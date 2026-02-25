@@ -64,3 +64,8 @@ demon-slayer-pixel/
 - 利用普攻积攒技能能量并获取技能充能
 - 在 Boss 阶段切换时把握输出与走位节奏
 
+## project infomation
+- All code built by codex3
+- All spritesheet built by nanobanana2
+- No code by human
+
