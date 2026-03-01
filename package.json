@@ -1,0 +1,17 @@
+{
+  "name": "demon-slayer-pixel",
+  "version": "1.0.0",
+  "description": "一个基于原生 `HTML + CSS + JavaScript` 的 2D 像素风生存小游戏。   玩家扮演炭治郎，在不断刷新的小怪与阶段式 Boss 战中尽可能生存并提高分数。",
+  "main": "index.js",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "vite": "^5.4.21"
+  }
+}

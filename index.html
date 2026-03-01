@@ -9,7 +9,7 @@
 <body>
   <main class="game-wrap">
     <h1>鬼灭之刃：炭治郎生存战</h1>
-    <p class="hint">A/D 移动 · W/空格 跳跃 · J 攻击 · K 水之呼吸·水车 · R 重开</p>
+    <p class="hint">A/D 移动 · W/空格 跳跃 · J 攻击 · K 释放技能 · 1/2/3 切换技能 · R 重开</p>
     <section class="game-shell">
       <canvas id="game" width="960" height="540" aria-label="Demon Slayer Pixel Survival"></canvas>
       <div class="touch-ui" aria-label="移动端虚拟按键">
@@ -20,12 +20,12 @@
         <div class="touch-pad right-pad">
           <button class="touch-btn action-btn jump-btn" data-key="w" aria-label="跳跃">跳</button>
           <button class="touch-btn action-btn attack-btn" data-key="j" aria-label="攻击">攻</button>
-          <button class="touch-btn action-btn skill-btn" data-key="k" aria-label="水车">式</button>
+          <button class="touch-btn action-btn skill-btn" data-key="k" aria-label="释放技能">式</button>
         </div>
       </div>
     </section>
     <p class="hint">目标：生存并迎战阶段式 Boss（下弦之鬼）。</p>
   </main>
-  <script src="game.js"></script>
+  <script type="module" src="./src/main.js"></script>
 </body>
 </html>
