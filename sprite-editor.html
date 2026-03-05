@@ -1,0 +1,1847 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sprite Sheet Editor · 序列帧编辑器</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+
+        :root {
+            --bg: #0f0f13;
+            --panel: #1a1a22;
+            --panel2: #22222e;
+            --accent: #7c6af7;
+            --accent2: #56cfb2;
+            --danger: #f47171;
+            --text: #e8e8f0;
+            --muted: #8888a8;
+            --border: #2e2e40;
+            --input-bg: #12121a;
+            --row-h: 32px;
+            --sidebar-w: 300px;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            display: flex;
+            height: 100vh;
+            overflow: hidden;
+            font-size: 13px;
+        }
+
+        /* ─── LEFT SIDEBAR ─── */
+        #sidebar {
+            width: var(--sidebar-w);
+            min-width: var(--sidebar-w);
+            background: var(--panel);
+            border-right: 1px solid var(--border);
+            display: flex;
+            flex-direction: column;
+            overflow-y: auto;
+            overflow-x: hidden;
+        }
+
+        #sidebar::-webkit-scrollbar {
+            width: 4px;
+        }
+
+        #sidebar::-webkit-scrollbar-thumb {
+            background: var(--border);
+            border-radius: 4px;
+        }
+
+        .sidebar-header {
+            padding: 16px 18px 12px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .logo {
+            font-size: 17px;
+            font-weight: 700;
+            color: var(--accent);
+            letter-spacing: -0.5px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .logo svg {
+            flex-shrink: 0;
+        }
+
+        .subtitle {
+            color: var(--muted);
+            font-size: 11px;
+            margin-top: 3px;
+        }
+
+        .section {
+            padding: 14px 16px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .section-title {
+            font-size: 10px;
+            font-weight: 600;
+            color: var(--muted);
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+            margin-bottom: 10px;
+        }
+
+        /* ─── DROP ZONE ─── */
+        #drop-zone {
+            border: 2px dashed var(--border);
+            border-radius: 8px;
+            padding: 20px 12px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s;
+            color: var(--muted);
+            font-size: 12px;
+            line-height: 1.6;
+            position: relative;
+            overflow: hidden;
+        }
+
+        #drop-zone.dragover {
+            border-color: var(--accent);
+            background: rgba(124, 106, 247, 0.08);
+            color: var(--text);
+        }
+
+        #drop-zone svg {
+            margin-bottom: 8px;
+            opacity: 0.5;
+        }
+
+        #drop-zone b {
+            display: block;
+            color: var(--text);
+            font-size: 13px;
+        }
+
+        #file-input {
+            display: none;
+        }
+
+        /* ─── THUMBNAIL ─── */
+        #thumbnail-wrap {
+            border-radius: 6px;
+            overflow: hidden;
+            border: 1px solid var(--border);
+            background: var(--input-bg);
+            position: relative;
+            display: none;
+        }
+
+        #thumbnail {
+            width: 100%;
+            display: block;
+            image-rendering: pixelated;
+        }
+
+        .thumb-label {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: rgba(0, 0, 0, 0.7);
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 10px;
+            padding: 3px 6px;
+            color: var(--accent2);
+        }
+
+        /* ─── FIELD GRID ─── */
+        .field-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+        }
+
+        .field-grid.cols-1 {
+            grid-template-columns: 1fr;
+        }
+
+        .field {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .field label {
+            font-size: 10px;
+            font-weight: 600;
+            color: var(--muted);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .field input[type=number],
+        .field input[type=range],
+        .field select {
+            background: var(--input-bg);
+            border: 1px solid var(--border);
+            border-radius: 5px;
+            color: var(--text);
+            padding: 5px 8px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 12px;
+            width: 100%;
+            outline: none;
+            transition: border-color 0.15s;
+        }
+
+        .field input:focus,
+        .field select:focus {
+            border-color: var(--accent);
+        }
+
+        .field input[type=range] {
+            padding: 0;
+            height: 6px;
+            accent-color: var(--accent);
+            cursor: pointer;
+        }
+
+        .zoom-row {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .zoom-row input[type=range] {
+            flex: 1;
+        }
+
+        .zoom-val {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 11px;
+            color: var(--accent2);
+            min-width: 38px;
+            text-align: right;
+        }
+
+        /* ─── BUTTONS ─── */
+        .btn-row {
+            display: flex;
+            gap: 8px;
+        }
+
+        .btn {
+            flex: 1;
+            border: none;
+            border-radius: 6px;
+            padding: 8px 10px;
+            font-family: 'Inter', sans-serif;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.15s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 5px;
+        }
+
+        .btn-primary {
+            background: var(--accent);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #9481ff;
+        }
+
+        .btn-secondary {
+            background: var(--panel2);
+            color: var(--text);
+            border: 1px solid var(--border);
+        }
+
+        .btn-secondary:hover {
+            border-color: var(--accent);
+        }
+
+        .btn-danger {
+            background: rgba(244, 113, 113, 0.15);
+            color: var(--danger);
+            border: 1px solid rgba(244, 113, 113, 0.3);
+        }
+
+        .btn-danger:hover {
+            background: rgba(244, 113, 113, 0.25);
+        }
+
+        .btn-success {
+            background: rgba(86, 207, 178, 0.15);
+            color: var(--accent2);
+            border: 1px solid rgba(86, 207, 178, 0.3);
+        }
+
+        .btn-success:hover {
+            background: rgba(86, 207, 178, 0.25);
+        }
+
+        .btn:disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+        }
+
+        /* ─── PLAYHEAD ─── */
+        #playhead-wrap {
+            border-top: 1px solid var(--border);
+            padding: 10px 16px 14px;
+        }
+
+        .playhead-title {
+            font-size: 10px;
+            font-weight: 600;
+            color: var(--muted);
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+            margin-bottom: 10px;
+        }
+
+        #frame-strip {
+            display: flex;
+            gap: 4px;
+            flex-wrap: wrap;
+            margin-top: 10px;
+        }
+
+        .frame-thumb {
+            width: 36px;
+            height: 36px;
+            border: 2px solid var(--border);
+            border-radius: 4px;
+            overflow: hidden;
+            cursor: pointer;
+            position: relative;
+            transition: border-color 0.15s;
+            background: var(--input-bg);
+        }
+
+        .frame-thumb.active {
+            border-color: var(--accent);
+        }
+
+        .frame-thumb canvas {
+            width: 100%;
+            height: 100%;
+            image-rendering: pixelated;
+        }
+
+        .frame-thumb .fnum {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            font-size: 8px;
+            background: rgba(0, 0, 0, 0.7);
+            text-align: center;
+            color: var(--muted);
+            line-height: 12px;
+        }
+
+        /* ─── MAIN VIEW ─── */
+        #main {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        #toolbar {
+            height: 44px;
+            background: var(--panel);
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            padding: 0 14px;
+            gap: 6px;
+        }
+
+        .tool-btn {
+            width: 32px;
+            height: 32px;
+            border: 1px solid transparent;
+            border-radius: 6px;
+            background: transparent;
+            color: var(--muted);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.15s;
+            font-size: 16px;
+        }
+
+        .tool-btn:hover {
+            background: var(--panel2);
+            color: var(--text);
+            border-color: var(--border);
+        }
+
+        .tool-btn.active {
+            background: rgba(124, 106, 247, 0.2);
+            color: var(--accent);
+            border-color: var(--accent);
+        }
+
+        .tool-sep {
+            width: 1px;
+            height: 24px;
+            background: var(--border);
+            margin: 0 4px;
+        }
+
+        .toolbar-info {
+            margin-left: auto;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 11px;
+            color: var(--muted);
+            display: flex;
+            gap: 16px;
+        }
+
+        .toolbar-info span b {
+            color: var(--accent2);
+            font-weight: 500;
+        }
+
+        /* ─── CANVAS AREA ─── */
+        #canvas-wrap {
+            flex: 1;
+            position: relative;
+            overflow: hidden;
+            cursor: grab;
+            background-image:
+                radial-gradient(circle, #2a2a36 1px, transparent 1px);
+            background-size: 24px 24px;
+        }
+
+        #canvas-wrap.tool-select {
+            cursor: crosshair;
+        }
+
+        #canvas-wrap.tool-lasso {
+            cursor: crosshair;
+        }
+
+        #canvas-wrap.dragging {
+            cursor: grabbing;
+        }
+
+        /* ─── SELECTION CANVAS ─── */
+        #sel-canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            pointer-events: none;
+            transform-origin: 0 0;
+        }
+
+        #main-canvas {
+            position: absolute;
+            image-rendering: pixelated;
+            transform-origin: 0 0;
+            will-change: transform;
+        }
+
+        /* ─── SELECTION OVERLAY (hit-test div, no visible border) ─── */
+        #selection-box {
+            position: absolute;
+            pointer-events: all;
+            display: none;
+            cursor: move;
+            background: transparent;
+        }
+
+        /* ─── SELECTION HANDLES ─── */
+        .sel-handle {
+            position: absolute;
+            width: 10px;
+            height: 10px;
+            background: var(--accent);
+            border: 2px solid white;
+            border-radius: 2px;
+            pointer-events: all;
+            cursor: nwse-resize;
+        }
+
+        /* ─── STATUS BAR ─── */
+        #statusbar {
+            height: 26px;
+            background: var(--panel);
+            border-top: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            padding: 0 14px;
+            gap: 20px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 10px;
+            color: var(--muted);
+        }
+
+        #statusbar span {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        #statusbar b {
+            color: var(--text);
+            font-weight: 400;
+        }
+
+        /* ─── PREVIEW PANEL ─── */
+        #preview-panel {
+            width: 200px;
+            min-width: 200px;
+            background: var(--panel);
+            border-left: 1px solid var(--border);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        #preview-panel-header {
+            padding: 10px 14px;
+            border-bottom: 1px solid var(--border);
+            font-size: 11px;
+            font-weight: 600;
+            color: var(--muted);
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+        }
+
+        #preview-canvas-wrap {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background-image:
+                linear-gradient(45deg, #1e1e28 25%, transparent 25%),
+                linear-gradient(-45deg, #1e1e28 25%, transparent 25%),
+                linear-gradient(45deg, transparent 75%, #1e1e28 75%),
+                linear-gradient(-45deg, transparent 75%, #1e1e28 75%);
+            background-size: 12px 12px;
+            background-position: 0 0, 0 6px, 6px 6px, 6px 0;
+            padding: 10px;
+        }
+
+        #preview-canvas {
+            image-rendering: pixelated;
+            max-width: 100%;
+            max-height: 100%;
+            border: 1px solid var(--border);
+        }
+
+        #preview-footer {
+            padding: 10px 14px;
+            border-top: 1px solid var(--border);
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .preview-info {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 10px;
+            color: var(--muted);
+        }
+
+        .preview-info b {
+            color: var(--accent2);
+        }
+
+        /* ─── TOAST ─── */
+        #toast {
+            position: fixed;
+            bottom: 40px;
+            left: 50%;
+            transform: translateX(-50%) translateY(20px);
+            background: var(--accent);
+            color: white;
+            padding: 8px 18px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            opacity: 0;
+            transition: all 0.25s;
+            pointer-events: none;
+            z-index: 999;
+        }
+
+        #toast.show {
+            opacity: 1;
+            transform: translateX(-50%) translateY(0);
+        }
+
+        /* ─── GRID OVERLAY CANVAS ─── */
+        #grid-canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            pointer-events: none;
+            image-rendering: pixelated;
+            transform-origin: 0 0;
+        }
+
+        /* ─── SCROLLBAR ─── */
+        *::-webkit-scrollbar {
+            width: 5px;
+            height: 5px;
+        }
+
+        *::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        *::-webkit-scrollbar-thumb {
+            background: var(--border);
+            border-radius: 4px;
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- LEFT SIDEBAR -->
+    <div id="sidebar">
+        <div class="sidebar-header">
+            <div class="logo">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+                    <rect x="2" y="2" width="9" height="9" rx="1.5" fill="#7c6af7" opacity="0.9" />
+                    <rect x="13" y="2" width="9" height="9" rx="1.5" fill="#7c6af7" opacity="0.6" />
+                    <rect x="2" y="13" width="9" height="9" rx="1.5" fill="#7c6af7" opacity="0.6" />
+                    <rect x="13" y="13" width="9" height="9" rx="1.5" fill="#56cfb2" opacity="0.9" />
+                </svg>
+                Sprite Editor
+            </div>
+            <div class="subtitle">序列帧编辑工具</div>
+        </div>
+
+        <!-- LOAD IMAGE -->
+        <div class="section">
+            <div class="section-title">图片来源</div>
+            <div id="drop-zone">
+                <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                    <polyline points="17 8 12 3 7 8" />
+                    <line x1="12" y1="3" x2="12" y2="15" />
+                </svg>
+                <b>拖入图片</b>
+                点击或拖拽序列帧图片到此处<br>
+                <small>PNG · JPG · WEBP · GIF</small>
+            </div>
+            <input type="file" id="file-input" accept="image/*">
+            <div id="thumbnail-wrap" style="margin-top:10px;">
+                <img id="thumbnail">
+                <div class="thumb-label" id="thumb-label">—</div>
+            </div>
+        </div>
+
+        <!-- FRAME PARAMS -->
+        <div class="section">
+            <div class="section-title">帧参数</div>
+            <div class="field-grid">
+                <div class="field">
+                    <label>帧宽 W</label>
+                    <input type="number" id="fw" value="64" min="1">
+                </div>
+                <div class="field">
+                    <label>帧高 H</label>
+                    <input type="number" id="fh" value="64" min="1">
+                </div>
+                <div class="field">
+                    <label>总帧数</label>
+                    <input type="number" id="fcount" value="4" min="1">
+                </div>
+                <div class="field">
+                    <label>FPS</label>
+                    <input type="number" id="fps" value="10" min="1" max="60">
+                </div>
+                <div class="field">
+                    <label>起始帧 X</label>
+                    <input type="number" id="offset-x" value="0" min="0">
+                </div>
+                <div class="field">
+                    <label>起始帧 Y</label>
+                    <input type="number" id="offset-y" value="0" min="0">
+                </div>
+            </div>
+            <div style="margin-top:10px;" class="btn-row">
+                <button class="btn btn-secondary" id="auto-detect-btn">⚡ 自动检测</button>
+                <button class="btn btn-secondary" id="show-grid-btn" title="显示/隐藏网格">⊞ 网格</button>
+            </div>
+        </div>
+
+        <!-- VIEW -->
+        <div class="section">
+            <div class="section-title">视图</div>
+            <div class="field">
+                <label>缩放</label>
+                <div class="zoom-row">
+                    <input type="range" id="zoom" min="0.1" max="8" step="0.05" value="1">
+                    <span class="zoom-val" id="zoom-val">100%</span>
+                </div>
+            </div>
+            <div class="btn-row" style="margin-top:8px;">
+                <button class="btn btn-secondary" id="fit-btn">⊡ 适应</button>
+                <button class="btn btn-secondary" id="reset-view-btn">↺ 重置</button>
+            </div>
+        </div>
+
+        <!-- PLAYBACK -->
+        <div class="section">
+            <div class="section-title">播放控制</div>
+            <div class="btn-row">
+                <button class="btn btn-primary" id="play-btn">▶ 播放</button>
+                <button class="btn btn-secondary" id="step-btn">⏭ 下一帧</button>
+            </div>
+            <div id="frame-strip"></div>
+        </div>
+
+        <!-- EXPORT -->
+        <div class="section">
+            <div class="section-title">导出选区</div>
+            <div class="field-grid">
+                <div class="field">
+                    <label>选区 X</label>
+                    <input type="number" id="sel-x" value="0" min="0">
+                </div>
+                <div class="field">
+                    <label>选区 Y</label>
+                    <input type="number" id="sel-y" value="0" min="0">
+                </div>
+                <div class="field">
+                    <label>选区 W</label>
+                    <input type="number" id="sel-w" value="0" min="0">
+                </div>
+                <div class="field">
+                    <label>选区 H</label>
+                    <input type="number" id="sel-h" value="0" min="0">
+                </div>
+            </div>
+            <div class="btn-row" style="margin-top:10px;">
+                <button class="btn btn-success" id="export-sel-btn">↓ 导出选区</button>
+                <button class="btn btn-success" id="export-frame-btn">↓ 导出帧</button>
+            </div>
+            <div class="btn-row" style="margin-top:6px;">
+                <button class="btn btn-success" id="export-spritesheet-btn">↓ 导出全部</button>
+            </div>
+        </div>
+
+        <!-- IMAGE RESIZE -->
+        <div class="section">
+            <div class="section-title">画布尺寸</div>
+            <div class="field-grid">
+                <div class="field">
+                    <label>画布宽 W</label>
+                    <input type="number" id="resize-w" value="0" min="1">
+                </div>
+                <div class="field">
+                    <label>画布高 H</label>
+                    <input type="number" id="resize-h" value="0" min="1">
+                </div>
+            </div>
+            <div class="btn-row" style="margin-top:10px;">
+                <button class="btn btn-secondary" id="resize-btn">⤡ 更新画布大小</button>
+                <button class="btn btn-secondary" id="resize-reset-btn" title="重置为原始尺寸">↺</button>
+            </div>
+            <div id="resize-info"
+                style="margin-top:6px;font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--muted);">当前:
+                <span id="resize-cur">—</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- MAIN CANVAS AREA -->
+    <div id="main">
+        <!-- TOOLBAR -->
+        <div id="toolbar">
+            <button class="tool-btn active" id="tool-pan" title="平移 (V)">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M5 9l-3 3 3 3M9 5l3-3 3 3M15 19l-3 3-3-3M19 9l3 3-3 3M12 12h.01" />
+                    <path d="M3 12h18M12 3v18" />
+                </svg>
+            </button>
+            <button class="tool-btn" id="tool-select" title="矩形框选 (S)">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <rect x="3" y="3" width="18" height="18" rx="1" stroke-dasharray="4 2" />
+                </svg>
+            </button>
+            <button class="tool-btn" id="tool-lasso" title="套索选区 (L)">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M7 5C4.5 7 3 9.5 3 12c0 3.3 2.7 6 6 6 2 0 3.8-.9 5-2.4" stroke-dasharray="3 1.5" />
+                    <path d="M14 15.5c1.5-1 2.5-2.7 2.5-4.5 0-3-2.2-5.5-5-5.5-1 0-2 .3-2.8.8" />
+                    <circle cx="18" cy="17" r="3" fill="rgba(124,106,247,0.4)" stroke="currentColor" />
+                </svg>
+            </button>
+            <div class="tool-sep"></div>
+            <button class="tool-btn" id="zoom-in-btn" title="放大 (+)">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="11" cy="11" r="8" />
+                    <line x1="21" y1="21" x2="16.65" y2="16.65" />
+                    <line x1="11" y1="8" x2="11" y2="14" />
+                    <line x1="8" y1="11" x2="14" y2="11" />
+                </svg>
+            </button>
+            <button class="tool-btn" id="zoom-out-btn" title="缩小 (-)">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="11" cy="11" r="8" />
+                    <line x1="21" y1="21" x2="16.65" y2="16.65" />
+                    <line x1="8" y1="11" x2="14" y2="11" />
+                </svg>
+            </button>
+            <div class="tool-sep"></div>
+            <div class="toolbar-info">
+                <span>尺寸: <b id="info-size">—</b></span>
+                <span>当前帧: <b id="info-frame">0</b></span>
+                <span>鼠标: <b id="info-mouse">—</b></span>
+                <span>选区: <b id="info-sel">—</b></span>
+            </div>
+        </div>
+
+        <!-- CANVAS VIEWPORT -->
+        <div id="canvas-wrap">
+            <canvas id="main-canvas"></canvas>
+            <canvas id="grid-canvas"></canvas>
+            <canvas id="sel-canvas"></canvas>
+            <div id="selection-box"></div>
+        </div>
+
+        <!-- STATUS BAR -->
+        <div id="statusbar">
+            <span>缩放: <b id="sb-zoom">100%</b></span>
+            <span>位置: <b id="sb-pos">0, 0</b></span>
+            <span>列数: <b id="sb-cols">—</b></span>
+            <span>图片: <b id="sb-img">未加载</b></span>
+        </div>
+    </div>
+
+    <!-- RIGHT PREVIEW -->
+    <div id="preview-panel">
+        <div id="preview-panel-header">动画预览</div>
+        <div id="preview-canvas-wrap">
+            <canvas id="preview-canvas" width="128" height="128"></canvas>
+        </div>
+        <div id="preview-footer">
+            <div class="preview-info">帧: <b id="pv-frame">0</b> / <b id="pv-total">0</b></div>
+            <div class="preview-info">尺寸: <b id="pv-size">—</b></div>
+            <div class="btn-row">
+                <button class="btn btn-secondary" id="pv-play-btn" style="font-size:11px;">▶</button>
+                <button class="btn btn-secondary" id="pv-loop-btn" style="font-size:11px;">↺ 循环</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="toast"></div>
+
+    <script>
+        // ─────────────────────────────────────────────
+        //  STATE
+        // ─────────────────────────────────────────────
+        const state = {
+            img: null,
+            imgSrc: '',
+            // canvas transform
+            panX: 0, panY: 0,
+            zoom: 1,
+            // tool: 'pan' | 'select' | 'lasso'
+            tool: 'pan',
+            // selection type: 'rect' | 'lasso'
+            selType: 'rect',
+            // selection in image coords {x,y,w,h} + optional .points[] for lasso
+            sel: null,
+            // lasso drawing
+            lassoDrawing: false,
+            lassoPoints: [],
+            // playback
+            currentFrame: 0,
+            isPlaying: false,
+            timer: 0,
+            lastTime: 0,
+            // grid
+            showGrid: true,
+            // drag
+            dragging: false,
+            panStart: null,
+            selStart: null,
+            // selection move (floating pixel layer)
+            movingSel: false,
+            moveSelStart: null,
+            editCanvas: null,
+            floatingCanvas: null,
+            floatOffset: { x: 0, y: 0 },
+            // marching ants animation
+            antsOffset: 0,
+        };
+
+        // ─────────────────────────────────────────────
+        //  DOM REFS
+        // ─────────────────────────────────────────────
+        const dropZone = document.getElementById('drop-zone');
+        const fileInput = document.getElementById('file-input');
+        const thumbnail = document.getElementById('thumbnail');
+        const thumbWrap = document.getElementById('thumbnail-wrap');
+        const thumbLabel = document.getElementById('thumb-label');
+        const mainCanvas = document.getElementById('main-canvas');
+        const gridCanvas = document.getElementById('grid-canvas');
+        const selCanvas = document.getElementById('sel-canvas');
+        const canvasWrap = document.getElementById('canvas-wrap');
+        const selBox = document.getElementById('selection-box');
+        const pvCanvas = document.getElementById('preview-canvas');
+        const pvCtx = pvCanvas.getContext('2d');
+        const ctx = mainCanvas.getContext('2d');
+        const selCtx = selCanvas.getContext('2d');
+
+        const fwInput = document.getElementById('fw');
+        const fhInput = document.getElementById('fh');
+        const fcountInput = document.getElementById('fcount');
+        const fpsInput = document.getElementById('fps');
+        const oxInput = document.getElementById('offset-x');
+        const oyInput = document.getElementById('offset-y');
+        const zoomSlider = document.getElementById('zoom');
+        const zoomVal = document.getElementById('zoom-val');
+        const selXInput = document.getElementById('sel-x');
+        const selYInput = document.getElementById('sel-y');
+        const selWInput = document.getElementById('sel-w');
+        const selHInput = document.getElementById('sel-h');
+        const frameStrip = document.getElementById('frame-strip');
+        const infoSize = document.getElementById('info-size');
+        const infoFrame = document.getElementById('info-frame');
+        const infoMouse = document.getElementById('info-mouse');
+        const infoSel = document.getElementById('info-sel');
+        const sbZoom = document.getElementById('sb-zoom');
+        const sbPos = document.getElementById('sb-pos');
+        const sbCols = document.getElementById('sb-cols');
+        const sbImg = document.getElementById('sb-img');
+        const pvFrame = document.getElementById('pv-frame');
+        const pvTotal = document.getElementById('pv-total');
+        const pvSize = document.getElementById('pv-size');
+
+        // ─────────────────────────────────────────────
+        //  HELPERS
+        // ─────────────────────────────────────────────
+        function get(id) { return document.getElementById(id); }
+
+        function fw() { return parseInt(fwInput.value) || 64; }
+        function fh() { return parseInt(fhInput.value) || 64; }
+        function fcount() { return parseInt(fcountInput.value) || 1; }
+        function fps() { return parseFloat(fpsInput.value) || 10; }
+        function ox() { return parseInt(oxInput.value) || 0; }
+        function oy() { return parseInt(oyInput.value) || 0; }
+
+        function cols() { return state.img ? Math.max(1, Math.floor((state.img.naturalWidth - ox()) / fw())) : 1; }
+
+        function showToast(msg, color = '#7c6af7') {
+            const t = document.getElementById('toast');
+            t.textContent = msg;
+            t.style.background = color;
+            t.classList.add('show');
+            setTimeout(() => t.classList.remove('show'), 2200);
+        }
+
+        // ─────────────────────────────────────────────
+        //  IMAGE LOADING
+        // ─────────────────────────────────────────────
+        function loadImage(src, name) {
+            const img = new Image();
+            img.onload = () => {
+                state.img = img;
+                mainCanvas.width = img.naturalWidth;
+                mainCanvas.height = img.naturalHeight;
+                gridCanvas.width = img.naturalWidth;
+                gridCanvas.height = img.naturalHeight;
+                selCanvas.width = img.naturalWidth;
+                selCanvas.height = img.naturalHeight;
+
+                thumbnail.src = src;
+                thumbWrap.style.display = 'block';
+                thumbLabel.textContent = `${img.naturalWidth} × ${img.naturalHeight} · ${name}`;
+                infoSize.textContent = `${img.naturalWidth} × ${img.naturalHeight}`;
+                sbImg.textContent = name;
+
+                // auto-detect frame width
+                autoDetect(false);
+                fitView();
+                renderStrip();
+                updateGridCanvas();
+                showToast('图片已加载 ✓', '#56cfb2');
+            };
+            img.onerror = () => showToast('图片加载失败', '#f47171');
+            img.src = src;
+        }
+
+        function autoDetect(toast = true) {
+            if (!state.img) return;
+            const w = state.img.naturalWidth;
+            const h = state.img.naturalHeight;
+            const cnt = fcount();
+            if (cnt > 0 && w % cnt === 0) {
+                fwInput.value = Math.round(w / cnt);
+            }
+            if (toast) showToast('已自动检测帧参数');
+            updateInfo();
+        }
+
+        // ─────────────────────────────────────────────
+        //  CANVAS TRANSFORM
+        // ─────────────────────────────────────────────
+        function applyTransform() {
+            const t = `translate(${state.panX}px, ${state.panY}px) scale(${state.zoom})`;
+            mainCanvas.style.transform = t;
+            gridCanvas.style.transform = t;
+            selCanvas.style.transform = t;
+            updateSelectionBox();
+        }
+
+        function fitView() {
+            if (!state.img) return;
+            const rect = canvasWrap.getBoundingClientRect();
+            const scaleX = (rect.width - 60) / state.img.naturalWidth;
+            const scaleY = (rect.height - 60) / state.img.naturalHeight;
+            const s = Math.min(scaleX, scaleY, 4);
+            state.zoom = s;
+            state.panX = (rect.width - state.img.naturalWidth * s) / 2;
+            state.panY = (rect.height - state.img.naturalHeight * s) / 2;
+            zoomSlider.value = s;
+            zoomVal.textContent = Math.round(s * 100) + '%';
+            applyTransform();
+            updateInfo();
+        }
+
+        function setZoom(z, cx, cy) {
+            const rect = canvasWrap.getBoundingClientRect();
+            const mx = cx !== undefined ? cx - rect.left : rect.width / 2;
+            const my = cy !== undefined ? cy - rect.top : rect.height / 2;
+            const oldZ = state.zoom;
+            state.zoom = Math.min(Math.max(z, 0.05), 16);
+            state.panX = mx - (mx - state.panX) * (state.zoom / oldZ);
+            state.panY = my - (my - state.panY) * (state.zoom / oldZ);
+            zoomSlider.value = Math.min(state.zoom, 8);
+            zoomVal.textContent = Math.round(state.zoom * 100) + '%';
+            applyTransform();
+            updateInfo();
+        }
+
+        // ─────────────────────────────────────────────
+        //  COORDINATE CONVERSION
+        // ─────────────────────────────────────────────
+        function screenToImage(sx, sy) {
+            const rect = canvasWrap.getBoundingClientRect();
+            return {
+                x: (sx - rect.left - state.panX) / state.zoom,
+                y: (sy - rect.top - state.panY) / state.zoom,
+            };
+        }
+
+        function imageToScreen(ix, iy) {
+            const rect = canvasWrap.getBoundingClientRect();
+            return {
+                x: ix * state.zoom + state.panX + rect.left,
+                y: iy * state.zoom + state.panY + rect.top,
+            };
+        }
+
+        // ─────────────────────────────────────────────
+        //  SELECTION CANVAS & BOX
+        // ─────────────────────────────────────────────
+
+        // Draw marching-ants outline on the sel-canvas
+        function drawSelCanvas() {
+            if (!state.img) return;
+            selCtx.clearRect(0, 0, selCanvas.width, selCanvas.height);
+            const s = state.sel;
+
+            if (!s) {
+                // Draw in-progress lasso
+                if (state.lassoDrawing && state.lassoPoints.length > 1) {
+                    selCtx.save();
+                    selCtx.strokeStyle = 'rgba(124,106,247,0.9)';
+                    selCtx.lineWidth = 1;
+                    selCtx.setLineDash([4, 3]);
+                    selCtx.lineDashOffset = -state.antsOffset;
+                    selCtx.beginPath();
+                    state.lassoPoints.forEach((p, i) => i === 0 ? selCtx.moveTo(p.x, p.y) : selCtx.lineTo(p.x, p.y));
+                    selCtx.stroke();
+                    selCtx.restore();
+                }
+                return;
+            }
+
+            selCtx.save();
+            // fill
+            selCtx.fillStyle = 'rgba(124,106,247,0.10)';
+            selCtx.beginPath();
+            if (s.points) {
+                s.points.forEach((p, i) => i === 0 ? selCtx.moveTo(p.x, p.y) : selCtx.lineTo(p.x, p.y));
+                selCtx.closePath();
+            } else {
+                selCtx.rect(s.x, s.y, s.w, s.h);
+            }
+            selCtx.fill();
+
+            // marching ants stroke
+            selCtx.strokeStyle = '#7c6af7';
+            selCtx.lineWidth = 1;
+            selCtx.setLineDash([4, 3]);
+            selCtx.lineDashOffset = -state.antsOffset;
+            selCtx.stroke();
+
+            // outer glow line
+            selCtx.strokeStyle = 'rgba(255,255,255,0.4)';
+            selCtx.setLineDash([4, 3]);
+            selCtx.lineDashOffset = -(state.antsOffset + 3.5);
+            selCtx.stroke();
+            selCtx.restore();
+        }
+
+        function updateSelectionBox() {
+            if (!state.sel || !state.img) {
+                selBox.style.display = 'none';
+                drawSelCanvas();
+                return;
+            }
+            const s = state.sel;
+            const sx = s.x * state.zoom + state.panX;
+            const sy = s.y * state.zoom + state.panY;
+            const sw = s.w * state.zoom;
+            const sh = s.h * state.zoom;
+            selBox.style.display = 'block';
+            selBox.style.left = sx + 'px';
+            selBox.style.top = sy + 'px';
+            selBox.style.width = sw + 'px';
+            selBox.style.height = sh + 'px';
+            updateSelInputs();
+            drawSelCanvas();
+        }
+
+        function updateSelInputs() {
+            if (!state.sel) return;
+            selXInput.value = Math.round(state.sel.x);
+            selYInput.value = Math.round(state.sel.y);
+            selWInput.value = Math.round(state.sel.w);
+            selHInput.value = Math.round(state.sel.h);
+            infoSel.textContent = `${Math.round(state.sel.x)},${Math.round(state.sel.y)} ${Math.round(state.sel.w)}×${Math.round(state.sel.h)}`;
+        }
+
+        // Animate marching ants
+        setInterval(() => {
+            state.antsOffset = (state.antsOffset + 0.4) % 7;
+            if (state.sel || state.lassoDrawing) drawSelCanvas();
+        }, 30);
+
+        // ─────────────────────────────────────────────
+        //  GRID OVERLAY
+        // ─────────────────────────────────────────────
+        function updateGridCanvas() {
+            if (!state.img) return;
+            const gc = gridCanvas.getContext('2d');
+            gc.clearRect(0, 0, gridCanvas.width, gridCanvas.height);
+            if (!state.showGrid) return;
+            const W = state.img.naturalWidth;
+            const H = state.img.naturalHeight;
+            const cw = fw(), ch = fh();
+            gc.strokeStyle = 'rgba(124,106,247,0.5)';
+            gc.lineWidth = 1;
+            gc.setLineDash([3, 3]);
+            for (let x = ox(); x <= W; x += cw) {
+                gc.beginPath(); gc.moveTo(x + 0.5, oy()); gc.lineTo(x + 0.5, H); gc.stroke();
+            }
+            for (let y = oy(); y <= H; y += ch) {
+                gc.beginPath(); gc.moveTo(ox(), y + 0.5); gc.lineTo(W, y + 0.5); gc.stroke();
+            }
+            gc.setLineDash([]);
+            // draw frame numbers
+            gc.fillStyle = 'rgba(124,106,247,0.7)';
+            gc.font = `${Math.max(8, Math.min(12, cw / 6))}px monospace`;
+            gc.textAlign = 'left';
+            gc.textBaseline = 'top';
+            const c = cols();
+            for (let i = 0; i < fcount(); i++) {
+                const col = i % c;
+                const row = Math.floor(i / c);
+                gc.fillText(i, ox() + col * cw + 3, oy() + row * ch + 3);
+            }
+        }
+
+        // ─────────────────────────────────────────────
+        //  FRAME STRIP
+        // ─────────────────────────────────────────────
+        function renderStrip() {
+            frameStrip.innerHTML = '';
+            if (!state.img) return;
+            const c = cols();
+            const n = fcount();
+            for (let i = 0; i < n; i++) {
+                const wrap = document.createElement('div');
+                wrap.className = 'frame-thumb' + (i === state.currentFrame ? ' active' : '');
+                const fc = document.createElement('canvas');
+                fc.width = fw();
+                fc.height = fh();
+                const fc2 = fc.getContext('2d');
+                const col = i % c, row = Math.floor(i / c);
+                fc2.drawImage(state.img, ox() + col * fw(), oy() + row * fh(), fw(), fh(), 0, 0, fw(), fh());
+                const fnum = document.createElement('div');
+                fnum.className = 'fnum';
+                fnum.textContent = i;
+                wrap.appendChild(fc);
+                wrap.appendChild(fnum);
+                wrap.onclick = () => { state.currentFrame = i; updateFrameStrip(); };
+                frameStrip.appendChild(wrap);
+            }
+        }
+
+        function updateFrameStrip() {
+            const thumbs = frameStrip.querySelectorAll('.frame-thumb');
+            thumbs.forEach((t, i) => {
+                t.classList.toggle('active', i === state.currentFrame);
+            });
+            infoFrame.textContent = state.currentFrame;
+            pvFrame.textContent = state.currentFrame;
+        }
+
+        // ─────────────────────────────────────────────
+        //  RENDER LOOP
+        // ─────────────────────────────────────────────
+        function drawMainCanvas() {
+            if (!state.img) return;
+            ctx.clearRect(0, 0, mainCanvas.width, mainCanvas.height);
+            if (state.editCanvas) {
+                // draw the working (hole) canvas
+                ctx.drawImage(state.editCanvas, 0, 0);
+                // draw floating selection on top at current offset
+                if (state.floatingCanvas) {
+                    ctx.drawImage(
+                        state.floatingCanvas,
+                        Math.round(state.floatOffset.x),
+                        Math.round(state.floatOffset.y)
+                    );
+                }
+            } else {
+                ctx.drawImage(state.img, 0, 0);
+            }
+        }
+
+        // Lift selected pixels from editCanvas into floatingCanvas
+        function liftSelection() {
+            if (!state.sel || !state.img) return;
+            const s = state.sel;
+            const sx = Math.round(s.x), sy = Math.round(s.y);
+            const sw = Math.round(s.w), sh = Math.round(s.h);
+            if (sw < 1 || sh < 1) return;
+
+            // Create editCanvas as a copy of the current image
+            const ec = document.createElement('canvas');
+            ec.width = state.img.naturalWidth;
+            ec.height = state.img.naturalHeight;
+            const ec2 = ec.getContext('2d');
+            ec2.drawImage(state.img, 0, 0);
+
+            // Capture floating pixels (with polygon clip for lasso)
+            const fc = document.createElement('canvas');
+            fc.width = sw;
+            fc.height = sh;
+            const fc2 = fc.getContext('2d');
+
+            if (s.points && s.points.length > 2) {
+                // Clip to the lasso polygon (offset by bbox origin)
+                fc2.save();
+                fc2.beginPath();
+                s.points.forEach((p, i) => {
+                    const px = p.x - sx, py = p.y - sy;
+                    i === 0 ? fc2.moveTo(px, py) : fc2.lineTo(px, py);
+                });
+                fc2.closePath();
+                fc2.clip();
+            }
+            fc2.drawImage(ec, sx, sy, sw, sh, 0, 0, sw, sh);
+            if (s.points && s.points.length > 2) fc2.restore();
+
+            // Punch hole in editCanvas matching the selection shape
+            if (s.points && s.points.length > 2) {
+                ec2.save();
+                ec2.globalCompositeOperation = 'destination-out';
+                ec2.beginPath();
+                s.points.forEach((p, i) => i === 0 ? ec2.moveTo(p.x, p.y) : ec2.lineTo(p.x, p.y));
+                ec2.closePath();
+                ec2.fill();
+                ec2.restore();
+            } else {
+                ec2.clearRect(sx, sy, sw, sh);
+            }
+
+            state.editCanvas = ec;
+            state.floatingCanvas = fc;
+            state.floatOffset = { x: sx, y: sy };
+        }
+
+        // Commit floating layer back onto editCanvas, update state.img
+        function commitFloat() {
+            if (!state.editCanvas || !state.floatingCanvas) return;
+            const ec2 = state.editCanvas.getContext('2d');
+            ec2.drawImage(
+                state.floatingCanvas,
+                Math.round(state.floatOffset.x),
+                Math.round(state.floatOffset.y)
+            );
+            // Bake into a new Image so the rest of the code works unchanged
+            const newImg = new Image();
+            newImg.onload = () => {
+                state.img = newImg;
+                renderStrip();
+                updateGridCanvas();
+            };
+            newImg.src = state.editCanvas.toDataURL();
+
+            state.editCanvas = null;
+            state.floatingCanvas = null;
+            state.floatOffset = { x: 0, y: 0 };
+        }
+
+        function drawPreview() {
+            if (!state.img) {
+                if (pvCanvas.width !== 128) pvCanvas.width = 128;
+                if (pvCanvas.height !== 128) pvCanvas.height = 128;
+                pvCtx.clearRect(0, 0, pvCanvas.width, pvCanvas.height);
+                return;
+            }
+            const c = cols();
+            const col = state.currentFrame % c;
+            const row = Math.floor(state.currentFrame / c);
+            const cw = fw(), ch = fh();
+            if (pvCanvas.width !== cw) pvCanvas.width = cw;
+            if (pvCanvas.height !== ch) pvCanvas.height = ch;
+            pvCtx.clearRect(0, 0, cw, ch);
+            pvCtx.drawImage(state.img, ox() + col * cw, oy() + row * ch, cw, ch, 0, 0, cw, ch);
+            pvSize.textContent = `${cw} × ${ch}`;
+            pvTotal.textContent = fcount();
+        }
+
+        function loop(ts) {
+            requestAnimationFrame(loop);
+            if (!state.img) return;
+
+            drawMainCanvas();
+
+            if (state.isPlaying) {
+                const dt = ts - (state.lastTime || ts);
+                state.lastTime = ts;
+                state.timer += dt;
+                const interval = 1000 / fps();
+                if (state.timer >= interval) {
+                    if (state.timer > interval * 5) {
+                        state.timer = state.timer % interval;
+                    }
+                    while (state.timer >= interval) {
+                        state.currentFrame = (state.currentFrame + 1) % fcount();
+                        state.timer -= interval;
+                    }
+                    updateFrameStrip();
+                }
+            } else {
+                state.lastTime = ts;
+            }
+
+            drawPreview();
+        }
+        requestAnimationFrame(loop);
+
+        // ─────────────────────────────────────────────
+        //  INFO UPDATE
+        // ─────────────────────────────────────────────
+        function updateInfo() {
+            sbZoom.textContent = Math.round(state.zoom * 100) + '%';
+            sbCols.textContent = state.img ? cols() : '—';
+            pvTotal.textContent = fcount();
+        }
+
+        // ─────────────────────────────────────────────
+        //  MOUSE EVENTS – CANVAS WRAP
+        // ─────────────────────────────────────────────
+        // ─── helper: point inside sel? ───
+        function ptInSel(pt) {
+            if (!state.sel) return false;
+            const s = state.sel;
+            // quick bbox pre-check
+            if (pt.x < s.x || pt.x > s.x + s.w || pt.y < s.y || pt.y > s.y + s.h) return false;
+            // for lasso: polygon test
+            if (s.points && s.points.length > 2) return ptInPolygon(pt.x, pt.y, s.points);
+            return true;
+        }
+
+        // Build a finalised lasso sel from accumulated points
+        function finishLasso() {
+            const pts = state.lassoPoints;
+            if (pts.length < 3) { state.lassoPoints = []; state.lassoDrawing = false; return; }
+            const xs = pts.map(p => p.x), ys = pts.map(p => p.y);
+            const minX = Math.min(...xs), minY = Math.min(...ys);
+            const maxX = Math.max(...xs), maxY = Math.max(...ys);
+            state.sel = { x: minX, y: minY, w: maxX - minX, h: maxY - minY, points: pts };
+            state.lassoPoints = [];
+            state.lassoDrawing = false;
+            updateSelectionBox();
+        }
+
+        canvasWrap.addEventListener('mousedown', (e) => {
+            e.preventDefault();
+            if (state.tool === 'pan' || e.button === 1) {
+                state.dragging = true;
+                state.panStart = { x: e.clientX - state.panX, y: e.clientY - state.panY };
+                canvasWrap.classList.add('dragging');
+
+            } else if (state.tool === 'lasso' && state.img) {
+                const pt = screenToImage(e.clientX, e.clientY);
+                if (ptInSel(pt) && state.sel && state.sel.w > 2) {
+                    // move selection content
+                    state.movingSel = true;
+                    state.moveSelStart = { imgPt: pt, selSnap: { ...state.sel, points: state.sel.points ? [...state.sel.points] : undefined } };
+                    if (!state.editCanvas) liftSelection();
+                } else {
+                    if (state.editCanvas) commitFloat();
+                    state.sel = null;
+                    state.lassoDrawing = true;
+                    state.lassoPoints = [screenToImage(e.clientX, e.clientY)];
+                    drawSelCanvas();
+                }
+
+            } else if (state.tool === 'select' && state.img) {
+                const pt = screenToImage(e.clientX, e.clientY);
+                if (ptInSel(pt) && state.sel && state.sel.w > 2 && state.sel.h > 2) {
+                    state.movingSel = true;
+                    state.moveSelStart = { imgPt: pt, selSnap: { ...state.sel } };
+                    if (!state.editCanvas) liftSelection();
+                } else {
+                    if (state.editCanvas) commitFloat();
+                    state.selStart = pt;
+                    state.sel = { x: pt.x, y: pt.y, w: 0, h: 0 };
+                    updateSelectionBox();
+                }
+            }
+        });
+
+        // Allow dragging that starts on the selection-box div itself
+        selBox.addEventListener('mousedown', (e) => {
+            if (!state.sel || !state.img) return;
+            if (state.tool !== 'select' && state.tool !== 'lasso') return;
+            e.preventDefault();
+            e.stopPropagation();
+            const pt = screenToImage(e.clientX, e.clientY);
+            state.movingSel = true;
+            state.moveSelStart = { imgPt: pt, selSnap: { ...state.sel, points: state.sel.points ? [...state.sel.points] : undefined } };
+            if (!state.editCanvas) liftSelection();
+        });
+
+        window.addEventListener('mousemove', (e) => {
+            if (!state.img) return;
+            const pt = screenToImage(e.clientX, e.clientY);
+            const ix = Math.round(pt.x), iy = Math.round(pt.y);
+            infoMouse.textContent = `${ix}, ${iy}`;
+            sbPos.textContent = `${ix}, ${iy}`;
+
+            if (state.dragging) {
+                state.panX = e.clientX - state.panStart.x;
+                state.panY = e.clientY - state.panStart.y;
+                applyTransform();
+            }
+
+            if (state.movingSel && state.moveSelStart && e.buttons === 1) {
+                const dx = pt.x - state.moveSelStart.imgPt.x;
+                const dy = pt.y - state.moveSelStart.imgPt.y;
+                const snap = state.moveSelStart.selSnap;
+                const newX = snap.x + dx;
+                const newY = snap.y + dy;
+                // translate lasso points too
+                const newPts = snap.points ? snap.points.map(p => ({ x: p.x + dx, y: p.y + dy })) : undefined;
+                state.sel = { x: newX, y: newY, w: snap.w, h: snap.h, points: newPts };
+                state.floatOffset = { x: newX, y: newY };
+                updateSelectionBox();
+                return;
+            }
+
+            // Lasso drawing
+            if (state.lassoDrawing && e.buttons === 1) {
+                const last = state.lassoPoints[state.lassoPoints.length - 1];
+                const dist = Math.hypot(pt.x - last.x, pt.y - last.y);
+                if (dist > 1.5 / state.zoom) { // sample every ~1.5 screen px
+                    state.lassoPoints.push(pt);
+                    drawSelCanvas();
+                }
+                return;
+            }
+
+            if (state.tool === 'select' && state.selStart && e.buttons === 1) {
+                const sx = Math.min(state.selStart.x, pt.x);
+                const sy = Math.min(state.selStart.y, pt.y);
+                const sw = Math.abs(pt.x - state.selStart.x);
+                const sh = Math.abs(pt.y - state.selStart.y);
+                state.sel = { x: sx, y: sy, w: sw, h: sh };
+                updateSelectionBox();
+            }
+        });
+
+        window.addEventListener('mouseup', (e) => {
+            state.dragging = false;
+            state.panStart = null;
+            canvasWrap.classList.remove('dragging');
+            if (state.movingSel) {
+                state.movingSel = false;
+                state.moveSelStart = null;
+                commitFloat();
+                return;
+            }
+            if (state.lassoDrawing) {
+                finishLasso();
+                return;
+            }
+            if (state.tool === 'select' && state.selStart) {
+                state.selStart = null;
+                if (state.sel && state.sel.w < 2 && state.sel.h < 2) {
+                    state.sel = null;
+                    selBox.style.display = 'none';
+                    drawSelCanvas();
+                }
+            }
+        });
+
+        canvasWrap.addEventListener('wheel', (e) => {
+            e.preventDefault();
+            const delta = e.deltaY > 0 ? 0.85 : 1.15;
+            setZoom(state.zoom * delta, e.clientX, e.clientY);
+        }, { passive: false });
+
+        // ─────────────────────────────────────────────
+        //  KEYBOARD
+        // ─────────────────────────────────────────────
+        window.addEventListener('keydown', (e) => {
+            if (e.target.tagName === 'INPUT') return;
+            if (e.key === 'v' || e.key === 'V') setTool('pan');
+            if (e.key === 's' || e.key === 'S') setTool('select');
+            if (e.key === 'l' || e.key === 'L') setTool('lasso');
+            if (e.key === '=' || e.key === '+') setZoom(state.zoom * 1.2);
+            if (e.key === '-') setZoom(state.zoom / 1.2);
+            if (e.key === '0') fitView();
+            if (e.key === 'Escape') {
+                if (state.editCanvas) commitFloat();
+                state.sel = null;
+                state.lassoDrawing = false;
+                state.lassoPoints = [];
+                selBox.style.display = 'none';
+                infoSel.textContent = '—';
+                drawSelCanvas();
+            }
+            if (e.key === 'ArrowRight') { state.currentFrame = (state.currentFrame + 1) % fcount(); updateFrameStrip(); }
+            if (e.key === 'ArrowLeft') { state.currentFrame = ((state.currentFrame - 1) + fcount()) % fcount(); updateFrameStrip(); }
+            if (e.key === ' ') { e.preventDefault(); togglePlay(); }
+        });
+
+        // ─────────────────────────────────────────────
+        //  TOOL SELECT
+        // ─────────────────────────────────────────────
+        function setTool(tool) {
+            state.tool = tool;
+            get('tool-pan').classList.toggle('active', tool === 'pan');
+            get('tool-select').classList.toggle('active', tool === 'select');
+            get('tool-lasso').classList.toggle('active', tool === 'lasso');
+            canvasWrap.classList.toggle('tool-select', tool === 'select');
+            canvasWrap.classList.toggle('tool-lasso', tool === 'lasso');
+            // update default selType
+            if (tool === 'select') state.selType = 'rect';
+            if (tool === 'lasso') state.selType = 'lasso';
+        }
+
+        get('tool-pan').addEventListener('click', () => setTool('pan'));
+        get('tool-select').addEventListener('click', () => setTool('select'));
+        get('tool-lasso').addEventListener('click', () => setTool('lasso'));
+
+        // ─────────────────────────────────────────────
+        //  ZOOM CONTROLS
+        // ─────────────────────────────────────────────
+        get('zoom-in-btn').addEventListener('click', () => setZoom(state.zoom * 1.25));
+        get('zoom-out-btn').addEventListener('click', () => setZoom(state.zoom / 1.25));
+        get('fit-btn').addEventListener('click', fitView);
+        get('reset-view-btn').addEventListener('click', () => {
+            state.panX = 0; state.panY = 0;
+            state.zoom = 1;
+            zoomSlider.value = 1;
+            zoomVal.textContent = '100%';
+            applyTransform();
+            updateInfo();
+        });
+        zoomSlider.addEventListener('input', () => {
+            setZoom(parseFloat(zoomSlider.value));
+        });
+
+        // ─────────────────────────────────────────────
+        //  PLAYBACK
+        // ─────────────────────────────────────────────
+        function togglePlay() {
+            state.isPlaying = !state.isPlaying;
+            get('play-btn').textContent = state.isPlaying ? '⏸ 暂停' : '▶ 播放';
+            get('pv-play-btn').textContent = state.isPlaying ? '⏸' : '▶';
+            state.timer = 0;
+        }
+
+        get('play-btn').addEventListener('click', togglePlay);
+        get('pv-play-btn').addEventListener('click', togglePlay);
+        get('pv-loop-btn').addEventListener('click', () => {
+            if (!state.isPlaying) togglePlay();
+        });
+        get('step-btn').addEventListener('click', () => {
+            state.currentFrame = (state.currentFrame + 1) % fcount();
+            updateFrameStrip();
+        });
+
+        // ─────────────────────────────────────────────
+        //  PARAMS CHANGE
+        // ─────────────────────────────────────────────
+        [fwInput, fhInput, fcountInput, fpsInput, oxInput, oyInput].forEach(el => {
+            el.addEventListener('input', () => {
+                updateInfo();
+                updateGridCanvas();
+                renderStrip();
+                if (state.currentFrame >= fcount()) state.currentFrame = 0;
+                updateFrameStrip();
+            });
+        });
+
+        // Sel inputs manual
+        [selXInput, selYInput, selWInput, selHInput].forEach(el => {
+            el.addEventListener('input', () => {
+                state.sel = {
+                    x: parseFloat(selXInput.value) || 0,
+                    y: parseFloat(selYInput.value) || 0,
+                    w: parseFloat(selWInput.value) || 0,
+                    h: parseFloat(selHInput.value) || 0,
+                };
+                updateSelectionBox();
+            });
+        });
+
+        // ─────────────────────────────────────────────
+        //  GRID TOGGLE
+        // ─────────────────────────────────────────────
+        get('show-grid-btn').addEventListener('click', () => {
+            state.showGrid = !state.showGrid;
+            get('show-grid-btn').classList.toggle('active', state.showGrid);
+            updateGridCanvas();
+        });
+
+        // ─────────────────────────────────────────────
+        //  AUTO DETECT
+        // ─────────────────────────────────────────────
+        get('auto-detect-btn').addEventListener('click', () => autoDetect(true));
+
+        // ─────────────────────────────────────────────
+        //  FILE DROP / INPUT
+        // ─────────────────────────────────────────────
+        dropZone.addEventListener('click', () => fileInput.click());
+
+        fileInput.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+            const url = URL.createObjectURL(file);
+            loadImage(url, file.name);
+        });
+
+        dropZone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            dropZone.classList.add('dragover');
+        });
+        dropZone.addEventListener('dragleave', () => dropZone.classList.remove('dragover'));
+        dropZone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            dropZone.classList.remove('dragover');
+            const file = e.dataTransfer.files[0];
+            if (!file || !file.type.startsWith('image/')) { showToast('请拖入图片文件', '#f47171'); return; }
+            const url = URL.createObjectURL(file);
+            loadImage(url, file.name);
+        });
+
+        // Also allow dropping anywhere on the page
+        document.body.addEventListener('dragover', (e) => e.preventDefault());
+        document.body.addEventListener('drop', (e) => {
+            e.preventDefault();
+            const file = e.dataTransfer.files[0];
+            if (!file || !file.type.startsWith('image/')) return;
+            const url = URL.createObjectURL(file);
+            loadImage(url, file.name);
+        });
+
+        // ─────────────────────────────────────────────
+        //  EXPORT FUNCTIONS
+        // ─────────────────────────────────────────────
+        function downloadCanvas(c, filename) {
+            const a = document.createElement('a');
+            a.href = c.toDataURL('image/png');
+            a.download = filename;
+            a.click();
+        }
+
+        // Export selection region from the SHEET
+        get('export-sel-btn').addEventListener('click', () => {
+            if (!state.img) { showToast('请先加载图片', '#f47171'); return; }
+            const sel = state.sel;
+            if (!sel || sel.w < 1 || sel.h < 1) { showToast('请先框选区域', '#f47171'); return; }
+            const ec = document.createElement('canvas');
+            ec.width = Math.round(sel.w);
+            ec.height = Math.round(sel.h);
+            const ec2 = ec.getContext('2d');
+            ec2.drawImage(state.img, sel.x, sel.y, sel.w, sel.h, 0, 0, sel.w, sel.h);
+            downloadCanvas(ec, 'selection.png');
+            showToast('选区已导出 ✓', '#56cfb2');
+        });
+
+        // Export current frame
+        get('export-frame-btn').addEventListener('click', () => {
+            if (!state.img) { showToast('请先加载图片', '#f47171'); return; }
+            const ec = document.createElement('canvas');
+            ec.width = fw();
+            ec.height = fh();
+            const ec2 = ec.getContext('2d');
+            const c = cols();
+            const col = state.currentFrame % c;
+            const row = Math.floor(state.currentFrame / c);
+            ec2.drawImage(state.img, ox() + col * fw(), oy() + row * fh(), fw(), fh(), 0, 0, fw(), fh());
+            downloadCanvas(ec, `frame_${state.currentFrame}.png`);
+            showToast(`帧 ${state.currentFrame} 已导出 ✓`, '#56cfb2');
+        });
+
+        // Export entire sprite sheet as PNG
+        get('export-spritesheet-btn').addEventListener('click', () => {
+            if (!state.img) { showToast('请先加载图片', '#f47171'); return; }
+            const ec = document.createElement('canvas');
+            ec.width = state.img.naturalWidth;
+            ec.height = state.img.naturalHeight;
+            const ec2 = ec.getContext('2d');
+            ec2.drawImage(state.img, 0, 0);
+            downloadCanvas(ec, 'spritesheet_export.png');
+            showToast('序列帧已导出 ✓', '#56cfb2');
+        });
+
+        // ─────────────────────────────────────────────
+        //  PASTE IMAGE FROM CLIPBOARD
+        // ─────────────────────────────────────────────
+        document.addEventListener('paste', (e) => {
+            const items = e.clipboardData?.items;
+            if (!items) return;
+            for (const item of items) {
+                if (item.type.startsWith('image/')) {
+                    const file = item.getAsFile();
+                    const url = URL.createObjectURL(file);
+                    loadImage(url, 'pasted_image.png');
+                    break;
+                }
+            }
+        });
+
+        // ─────────────────────────────────────────────
+        //  IMAGE RESIZE
+        // ─────────────────────────────────────────────
+        const resizeWInput = get('resize-w');
+        const resizeHInput = get('resize-h');
+        const resizeLockChk = get('resize-lock');
+        const resizeInterpSel = get('resize-interp');
+        const resizeCurLabel = get('resize-cur');
+
+        // Keep a copy of original image data URL for the ↺ reset button
+        let originalImgSrc = null;
+
+        // Populate resize inputs to match the current image
+        function syncResizeInputs() {
+            if (!state.img) return;
+            resizeWInput.value = state.img.naturalWidth;
+            resizeHInput.value = state.img.naturalHeight;
+            resizeCurLabel.textContent = `${state.img.naturalWidth} × ${state.img.naturalHeight} px`;
+        }
+
+        function resizeImage() {
+            if (!state.img) { showToast('请先加载图片', '#f47171'); return; }
+            const newW = parseInt(resizeWInput.value);
+            const newH = parseInt(resizeHInput.value);
+            if (!newW || !newH || newW < 1 || newH < 1) {
+                showToast('请输入有效尺寸', '#f47171'); return;
+            }
+
+            // Save original only once so ↺ can restore it
+            if (!originalImgSrc) originalImgSrc = state.img.src;
+
+            const ec = document.createElement('canvas');
+            ec.width = newW;
+            ec.height = newH;
+            const ec2 = ec.getContext('2d');
+
+            // Draw without stretching
+            ec2.drawImage(state.img, 0, 0);
+
+            const newImg = new Image();
+            newImg.onload = () => {
+                state.img = newImg;
+                // Resize working canvases
+                mainCanvas.width = newW; mainCanvas.height = newH;
+                gridCanvas.width = newW; gridCanvas.height = newH;
+                selCanvas.width = newW; selCanvas.height = newH;
+
+                // Clear any floating selection
+                state.sel = null;
+                state.editCanvas = null;
+                state.floatingCanvas = null;
+                selBox.style.display = 'none';
+                infoSel.textContent = '—';
+                // Refresh UI
+                syncResizeInputs();
+                updateGridCanvas();
+                renderStrip();
+                fitView();
+                // Update thumbnail
+                thumbnail.src = newImg.src;
+                thumbWrap.style.display = 'block';
+                thumbLabel.textContent = `${newW} × ${newH} · ${sbImg.textContent}`;
+                infoSize.textContent = `${newW} × ${newH}`;
+                showToast(`已调整为 ${newW} × ${newH} px ✓`, '#56cfb2');
+            };
+            newImg.src = ec.toDataURL();
+        }
+
+        get('resize-btn').addEventListener('click', resizeImage);
+
+        get('resize-reset-btn').addEventListener('click', () => {
+            if (!originalImgSrc) { showToast('尚无原始记录', '#f47171'); return; }
+            loadImage(originalImgSrc, sbImg.textContent);
+            originalImgSrc = null;
+        });
+
+        // Auto-sync resize inputs whenever state.img changes
+        let _lastSyncImg = null;
+        setInterval(() => {
+            if (state.img && state.img !== _lastSyncImg) {
+                _lastSyncImg = state.img;
+                syncResizeInputs();
+            }
+        }, 200);
+
+        // ─────────────────────────────────────────────
+        //  INIT
+        // ─────────────────────────────────────────────
+        updateInfo();
+        setTool('pan');
+        get('show-grid-btn').classList.add('active');
+    </script>
+</body>
+
+</html>

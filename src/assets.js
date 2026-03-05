@@ -184,24 +184,26 @@ export async function loadSprites() {
           skill.frameRanges.push({ x, w: wv });
           x += wv;
         }
+      } else if (skill.frameW) {
+        skill.frameRanges = [];
+        const count = skill.frameCount || 6;
+        for (let i = 0; i < count; i++) {
+          skill.frameRanges.push({ x: i * skill.frameW, w: skill.frameW });
+        }
+      } else if (skill.frameCount) {
+        skill.frameRanges = buildEvenRanges(img.width, skill.frameCount);
       } else {
         const detected = detectVariableFrameRanges(img, skill.frameCount);
         if (detected && detected.length) {
           skill.frameRanges = detected;
-        } else if (skill.frameW) {
-        skill.frameRanges = [];
-        const count = skill.frameCount || 6;
-        for (let i = 0; i < count; i++) {
-            skill.frameRanges.push({ x: i * skill.frameW, w: skill.frameW });
-        }
         } else {
-          skill.frameRanges = buildEvenRanges(img.width, skill.frameCount || 6);
+          skill.frameRanges = buildEvenRanges(img.width, 6);
         }
       }
       const widths = (skill.frameRanges || []).map(fr => fr.w);
       try {
         console.log(`[${skill.id}] frame widths (${widths.length}):`, widths);
-      } catch (_) {}
+      } catch (_) { }
     }));
   }
   await Promise.all(jobs);

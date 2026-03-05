@@ -5,67 +5,62 @@
 
 ## 游戏特性
 
-- 原生 Canvas 渲染（无第三方框架）
-- 键盘与移动端虚拟按键双端支持
-- 近战普攻 + 招式系统（`贰之型 水车`）
-- 平台、掉落晶体、分阶段 Boss 战
-- 像素风角色与特效贴图（`assets/sprites`）
+- **原生 Canvas 渲染**：不依赖任何第三方渲染框架。
+- **现代化构建**：使用 Vite 进行模块化开发与资源管理。
+- **双端支持**：适配键盘操作与移动端触控/虚拟按键。
+- **丰富系统**：包含招式系统、平台掉落、分阶段 Boss 战。
+- **动态特效**：基于粒子的战斗视觉反馈。
 
 ## 操作说明
 
 - `A` / `D`：左右移动
 - `W` / `Space`：跳跃
 - `J`：普通攻击
-- `K`：释放技能（水车，需有可用充能）
+- `K`：释放技能（水车/其他招式，需有可用充能）
 - `R`：游戏结束后重开
 
-## 本地运行
+## 开发与本地运行
 
-### 方式 1：直接打开
+项目已接入 Vite，推荐使用以下方式运行以获得最佳开发体验：
 
-直接双击 `index.html` 可运行。
-
-### 方式 2：本地静态服务器（推荐）
-
-在项目根目录启动：
-
+### 1. 安装依赖
 ```bash
-python3 -m http.server 8000
+npm install
 ```
 
-然后访问：`http://localhost:8000`
+### 2. 启动开发服务器
+```bash
+npm run dev
+```
+访问控制台输出的链接（通常是 `http://localhost:5173`）即可。
 
-## 项目结构
+### 3. 构建发布版本
+```bash
+npm run build
+```
 
+## 项目结构与文档
+
+详细的文档位于 `docs/` 目录下：
+
+- [📂 项目架构 (ARCHITECTURE.md)](docs/ARCHITECTURE.md)：深入了解代码模块设计与游戏循环逻辑。
+- [🎨 素材处理 (SPRITES.md)](docs/SPRITES.md)：说明如何使用 Python 脚本生成和优化像素精灵图。
+
+### 代码目录概览
 ```text
 demon-slayer-pixel/
-├── index.html
-├── style.css
-├── game.js
-├── assets/
-│   ├── origin/                  # 原始素材
-│   ├── sprites/                 # 游戏使用的精灵图
-│   └── sprites_backup_transparent/
-├── scripts_redraw_sprites.py    # 重绘/生成像素素材脚本
-└── scripts_make_sprites_transparent.py
+├── docs/                # 项目详细文档
+├── src/                 # 源代码目录
+│   ├── entities/        # 游戏实体实现（玩家、敌人、Boss等）
+│   ├── assets.js        # 资源加载与精灵图解析
+│   ├── main.js          # 游戏入口与主循环
+│   └── state.js         # 全局状态管理
+├── assets/              # 静态资源（图片、音频）
+├── index.html           # 页面入口
+└── package.json         # 项目配置文件与依赖
 ```
 
-## 素材脚本说明
-
-- `scripts_redraw_sprites.py`：生成/重绘角色、敌人、Boss 与特效贴图
-- `scripts_make_sprites_transparent.py`：去除精灵图背景（透明化处理）
-
-注意：两个脚本内当前写死了绝对路径（`/Users/bytedance/Work/demon-slayer/...`）。  
-如果要在当前仓库直接使用，建议先改为当前项目路径（`/Users/bytedance/Work/demon-slayer-pixel/...`）或改成相对路径。
-
-## 目标与玩法
-
-- 生存更久，累计更高击杀分
-- 利用普攻积攒技能能量并获取技能充能
-- 在 Boss 阶段切换时把握输出与走位节奏
-
-## project infomation
-- All code built by codex3
-- All spritesheet built by nanobanana2
-- No code by human
+## 致谢
+- 代码构建：codex3
+- 像素素材：nanobanana2
 

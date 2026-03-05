@@ -49,7 +49,7 @@ export function castSelectedSkill() {
   const cy = p.y + p.h / 2;
   const radius = skill.radius;
   const frameCount = Math.max(1, (skill.frameRanges || []).length);
-  
+
   state.skillBursts.push({
     x: cx,
     y: cy + 2,
@@ -138,14 +138,14 @@ export function hurtPlayer(damage, sourceVx) {
 export function tryJump() {
   const p = state.player;
   if (onGround(p, p.onPlatform)) {
-     p.vy = -p.jump;
-     playTone(260, 0.05, "triangle", 0.04);
+    p.vy = -p.jump;
+    playTone(260, 0.05, "triangle", 0.04);
   }
 }
 
 export function updatePlayer() {
   const p = state.player;
-  
+
   if (p.onPlatform && state.platforms.includes(p.onPlatform)) {
     p.x += p.onPlatform.vx;
   }
@@ -237,38 +237,32 @@ export function drawPlayer() {
 
   if (p.skillTimer > 0) {
     const skill = SKILLS[p.skillIndex] || SKILLS[0];
-    
+
     // Check if skill image is ready
     if (skill.image) {
       const total = 24;
       const progress = 1 - p.skillTimer / total;
       let frame = 0;
       if (skill.frameRanges && skill.frameRanges.length > 0) {
-          frame = Math.min(skill.frameRanges.length - 1, Math.max(0, Math.floor(progress * skill.frameRanges.length)));
+        frame = Math.min(skill.frameRanges.length - 1, Math.max(0, Math.floor(progress * skill.frameRanges.length)));
       } else {
-          frame = Math.min((skill.frameCount || 6) - 1, Math.max(0, Math.floor(progress * (skill.frameCount || 6))));
+        frame = Math.min((skill.frameCount || 6) - 1, Math.max(0, Math.floor(progress * (skill.frameCount || 6))));
       }
 
       if (isNaN(frame)) frame = 0;
 
-      const basePlayerH = 56;
-      const targetH = skill.frameH && skill.drawScale ? skill.frameH * skill.drawScale : 150;
-      const ratioToPlayer = targetH / basePlayerH;
-      const drawH = p.h * ratioToPlayer;
-      let drawW = drawH;
-      
       const srcH = skill.frameH || (skill.image ? skill.image.height : 496);
-      
+      const drawH = (skill.drawScale ? srcH * skill.drawScale : 150);
+      let drawW = drawH;
+
       if (skill.frameRanges && skill.frameRanges[frame]) {
         const fr = skill.frameRanges[frame];
         drawW = drawH * (fr.w / srcH);
       } else if (skill.frameRanges && skill.frameRanges.length > 0) {
         const safeFr = skill.frameRanges[frame % skill.frameRanges.length];
         if (safeFr) drawW = drawH * (safeFr.w / srcH);
-      } else if (skill.frameW && skill.image) {
-        drawW = drawH * (skill.frameW / srcH);
       } else {
-        drawW = drawH * (360 / 496);
+        drawW = drawH;
       }
 
       const centerY = p.y + p.h / 2;
@@ -291,7 +285,7 @@ export function drawPlayer() {
         const drawX = centerX - drawW / 2;
         const drawY = feetY - drawH - 2;
         drawSheetFrame(sheet, frame, drawX, drawY, drawW, drawH, p.facing);
-        
+
         // Draw debug text
         ctx.fillStyle = "red";
         ctx.font = "12px monospace";
@@ -306,7 +300,7 @@ export function drawPlayer() {
   const speed = stateName === "attack" ? 3 : stateName === "run" ? 5 : stateName === "jump" ? 7 : 8;
   const sheet = PLAYER_SHEETS[stateName];
   const frame = frameIndex(sheet.count, speed, state.elapsed);
-  
+
   const sizeByState = {
     idle: { w: 145, h: 101 },
     run: { w: 132, h: 92 },

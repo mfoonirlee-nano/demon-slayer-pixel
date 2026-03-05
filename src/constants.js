@@ -18,7 +18,7 @@ export const SKILLS = [
     name: "壹之型",
     src: "assets/sprites/skill1.png",
     frameCount: 5,
-    frameWidths: [147, 174, 189, 317, 152],
+
     frameH: 496,
     drawScale: 0.15,
     radius: 230,
@@ -32,7 +32,7 @@ export const SKILLS = [
     name: "贰之型",
     src: "assets/sprites/skill2.png",
     frameCount: 6,
-    frameWidths: [179, 131, 205, 229, 127, 135],
+
     frameH: 496,
     drawScale: 0.15,
     radius: 240,
@@ -46,7 +46,7 @@ export const SKILLS = [
     name: "叁之型",
     src: "assets/sprites/skill3.png",
     frameCount: 6,
-    frameWidths: [65, 90, 110, 145, 115, 75],
+
     frameH: 496,
     drawScale: 0.15,
     radius: 255,
