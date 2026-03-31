@@ -1,10 +1,10 @@
-import { state } from "../state.js";
-import { WIDTH, GROUND_Y, BOSS_SHEET } from "../constants.js";
-import { hitbox, frameIndex } from "../utils.js";
-import { drawSheetFrame } from "../graphics.js";
-import { playTone } from "../audio.js";
-import { hurtPlayer } from "./player.js";
-import { spawnEnemy } from "./enemy.js";
+import { state, type BossState } from "../state";
+import { WIDTH, GROUND_Y, BOSS_SHEET } from "../constants";
+import { hitbox, frameIndex } from "../utils";
+import { drawSheetFrame } from "../graphics";
+import { playTone } from "../audio";
+import { hurtPlayer } from "./player";
+import { spawnEnemy } from "./enemy";
 
 export function spawnBoss() {
   state.boss = {
@@ -28,7 +28,7 @@ export function spawnBoss() {
 }
 
 export function updateBoss() {
-  const boss = state.boss;
+  const boss = state.boss as BossState;
   if (!boss) return;
 
   boss.hitCd -= 1;
@@ -90,7 +90,7 @@ export function updateBoss() {
 }
 
 export function drawBoss() {
-  const boss = state.boss;
+  const boss = state.boss as BossState;
   if (!boss) return;
   const frame = frameIndex(BOSS_SHEET.count, 9 - boss.phase, state.elapsed, boss.animSeed);
   const toward = state.player.x + state.player.w / 2 - (boss.x + boss.w / 2);

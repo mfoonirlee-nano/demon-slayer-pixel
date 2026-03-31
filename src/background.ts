@@ -1,7 +1,7 @@
-import { state } from "./state.js";
-import { ctx } from "./context.js";
-import { WIDTH, HEIGHT, GROUND_Y } from "./constants.js";
-import { lerp, colorLerp } from "./utils.js";
+import { state } from "./state";
+import { ctx } from "./context";
+import { WIDTH, HEIGHT, GROUND_Y } from "./constants";
+import { lerp, colorLerp } from "./utils";
 
 const STAR_FIELD = Array.from({ length: 70 }, (_, i) => ({
   x: (i * 137) % WIDTH,
@@ -33,6 +33,7 @@ const LANTERNS = Array.from({ length: 8 }, (_, i) => ({
 }));
 
 export function drawBackground() {
+  if (!ctx) return;
   const elapsed = state.elapsed;
   const nightTop = "#0a1223";
   const nightMid = "#101b33";

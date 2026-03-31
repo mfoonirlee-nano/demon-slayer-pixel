@@ -1,12 +1,12 @@
-import { state } from "../state.js";
-import { ctx } from "../context.js";
-import { WIDTH } from "../constants.js";
-import { hitbox } from "../utils.js";
-import { hurtPlayer } from "./player.js";
+import { state, type ProjectileState } from "../state";
+import { ctx } from "../context";
+import { WIDTH } from "../constants";
+import { hitbox } from "../utils";
+import { hurtPlayer } from "./player";
 
 export function updateProjectiles() {
   for (let i = state.projectiles.length - 1; i >= 0; i -= 1) {
-    const p = state.projectiles[i];
+    const p = state.projectiles[i] as ProjectileState;
     p.x += p.vx;
     p.life -= 1;
     if (hitbox(state.player, p)) {
@@ -21,6 +21,7 @@ export function updateProjectiles() {
 }
 
 export function drawProjectiles() {
+  if (!ctx) return;
   for (const p of state.projectiles) {
     ctx.fillStyle = "#ff6e93";
     ctx.fillRect(p.x, p.y, p.w, p.h);

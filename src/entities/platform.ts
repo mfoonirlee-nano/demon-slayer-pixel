@@ -1,12 +1,12 @@
-import { state } from "../state.js";
-import { ctx } from "../context.js";
-import { WIDTH, GROUND_Y } from "../constants.js";
-import { hitbox } from "../utils.js";
-import { playTone } from "../audio.js";
-import { emitHitBurst } from "./particle.js";
+import { state, type CrystalType, type PlatformState, type PlatformStyle } from "../state";
+import { ctx } from "../context";
+import { WIDTH, GROUND_Y } from "../constants";
+import { hitbox } from "../utils";
+import { playTone } from "../audio";
+import { emitHitBurst } from "./particle";
 
-export function spawnCrystalOnPlatform(platform) {
-  const type = Math.random() < 0.55 ? "atk" : "hp";
+export function spawnCrystalOnPlatform(platform: PlatformState) {
+  const type: CrystalType = Math.random() < 0.55 ? "atk" : "hp";
   state.crystals.push({
     platform,
     offsetX: 16 + Math.random() * Math.max(24, platform.w - 32),
@@ -19,9 +19,9 @@ export function spawnCrystalOnPlatform(platform) {
 export function spawnPlatform() {
   const width = 88 + Math.random() * 74;
   const y = GROUND_Y - (70 + Math.random() * 130);
-  const styles = ["stone", "moss", "shrine", "ruin"];
+  const styles: PlatformStyle[] = ["stone", "moss", "shrine", "ruin"];
   const style = styles[Math.floor(Math.random() * styles.length)];
-  const platform = {
+  const platform: PlatformState = {
     x: WIDTH + 40,
     y,
     w: width,
@@ -38,7 +38,7 @@ export function spawnPlatform() {
   }
 }
 
-export function updatePlatforms(dt) {
+export function updatePlatforms(dt: number) {
   for (let i = state.platforms.length - 1; i >= 0; i -= 1) {
     const p = state.platforms[i];
     p.x += p.vx;
@@ -47,7 +47,7 @@ export function updatePlatforms(dt) {
   }
 }
 
-export function updateCrystals(dt) {
+export function updateCrystals(dt: number) {
   for (let i = state.crystals.length - 1; i >= 0; i -= 1) {
     const c = state.crystals[i];
     if (!state.platforms.includes(c.platform)) {
@@ -76,6 +76,8 @@ export function updateCrystals(dt) {
 }
 
 export function drawCrystals() {
+  if (!ctx) return;
+
   for (const c of state.crystals) {
     if (!state.platforms.includes(c.platform)) continue;
     const x = c.platform.x + c.offsetX;
@@ -98,6 +100,8 @@ export function drawCrystals() {
 }
 
 export function drawPlatforms() {
+  if (!ctx) return;
+
   for (const p of state.platforms) {
     if (p.style === "shrine") {
       ctx.fillStyle = "#4c2830";

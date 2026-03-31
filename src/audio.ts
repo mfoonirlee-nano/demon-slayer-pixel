@@ -1,15 +1,16 @@
-let audioCtx = null;
+let audioCtx: AudioContext | null = null;
 
 export function ensureAudio() {
   if (!audioCtx) {
-    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    if (!window.AudioContext) return;
+    audioCtx = new window.AudioContext();
   }
   if (audioCtx.state === "suspended") {
-    audioCtx.resume();
+    void audioCtx.resume();
   }
 }
 
-export function playTone(freq, duration = 0.08, type = "square", volume = 0.03) {
+export function playTone(freq: number, duration = 0.08, type: OscillatorType = "square", volume = 0.03) {
   if (!audioCtx) return;
   const now = audioCtx.currentTime;
   const osc = audioCtx.createOscillator();

@@ -1,7 +1,33 @@
-import { canvas } from "./context.js";
+export type FrameRange = { x: number; w: number };
 
-export const WIDTH = canvas.width;
-export const HEIGHT = canvas.height;
+export type Skill = {
+  id: string;
+  name: string;
+  src: string;
+  frameCount: number;
+  image: HTMLImageElement | null;
+  frameRanges: FrameRange[] | null;
+  frameWidths?: number[];
+  frameW?: number;
+  frameH: number;
+  drawScale: number;
+  radius: number;
+  enemyBase: number;
+  enemyScale: number;
+  bossBase: number;
+  color: string;
+};
+
+export type SpriteSheet = {
+  src: string;
+  frameW: number;
+  frameH: number;
+  count: number;
+  image: HTMLImageElement | null;
+};
+
+export const WIDTH = 960;
+export const HEIGHT = 540;
 export const GROUND_Y = HEIGHT - 80;
 export const GRAVITY = 0.75;
 
@@ -12,13 +38,14 @@ export const BASIC_ATTACK = {
   color: "#6be0ff",
 };
 
-export const SKILLS = [
+export const SKILLS: Skill[] = [
   {
     id: "skill1",
     name: "壹之型",
     src: "assets/sprites/skill1.png",
     frameCount: 5,
-
+    image: null,
+    frameRanges: null,
     frameH: 496,
     drawScale: 0.15,
     radius: 230,
@@ -32,7 +59,8 @@ export const SKILLS = [
     name: "贰之型",
     src: "assets/sprites/skill2.png",
     frameCount: 6,
-
+    image: null,
+    frameRanges: null,
     frameH: 496,
     drawScale: 0.15,
     radius: 240,
@@ -46,7 +74,8 @@ export const SKILLS = [
     name: "叁之型",
     src: "assets/sprites/skill3.png",
     frameCount: 6,
-
+    image: null,
+    frameRanges: null,
     frameH: 496,
     drawScale: 0.15,
     radius: 255,
@@ -57,7 +86,7 @@ export const SKILLS = [
   },
 ];
 
-export const PLAYER_SHEETS = {
+export const PLAYER_SHEETS: Record<string, SpriteSheet> = {
   idle: {
     src: "assets/sprites/player_idle.png",
     frameW: 435,
@@ -88,7 +117,7 @@ export const PLAYER_SHEETS = {
   },
 };
 
-export const ENEMY_SHEETS = [
+export const ENEMY_SHEETS: SpriteSheet[] = [
   {
     src: "assets/sprites/enemy_1.png",
     frameW: 287,
@@ -115,18 +144,11 @@ export const ENEMY_SHEETS = [
 export const ENEMY_REF_DRAW_W = 120;
 export const ENEMY_DRAW_SCALE = ENEMY_REF_DRAW_W / ENEMY_SHEETS[1].frameW;
 
-export const BOSS_SHEET = {
+export const BOSS_SHEET: SpriteSheet = {
   src: "assets/sprites/boss.png",
   frameW: 350,
   frameH: 419,
   count: 4,
   image: null,
 };
-export const WATER_FX_SHEET = {
-  src: "assets/sprites/water_slash.png",
-  frameW: 64,
-  frameH: 48,
-  count: 6,
-  image: null,
-};
-export const USE_SEPARATE_WATER_FX = false;
+

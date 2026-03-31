@@ -1,12 +1,12 @@
 # 鬼灭之刃：炭治郎生存战（Pixel Survival）
 
-一个基于原生 `HTML + CSS + JavaScript` 的 2D 像素风生存小游戏。  
+一个基于 `React 19 + Jotai + Tailwind CSS + TypeScript` 的 2D 像素风生存小游戏。  
 玩家扮演炭治郎，在不断刷新的小怪与阶段式 Boss 战中尽可能生存并提高分数。
 
 ## 游戏特性
 
-- **原生 Canvas 渲染**：不依赖任何第三方渲染框架。
-- **现代化构建**：使用 Vite 进行模块化开发与资源管理。
+- **Canvas 渲染内核**：保留原有像素风游戏渲染与玩法循环。
+- **React 外壳 + 状态桥接**：使用 React 19、Jotai、Tailwind CSS、TypeScript 与 Vite 承载界面与 HUD。
 - **双端支持**：适配键盘操作与移动端触控/虚拟按键。
 - **丰富系统**：包含招式系统、平台掉落、分阶段 Boss 战。
 - **动态特效**：基于粒子的战斗视觉反馈。
@@ -52,9 +52,11 @@ demon-slayer-pixel/
 ├── docs/                # 项目详细文档
 ├── src/                 # 源代码目录
 │   ├── entities/        # 游戏实体实现（玩家、敌人、Boss等）
-│   ├── assets.js        # 资源加载与精灵图解析
-│   ├── main.js          # 游戏入口与主循环
-│   └── state.js         # 全局状态管理
+│   ├── App.tsx          # React 外壳、HUD 与触控按钮
+│   ├── main.tsx         # React 入口
+│   ├── runtime.ts       # 游戏运行时与主循环
+│   ├── gameStore.ts     # Jotai HUD 状态桥
+│   └── state.ts         # 运行时全局状态
 ├── assets/              # 静态资源（图片、音频）
 ├── index.html           # 页面入口
 └── package.json         # 项目配置文件与依赖

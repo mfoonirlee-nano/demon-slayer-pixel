@@ -1,8 +1,8 @@
-import { state } from "../state.js";
-import { WIDTH, GROUND_Y, ENEMY_SHEETS, ENEMY_DRAW_SCALE } from "../constants.js";
-import { hitbox, frameIndex } from "../utils.js";
-import { drawSheetFrame } from "../graphics.js";
-import { hurtPlayer } from "./player.js";
+import { state, type EnemyState } from "../state";
+import { WIDTH, GROUND_Y, ENEMY_SHEETS, ENEMY_DRAW_SCALE } from "../constants";
+import { hitbox, frameIndex } from "../utils";
+import { drawSheetFrame } from "../graphics";
+import { hurtPlayer } from "./player";
 
 export function spawnEnemy() {
   const side = Math.random() < 0.5 ? -1 : 1;
@@ -42,7 +42,7 @@ export function updateEnemies() {
   }
 }
 
-export function drawEnemy(e) {
+export function drawEnemy(e: EnemyState) {
   const sheet = ENEMY_SHEETS[e.sheetIndex % ENEMY_SHEETS.length] || ENEMY_SHEETS[0];
   const frame = frameIndex(sheet.count, 7, state.elapsed, e.animSeed);
   const facing = e.vx > 0 ? 1 : -1;

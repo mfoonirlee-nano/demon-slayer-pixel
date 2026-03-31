@@ -1,11 +1,10 @@
-import { state } from "../state.js";
-import { ctx } from "../context.js";
-import { GRAVITY, GROUND_Y, WIDTH, BASIC_ATTACK, SKILLS, PLAYER_SHEETS, USE_SEPARATE_WATER_FX, WATER_FX_SHEET } from "../constants.js";
-import { onGround, hitbox, frameIndex } from "../utils.js";
-import { drawSheetFrame, drawVariableSheetFrame } from "../graphics.js";
-import { playTone } from "../audio.js";
-import { emitSlash, emitHitBurst } from "./particle.js";
-import { keys } from "../input.js";
+import { state } from "../state";
+import { GRAVITY, GROUND_Y, WIDTH, BASIC_ATTACK, SKILLS, PLAYER_SHEETS } from "../constants";
+import { onGround, hitbox, frameIndex } from "../utils";
+import { drawSheetFrame, drawVariableSheetFrame } from "../graphics";
+import { playTone } from "../audio";
+import { emitSlash, emitHitBurst } from "./particle";
+import { keys } from "../input";
 
 export function triggerAttack() {
   if (state.player.attackTimer > 0 || state.player.skillTimer > 0) return;
@@ -13,7 +12,7 @@ export function triggerAttack() {
   playTone(320, 0.07, "triangle", 0.05);
 }
 
-export function gainSkillEnergy(amount) {
+export function gainSkillEnergy(amount: number) {
   const p = state.player;
   if (p.skillCharges >= 3) {
     p.skillEnergy = 100;
@@ -30,7 +29,7 @@ export function gainSkillEnergy(amount) {
   }
 }
 
-export function selectSkill(index) {
+export function selectSkill(index: number) {
   state.player.skillIndex = Math.max(0, Math.min(SKILLS.length - 1, index));
 }
 
@@ -121,7 +120,7 @@ export function attackBox() {
   };
 }
 
-export function hurtPlayer(damage, sourceVx) {
+export function hurtPlayer(damage: number, sourceVx: number) {
   const p = state.player;
   if (p.invincible > 0) return;
   p.hp -= damage;
@@ -238,7 +237,6 @@ export function drawPlayer() {
   if (p.skillTimer > 0) {
     const skill = SKILLS[p.skillIndex] || SKILLS[0];
 
-    // Check if skill image is ready
     if (skill.image) {
       const total = 24;
       const progress = 1 - p.skillTimer / total;
@@ -273,7 +271,6 @@ export function drawPlayer() {
       drawVariableSheetFrame(skill, frame, drawX, drawY, drawW, drawH, p.facing);
       return;
     } else {
-      // Fallback: Use attack animation if skill image is missing
       const sheet = PLAYER_SHEETS.attack;
       if (sheet.image) {
         const frame = frameIndex(sheet.count, 3, state.elapsed);
@@ -285,11 +282,6 @@ export function drawPlayer() {
         const drawX = centerX - drawW / 2;
         const drawY = feetY - drawH - 2;
         drawSheetFrame(sheet, frame, drawX, drawY, drawW, drawH, p.facing);
-
-        // Draw debug text
-        ctx.fillStyle = "red";
-        ctx.font = "12px monospace";
-        ctx.fillText(`Skill Img Missing: ${skill.src}`, p.x - 20, p.y - 10);
         return;
       }
     }
@@ -316,17 +308,4 @@ export function drawPlayer() {
   const drawY = feetY - drawH - 2;
   drawSheetFrame(sheet, frame, drawX, drawY, drawW, drawH, p.facing);
 
-  if (USE_SEPARATE_WATER_FX && p.attackTimer > 0 && WATER_FX_SHEET.image) {
-    const total = Math.max(1, BASIC_ATTACK.frames);
-    const progress = 1 - p.attackTimer / total;
-    const fxFrame = Math.min(
-      WATER_FX_SHEET.count - 1,
-      Math.max(0, Math.floor(progress * WATER_FX_SHEET.count)),
-    );
-    const fxW = 132;
-    const fxH = 96;
-    const fxX = p.facing === 1 ? p.x - 8 : p.x - 94;
-    const fxY = p.y - 30;
-    drawSheetFrame(WATER_FX_SHEET, fxFrame, fxX, fxY, fxW, fxH, p.facing);
-  }
 }

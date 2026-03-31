@@ -1,9 +1,9 @@
-import { state } from "../state.js";
-import { ctx } from "../context.js";
-import { drawVariableSheetFrame } from "../graphics.js";
-import { SKILLS } from "../constants.js";
+import { state, type HitBurstState, type ParticleState, type SkillBurstState } from "../state";
+import { ctx } from "../context";
+import { drawVariableSheetFrame } from "../graphics";
+import { SKILLS } from "../constants";
 
-export function emitSlash(x, y, color) {
+export function emitSlash(x: number, y: number, color: string) {
   for (let i = 0; i < 12; i += 1) {
     state.particles.push({
       x,
@@ -16,7 +16,7 @@ export function emitSlash(x, y, color) {
   }
 }
 
-export function emitHitBurst(x, y, color = "#9feaff", power = 1) {
+export function emitHitBurst(x: number, y: number, color = "#9feaff", power = 1) {
   state.hitBursts.push({
     x,
     y,
@@ -39,7 +39,7 @@ export function emitHitBurst(x, y, color = "#9feaff", power = 1) {
 
 export function updateParticles() {
   for (let i = state.particles.length - 1; i >= 0; i -= 1) {
-    const p = state.particles[i];
+    const p = state.particles[i] as ParticleState;
     p.x += p.vx;
     p.y += p.vy;
     p.vx *= p.fade || 0.96;
@@ -52,7 +52,7 @@ export function updateParticles() {
 
 export function updateSkillBursts() {
   for (let i = state.skillBursts.length - 1; i >= 0; i -= 1) {
-    const b = state.skillBursts[i];
+    const b = state.skillBursts[i] as SkillBurstState;
     b.life -= 1;
     const progress = 1 - b.life / b.maxLife;
     b.frame = Math.min(b.frameCount - 1, Math.floor(progress * b.frameCount));
@@ -62,7 +62,7 @@ export function updateSkillBursts() {
 
 export function updateHitBursts() {
   for (let i = state.hitBursts.length - 1; i >= 0; i -= 1) {
-    const b = state.hitBursts[i];
+    const b = state.hitBursts[i] as HitBurstState;
     b.life -= 1;
     b.radius += b.grow;
     for (const s of b.sparks) {
@@ -74,6 +74,7 @@ export function updateHitBursts() {
 }
 
 export function drawSkillBursts() {
+  if (!ctx) return;
   for (const b of state.skillBursts) {
     const t = 1 - b.life / b.maxLife;
     const skill = SKILLS[b.skillIndex] || SKILLS[0];
@@ -95,6 +96,7 @@ export function drawSkillBursts() {
 }
 
 export function drawHitBursts() {
+  if (!ctx) return;
   for (const b of state.hitBursts) {
     const t = b.life / b.maxLife;
     const a = 0.2 + t * 0.7;
@@ -121,6 +123,7 @@ export function drawHitBursts() {
 }
 
 export function drawParticles() {
+  if (!ctx) return;
   for (const p of state.particles) {
     ctx.fillStyle = p.color;
     const size = p.size || 3;

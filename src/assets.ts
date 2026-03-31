@@ -1,8 +1,7 @@
-import { PLAYER_SHEETS, ENEMY_SHEETS, BOSS_SHEET, WATER_FX_SHEET, SKILLS } from "./constants.js";
-import { loadImage, buildEvenRanges } from "./utils.js";
-import { state } from "./state.js";
+import { PLAYER_SHEETS, ENEMY_SHEETS, BOSS_SHEET, SKILLS, type FrameRange } from "./constants";import { loadImage, buildEvenRanges } from "./utils";
+import { state } from "./state";
 
-function detectVariableFrameRanges(image, expectedCount) {
+function detectVariableFrameRanges(image: HTMLImageElement, expectedCount?: number): FrameRange[] | null {
   try {
     const w = image.width;
     const h = image.height;
@@ -11,6 +10,7 @@ function detectVariableFrameRanges(image, expectedCount) {
     canvas.width = w;
     canvas.height = h;
     const ctx = canvas.getContext("2d");
+    if (!ctx) return null;
     ctx.drawImage(image, 0, 0);
     const data = ctx.getImageData(0, 0, w, h).data;
     const alphaThreshold = 8;
@@ -84,7 +84,7 @@ function detectVariableFrameRanges(image, expectedCount) {
       const last = goodRuns[goodRuns.length - 1];
       if (last[1] === w - 1) contentEnd = last[0];
     }
-    const ranges = [];
+    const ranges: FrameRange[] = [];
     let prev = contentStart;
     for (const run of goodRuns) {
       const a = run[0];
@@ -98,7 +98,7 @@ function detectVariableFrameRanges(image, expectedCount) {
     if (prev < contentEnd) ranges.push({ x: prev, w: contentEnd - prev });
     const rs = ranges.filter((r) => r.w > 0);
     if (!rs.length) return null;
-    function adjustToExpected(list) {
+    function adjustToExpected(list: FrameRange[]): FrameRange[] {
       const out = list.slice();
       if (typeof expectedCount === "number" && expectedCount > 0) {
         if (out.length > expectedCount) {
@@ -110,14 +110,14 @@ function detectVariableFrameRanges(image, expectedCount) {
             const left = idx - 1 >= 0 ? out[idx - 1] : null;
             const right = idx + 1 < out.length ? out[idx + 1] : null;
             if (!left && !right) break;
-            if (!left) {
+            if (!left && right) {
               right.x = out[idx].x;
               right.w += out[idx].w;
               out.splice(idx, 1);
-            } else if (!right) {
+            } else if (left && !right) {
               left.w += out[idx].w;
               out.splice(idx, 1);
-            } else {
+            } else if (left && right) {
               if (left.w <= right.w) {
                 left.w += out[idx].w;
                 out.splice(idx, 1);
@@ -168,9 +168,6 @@ export async function loadSprites() {
   jobs.push(loadImage(BOSS_SHEET.src).then((img) => {
     BOSS_SHEET.image = img;
   }));
-  jobs.push(loadImage(WATER_FX_SHEET.src).then((img) => {
-    WATER_FX_SHEET.image = img;
-  }));
   for (const skill of SKILLS) {
     jobs.push(loadImage(skill.src).then((img) => {
       skill.image = img;
@@ -200,10 +197,6 @@ export async function loadSprites() {
           skill.frameRanges = buildEvenRanges(img.width, 6);
         }
       }
-      const widths = (skill.frameRanges || []).map(fr => fr.w);
-      try {
-        console.log(`[${skill.id}] frame widths (${widths.length}):`, widths);
-      } catch (_) { }
     }));
   }
   await Promise.all(jobs);
