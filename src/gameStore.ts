@@ -1,5 +1,6 @@
 import { atom } from "jotai";
 import { createStore } from "jotai/vanilla";
+import { PLAYER_DEFAULTS } from "./constants";
 
 export type BossSnapshot = {
   hp: number;
@@ -32,11 +33,11 @@ const initialSnapshot: GameSnapshot = {
   enemiesCount: 0,
   boss: null,
   player: {
-    hp: 100,
+    hp: PLAYER_DEFAULTS.hp,
     score: 0,
     attackBonus: 0,
-    skillEnergy: 100,
-    skillCharges: 3,
+    skillEnergy: PLAYER_DEFAULTS.skillEnergy,
+    skillCharges: PLAYER_DEFAULTS.skillCharges,
     skillIndex: 0,
   },
 };

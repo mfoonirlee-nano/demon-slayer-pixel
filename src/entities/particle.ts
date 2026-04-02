@@ -1,37 +1,49 @@
-import { state, type HitBurstState, type ParticleState, type SkillBurstState } from "../state";
+import { state } from "../state";
 import { ctx } from "../context";
+import {
+  SKILLS,
+  PARTICLE_CONFIG,
+  HIT_BURST_CONFIG,
+  SKILL_BURST_VISUAL,
+  HIT_BURST_VISUAL,
+} from "../constants";
+import type { HitBurstState, ParticleState, SkillBurstState } from "../types/game-state";
 import { drawVariableSheetFrame } from "../graphics";
-import { SKILLS } from "../constants";
 
 export function emitSlash(x: number, y: number, color: string) {
-  for (let i = 0; i < 12; i += 1) {
+  for (let i = 0; i < PARTICLE_CONFIG.slashCount; i += 1) {
     state.particles.push({
       x,
       y,
-      vx: (Math.random() - 0.5) * 7,
-      vy: (Math.random() - 0.5) * 7,
-      life: 20 + Math.random() * 10,
+      vx: (Math.random() - 0.5) * PARTICLE_CONFIG.slashVelocity,
+      vy: (Math.random() - 0.5) * PARTICLE_CONFIG.slashVelocity,
+      life: PARTICLE_CONFIG.slashLifeBase + Math.random() * PARTICLE_CONFIG.slashLifeVariance,
       color,
     });
   }
 }
 
 export function emitHitBurst(x: number, y: number, color = "#9feaff", power = 1) {
+  const life = Math.floor(HIT_BURST_CONFIG.baseLife + HIT_BURST_CONFIG.lifeScale * power);
+  const sparkCount = Math.floor(HIT_BURST_CONFIG.baseSparks + HIT_BURST_CONFIG.sparkScale * power);
   state.hitBursts.push({
     x,
     y,
-    life: Math.floor(10 + 8 * power),
-    maxLife: Math.floor(10 + 8 * power),
-    radius: 8 + 6 * power,
-    grow: 1.8 + 1.2 * power,
+    life,
+    maxLife: life,
+    radius: HIT_BURST_CONFIG.baseRadius + HIT_BURST_CONFIG.radiusScale * power,
+    grow: HIT_BURST_CONFIG.baseGrow + HIT_BURST_CONFIG.growScale * power,
     color,
-    sparks: Array.from({ length: Math.floor(8 + 8 * power) }, (_, i) => {
-      const ang = (Math.PI * 2 * i) / Math.floor(8 + 8 * power) + (Math.random() - 0.5) * 0.25;
+    sparks: Array.from({ length: sparkCount }, (_, i) => {
+      const ang = (Math.PI * 2 * i) / sparkCount + (Math.random() - 0.5) * HIT_BURST_CONFIG.sparkAngleJitter;
       return {
         ang,
-        dist: 1 + Math.random() * 5,
-        speed: 1.2 + Math.random() * 2.4 + power * 0.5,
-        size: 1.4 + Math.random() * 1.8,
+        dist: HIT_BURST_CONFIG.sparkDistBase + Math.random() * HIT_BURST_CONFIG.sparkDistVariance,
+        speed:
+          HIT_BURST_CONFIG.sparkSpeedBase +
+          Math.random() * HIT_BURST_CONFIG.sparkSpeedVariance +
+          power * HIT_BURST_CONFIG.sparkSpeedPowerScale,
+        size: HIT_BURST_CONFIG.sparkSizeBase + Math.random() * HIT_BURST_CONFIG.sparkSizeVariance,
       };
     }),
   });
@@ -42,9 +54,9 @@ export function updateParticles() {
     const p = state.particles[i] as ParticleState;
     p.x += p.vx;
     p.y += p.vy;
-    p.vx *= p.fade || 0.96;
-    p.vy *= p.fade || 0.96;
-    if (p.size) p.size *= 0.97;
+    p.vx *= p.fade || PARTICLE_CONFIG.velocityFade;
+    p.vy *= p.fade || PARTICLE_CONFIG.velocityFade;
+    if (p.size) p.size *= PARTICLE_CONFIG.sizeFade;
     p.life -= 1;
     if (p.life <= 0) state.particles.splice(i, 1);
   }
@@ -67,7 +79,7 @@ export function updateHitBursts() {
     b.radius += b.grow;
     for (const s of b.sparks) {
       s.dist += s.speed;
-      s.size *= 0.97;
+      s.size *= PARTICLE_CONFIG.sizeFade;
     }
     if (b.life <= 0) state.hitBursts.splice(i, 1);
   }
@@ -82,15 +94,19 @@ export function drawSkillBursts() {
     const drawW = b.width * scale;
     const drawH = b.height * scale;
     const drawX = b.x - drawW / 2;
-    const drawY = b.y - drawH * 0.68;
+    const drawY = b.y - drawH * SKILL_BURST_VISUAL.drawYOffsetRatio;
     ctx.save();
     ctx.globalCompositeOperation = "source-over";
-    ctx.globalAlpha = 0.96;
-    // Use player facing from state, defaulting to 1 if player not ready (though bursts usually imply player exists)
+    ctx.globalAlpha = SKILL_BURST_VISUAL.alpha;
     const facing = state.player ? state.player.facing : 1;
     drawVariableSheetFrame(skill, b.frame, drawX, drawY, drawW, drawH, facing);
-    ctx.fillStyle = `${b.color}22`;
-    ctx.fillRect(drawX + 12, drawY + drawH * 0.66, Math.max(20, drawW - 24), 10);
+    ctx.fillStyle = `${b.color}${SKILL_BURST_VISUAL.floorTintSuffix}`;
+    ctx.fillRect(
+      drawX + SKILL_BURST_VISUAL.floorTintXOffset,
+      drawY + drawH * SKILL_BURST_VISUAL.floorTintYRatio,
+      Math.max(SKILL_BURST_VISUAL.floorTintMinWidth, drawW - SKILL_BURST_VISUAL.floorTintXPadding),
+      SKILL_BURST_VISUAL.floorTintHeight,
+    );
     ctx.restore();
   }
 }
@@ -99,23 +115,23 @@ export function drawHitBursts() {
   if (!ctx) return;
   for (const b of state.hitBursts) {
     const t = b.life / b.maxLife;
-    const a = 0.2 + t * 0.7;
+    const a = HIT_BURST_VISUAL.baseAlpha + t * HIT_BURST_VISUAL.alphaScale;
     ctx.save();
     ctx.globalCompositeOperation = "lighter";
-    ctx.strokeStyle = `rgba(166,236,255,${a})`;
-    ctx.lineWidth = 2.6;
+    ctx.strokeStyle = `rgba(${HIT_BURST_VISUAL.outerStrokeColor[0]},${HIT_BURST_VISUAL.outerStrokeColor[1]},${HIT_BURST_VISUAL.outerStrokeColor[2]},${a})`;
+    ctx.lineWidth = HIT_BURST_VISUAL.outerLineWidth;
     ctx.beginPath();
     ctx.arc(b.x, b.y, b.radius, 0, Math.PI * 2);
     ctx.stroke();
-    ctx.strokeStyle = `rgba(225,250,255,${a * 0.7})`;
-    ctx.lineWidth = 1.4;
+    ctx.strokeStyle = `rgba(${HIT_BURST_VISUAL.innerStrokeColor[0]},${HIT_BURST_VISUAL.innerStrokeColor[1]},${HIT_BURST_VISUAL.innerStrokeColor[2]},${a * HIT_BURST_VISUAL.innerAlphaScale})`;
+    ctx.lineWidth = HIT_BURST_VISUAL.innerLineWidth;
     ctx.beginPath();
-    ctx.arc(b.x, b.y, Math.max(2, b.radius - 6), 0, Math.PI * 2);
+    ctx.arc(b.x, b.y, Math.max(HIT_BURST_CONFIG.minInnerRadius, b.radius - HIT_BURST_CONFIG.radiusScale), 0, Math.PI * 2);
     ctx.stroke();
     for (const s of b.sparks) {
       const px = b.x + Math.cos(s.ang) * s.dist;
       const py = b.y + Math.sin(s.ang) * s.dist;
-      ctx.fillStyle = `rgba(203,246,255,${a})`;
+      ctx.fillStyle = `rgba(${HIT_BURST_VISUAL.sparkColor[0]},${HIT_BURST_VISUAL.sparkColor[1]},${HIT_BURST_VISUAL.sparkColor[2]},${a})`;
       ctx.fillRect(px, py, s.size, s.size);
     }
     ctx.restore();
@@ -126,7 +142,7 @@ export function drawParticles() {
   if (!ctx) return;
   for (const p of state.particles) {
     ctx.fillStyle = p.color;
-    const size = p.size || 3;
+    const size = p.size || PARTICLE_CONFIG.defaultSize;
     ctx.fillRect(p.x, p.y, size, size);
   }
 }

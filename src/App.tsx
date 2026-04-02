@@ -37,7 +37,7 @@ function GameCanvas() {
       width={WIDTH}
       height={HEIGHT}
       aria-label="Demon Slayer Pixel Survival"
-      className="pixel-canvas h-auto w-full max-w-[960px] border-4 border-[#3f5f8a] bg-[#0b1220] shadow-[0_16px_48px_rgba(0,0,0,0.5)] max-md:h-[100svh] max-md:max-w-none max-md:border-0 max-md:shadow-none"
+      className="pixel-canvas block h-auto w-[960px] max-w-full bg-[#0b1220] max-md:h-[100svh] max-md:w-screen max-md:max-w-none"
     />
   );
 }
@@ -127,7 +127,7 @@ function AppShell() {
     <main className="mx-auto flex min-h-screen w-full max-w-[1020px] flex-col items-center justify-center px-4 py-4 text-center max-md:max-w-none max-md:px-0 max-md:py-0">
       <h1 className="mb-4 text-base tracking-[1px] md:text-2xl max-md:hidden">鬼灭之刃：炭治郎生存战</h1>
       <p className="mb-2 text-[10px] opacity-90 md:text-[13px] max-md:hidden">A/D 移动 · W/空格 跳跃 · J 攻击 · K 释放技能 · 1/2/3 切换技能 · R 重开</p>
-      <section className="relative w-full overflow-hidden bg-black max-md:h-[100svh] max-md:w-screen">
+      <section className="relative w-fit max-w-full overflow-hidden border-4 border-[#3f5f8a] bg-black shadow-[0_16px_48px_rgba(0,0,0,0.5)] max-md:h-[100svh] max-md:w-screen max-md:border-0 max-md:shadow-none">
         <GameCanvas />
         <Hud />
         <TouchControls />

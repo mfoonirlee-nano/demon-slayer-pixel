@@ -1,39 +1,49 @@
-import { state, type CrystalType, type PlatformState, type PlatformStyle } from "../state";
+import { state } from "../state";
 import { ctx } from "../context";
-import { WIDTH, GROUND_Y } from "../constants";
+import {
+  WIDTH,
+  GROUND_Y,
+  PLATFORM_CONFIG,
+  PLATFORM_STYLE_LIST,
+  CRYSTAL_CONFIG,
+  CRYSTAL_TYPES_BY_KIND,
+  PLAYER_LIMITS,
+} from "../constants";
+import type { CrystalType, PlatformState, PlatformStyle } from "../types/game-state";
 import { hitbox } from "../utils";
 import { playTone } from "../audio";
 import { emitHitBurst } from "./particle";
 
 export function spawnCrystalOnPlatform(platform: PlatformState) {
-  const type: CrystalType = Math.random() < 0.55 ? "atk" : "hp";
+  const type: CrystalType = Math.random() < CRYSTAL_CONFIG.attackTypeChance ? CRYSTAL_TYPES_BY_KIND.attack : CRYSTAL_TYPES_BY_KIND.health;
   state.crystals.push({
     platform,
-    offsetX: 16 + Math.random() * Math.max(24, platform.w - 32),
+    offsetX:
+      CRYSTAL_CONFIG.offsetBase +
+      Math.random() * Math.max(CRYSTAL_CONFIG.minTravelWidth, platform.w - CRYSTAL_CONFIG.offsetPadding),
     type,
-    size: 10,
+    size: CRYSTAL_CONFIG.size,
     phase: Math.random() * Math.PI * 2,
   });
 }
 
 export function spawnPlatform() {
-  const width = 88 + Math.random() * 74;
-  const y = GROUND_Y - (70 + Math.random() * 130);
-  const styles: PlatformStyle[] = ["stone", "moss", "shrine", "ruin"];
-  const style = styles[Math.floor(Math.random() * styles.length)];
+  const width = PLATFORM_CONFIG.widthBase + Math.random() * PLATFORM_CONFIG.widthVariance;
+  const y = GROUND_Y - (PLATFORM_CONFIG.minYOffset + Math.random() * PLATFORM_CONFIG.yVariance);
+  const style = PLATFORM_STYLE_LIST[Math.floor(Math.random() * PLATFORM_STYLE_LIST.length)] as PlatformStyle;
   const platform: PlatformState = {
-    x: WIDTH + 40,
+    x: WIDTH + PLATFORM_CONFIG.spawnOffsetX,
     y,
     w: width,
-    h: 12,
-    vx: -(1.4 + Math.random() * 0.9 + state.elapsed * 0.02),
+    h: PLATFORM_CONFIG.height,
+    vx: -(PLATFORM_CONFIG.baseSpeed + Math.random() * PLATFORM_CONFIG.randomSpeed + state.elapsed * PLATFORM_CONFIG.speedScaleByElapsed),
     phase: Math.random() * Math.PI * 2,
     style,
-    trim: 2 + Math.floor(Math.random() * 3),
-    notch: Math.random() < 0.5 ? 0 : 1 + Math.floor(Math.random() * 3),
+    trim: PLATFORM_CONFIG.trimBase + Math.floor(Math.random() * PLATFORM_CONFIG.trimVariants),
+    notch: Math.random() < PLATFORM_CONFIG.notchChance ? 0 : PLATFORM_CONFIG.notchBase + Math.floor(Math.random() * PLATFORM_CONFIG.notchVariants),
   };
   state.platforms.push(platform);
-  if (y <= GROUND_Y - 120 && Math.random() < 0.58) {
+  if (y <= GROUND_Y - PLATFORM_CONFIG.crystalEligibleHeight && Math.random() < PLATFORM_CONFIG.crystalSpawnChance) {
     spawnCrystalOnPlatform(platform);
   }
 }
@@ -42,8 +52,8 @@ export function updatePlatforms(dt: number) {
   for (let i = state.platforms.length - 1; i >= 0; i -= 1) {
     const p = state.platforms[i];
     p.x += p.vx;
-    p.phase += dt * 3;
-    if (p.x + p.w < -20) state.platforms.splice(i, 1);
+    p.phase += dt * PLATFORM_CONFIG.phaseSpeed;
+    if (p.x + p.w < -PLATFORM_CONFIG.despawnMargin) state.platforms.splice(i, 1);
   }
 }
 
@@ -55,18 +65,18 @@ export function updateCrystals(dt: number) {
       continue;
     }
 
-    c.phase += dt * 4;
+    c.phase += dt * CRYSTAL_CONFIG.phaseSpeed;
     const x = c.platform.x + c.offsetX;
-    const y = c.platform.y - 18 + Math.sin(c.phase) * 2;
+    const y = c.platform.y - CRYSTAL_CONFIG.floatYOffset + Math.sin(c.phase) * CRYSTAL_CONFIG.floatAmplitude;
     const box = { x: x - c.size / 2, y: y - c.size / 2, w: c.size, h: c.size };
 
     if (hitbox(state.player, box)) {
-      if (c.type === "atk") {
-        state.player.attackBonus = Math.min(24, state.player.attackBonus + 2);
+      if (c.type === CRYSTAL_TYPES_BY_KIND.attack) {
+        state.player.attackBonus = Math.min(PLAYER_LIMITS.attackBonusCap, state.player.attackBonus + CRYSTAL_CONFIG.attackBonusGain);
         emitHitBurst(x, y, "#82d6ff", 1.6);
         playTone(560, 0.08, "triangle", 0.045);
       } else {
-        state.player.hp = Math.min(100, state.player.hp + 24);
+        state.player.hp = Math.min(PLAYER_LIMITS.maxHp, state.player.hp + CRYSTAL_CONFIG.healAmount);
         emitHitBurst(x, y, "#6ff3b6", 1.4);
         playTone(440, 0.08, "triangle", 0.045);
       }
@@ -81,9 +91,9 @@ export function drawCrystals() {
   for (const c of state.crystals) {
     if (!state.platforms.includes(c.platform)) continue;
     const x = c.platform.x + c.offsetX;
-    const y = c.platform.y - 18 + Math.sin(c.phase) * 2;
+    const y = c.platform.y - CRYSTAL_CONFIG.floatYOffset + Math.sin(c.phase) * CRYSTAL_CONFIG.floatAmplitude;
     const glow = 0.45 + 0.2 * Math.sin(c.phase * 1.7);
-    if (c.type === "atk") {
+    if (c.type === CRYSTAL_TYPES_BY_KIND.attack) {
       ctx.fillStyle = `rgba(118,200,255,${glow})`;
       ctx.fillRect(x - 7, y - 7, 14, 14);
       ctx.fillStyle = "#d9f4ff";
@@ -103,7 +113,7 @@ export function drawPlatforms() {
   if (!ctx) return;
 
   for (const p of state.platforms) {
-    if (p.style === "shrine") {
+    if (p.style === PLATFORM_STYLE_LIST[2]) {
       ctx.fillStyle = "#4c2830";
       ctx.fillRect(p.x, p.y, p.w, p.h);
       ctx.fillStyle = "#9a3947";
@@ -114,7 +124,7 @@ export function drawPlatforms() {
       }
       ctx.fillStyle = "#2a151b";
       ctx.fillRect(p.x + 6, p.y + p.h, p.w - 12, 3);
-    } else if (p.style === "ruin") {
+    } else if (p.style === PLATFORM_STYLE_LIST[3]) {
       ctx.fillStyle = "#3a4554";
       ctx.fillRect(p.x, p.y, p.w, p.h);
       ctx.fillStyle = "#5d6e84";
@@ -125,7 +135,7 @@ export function drawPlatforms() {
       }
       ctx.fillStyle = "#1e2938";
       ctx.fillRect(p.x + 5, p.y + p.h, p.w - 10, 3);
-    } else if (p.style === "moss") {
+    } else if (p.style === PLATFORM_STYLE_LIST[1]) {
       ctx.fillStyle = "#2e4667";
       ctx.fillRect(p.x, p.y, p.w, p.h);
       ctx.fillStyle = "#3f5f88";

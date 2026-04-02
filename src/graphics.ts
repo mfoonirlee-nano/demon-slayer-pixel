@@ -1,5 +1,5 @@
 import { ctx } from "./context";
-import type { Skill, SpriteSheet } from "./constants";
+import type { Skill, SpriteSheet } from "./types/assets";
 
 export function drawSheetFrame(sheet: SpriteSheet, frame: number, x: number, y: number, w: number, h: number, facing = 1) {
   if (!ctx || !sheet.image) return;

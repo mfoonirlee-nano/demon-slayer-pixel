@@ -16,16 +16,32 @@
 ### 4. 基于实体的逻辑 (Entity Logic)
 `src/entities/` 目录下的每个模块代表一种游戏实体（玩家、敌人、Boss、平台等）。每个模块负责该类实体的生成 (`spawn`)、更新 (`update`) 和绘制 (`draw`)。
 
+### 5. 配置与类型分层
+重构后，仓库把常量配置与类型定义从运行时逻辑中拆出：
+- `src/constants/` 负责游戏配置、资源元数据、运行时调参与领域标识。
+- `src/types/` 负责资源类型与游戏运行态类型。
+
 ## 代码目录结构
 
 - `src/main.tsx`: React 入口，挂载应用。
 - `src/App.tsx`: 页面外壳、HUD、移动端按钮与 canvas 容器。
 - `src/runtime.ts`: 游戏运行时，初始化输入、加载资源、启动主循环。
-- `src/state.ts`: 维护游戏全局运行时状态。
+- `src/state.ts`: 维护游戏全局运行时状态，并提供重置与快照方法。
 - `src/gameStore.ts`: 将运行时快照桥接到 Jotai。
-- `src/constants.ts`: 存放游戏平衡参数、技能配置、精灵图尺寸等常量。
+- `src/constants/`:
+  - `world.ts`: 画布尺寸、地面位置、重力等世界常量。
+  - `assets.ts`: 技能、玩家/敌人/Boss 精灵图元数据。
+  - `combat.ts`: 战斗伤害、玩家默认值、Boss/敌人数值参数。
+  - `runtime.ts`: 主循环节奏、刷新间隔、加载文案。
+  - `platform.ts`: 平台和晶体生成参数。
+  - `visual.ts`: 技能闪屏、爆发特效等视觉参数。
+  - `ids.ts`: 动作、技能、平台、晶体等领域标识。
+  - `index.ts`: 对外统一导出。
+- `src/types/`:
+  - `assets.ts`: `Skill`、`SpriteSheet`、`FrameRange` 等资源类型。
+  - `game-state.ts`: 玩家、敌人、Boss、平台、粒子等运行时状态类型。
 - `src/context.ts`: 管理 canvas 与 2D context 引用。
-- `src/assets.ts`: 异步加载图片资源并准备技能帧范围。
+- `src/assets.ts`: 异步加载图片资源，并根据图片内容推导技能帧范围。
 - `src/input.ts`: 处理键盘输入和移动端虚拟按键逻辑。
 - `src/background.ts`: 实现动态背景渲染。
 - `src/utils.ts`: 通用工具函数。

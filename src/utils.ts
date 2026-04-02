@@ -1,4 +1,5 @@
 import { GROUND_Y } from "./constants";
+import type { FrameRange } from "./types/assets";
 
 export type RectLike = {
   x: number;
@@ -28,8 +29,8 @@ export function frameIndex(frameCount: number, speed: number, elapsed: number, s
   return Math.floor((elapsed * 60 + seed) / speed) % frameCount;
 }
 
-export function buildEvenRanges(width: number, count: number) {
-  const ranges = [] as Array<{ x: number; w: number }>;
+export function buildEvenRanges(width: number, count: number): FrameRange[] {
+  const ranges: FrameRange[] = [];
   for (let i = 0; i < count; i += 1) {
     const sx = Math.floor((i * width) / count);
     const ex = i === count - 1 ? width : Math.floor(((i + 1) * width) / count);
