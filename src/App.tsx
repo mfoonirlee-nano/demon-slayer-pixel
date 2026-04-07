@@ -1,18 +1,14 @@
 import { useEffect, useRef } from "react";
 import { Provider, useAtomValue } from "jotai";
-import { WIDTH, HEIGHT, SKILLS } from "./constants";
+import { WIDTH, HEIGHT, SKILLS, HUD_UI } from "./constants";
 import { setCanvas } from "./context";
 import { startGame } from "./runtime";
-import {
-  bossHudAtom,
-  elapsedAtom,
-  gameOverAtom,
-  gameSnapshotAtom,
-  gameStore,
-  loadingAtom,
-  playerHudAtom,
-  setGameSnapshot,
-} from "./gameStore";
+import { gameSnapshotAtom, gameStore, setGameSnapshot } from "./gameStore";
+
+function clampMeterPercent(value: number, maxValue: number) {
+  if (maxValue <= 0) return 0;
+  return Math.max(0, Math.min(HUD_UI.meterPercentMax, (value / maxValue) * HUD_UI.meterPercentMax));
+}
 
 function GameCanvas() {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
@@ -44,56 +40,46 @@ function GameCanvas() {
 
 function Hud() {
   const snapshot = useAtomValue(gameSnapshotAtom);
-  const player = useAtomValue(playerHudAtom);
-  const boss = useAtomValue(bossHudAtom);
-  const elapsed = useAtomValue(elapsedAtom);
-  const isLoading = useAtomValue(loadingAtom);
-  const isGameOver = useAtomValue(gameOverAtom);
+  const { player, boss, elapsed, spritesReady, gameOver } = snapshot;
   const activeSkill = SKILLS[player.skillIndex] || SKILLS[0];
+  const hpPercent = clampMeterPercent(player.hp, player.maxHp);
+  const skillEnergyPercent = clampMeterPercent(player.skillEnergy, player.skillEnergyMax);
+  const bossHpPercent = boss ? clampMeterPercent(boss.hp, boss.hpMax) : 0;
 
   return (
     <>
-      <div className="pointer-events-none absolute left-4 top-4 z-10 hidden w-[360px] rounded border border-white/10 bg-black/40 p-4 text-[12px] leading-6 text-white backdrop-blur-[2px] md:block">
-        <div className="flex items-center justify-between gap-4">
-          <span>HP: {Math.max(0, Math.floor(player.hp))}</span>
-          <div className="h-3 w-[150px] overflow-hidden bg-[#2f445e]">
-            <div className="h-full bg-[#26d5ff]" style={{ width: `${Math.max(0, Math.min(100, player.hp))}%` }} />
+      <div className="pointer-events-none absolute left-4 top-4 z-10 hidden rounded border border-white/10 bg-black/40 p-3 text-[12px] text-white backdrop-blur-[2px] md:block" style={{ width: HUD_UI.panelWidth }}>
+        <div className="flex items-center justify-between gap-3">
+          <span>HP {Math.max(0, Math.floor(player.hp))}</span>
+          <div className="h-3 overflow-hidden bg-[#2f445e]" style={{ width: HUD_UI.hpBarWidth }}>
+            <div className="h-full bg-[#26d5ff]" style={{ width: `${hpPercent}%` }} />
           </div>
         </div>
-        <div>击杀分: {player.score}</div>
-        <div className="flex items-center justify-between gap-4">
-          <span>招式: {activeSkill.name} ({player.skillIndex + 1})</span>
-          <span>可用: {player.skillCharges}/3</span>
+        <div className="mt-3 flex items-center justify-between gap-3">
+          <span>{activeSkill.name}</span>
+          <span>{player.skillCharges}/{player.maxSkillCharges}</span>
         </div>
-        <div>攻击加成: +{player.attackBonus}</div>
-        <div className="mt-1 h-2 w-[110px] overflow-hidden bg-[#2f445e]">
-          <div className="h-full bg-[#7fe8ff]" style={{ width: `${Math.max(0, Math.min(100, player.skillEnergy))}%` }} />
+        <div className="mt-2 h-2 overflow-hidden bg-[#2f445e]" style={{ width: HUD_UI.skillBarWidth }}>
+          <div className="h-full bg-[#7fe8ff]" style={{ width: `${skillEnergyPercent}%` }} />
         </div>
-        {!activeSkill.image ? <div className="mt-1 text-[#ffb3c1]">技能贴图加载失败</div> : null}
-      </div>
-
-      <div className="pointer-events-none absolute right-4 top-4 z-10 hidden text-right text-[12px] leading-6 text-white md:block">
-        <div>生存: {elapsed.toFixed(1)}s</div>
-        <div>敌人: {snapshot.enemiesCount}</div>
-        <div>J: 普攻 K: 技能 1/2/3: 切换技能</div>
       </div>
 
       {boss ? (
-        <div className="pointer-events-none absolute left-1/2 top-4 z-10 hidden w-[380px] -translate-x-1/2 rounded border border-white/10 bg-black/40 px-4 py-2 text-white md:block">
+        <div className="pointer-events-none absolute left-1/2 top-4 z-10 hidden -translate-x-1/2 rounded border border-white/10 bg-black/40 px-4 py-2 text-white md:block" style={{ width: HUD_UI.bossBarWidth }}>
           <div className="mb-1 text-center text-[12px]">下弦之鬼·阶段 {boss.phase}</div>
           <div className="h-3 w-full overflow-hidden bg-[#443246]">
-            <div className="h-full bg-[#ff6e93]" style={{ width: `${Math.max(0, Math.min(100, (boss.hp / boss.hpMax) * 100))}%` }} />
+            <div className="h-full bg-[#ff6e93]" style={{ width: `${bossHpPercent}%` }} />
           </div>
         </div>
       ) : null}
 
-      {isLoading ? (
+      {!spritesReady ? (
         <div className="pointer-events-none absolute inset-0 z-20 flex items-center justify-center bg-black/30 text-sm text-white md:hidden">
           加载像素贴图中...
         </div>
       ) : null}
 
-      {isGameOver ? (
+      {gameOver ? (
         <div className="absolute inset-0 z-20 flex items-center justify-center bg-black/60 px-6 text-center text-white">
           <div className="space-y-3">
             <div className="text-2xl md:text-4xl">战斗结束</div>

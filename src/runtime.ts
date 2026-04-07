@@ -26,9 +26,17 @@ let running = false;
 let runToken = 0;
 let publishState: (snapshot: GameSnapshot) => void = () => {};
 
+function publishCurrentState() {
+  publishState(getStateSnapshot());
+}
+
+function queueNextFrame() {
+  frameId = requestAnimationFrame(loop);
+}
+
 function restart() {
   resetState();
-  publishState(getStateSnapshot());
+  publishCurrentState();
 }
 
 function drawLoadingState() {
@@ -55,8 +63,8 @@ function loop(ts: number) {
 
   if (!state.spritesReady) {
     drawLoadingState();
-    publishState(getStateSnapshot());
-    frameId = requestAnimationFrame(loop);
+    publishCurrentState();
+    queueNextFrame();
     return;
   }
 
@@ -102,14 +110,14 @@ function loop(ts: number) {
   if (state.player.skillFlash > 0) {
     const flashT = state.player.skillFlash / SKILL_FLASH.maxFrames;
     const radius = SKILL_FLASH.baseRadius - state.player.skillFlash * SKILL_FLASH.radiusStep;
-    ctx.fillStyle = `rgba(${SKILL_FLASH.overlayColor[0]},${SKILL_FLASH.overlayColor[1]},${SKILL_FLASH.overlayColor[2]},${flashT * SKILL_FLASH.overlayAlphaScale})`;
+    ctx.fillStyle = `rgba(${SKILL_FLASH.overlayColorRgb},${flashT * SKILL_FLASH.overlayAlphaScale})`;
     ctx.fillRect(0, 0, WIDTH, HEIGHT);
-    ctx.strokeStyle = `rgba(${SKILL_FLASH.outerStrokeColor[0]},${SKILL_FLASH.outerStrokeColor[1]},${SKILL_FLASH.outerStrokeColor[2]},${flashT * SKILL_FLASH.outerStrokeAlphaScale})`;
+    ctx.strokeStyle = `rgba(${SKILL_FLASH.outerStrokeColorRgb},${flashT * SKILL_FLASH.outerStrokeAlphaScale})`;
     ctx.lineWidth = SKILL_FLASH.outerLineWidth;
     ctx.beginPath();
     ctx.arc(state.player.x + state.player.w / 2, state.player.y + state.player.h / 2, Math.max(SKILL_FLASH.minOuterRadius, radius), 0, Math.PI * 2);
     ctx.stroke();
-    ctx.strokeStyle = `rgba(${SKILL_FLASH.innerStrokeColor[0]},${SKILL_FLASH.innerStrokeColor[1]},${SKILL_FLASH.innerStrokeColor[2]},${flashT * SKILL_FLASH.innerStrokeAlphaScale})`;
+    ctx.strokeStyle = `rgba(${SKILL_FLASH.innerStrokeColorRgb},${flashT * SKILL_FLASH.innerStrokeAlphaScale})`;
     ctx.lineWidth = SKILL_FLASH.innerLineWidth;
     ctx.beginPath();
     ctx.arc(
@@ -130,8 +138,8 @@ function loop(ts: number) {
   drawHitBursts();
   drawProjectiles();
   drawParticles();
-  publishState(getStateSnapshot());
-  frameId = requestAnimationFrame(loop);
+  publishCurrentState();
+  queueNextFrame();
 }
 
 export function startGame(options: { onStateChange?: (snapshot: GameSnapshot) => void } = {}) {
@@ -146,7 +154,7 @@ export function startGame(options: { onStateChange?: (snapshot: GameSnapshot) =>
   const currentRunToken = ++runToken;
   publishState = options.onStateChange ?? (() => {});
   resetState();
-  publishState(getStateSnapshot());
+  publishCurrentState();
 
   setupInput({
     onJump: tryJump,
@@ -165,7 +173,7 @@ export function startGame(options: { onStateChange?: (snapshot: GameSnapshot) =>
     .finally(() => {
       if (!running || currentRunToken !== runToken) return;
       state.last = 0;
-      frameId = requestAnimationFrame(loop);
+      queueNextFrame();
     });
 
   return stopGame;

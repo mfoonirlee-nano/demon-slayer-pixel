@@ -1,3 +1,5 @@
+const SECONDS_PER_MINUTE = 60;
+
 export const BASIC_ATTACK = {
   damage: 16,
   reach: 64,
@@ -15,9 +17,10 @@ export const PLAYER_DEFAULTS = {
   speed: 4,
   jump: 14,
   facing: 1,
-  hp: 100,
-  skillEnergy: 100,
-  skillCharges: 3,
+  maxHp: 100,
+  baseAttack: BASIC_ATTACK.damage,
+  maxSkillEnergy: 100,
+  maxSkillCharges: 3,
 } as const;
 
 export const PLAYER_LIMITS = {
@@ -35,6 +38,10 @@ export const PLAYER_COMBAT = {
   skillBurstHeight: 300,
   skillScaleIn: 0.92,
   skillScaleOut: 1.08,
+  skillEnemyBurstPower: 1.5,
+  skillBossBurstPower: 2.2,
+  attackEnemyBurstPower: 1.0,
+  attackBossBurstPower: 1.4,
   enemyHitCooldown: 12,
   bossHitCooldown: 10,
   bossRadiusPadding: 40,
@@ -58,6 +65,29 @@ export const PLAYER_COMBAT = {
   bossHitY: 30,
   blinkInterval: 3,
   movementIdleThreshold: 1.1,
+  groundDrag: 0.72,
+  platformEdgePadding: 8,
+  platformLandingTolerance: 2,
+  effects: {
+    skillEnemyBurstColor: "#9beeff",
+    skillBossSlashColor: "#9beeff",
+    skillBossBurstColor: "#c8f4ff",
+    hurtSlashColor: "#ff4e73",
+    attackEnemyBurstColor: "#8ee6ff",
+    attackKillSlashColor: "#ff915d",
+    attackBossBurstColor: "#b4efff",
+    bossKillSlashColor: "#ffc96b",
+  },
+  tones: {
+    attackStart: { frequency: 320, duration: 0.07, volume: 0.05 },
+    skillCastPrimary: { frequency: 620, duration: 0.11, volume: 0.06 },
+    skillCastSecondary: { frequency: 860, duration: 0.09, volume: 0.05 },
+    hurt: { frequency: 120, duration: 0.12, volume: 0.05 },
+    jump: { frequency: 260, duration: 0.05, volume: 0.04 },
+    attackHit: { baseFrequency: 430, randomVariance: 60, duration: 0.04, volume: 0.025 },
+    bossHit: { frequency: 180, duration: 0.06, volume: 0.05 },
+    bossKill: { frequency: 700, duration: 0.12, volume: 0.06 },
+  },
 } as const;
 
 export const PLAYER_DRAW = {
@@ -66,6 +96,7 @@ export const PLAYER_DRAW = {
   yOffset: 2,
   fallbackSkillFrameH: 496,
   fallbackSkillDrawH: 150,
+  fallbackSkillFrameCount: 6,
   fallbackAnimSpeed: {
     attack: 3,
     run: 5,
@@ -83,7 +114,7 @@ export const ENEMY_CONFIG = {
   h: 48,
   baseSpeed: 0.72,
   randomSpeed: 1.08,
-  speedScaleByElapsed: 1 / 60,
+  speedScaleByElapsed: 1 / SECONDS_PER_MINUTE,
   maxDamage: 20,
   baseDamage: 3,
   damageScaleByElapsed: 0.1,
@@ -135,6 +166,12 @@ export const BOSS_CONFIG = {
   drawOffsetY: 108,
   drawW: 176,
   drawH: 208,
+  tones: {
+    spawnPrimary: { frequency: 120, duration: 0.2, volume: 0.06 },
+    spawnSecondary: { frequency: 90, duration: 0.25, volume: 0.05 },
+    projectile: { frequency: 190, duration: 0.08, volume: 0.05 },
+    summon: { frequency: 100, duration: 0.09, volume: 0.045 },
+  },
 } as const;
 
 export const PROJECTILE_CONFIG = {

@@ -45,6 +45,7 @@ npm run build
 
 - [📂 项目架构 (ARCHITECTURE.md)](docs/ARCHITECTURE.md)：深入了解代码模块设计与游戏循环逻辑。
 - [🎨 素材处理 (SPRITES.md)](docs/SPRITES.md)：说明如何使用 Python 脚本生成和优化像素精灵图。
+- [📏 项目规则 (CODE_RULES.md)](docs/CODE_RULES.md)：统一约束命名、注释、TypeScript 与 magic number 的处理方式。
 
 ### 代码目录概览
 ```text

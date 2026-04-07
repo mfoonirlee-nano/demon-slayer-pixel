@@ -26,12 +26,16 @@ export type PlayerState = {
   jump: number;
   facing: number;
   hp: number;
+  maxHp: number;
   invincible: number;
   attackTimer: number;
   score: number;
+  baseAttack: number;
   attackBonus: number;
   skillEnergy: number;
+  skillEnergyMax: number;
   skillCharges: number;
+  maxSkillCharges: number;
   skillIndex: number;
   skillTimer: number;
   onPlatform: PlatformState | null;

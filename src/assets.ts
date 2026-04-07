@@ -16,6 +16,11 @@ const IMAGE_ANALYSIS = {
   minSplitWidth: 2,
 } as const;
 
+const IMAGE_PIXEL_DATA = {
+  channelCount: 4,
+  alphaChannelOffset: 3,
+} as const;
+
 function detectVariableFrameRanges(image: HTMLImageElement, expectedCount?: number): FrameRange[] | null {
   try {
     const w = image.width;
@@ -33,7 +38,7 @@ function detectVariableFrameRanges(image: HTMLImageElement, expectedCount?: numb
     let found = false;
     for (let y = 0; y < h && !found; y += 1) {
       for (let x = 0; x < w; x += 1) {
-        const idx = (y * w + x) * 4 + 3;
+        const idx = (y * w + x) * IMAGE_PIXEL_DATA.channelCount + IMAGE_PIXEL_DATA.alphaChannelOffset;
         if (data[idx] > IMAGE_ANALYSIS.alphaThreshold) {
           top = y;
           found = true;
@@ -44,7 +49,7 @@ function detectVariableFrameRanges(image: HTMLImageElement, expectedCount?: numb
     found = false;
     for (let y = h - 1; y >= 0 && !found; y -= 1) {
       for (let x = 0; x < w; x += 1) {
-        const idx = (y * w + x) * 4 + 3;
+        const idx = (y * w + x) * IMAGE_PIXEL_DATA.channelCount + IMAGE_PIXEL_DATA.alphaChannelOffset;
         if (data[idx] > IMAGE_ANALYSIS.alphaThreshold) {
           bottom = y;
           found = true;
@@ -62,7 +67,7 @@ function detectVariableFrameRanges(image: HTMLImageElement, expectedCount?: numb
     for (let x = 0; x < w; x += 1) {
       let cnt = 0;
       for (let y = top; y <= bottom; y += 1) {
-        const idx = (y * w + x) * 4 + 3;
+        const idx = (y * w + x) * IMAGE_PIXEL_DATA.channelCount + IMAGE_PIXEL_DATA.alphaChannelOffset;
         if (data[idx] > IMAGE_ANALYSIS.alphaThreshold) {
           cnt += 1;
           if (cnt > maxOpaquePerColumn) break;

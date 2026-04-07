@@ -1,6 +1,7 @@
 import { ctx } from "../context";
 import { WIDTH } from "../constants";
 import { colorLerp, lerp } from "../utils";
+import type { RgbColor } from "../utils";
 import {
   MOON_GLOW_CONFIG,
   MOON_LAYOUT,
@@ -24,6 +25,9 @@ const STAR_FIELD: StarPoint[] = Array.from({ length: MOON_STAR_CONFIG.count }, (
   size: i % MOON_STAR_CONFIG.largeEvery === 0 ? MOON_STAR_CONFIG.largeSize : MOON_STAR_CONFIG.smallSize,
   twinkle: (i * MOON_STAR_CONFIG.twinkleStep) % MOON_STAR_CONFIG.twinkleRange,
 }));
+
+const MOON_CRATER_BASE_COLOR: RgbColor = [156, 176, 208];
+const MOON_HIGHLIGHT_BASE_COLOR: RgbColor = [255, 255, 255];
 
 function rgba(color: readonly number[], alpha: number) {
   return `rgba(${color[0]},${color[1]},${color[2]},${alpha})`;
@@ -72,12 +76,12 @@ export function drawMoon(options: { elapsed: number; moon: MoonState }) {
   const bloodLerp = moon.bloodLerp;
   const motion = getMoonMotion(elapsed, bloodLerp);
   const cycle = 0.5 + 0.5 * Math.sin(elapsed * MOON_MOTION_CONFIG.colorCycleSpeed);
-  const moonBaseRGB = [
+  const moonBaseRgb: RgbColor = [
     Math.round(lerp(MOON_SURFACE_CONFIG.baseColorA[0], MOON_SURFACE_CONFIG.baseColorB[0], cycle)),
     Math.round(lerp(MOON_SURFACE_CONFIG.baseColorA[1], MOON_SURFACE_CONFIG.baseColorB[1], cycle)),
     Math.round(lerp(MOON_SURFACE_CONFIG.baseColorA[2], MOON_SURFACE_CONFIG.baseColorB[2], cycle)),
   ];
-  const moonColor = colorLerp(moonBaseRGB, MOON_SURFACE_CONFIG.bloodCoreColor as unknown as number[], bloodLerp);
+  const moonColor = colorLerp(moonBaseRgb, MOON_SURFACE_CONFIG.bloodCoreColor, bloodLerp);
   const moonX = MOON_LAYOUT.x + motion.moonX;
   const moonY = MOON_LAYOUT.y + motion.moonY;
   const bloodRingRadius = MOON_GLOW_CONFIG.bloodRingRadius + motion.bloodWaveAmount * MOON_MOTION_CONFIG.bloodWave.radiusBoost;
@@ -135,7 +139,7 @@ export function drawMoon(options: { elapsed: number; moon: MoonState }) {
   context.arc(moonX, moonY, MOON_LAYOUT.coreRadius, 0, Math.PI * 2);
   context.fill();
 
-  context.fillStyle = colorLerp([156, 176, 208], MOON_SURFACE_CONFIG.craterColor as unknown as number[], bloodLerp);
+  context.fillStyle = colorLerp(MOON_CRATER_BASE_COLOR, MOON_SURFACE_CONFIG.craterColor, bloodLerp);
   for (const crater of MOON_SURFACE_CONFIG.craterRows) {
     context.fillRect(
       moonX + crater.x + motion.shimmerX * crater.driftX,
@@ -145,7 +149,7 @@ export function drawMoon(options: { elapsed: number; moon: MoonState }) {
     );
   }
 
-  context.fillStyle = colorLerp([255, 255, 255], MOON_SURFACE_CONFIG.highlightColor as unknown as number[], bloodLerp);
+  context.fillStyle = colorLerp(MOON_HIGHLIGHT_BASE_COLOR, MOON_SURFACE_CONFIG.highlightColor, bloodLerp);
   context.globalAlpha = MOON_SURFACE_CONFIG.highlightAlpha + (1 - bloodLerp) * 0.08 + motion.pulseWave * 0.04 + Math.max(0, motion.shimmerX) * MOON_SURFACE_CONFIG.shimmerAlpha;
   context.beginPath();
   context.arc(
@@ -163,9 +167,9 @@ export function getMoonSkyColors(moon: MoonState) {
   const bloodLerp = moon.bloodLerp;
 
   return {
-    nightTop: colorLerp(MOON_SKY_CONFIG.baseTop as unknown as number[], MOON_SKY_CONFIG.bloodTop as unknown as number[], bloodLerp),
-    nightMid: colorLerp(MOON_SKY_CONFIG.baseMid as unknown as number[], MOON_SKY_CONFIG.bloodMid as unknown as number[], bloodLerp * MOON_SKY_CONFIG.midBlend),
-    nightLow: colorLerp(MOON_SKY_CONFIG.baseLow as unknown as number[], MOON_SKY_CONFIG.bloodLow as unknown as number[], bloodLerp * MOON_SKY_CONFIG.lowBlend),
+    nightTop: colorLerp(MOON_SKY_CONFIG.baseTop, MOON_SKY_CONFIG.bloodTop, bloodLerp),
+    nightMid: colorLerp(MOON_SKY_CONFIG.baseMid, MOON_SKY_CONFIG.bloodMid, bloodLerp * MOON_SKY_CONFIG.midBlend),
+    nightLow: colorLerp(MOON_SKY_CONFIG.baseLow, MOON_SKY_CONFIG.bloodLow, bloodLerp * MOON_SKY_CONFIG.lowBlend),
     upperOverlay: rgba(MOON_SKY_CONFIG.upperOverlayColor, bloodLerp * MOON_SKY_CONFIG.upperOverlayAlpha),
     midOverlay: rgba(MOON_SKY_CONFIG.midOverlayColor, bloodLerp * MOON_SKY_CONFIG.midOverlayAlpha),
   };

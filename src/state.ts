@@ -16,13 +16,17 @@ export function createInitialPlayerState(): PlayerState {
     speed: PLAYER_DEFAULTS.speed,
     jump: PLAYER_DEFAULTS.jump,
     facing: PLAYER_DEFAULTS.facing,
-    hp: PLAYER_DEFAULTS.hp,
+    hp: PLAYER_DEFAULTS.maxHp,
+    maxHp: PLAYER_DEFAULTS.maxHp,
     invincible: 0,
     attackTimer: 0,
     score: 0,
+    baseAttack: PLAYER_DEFAULTS.baseAttack,
     attackBonus: 0,
-    skillEnergy: PLAYER_DEFAULTS.skillEnergy,
-    skillCharges: PLAYER_DEFAULTS.skillCharges,
+    skillEnergy: PLAYER_DEFAULTS.maxSkillEnergy,
+    skillEnergyMax: PLAYER_DEFAULTS.maxSkillEnergy,
+    skillCharges: PLAYER_DEFAULTS.maxSkillCharges,
+    maxSkillCharges: PLAYER_DEFAULTS.maxSkillCharges,
     skillIndex: 0,
     skillTimer: 0,
     onPlatform: null,
@@ -55,16 +59,21 @@ export function createInitialState(): GameState {
 
 export const state: GameState = createInitialState();
 
+function resetCollection<T>(collection: T[], nextItems: T[] = []) {
+  collection.length = 0;
+  collection.push(...nextItems);
+}
+
 export function resetState() {
   const next = createInitialState();
-  Object.assign(state.player, next.player);
-  state.enemies.length = 0;
-  state.platforms.length = 0;
-  state.crystals.length = 0;
-  state.particles.length = 0;
-  state.skillBursts.length = 0;
-  state.hitBursts.length = 0;
-  state.projectiles.length = 0;
+  state.player = next.player;
+  resetCollection(state.enemies, next.enemies);
+  resetCollection(state.platforms, next.platforms);
+  resetCollection(state.crystals, next.crystals);
+  resetCollection(state.particles, next.particles);
+  resetCollection(state.skillBursts, next.skillBursts);
+  resetCollection(state.hitBursts, next.hitBursts);
+  resetCollection(state.projectiles, next.projectiles);
   state.elapsed = next.elapsed;
   state.spawnTimer = next.spawnTimer;
   state.bossSpawnTimer = next.bossSpawnTimer;
@@ -91,10 +100,15 @@ export function getStateSnapshot(): GameSnapshot {
       : null,
     player: {
       hp: state.player.hp,
+      maxHp: state.player.maxHp,
       score: state.player.score,
+      baseAttack: state.player.baseAttack,
       attackBonus: state.player.attackBonus,
+      totalAttack: state.player.baseAttack + state.player.attackBonus,
       skillEnergy: state.player.skillEnergy,
+      skillEnergyMax: state.player.skillEnergyMax,
       skillCharges: state.player.skillCharges,
+      maxSkillCharges: state.player.maxSkillCharges,
       skillIndex: state.player.skillIndex,
     },
   };

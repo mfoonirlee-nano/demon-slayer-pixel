@@ -85,6 +85,12 @@ Don't build for imaginary scenarios. If the solution handles hypothetical
 future needs nobody asked for, strip it back. Simple and correct beats
 elaborate and speculative.
 
+Project Rules Source of Truth
+When a task touches naming, comments, TypeScript hygiene, or magic numbers,
+read `docs/CODE_RULES.md` before editing and follow it as the repository's
+shared rule set. Keep `docs/CODE_RULES.md` and this file aligned when those
+rules change.
+
 
 ---
 

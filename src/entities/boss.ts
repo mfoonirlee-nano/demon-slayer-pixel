@@ -25,8 +25,18 @@ export function spawnBoss() {
     jumpCd: 0,
     animSeed: Math.floor(Math.random() * BOSS_CONFIG.animSeedMax),
   };
-  playTone(120, 0.2, "sawtooth", 0.06);
-  playTone(90, 0.25, "sawtooth", 0.05);
+  playTone(
+    BOSS_CONFIG.tones.spawnPrimary.frequency,
+    BOSS_CONFIG.tones.spawnPrimary.duration,
+    "sawtooth",
+    BOSS_CONFIG.tones.spawnPrimary.volume,
+  );
+  playTone(
+    BOSS_CONFIG.tones.spawnSecondary.frequency,
+    BOSS_CONFIG.tones.spawnSecondary.duration,
+    "sawtooth",
+    BOSS_CONFIG.tones.spawnSecondary.volume,
+  );
 }
 
 export function updateBoss() {
@@ -72,11 +82,21 @@ export function updateBoss() {
           damage: BOSS_CONFIG.projectileBaseDamage + boss.phase,
         });
       }
-      playTone(190, 0.08, "sawtooth", 0.05);
+      playTone(
+        BOSS_CONFIG.tones.projectile.frequency,
+        BOSS_CONFIG.tones.projectile.duration,
+        "sawtooth",
+        BOSS_CONFIG.tones.projectile.volume,
+      );
     } else {
       spawnEnemy();
       if (boss.phase >= BOSS_CONFIG.summonExtraEnemyPhase) spawnEnemy();
-      playTone(100, 0.09, "square", 0.045);
+      playTone(
+        BOSS_CONFIG.tones.summon.frequency,
+        BOSS_CONFIG.tones.summon.duration,
+        "square",
+        BOSS_CONFIG.tones.summon.volume,
+      );
     }
     boss.aiTimer = BOSS_CONFIG.aiBaseCooldown - boss.phase * BOSS_CONFIG.aiPhaseReduction;
   }

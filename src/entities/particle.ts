@@ -10,6 +10,9 @@ import {
 import type { HitBurstState, ParticleState, SkillBurstState } from "../types/game-state";
 import { drawVariableSheetFrame } from "../graphics";
 
+const FULL_CIRCLE_RADIANS = Math.PI * 2;
+const DEFAULT_HIT_BURST_COLOR = "#9feaff";
+
 export function emitSlash(x: number, y: number, color: string) {
   for (let i = 0; i < PARTICLE_CONFIG.slashCount; i += 1) {
     state.particles.push({
@@ -23,7 +26,7 @@ export function emitSlash(x: number, y: number, color: string) {
   }
 }
 
-export function emitHitBurst(x: number, y: number, color = "#9feaff", power = 1) {
+export function emitHitBurst(x: number, y: number, color = DEFAULT_HIT_BURST_COLOR, power = 1) {
   const life = Math.floor(HIT_BURST_CONFIG.baseLife + HIT_BURST_CONFIG.lifeScale * power);
   const sparkCount = Math.floor(HIT_BURST_CONFIG.baseSparks + HIT_BURST_CONFIG.sparkScale * power);
   state.hitBursts.push({
@@ -35,7 +38,7 @@ export function emitHitBurst(x: number, y: number, color = "#9feaff", power = 1)
     grow: HIT_BURST_CONFIG.baseGrow + HIT_BURST_CONFIG.growScale * power,
     color,
     sparks: Array.from({ length: sparkCount }, (_, i) => {
-      const ang = (Math.PI * 2 * i) / sparkCount + (Math.random() - 0.5) * HIT_BURST_CONFIG.sparkAngleJitter;
+      const ang = (FULL_CIRCLE_RADIANS * i) / sparkCount + (Math.random() - 0.5) * HIT_BURST_CONFIG.sparkAngleJitter;
       return {
         ang,
         dist: HIT_BURST_CONFIG.sparkDistBase + Math.random() * HIT_BURST_CONFIG.sparkDistVariance,
@@ -118,20 +121,20 @@ export function drawHitBursts() {
     const a = HIT_BURST_VISUAL.baseAlpha + t * HIT_BURST_VISUAL.alphaScale;
     ctx.save();
     ctx.globalCompositeOperation = "lighter";
-    ctx.strokeStyle = `rgba(${HIT_BURST_VISUAL.outerStrokeColor[0]},${HIT_BURST_VISUAL.outerStrokeColor[1]},${HIT_BURST_VISUAL.outerStrokeColor[2]},${a})`;
+    ctx.strokeStyle = `rgba(${HIT_BURST_VISUAL.outerStrokeColorRgb},${a})`;
     ctx.lineWidth = HIT_BURST_VISUAL.outerLineWidth;
     ctx.beginPath();
-    ctx.arc(b.x, b.y, b.radius, 0, Math.PI * 2);
+    ctx.arc(b.x, b.y, b.radius, 0, FULL_CIRCLE_RADIANS);
     ctx.stroke();
-    ctx.strokeStyle = `rgba(${HIT_BURST_VISUAL.innerStrokeColor[0]},${HIT_BURST_VISUAL.innerStrokeColor[1]},${HIT_BURST_VISUAL.innerStrokeColor[2]},${a * HIT_BURST_VISUAL.innerAlphaScale})`;
+    ctx.strokeStyle = `rgba(${HIT_BURST_VISUAL.innerStrokeColorRgb},${a * HIT_BURST_VISUAL.innerAlphaScale})`;
     ctx.lineWidth = HIT_BURST_VISUAL.innerLineWidth;
     ctx.beginPath();
-    ctx.arc(b.x, b.y, Math.max(HIT_BURST_CONFIG.minInnerRadius, b.radius - HIT_BURST_CONFIG.radiusScale), 0, Math.PI * 2);
+    ctx.arc(b.x, b.y, Math.max(HIT_BURST_CONFIG.minInnerRadius, b.radius - HIT_BURST_CONFIG.radiusScale), 0, FULL_CIRCLE_RADIANS);
     ctx.stroke();
     for (const s of b.sparks) {
       const px = b.x + Math.cos(s.ang) * s.dist;
       const py = b.y + Math.sin(s.ang) * s.dist;
-      ctx.fillStyle = `rgba(${HIT_BURST_VISUAL.sparkColor[0]},${HIT_BURST_VISUAL.sparkColor[1]},${HIT_BURST_VISUAL.sparkColor[2]},${a})`;
+      ctx.fillStyle = `rgba(${HIT_BURST_VISUAL.sparkColorRgb},${a})`;
       ctx.fillRect(px, py, s.size, s.size);
     }
     ctx.restore();

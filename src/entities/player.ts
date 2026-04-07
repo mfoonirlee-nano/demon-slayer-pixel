@@ -7,7 +7,6 @@ import {
   SKILLS,
   PLAYER_SHEETS,
   PLAYER_ANIMATION_STATES,
-  PLAYER_LIMITS,
   PLAYER_COMBAT,
   PLAYER_DRAW,
 } from "../constants";
@@ -20,24 +19,38 @@ import { keys } from "../input";
 export function triggerAttack() {
   if (state.player.attackTimer > 0 || state.player.skillTimer > 0) return;
   state.player.attackTimer = BASIC_ATTACK.frames;
-  playTone(320, 0.07, "triangle", 0.05);
+  playTone(
+    PLAYER_COMBAT.tones.attackStart.frequency,
+    PLAYER_COMBAT.tones.attackStart.duration,
+    "triangle",
+    PLAYER_COMBAT.tones.attackStart.volume,
+  );
+}
+
+export function getPlayerAttackDamage() {
+  return state.player.baseAttack + state.player.attackBonus;
 }
 
 export function gainSkillEnergy(amount: number) {
   const p = state.player;
-  if (p.skillCharges >= PLAYER_LIMITS.maxSkillCharges) {
-    p.skillEnergy = PLAYER_LIMITS.maxSkillEnergy;
+  if (p.skillCharges >= p.maxSkillCharges) {
+    p.skillEnergy = p.skillEnergyMax;
     return;
   }
   p.skillEnergy += amount;
-  while (p.skillEnergy >= PLAYER_LIMITS.maxSkillEnergy && p.skillCharges < PLAYER_LIMITS.maxSkillCharges) {
-    p.skillEnergy -= PLAYER_LIMITS.maxSkillEnergy;
+  while (p.skillEnergy >= p.skillEnergyMax && p.skillCharges < p.maxSkillCharges) {
+    p.skillEnergy -= p.skillEnergyMax;
     p.skillCharges += 1;
   }
-  if (p.skillCharges >= PLAYER_LIMITS.maxSkillCharges) {
-    p.skillCharges = PLAYER_LIMITS.maxSkillCharges;
-    p.skillEnergy = PLAYER_LIMITS.maxSkillEnergy;
+  if (p.skillCharges >= p.maxSkillCharges) {
+    p.skillCharges = p.maxSkillCharges;
+    p.skillEnergy = p.skillEnergyMax;
   }
+}
+
+export function healPlayer(amount: number) {
+  const p = state.player;
+  p.hp = Math.min(p.maxHp, p.hp + amount);
 }
 
 export function selectSkill(index: number) {
@@ -49,7 +62,7 @@ export function castSelectedSkill() {
   if (p.skillCharges <= 0) return;
   const skill = SKILLS[p.skillIndex] || SKILLS[0];
   p.skillCharges -= 1;
-  if (p.skillCharges < PLAYER_LIMITS.maxSkillCharges) {
+  if (p.skillCharges < p.maxSkillCharges) {
     p.skillEnergy = Math.min(p.skillEnergy, PLAYER_COMBAT.skillEnergySpendClamp);
   }
   p.skillFlash = 0;
@@ -86,7 +99,7 @@ export function castSelectedSkill() {
     e.hp -= damage;
     e.hitCd = PLAYER_COMBAT.enemyHitCooldown;
     emitSlash(ex, ey, skill.color);
-    emitHitBurst(ex, ey, "#9beeff", 1.5);
+    emitHitBurst(ex, ey, PLAYER_COMBAT.effects.skillEnemyBurstColor, PLAYER_COMBAT.skillEnemyBurstPower);
     if (e.hp <= 0) {
       p.score += PLAYER_COMBAT.enemyKillScore;
       gainSkillEnergy(PLAYER_COMBAT.enemyEnergyGain);
@@ -103,8 +116,8 @@ export function castSelectedSkill() {
       const ratio = Math.max(PLAYER_COMBAT.bossMinDamageRatio, 1 - dist / (radius + PLAYER_COMBAT.bossRadiusPadding));
       boss.hp -= skill.bossBase * ratio;
       boss.hitCd = PLAYER_COMBAT.bossHitCooldown;
-      emitSlash(bx, by, "#9beeff");
-      emitHitBurst(bx, by, "#c8f4ff", 2.2);
+      emitSlash(bx, by, PLAYER_COMBAT.effects.skillBossSlashColor);
+      emitHitBurst(bx, by, PLAYER_COMBAT.effects.skillBossBurstColor, PLAYER_COMBAT.skillBossBurstPower);
       if (boss.hp <= 0) {
         p.score += PLAYER_COMBAT.bossKillScore;
         gainSkillEnergy(PLAYER_COMBAT.bossEnergyGain);
@@ -114,8 +127,18 @@ export function castSelectedSkill() {
     }
   }
 
-  playTone(620, 0.11, "triangle", 0.06);
-  playTone(860, 0.09, "sawtooth", 0.05);
+  playTone(
+    PLAYER_COMBAT.tones.skillCastPrimary.frequency,
+    PLAYER_COMBAT.tones.skillCastPrimary.duration,
+    "triangle",
+    PLAYER_COMBAT.tones.skillCastPrimary.volume,
+  );
+  playTone(
+    PLAYER_COMBAT.tones.skillCastSecondary.frequency,
+    PLAYER_COMBAT.tones.skillCastSecondary.duration,
+    "sawtooth",
+    PLAYER_COMBAT.tones.skillCastSecondary.volume,
+  );
 }
 
 export function attackBox() {
@@ -126,7 +149,7 @@ export function attackBox() {
     y: p.y + BASIC_ATTACK.yOffset,
     w: reach,
     h: BASIC_ATTACK.height,
-    damage: BASIC_ATTACK.damage + p.attackBonus,
+    damage: getPlayerAttackDamage(),
     color: BASIC_ATTACK.color,
   };
 }
@@ -134,12 +157,17 @@ export function attackBox() {
 export function hurtPlayer(damage: number, sourceVx: number) {
   const p = state.player;
   if (p.invincible > 0) return;
-  p.hp -= damage;
+  p.hp = Math.max(0, p.hp - damage);
   p.invincible = PLAYER_COMBAT.hurtInvincibleFrames;
   p.vx = -Math.sign(sourceVx || 1) * PLAYER_COMBAT.hurtKnockbackX;
   p.vy = PLAYER_COMBAT.hurtKnockbackY;
-  emitSlash(p.x + p.w / 2, p.y + PLAYER_COMBAT.attackKillY, "#ff4e73");
-  playTone(120, 0.12, "square", 0.05);
+  emitSlash(p.x + p.w / 2, p.y + PLAYER_COMBAT.attackKillY, PLAYER_COMBAT.effects.hurtSlashColor);
+  playTone(
+    PLAYER_COMBAT.tones.hurt.frequency,
+    PLAYER_COMBAT.tones.hurt.duration,
+    "square",
+    PLAYER_COMBAT.tones.hurt.volume,
+  );
   if (p.hp <= 0) {
     state.gameOver = true;
   }
@@ -149,7 +177,12 @@ export function tryJump() {
   const p = state.player;
   if (onGround(p, p.onPlatform)) {
     p.vy = -p.jump;
-    playTone(260, 0.05, "triangle", 0.04);
+    playTone(
+      PLAYER_COMBAT.tones.jump.frequency,
+      PLAYER_COMBAT.tones.jump.duration,
+      "triangle",
+      PLAYER_COMBAT.tones.jump.volume,
+    );
   }
 }
 
@@ -166,7 +199,7 @@ export function updatePlayer() {
     p.vx = p.speed;
     p.facing = 1;
   } else {
-    p.vx *= 0.72;
+    p.vx *= PLAYER_COMBAT.groundDrag;
   }
 
   p.vy += GRAVITY;
@@ -179,10 +212,11 @@ export function updatePlayer() {
   let landed = false;
   if (p.vy >= 0) {
     for (const plt of state.platforms) {
-      const overlapX = p.x + p.w > plt.x + 8 && p.x < plt.x + plt.w - 8;
+      const overlapX = p.x + p.w > plt.x + PLAYER_COMBAT.platformEdgePadding
+        && p.x < plt.x + plt.w - PLAYER_COMBAT.platformEdgePadding;
       if (!overlapX) continue;
       const nowBottom = p.y + p.h;
-      if (prevBottom <= plt.y + 2 && nowBottom >= plt.y) {
+      if (prevBottom <= plt.y + PLAYER_COMBAT.platformLandingTolerance && nowBottom >= plt.y) {
         p.y = plt.y - p.h;
         p.vy = 0;
         p.onPlatform = plt;
@@ -209,12 +243,22 @@ export function updatePlayer() {
         e.hp -= box.damage;
         e.hitCd = PLAYER_COMBAT.attackEnemyHitCooldown;
         emitSlash(e.x + e.w / 2, e.y + PLAYER_COMBAT.attackHitY, box.color);
-        emitHitBurst(e.x + e.w / 2, e.y + PLAYER_COMBAT.attackHitY, "#8ee6ff", 1.0);
-        playTone(430 + Math.random() * 60, 0.04, "triangle", 0.025);
+        emitHitBurst(
+          e.x + e.w / 2,
+          e.y + PLAYER_COMBAT.attackHitY,
+          PLAYER_COMBAT.effects.attackEnemyBurstColor,
+          PLAYER_COMBAT.attackEnemyBurstPower,
+        );
+        playTone(
+          PLAYER_COMBAT.tones.attackHit.baseFrequency + Math.random() * PLAYER_COMBAT.tones.attackHit.randomVariance,
+          PLAYER_COMBAT.tones.attackHit.duration,
+          "triangle",
+          PLAYER_COMBAT.tones.attackHit.volume,
+        );
         if (e.hp <= 0) {
           p.score += PLAYER_COMBAT.attackKillScore;
           gainSkillEnergy(PLAYER_COMBAT.enemyEnergyGain);
-          emitSlash(e.x + e.w / 2, e.y + PLAYER_COMBAT.attackKillY, "#ff915d");
+          emitSlash(e.x + e.w / 2, e.y + PLAYER_COMBAT.attackKillY, PLAYER_COMBAT.effects.attackKillSlashColor);
           state.enemies.splice(i, 1);
         }
       }
@@ -225,13 +269,28 @@ export function updatePlayer() {
       boss.hp -= box.damage;
       boss.hitCd = PLAYER_COMBAT.attackBossHitCooldown;
       emitSlash(boss.x + boss.w * PLAYER_COMBAT.bossHitXRatio, boss.y + PLAYER_COMBAT.bossHitY, box.color);
-      emitHitBurst(boss.x + boss.w * PLAYER_COMBAT.bossHitXRatio, boss.y + PLAYER_COMBAT.bossHitY, "#b4efff", 1.4);
-      playTone(180, 0.06, "sawtooth", 0.05);
+      emitHitBurst(
+        boss.x + boss.w * PLAYER_COMBAT.bossHitXRatio,
+        boss.y + PLAYER_COMBAT.bossHitY,
+        PLAYER_COMBAT.effects.attackBossBurstColor,
+        PLAYER_COMBAT.attackBossBurstPower,
+      );
+      playTone(
+        PLAYER_COMBAT.tones.bossHit.frequency,
+        PLAYER_COMBAT.tones.bossHit.duration,
+        "sawtooth",
+        PLAYER_COMBAT.tones.bossHit.volume,
+      );
       if (boss.hp <= 0) {
         p.score += PLAYER_COMBAT.bossKillScore;
         gainSkillEnergy(PLAYER_COMBAT.bossEnergyGain);
-        emitSlash(boss.x + boss.w / 2, boss.y + PLAYER_COMBAT.bossHitY, "#ffc96b");
-        playTone(700, 0.12, "triangle", 0.06);
+        emitSlash(boss.x + boss.w / 2, boss.y + PLAYER_COMBAT.bossHitY, PLAYER_COMBAT.effects.bossKillSlashColor);
+        playTone(
+          PLAYER_COMBAT.tones.bossKill.frequency,
+          PLAYER_COMBAT.tones.bossKill.duration,
+          "triangle",
+          PLAYER_COMBAT.tones.bossKill.volume,
+        );
         state.boss = null;
         state.bossSpawnTimer = PLAYER_COMBAT.skillChargeResetDelay;
       }
@@ -251,14 +310,13 @@ export function drawPlayer() {
     if (skill.image) {
       const total = PLAYER_COMBAT.skillTimerFrames;
       const progress = 1 - p.skillTimer / total;
-      let frame = 0;
-      if (skill.frameRanges && skill.frameRanges.length > 0) {
-        frame = Math.min(skill.frameRanges.length - 1, Math.max(0, Math.floor(progress * skill.frameRanges.length)));
-      } else {
-        frame = Math.min((skill.frameCount || 6) - 1, Math.max(0, Math.floor(progress * (skill.frameCount || 6))));
-      }
-
-      if (isNaN(frame)) frame = 0;
+      const rawFrame = skill.frameRanges && skill.frameRanges.length > 0
+        ? Math.min(skill.frameRanges.length - 1, Math.max(0, Math.floor(progress * skill.frameRanges.length)))
+        : Math.min(
+          (skill.frameCount || PLAYER_DRAW.fallbackSkillFrameCount) - 1,
+          Math.max(0, Math.floor(progress * (skill.frameCount || PLAYER_DRAW.fallbackSkillFrameCount))),
+        );
+      const frame = Number.isNaN(rawFrame) ? 0 : rawFrame;
 
       const srcH = skill.frameH || (skill.image ? skill.image.height : PLAYER_DRAW.fallbackSkillFrameH);
       const drawH = skill.drawScale ? srcH * skill.drawScale : PLAYER_DRAW.fallbackSkillDrawH;

@@ -10,10 +10,15 @@ export type BossSnapshot = {
 
 export type PlayerSnapshot = {
   hp: number;
+  maxHp: number;
   score: number;
+  baseAttack: number;
   attackBonus: number;
+  totalAttack: number;
   skillEnergy: number;
+  skillEnergyMax: number;
   skillCharges: number;
+  maxSkillCharges: number;
   skillIndex: number;
 };
 
@@ -33,22 +38,22 @@ const initialSnapshot: GameSnapshot = {
   enemiesCount: 0,
   boss: null,
   player: {
-    hp: PLAYER_DEFAULTS.hp,
+    hp: PLAYER_DEFAULTS.maxHp,
+    maxHp: PLAYER_DEFAULTS.maxHp,
     score: 0,
+    baseAttack: PLAYER_DEFAULTS.baseAttack,
     attackBonus: 0,
-    skillEnergy: PLAYER_DEFAULTS.skillEnergy,
-    skillCharges: PLAYER_DEFAULTS.skillCharges,
+    totalAttack: PLAYER_DEFAULTS.baseAttack,
+    skillEnergy: PLAYER_DEFAULTS.maxSkillEnergy,
+    skillEnergyMax: PLAYER_DEFAULTS.maxSkillEnergy,
+    skillCharges: PLAYER_DEFAULTS.maxSkillCharges,
+    maxSkillCharges: PLAYER_DEFAULTS.maxSkillCharges,
     skillIndex: 0,
   },
 };
 
 export const gameStore = createStore();
 export const gameSnapshotAtom = atom<GameSnapshot>(initialSnapshot);
-export const loadingAtom = atom((get) => !get(gameSnapshotAtom).spritesReady);
-export const gameOverAtom = atom((get) => get(gameSnapshotAtom).gameOver);
-export const playerHudAtom = atom((get) => get(gameSnapshotAtom).player);
-export const bossHudAtom = atom((get) => get(gameSnapshotAtom).boss);
-export const elapsedAtom = atom((get) => get(gameSnapshotAtom).elapsed);
 
 export function setGameSnapshot(snapshot: GameSnapshot) {
   gameStore.set(gameSnapshotAtom, snapshot);
