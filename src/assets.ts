@@ -1,5 +1,25 @@
-import { PLAYER_SHEETS, ENEMY_SHEETS, BOSS_SHEET, SKILLS, type FrameRange } from "./constants";import { loadImage, buildEvenRanges } from "./utils";
+import {
+  PLAYER_SHEETS,
+  ENEMY_SHEETS,
+  BOSS_SHEET,
+  SKILLS,
+  DEFAULT_SKILL_FRAME_COUNT,
+} from "./constants";
+import type { FrameRange } from "./types/assets";
+import { loadImage, buildEvenRanges } from "./utils";
 import { state } from "./state";
+
+const IMAGE_ANALYSIS = {
+  alphaThreshold: 8,
+  contentDensityRatio: 0.02,
+  minSeparatorWidth: 2,
+  minSplitWidth: 2,
+} as const;
+
+const IMAGE_PIXEL_DATA = {
+  channelCount: 4,
+  alphaChannelOffset: 3,
+} as const;
 
 function detectVariableFrameRanges(image: HTMLImageElement, expectedCount?: number): FrameRange[] | null {
   try {
@@ -13,14 +33,13 @@ function detectVariableFrameRanges(image: HTMLImageElement, expectedCount?: numb
     if (!ctx) return null;
     ctx.drawImage(image, 0, 0);
     const data = ctx.getImageData(0, 0, w, h).data;
-    const alphaThreshold = 8;
     let top = 0;
     let bottom = h - 1;
     let found = false;
     for (let y = 0; y < h && !found; y += 1) {
       for (let x = 0; x < w; x += 1) {
-        const idx = (y * w + x) * 4 + 3;
-        if (data[idx] > alphaThreshold) {
+        const idx = (y * w + x) * IMAGE_PIXEL_DATA.channelCount + IMAGE_PIXEL_DATA.alphaChannelOffset;
+        if (data[idx] > IMAGE_ANALYSIS.alphaThreshold) {
           top = y;
           found = true;
           break;
@@ -30,8 +49,8 @@ function detectVariableFrameRanges(image: HTMLImageElement, expectedCount?: numb
     found = false;
     for (let y = h - 1; y >= 0 && !found; y -= 1) {
       for (let x = 0; x < w; x += 1) {
-        const idx = (y * w + x) * 4 + 3;
-        if (data[idx] > alphaThreshold) {
+        const idx = (y * w + x) * IMAGE_PIXEL_DATA.channelCount + IMAGE_PIXEL_DATA.alphaChannelOffset;
+        if (data[idx] > IMAGE_ANALYSIS.alphaThreshold) {
           bottom = y;
           found = true;
           break;
@@ -43,13 +62,13 @@ function detectVariableFrameRanges(image: HTMLImageElement, expectedCount?: numb
       bottom = h - 1;
     }
     const contentRows = bottom - top + 1;
-    const maxOpaquePerColumn = Math.max(1, Math.floor(contentRows * 0.02));
+    const maxOpaquePerColumn = Math.max(1, Math.floor(contentRows * IMAGE_ANALYSIS.contentDensityRatio));
     const opaqueCountPerCol = new Array(w).fill(0);
     for (let x = 0; x < w; x += 1) {
       let cnt = 0;
       for (let y = top; y <= bottom; y += 1) {
-        const idx = (y * w + x) * 4 + 3;
-        if (data[idx] > alphaThreshold) {
+        const idx = (y * w + x) * IMAGE_PIXEL_DATA.channelCount + IMAGE_PIXEL_DATA.alphaChannelOffset;
+        if (data[idx] > IMAGE_ANALYSIS.alphaThreshold) {
           cnt += 1;
           if (cnt > maxOpaquePerColumn) break;
         }
@@ -60,7 +79,7 @@ function detectVariableFrameRanges(image: HTMLImageElement, expectedCount?: numb
     for (let x = 0; x < w; x += 1) {
       isDelimiter[x] = opaqueCountPerCol[x] <= maxOpaquePerColumn;
     }
-    const runs = [];
+    const runs: Array<[number, number]> = [];
     let inRun = false;
     let runStart = 0;
     for (let x = 0; x < w; x += 1) {
@@ -75,8 +94,7 @@ function detectVariableFrameRanges(image: HTMLImageElement, expectedCount?: numb
       }
     }
     if (inRun) runs.push([runStart, w - 1]);
-    const minSep = 2;
-    const goodRuns = runs.filter((r) => r[1] - r[0] + 1 >= minSep);
+    const goodRuns = runs.filter((r) => r[1] - r[0] + 1 >= IMAGE_ANALYSIS.minSeparatorWidth);
     let contentStart = 0;
     let contentEnd = w;
     if (goodRuns.length && goodRuns[0][0] === 0) contentStart = goodRuns[0][1] + 1;
@@ -135,7 +153,7 @@ function detectVariableFrameRanges(image: HTMLImageElement, expectedCount?: numb
               if (out[i].w > out[idx].w) idx = i;
             }
             const r = out[idx];
-            if (r.w <= 2) break;
+            if (r.w <= IMAGE_ANALYSIS.minSplitWidth) break;
             const w1 = Math.floor(r.w / 2);
             const w2 = r.w - w1;
             const x2 = r.x + w1;
@@ -154,7 +172,7 @@ function detectVariableFrameRanges(image: HTMLImageElement, expectedCount?: numb
 }
 
 export async function loadSprites() {
-  const jobs = [];
+  const jobs: Array<Promise<void>> = [];
   for (const sheet of Object.values(PLAYER_SHEETS)) {
     jobs.push(loadImage(sheet.src).then((img) => {
       sheet.image = img;
@@ -177,25 +195,21 @@ export async function loadSprites() {
         skill.frameRanges = [];
         let x = 0;
         for (const fw of skill.frameWidths) {
-          const wv = Math.max(1, Math.floor(fw));
-          skill.frameRanges.push({ x, w: wv });
-          x += wv;
+          const widthValue = Math.max(1, Math.floor(fw));
+          skill.frameRanges.push({ x, w: widthValue });
+          x += widthValue;
         }
       } else if (skill.frameW) {
         skill.frameRanges = [];
-        const count = skill.frameCount || 6;
-        for (let i = 0; i < count; i++) {
+        const count = skill.frameCount || DEFAULT_SKILL_FRAME_COUNT;
+        for (let i = 0; i < count; i += 1) {
           skill.frameRanges.push({ x: i * skill.frameW, w: skill.frameW });
         }
       } else if (skill.frameCount) {
         skill.frameRanges = buildEvenRanges(img.width, skill.frameCount);
       } else {
         const detected = detectVariableFrameRanges(img, skill.frameCount);
-        if (detected && detected.length) {
-          skill.frameRanges = detected;
-        } else {
-          skill.frameRanges = buildEvenRanges(img.width, 6);
-        }
+        skill.frameRanges = detected && detected.length ? detected : buildEvenRanges(img.width, DEFAULT_SKILL_FRAME_COUNT);
       }
     }));
   }

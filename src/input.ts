@@ -1,5 +1,9 @@
 import { ensureAudio } from "./audio";
 
+const PREVENT_DEFAULT_KEYS = ["a", "d", "w", " ", "j", "k", "1", "2", "3", "r", "arrowleft", "arrowright", "arrowup"] as const;
+const SKILL_SWITCH_KEYS = ["1", "2", "3"] as const;
+const SKILL_KEY_OFFSET = 1;
+
 type InputHandlers = {
   onJump?: () => void;
   onAttack?: () => void;
@@ -24,7 +28,7 @@ export function setupInput(callbacks: InputHandlers) {
 
   const onKeyDown = (e: KeyboardEvent) => {
     const raw = e.key === " " ? " " : e.key.toLowerCase();
-    if (["a", "d", "w", " ", "j", "k", "1", "2", "3", "r", "arrowleft", "arrowright", "arrowup"].includes(raw)) {
+    if (PREVENT_DEFAULT_KEYS.includes(raw as (typeof PREVENT_DEFAULT_KEYS)[number])) {
       e.preventDefault();
     }
     handleInputPress(raw);
@@ -65,7 +69,9 @@ function handleInputPress(key: string) {
   if (handlers.onJump && (k === "w" || k === " ")) handlers.onJump();
   if (handlers.onAttack && k === "j") handlers.onAttack();
   if (handlers.onSkill && k === "k") handlers.onSkill();
-  if (handlers.onSwitchSkill && ["1", "2", "3"].includes(k)) handlers.onSwitchSkill(Number(k) - 1);
+  if (handlers.onSwitchSkill && SKILL_SWITCH_KEYS.includes(k as (typeof SKILL_SWITCH_KEYS)[number])) {
+    handlers.onSwitchSkill(Number(k) - SKILL_KEY_OFFSET);
+  }
   if (handlers.onRestart && k === "r") handlers.onRestart();
 }
 

@@ -1,14 +1,8 @@
 import { state } from "./state";
 import { ctx } from "./context";
 import { WIDTH, HEIGHT, GROUND_Y } from "./constants";
-import { lerp, colorLerp } from "./utils";
+import { drawMoon, getMoonSkyColors } from "./moon";
 
-const STAR_FIELD = Array.from({ length: 70 }, (_, i) => ({
-  x: (i * 137) % WIDTH,
-  y: 22 + ((i * 73) % 190),
-  size: i % 9 === 0 ? 3 : 2,
-  twinkle: (i * 11) % 24,
-}));
 const MOUNTAINS = Array.from({ length: 10 }, (_, i) => ({
   x: i * 140,
   w: 150 + (i % 3) * 34,
@@ -34,10 +28,9 @@ const LANTERNS = Array.from({ length: 8 }, (_, i) => ({
 
 export function drawBackground() {
   if (!ctx) return;
+
   const elapsed = state.elapsed;
-  const nightTop = "#0a1223";
-  const nightMid = "#101b33";
-  const nightLow = "#152744";
+  const { nightTop, nightMid, nightLow, upperOverlay, midOverlay } = getMoonSkyColors(state.moon);
   const scrollFar = (elapsed * 8) % WIDTH;
   const scrollMid = (elapsed * 14) % WIDTH;
   const scrollNear = (elapsed * 22) % WIDTH;
@@ -50,44 +43,13 @@ export function drawBackground() {
   ctx.fillStyle = nightLow;
   ctx.fillRect(0, 290, WIDTH, GROUND_Y - 290);
 
-  // Moon: color shifts over time; transitions to blood moon during boss phase.
-  const cycle = 0.5 + 0.5 * Math.sin(elapsed * 0.08);
-  const moonBaseRGB = [
-    Math.round(lerp(208, 255, cycle)),
-    Math.round(lerp(226, 232, cycle)),
-    Math.round(lerp(255, 190, cycle)),
-  ];
-  const moonColor = colorLerp(moonBaseRGB, [186, 36, 42], state.moonBloodLerp);
-  ctx.fillStyle = `rgba(196,225,255,${0.09 + 0.12 * (1 - state.moonBloodLerp)})`;
-  ctx.beginPath();
-  ctx.arc(762, 80, 50, 0, Math.PI * 2);
-  ctx.fill();
-  ctx.fillStyle = `rgba(206,230,255,${0.12 + 0.16 * (1 - state.moonBloodLerp)})`;
-  ctx.beginPath();
-  ctx.arc(762, 80, 34, 0, Math.PI * 2);
-  ctx.fill();
-  ctx.fillStyle = `rgba(255,86,92,${0.08 + 0.14 * state.moonBloodLerp})`;
-  ctx.beginPath();
-  ctx.arc(762, 80, 42, 0, Math.PI * 2);
-  ctx.fill();
-  ctx.fillStyle = `rgba(255,112,122,${0.05 + 0.09 * state.moonBloodLerp})`;
-  ctx.beginPath();
-  ctx.arc(762, 80, 58, 0, Math.PI * 2);
-  ctx.fill();
-  ctx.fillStyle = moonColor;
-  ctx.beginPath();
-  ctx.arc(762, 80, 22, 0, Math.PI * 2);
-  ctx.fill();
-  ctx.fillStyle = "rgba(156,176,208,0.35)";
-  ctx.fillRect(749, 75, 7, 1);
-  ctx.fillRect(757, 83, 6, 1);
-  ctx.fillRect(767, 79, 5, 1);
-  ctx.fillStyle = `rgba(255,255,255,${0.25 + 0.15 * (1 - state.moonBloodLerp)})`;
-  ctx.beginPath();
-  ctx.arc(754, 74, 7, 0, Math.PI * 2);
-  ctx.fill();
+  ctx.fillStyle = upperOverlay;
+  ctx.fillRect(0, 0, WIDTH, 220);
+  ctx.fillStyle = midOverlay;
+  ctx.fillRect(0, 110, WIDTH, 180);
 
-  // Moving cloud layers.
+  drawMoon({ elapsed, moon: state.moon });
+
   for (const c of CLOUDS) {
     const x1 = c.x - cloudDrift * c.layer;
     for (const wrap of [x1, x1 + WIDTH + 220]) {
@@ -96,13 +58,6 @@ export function drawBackground() {
       ctx.fillRect(wrap + c.w * 0.2, c.y - 6, c.w * 0.58, c.h * 0.7);
       ctx.fillRect(wrap + c.w * 0.52, c.y + 2, c.w * 0.42, c.h * 0.65);
     }
-  }
-
-  for (const s of STAR_FIELD) {
-    const twinkleOn = Math.floor(elapsed * 12 + s.twinkle) % 6 !== 0;
-    if (!twinkleOn) continue;
-    ctx.fillStyle = s.size === 3 ? "#dbe9ff" : "#a8c6ff";
-    ctx.fillRect(s.x, s.y, s.size, s.size);
   }
 
   for (const m of MOUNTAINS) {

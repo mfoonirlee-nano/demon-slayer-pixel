@@ -1,175 +1,32 @@
-import { GROUND_Y } from "./constants";
+import { GROUND_Y, PLAYER_DEFAULTS, RUNTIME_CONFIG } from "./constants";
 import type { GameSnapshot } from "./gameStore";
+import { createInitialMoonState } from "./moon";
+import type { GameState, PlayerState } from "./types/game-state";
 
-export type PlatformStyle = "stone" | "moss" | "shrine" | "ruin";
-export type CrystalType = "atk" | "hp";
-
-export type PlatformState = {
-  x: number;
-  y: number;
-  w: number;
-  h: number;
-  vx: number;
-  phase: number;
-  style: PlatformStyle;
-  trim: number;
-  notch: number;
-};
-
-export type PlayerState = {
-  x: number;
-  y: number;
-  w: number;
-  h: number;
-  vx: number;
-  vy: number;
-  speed: number;
-  jump: number;
-  facing: number;
-  hp: number;
-  invincible: number;
-  attackTimer: number;
-  score: number;
-  attackBonus: number;
-  skillEnergy: number;
-  skillCharges: number;
-  skillIndex: number;
-  skillTimer: number;
-  onPlatform: PlatformState | null;
-  skillFlash: number;
-  isPlayer: boolean;
-};
-
-export type EnemyState = {
-  x: number;
-  y: number;
-  w: number;
-  h: number;
-  vx: number;
-  hp: number;
-  damage: number;
-  hitCd: number;
-  animSeed: number;
-  sheetIndex: number;
-};
-
-export type BossState = {
-  x: number;
-  y: number;
-  w: number;
-  h: number;
-  vx: number;
-  targetX: number;
-  entering: boolean;
-  hpMax: number;
-  hp: number;
-  phase: number;
-  hitCd: number;
-  aiTimer: number;
-  jumpCd: number;
-  animSeed: number;
-} | null;
-
-export type ProjectileState = {
-  x: number;
-  y: number;
-  w: number;
-  h: number;
-  vx: number;
-  life: number;
-  damage: number;
-};
-
-export type ParticleState = {
-  x: number;
-  y: number;
-  vx: number;
-  vy: number;
-  life: number;
-  color: string;
-  size?: number;
-  fade?: number;
-};
-
-export type SparkState = {
-  ang: number;
-  dist: number;
-  speed: number;
-  size: number;
-};
-
-export type HitBurstState = {
-  x: number;
-  y: number;
-  life: number;
-  maxLife: number;
-  radius: number;
-  grow: number;
-  color: string;
-  sparks: SparkState[];
-};
-
-export type SkillBurstState = {
-  x: number;
-  y: number;
-  life: number;
-  maxLife: number;
-  frame: number;
-  frameCount: number;
-  skillIndex: number;
-  width: number;
-  height: number;
-  scaleIn: number;
-  scaleOut: number;
-  color: string;
-};
-
-export type CrystalState = {
-  platform: PlatformState;
-  offsetX: number;
-  type: CrystalType;
-  size: number;
-  phase: number;
-};
-
-export type GameState = {
-  elapsed: number;
-  last: number;
-  spawnTimer: number;
-  bossSpawnTimer: number;
-  platformSpawnTimer: number;
-  gameOver: boolean;
-  boss: BossState;
-  moonBloodLerp: number;
-  spritesReady: boolean;
-  player: PlayerState;
-  enemies: EnemyState[];
-  particles: ParticleState[];
-  projectiles: ProjectileState[];
-  platforms: PlatformState[];
-  skillBursts: SkillBurstState[];
-  hitBursts: HitBurstState[];
-  crystals: CrystalState[];
-};
+export type * from "./types/game-state";
 
 export function createInitialPlayerState(): PlayerState {
   return {
-    x: 140,
-    y: GROUND_Y - 56,
-    w: 34,
-    h: 56,
+    x: PLAYER_DEFAULTS.x,
+    y: GROUND_Y - PLAYER_DEFAULTS.yOffsetFromGround,
+    w: PLAYER_DEFAULTS.w,
+    h: PLAYER_DEFAULTS.h,
     vx: 0,
     vy: 0,
-    speed: 4,
-    jump: 14,
-    facing: 1,
-    hp: 100,
+    speed: PLAYER_DEFAULTS.speed,
+    jump: PLAYER_DEFAULTS.jump,
+    facing: PLAYER_DEFAULTS.facing,
+    hp: PLAYER_DEFAULTS.maxHp,
+    maxHp: PLAYER_DEFAULTS.maxHp,
     invincible: 0,
     attackTimer: 0,
     score: 0,
+    baseAttack: PLAYER_DEFAULTS.baseAttack,
     attackBonus: 0,
-    skillEnergy: 100,
-    skillCharges: 3,
+    skillEnergy: PLAYER_DEFAULTS.maxSkillEnergy,
+    skillEnergyMax: PLAYER_DEFAULTS.maxSkillEnergy,
+    skillCharges: PLAYER_DEFAULTS.maxSkillCharges,
+    maxSkillCharges: PLAYER_DEFAULTS.maxSkillCharges,
     skillIndex: 0,
     skillTimer: 0,
     onPlatform: null,
@@ -183,11 +40,11 @@ export function createInitialState(): GameState {
     elapsed: 0,
     last: 0,
     spawnTimer: 0,
-    bossSpawnTimer: 28,
+    bossSpawnTimer: RUNTIME_CONFIG.initialBossSpawnTimer,
     platformSpawnTimer: 0,
     gameOver: false,
     boss: null,
-    moonBloodLerp: 0,
+    moon: createInitialMoonState(),
     spritesReady: false,
     player: createInitialPlayerState(),
     enemies: [],
@@ -202,23 +59,28 @@ export function createInitialState(): GameState {
 
 export const state: GameState = createInitialState();
 
+function resetCollection<T>(collection: T[], nextItems: T[] = []) {
+  collection.length = 0;
+  collection.push(...nextItems);
+}
+
 export function resetState() {
   const next = createInitialState();
-  Object.assign(state.player, next.player);
-  state.enemies.length = 0;
-  state.platforms.length = 0;
-  state.crystals.length = 0;
-  state.particles.length = 0;
-  state.skillBursts.length = 0;
-  state.hitBursts.length = 0;
-  state.projectiles.length = 0;
+  state.player = next.player;
+  resetCollection(state.enemies, next.enemies);
+  resetCollection(state.platforms, next.platforms);
+  resetCollection(state.crystals, next.crystals);
+  resetCollection(state.particles, next.particles);
+  resetCollection(state.skillBursts, next.skillBursts);
+  resetCollection(state.hitBursts, next.hitBursts);
+  resetCollection(state.projectiles, next.projectiles);
   state.elapsed = next.elapsed;
   state.spawnTimer = next.spawnTimer;
   state.bossSpawnTimer = next.bossSpawnTimer;
   state.platformSpawnTimer = next.platformSpawnTimer;
   state.boss = next.boss;
   state.gameOver = next.gameOver;
-  state.moonBloodLerp = next.moonBloodLerp;
+  state.moon = next.moon;
   state.last = next.last;
   state.spritesReady = next.spritesReady;
 }
@@ -238,10 +100,15 @@ export function getStateSnapshot(): GameSnapshot {
       : null,
     player: {
       hp: state.player.hp,
+      maxHp: state.player.maxHp,
       score: state.player.score,
+      baseAttack: state.player.baseAttack,
       attackBonus: state.player.attackBonus,
+      totalAttack: state.player.baseAttack + state.player.attackBonus,
       skillEnergy: state.player.skillEnergy,
+      skillEnergyMax: state.player.skillEnergyMax,
       skillCharges: state.player.skillCharges,
+      maxSkillCharges: state.player.maxSkillCharges,
       skillIndex: state.player.skillIndex,
     },
   };

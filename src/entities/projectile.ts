@@ -1,6 +1,7 @@
-import { state, type ProjectileState } from "../state";
+import { state } from "../state";
 import { ctx } from "../context";
-import { WIDTH } from "../constants";
+import { WIDTH, PROJECTILE_CONFIG } from "../constants";
+import type { ProjectileState } from "../types/game-state";
 import { hitbox } from "../utils";
 import { hurtPlayer } from "./player";
 
@@ -14,7 +15,7 @@ export function updateProjectiles() {
       state.projectiles.splice(i, 1);
       continue;
     }
-    if (p.life <= 0 || p.x < -24 || p.x > WIDTH + 24) {
+    if (p.life <= 0 || p.x < -PROJECTILE_CONFIG.despawnMargin || p.x > WIDTH + PROJECTILE_CONFIG.despawnMargin) {
       state.projectiles.splice(i, 1);
     }
   }
@@ -23,9 +24,9 @@ export function updateProjectiles() {
 export function drawProjectiles() {
   if (!ctx) return;
   for (const p of state.projectiles) {
-    ctx.fillStyle = "#ff6e93";
+    ctx.fillStyle = PROJECTILE_CONFIG.primaryColor;
     ctx.fillRect(p.x, p.y, p.w, p.h);
-    ctx.fillStyle = "#ffe2ef";
-    ctx.fillRect(p.x + 2, p.y + 2, 3, 3);
+    ctx.fillStyle = PROJECTILE_CONFIG.highlightColor;
+    ctx.fillRect(p.x + PROJECTILE_CONFIG.highlightOffset, p.y + PROJECTILE_CONFIG.highlightOffset, PROJECTILE_CONFIG.highlightSize, PROJECTILE_CONFIG.highlightSize);
   }
 }

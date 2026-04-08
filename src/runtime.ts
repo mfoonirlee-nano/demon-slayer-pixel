@@ -1,6 +1,14 @@
 import { state, resetState, getStateSnapshot } from "./state";
 import { ctx } from "./context";
-import { WIDTH, HEIGHT } from "./constants";
+import { updateMoon } from "./moon";
+import {
+  WIDTH,
+  HEIGHT,
+  RUNTIME_CONFIG,
+  UI_COPY,
+  LOADING_SCREEN,
+  SKILL_FLASH,
+} from "./constants";
 import { loadSprites } from "./assets";
 import { setupInput, teardownInput } from "./input";
 import { drawBackground } from "./background";
@@ -15,37 +23,48 @@ import type { GameSnapshot } from "./gameStore";
 
 let frameId = 0;
 let running = false;
+let runToken = 0;
 let publishState: (snapshot: GameSnapshot) => void = () => {};
+
+function publishCurrentState() {
+  publishState(getStateSnapshot());
+}
+
+function queueNextFrame() {
+  frameId = requestAnimationFrame(loop);
+}
 
 function restart() {
   resetState();
-  publishState(getStateSnapshot());
+  publishCurrentState();
 }
 
 function drawLoadingState() {
   if (!ctx) return;
   drawBackground();
-  ctx.fillStyle = "rgba(0,0,0,0.45)";
+  ctx.fillStyle = LOADING_SCREEN.overlayColor;
   ctx.fillRect(0, 0, WIDTH, HEIGHT);
-  ctx.fillStyle = "#fff";
-  ctx.font = "24px monospace";
-  const loadingText = "加载像素贴图中...";
+  ctx.fillStyle = LOADING_SCREEN.textColor;
+  ctx.font = LOADING_SCREEN.font;
+  const loadingText = UI_COPY.loadingSprites;
   ctx.fillText(loadingText, WIDTH / 2 - ctx.measureText(loadingText).width / 2, HEIGHT / 2);
 }
 
 function loop(ts: number) {
   if (!running || !ctx) return;
   if (!state.last) state.last = ts;
-  const dt = Math.min(32, ts - state.last) / 1000;
+  const dt = Math.min(RUNTIME_CONFIG.maxFrameDeltaMs, ts - state.last) / RUNTIME_CONFIG.msPerSecond;
   state.last = ts;
 
-  const moonTarget = state.boss ? 1 : 0;
-  state.moonBloodLerp += (moonTarget - state.moonBloodLerp) * Math.min(1, dt * 2.4);
+  updateMoon(state.moon, dt, {
+    bloodActive: state.boss !== null,
+    bloodLerpSpeed: RUNTIME_CONFIG.moonBloodLerpSpeed,
+  });
 
   if (!state.spritesReady) {
     drawLoadingState();
-    publishState(getStateSnapshot());
-    frameId = requestAnimationFrame(loop);
+    publishCurrentState();
+    queueNextFrame();
     return;
   }
 
@@ -56,18 +75,21 @@ function loop(ts: number) {
 
     if (!state.boss && state.spawnTimer <= 0) {
       spawnEnemy();
-      state.spawnTimer = Math.max(0.38, 1.2 - state.elapsed * 0.012);
+      state.spawnTimer = Math.max(
+        RUNTIME_CONFIG.enemySpawnMinInterval,
+        RUNTIME_CONFIG.enemySpawnBaseInterval - state.elapsed * RUNTIME_CONFIG.enemySpawnDecay,
+      );
     }
 
     state.platformSpawnTimer -= dt;
     if (state.platformSpawnTimer <= 0) {
       spawnPlatform();
-      state.platformSpawnTimer = 2.2 + Math.random() * 1.5;
+      state.platformSpawnTimer = RUNTIME_CONFIG.platformSpawnBaseInterval + Math.random() * RUNTIME_CONFIG.platformSpawnRandomInterval;
     }
 
-    if (!state.boss && state.bossSpawnTimer <= 0 && state.elapsed > 18) {
+    if (!state.boss && state.bossSpawnTimer <= 0 && state.elapsed > RUNTIME_CONFIG.bossAppearAfterSeconds) {
       spawnBoss();
-      state.bossSpawnTimer = 9999;
+      state.bossSpawnTimer = RUNTIME_CONFIG.disableBossSpawnTimer;
     }
 
     updatePlayer();
@@ -85,20 +107,26 @@ function loop(ts: number) {
   drawPlatforms();
   drawCrystals();
 
-  if (state.player.skillFlash > 0 && ctx) {
-    const flashT = state.player.skillFlash / 24;
-    const radius = 320 - state.player.skillFlash * 9;
-    ctx.fillStyle = `rgba(98,190,255,${flashT * 0.08})`;
+  if (state.player.skillFlash > 0) {
+    const flashT = state.player.skillFlash / SKILL_FLASH.maxFrames;
+    const radius = SKILL_FLASH.baseRadius - state.player.skillFlash * SKILL_FLASH.radiusStep;
+    ctx.fillStyle = `rgba(${SKILL_FLASH.overlayColorRgb},${flashT * SKILL_FLASH.overlayAlphaScale})`;
     ctx.fillRect(0, 0, WIDTH, HEIGHT);
-    ctx.strokeStyle = `rgba(140,240,255,${flashT * 0.95})`;
-    ctx.lineWidth = 4.5;
+    ctx.strokeStyle = `rgba(${SKILL_FLASH.outerStrokeColorRgb},${flashT * SKILL_FLASH.outerStrokeAlphaScale})`;
+    ctx.lineWidth = SKILL_FLASH.outerLineWidth;
     ctx.beginPath();
-    ctx.arc(state.player.x + state.player.w / 2, state.player.y + state.player.h / 2, Math.max(40, radius), 0, Math.PI * 2);
+    ctx.arc(state.player.x + state.player.w / 2, state.player.y + state.player.h / 2, Math.max(SKILL_FLASH.minOuterRadius, radius), 0, Math.PI * 2);
     ctx.stroke();
-    ctx.strokeStyle = `rgba(214,247,255,${flashT * 0.65})`;
-    ctx.lineWidth = 2.3;
+    ctx.strokeStyle = `rgba(${SKILL_FLASH.innerStrokeColorRgb},${flashT * SKILL_FLASH.innerStrokeAlphaScale})`;
+    ctx.lineWidth = SKILL_FLASH.innerLineWidth;
     ctx.beginPath();
-    ctx.arc(state.player.x + state.player.w / 2, state.player.y + state.player.h / 2, Math.max(24, radius - 22), 0, Math.PI * 2);
+    ctx.arc(
+      state.player.x + state.player.w / 2,
+      state.player.y + state.player.h / 2,
+      Math.max(SKILL_FLASH.minInnerRadius, radius - SKILL_FLASH.innerRadiusBase),
+      0,
+      Math.PI * 2,
+    );
     ctx.stroke();
     state.player.skillFlash -= 1;
   }
@@ -110,22 +138,23 @@ function loop(ts: number) {
   drawHitBursts();
   drawProjectiles();
   drawParticles();
-  publishState(getStateSnapshot());
-  frameId = requestAnimationFrame(loop);
+  publishCurrentState();
+  queueNextFrame();
 }
 
 export function startGame(options: { onStateChange?: (snapshot: GameSnapshot) => void } = {}) {
   if (!ctx) {
-    throw new Error("Canvas context is not ready.");
+    throw new Error(UI_COPY.canvasContextMissing);
   }
   if (running) {
     return stopGame;
   }
 
   running = true;
+  const currentRunToken = ++runToken;
   publishState = options.onStateChange ?? (() => {});
   resetState();
-  publishState(getStateSnapshot());
+  publishCurrentState();
 
   setupInput({
     onJump: tryJump,
@@ -142,9 +171,9 @@ export function startGame(options: { onStateChange?: (snapshot: GameSnapshot) =>
       state.spritesReady = true;
     })
     .finally(() => {
-      if (!running) return;
+      if (!running || currentRunToken !== runToken) return;
       state.last = 0;
-      frameId = requestAnimationFrame(loop);
+      queueNextFrame();
     });
 
   return stopGame;
@@ -152,6 +181,7 @@ export function startGame(options: { onStateChange?: (snapshot: GameSnapshot) =>
 
 export function stopGame() {
   running = false;
+  runToken += 1;
   publishState = () => {};
   if (frameId) {
     cancelAnimationFrame(frameId);
