@@ -11,7 +11,7 @@ import {
   PLAYER_DRAW,
 } from "../constants";
 import { onGround, hitbox, frameIndex } from "../utils";
-import { drawSheetFrame, drawVariableSheetFrame } from "../graphics";
+import { drawSheetFrame, drawSkillFrame } from "../graphics";
 import { playTone } from "../audio";
 import { emitSlash, emitHitBurst } from "./particle";
 import { keys } from "../input";
@@ -71,7 +71,7 @@ export function castSelectedSkill() {
   const cx = p.x + p.w / 2;
   const cy = p.y + p.h / 2;
   const radius = skill.radius;
-  const frameCount = Math.max(1, (skill.frameRanges || []).length);
+  const frameCount = Math.max(1, skill.frameCount);
 
   state.skillBursts.push({
     x: cx,
@@ -310,32 +310,19 @@ export function drawPlayer() {
     if (skill.image) {
       const total = PLAYER_COMBAT.skillTimerFrames;
       const progress = 1 - p.skillTimer / total;
-      const rawFrame = skill.frameRanges && skill.frameRanges.length > 0
-        ? Math.min(skill.frameRanges.length - 1, Math.max(0, Math.floor(progress * skill.frameRanges.length)))
-        : Math.min(
-          (skill.frameCount || PLAYER_DRAW.fallbackSkillFrameCount) - 1,
-          Math.max(0, Math.floor(progress * (skill.frameCount || PLAYER_DRAW.fallbackSkillFrameCount))),
-        );
+      const rawFrame = Math.min(skill.frameCount - 1, Math.max(0, Math.floor(progress * skill.frameCount)));
       const frame = Number.isNaN(rawFrame) ? 0 : rawFrame;
 
-      const srcH = skill.frameH || (skill.image ? skill.image.height : PLAYER_DRAW.fallbackSkillFrameH);
+      const srcH = skill.frameH || skill.image.height;
       const drawH = skill.drawScale ? srcH * skill.drawScale : PLAYER_DRAW.fallbackSkillDrawH;
-      let drawW = drawH;
-
-      if (skill.frameRanges && skill.frameRanges[frame]) {
-        const fr = skill.frameRanges[frame];
-        drawW = drawH * (fr.w / srcH);
-      } else if (skill.frameRanges && skill.frameRanges.length > 0) {
-        const safeFr = skill.frameRanges[frame % skill.frameRanges.length];
-        if (safeFr) drawW = drawH * (safeFr.w / srcH);
-      }
+      const drawW = drawH * (skill.frameW / srcH);
 
       const centerY = p.y + p.h / 2;
       const centerX = p.x + p.w / 2;
       const drawX = centerX - drawW / 2;
       const drawY = centerY - drawH / 2;
 
-      drawVariableSheetFrame(skill, frame, drawX, drawY, drawW, drawH, p.facing);
+      drawSkillFrame(skill, frame, drawX, drawY, drawW, drawH, p.facing);
       return;
     }
 

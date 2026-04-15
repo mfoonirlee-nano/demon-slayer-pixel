@@ -8,7 +8,7 @@ import {
   HIT_BURST_VISUAL,
 } from "../constants";
 import type { HitBurstState, ParticleState, SkillBurstState } from "../types/game-state";
-import { drawVariableSheetFrame } from "../graphics";
+import { drawSkillFrame } from "../graphics";
 
 const FULL_CIRCLE_RADIANS = Math.PI * 2;
 const DEFAULT_HIT_BURST_COLOR = "#9feaff";
@@ -102,7 +102,7 @@ export function drawSkillBursts() {
     ctx.globalCompositeOperation = "source-over";
     ctx.globalAlpha = SKILL_BURST_VISUAL.alpha;
     const facing = state.player ? state.player.facing : 1;
-    drawVariableSheetFrame(skill, b.frame, drawX, drawY, drawW, drawH, facing);
+    drawSkillFrame(skill, b.frame, drawX, drawY, drawW, drawH, facing);
     ctx.fillStyle = `${b.color}${SKILL_BURST_VISUAL.floorTintSuffix}`;
     ctx.fillRect(
       drawX + SKILL_BURST_VISUAL.floorTintXOffset,

@@ -12,14 +12,14 @@ export function drawSheetFrame(sheet: SpriteSheet, frame: number, x: number, y: 
   ctx.restore();
 }
 
-export function drawVariableSheetFrame(skill: Skill, frame: number, x: number, y: number, w: number, h: number, facing = 1) {
-  if (!ctx || !skill.image || !skill.frameRanges || !skill.frameRanges.length) return;
-  const safeFrame = ((frame % skill.frameRanges.length) + skill.frameRanges.length) % skill.frameRanges.length;
-  const range = skill.frameRanges[safeFrame];
-  if (!range) return;
+export function drawSkillFrame(skill: Skill, frame: number, x: number, y: number, w: number, h: number, facing = 1) {
+  if (!ctx || !skill.image) return;
+  const safeFrame = ((frame % skill.frameCount) + skill.frameCount) % skill.frameCount;
+  const sx = safeFrame * skill.frameW;
+  const srcH = skill.frameH || skill.image.height;
   ctx.save();
   ctx.translate(x + w / 2, y + h / 2);
   ctx.scale(facing, 1);
-  ctx.drawImage(skill.image, range.x, 0, range.w, skill.frameH || skill.image.height, -w / 2, -h / 2, w, h);
+  ctx.drawImage(skill.image, sx, 0, skill.frameW, srcH, -w / 2, -h / 2, w, h);
   ctx.restore();
 }

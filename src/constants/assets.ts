@@ -1,17 +1,16 @@
 import { PLAYER_ANIMATION_STATES, SKILL_IDS } from "./ids";
 import type { PlayerAnimationState, Skill, SpriteSheet } from "../types/assets";
 
-export const DEFAULT_SKILL_FRAME_COUNT = 6;
-
 export const SKILLS: Skill[] = [
   {
     id: SKILL_IDS.skill1,
     name: "壹之型",
     src: "assets/sprites/skill1.png",
     frameCount: 5,
+    frameW: 800,
     image: null,
-    frameRanges: null,
-    frameH: 496,
+
+    frameH: 420,
     drawScale: 0.15,
     radius: 230,
     enemyBase: 34,
@@ -24,9 +23,10 @@ export const SKILLS: Skill[] = [
     name: "贰之型",
     src: "assets/sprites/skill2.png",
     frameCount: 6,
+    frameW: 500,
     image: null,
-    frameRanges: null,
-    frameH: 496,
+
+    frameH: 500,
     drawScale: 0.15,
     radius: 240,
     enemyBase: 37,
@@ -38,10 +38,11 @@ export const SKILLS: Skill[] = [
     id: SKILL_IDS.skill3,
     name: "叁之型",
     src: "assets/sprites/skill3.png",
-    frameCount: 6,
+    frameCount: 5,
+    frameW: 540,
     image: null,
-    frameRanges: null,
-    frameH: 496,
+
+    frameH: 470,
     drawScale: 0.15,
     radius: 255,
     enemyBase: 40,
