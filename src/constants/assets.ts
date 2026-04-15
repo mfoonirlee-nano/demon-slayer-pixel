@@ -9,7 +9,6 @@ export const SKILLS: Skill[] = [
     frameCount: 5,
     frameW: 800,
     image: null,
-
     frameH: 420,
     drawScale: 0.15,
     radius: 230,
@@ -25,7 +24,6 @@ export const SKILLS: Skill[] = [
     frameCount: 6,
     frameW: 500,
     image: null,
-
     frameH: 500,
     drawScale: 0.15,
     radius: 240,
@@ -41,7 +39,6 @@ export const SKILLS: Skill[] = [
     frameCount: 5,
     frameW: 540,
     image: null,
-
     frameH: 470,
     drawScale: 0.15,
     radius: 255,
