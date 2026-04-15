@@ -1,5 +1,3 @@
-export type FrameRange = { x: number; w: number };
-
 export type SkillId = "skill1" | "skill2" | "skill3";
 
 export type PlayerAnimationState = "idle" | "run" | "jump" | "attack";
@@ -11,16 +9,12 @@ export type Skill = {
   name: string;
   // 技能序列图（SpriteSheet）的相对路径
   src: string;
-  // 动画的帧数。决定了每一帧切片的宽度 (图片总宽度 / frameCount)
+  // 动画的帧数
   frameCount: number;
+  // 每一帧切片的宽度（像素），等于图片总宽度 / frameCount
+  frameW: number;
   // 引擎加载后的图片对象
   image: HTMLImageElement | null;
-  // 引擎计算的每帧剪裁坐标，无需手动配置
-  frameRanges: FrameRange[] | null;
-  // 特殊指定的各帧具体宽度数组
-  frameWidths?: number[];
-  // 每帧固定的具体宽度，如果配置了会覆盖默认的均分逻辑
-  frameW?: number;
   // 【最重要：决定了动画的物理重心和裁剪高度】
   // 原始切片高度。游戏引擎默认会将图片区域的中心点绑定在主角的中心点上。
   // 因此如果新图上下有不对称的留白，都会直接导致游戏内播放技能的“释放位置”偏上或偏下。

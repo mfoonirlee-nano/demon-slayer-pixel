@@ -1,5 +1,4 @@
 import { GROUND_Y } from "./constants";
-import type { FrameRange } from "./types/assets";
 import type { PlatformState } from "./types/game-state";
 
 const GROUND_CONTACT_EPSILON = 0.1;
@@ -33,16 +32,6 @@ export function hitbox(a: RectLike, b: RectLike) {
 
 export function frameIndex(frameCount: number, speed: number, elapsed: number, seed = 0) {
   return Math.floor((elapsed * FRAMES_PER_SECOND + seed) / speed) % frameCount;
-}
-
-export function buildEvenRanges(width: number, count: number): FrameRange[] {
-  const ranges: FrameRange[] = [];
-  for (let i = 0; i < count; i += 1) {
-    const sx = Math.floor((i * width) / count);
-    const ex = i === count - 1 ? width : Math.floor(((i + 1) * width) / count);
-    ranges.push({ x: sx, w: Math.max(1, ex - sx) });
-  }
-  return ranges;
 }
 
 export function lerp(a: number, b: number, t: number) {
