@@ -94,8 +94,10 @@ export function drawSkillBursts() {
     const t = 1 - b.life / b.maxLife;
     const skill = SKILLS[b.skillIndex] || SKILLS[0];
     const scale = b.scaleIn + (b.scaleOut - b.scaleIn) * t;
-    const drawW = b.width * scale;
-    const drawH = b.height * scale;
+    const baseH = skill.frameH * skill.drawScale;
+    const baseW = skill.frameW * skill.drawScale;
+    const drawW = baseW * scale;
+    const drawH = baseH * scale;
     const drawX = b.x - drawW / 2;
     const drawY = b.y - drawH * SKILL_BURST_VISUAL.drawYOffsetRatio;
     ctx.save();

@@ -82,7 +82,7 @@ export function resetState() {
   state.gameOver = next.gameOver;
   state.moon = next.moon;
   state.last = next.last;
-  state.spritesReady = next.spritesReady;
+  // spritesReady is not reset — loaded assets persist across game resets
 }
 
 export function getStateSnapshot(): GameSnapshot {

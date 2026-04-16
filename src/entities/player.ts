@@ -81,8 +81,6 @@ export function castSelectedSkill() {
     frame: 0,
     frameCount,
     skillIndex: p.skillIndex,
-    width: PLAYER_COMBAT.skillBurstWidth,
-    height: PLAYER_COMBAT.skillBurstHeight,
     scaleIn: PLAYER_COMBAT.skillScaleIn,
     scaleOut: PLAYER_COMBAT.skillScaleOut,
     color: skill.color,
@@ -319,8 +317,8 @@ export function drawPlayer() {
 
       const centerY = p.y + p.h / 2;
       const centerX = p.x + p.w / 2;
-      const drawX = centerX - drawW / 2;
-      const drawY = centerY - drawH / 2;
+      const drawX = centerX - drawW / 2 + skill.drawOffsetX;
+      const drawY = centerY - drawH / 2 + skill.drawOffsetY;
 
       drawSkillFrame(skill, frame, drawX, drawY, drawW, drawH, p.facing);
       return;
