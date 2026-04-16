@@ -34,8 +34,6 @@ export const PLAYER_COMBAT = {
   skillTimerFrames: 24,
   skillBurstLife: 40,
   skillBurstYOffset: 2,
-  skillBurstWidth: 400,
-  skillBurstHeight: 300,
   skillScaleIn: 0.92,
   skillScaleOut: 1.08,
   skillEnemyBurstPower: 1.5,

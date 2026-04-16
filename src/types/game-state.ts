@@ -120,8 +120,6 @@ export type SkillBurstState = {
   frame: number;
   frameCount: number;
   skillIndex: number;
-  width: number;
-  height: number;
   scaleIn: number;
   scaleOut: number;
   color: string;

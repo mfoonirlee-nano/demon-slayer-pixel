@@ -23,6 +23,11 @@ export type Skill = {
   // 控制技能附着在人物身上时的整体放大/缩小比例。
   // 它会将最终展示的高度变为 `frameH * drawScale`，并由此按切片比例同等拉伸宽度。
   drawScale: number;
+  // 动画重心偏移（屏幕像素，正值向右/下）。
+  // 当 sprite 图留白不对称导致视觉重心偏离玩家中心时，用这两个值补偿，
+  // 而不需要裁剪原图或修改 frameH。
+  drawOffsetX: number;
+  drawOffsetY: number;
   // 技能范围的逻辑判定半径（与视觉素材大小没有直接关联）
   radius: number;
   // 基础敌人伤害

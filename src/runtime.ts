@@ -23,7 +23,6 @@ import type { GameSnapshot } from "./gameStore";
 
 let frameId = 0;
 let running = false;
-let runToken = 0;
 let publishState: (snapshot: GameSnapshot) => void = () => {};
 
 function publishCurrentState() {
@@ -65,7 +64,7 @@ function loop(ts: number) {
     drawLoadingState();
     publishCurrentState();
     queueNextFrame();
-    return;
+    return; // spritesReady=false, waiting for assets
   }
 
   if (!state.gameOver) {
@@ -151,7 +150,6 @@ export function startGame(options: { onStateChange?: (snapshot: GameSnapshot) =>
   }
 
   running = true;
-  const currentRunToken = ++runToken;
   publishState = options.onStateChange ?? (() => {});
   resetState();
   publishCurrentState();
@@ -164,24 +162,22 @@ export function startGame(options: { onStateChange?: (snapshot: GameSnapshot) =>
     onRestart: restart,
   });
 
-  const loadTask = state.spritesReady ? Promise.resolve() : loadSprites();
-  loadTask
-    .catch((err) => {
-      console.error(err);
+  state.last = 0;
+  queueNextFrame();
+
+  console.log('[runtime] startGame: spritesReady=', state.spritesReady);
+  if (!state.spritesReady) {
+    loadSprites().catch((err) => {
+      console.error('[runtime] loadSprites failed:', err);
       state.spritesReady = true;
-    })
-    .finally(() => {
-      if (!running || currentRunToken !== runToken) return;
-      state.last = 0;
-      queueNextFrame();
     });
+  }
 
   return stopGame;
 }
 
 export function stopGame() {
   running = false;
-  runToken += 1;
   publishState = () => {};
   if (frameId) {
     cancelAnimationFrame(frameId);
