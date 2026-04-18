@@ -8,7 +8,6 @@ import {
   HIT_BURST_VISUAL,
 } from "../constants";
 import type { HitBurstState, ParticleState, SkillBurstState } from "../types/game-state";
-import { drawSkillFrame } from "../graphics";
 
 const FULL_CIRCLE_RADIANS = Math.PI * 2;
 const DEFAULT_HIT_BURST_COLOR = "#9feaff";
@@ -69,8 +68,6 @@ export function updateSkillBursts() {
   for (let i = state.skillBursts.length - 1; i >= 0; i -= 1) {
     const b = state.skillBursts[i] as SkillBurstState;
     b.life -= 1;
-    const progress = 1 - b.life / b.maxLife;
-    b.frame = Math.min(b.frameCount - 1, Math.floor(progress * b.frameCount));
     if (b.life <= 0) state.skillBursts.splice(i, 1);
   }
 }
@@ -94,17 +91,14 @@ export function drawSkillBursts() {
     const t = 1 - b.life / b.maxLife;
     const skill = SKILLS[b.skillIndex] || SKILLS[0];
     const scale = b.scaleIn + (b.scaleOut - b.scaleIn) * t;
-    const baseH = skill.frameH * skill.drawScale;
     const baseW = skill.frameW * skill.drawScale;
+    const baseH = skill.frameH * skill.drawScale;
     const drawW = baseW * scale;
     const drawH = baseH * scale;
     const drawX = b.x - drawW / 2;
     const drawY = b.y - drawH * SKILL_BURST_VISUAL.drawYOffsetRatio;
     ctx.save();
-    ctx.globalCompositeOperation = "source-over";
     ctx.globalAlpha = SKILL_BURST_VISUAL.alpha;
-    const facing = state.player ? state.player.facing : 1;
-    drawSkillFrame(skill, b.frame, drawX, drawY, drawW, drawH, facing);
     ctx.fillStyle = `${b.color}${SKILL_BURST_VISUAL.floorTintSuffix}`;
     ctx.fillRect(
       drawX + SKILL_BURST_VISUAL.floorTintXOffset,

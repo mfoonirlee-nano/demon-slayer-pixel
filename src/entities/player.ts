@@ -66,7 +66,7 @@ export function castSelectedSkill() {
     p.skillEnergy = Math.min(p.skillEnergy, PLAYER_COMBAT.skillEnergySpendClamp);
   }
   p.skillFlash = 0;
-  p.skillTimer = PLAYER_COMBAT.skillTimerFrames;
+  p.skillTimer = Math.ceil(skill.frameCount * 60 / 24);
 
   const cx = p.x + p.w / 2;
   const cy = p.y + p.h / 2;
@@ -192,10 +192,10 @@ export function updatePlayer() {
   }
   if (keys.has("a")) {
     p.vx = -p.speed;
-    p.facing = -1;
+    if (p.skillTimer <= 0) p.facing = -1;
   } else if (keys.has("d")) {
     p.vx = p.speed;
-    p.facing = 1;
+    if (p.skillTimer <= 0) p.facing = 1;
   } else {
     p.vx *= PLAYER_COMBAT.groundDrag;
   }
@@ -306,19 +306,18 @@ export function drawPlayer() {
     const skill = SKILLS[p.skillIndex] || SKILLS[0];
 
     if (skill.image) {
-      const total = PLAYER_COMBAT.skillTimerFrames;
-      const progress = 1 - p.skillTimer / total;
-      const rawFrame = Math.min(skill.frameCount - 1, Math.max(0, Math.floor(progress * skill.frameCount)));
-      const frame = Number.isNaN(rawFrame) ? 0 : rawFrame;
+      const total = Math.ceil(skill.frameCount * 60 / 24);
+      const elapsedGameFrames = total - p.skillTimer;
+      const frame = Math.min(skill.frameCount - 1, Math.floor(elapsedGameFrames * 24 / 60));
 
       const srcH = skill.frameH || skill.image.height;
       const drawH = skill.drawScale ? srcH * skill.drawScale : PLAYER_DRAW.fallbackSkillDrawH;
       const drawW = drawH * (skill.frameW / srcH);
 
-      const centerY = p.y + p.h / 2;
+      const feetY = p.y + p.h;
       const centerX = p.x + p.w / 2;
       const drawX = centerX - drawW / 2 + skill.drawOffsetX;
-      const drawY = centerY - drawH / 2 + skill.drawOffsetY;
+      const drawY = feetY - drawH - PLAYER_DRAW.yOffset + skill.drawOffsetY;
 
       drawSkillFrame(skill, frame, drawX, drawY, drawW, drawH, p.facing);
       return;
