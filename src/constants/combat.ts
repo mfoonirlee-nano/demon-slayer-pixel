@@ -94,6 +94,7 @@ export const PLAYER_DRAW = {
   fallbackSkillFrameH: 496,
   fallbackSkillDrawH: 150,
   fallbackSkillFrameCount: 6,
+  skillAnimFps: 12,
   fallbackAnimSpeed: {
     attack: 3,
     run: 5,

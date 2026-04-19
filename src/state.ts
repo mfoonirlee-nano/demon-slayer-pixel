@@ -51,6 +51,8 @@ export function createInitialState(): GameState {
     particles: [],
     projectiles: [],
     platforms: [],
+    pillars: [],
+    chests: [],
     skillBursts: [],
     hitBursts: [],
     crystals: [],
@@ -69,6 +71,8 @@ export function resetState() {
   state.player = next.player;
   resetCollection(state.enemies, next.enemies);
   resetCollection(state.platforms, next.platforms);
+  resetCollection(state.pillars, next.pillars);
+  resetCollection(state.chests, next.chests);
   resetCollection(state.crystals, next.crystals);
   resetCollection(state.particles, next.particles);
   resetCollection(state.skillBursts, next.skillBursts);

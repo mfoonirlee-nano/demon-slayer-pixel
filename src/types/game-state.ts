@@ -2,6 +2,8 @@ import type { MoonState } from "../moon/types";
 
 export type PlatformStyle = "stone" | "moss" | "shrine" | "ruin";
 export type CrystalType = "atk" | "hp";
+export type PlatformKind = "normal" | "hover" | "chain";
+export type PlatformLayer = "low" | "mid" | "high";
 
 export type PlatformState = {
   x: number;
@@ -11,8 +13,26 @@ export type PlatformState = {
   vx: number;
   phase: number;
   style: PlatformStyle;
+  kind: PlatformKind;
   trim: number;
   notch: number;
+  hoverAmplitude: number;
+  baseY: number;
+};
+
+export type PillarState = {
+  x: number;
+  y: number;
+  w: number;
+  h: number;
+  vx: number;
+};
+
+export type ChestState = {
+  platform: PlatformState;
+  offsetX: number;
+  phase: number;
+  collected: boolean;
 };
 
 export type PlayerState = {
@@ -148,6 +168,8 @@ export type GameState = {
   particles: ParticleState[];
   projectiles: ProjectileState[];
   platforms: PlatformState[];
+  pillars: PillarState[];
+  chests: ChestState[];
   skillBursts: SkillBurstState[];
   hitBursts: HitBurstState[];
   crystals: CrystalState[];

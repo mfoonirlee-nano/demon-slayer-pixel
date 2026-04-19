@@ -1,10 +1,6 @@
 import { CRYSTAL_TYPES, PLATFORM_STYLE_VALUES } from "./ids";
 
 export const PLATFORM_CONFIG = {
-  widthBase: 88,
-  widthVariance: 74,
-  minYOffset: 70,
-  yVariance: 130,
   spawnOffsetX: 40,
   height: 12,
   baseSpeed: 1.4,
@@ -15,10 +11,93 @@ export const PLATFORM_CONFIG = {
   notchChance: 0.5,
   notchBase: 1,
   notchVariants: 3,
-  crystalEligibleHeight: 120,
-  crystalSpawnChance: 0.58,
+  crystalSpawnChance: 0.45,
   phaseSpeed: 3,
   despawnMargin: 20,
+} as const;
+
+// Y positions by layer (absolute canvas Y, lower number = higher on screen)
+// Jump height = v0²/(2g) = 14²/(2*0.75) ≈ 131px
+// GROUND_Y = 460
+export const PLATFORM_LAYERS = {
+  low:  { yMin: 383, yMax: 418 },  // 42–77px above ground  — easy jump
+  mid:  { yMin: 345, yMax: 383 },  // 77–115px above ground — normal jump
+  high: { yMin: 330, yMax: 345 },  // 115–130px above ground — full jump (max ≈ 131px)
+} as const;
+
+// Normal platform sizes per layer
+export const PLATFORM_WIDTH = {
+  normal: { base: 88, variance: 64 },   // 88–152px
+  chain:  { base: 48, variance: 32 },   // 48–80px (smaller, gap-jump stepping stones)
+} as const;
+
+// Markov transition matrix: given current layer, probability weights [low, mid, high]
+export const LAYER_TRANSITIONS = {
+  low:  [0.50, 0.35, 0.15],
+  mid:  [0.25, 0.40, 0.35],
+  high: [0.15, 0.50, 0.35],
+} as const;
+
+// Chain cluster config (2–3 stepping-stone platforms spawned together)
+export const CHAIN_CONFIG = {
+  minCount: 2,
+  maxCount: 3,
+  // Horizontal gap between chain platforms (player can jump: 4px/f × ~37f flight ≈ 148px safe max)
+  gapMin: 72,
+  gapMax: 112,
+  // Max vertical step between chain platforms (must stay within jump range)
+  maxDyAbs: 55,
+  // Chance to trigger a chain cluster instead of a normal platform
+  triggerChance: 0.22,
+} as const;
+
+// Hover platform (floating up/down)
+export const HOVER_CONFIG = {
+  amplitude: 8,         // ±8px vertical travel
+  phaseSpeed: 1.8,      // radians/second
+  // Only spawn on mid/high layers
+  chance: 0.20,
+} as const;
+
+// Ground pillars (visual obstacle, player must jump over)
+export const PILLAR_CONFIG = {
+  widthMin: 8,
+  widthMax: 18,
+  heightMin: 30,
+  heightMax: 60,
+  spawnChance: 0.35,   // per platform spawn cycle
+  baseColor: "#2a3a52",
+  topColor: "#3f5470",
+  cracksColor: "#1a2638",
+} as const;
+
+// Chest pickup (bigger reward than crystal, spawns on any layer)
+export const CHEST_CONFIG = {
+  spawnEvery: 6,        // every N platform spawns (approximate)
+  spawnVariance: 3,     // ± variance
+  offsetBase: 16,
+  attackBonusGain: 6,
+  healAmount: 48,
+  size: 14,
+  floatYOffset: 22,
+  floatAmplitude: 3,
+  phaseSpeed: 2.2,
+  glowBase: 0.5,
+  glowAmplitude: 0.3,
+  hitBurstPower: 2.2,
+  tones: {
+    attack: { frequency: 680, duration: 0.14, volume: 0.06 },
+    health: { frequency: 520, duration: 0.14, volume: 0.06 },
+  },
+} as const;
+
+export const CHEST_VISUAL = {
+  baseColor: "#8b6914",
+  lidColor: "#c49a20",
+  rimColor: "#f0c040",
+  lockColor: "#f5e070",
+  glowColorRgb: "240,190,40",
+  burstColor: "#f0c040",
 } as const;
 
 export const PLATFORM_STYLE_LIST = PLATFORM_STYLE_VALUES;

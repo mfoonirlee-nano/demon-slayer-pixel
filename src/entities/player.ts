@@ -66,7 +66,7 @@ export function castSelectedSkill() {
     p.skillEnergy = Math.min(p.skillEnergy, PLAYER_COMBAT.skillEnergySpendClamp);
   }
   p.skillFlash = 0;
-  p.skillTimer = Math.ceil(skill.frameCount * 60 / 24);
+  p.skillTimer = Math.ceil(skill.frameCount * 60 / PLAYER_DRAW.skillAnimFps);
 
   const cx = p.x + p.w / 2;
   const cy = p.y + p.h / 2;
@@ -306,9 +306,9 @@ export function drawPlayer() {
     const skill = SKILLS[p.skillIndex] || SKILLS[0];
 
     if (skill.image) {
-      const total = Math.ceil(skill.frameCount * 60 / 24);
+      const total = Math.ceil(skill.frameCount * 60 / PLAYER_DRAW.skillAnimFps);
       const elapsedGameFrames = total - p.skillTimer;
-      const frame = Math.min(skill.frameCount - 1, Math.floor(elapsedGameFrames * 24 / 60));
+      const frame = Math.min(skill.frameCount - 1, Math.floor(elapsedGameFrames * PLAYER_DRAW.skillAnimFps / 60));
 
       const srcH = skill.frameH || skill.image.height;
       const drawH = skill.drawScale ? srcH * skill.drawScale : PLAYER_DRAW.fallbackSkillDrawH;
@@ -316,8 +316,12 @@ export function drawPlayer() {
 
       const feetY = p.y + p.h;
       const centerX = p.x + p.w / 2;
-      const drawX = centerX - drawW / 2 + skill.drawOffsetX;
-      const drawY = feetY - drawH - PLAYER_DRAW.yOffset + skill.drawOffsetY;
+      // drawAnchorX: where the character pivot sits in the frame (0–1, default 0.5 = center).
+      // When facing left, the image is flipped inside drawSkillFrame, so the anchor mirrors to (1 - anchorX).
+      const anchorX = skill.drawAnchorX ?? 0.5;
+      const effectiveAnchor = p.facing === 1 ? anchorX : (1 - anchorX);
+      const drawX = centerX - drawW * effectiveAnchor;
+      const drawY = feetY - drawH - PLAYER_DRAW.yOffset;
 
       drawSkillFrame(skill, frame, drawX, drawY, drawW, drawH, p.facing);
       return;

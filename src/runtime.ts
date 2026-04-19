@@ -16,7 +16,18 @@ import { drawBackground } from "./background";
 import { updatePlayer, drawPlayer, triggerAttack, castSelectedSkill, selectSkill, tryJump } from "./entities/player";
 import { spawnEnemy, updateEnemies, drawEnemy } from "./entities/enemy";
 import { spawnBoss, updateBoss, drawBoss } from "./entities/boss";
-import { spawnPlatform, updatePlatforms, drawPlatforms, updateCrystals, drawCrystals } from "./entities/platform";
+import {
+  spawnNextMapSegment,
+  resetMapGenerator,
+  updatePlatforms,
+  updatePillars,
+  updateCrystals,
+  updateChests,
+  drawPlatforms,
+  drawPillars,
+  drawCrystals,
+  drawChests,
+} from "./entities/platform";
 import { updateProjectiles, drawProjectiles } from "./entities/projectile";
 import { updateParticles, updateSkillBursts, updateHitBursts, drawParticles, drawSkillBursts, drawHitBursts } from "./entities/particle";
 import type { GameSnapshot } from "./gameStore";
@@ -35,6 +46,7 @@ function queueNextFrame() {
 
 function restart() {
   resetState();
+  resetMapGenerator();
   publishCurrentState();
 }
 
@@ -64,7 +76,7 @@ function loop(ts: number) {
     drawLoadingState();
     publishCurrentState();
     queueNextFrame();
-    return; // spritesReady=false, waiting for assets
+    return;
   }
 
   if (!state.gameOver) {
@@ -82,7 +94,7 @@ function loop(ts: number) {
 
     state.platformSpawnTimer -= dt;
     if (state.platformSpawnTimer <= 0) {
-      spawnPlatform();
+      spawnNextMapSegment();
       state.platformSpawnTimer = RUNTIME_CONFIG.platformSpawnBaseInterval + Math.random() * RUNTIME_CONFIG.platformSpawnRandomInterval;
     }
 
@@ -93,7 +105,9 @@ function loop(ts: number) {
 
     updatePlayer();
     updatePlatforms(dt);
+    updatePillars();
     updateCrystals(dt);
+    updateChests(dt);
     updateEnemies();
     updateBoss();
     updateProjectiles();
@@ -103,8 +117,10 @@ function loop(ts: number) {
   }
 
   drawBackground();
+  drawPillars();
   drawPlatforms();
   drawCrystals();
+  drawChests();
 
   if (state.player.skillFlash > 0) {
     const flashT = state.player.skillFlash / SKILL_FLASH.maxFrames;
