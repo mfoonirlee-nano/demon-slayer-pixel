@@ -29,7 +29,7 @@ import {
   drawChests,
 } from "./entities/platform";
 import { updateProjectiles, drawProjectiles } from "./entities/projectile";
-import { updateParticles, updateSkillBursts, updateHitBursts, drawParticles, drawSkillBursts, drawHitBursts } from "./entities/particle";
+import { updateParticles, updateSkillBursts, updateHitBursts, updateSkill1Effects, drawParticles, drawSkillBursts, drawHitBursts, drawSkill1Effects } from "./entities/particle";
 import type { GameSnapshot } from "./gameStore";
 
 let frameId = 0;
@@ -114,6 +114,7 @@ function loop(ts: number) {
     updateParticles();
     updateSkillBursts();
     updateHitBursts();
+    updateSkill1Effects();
   }
 
   drawBackground();
@@ -150,6 +151,7 @@ function loop(ts: number) {
   drawSkillBursts();
   for (const e of state.enemies) drawEnemy(e);
   drawBoss();
+  drawSkill1Effects();
   drawHitBursts();
   drawProjectiles();
   drawParticles();

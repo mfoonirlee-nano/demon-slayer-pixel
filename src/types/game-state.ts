@@ -58,6 +58,7 @@ export type PlayerState = {
   maxSkillCharges: number;
   skillIndex: number;
   skillTimer: number;
+  skillEffectSpawned: boolean;
   onPlatform: PlatformState | null;
   skillFlash: number;
   isPlayer: boolean;
@@ -145,6 +146,15 @@ export type SkillBurstState = {
   color: string;
 };
 
+export type Skill1EffectState = {
+  x: number;
+  y: number;
+  vx: number;
+  facing: number;
+  frame: number;
+  elapsed: number;
+};
+
 export type CrystalState = {
   platform: PlatformState;
   offsetX: number;
@@ -172,5 +182,6 @@ export type GameState = {
   chests: ChestState[];
   skillBursts: SkillBurstState[];
   hitBursts: HitBurstState[];
+  skill1Effects: Skill1EffectState[];
   crystals: CrystalState[];
 };

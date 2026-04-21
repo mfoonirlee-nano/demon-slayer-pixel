@@ -29,6 +29,7 @@ export function createInitialPlayerState(): PlayerState {
     maxSkillCharges: PLAYER_DEFAULTS.maxSkillCharges,
     skillIndex: 0,
     skillTimer: 0,
+    skillEffectSpawned: false,
     onPlatform: null,
     skillFlash: 0,
     isPlayer: true,
@@ -55,6 +56,7 @@ export function createInitialState(): GameState {
     chests: [],
     skillBursts: [],
     hitBursts: [],
+    skill1Effects: [],
     crystals: [],
   };
 }
@@ -77,6 +79,7 @@ export function resetState() {
   resetCollection(state.particles, next.particles);
   resetCollection(state.skillBursts, next.skillBursts);
   resetCollection(state.hitBursts, next.hitBursts);
+  resetCollection(state.skill1Effects, next.skill1Effects);
   resetCollection(state.projectiles, next.projectiles);
   state.elapsed = next.elapsed;
   state.spawnTimer = next.spawnTimer;

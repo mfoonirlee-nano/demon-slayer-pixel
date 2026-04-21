@@ -5,10 +5,13 @@ import {
   WIDTH,
   BASIC_ATTACK,
   SKILLS,
+  SKILL_IDS,
   PLAYER_SHEETS,
   PLAYER_ANIMATION_STATES,
   PLAYER_COMBAT,
   PLAYER_DRAW,
+  SKILL1_EFFECT_SHEET,
+  SKILL1_EFFECT_CONFIG,
 } from "../constants";
 import { onGround, hitbox, frameIndex } from "../utils";
 import { drawSheetFrame, drawSkillFrame } from "../graphics";
@@ -67,6 +70,7 @@ export function castSelectedSkill() {
   }
   p.skillFlash = 0;
   p.skillTimer = Math.ceil(skill.frameCount * 60 / PLAYER_DRAW.skillAnimFps);
+  p.skillEffectSpawned = skill.id !== SKILL_IDS.skill1;
 
   const cx = p.x + p.w / 2;
   const cy = p.y + p.h / 2;
@@ -229,7 +233,27 @@ export function updatePlayer() {
     p.vy = 0;
   }
 
-  if (p.skillTimer > 0) p.skillTimer -= 1;
+  if (p.skillTimer > 0) {
+    p.skillTimer -= 1;
+    const skill = SKILLS[p.skillIndex] || SKILLS[0];
+    if (!p.skillEffectSpawned && skill.id === SKILL_IDS.skill1) {
+      const total = Math.ceil(skill.frameCount * 60 / PLAYER_DRAW.skillAnimFps);
+      const halfway = Math.floor(total / 2);
+      if (p.skillTimer <= halfway) {
+        p.skillEffectSpawned = true;
+        const drawH = skill.frameH * skill.drawScale;
+        const effectH = SKILL1_EFFECT_SHEET.frameH * SKILL1_EFFECT_CONFIG.drawScale;
+        state.skill1Effects.push({
+          x: p.x + p.w / 2,
+          y: p.y + p.h - drawH / 2 - effectH / 2,
+          vx: p.facing * SKILL1_EFFECT_CONFIG.speed,
+          facing: p.facing,
+          frame: 0,
+          elapsed: 0,
+        });
+      }
+    }
+  }
 
   if (p.attackTimer > 0) {
     p.attackTimer -= 1;
