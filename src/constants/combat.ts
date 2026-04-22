@@ -188,6 +188,7 @@ export const PARTICLE_CONFIG = {
   velocityFade: 0.96,
   sizeFade: 0.97,
   defaultSize: 3,
+  slashDefaultSpread: 10,
 } as const;
 
 export const HIT_BURST_CONFIG = {

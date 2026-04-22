@@ -12,7 +12,7 @@ export const SKILLS: Skill[] = [
     frameH: 420,
     drawScale: 0.247,
     drawAnchorX: 0.15,
-    radius: 230,
+    radius: 30,
     enemyBase: 34,
     enemyScale: 42,
     bossBase: 56,
@@ -27,7 +27,7 @@ export const SKILLS: Skill[] = [
     image: null,
     frameH: 500,
     drawScale: 0.243,
-    radius: 240,
+    radius: 30,
     enemyBase: 37,
     enemyScale: 45,
     bossBase: 62,
@@ -42,7 +42,7 @@ export const SKILLS: Skill[] = [
     image: null,
     frameH: 470,
     drawScale: 0.256,
-    radius: 255,
+    radius: 30,
     enemyBase: 40,
     enemyScale: 48,
     bossBase: 68,
@@ -143,7 +143,7 @@ export const SKILL2_EFFECT_SHEET: SpriteSheet = {
 };
 
 export const SKILL2_EFFECT_CONFIG = {
-  drawScale: 0.36,
+  drawScale: 0.52,
   speed: 6,
   frameDuration: 4,
   // 3-5 character widths (player w=34), using 4 widths ≈ 136px

@@ -96,14 +96,17 @@ export function castSelectedSkill() {
     const e = state.enemies[i];
     const ex = e.x + e.w / 2;
     const ey = e.y + e.h / 2;
+    if ((ex - cx) * p.facing < 0) continue;
     const dist = Math.hypot(ex - cx, ey - cy);
     if (dist > radius) continue;
     const ratio = 1 - dist / radius;
     const damage = (skill.enemyBase + ratio * skill.enemyScale) * (1 + p.attackBonus * PLAYER_COMBAT.attackBonusScale);
     e.hp -= damage;
     e.hitCd = PLAYER_COMBAT.enemyHitCooldown;
-    emitSlash(ex, ey, skill.color);
-    emitHitBurst(ex, ey, PLAYER_COMBAT.effects.skillEnemyBurstColor, PLAYER_COMBAT.skillEnemyBurstPower);
+    const skillHitX = e.x + Math.random() * e.w;
+    const skillHitY = e.y + Math.random() * e.h;
+    emitSlash(skillHitX, skillHitY, skill.color, e.w);
+    emitHitBurst(skillHitX, skillHitY, PLAYER_COMBAT.effects.skillEnemyBurstColor, PLAYER_COMBAT.skillEnemyBurstPower);
     if (e.hp <= 0) {
       p.score += PLAYER_COMBAT.enemyKillScore;
       gainSkillEnergy(PLAYER_COMBAT.enemyEnergyGain);
@@ -115,18 +118,20 @@ export function castSelectedSkill() {
     const boss = state.boss;
     const bx = boss.x + boss.w / 2;
     const by = boss.y + boss.h / 2;
-    const dist = Math.hypot(bx - cx, by - cy);
-    if (dist <= radius + PLAYER_COMBAT.bossRadiusPadding) {
-      const ratio = Math.max(PLAYER_COMBAT.bossMinDamageRatio, 1 - dist / (radius + PLAYER_COMBAT.bossRadiusPadding));
-      boss.hp -= skill.bossBase * ratio;
-      boss.hitCd = PLAYER_COMBAT.bossHitCooldown;
-      emitSlash(bx, by, PLAYER_COMBAT.effects.skillBossSlashColor);
-      emitHitBurst(bx, by, PLAYER_COMBAT.effects.skillBossBurstColor, PLAYER_COMBAT.skillBossBurstPower);
-      if (boss.hp <= 0) {
-        p.score += PLAYER_COMBAT.bossKillScore;
-        gainSkillEnergy(PLAYER_COMBAT.bossEnergyGain);
-        state.boss = null;
-        state.bossSpawnTimer = PLAYER_COMBAT.skillChargeResetDelay;
+    if ((bx - cx) * p.facing >= 0) {
+      const dist = Math.hypot(bx - cx, by - cy);
+      if (dist <= radius + PLAYER_COMBAT.bossRadiusPadding) {
+        const ratio = Math.max(PLAYER_COMBAT.bossMinDamageRatio, 1 - dist / (radius + PLAYER_COMBAT.bossRadiusPadding));
+        boss.hp -= skill.bossBase * ratio;
+        boss.hitCd = PLAYER_COMBAT.bossHitCooldown;
+        emitSlash(bx, by, PLAYER_COMBAT.effects.skillBossSlashColor);
+        emitHitBurst(bx, by, PLAYER_COMBAT.effects.skillBossBurstColor, PLAYER_COMBAT.skillBossBurstPower);
+        if (boss.hp <= 0) {
+          p.score += PLAYER_COMBAT.bossKillScore;
+          gainSkillEnergy(PLAYER_COMBAT.bossEnergyGain);
+          state.boss = null;
+          state.bossSpawnTimer = PLAYER_COMBAT.skillChargeResetDelay;
+        }
       }
     }
   }
@@ -280,15 +285,12 @@ export function updatePlayer() {
     for (let i = state.enemies.length - 1; i >= 0; i -= 1) {
       const e = state.enemies[i];
       if (hitbox(box, e) && e.hitCd <= 0) {
+        const atkHitX = e.x + Math.random() * e.w;
+        const atkHitY = e.y + e.h * 0.2 + Math.random() * e.h * 0.6;
         e.hp -= box.damage;
         e.hitCd = PLAYER_COMBAT.attackEnemyHitCooldown;
-        emitSlash(e.x + e.w / 2, e.y + PLAYER_COMBAT.attackHitY, box.color);
-        emitHitBurst(
-          e.x + e.w / 2,
-          e.y + PLAYER_COMBAT.attackHitY,
-          PLAYER_COMBAT.effects.attackEnemyBurstColor,
-          PLAYER_COMBAT.attackEnemyBurstPower,
-        );
+        emitSlash(atkHitX, atkHitY, box.color, e.w);
+        emitHitBurst(atkHitX, atkHitY, PLAYER_COMBAT.effects.attackEnemyBurstColor, PLAYER_COMBAT.attackEnemyBurstPower);
         playTone(
           PLAYER_COMBAT.tones.attackHit.baseFrequency + Math.random() * PLAYER_COMBAT.tones.attackHit.randomVariance,
           PLAYER_COMBAT.tones.attackHit.duration,
@@ -298,7 +300,7 @@ export function updatePlayer() {
         if (e.hp <= 0) {
           p.score += PLAYER_COMBAT.attackKillScore;
           gainSkillEnergy(PLAYER_COMBAT.enemyEnergyGain);
-          emitSlash(e.x + e.w / 2, e.y + PLAYER_COMBAT.attackKillY, PLAYER_COMBAT.effects.attackKillSlashColor);
+          emitSlash(e.x + Math.random() * e.w, e.y + Math.random() * e.h, PLAYER_COMBAT.effects.attackKillSlashColor, e.w);
           state.enemies.splice(i, 1);
         }
       }

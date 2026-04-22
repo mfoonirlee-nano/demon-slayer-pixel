@@ -18,11 +18,11 @@ import type { HitBurstState, ParticleState, Skill1EffectState, Skill2EffectState
 const FULL_CIRCLE_RADIANS = Math.PI * 2;
 const DEFAULT_HIT_BURST_COLOR = "#9feaff";
 
-export function emitSlash(x: number, y: number, color: string) {
+export function emitSlash(x: number, y: number, color: string, spread: number = PARTICLE_CONFIG.slashDefaultSpread) {
   for (let i = 0; i < PARTICLE_CONFIG.slashCount; i += 1) {
     state.particles.push({
-      x,
-      y,
+      x: x + (Math.random() - 0.5) * spread,
+      y: y + (Math.random() - 0.5) * spread * 0.6,
       vx: (Math.random() - 0.5) * PARTICLE_CONFIG.slashVelocity,
       vy: (Math.random() - 0.5) * PARTICLE_CONFIG.slashVelocity,
       life: PARTICLE_CONFIG.slashLifeBase + Math.random() * PARTICLE_CONFIG.slashLifeVariance,
@@ -112,11 +112,11 @@ export function updateSkill1Effects() {
       const overlapX = effRight > enemy.x && effLeft < enemy.x + enemy.w;
       const overlapY = effBottom > enemy.y && effTop < enemy.y + enemy.h;
       if (!overlapX || !overlapY) continue;
-      const hitX = Math.max(enemy.x, Math.min(enemy.x + enemy.w, eff.x));
-      const hitY = enemy.y + enemy.h * 0.4;
+      const hitX = enemy.x + Math.random() * enemy.w;
+      const hitY = enemy.y + Math.random() * enemy.h;
       enemy.hp -= damage;
       enemy.hitCd = SKILL1_EFFECT_CONFIG.hitCooldown;
-      emitSlash(hitX, hitY, PLAYER_COMBAT.effects.skillEnemyBurstColor);
+      emitSlash(hitX, hitY, PLAYER_COMBAT.effects.skillEnemyBurstColor, enemy.w);
       emitHitBurst(hitX, hitY, PLAYER_COMBAT.effects.skillEnemyBurstColor, PLAYER_COMBAT.skillEnemyBurstPower);
       if (enemy.hp <= 0) {
         p.score += PLAYER_COMBAT.enemyKillScore;
@@ -201,11 +201,11 @@ export function updateSkill2Effects() {
       const overlapX = effRight > enemy.x && effLeft < enemy.x + enemy.w;
       const overlapY = effBottom > enemy.y && effTop < enemy.y + enemy.h;
       if (!overlapX || !overlapY) continue;
-      const hitX = Math.max(enemy.x, Math.min(enemy.x + enemy.w, eff.x));
-      const hitY = enemy.y + enemy.h * 0.4;
+      const hitX = enemy.x + Math.random() * enemy.w;
+      const hitY = enemy.y + Math.random() * enemy.h;
       enemy.hp -= damage;
       enemy.hitCd = SKILL2_EFFECT_CONFIG.hitCooldown;
-      emitSlash(hitX, hitY, PLAYER_COMBAT.effects.skillEnemyBurstColor);
+      emitSlash(hitX, hitY, PLAYER_COMBAT.effects.skillEnemyBurstColor, enemy.w);
       emitHitBurst(hitX, hitY, PLAYER_COMBAT.effects.skillEnemyBurstColor, PLAYER_COMBAT.skillEnemyBurstPower);
       if (enemy.hp <= 0) {
         p.score += PLAYER_COMBAT.enemyKillScore;
