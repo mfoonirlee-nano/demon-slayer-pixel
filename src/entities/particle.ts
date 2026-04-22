@@ -356,7 +356,10 @@ export function drawSkill2Effects() {
   const drawW = sheet.frameW * SKILL2_EFFECT_CONFIG.drawScale;
   for (const e of state.skill2Effects) {
     const sx = e.frame * sheet.frameW;
+    const fadeT = Math.max(0, e.traveled / SKILL2_EFFECT_CONFIG.maxTravel * 2 - 1);
+    const alpha = 1 - fadeT * 0.7;
     ctx.save();
+    ctx.globalAlpha = alpha;
     ctx.translate(e.x, e.y + drawH / 2);
     ctx.scale(e.facing, 1);
     ctx.drawImage(sheet.image, sx, 0, sheet.frameW, sheet.frameH, -drawW / 2, -drawH / 2, drawW, drawH);
