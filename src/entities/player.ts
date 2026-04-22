@@ -12,6 +12,8 @@ import {
   PLAYER_DRAW,
   SKILL1_EFFECT_SHEET,
   SKILL1_EFFECT_CONFIG,
+  SKILL2_EFFECT_SHEET,
+  SKILL2_EFFECT_CONFIG,
 } from "../constants";
 import { onGround, hitbox, frameIndex } from "../utils";
 import { drawSheetFrame, drawSkillFrame } from "../graphics";
@@ -70,7 +72,7 @@ export function castSelectedSkill() {
   }
   p.skillFlash = 0;
   p.skillTimer = Math.ceil(skill.frameCount * 60 / PLAYER_DRAW.skillAnimFps);
-  p.skillEffectSpawned = skill.id !== SKILL_IDS.skill1;
+  p.skillEffectSpawned = skill.id !== SKILL_IDS.skill1 && skill.id !== SKILL_IDS.skill2;
 
   const cx = p.x + p.w / 2;
   const cy = p.y + p.h / 2;
@@ -236,21 +238,37 @@ export function updatePlayer() {
   if (p.skillTimer > 0) {
     p.skillTimer -= 1;
     const skill = SKILLS[p.skillIndex] || SKILLS[0];
-    if (!p.skillEffectSpawned && skill.id === SKILL_IDS.skill1) {
+    if (!p.skillEffectSpawned) {
       const total = Math.ceil(skill.frameCount * 60 / PLAYER_DRAW.skillAnimFps);
       const halfway = Math.floor(total / 2);
       if (p.skillTimer <= halfway) {
         p.skillEffectSpawned = true;
-        const drawH = skill.frameH * skill.drawScale;
-        const effectH = SKILL1_EFFECT_SHEET.frameH * SKILL1_EFFECT_CONFIG.drawScale;
-        state.skill1Effects.push({
-          x: p.x + p.w / 2,
-          y: p.y + p.h - drawH / 2 - effectH / 2,
-          vx: p.facing * SKILL1_EFFECT_CONFIG.speed,
-          facing: p.facing,
-          frame: 0,
-          elapsed: 0,
-        });
+        const cx = p.x + p.w / 2;
+        const feetY = p.y + p.h;
+        if (skill.id === SKILL_IDS.skill1) {
+          const effectH = SKILL1_EFFECT_SHEET.frameH * SKILL1_EFFECT_CONFIG.drawScale;
+          const skillDrawH = skill.frameH * skill.drawScale;
+          state.skill1Effects.push({
+            x: cx,
+            y: feetY - skillDrawH / 2 - effectH / 2,
+            vx: p.facing * SKILL1_EFFECT_CONFIG.speed,
+            facing: p.facing,
+            frame: 0,
+            elapsed: 0,
+          });
+        } else if (skill.id === SKILL_IDS.skill2) {
+          const effectH = SKILL2_EFFECT_SHEET.frameH * SKILL2_EFFECT_CONFIG.drawScale;
+          const skillDrawH = skill.frameH * skill.drawScale;
+          state.skill2Effects.push({
+            x: cx,
+            y: feetY - skillDrawH / 2 - effectH / 2,
+            vx: p.facing * SKILL2_EFFECT_CONFIG.speed,
+            facing: p.facing,
+            frame: 0,
+            elapsed: 0,
+            traveled: 0,
+          });
+        }
       }
     }
   }

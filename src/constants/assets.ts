@@ -134,6 +134,24 @@ export const SKILL1_EFFECT_CONFIG = {
   hitCooldown: 20,
 } as const;
 
+export const SKILL2_EFFECT_SHEET: SpriteSheet = {
+  src: "assets/sprites/skill2_effect.png",
+  frameW: 380,
+  frameH: 450,
+  count: 6,
+  image: null,
+};
+
+export const SKILL2_EFFECT_CONFIG = {
+  drawScale: 0.36,
+  speed: 6,
+  frameDuration: 4,
+  // 3-5 character widths (player w=34), using 4 widths ≈ 136px
+  maxTravel: 140,
+  damageMultiplier: 1.5,
+  hitCooldown: 20,
+} as const;
+
 export const BOSS_SHEET: SpriteSheet = {
   src: "assets/sprites/boss.png",
   frameW: 350,

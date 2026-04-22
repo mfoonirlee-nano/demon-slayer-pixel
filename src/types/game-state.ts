@@ -155,6 +155,16 @@ export type Skill1EffectState = {
   elapsed: number;
 };
 
+export type Skill2EffectState = {
+  x: number;
+  y: number;
+  vx: number;
+  facing: number;
+  frame: number;
+  elapsed: number;
+  traveled: number;
+};
+
 export type CrystalState = {
   platform: PlatformState;
   offsetX: number;
@@ -183,5 +193,6 @@ export type GameState = {
   skillBursts: SkillBurstState[];
   hitBursts: HitBurstState[];
   skill1Effects: Skill1EffectState[];
+  skill2Effects: Skill2EffectState[];
   crystals: CrystalState[];
 };

@@ -8,10 +8,12 @@ import {
   HIT_BURST_VISUAL,
   SKILL1_EFFECT_SHEET,
   SKILL1_EFFECT_CONFIG,
+  SKILL2_EFFECT_SHEET,
+  SKILL2_EFFECT_CONFIG,
   PLAYER_COMBAT,
   WIDTH,
 } from "../constants";
-import type { HitBurstState, ParticleState, Skill1EffectState, SkillBurstState } from "../types/game-state";
+import type { HitBurstState, ParticleState, Skill1EffectState, Skill2EffectState, SkillBurstState } from "../types/game-state";
 
 const FULL_CIRCLE_RADIANS = Math.PI * 2;
 const DEFAULT_HIT_BURST_COLOR = "#9feaff";
@@ -172,6 +174,90 @@ export function updateSkill1Effects() {
   }
 }
 
+export function updateSkill2Effects() {
+  const sheet = SKILL2_EFFECT_SHEET;
+  const drawW = sheet.frameW * SKILL2_EFFECT_CONFIG.drawScale;
+  const drawH = sheet.frameH * SKILL2_EFFECT_CONFIG.drawScale;
+  const p = state.player;
+  const damage = (p.baseAttack + p.attackBonus) * SKILL2_EFFECT_CONFIG.damageMultiplier;
+
+  for (let i = state.skill2Effects.length - 1; i >= 0; i -= 1) {
+    const eff = state.skill2Effects[i] as Skill2EffectState;
+    eff.x += eff.vx;
+    eff.traveled += Math.abs(eff.vx);
+    eff.elapsed += 1;
+
+    const rawFrame = Math.floor(eff.elapsed / SKILL2_EFFECT_CONFIG.frameDuration);
+    eff.frame = Math.min(sheet.count - 1, rawFrame);
+
+    const effLeft = eff.x - drawW / 2;
+    const effRight = eff.x + drawW / 2;
+    const effTop = eff.y;
+    const effBottom = eff.y + drawH;
+
+    for (let j = state.enemies.length - 1; j >= 0; j -= 1) {
+      const enemy = state.enemies[j];
+      if (enemy.hitCd > 0) continue;
+      const overlapX = effRight > enemy.x && effLeft < enemy.x + enemy.w;
+      const overlapY = effBottom > enemy.y && effTop < enemy.y + enemy.h;
+      if (!overlapX || !overlapY) continue;
+      const hitX = Math.max(enemy.x, Math.min(enemy.x + enemy.w, eff.x));
+      const hitY = enemy.y + enemy.h * 0.4;
+      enemy.hp -= damage;
+      enemy.hitCd = SKILL2_EFFECT_CONFIG.hitCooldown;
+      emitSlash(hitX, hitY, PLAYER_COMBAT.effects.skillEnemyBurstColor);
+      emitHitBurst(hitX, hitY, PLAYER_COMBAT.effects.skillEnemyBurstColor, PLAYER_COMBAT.skillEnemyBurstPower);
+      if (enemy.hp <= 0) {
+        p.score += PLAYER_COMBAT.enemyKillScore;
+        if (p.skillCharges < p.maxSkillCharges) {
+          p.skillEnergy += PLAYER_COMBAT.enemyEnergyGain;
+          while (p.skillEnergy >= p.skillEnergyMax && p.skillCharges < p.maxSkillCharges) {
+            p.skillEnergy -= p.skillEnergyMax;
+            p.skillCharges += 1;
+          }
+          if (p.skillCharges >= p.maxSkillCharges) {
+            p.skillCharges = p.maxSkillCharges;
+            p.skillEnergy = p.skillEnergyMax;
+          }
+        }
+        state.enemies.splice(j, 1);
+      }
+    }
+
+    if (state.boss && state.boss.hitCd <= 0) {
+      const boss = state.boss;
+      const overlapX = effRight > boss.x && effLeft < boss.x + boss.w;
+      const overlapY = effBottom > boss.y && effTop < boss.y + boss.h;
+      if (overlapX && overlapY) {
+        boss.hp -= damage;
+        boss.hitCd = SKILL2_EFFECT_CONFIG.hitCooldown;
+        const bossHitX = Math.max(boss.x, Math.min(boss.x + boss.w, eff.x));
+        const bossHitY = boss.y + boss.h * 0.4;
+        emitSlash(bossHitX, bossHitY, PLAYER_COMBAT.effects.skillBossSlashColor);
+        emitHitBurst(bossHitX, bossHitY, PLAYER_COMBAT.effects.skillBossBurstColor, PLAYER_COMBAT.skillBossBurstPower);
+        if (boss.hp <= 0) {
+          p.score += PLAYER_COMBAT.bossKillScore;
+          if (p.skillCharges < p.maxSkillCharges) {
+            p.skillEnergy += PLAYER_COMBAT.bossEnergyGain;
+            while (p.skillEnergy >= p.skillEnergyMax && p.skillCharges < p.maxSkillCharges) {
+              p.skillEnergy -= p.skillEnergyMax;
+              p.skillCharges += 1;
+            }
+            if (p.skillCharges >= p.maxSkillCharges) {
+              p.skillCharges = p.maxSkillCharges;
+              p.skillEnergy = p.skillEnergyMax;
+            }
+          }
+          state.boss = null;
+          state.bossSpawnTimer = PLAYER_COMBAT.skillChargeResetDelay;
+        }
+      }
+    }
+
+    if (eff.traveled >= SKILL2_EFFECT_CONFIG.maxTravel) state.skill2Effects.splice(i, 1);
+  }
+}
+
 export function updateHitBursts() {
   for (let i = state.hitBursts.length - 1; i >= 0; i -= 1) {
     const b = state.hitBursts[i] as HitBurstState;
@@ -253,6 +339,22 @@ export function drawSkill1Effects() {
   const drawH = sheet.frameH * SKILL1_EFFECT_CONFIG.drawScale;
   const drawW = sheet.frameW * SKILL1_EFFECT_CONFIG.drawScale;
   for (const e of state.skill1Effects) {
+    const sx = e.frame * sheet.frameW;
+    ctx.save();
+    ctx.translate(e.x, e.y + drawH / 2);
+    ctx.scale(e.facing, 1);
+    ctx.drawImage(sheet.image, sx, 0, sheet.frameW, sheet.frameH, -drawW / 2, -drawH / 2, drawW, drawH);
+    ctx.restore();
+  }
+}
+
+export function drawSkill2Effects() {
+  if (!ctx) return;
+  const sheet = SKILL2_EFFECT_SHEET;
+  if (!sheet.image) return;
+  const drawH = sheet.frameH * SKILL2_EFFECT_CONFIG.drawScale;
+  const drawW = sheet.frameW * SKILL2_EFFECT_CONFIG.drawScale;
+  for (const e of state.skill2Effects) {
     const sx = e.frame * sheet.frameW;
     ctx.save();
     ctx.translate(e.x, e.y + drawH / 2);
