@@ -88,20 +88,9 @@ export const PLAYER_COMBAT = {
 } as const;
 
 export const PLAYER_DRAW = {
-  idle: { w: 145, h: 101 },
-  action: { w: 132, h: 92 },
-  attack: { w: 146, h: 146, bottomPad: 9 },
   yOffset: 2,
-  fallbackSkillFrameH: 496,
   fallbackSkillDrawH: 150,
-  fallbackSkillFrameCount: 6,
   skillAnimFps: 12,
-  fallbackAnimSpeed: {
-    attack: 3,
-    run: 5,
-    jump: 7,
-    idle: 8,
-  },
 } as const;
 
 export const ENEMY_CONFIG = {

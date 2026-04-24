@@ -1,5 +1,5 @@
 import { PLAYER_ANIMATION_STATES, SKILL_IDS } from "./ids";
-import type { PlayerAnimationState, Skill, SpriteSheet } from "../types/assets";
+import type { PlayerAnimationState, PlayerSheet, Skill, SpriteSheet } from "../types/assets";
 
 export const SKILLS: Skill[] = [
   {
@@ -11,7 +11,7 @@ export const SKILLS: Skill[] = [
     image: null,
     frameH: 420,
     drawScale: 0.247,
-    drawAnchorX: 0.15,
+    anchorX: 0.15,
     radius: 30,
     enemyBase: 34,
     enemyScale: 42,
@@ -53,13 +53,16 @@ export const SKILLS: Skill[] = [
 const PLAYER_SHEET_FRAME_W = 435;
 const PLAYER_SHEET_FRAME_H = 304;
 
-export const PLAYER_SHEETS: Record<PlayerAnimationState, SpriteSheet> = {
+export const PLAYER_SHEETS: Record<PlayerAnimationState, PlayerSheet> = {
   [PLAYER_ANIMATION_STATES.idle]: {
     src: "assets/sprites/player_idle.png",
     frameW: PLAYER_SHEET_FRAME_W,
     frameH: PLAYER_SHEET_FRAME_H,
     count: 2,
     image: null,
+    drawW: 145,
+    drawH: 101,
+    animSpeed: 8,
   },
   [PLAYER_ANIMATION_STATES.run]: {
     src: "assets/sprites/player_run.png",
@@ -67,6 +70,9 @@ export const PLAYER_SHEETS: Record<PlayerAnimationState, SpriteSheet> = {
     frameH: PLAYER_SHEET_FRAME_H,
     count: 3,
     image: null,
+    drawW: 132,
+    drawH: 92,
+    animSpeed: 5,
   },
   [PLAYER_ANIMATION_STATES.jump]: {
     src: "assets/sprites/player_jump.png",
@@ -74,6 +80,9 @@ export const PLAYER_SHEETS: Record<PlayerAnimationState, SpriteSheet> = {
     frameH: PLAYER_SHEET_FRAME_H,
     count: 3,
     image: null,
+    drawW: 132,
+    drawH: 92,
+    animSpeed: 7,
   },
   [PLAYER_ANIMATION_STATES.attack]: {
     src: "assets/sprites/player_attack.png",
@@ -81,6 +90,11 @@ export const PLAYER_SHEETS: Record<PlayerAnimationState, SpriteSheet> = {
     frameH: 400,
     count: 6,
     image: null,
+    drawW: 146,
+    drawH: 146,
+    animSpeed: 3,
+    // feet sit at 93.8% from sprite top (sprite hangs 9px below reference point)
+    anchorY: 0.938,
   },
 };
 

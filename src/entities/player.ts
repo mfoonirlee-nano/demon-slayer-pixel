@@ -346,9 +346,13 @@ export function drawPlayer() {
   const p = state.player;
   if (p.invincible > 0 && Math.floor(p.invincible / PLAYER_COMBAT.blinkInterval) % 2 === 0) return;
 
+  // Unified reference point: player center X, feet Y minus global sprite padding.
+  // All draw positions: drawX = refX - drawW * anchorX, drawY = refY - drawH * anchorY
+  const refX = p.x + p.w / 2;
+  const refY = p.y + p.h - PLAYER_DRAW.yOffset;
+
   if (p.skillTimer > 0) {
     const skill = SKILLS[p.skillIndex] || SKILLS[0];
-
     if (skill.image) {
       const total = Math.ceil(skill.frameCount * 60 / PLAYER_DRAW.skillAnimFps);
       const elapsedGameFrames = total - p.skillTimer;
@@ -358,58 +362,26 @@ export function drawPlayer() {
       const drawH = skill.drawScale ? srcH * skill.drawScale : PLAYER_DRAW.fallbackSkillDrawH;
       const drawW = drawH * (skill.frameW / srcH);
 
-      const feetY = p.y + p.h;
-      const centerX = p.x + p.w / 2;
-      // drawAnchorX: where the character pivot sits in the frame (0–1, default 0.5 = center).
-      // When facing left, the image is flipped inside drawSkillFrame, so the anchor mirrors to (1 - anchorX).
-      const anchorX = skill.drawAnchorX ?? 0.5;
-      const effectiveAnchor = p.facing === 1 ? anchorX : (1 - anchorX);
-      const drawX = centerX - drawW * effectiveAnchor;
-      const drawY = feetY - drawH - PLAYER_DRAW.yOffset;
-
-      drawSkillFrame(skill, frame, drawX, drawY, drawW, drawH, p.facing);
-      return;
-    }
-
-    const sheet = PLAYER_SHEETS[PLAYER_ANIMATION_STATES.attack];
-    if (sheet.image) {
-      const frame = frameIndex(sheet.count, PLAYER_DRAW.fallbackAnimSpeed.attack, state.elapsed);
-      const feetY = p.y + p.h;
-      const centerX = p.x + p.w / 2;
-      const drawW = PLAYER_DRAW.attack.w;
-      const drawH = PLAYER_DRAW.attack.h;
-      const drawX = centerX - drawW / 2;
-      const drawY = feetY - drawH - PLAYER_DRAW.yOffset + PLAYER_DRAW.attack.bottomPad;
-      drawSheetFrame(sheet, frame, drawX, drawY, drawW, drawH, p.facing);
+      const anchorX = skill.anchorX ?? 0.5;
+      const anchorY = skill.anchorY ?? 1;
+      // When facing left, the sprite is mirrored, so the horizontal anchor mirrors too.
+      const effectiveAnchorX = p.facing === 1 ? anchorX : (1 - anchorX);
+      drawSkillFrame(skill, frame, refX - drawW * effectiveAnchorX, refY - drawH * anchorY, drawW, drawH, p.facing);
       return;
     }
   }
 
   const isLanded = onGround(p, p.onPlatform);
-  const stateName = p.attackTimer > 0
+  const stateName = p.skillTimer > 0 || p.attackTimer > 0
     ? PLAYER_ANIMATION_STATES.attack
     : !isLanded
       ? PLAYER_ANIMATION_STATES.jump
       : Math.abs(p.vx) > PLAYER_COMBAT.movementIdleThreshold
         ? PLAYER_ANIMATION_STATES.run
         : PLAYER_ANIMATION_STATES.idle;
-  const speed = PLAYER_DRAW.fallbackAnimSpeed[stateName];
-  const sheet = PLAYER_SHEETS[stateName];
-  const frame = frameIndex(sheet.count, speed, state.elapsed);
 
-  const feetY = p.y + p.h;
-  const centerX = p.x + p.w / 2;
-  let drawW: number, drawH: number, drawY: number;
-  if (stateName === PLAYER_ANIMATION_STATES.attack) {
-    drawW = PLAYER_DRAW.attack.w;
-    drawH = PLAYER_DRAW.attack.h;
-    drawY = feetY - drawH - PLAYER_DRAW.yOffset + PLAYER_DRAW.attack.bottomPad;
-  } else {
-    const drawSize = stateName === PLAYER_ANIMATION_STATES.idle ? PLAYER_DRAW.idle : PLAYER_DRAW.action;
-    drawW = drawSize.w;
-    drawH = drawSize.h;
-    drawY = feetY - drawH - PLAYER_DRAW.yOffset;
-  }
-  const drawX = centerX - drawW / 2;
-  drawSheetFrame(sheet, frame, drawX, drawY, drawW, drawH, p.facing);
+  const sheet = PLAYER_SHEETS[stateName];
+  const { drawW, drawH, animSpeed, anchorX = 0.5, anchorY = 1 } = sheet;
+  const frame = frameIndex(sheet.count, animSpeed, state.elapsed);
+  drawSheetFrame(sheet, frame, refX - drawW * anchorX, refY - drawH * anchorY, drawW, drawH, p.facing);
 }
