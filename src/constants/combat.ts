@@ -3,7 +3,7 @@ const SECONDS_PER_MINUTE = 60;
 export const BASIC_ATTACK = {
   damage: 16,
   reach: 64,
-  frames: 16,
+  frames: 18,
   color: "#6be0ff",
   yOffset: 8,
   height: 38,
@@ -90,6 +90,7 @@ export const PLAYER_COMBAT = {
 export const PLAYER_DRAW = {
   idle: { w: 145, h: 101 },
   action: { w: 132, h: 92 },
+  attack: { w: 146, h: 146, bottomPad: 9 },
   yOffset: 2,
   fallbackSkillFrameH: 496,
   fallbackSkillDrawH: 150,

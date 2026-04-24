@@ -77,9 +77,9 @@ export const PLAYER_SHEETS: Record<PlayerAnimationState, SpriteSheet> = {
   },
   [PLAYER_ANIMATION_STATES.attack]: {
     src: "assets/sprites/player_attack.png",
-    frameW: PLAYER_SHEET_FRAME_W,
-    frameH: PLAYER_SHEET_FRAME_H,
-    count: 3,
+    frameW: 400,
+    frameH: 400,
+    count: 6,
     image: null,
   },
 };

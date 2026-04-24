@@ -376,10 +376,10 @@ export function drawPlayer() {
       const frame = frameIndex(sheet.count, PLAYER_DRAW.fallbackAnimSpeed.attack, state.elapsed);
       const feetY = p.y + p.h;
       const centerX = p.x + p.w / 2;
-      const drawW = PLAYER_DRAW.action.w;
-      const drawH = PLAYER_DRAW.action.h;
+      const drawW = PLAYER_DRAW.attack.w;
+      const drawH = PLAYER_DRAW.attack.h;
       const drawX = centerX - drawW / 2;
-      const drawY = feetY - drawH - PLAYER_DRAW.yOffset;
+      const drawY = feetY - drawH - PLAYER_DRAW.yOffset + PLAYER_DRAW.attack.bottomPad;
       drawSheetFrame(sheet, frame, drawX, drawY, drawW, drawH, p.facing);
       return;
     }
@@ -397,12 +397,19 @@ export function drawPlayer() {
   const sheet = PLAYER_SHEETS[stateName];
   const frame = frameIndex(sheet.count, speed, state.elapsed);
 
-  const drawSize = stateName === PLAYER_ANIMATION_STATES.idle ? PLAYER_DRAW.idle : PLAYER_DRAW.action;
   const feetY = p.y + p.h;
   const centerX = p.x + p.w / 2;
-  const drawW = drawSize.w;
-  const drawH = drawSize.h;
+  let drawW: number, drawH: number, drawY: number;
+  if (stateName === PLAYER_ANIMATION_STATES.attack) {
+    drawW = PLAYER_DRAW.attack.w;
+    drawH = PLAYER_DRAW.attack.h;
+    drawY = feetY - drawH - PLAYER_DRAW.yOffset + PLAYER_DRAW.attack.bottomPad;
+  } else {
+    const drawSize = stateName === PLAYER_ANIMATION_STATES.idle ? PLAYER_DRAW.idle : PLAYER_DRAW.action;
+    drawW = drawSize.w;
+    drawH = drawSize.h;
+    drawY = feetY - drawH - PLAYER_DRAW.yOffset;
+  }
   const drawX = centerX - drawW / 2;
-  const drawY = feetY - drawH - PLAYER_DRAW.yOffset;
   drawSheetFrame(sheet, frame, drawX, drawY, drawW, drawH, p.facing);
 }
