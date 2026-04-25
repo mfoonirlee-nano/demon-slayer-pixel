@@ -126,21 +126,21 @@ export const ENEMY_DRAW_SCALE = ENEMY_REF_DRAW_W / ENEMY_SHEETS[1].frameW;
 
 export const SKILL1_EFFECT_SHEET: SpriteSheet = {
   src: "assets/sprites/skill1_effect.png",
-  frameW: 600,
-  frameH: 200,
+  frameW: 320,
+  frameH: 150,
   count: 6,
   image: null,
 };
 
 export const SKILL1_EFFECT_CONFIG = {
   // draw scale relative to frame height
-  drawScale: 0.6,
+  drawScale: 0.66,
   // horizontal speed in px/frame
   speed: 8,
   // frame animate speed in game-frames per anim-frame
   frameDuration: 5,
   // last N frames to loop once the initial run ends
-  loopFromFrame: 4,
+  loopFromFrame: 2,
   // damage multiplier relative to player base+bonus attack
   damageMultiplier: 1.2,
   // frames between successive hits on the same target
