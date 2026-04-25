@@ -50,38 +50,37 @@ export const SKILLS: Skill[] = [
   },
 ];
 
-const PLAYER_SHEET_FRAME_W = 435;
-const PLAYER_SHEET_FRAME_H = 304;
 
 export const PLAYER_SHEETS: Record<PlayerAnimationState, PlayerSheet> = {
   [PLAYER_ANIMATION_STATES.idle]: {
     src: "assets/sprites/player_idle.png",
-    frameW: PLAYER_SHEET_FRAME_W,
-    frameH: PLAYER_SHEET_FRAME_H,
-    count: 2,
+    frameW: 320,
+    frameH: 380,
+    count: 6,
     image: null,
-    drawW: 145,
-    drawH: 101,
+    drawW: 90,
+    drawH: 107,
     animSpeed: 8,
   },
   [PLAYER_ANIMATION_STATES.run]: {
     src: "assets/sprites/player_run.png",
-    frameW: PLAYER_SHEET_FRAME_W,
-    frameH: PLAYER_SHEET_FRAME_H,
-    count: 3,
+    frameW: 320,
+    frameH: 430,
+    count: 6,
     image: null,
-    drawW: 132,
-    drawH: 92,
+    drawW: 82,
+    drawH: 110,
     animSpeed: 5,
+    flipX: true,
   },
   [PLAYER_ANIMATION_STATES.jump]: {
     src: "assets/sprites/player_jump.png",
-    frameW: PLAYER_SHEET_FRAME_W,
-    frameH: PLAYER_SHEET_FRAME_H,
-    count: 3,
+    frameW: 300,
+    frameH: 310,
+    count: 6,
     image: null,
-    drawW: 132,
-    drawH: 92,
+    drawW: 107,
+    drawH: 110,
     animSpeed: 7,
   },
   [PLAYER_ANIMATION_STATES.attack]: {

@@ -62,4 +62,6 @@ export type PlayerSheet = SpriteSheet & {
   anchorX?: number;
   // vertical anchor (0–1): where the player feet sit in the frame, default 1.0 = sprite bottom
   anchorY?: number;
+  // set true when the source sprite faces left instead of the default right
+  flipX?: boolean;
 };

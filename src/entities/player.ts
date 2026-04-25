@@ -381,7 +381,7 @@ export function drawPlayer() {
         : PLAYER_ANIMATION_STATES.idle;
 
   const sheet = PLAYER_SHEETS[stateName];
-  const { drawW, drawH, animSpeed, anchorX = 0.5, anchorY = 1 } = sheet;
+  const { drawW, drawH, animSpeed, anchorX = 0.5, anchorY = 1, flipX } = sheet;
   const frame = frameIndex(sheet.count, animSpeed, state.elapsed);
-  drawSheetFrame(sheet, frame, refX - drawW * anchorX, refY - drawH * anchorY, drawW, drawH, p.facing);
+  drawSheetFrame(sheet, frame, refX - drawW * anchorX, refY - drawH * anchorY, drawW, drawH, p.facing * (flipX ? -1 : 1));
 }
