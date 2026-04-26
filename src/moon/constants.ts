@@ -1,11 +1,11 @@
 export const MOON_LAYOUT = {
   x: 762,
   y: 80,
-  coreRadius: 22,
-  shadowRadius: 31,
-  highlightRadius: 7,
-  highlightOffsetX: -8,
-  highlightOffsetY: -6,
+  coreRadius: 34,
+  shadowRadius: 46,
+  highlightRadius: 10,
+  highlightOffsetX: -12,
+  highlightOffsetY: -9,
 } as const;
 
 export const MOON_SKY_CONFIG = {
@@ -130,22 +130,37 @@ export const MOON_MIST_CONFIG = {
 } as const;
 
 export const MOON_GLOW_CONFIG = {
+  // 正常月光：蓝白内晕
   coolGlowColor: [198, 220, 246] as const,
-  coolGlowAlpha: 0.22,
-  coolGlowBlur: 28,
-  coolGlowRadius: 40,
+  coolGlowAlpha: 0.28,
+  coolGlowBlur: 32,
+  coolGlowRadius: 52,
+
+  // 正常月光：中层散射光（蓝白）
+  outerGlowColor: [210, 228, 252] as const,
+  outerGlowAlpha: 0.14,
+  outerGlowBlur: 55,
+  outerGlowRadius: 80,
+
+  // 正常月光：最远散射（极淡蓝白）
+  farGlowColor: [220, 235, 255] as const,
+  farGlowAlpha: 0.07,
+  farGlowBlur: 90,
+  farGlowRadius: 120,
+
+  // 血月：内环
   bloodRingColor: [255, 88, 102] as const,
-  bloodRingAlpha: 0.2,
-  bloodRingBlur: 34,
-  bloodRingRadius: 45,
-  outerGlowColor: [255, 120, 120] as const,
-  outerGlowAlpha: 0.15,
-  outerGlowBlur: 50,
-  outerGlowRadius: 65,
-  farGlowColor: [255, 60, 60] as const,
-  farGlowAlpha: 0.1,
-  farGlowBlur: 80,
-  farGlowRadius: 100,
+  bloodRingAlpha: 0.25,
+  bloodRingBlur: 38,
+  bloodRingRadius: 58,
+
+  // 血月：中层光晕（用于插值替换 outerGlow）
+  bloodOuterColor: [255, 80, 80] as const,
+  bloodOuterAlpha: 0.18,
+
+  // 血月：最外层光晕（用于插值替换 farGlow）
+  bloodFarColor: [200, 40, 40] as const,
+  bloodFarAlpha: 0.12,
 } as const;
 
 export const MOON_SURFACE_CONFIG = {

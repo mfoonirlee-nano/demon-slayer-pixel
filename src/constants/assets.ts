@@ -172,3 +172,13 @@ export const BOSS_SHEET: SpriteSheet = {
   count: 4,
   image: null,
 };
+
+export const SKY_SPRITES: {
+  src: string;
+  image: HTMLImageElement | null;
+  moon: { sx: number; sy: number; sw: number; sh: number };
+} = {
+  src: "assets/sprites/sky_sprites.png",
+  image: null,
+  moon: { sx: 35, sy: 37, sw: 321, sh: 322 },
+};

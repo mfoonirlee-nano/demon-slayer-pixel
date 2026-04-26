@@ -5,6 +5,7 @@ import {
   SKILLS,
   SKILL1_EFFECT_SHEET,
   SKILL2_EFFECT_SHEET,
+  SKY_SPRITES,
 } from "./constants";
 import { loadImage } from "./utils";
 import { state } from "./state";
@@ -22,6 +23,7 @@ export function loadSprites(): Promise<void> {
     jobs.push(loadImage(sheet.src).then((img) => { sheet.image = img; }));
   }
   jobs.push(loadImage(BOSS_SHEET.src).then((img) => { BOSS_SHEET.image = img; }));
+  jobs.push(loadImage(SKY_SPRITES.src).then((img) => { SKY_SPRITES.image = img; }));
   jobs.push(loadImage(SKILL1_EFFECT_SHEET.src).then((img) => { SKILL1_EFFECT_SHEET.image = img; }));
   jobs.push(loadImage(SKILL2_EFFECT_SHEET.src).then((img) => { SKILL2_EFFECT_SHEET.image = img; }));
   for (const skill of SKILLS) {
