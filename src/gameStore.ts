@@ -25,6 +25,7 @@ export type PlayerSnapshot = {
 export type GameSnapshot = {
   elapsed: number;
   gameOver: boolean;
+  paused: boolean;
   spritesReady: boolean;
   enemiesCount: number;
   boss: BossSnapshot | null;
@@ -34,6 +35,7 @@ export type GameSnapshot = {
 const initialSnapshot: GameSnapshot = {
   elapsed: 0,
   gameOver: false,
+  paused: false,
   spritesReady: false,
   enemiesCount: 0,
   boss: null,

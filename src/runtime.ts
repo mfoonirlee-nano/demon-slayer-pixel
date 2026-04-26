@@ -34,10 +34,17 @@ import type { GameSnapshot } from "./gameStore";
 
 let frameId = 0;
 let running = false;
+let paused = false;
 let publishState: (snapshot: GameSnapshot) => void = () => {};
 
 function publishCurrentState() {
-  publishState(getStateSnapshot());
+  publishState(getStateSnapshot(paused));
+}
+
+function togglePause() {
+  if (state.gameOver || !state.spritesReady) return;
+  paused = !paused;
+  publishCurrentState();
 }
 
 function queueNextFrame() {
@@ -45,6 +52,7 @@ function queueNextFrame() {
 }
 
 function restart() {
+  paused = false;
   resetState();
   resetMapGenerator();
   publishCurrentState();
@@ -63,6 +71,11 @@ function drawLoadingState() {
 
 function loop(ts: number) {
   if (!running || !ctx) return;
+  if (paused) {
+    state.last = ts;
+    queueNextFrame();
+    return;
+  }
   if (!state.last) state.last = ts;
   const dt = Math.min(RUNTIME_CONFIG.maxFrameDeltaMs, ts - state.last) / RUNTIME_CONFIG.msPerSecond;
   state.last = ts;
@@ -180,6 +193,7 @@ export function startGame(options: { onStateChange?: (snapshot: GameSnapshot) =>
     onSkill: castSelectedSkill,
     onSwitchSkill: selectSkill,
     onRestart: restart,
+    onPause: togglePause,
   });
 
   state.last = 0;

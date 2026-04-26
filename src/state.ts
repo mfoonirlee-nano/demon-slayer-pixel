@@ -94,10 +94,11 @@ export function resetState() {
   // spritesReady is not reset — loaded assets persist across game resets
 }
 
-export function getStateSnapshot(): GameSnapshot {
+export function getStateSnapshot(paused = false): GameSnapshot {
   return {
     elapsed: state.elapsed,
     gameOver: state.gameOver,
+    paused,
     spritesReady: state.spritesReady,
     enemiesCount: state.enemies.length,
     boss: state.boss

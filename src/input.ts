@@ -1,6 +1,6 @@
 import { ensureAudio } from "./audio";
 
-const PREVENT_DEFAULT_KEYS = ["a", "d", "w", " ", "j", "k", "1", "2", "3", "r", "arrowleft", "arrowright", "arrowup"] as const;
+const PREVENT_DEFAULT_KEYS = ["a", "d", "w", " ", "j", "k", "1", "2", "3", "r", "p", "escape", "arrowleft", "arrowright", "arrowup"] as const;
 const SKILL_SWITCH_KEYS = ["1", "2", "3"] as const;
 const SKILL_KEY_OFFSET = 1;
 
@@ -10,6 +10,7 @@ type InputHandlers = {
   onSkill?: () => void;
   onSwitchSkill?: (index: number) => void;
   onRestart?: () => void;
+  onPause?: () => void;
 };
 
 export const keys = new Set<string>();
@@ -73,6 +74,7 @@ function handleInputPress(key: string) {
     handlers.onSwitchSkill(Number(k) - SKILL_KEY_OFFSET);
   }
   if (handlers.onRestart && k === "r") handlers.onRestart();
+  if (handlers.onPause && (k === "escape" || k === "p")) handlers.onPause();
 }
 
 function handleInputRelease(key: string) {
