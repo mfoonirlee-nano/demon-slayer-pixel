@@ -173,12 +173,24 @@ export const BOSS_SHEET: SpriteSheet = {
   image: null,
 };
 
+type SpriteRegion = { sx: number; sy: number; sw: number; sh: number };
+
 export const SKY_SPRITES: {
   src: string;
   image: HTMLImageElement | null;
-  moon: { sx: number; sy: number; sw: number; sh: number };
+  moon: SpriteRegion;
+  cloud1: SpriteRegion;
+  cloud2: SpriteRegion;
+  starSmall: SpriteRegion;
+  starMedium: SpriteRegion;
+  starGroup: SpriteRegion;
 } = {
   src: "assets/sprites/sky_sprites.png",
   image: null,
   moon: { sx: 35, sy: 37, sw: 321, sh: 322 },
+  cloud1: { sx: 456, sy: 187, sw: 279, sh: 136 },
+  cloud2: { sx: 790, sy: 165, sw: 422, sh: 164 },
+  starSmall: { sx: 107, sy: 635, sw: 57, sh: 56 },
+  starMedium: { sx: 409, sy: 564, sw: 207, sh: 214 },
+  starGroup: { sx: 790, sy: 544, sw: 309, sh: 286 },
 };

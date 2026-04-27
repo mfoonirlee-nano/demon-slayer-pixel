@@ -41,18 +41,14 @@ function lerpColor(
   ];
 }
 
-// Reused offscreen canvas for blood tint compositing
-let moonOffscreen: HTMLCanvasElement | null = null;
-let moonOffCtx: CanvasRenderingContext2D | null = null;
-
-function getMoonOffscreen(size: number): [HTMLCanvasElement, CanvasRenderingContext2D] {
-  if (!moonOffscreen || moonOffscreen.width !== size) {
-    moonOffscreen = document.createElement("canvas");
-    moonOffscreen.width = size;
-    moonOffscreen.height = size;
-    moonOffCtx = moonOffscreen.getContext("2d");
-  }
-  return [moonOffscreen, moonOffCtx!];
+function drawGlow(context: CanvasRenderingContext2D, cx: number, cy: number, radius: number, color: readonly number[], alpha: number) {
+  const grad = context.createRadialGradient(cx, cy, 0, cx, cy, radius);
+  grad.addColorStop(0, `rgba(${color[0]},${color[1]},${color[2]},${alpha})`);
+  grad.addColorStop(1, `rgba(${color[0]},${color[1]},${color[2]},0)`);
+  context.fillStyle = grad;
+  context.beginPath();
+  context.arc(cx, cy, radius, 0, Math.PI * 2);
+  context.fill();
 }
 
 function getMoonMotion(elapsed: number, bloodLerp: number) {
@@ -114,41 +110,21 @@ export function drawMoon(options: { elapsed: number; moon: MoonState }) {
 
   drawMoonStars(context, elapsed, bloodLerp);
 
-  context.save();
-  // 最外层散射：蓝白 → 暗血红
-  context.shadowColor = rgba(currentFarColor, farGlowAlpha);
-  context.shadowBlur = MOON_GLOW_CONFIG.farGlowBlur;
-  context.fillStyle = rgba(currentFarColor, farGlowAlpha);
-  context.beginPath();
-  context.arc(moonX, moonY, farGlowRadius, 0, Math.PI * 2);
-  context.fill();
+  // 最外层散射（radialGradient 替代 shadowBlur）
+  drawGlow(context, moonX, moonY, farGlowRadius, currentFarColor, farGlowAlpha * 2.2);
 
-  // 次外层散射：蓝白 → 亮血红
-  context.shadowColor = rgba(currentOuterColor, outerGlowAlpha);
-  context.shadowBlur = MOON_GLOW_CONFIG.outerGlowBlur;
-  context.fillStyle = rgba(currentOuterColor, outerGlowAlpha);
-  context.beginPath();
-  context.arc(moonX, moonY, outerGlowRadius, 0, Math.PI * 2);
-  context.fill();
+  // 次外层散射
+  drawGlow(context, moonX, moonY, outerGlowRadius, currentOuterColor, outerGlowAlpha * 2.0);
 
-  // 内层月光晕（蓝白，血月时减弱）
-  context.shadowColor = rgba(MOON_GLOW_CONFIG.coolGlowColor, (1 - bloodLerp * 0.8) * MOON_GLOW_CONFIG.coolGlowAlpha);
-  context.shadowBlur = MOON_GLOW_CONFIG.coolGlowBlur;
-  context.fillStyle = rgba(MOON_GLOW_CONFIG.coolGlowColor, (1 - bloodLerp * 0.8) * MOON_GLOW_CONFIG.coolGlowAlpha);
-  context.beginPath();
-  context.arc(moonX, moonY, MOON_GLOW_CONFIG.coolGlowRadius + motion.pulseWave * 1.4, 0, Math.PI * 2);
-  context.fill();
+  // 内层月光晕（血月时减弱）
+  const coolAlpha = (1 - bloodLerp * 0.8) * MOON_GLOW_CONFIG.coolGlowAlpha;
+  drawGlow(context, moonX, moonY, MOON_GLOW_CONFIG.coolGlowRadius + motion.pulseWave * 1.4, MOON_GLOW_CONFIG.coolGlowColor, coolAlpha * 2.0);
 
-  // 血月光环（bloodLerp > 0 才有）
+  // 血月光环
   if (bloodLerp > 0) {
-    context.shadowColor = rgba(MOON_GLOW_CONFIG.bloodRingColor, bloodLerp * (MOON_GLOW_CONFIG.bloodRingAlpha + Math.max(0, motion.bloodWaveAmount) * MOON_MOTION_CONFIG.bloodWave.alphaBoost));
-    context.shadowBlur = MOON_GLOW_CONFIG.bloodRingBlur;
-    context.fillStyle = rgba(MOON_GLOW_CONFIG.bloodRingColor, bloodLerp * MOON_GLOW_CONFIG.bloodRingAlpha);
-    context.beginPath();
-    context.arc(moonX, moonY, bloodRingRadius, 0, Math.PI * 2);
-    context.fill();
+    const ringAlpha = bloodLerp * (MOON_GLOW_CONFIG.bloodRingAlpha + Math.max(0, motion.bloodWaveAmount) * MOON_MOTION_CONFIG.bloodWave.alphaBoost);
+    drawGlow(context, moonX, moonY, bloodRingRadius, MOON_GLOW_CONFIG.bloodRingColor, ringAlpha * 2.0);
   }
-  context.restore();
 
   const spriteImg = SKY_SPRITES.image;
   const moonDrawSize = MOON_LAYOUT.coreRadius * 2;
@@ -157,28 +133,19 @@ export function drawMoon(options: { elapsed: number; moon: MoonState }) {
   const { sx, sy, sw, sh } = SKY_SPRITES.moon;
 
   if (spriteImg) {
+    context.drawImage(spriteImg, sx, sy, sw, sh, moonDrawX, moonDrawY, moonDrawSize, moonDrawSize);
     if (bloodLerp > 0) {
-      // 血月叠色：先画原始 sprite，再叠两层：深化（multiply 暗化）+ 血红 tint
-      const [offscreen, offCtx] = getMoonOffscreen(moonDrawSize);
-      offCtx.clearRect(0, 0, moonDrawSize, moonDrawSize);
-      offCtx.drawImage(spriteImg, sx, sy, sw, sh, 0, 0, moonDrawSize, moonDrawSize);
-
-      // source-atop 确保所有叠色只覆盖 sprite 的不透明像素（圆形月亮区域）
-      offCtx.globalCompositeOperation = "source-atop";
-
-      // 第一层：暗化（深红低透明度模拟月蚀压暗）
-      offCtx.fillStyle = `rgba(60,0,0,${bloodLerp * 0.55})`;
-      offCtx.fillRect(0, 0, moonDrawSize, moonDrawSize);
-
-      // 第二层：血红 tint
+      // 直接在主 canvas 叠色：用圆形裁剪区域限制到月亮范围
+      context.save();
+      context.beginPath();
+      context.arc(moonX, moonY, MOON_LAYOUT.coreRadius, 0, Math.PI * 2);
+      context.clip();
+      context.fillStyle = `rgba(60,0,0,${bloodLerp * 0.55})`;
+      context.fillRect(moonDrawX, moonDrawY, moonDrawSize, moonDrawSize);
       const [tintR, tintG, tintB] = MOON_SURFACE_CONFIG.bloodCoreColor;
-      offCtx.fillStyle = `rgba(${tintR},${tintG},${tintB},${bloodLerp * 0.5})`;
-      offCtx.fillRect(0, 0, moonDrawSize, moonDrawSize);
-
-      offCtx.globalCompositeOperation = "source-over";
-      context.drawImage(offscreen, moonDrawX, moonDrawY);
-    } else {
-      context.drawImage(spriteImg, sx, sy, sw, sh, moonDrawX, moonDrawY, moonDrawSize, moonDrawSize);
+      context.fillStyle = `rgba(${tintR},${tintG},${tintB},${bloodLerp * 0.5})`;
+      context.fillRect(moonDrawX, moonDrawY, moonDrawSize, moonDrawSize);
+      context.restore();
     }
   } else {
     context.fillStyle = rgba(MOON_SURFACE_CONFIG.shadowColor, bloodLerp * MOON_SURFACE_CONFIG.shadowAlpha);

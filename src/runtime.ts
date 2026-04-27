@@ -112,6 +112,7 @@ function loop(ts: number) {
     }
 
     if (!state.boss && state.bossSpawnTimer <= 0 && state.elapsed > RUNTIME_CONFIG.bossAppearAfterSeconds) {
+      state.enemies.length = 0;
       spawnBoss();
       state.bossSpawnTimer = RUNTIME_CONFIG.disableBossSpawnTimer;
     }

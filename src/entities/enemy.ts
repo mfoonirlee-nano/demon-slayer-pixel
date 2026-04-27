@@ -1,11 +1,12 @@
 import { state } from "../state";
-import { WIDTH, GROUND_Y, ENEMY_SHEETS, ENEMY_DRAW_SCALE, ENEMY_CONFIG } from "../constants";
+import { WIDTH, GROUND_Y, ENEMY_SHEETS, ENEMY_DRAW_SCALE, ENEMY_CONFIG, RUNTIME_CONFIG } from "../constants";
 import type { EnemyState } from "../types/game-state";
 import { hitbox, frameIndex } from "../utils";
 import { drawSheetFrame } from "../graphics";
 import { hurtPlayer } from "./player";
 
 export function spawnEnemy() {
+  if (state.enemies.length >= RUNTIME_CONFIG.enemyMaxCount) return;
   const side = Math.random() < ENEMY_CONFIG.spawnSideChance ? -1 : 1;
   const speed = ENEMY_CONFIG.baseSpeed + Math.random() * ENEMY_CONFIG.randomSpeed + state.elapsed * ENEMY_CONFIG.speedScaleByElapsed;
   const damage = Math.min(ENEMY_CONFIG.maxDamage, ENEMY_CONFIG.baseDamage + state.elapsed * ENEMY_CONFIG.damageScaleByElapsed);

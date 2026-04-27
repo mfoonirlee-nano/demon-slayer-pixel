@@ -5,6 +5,7 @@ export const RUNTIME_CONFIG = {
   enemySpawnMinInterval: 0.38,
   enemySpawnBaseInterval: 1.2,
   enemySpawnDecay: 0.012,
+  enemyMaxCount: 12,
   platformSpawnBaseInterval: 2.2,
   platformSpawnRandomInterval: 1.5,
   bossAppearAfterSeconds: 18,

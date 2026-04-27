@@ -1,6 +1,6 @@
 import { state } from "./state";
 import { ctx } from "./context";
-import { WIDTH, HEIGHT, GROUND_Y } from "./constants";
+import { WIDTH, HEIGHT, GROUND_Y, SKY_SPRITES } from "./constants";
 import { drawMoon, getMoonSkyColors } from "./moon";
 
 const MOUNTAINS = Array.from({ length: 10 }, (_, i) => ({
@@ -14,12 +14,23 @@ const TREES = Array.from({ length: 34 }, (_, i) => ({
   crownW: 22 + (i % 4) * 5,
   layer: (i % 3) + 1,
 }));
-const CLOUDS = Array.from({ length: 12 }, (_, i) => ({
-  x: i * 150 + (i % 3) * 26,
-  y: 34 + (i % 5) * 24,
-  w: 44 + (i % 4) * 16,
-  h: 14 + (i % 3) * 5,
-  layer: 0.55 + (i % 4) * 0.18,
+
+// Sprite clouds: alternate between cloud1 and cloud2 for variety
+const CLOUDS = Array.from({ length: 5 }, (_, i) => ({
+  x: i * 260 + (i % 3) * 40,
+  y: 28 + (i % 5) * 22,
+  scale: (0.28 + (i % 3) * 0.06) * (2 / 3),
+  speed: 18 + (i % 4) * 6,
+  variant: i % 2 as 0 | 1,
+}));
+
+// Sprite stars: only small/medium variants (no group), spread across sky
+const STARS = Array.from({ length: 9 }, (_, i) => ({
+  x: (i * 137 + (i % 5) * 43) % WIDTH,
+  y: 18 + (i % 7) * 28,
+  scale: (0.18 + (i % 4) * 0.09) * (2 / 3) * 0.5,
+  twinkleOffset: (i * 11) % 24,
+  variant: i % 2 as 0 | 1, // 0=small, 1=medium
 }));
 const LANTERNS = Array.from({ length: 8 }, (_, i) => ({
   x: i * 170 + 60,
@@ -34,7 +45,6 @@ export function drawBackground() {
   const scrollFar = (elapsed * 8) % WIDTH;
   const scrollMid = (elapsed * 14) % WIDTH;
   const scrollNear = (elapsed * 22) % WIDTH;
-  const cloudDrift = elapsed * 10;
 
   ctx.fillStyle = nightTop;
   ctx.fillRect(0, 0, WIDTH, 170);
@@ -50,13 +60,38 @@ export function drawBackground() {
 
   drawMoon({ elapsed, moon: state.moon });
 
-  for (const c of CLOUDS) {
-    const x1 = c.x - cloudDrift * c.layer;
-    for (const wrap of [x1, x1 + WIDTH + 220]) {
-      ctx.fillStyle = `rgba(172,196,230,${0.12 + c.layer * 0.03})`;
-      ctx.fillRect(wrap, c.y, c.w, c.h);
-      ctx.fillRect(wrap + c.w * 0.2, c.y - 6, c.w * 0.58, c.h * 0.7);
-      ctx.fillRect(wrap + c.w * 0.52, c.y + 2, c.w * 0.42, c.h * 0.65);
+  // Draw sprite stars with scale-based twinkling; hidden during blood moon
+  const spriteImg = SKY_SPRITES.image;
+  const bloodLerp = state.moon.bloodLerp;
+  if (spriteImg && bloodLerp < 1) {
+    const starVisibility = 1 - bloodLerp;
+    for (const s of STARS) {
+      const region = s.variant === 0 ? SKY_SPRITES.starSmall : SKY_SPRITES.starMedium;
+      // Scale twinkling: 0 → full size, giving a "blink in and out" effect
+      const twinkle = Math.max(0, 0.5 + 0.5 * Math.sin(elapsed * 2.8 + s.twinkleOffset));
+      const drawW = region.sw * s.scale * twinkle;
+      const drawH = region.sh * s.scale * twinkle;
+      if (drawW < 0.5) continue;
+      const cx = s.x + region.sw * s.scale / 2;
+      const cy = s.y + region.sh * s.scale / 2;
+      ctx.save();
+      ctx.globalAlpha = starVisibility * 0.82;
+      ctx.drawImage(spriteImg, region.sx, region.sy, region.sw, region.sh, cx - drawW / 2, cy - drawH / 2, drawW, drawH);
+      ctx.restore();
+    }
+  }
+
+  // Draw sprite clouds drifting slowly (fallback to invisible rect if image not loaded)
+  if (spriteImg) {
+    for (const c of CLOUDS) {
+      const region = c.variant === 0 ? SKY_SPRITES.cloud1 : SKY_SPRITES.cloud2;
+      const drawW = region.sw * c.scale;
+      const drawH = region.sh * c.scale;
+      const x1 = ((c.x - elapsed * c.speed) % (WIDTH + drawW) + (WIDTH + drawW)) % (WIDTH + drawW) - drawW;
+      ctx.save();
+      ctx.globalAlpha = 0.55;
+      ctx.drawImage(spriteImg, region.sx, region.sy, region.sw, region.sh, x1, c.y, drawW, drawH);
+      ctx.restore();
     }
   }
 
