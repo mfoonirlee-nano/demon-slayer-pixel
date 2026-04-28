@@ -1,15 +1,16 @@
 export const HUD_UI = {
   meterPercentMax: 100,
   bossBarWidth: 380,
-  // HP bar sprite layout
-  hpBarW: 220,
-  hpBarH: 31,
-  // icon size and how much it overlaps the left edge of the bar
-  hpIconSize: 48,
-  hpIconOverlap: 14,
-  // fill zone inside the bar sprite (left offset accounts for icon, right for wave deco)
-  hpFillLeft: 30,
-  hpFillTop: 6,
-  hpFillW: 158,
-  hpFillH: 19,
+  // hp_bar sprite: visible content area rendered at 260px wide
+  // container clips to content area only (no empty canvas margin)
+  hpBarContainerW: 260,
+  hpBarContainerH: 40,
+  hpBarImgW: 274,     // full 1920px image scaled to this width
+  hpBarImgOffX: -3,   // shift to align content area left edge
+  hpBarImgOffY: -52,  // shift to align content area top edge
+  // hollow fill zone: starts at bar track left edge (after icon), stays inside groove borders
+  hpFillLeft: 20,
+  hpFillTop: 11,
+  hpFillW: 211,
+  hpFillH: 15,
 } as const;

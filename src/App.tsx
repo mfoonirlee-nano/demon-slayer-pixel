@@ -244,74 +244,31 @@ function Hud() {
   return (
     <>
       <div className="pointer-events-none absolute left-4 top-4 z-10 hidden text-[12px] text-white md:block">
-        {/* HP bar row */}
-        <div className="relative flex items-center" style={{ height: HUD_UI.hpBarH }}>
-          {/* hp_bar background image */}
+        {/* HP bar: container clips to content area, fill bars sit behind the frame image */}
+        <div style={{ position: "relative", width: HUD_UI.hpBarContainerW, height: HUD_UI.hpBarContainerH, overflow: "hidden" }}>
+          {/* fill layer — rendered first, sits behind the frame */}
+          <div style={{ position: "absolute", zIndex: 0, left: HUD_UI.hpFillLeft, top: HUD_UI.hpFillTop, width: HUD_UI.hpFillW, height: HUD_UI.hpFillH, overflow: "hidden", borderRadius: 2 }}>
+            <div className="absolute inset-y-0 left-0 h-full" style={{ width: `${ghostHpPercent}%`, background: "#7a2020" }} />
+            <div className="absolute inset-y-0 left-0 h-full" style={{ width: `${hpPercent}%`, background: "linear-gradient(90deg,#c0312a,#ff5a4a)" }} />
+          </div>
+          {/* frame image on top — transparent middle reveals the fill */}
           <img
             src="assets/sprites/hp_bar.png"
             alt=""
             draggable={false}
-            style={{ width: HUD_UI.hpBarW, height: HUD_UI.hpBarH, imageRendering: "pixelated", display: "block" }}
+            style={{ position: "absolute", zIndex: 1, width: HUD_UI.hpBarImgW, left: HUD_UI.hpBarImgOffX, top: HUD_UI.hpBarImgOffY, imageRendering: "pixelated" }}
           />
-          {/* HP fill — clipped to the inner fill zone of the bar */}
-          <div
-            className="absolute"
-            style={{
-              left: HUD_UI.hpFillLeft,
-              top: HUD_UI.hpFillTop,
-              width: HUD_UI.hpFillW,
-              height: HUD_UI.hpFillH,
-              overflow: "hidden",
-              borderRadius: 2,
-            }}
-          >
-            {/* ghost (delayed) fill */}
-            <div className="absolute inset-y-0 left-0 h-full" style={{ width: `${ghostHpPercent}%`, background: "#1a6e8a" }} />
-            {/* current fill */}
-            <div className="absolute inset-y-0 left-0 h-full" style={{ width: `${hpPercent}%`, background: "linear-gradient(90deg,#26a8d5,#26d5ff)" }} />
-          </div>
-          {/* HP number centered on bar */}
-          <span
-            className="absolute select-none"
-            style={{
-              left: HUD_UI.hpFillLeft,
-              width: HUD_UI.hpFillW,
-              top: 0,
-              height: HUD_UI.hpBarH,
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              fontSize: 11,
-              fontWeight: 700,
-              color: "#e0f4ff",
-              textShadow: "0 1px 3px rgba(0,0,0,0.9)",
-              letterSpacing: "0.05em",
-            }}
-          >
+          {/* HP number centered on the track area */}
+          <span style={{ position: "absolute", zIndex: 2, left: HUD_UI.hpFillLeft, top: 0, width: HUD_UI.hpFillW, height: HUD_UI.hpBarContainerH, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 11, fontWeight: 700, color: "#ffe0e0", textShadow: "0 1px 3px rgba(0,0,0,0.9)", letterSpacing: "0.04em" }}>
             {Math.max(0, Math.floor(player.hp))} / {player.maxHp}
           </span>
-          {/* hp_icon overlapping left edge of bar */}
-          <img
-            src="assets/sprites/hp_icon.png"
-            alt=""
-            draggable={false}
-            style={{
-              position: "absolute",
-              left: -HUD_UI.hpIconOverlap,
-              top: "50%",
-              transform: "translateY(-50%)",
-              width: HUD_UI.hpIconSize,
-              height: HUD_UI.hpIconSize,
-              imageRendering: "pixelated",
-            }}
-          />
         </div>
         {/* Skill row */}
-        <div className="mt-2 flex items-center justify-between gap-3" style={{ paddingLeft: HUD_UI.hpIconSize - HUD_UI.hpIconOverlap }}>
+        <div className="mt-2 flex items-center justify-between gap-3" style={{ paddingLeft: HUD_UI.hpFillLeft }}>
           <span>{activeSkill.name}</span>
           <span>{player.skillCharges}/{player.maxSkillCharges}</span>
         </div>
-        <div className="mt-1 overflow-hidden bg-[#2f445e]" style={{ height: 6, width: HUD_UI.hpFillW, marginLeft: HUD_UI.hpIconSize - HUD_UI.hpIconOverlap }}>
+        <div className="mt-1 overflow-hidden bg-[#2f445e]" style={{ height: 6, width: HUD_UI.hpFillW, marginLeft: HUD_UI.hpFillLeft }}>
           <div className="h-full bg-[#7fe8ff]" style={{ width: `${skillEnergyPercent}%` }} />
         </div>
       </div>
