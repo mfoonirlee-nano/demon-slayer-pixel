@@ -85,7 +85,7 @@ function PauseScreen({ snapshot }: { snapshot: GameSnapshot }) {
             <div className="relative h-[6px] w-full overflow-hidden" style={{ background: "#0d2135" }}>
               <div
                 className="absolute inset-y-0 left-0 h-full transition-none"
-                style={{ width: `${hpPercent}%`, background: "linear-gradient(90deg,#1a8aaa,#26d5ff)" }}
+                style={{ width: `${hpPercent}%`, background: "linear-gradient(90deg,#2a8a3a,#5aff6a)" }}
               />
             </div>
           </div>
@@ -237,39 +237,46 @@ function Hud() {
 
   const hpPercent = clampMeterPercent(player.hp, player.maxHp);
   const ghostHpPercent = clampMeterPercent(ghostHp, player.maxHp);
-  const skillEnergyPercent = clampMeterPercent(player.skillEnergy, player.skillEnergyMax);
+  const skillChargePercent = clampMeterPercent(
+    player.skillCharges * player.skillEnergyMax + player.skillEnergy,
+    player.maxSkillCharges * player.skillEnergyMax,
+  );
   const bossHpPercent = clampMeterPercent(bossHp, bossHpMax);
   const ghostBossHpPercent = clampMeterPercent(ghostBossHp, bossHpMax);
 
   return (
     <>
       <div className="pointer-events-none absolute left-4 top-4 z-10 hidden text-[12px] text-white md:block">
-        {/* HP bar: container clips to content area, fill bars sit behind the frame image */}
-        <div style={{ position: "relative", width: HUD_UI.hpBarContainerW, height: HUD_UI.hpBarContainerH, overflow: "hidden" }}>
-          {/* fill layer — rendered first, sits behind the frame */}
-          <div style={{ position: "absolute", zIndex: 0, left: HUD_UI.hpFillLeft, top: HUD_UI.hpFillTop, width: HUD_UI.hpFillW, height: HUD_UI.hpFillH, overflow: "hidden", borderRadius: 2 }}>
-            <div className="absolute inset-y-0 left-0 h-full" style={{ width: `${ghostHpPercent}%`, background: "#7a2020" }} />
-            <div className="absolute inset-y-0 left-0 h-full" style={{ width: `${hpPercent}%`, background: "linear-gradient(90deg,#c0312a,#ff5a4a)" }} />
+        <div style={{ position: "relative", width: HUD_UI.statusBarContainerW, height: HUD_UI.statusBarContainerH }}>
+          {/* HP fill — upper track */}
+          <div style={{ position: "absolute", zIndex: 0, left: HUD_UI.hpFillLeft, top: HUD_UI.hpFillTop, width: HUD_UI.hpFillW, height: HUD_UI.hpFillH, overflow: "hidden", borderRadius: 1 }}>
+            <div className="absolute inset-y-0 left-0 h-full" style={{ width: `${ghostHpPercent}%`, background: "#204a20" }} />
+            <div className="absolute inset-y-0 left-0 h-full" style={{ width: `${hpPercent}%`, background: "linear-gradient(90deg,#2a8a3a,#5aff6a)" }} />
           </div>
-          {/* frame image on top — transparent middle reveals the fill */}
+          {/* Skill energy fill — lower track */}
+          <div style={{ position: "absolute", zIndex: 0, left: HUD_UI.skillFillLeft, top: HUD_UI.skillFillTop, width: HUD_UI.skillFillW, height: HUD_UI.skillFillH, overflow: "hidden", borderRadius: 1 }}>
+            <div className="absolute inset-y-0 left-0 h-full" style={{ width: `${skillChargePercent}%`, background: "linear-gradient(90deg,#1a6b8a,#7fe8ff)" }} />
+          </div>
+          {/* frame image — transparent tracks reveal fills behind */}
           <img
-            src="assets/sprites/hp_bar.png"
+            src="assets/sprites/status_bar.png"
             alt=""
             draggable={false}
-            style={{ position: "absolute", zIndex: 1, width: HUD_UI.hpBarImgW, left: HUD_UI.hpBarImgOffX, top: HUD_UI.hpBarImgOffY, imageRendering: "pixelated" }}
+            style={{ position: "absolute", zIndex: 1, width: HUD_UI.statusBarImgW, left: 0, top: 0, imageRendering: "pixelated" }}
           />
-          {/* HP number centered on the track area */}
-          <span style={{ position: "absolute", zIndex: 2, left: HUD_UI.hpFillLeft, top: 0, width: HUD_UI.hpFillW, height: HUD_UI.hpBarContainerH, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 11, fontWeight: 700, color: "#ffe0e0", textShadow: "0 1px 3px rgba(0,0,0,0.9)", letterSpacing: "0.04em" }}>
+          {/* HP text — centered on upper track */}
+          <span style={{ position: "absolute", zIndex: 2, left: HUD_UI.hpFillLeft, top: HUD_UI.hpFillTop, width: HUD_UI.hpFillW, height: HUD_UI.hpFillH, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 9, fontWeight: 700, color: "#e0ffe0", textShadow: "0 1px 3px rgba(0,0,0,0.9)", letterSpacing: "0.04em", lineHeight: 1 }}>
             {Math.max(0, Math.floor(player.hp))} / {player.maxHp}
           </span>
         </div>
-        {/* Skill row */}
-        <div className="mt-2 flex items-center justify-between gap-3" style={{ paddingLeft: HUD_UI.hpFillLeft }}>
-          <span>{activeSkill.name}</span>
-          <span>{player.skillCharges}/{player.maxSkillCharges}</span>
-        </div>
-        <div className="mt-1 overflow-hidden bg-[#2f445e]" style={{ height: 6, width: HUD_UI.hpFillW, marginLeft: HUD_UI.hpFillLeft }}>
-          <div className="h-full bg-[#7fe8ff]" style={{ width: `${skillEnergyPercent}%` }} />
+        {/* Skill info row below status bar */}
+        <div className="flex items-center justify-between" style={{ paddingLeft: HUD_UI.skillFillLeft, paddingRight: HUD_UI.statusBarContainerW - HUD_UI.skillFillLeft - HUD_UI.skillFillW }}>
+          <span style={{ fontSize: 10, color: "#e0f8ff", textShadow: "0 1px 2px rgba(0,0,0,0.8)" }}>
+            {activeSkill.name}
+          </span>
+          <span style={{ fontSize: 10, color: "#7fe8ff", textShadow: "0 1px 2px rgba(0,0,0,0.8)" }}>
+            {Math.floor(skillChargePercent)}%
+          </span>
         </div>
       </div>
 
