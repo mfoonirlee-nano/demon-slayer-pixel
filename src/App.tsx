@@ -248,7 +248,7 @@ function Hud() {
           </div>
           {/* frame image — transparent tracks reveal fills behind */}
           <img
-            src="assets/sprites/status_bar.png"
+            src="assets/sprites/ui/status_bar.png"
             alt=""
             draggable={false}
             style={{ position: "absolute", zIndex: 1, width: HUD_UI.statusBarImgW, left: 0, top: 0, imageRendering: "pixelated" }}
@@ -257,6 +257,13 @@ function Hud() {
           <span style={{ position: "absolute", zIndex: 2, left: HUD_UI.hpFillLeft, top: HUD_UI.hpFillTop, width: HUD_UI.hpFillW, height: HUD_UI.hpFillH, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 9, fontWeight: 700, color: "#e0ffe0", textShadow: "0 1px 3px rgba(0,0,0,0.9)", letterSpacing: "0.04em", lineHeight: 1 }}>
             {Math.max(0, Math.floor(player.hp))} / {player.maxHp}
           </span>
+          {/* Skill icon — circular area left of bars */}
+          <img
+            src={`assets/sprites/ui/skill${player.skillIndex + 1}_icon.png`}
+            alt=""
+            draggable={false}
+            style={{ position: "absolute", zIndex: 2, left: 48, top: 25, width: 60, height: 60, borderRadius: "50%", objectFit: "cover" }}
+          />
         </div>
       </div>
 
