@@ -38,7 +38,49 @@ function GameCanvas() {
   );
 }
 
-const HP_GHOST_LERP_SPEED = 0.04;
+const GHOST_LERP_SPEED = 0.04;
+
+function useGhostValue(value: number) {
+  const [ghost, setGhost] = useState(value);
+  const ghostRef = useRef(value);
+  const rafRef = useRef<number>(0);
+
+  useEffect(() => {
+    if (value === ghostRef.current) return;
+    const animate = () => {
+      const diff = value - ghostRef.current;
+      if (Math.abs(diff) < 0.1) {
+        ghostRef.current = value;
+        setGhost(value);
+        return;
+      }
+      ghostRef.current += diff * GHOST_LERP_SPEED;
+      setGhost(ghostRef.current);
+      rafRef.current = requestAnimationFrame(animate);
+    };
+    cancelAnimationFrame(rafRef.current);
+    rafRef.current = requestAnimationFrame(animate);
+    return () => cancelAnimationFrame(rafRef.current);
+  }, [value]);
+
+  return ghost;
+}
+
+function GhostBar({ value, max, ghostValue, color, ghostColor }: {
+  value: number; max: number; ghostValue: number;
+  color: string; ghostColor: string;
+}) {
+  const percent = clampMeterPercent(value, max);
+  const ghostPercent = clampMeterPercent(ghostValue, max);
+  const wide = Math.max(percent, ghostPercent);
+  const narrow = Math.min(percent, ghostPercent);
+  return (
+    <>
+      <div className="absolute inset-y-0 left-0 h-full" style={{ width: `${wide}%`, background: ghostColor }} />
+      <div className="absolute inset-y-0 left-0 h-full" style={{ width: `${narrow}%`, background: color }} />
+    </>
+  );
+}
 
 function PauseScreen({ snapshot }: { snapshot: GameSnapshot }) {
   const { player } = snapshot;
@@ -181,68 +223,16 @@ function Hud() {
   const { player, boss, elapsed, spritesReady, gameOver } = snapshot;
   const activeSkill = SKILLS[player.skillIndex] || SKILLS[0];
 
-  const [ghostHp, setGhostHp] = useState(player.hp);
-  const ghostHpRef = useRef(player.hp);
-  const playerRafRef = useRef<number>(0);
-
-  useEffect(() => {
-    if (player.hp >= ghostHpRef.current) {
-      ghostHpRef.current = player.hp;
-      setGhostHp(player.hp);
-      return;
-    }
-    const animate = () => {
-      const diff = player.hp - ghostHpRef.current;
-      if (Math.abs(diff) < 0.1) {
-        ghostHpRef.current = player.hp;
-        setGhostHp(player.hp);
-        return;
-      }
-      ghostHpRef.current += diff * HP_GHOST_LERP_SPEED;
-      setGhostHp(ghostHpRef.current);
-      playerRafRef.current = requestAnimationFrame(animate);
-    };
-    cancelAnimationFrame(playerRafRef.current);
-    playerRafRef.current = requestAnimationFrame(animate);
-    return () => cancelAnimationFrame(playerRafRef.current);
-  }, [player.hp]);
-
+  const skillValue = player.skillCharges * player.skillEnergyMax + player.skillEnergy;
+  const skillMax = player.maxSkillCharges * player.skillEnergyMax;
   const bossHp = boss?.hp ?? 0;
   const bossHpMax = boss?.hpMax ?? 1;
-  const [ghostBossHp, setGhostBossHp] = useState(bossHp);
-  const ghostBossHpRef = useRef(bossHp);
-  const bossRafRef = useRef<number>(0);
 
-  useEffect(() => {
-    if (bossHp >= ghostBossHpRef.current) {
-      ghostBossHpRef.current = bossHp;
-      setGhostBossHp(bossHp);
-      return;
-    }
-    const animate = () => {
-      const diff = bossHp - ghostBossHpRef.current;
-      if (Math.abs(diff) < 0.1) {
-        ghostBossHpRef.current = bossHp;
-        setGhostBossHp(bossHp);
-        return;
-      }
-      ghostBossHpRef.current += diff * HP_GHOST_LERP_SPEED;
-      setGhostBossHp(ghostBossHpRef.current);
-      bossRafRef.current = requestAnimationFrame(animate);
-    };
-    cancelAnimationFrame(bossRafRef.current);
-    bossRafRef.current = requestAnimationFrame(animate);
-    return () => cancelAnimationFrame(bossRafRef.current);
-  }, [bossHp]);
+  const ghostHp = useGhostValue(player.hp);
+  const ghostSkill = useGhostValue(skillValue);
+  const ghostBossHp = useGhostValue(bossHp);
 
-  const hpPercent = clampMeterPercent(player.hp, player.maxHp);
-  const ghostHpPercent = clampMeterPercent(ghostHp, player.maxHp);
-  const skillChargePercent = clampMeterPercent(
-    player.skillCharges * player.skillEnergyMax + player.skillEnergy,
-    player.maxSkillCharges * player.skillEnergyMax,
-  );
-  const bossHpPercent = clampMeterPercent(bossHp, bossHpMax);
-  const ghostBossHpPercent = clampMeterPercent(ghostBossHp, bossHpMax);
+  const skillChargePercent = clampMeterPercent(skillValue, skillMax);
 
   return (
     <>
@@ -250,12 +240,11 @@ function Hud() {
         <div style={{ position: "relative", width: HUD_UI.statusBarContainerW, height: HUD_UI.statusBarContainerH }}>
           {/* HP fill — upper track */}
           <div style={{ position: "absolute", zIndex: 0, left: HUD_UI.hpFillLeft, top: HUD_UI.hpFillTop, width: HUD_UI.hpFillW, height: HUD_UI.hpFillH, overflow: "hidden", borderRadius: 1 }}>
-            <div className="absolute inset-y-0 left-0 h-full" style={{ width: `${ghostHpPercent}%`, background: "#204a20" }} />
-            <div className="absolute inset-y-0 left-0 h-full" style={{ width: `${hpPercent}%`, background: "linear-gradient(90deg,#2a8a3a,#5aff6a)" }} />
+            <GhostBar value={player.hp} max={player.maxHp} ghostValue={ghostHp} color="linear-gradient(90deg,#2a8a3a,#5aff6a)" ghostColor="#2d6b2d" />
           </div>
           {/* Skill energy fill — lower track */}
           <div style={{ position: "absolute", zIndex: 0, left: HUD_UI.skillFillLeft, top: HUD_UI.skillFillTop, width: HUD_UI.skillFillW, height: HUD_UI.skillFillH, overflow: "hidden", borderRadius: 1 }}>
-            <div className="absolute inset-y-0 left-0 h-full" style={{ width: `${skillChargePercent}%`, background: "linear-gradient(90deg,#1a6b8a,#7fe8ff)" }} />
+            <GhostBar value={skillValue} max={skillMax} ghostValue={ghostSkill} color="linear-gradient(90deg,#1a6b8a,#7fe8ff)" ghostColor="#245a6d" />
           </div>
           {/* frame image — transparent tracks reveal fills behind */}
           <img
@@ -284,8 +273,7 @@ function Hud() {
         <div className="pointer-events-none absolute left-1/2 top-4 z-10 hidden -translate-x-1/2 rounded border border-white/10 bg-black/40 px-4 py-2 text-white md:block" style={{ width: HUD_UI.bossBarWidth }}>
           <div className="mb-1 text-center text-[12px]">下弦之鬼·阶段 {boss.phase}</div>
           <div className="relative h-3 w-full overflow-hidden bg-[#443246]">
-            <div className="absolute inset-y-0 left-0 h-full bg-[#7a2a44]" style={{ width: `${ghostBossHpPercent}%` }} />
-            <div className="absolute inset-y-0 left-0 h-full bg-[#ff6e93]" style={{ width: `${bossHpPercent}%` }} />
+            <GhostBar value={bossHp} max={bossHpMax} ghostValue={ghostBossHp} color="#ff6e93" ghostColor="#9a3a5a" />
           </div>
         </div>
       ) : null}
