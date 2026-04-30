@@ -20,7 +20,7 @@ const CLOUDS = Array.from({ length: 5 }, (_, i) => ({
   x: i * 260 + (i % 3) * 40,
   y: 28 + (i % 5) * 22,
   scale: (0.28 + (i % 3) * 0.06) * (2 / 3),
-  speed: 18 + (i % 4) * 6,
+  speed: 6 + (i % 4) * 3,
   variant: i % 2 as 0 | 1,
 }));
 
@@ -89,7 +89,7 @@ export function drawBackground() {
       const drawH = region.sh * c.scale;
       const x1 = ((c.x - elapsed * c.speed) % (WIDTH + drawW) + (WIDTH + drawW)) % (WIDTH + drawW) - drawW;
       ctx.save();
-      ctx.globalAlpha = 0.55;
+      ctx.globalAlpha = 0.7;
       ctx.drawImage(spriteImg, region.sx, region.sy, region.sw, region.sh, x1, c.y, drawW, drawH);
       ctx.restore();
     }

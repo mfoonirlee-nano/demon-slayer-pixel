@@ -258,15 +258,6 @@ function Hud() {
             {Math.max(0, Math.floor(player.hp))} / {player.maxHp}
           </span>
         </div>
-        {/* Skill info row below status bar */}
-        <div className="flex items-center justify-between" style={{ paddingLeft: HUD_UI.skillFillLeft, paddingRight: HUD_UI.statusBarContainerW - HUD_UI.skillFillLeft - HUD_UI.skillFillW }}>
-          <span style={{ fontSize: 10, color: "#e0f8ff", textShadow: "0 1px 2px rgba(0,0,0,0.8)" }}>
-            {activeSkill.name}
-          </span>
-          <span style={{ fontSize: 10, color: "#7fe8ff", textShadow: "0 1px 2px rgba(0,0,0,0.8)" }}>
-            {Math.floor(skillChargePercent)}%
-          </span>
-        </div>
       </div>
 
       {boss ? (
