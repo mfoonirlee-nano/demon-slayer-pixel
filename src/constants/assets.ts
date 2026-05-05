@@ -165,6 +165,21 @@ export const SKILL2_EFFECT_CONFIG = {
   hitCooldown: 20,
 } as const;
 
+export const SKILL3_EFFECT_SHEET: SpriteSheet = {
+  src: "assets/sprites/skills/skill3_effect.png",
+  frameW: 400,
+  frameH: 300,
+  count: 6,
+  image: null,
+};
+
+export const SKILL3_EFFECT_CONFIG = {
+  drawScale: 0.5,
+  frameDuration: 6,
+  maxHits: 3,
+  damageMultiplier: 2,
+} as const;
+
 export const BOSS_SHEET: SpriteSheet = {
   src: "assets/sprites/enemies/boss.png",
   frameW: 350,

@@ -14,6 +14,7 @@ import {
   SKILL1_EFFECT_CONFIG,
   SKILL2_EFFECT_SHEET,
   SKILL2_EFFECT_CONFIG,
+  SKILL3_EFFECT_CONFIG,
 } from "../constants";
 import { onGround, hitbox, frameIndex } from "../utils";
 import { drawSheetFrame, drawSkillFrame } from "../graphics";
@@ -73,6 +74,15 @@ export function castSelectedSkill() {
   p.skillFlash = 0;
   p.skillTimer = Math.ceil(skill.frameCount * 60 / PLAYER_DRAW.skillAnimFps);
   p.skillEffectSpawned = skill.id !== SKILL_IDS.skill1 && skill.id !== SKILL_IDS.skill2;
+
+  if (skill.id === SKILL_IDS.skill3) {
+    state.skill3Effect = {
+      elapsed: 0,
+      frame: 0,
+      hitsRemaining: SKILL3_EFFECT_CONFIG.maxHits,
+      alpha: 1,
+    };
+  }
 
   const cx = p.x + p.w / 2;
   const cy = p.y + p.h / 2;
@@ -166,6 +176,44 @@ export function attackBox() {
 export function hurtPlayer(damage: number, sourceVx: number) {
   const p = state.player;
   if (p.invincible > 0) return;
+
+  if (state.skill3Effect) {
+    state.skill3Effect.hitsRemaining -= 1;
+    state.skill3Effect.alpha = state.skill3Effect.hitsRemaining / SKILL3_EFFECT_CONFIG.maxHits;
+    p.invincible = PLAYER_COMBAT.hurtInvincibleFrames;
+
+    const counterDamage = (p.baseAttack + p.attackBonus) * SKILL3_EFFECT_CONFIG.damageMultiplier;
+    for (let i = state.enemies.length - 1; i >= 0; i -= 1) {
+      const e = state.enemies[i];
+      if (!hitbox(p, e)) continue;
+      e.hp -= counterDamage;
+      emitSlash(e.x + e.w / 2, e.y + e.h / 2, SKILLS[2].color, e.w);
+      emitHitBurst(e.x + e.w / 2, e.y + e.h / 2, SKILLS[2].color, 1.5);
+      if (e.hp <= 0) {
+        p.score += PLAYER_COMBAT.enemyKillScore;
+        gainSkillEnergy(PLAYER_COMBAT.enemyEnergyGain);
+        state.enemies.splice(i, 1);
+      }
+    }
+    if (state.boss && hitbox(p, state.boss)) {
+      state.boss.hp -= counterDamage;
+      emitSlash(state.boss.x + state.boss.w / 2, state.boss.y + state.boss.h * 0.4, SKILLS[2].color);
+      emitHitBurst(state.boss.x + state.boss.w / 2, state.boss.y + state.boss.h * 0.4, SKILLS[2].color, 2);
+      if (state.boss.hp <= 0) {
+        p.score += PLAYER_COMBAT.bossKillScore;
+        gainSkillEnergy(PLAYER_COMBAT.bossEnergyGain);
+        state.boss = null;
+        state.bossSpawnTimer = PLAYER_COMBAT.skillChargeResetDelay;
+      }
+    }
+
+    playTone(440, 0.08, "triangle", 0.15);
+    if (state.skill3Effect.hitsRemaining <= 0) {
+      state.skill3Effect = null;
+    }
+    return;
+  }
+
   p.hp = Math.max(0, p.hp - damage);
   p.invincible = PLAYER_COMBAT.hurtInvincibleFrames;
   p.vx = -Math.sign(sourceVx || 1) * PLAYER_COMBAT.hurtKnockbackX;

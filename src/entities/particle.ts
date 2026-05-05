@@ -10,6 +10,8 @@ import {
   SKILL1_EFFECT_CONFIG,
   SKILL2_EFFECT_SHEET,
   SKILL2_EFFECT_CONFIG,
+  SKILL3_EFFECT_SHEET,
+  SKILL3_EFFECT_CONFIG,
   PLAYER_COMBAT,
   WIDTH,
 } from "../constants";
@@ -365,4 +367,30 @@ export function drawSkill2Effects() {
     ctx.drawImage(sheet.image, sx, 0, sheet.frameW, sheet.frameH, -drawW / 2, -drawH / 2, drawW, drawH);
     ctx.restore();
   }
+}
+
+export function updateSkill3Effect() {
+  const eff = state.skill3Effect;
+  if (!eff) return;
+  eff.elapsed += 1;
+  const rawFrame = Math.floor(eff.elapsed / SKILL3_EFFECT_CONFIG.frameDuration);
+  eff.frame = rawFrame % SKILL3_EFFECT_SHEET.count;
+}
+
+export function drawSkill3Effect() {
+  if (!ctx) return;
+  const eff = state.skill3Effect;
+  if (!eff) return;
+  const sheet = SKILL3_EFFECT_SHEET;
+  if (!sheet.image) return;
+  const p = state.player;
+  const drawW = sheet.frameW * SKILL3_EFFECT_CONFIG.drawScale;
+  const drawH = sheet.frameH * SKILL3_EFFECT_CONFIG.drawScale;
+  const cx = p.x + p.w / 2;
+  const cy = p.y + p.h - 72;
+  const sx = eff.frame * sheet.frameW;
+  ctx.save();
+  ctx.globalAlpha = eff.alpha;
+  ctx.drawImage(sheet.image, sx, 0, sheet.frameW, sheet.frameH, cx - drawW / 2, cy - drawH / 2, drawW, drawH);
+  ctx.restore();
 }

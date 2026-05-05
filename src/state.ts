@@ -58,6 +58,7 @@ export function createInitialState(): GameState {
     hitBursts: [],
     skill1Effects: [],
     skill2Effects: [],
+    skill3Effect: null,
     crystals: [],
   };
 }
@@ -82,6 +83,7 @@ export function resetState() {
   resetCollection(state.hitBursts, next.hitBursts);
   resetCollection(state.skill1Effects, next.skill1Effects);
   resetCollection(state.skill2Effects, next.skill2Effects);
+  state.skill3Effect = next.skill3Effect;
   resetCollection(state.projectiles, next.projectiles);
   state.elapsed = next.elapsed;
   state.spawnTimer = next.spawnTimer;
