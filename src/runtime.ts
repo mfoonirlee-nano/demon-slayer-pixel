@@ -11,7 +11,7 @@ import {
 } from "./constants";
 import { loadSprites } from "./assets";
 import { setupInput, teardownInput } from "./input";
-import { drawBackground } from "./background";
+import { drawBackground, drawForeground } from "./background";
 
 import { updatePlayer, drawPlayer, triggerAttack, castSelectedSkill, selectSkill, tryJump } from "./entities/player";
 import { spawnEnemy, updateEnemies, drawEnemy } from "./entities/enemy";
@@ -173,6 +173,7 @@ function loop(ts: number) {
   drawHitBursts();
   drawProjectiles();
   drawParticles();
+  drawForeground();
   publishCurrentState();
   queueNextFrame();
 }

@@ -77,19 +77,75 @@ const STARS = Array.from({ length: 9 }, (_, i) => ({
   twinkleOffset: (i * 11) % 24,
   variant: i % 2 as 0 | 1, // 0=small, 1=medium
 }));
-// Flat stone tile patches — sit on the ground plane, drawn before towers.
-const FOREGROUND_PATCHES = Array.from({ length: 8 }, (_, i) => ({
-  x: i * 135 + (i % 3) * 41,
-  variant: i % FOREGROUND_SPRITES.patches.length,
-  scale: 0.42 + (i % 3) * 0.07,
-}));
+// Foreground placement helpers ------------------------------------------------
+interface ForegroundItem {
+  x: number;
+  variant: number;
+  scale: number;
+  w: number;
+  h: number;
+}
 
-// Standalone clutter — rocks, grass, bushes. Drawn in front of lanterns.
-const FOREGROUND_DECOR = Array.from({ length: 16 }, (_, i) => ({
-  x: i * 68 + (i % 5) * 23,
-  variant: i % FOREGROUND_SPRITES.decor.length,
-  scale: 0.4 + (i % 4) * 0.06,
-}));
+function buildForegroundItems(
+  count: number,
+  span: number,
+  regions: readonly { sx: number; sy: number; sw: number; sh: number }[],
+  minScale: number,
+  maxScale: number,
+  padMin: number,
+  padMax: number,
+  salt: number,
+): ForegroundItem[] {
+  const items: ForegroundItem[] = [];
+  const maxAttempts = 200;
+
+  for (let i = 0; i < count; i++) {
+    for (let attempt = 0; attempt < maxAttempts; attempt++) {
+      const variant = Math.floor(seeded(i + attempt * 31 + salt, 301 + salt) * regions.length);
+      const scale = minScale + seeded(i + attempt * 31 + salt, 401 + salt) * (maxScale - minScale);
+      const w = regions[variant].sw * scale;
+      const h = regions[variant].sh * scale;
+
+      let x = seeded(i + attempt * 31 + salt, 501 + salt) * span;
+      x = ((x % span) + span) % span;
+
+      // randomly add a one-side padding so items don't always cluster near edge
+      const pad = padMin + seeded(i + attempt * 31 + salt, 601 + salt) * (padMax - padMin);
+      x = ((x + pad) % span + span) % span;
+
+      // test overlap with existing items (horizontal only → both anchored to ground)
+      let overlapped = false;
+      for (const other of items) {
+        // compute draw widths on-the-fly since items have varying sizes
+        const dx = Math.abs(x - other.x);
+        const overlapThreshold = (w + other.w) * 0.5;
+        if (dx < overlapThreshold) {
+          overlapped = true;
+          break;
+        }
+      }
+
+      if (!overlapped) {
+        items.push({ x, variant, scale, w, h });
+        break;
+      }
+    }
+  }
+
+  return items;
+}
+
+const FOREGROUND_PATCH_SPAN = WIDTH + 200;
+const FOREGROUND_PATCHES = buildForegroundItems(
+  6, FOREGROUND_PATCH_SPAN, FOREGROUND_SPRITES.patches,
+  0.42, 0.56, 10, 60, 701,
+);
+
+const FOREGROUND_DECOR_SPAN = WIDTH + 180;
+const FOREGROUND_DECOR = buildForegroundItems(
+  9, FOREGROUND_DECOR_SPAN, FOREGROUND_SPRITES.decor,
+  0.4, 0.58, 15, 80, 601,
+);
 
 export function drawBackground() {
   if (!ctx) return;
@@ -210,20 +266,6 @@ export function drawBackground() {
     }
   }
 
-  const foregroundImg = FOREGROUND_SPRITES.image;
-  if (foregroundImg) {
-    for (const p of FOREGROUND_PATCHES) {
-      const region = FOREGROUND_SPRITES.patches[p.variant];
-      const drawW = region.sw * p.scale;
-      const drawH = region.sh * p.scale;
-      const span = WIDTH + drawW + 120;
-      const raw = (p.x - scrollNear * 0.9) % span;
-      const x = (raw + span) % span - drawW;
-      const y = GROUND_Y - drawH + 6;
-      ctx.drawImage(foregroundImg, region.sx, region.sy, region.sw, region.sh, x, y, drawW, drawH);
-    }
-  }
-
   const towerImg = STONE_TOWER_SPRITES.image;
   if (towerImg) {
     for (const tower of TOWERS) {
@@ -240,19 +282,6 @@ export function drawBackground() {
     }
   }
 
-  if (foregroundImg) {
-    for (const d of FOREGROUND_DECOR) {
-      const region = FOREGROUND_SPRITES.decor[d.variant];
-      const drawW = region.sw * d.scale;
-      const drawH = region.sh * d.scale;
-      const span = WIDTH + drawW + 120;
-      const raw = (d.x - scrollNear) % span;
-      const x = (raw + span) % span - drawW;
-      const y = GROUND_Y - 2 - drawH;
-      ctx.drawImage(foregroundImg, region.sx, region.sy, region.sw, region.sh, x, y, drawW, drawH);
-    }
-  }
-
   ctx.fillStyle = "rgba(180, 210, 255, 0.08)";
   ctx.fillRect(0, GROUND_Y - 50, WIDTH, 20);
   ctx.fillStyle = "rgba(180, 210, 255, 0.12)";
@@ -262,5 +291,33 @@ export function drawBackground() {
     const fy = 120 + i * 48;
     ctx.fillStyle = "rgba(140,190,255,0.08)";
     ctx.fillRect(fx, fy, 220 + i * 50, 10);
+  }
+}
+
+// Draw foreground patches and decor *after* every gameplay element so they
+// visually sit on top of the whole scene (as requested in TODO).
+export function drawForeground() {
+  if (!ctx) return;
+  const elapsed = state.elapsed;
+  const scrollNear = (elapsed * 22) % WIDTH;
+  const foregroundImg = FOREGROUND_SPRITES.image;
+  if (!foregroundImg) return;
+
+  for (const p of FOREGROUND_PATCHES) {
+    const region = FOREGROUND_SPRITES.patches[p.variant];
+    const span = WIDTH + p.w + 120;
+    const raw = (p.x - scrollNear * 0.9) % span;
+    const x = (raw + span) % span - p.w;
+    const y = GROUND_Y - p.h + 6;
+    ctx.drawImage(foregroundImg, region.sx, region.sy, region.sw, region.sh, x, y, p.w, p.h);
+  }
+
+  for (const d of FOREGROUND_DECOR) {
+    const region = FOREGROUND_SPRITES.decor[d.variant];
+    const span = WIDTH + d.w + 120;
+    const raw = (d.x - scrollNear) % span;
+    const x = (raw + span) % span - d.w;
+    const y = GROUND_Y - 2 - d.h;
+    ctx.drawImage(foregroundImg, region.sx, region.sy, region.sw, region.sh, x, y, d.w, d.h);
   }
 }
