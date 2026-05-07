@@ -15,12 +15,21 @@ import {
 } from "./constants";
 import { drawMoon, getMoonSkyColors } from "./moon";
 
-// Mountain parallax layers: farthest = slowest + highest on screen,
-// closest = fastest + anchored near the ground.
+// Three-plane parallax speeds (pixels per second of elapsed time). Each plane
+// scrolls at a different rate so the scene has a true sense of depth.
+const PARALLAX_SPEED = {
+  background: 4,    // sky elements + far mountain ridge (slowest)
+  midground: 12,    // mid/near mountains, trees, stone towers
+  foreground: 24,   // ground strip + foreground patches/decor (fastest)
+};
+
+// Mountain sub-parallax: each variant is placed on one of the three planes.
+// `plane` picks the scroll speed; `depthMul` lets us further stagger mountains
+// within the same plane (e.g. far-back ridge drifts slower than mid-back).
 const MOUNTAIN_LAYERS = [
-  { variantIndex: 0, parallax: 0.25, bottom: -140 }, // offsets are from GROUND_Y
-  { variantIndex: 1, parallax: 0.5,  bottom: -80 },
-  { variantIndex: 2, parallax: 1.0,  bottom: -15 },
+  { variantIndex: 0, plane: "background" as const, depthMul: 1.0, bottom: -100 },
+  { variantIndex: 1, plane: "midground"  as const, depthMul: 0.6, bottom: -80  },
+  { variantIndex: 2, plane: "midground"  as const, depthMul: 1.0, bottom: -15  },
 ];
 
 // Tree sprite pools: left/middle of sheet = living greens + red maples;
@@ -152,9 +161,12 @@ export function drawBackground() {
 
   const elapsed = state.elapsed;
   const { nightTop, nightMid, nightLow, upperOverlay, midOverlay } = getMoonSkyColors(state.moon);
-  const scrollFar = (elapsed * 8) % WIDTH;
-  const scrollMid = (elapsed * 14) % WIDTH;
-  const scrollNear = (elapsed * 22) % WIDTH;
+
+  // Three-plane scroll offsets — all elements below anchor to exactly one of
+  // these so parallax depth stays consistent across the scene.
+  const scrollBackground = elapsed * PARALLAX_SPEED.background;
+  const scrollMidground  = elapsed * PARALLAX_SPEED.midground;
+  const scrollForeground = elapsed * PARALLAX_SPEED.foreground;
 
   ctx.fillStyle = nightTop;
   ctx.fillRect(0, 0, WIDTH, 170);
@@ -206,6 +218,9 @@ export function drawBackground() {
     }
   }
 
+  // --- Background plane: far ridges, slowest drift ------------------------
+  // --- Midground plane: mid + near ridges, tree/tower line ---------------
+  // (Mountains span background + midground — each variant declares its plane.)
   const mountainImg = MOUNTAIN_SPRITES.image;
   if (mountainImg) {
     for (const layer of MOUNTAIN_LAYERS) {
@@ -213,7 +228,8 @@ export function drawBackground() {
       const tileW = region.sw;
       const tileH = region.sh;
       const y = GROUND_Y + layer.bottom - tileH;
-      const offset = ((scrollFar * layer.parallax) % tileW + tileW) % tileW;
+      const planeScroll = layer.plane === "background" ? scrollBackground : scrollMidground;
+      const offset = ((planeScroll * layer.depthMul) % tileW + tileW) % tileW;
       for (let x = -offset; x < WIDTH + tileW; x += tileW) {
         ctx.drawImage(mountainImg, region.sx, region.sy, region.sw, region.sh, x, y, tileW, tileH);
       }
@@ -227,7 +243,8 @@ export function drawBackground() {
     ? 1
     : Math.max(0, Math.min(1, 1 - state.bossSpawnTimer / maxTimer));
 
-  const sceneryScroll = scrollMid * 0.85;
+  // Trees and stone towers share the midground plane with the mid/near ridges.
+  const sceneryScroll = scrollMidground;
   const treeImg = TREE_SPRITES.image;
   if (treeImg) {
     for (const t of TREES) {
@@ -260,7 +277,8 @@ export function drawBackground() {
     // Anchor top of tile strip slightly above GROUND_Y so grass/ice overlaps
     // the play line, giving a natural "surface" rather than a hard seam.
     const topY = GROUND_Y - 10;
-    const offset = ((scrollNear % tileW) + tileW) % tileW;
+    // --- Foreground plane: ground tile strip scrolls fastest. -------------
+    const offset = ((scrollForeground % tileW) + tileW) % tileW;
     for (let x = -offset; x < WIDTH + tileW; x += tileW) {
       ctx.drawImage(groundImg, gRegion.sx, gRegion.sy, gRegion.sw, gRegion.sh, x, topY, tileW, tileH);
     }
@@ -299,14 +317,17 @@ export function drawBackground() {
 export function drawForeground() {
   if (!ctx) return;
   const elapsed = state.elapsed;
-  const scrollNear = (elapsed * 22) % WIDTH;
+  // Foreground patches and decor ride the same plane as the ground strip.
+  // Patches sit a touch slower (0.9×) so flat rock tiles read as slightly
+  // more distant than the individual grass/bush clumps on top of them.
+  const scrollForeground = elapsed * PARALLAX_SPEED.foreground;
   const foregroundImg = FOREGROUND_SPRITES.image;
   if (!foregroundImg) return;
 
   for (const p of FOREGROUND_PATCHES) {
     const region = FOREGROUND_SPRITES.patches[p.variant];
     const span = WIDTH + p.w + 120;
-    const raw = (p.x - scrollNear * 0.9) % span;
+    const raw = (p.x - scrollForeground * 0.9) % span;
     const x = (raw + span) % span - p.w;
     const y = GROUND_Y - p.h + 6;
     ctx.drawImage(foregroundImg, region.sx, region.sy, region.sw, region.sh, x, y, p.w, p.h);
@@ -315,7 +336,7 @@ export function drawForeground() {
   for (const d of FOREGROUND_DECOR) {
     const region = FOREGROUND_SPRITES.decor[d.variant];
     const span = WIDTH + d.w + 120;
-    const raw = (d.x - scrollNear) % span;
+    const raw = (d.x - scrollForeground) % span;
     const x = (raw + span) % span - d.w;
     const y = GROUND_Y - 2 - d.h;
     ctx.drawImage(foregroundImg, region.sx, region.sy, region.sw, region.sh, x, y, d.w, d.h);

@@ -279,9 +279,9 @@ export const MOUNTAIN_SPRITES: {
   src: "assets/sprites/background/mountains.png",
   image: null,
   variants: [
-    { sx: 14, sy: 146, sw: 1639, sh: 111 },   // far
-    { sx: 6,  sy: 364, sw: 1659, sh: 167 },   // mid
-    { sx: 6,  sy: 628, sw: 1660, sh: 252 },   // near (pines at base)
+    { sx: 14, sy: 82,  sw: 1639, sh: 175 },   // far
+    { sx: 6,  sy: 308, sw: 1659, sh: 223 },   // mid
+    { sx: 6,  sy: 562, sw: 1660, sh: 318 },   // near (pines at base)
   ],
 };
 
