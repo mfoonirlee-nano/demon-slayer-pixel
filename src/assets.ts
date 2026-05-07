@@ -7,6 +7,12 @@ import {
   SKILL2_EFFECT_SHEET,
   SKILL3_EFFECT_SHEET,
   SKY_SPRITES,
+  TREE_SPRITES,
+  CLOUDS_SPRITES,
+  STONE_TOWER_SPRITES,
+  FOREGROUND_SPRITES,
+  GROUND_SPRITES,
+  MOUNTAIN_SPRITES,
 } from "./constants";
 import { loadImage } from "./utils";
 import { state } from "./state";
@@ -25,6 +31,12 @@ export function loadSprites(): Promise<void> {
   }
   jobs.push(loadImage(BOSS_SHEET.src).then((img) => { BOSS_SHEET.image = img; }));
   jobs.push(loadImage(SKY_SPRITES.src).then((img) => { SKY_SPRITES.image = img; }));
+  jobs.push(loadImage(TREE_SPRITES.src).then((img) => { TREE_SPRITES.image = img; }));
+  jobs.push(loadImage(CLOUDS_SPRITES.src).then((img) => { CLOUDS_SPRITES.image = img; }));
+  jobs.push(loadImage(STONE_TOWER_SPRITES.src).then((img) => { STONE_TOWER_SPRITES.image = img; }));
+  jobs.push(loadImage(FOREGROUND_SPRITES.src).then((img) => { FOREGROUND_SPRITES.image = img; }));
+  jobs.push(loadImage(GROUND_SPRITES.src).then((img) => { GROUND_SPRITES.image = img; }));
+  jobs.push(loadImage(MOUNTAIN_SPRITES.src).then((img) => { MOUNTAIN_SPRITES.image = img; }));
   jobs.push(loadImage(SKILL1_EFFECT_SHEET.src).then((img) => { SKILL1_EFFECT_SHEET.image = img; }));
   jobs.push(loadImage(SKILL2_EFFECT_SHEET.src).then((img) => { SKILL2_EFFECT_SHEET.image = img; }));
   jobs.push(loadImage(SKILL3_EFFECT_SHEET.src).then((img) => { SKILL3_EFFECT_SHEET.image = img; }));

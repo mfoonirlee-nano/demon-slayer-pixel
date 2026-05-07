@@ -1,6 +1,5 @@
 import tinify from "tinify";
-import { readFileSync, statSync, readdirSync } from "fs";
-import { join } from "path";
+import { readFileSync, statSync } from "fs";
 
 const envPath = new URL("../.env", import.meta.url).pathname;
 const envContent = readFileSync(envPath, "utf-8");
@@ -13,24 +12,14 @@ if (!apiKey) {
 
 tinify.key = apiKey;
 
-function findPngs(dir) {
-  const results = [];
-  for (const entry of readdirSync(dir, { withFileTypes: true })) {
-    const full = join(dir, entry.name);
-    if (entry.isDirectory()) results.push(...findPngs(full));
-    else if (entry.name.endsWith(".png")) results.push(full);
-  }
-  return results;
-}
-
-const files = findPngs("assets");
+const files = process.argv.slice(2).filter((f) => f.endsWith(".png"));
 
 if (files.length === 0) {
-  console.log("No PNG files found.");
+  console.log("No PNG files to compress.");
   process.exit(0);
 }
 
-console.log(`Found ${files.length} PNG files, compressing...\n`);
+console.log(`Compressing ${files.length} PNG file(s)...\n`);
 
 let totalBefore = 0;
 let totalAfter = 0;

@@ -1,27 +1,72 @@
 import { state } from "./state";
 import { ctx } from "./context";
-import { WIDTH, HEIGHT, GROUND_Y, SKY_SPRITES } from "./constants";
+import {
+  WIDTH,
+  HEIGHT,
+  GROUND_Y,
+  SKY_SPRITES,
+  TREE_SPRITES,
+  CLOUDS_SPRITES,
+  STONE_TOWER_SPRITES,
+  FOREGROUND_SPRITES,
+  GROUND_SPRITES,
+  MOUNTAIN_SPRITES,
+  RUNTIME_CONFIG,
+} from "./constants";
 import { drawMoon, getMoonSkyColors } from "./moon";
 
-const MOUNTAINS = Array.from({ length: 10 }, (_, i) => ({
-  x: i * 140,
-  w: 150 + (i % 3) * 34,
-  h: 90 + (i % 4) * 22,
-}));
-const TREES = Array.from({ length: 34 }, (_, i) => ({
-  x: i * 54 + (i % 3) * 11,
-  h: 34 + (i % 6) * 12,
-  crownW: 22 + (i % 4) * 5,
-  layer: (i % 3) + 1,
+// Mountain parallax layers: farthest = slowest + highest on screen,
+// closest = fastest + anchored near the ground.
+const MOUNTAIN_LAYERS = [
+  { variantIndex: 0, parallax: 0.25, bottom: -140 }, // offsets are from GROUND_Y
+  { variantIndex: 1, parallax: 0.5,  bottom: -80 },
+  { variantIndex: 2, parallax: 1.0,  bottom: -15 },
+];
+
+// Tree sprite pools: left/middle of sheet = living greens + red maples;
+// right side = dead / withered trees. Stone towers follow the same
+// left-to-right freshness gradient.
+const TREE_LUSH_POOL = [0, 1, 2, 3, 4, 5, 6, 7, 8];
+const TREE_WITHERED_POOL = [9, 10, 11];
+const TOWER_INTACT_POOL = [0, 1, 2, 3, 4, 5, 6];
+const TOWER_BROKEN_POOL = [7, 8, 9, 10];
+
+// Stable, non-uniform hash → produces fixed per-index "randomness".
+function seeded(i: number, salt: number): number {
+  let x = Math.imul(i + salt, 2654435761);
+  x = Math.imul(x ^ (x >>> 13), 1274126177);
+  return ((x ^ (x >>> 16)) >>> 0) / 4294967296;
+}
+
+// Scenery wraps over a world span wider than the viewport so the forest
+// doesn't feel like a repeating fence.
+const SCENERY_SPAN = WIDTH * 2;
+
+const TREES = Array.from({ length: 12 }, (_, i) => ({
+  x: seeded(i, 101) * SCENERY_SPAN,
+  lushVariant: TREE_LUSH_POOL[Math.floor(seeded(i, 211) * TREE_LUSH_POOL.length)],
+  witheredVariant: TREE_WITHERED_POOL[Math.floor(seeded(i, 317) * TREE_WITHERED_POOL.length)],
+  scale: 0.5 + seeded(i, 409) * 0.22,
+  // Proximity threshold at which this tree swaps to its withered form.
+  transitionPoint: 0.15 + seeded(i, 503) * 0.75,
 }));
 
-// Sprite clouds: alternate between cloud1 and cloud2 for variety
+const TOWERS = Array.from({ length: 6 }, (_, i) => ({
+  // Offset phase so towers don't sit on top of trees at the same x.
+  x: (seeded(i, 131) * SCENERY_SPAN + SCENERY_SPAN * 0.37) % SCENERY_SPAN,
+  intactVariant: TOWER_INTACT_POOL[Math.floor(seeded(i, 229) * TOWER_INTACT_POOL.length)],
+  brokenVariant: TOWER_BROKEN_POOL[Math.floor(seeded(i, 331) * TOWER_BROKEN_POOL.length)],
+  scale: 0.44 + seeded(i, 421) * 0.14,
+  transitionPoint: 0.2 + seeded(i, 557) * 0.7,
+}));
+
+// Sprite clouds: cycle 3 dedicated cloud variants for variety
 const CLOUDS = Array.from({ length: 5 }, (_, i) => ({
   x: i * 260 + (i % 3) * 40,
   y: 28 + (i % 5) * 22,
-  scale: (0.28 + (i % 3) * 0.06) * (2 / 3),
+  scale: 0.55 + (i % 3) * 0.12,
   speed: 6 + (i % 4) * 3,
-  variant: i % 2 as 0 | 1,
+  variant: i % 3 as 0 | 1 | 2,
 }));
 
 // Sprite stars: only small/medium variants (no group), spread across sky
@@ -32,9 +77,18 @@ const STARS = Array.from({ length: 9 }, (_, i) => ({
   twinkleOffset: (i * 11) % 24,
   variant: i % 2 as 0 | 1, // 0=small, 1=medium
 }));
-const LANTERNS = Array.from({ length: 8 }, (_, i) => ({
-  x: i * 170 + 60,
-  y: GROUND_Y - 130 - (i % 2) * 18,
+// Flat stone tile patches — sit on the ground plane, drawn before towers.
+const FOREGROUND_PATCHES = Array.from({ length: 8 }, (_, i) => ({
+  x: i * 135 + (i % 3) * 41,
+  variant: i % FOREGROUND_SPRITES.patches.length,
+  scale: 0.42 + (i % 3) * 0.07,
+}));
+
+// Standalone clutter — rocks, grass, bushes. Drawn in front of lanterns.
+const FOREGROUND_DECOR = Array.from({ length: 16 }, (_, i) => ({
+  x: i * 68 + (i % 5) * 23,
+  variant: i % FOREGROUND_SPRITES.decor.length,
+  scale: 0.4 + (i % 4) * 0.06,
 }));
 
 export function drawBackground() {
@@ -81,80 +135,122 @@ export function drawBackground() {
     }
   }
 
-  // Draw sprite clouds drifting slowly (fallback to invisible rect if image not loaded)
-  if (spriteImg) {
+  // Draw sprite clouds drifting slowly across the sky
+  const cloudImg = CLOUDS_SPRITES.image;
+  if (cloudImg) {
     for (const c of CLOUDS) {
-      const region = c.variant === 0 ? SKY_SPRITES.cloud1 : SKY_SPRITES.cloud2;
+      const region = CLOUDS_SPRITES.variants[c.variant];
       const drawW = region.sw * c.scale;
       const drawH = region.sh * c.scale;
       const x1 = ((c.x - elapsed * c.speed) % (WIDTH + drawW) + (WIDTH + drawW)) % (WIDTH + drawW) - drawW;
       ctx.save();
-      ctx.globalAlpha = 0.7;
-      ctx.drawImage(spriteImg, region.sx, region.sy, region.sw, region.sh, x1, c.y, drawW, drawH);
+      ctx.globalAlpha = 0.78;
+      ctx.drawImage(cloudImg, region.sx, region.sy, region.sw, region.sh, x1, c.y, drawW, drawH);
       ctx.restore();
     }
   }
 
-  for (const m of MOUNTAINS) {
-    const x = m.x - scrollFar;
-    ctx.fillStyle = "#1d2f4f";
-    ctx.fillRect(x, GROUND_Y - 220, m.w, m.h);
-    ctx.fillStyle = "#243a5f";
-    ctx.fillRect(x + 14, GROUND_Y - 220 + 12, m.w - 28, m.h - 12);
-    ctx.fillStyle = "#2c466f";
-    ctx.fillRect(x + m.w / 2 - 16, GROUND_Y - 220, 32, 16);
-  }
-
-  for (const m of MOUNTAINS) {
-    const x = m.x + WIDTH - scrollFar;
-    ctx.fillStyle = "#1d2f4f";
-    ctx.fillRect(x, GROUND_Y - 220, m.w, m.h);
-    ctx.fillStyle = "#243a5f";
-    ctx.fillRect(x + 14, GROUND_Y - 220 + 12, m.w - 28, m.h - 12);
-    ctx.fillStyle = "#2c466f";
-    ctx.fillRect(x + m.w / 2 - 16, GROUND_Y - 220, 32, 16);
-  }
-
-  for (const t of TREES) {
-    const parallax = 0.45 + t.layer * 0.2;
-    const xBase = t.x - scrollMid * parallax;
-    for (const wrap of [xBase, xBase + WIDTH + 140]) {
-      const y = GROUND_Y - 46 - t.h;
-      const trunkW = 6 + t.layer;
-      const crownW = t.crownW;
-      ctx.fillStyle = "#13253f";
-      ctx.fillRect(wrap + crownW * 0.42, y + 18, trunkW, t.h + 8);
-      ctx.fillStyle = t.layer === 1 ? "#1a3659" : t.layer === 2 ? "#21426c" : "#2a4f80";
-      ctx.fillRect(wrap, y, crownW, 24 + t.layer * 4);
-      ctx.fillStyle = "#2e5d8f";
-      ctx.fillRect(wrap + 4, y + 3, crownW - 8, 12 + t.layer * 2);
-      ctx.fillStyle = "#3b6c9f";
-      ctx.fillRect(wrap + 8, y + 7, 6, 3);
+  const mountainImg = MOUNTAIN_SPRITES.image;
+  if (mountainImg) {
+    for (const layer of MOUNTAIN_LAYERS) {
+      const region = MOUNTAIN_SPRITES.variants[layer.variantIndex];
+      const tileW = region.sw;
+      const tileH = region.sh;
+      const y = GROUND_Y + layer.bottom - tileH;
+      const offset = ((scrollFar * layer.parallax) % tileW + tileW) % tileW;
+      for (let x = -offset; x < WIDTH + tileW; x += tileW) {
+        ctx.drawImage(mountainImg, region.sx, region.sy, region.sw, region.sh, x, y, tileW, tileH);
+      }
     }
   }
 
+  // Boss proximity drives the lush → withered transition. Zero at game start,
+  // ramps to 1 as the boss timer ticks down; pinned at 1 once boss is active.
+  const maxTimer = RUNTIME_CONFIG.initialBossSpawnTimer;
+  const bossProximity = state.boss
+    ? 1
+    : Math.max(0, Math.min(1, 1 - state.bossSpawnTimer / maxTimer));
+
+  const sceneryScroll = scrollMid * 0.85;
+  const treeImg = TREE_SPRITES.image;
+  if (treeImg) {
+    for (const t of TREES) {
+      const variantIndex = bossProximity >= t.transitionPoint ? t.witheredVariant : t.lushVariant;
+      const region = TREE_SPRITES.variants[variantIndex];
+      const drawW = region.sw * t.scale;
+      const drawH = region.sh * t.scale;
+      const y = GROUND_Y - 6 - drawH;
+      const wrapped = ((t.x - sceneryScroll) % SCENERY_SPAN + SCENERY_SPAN) % SCENERY_SPAN;
+      for (const dx of [wrapped, wrapped - SCENERY_SPAN]) {
+        if (dx + drawW < 0 || dx > WIDTH) continue;
+        ctx.drawImage(treeImg, region.sx, region.sy, region.sw, region.sh, dx, y, drawW, drawH);
+      }
+    }
+  }
+
+  // Ground plane: tile one of 4 variants, stepping lush → withering → hostile
+  // as the boss approaches. Below the tile strip is filled with a dark base
+  // so the bottom-of-screen stays opaque if the sprite is shorter than the gap.
   ctx.fillStyle = "#0b1424";
   ctx.fillRect(0, GROUND_Y, WIDTH, HEIGHT - GROUND_Y);
 
-  for (let i = -1; i < Math.ceil(WIDTH / 32) + 1; i += 1) {
-    const x = i * 32 - (scrollNear % 32);
-    ctx.fillStyle = i % 2 === 0 ? "#192f4d" : "#1f3a5f";
-    ctx.fillRect(x, GROUND_Y - 14, 24, 14);
-    ctx.fillStyle = "#2a4b77";
-    ctx.fillRect(x + 4, GROUND_Y - 10, 8, 6);
+  const groundImg = GROUND_SPRITES.image;
+  if (groundImg) {
+    const groundVariantIndex = bossProximity < 0.33 ? 0 : bossProximity < 0.66 ? 2 : 3;
+    const gRegion = GROUND_SPRITES.variants[groundVariantIndex];
+    // Match tile width to viewport scale — keep aspect ratio of source region.
+    const tileW = gRegion.sw;
+    const tileH = gRegion.sh;
+    // Anchor top of tile strip slightly above GROUND_Y so grass/ice overlaps
+    // the play line, giving a natural "surface" rather than a hard seam.
+    const topY = GROUND_Y - 10;
+    const offset = ((scrollNear % tileW) + tileW) % tileW;
+    for (let x = -offset; x < WIDTH + tileW; x += tileW) {
+      ctx.drawImage(groundImg, gRegion.sx, gRegion.sy, gRegion.sw, gRegion.sh, x, topY, tileW, tileH);
+    }
   }
 
-  for (const lantern of LANTERNS) {
-    const x = lantern.x - scrollNear * 0.7;
-    const y = lantern.y;
-    ctx.fillStyle = "#3b2e25";
-    ctx.fillRect(x + 7, y + 20, 2, 34);
-    ctx.fillStyle = "#6c4830";
-    ctx.fillRect(x, y + 8, 16, 14);
-    ctx.fillStyle = "#ffcf75";
-    ctx.fillRect(x + 3, y + 11, 10, 8);
-    ctx.fillStyle = "#ffe8a7";
-    ctx.fillRect(x + 6, y + 13, 4, 4);
+  const foregroundImg = FOREGROUND_SPRITES.image;
+  if (foregroundImg) {
+    for (const p of FOREGROUND_PATCHES) {
+      const region = FOREGROUND_SPRITES.patches[p.variant];
+      const drawW = region.sw * p.scale;
+      const drawH = region.sh * p.scale;
+      const span = WIDTH + drawW + 120;
+      const raw = (p.x - scrollNear * 0.9) % span;
+      const x = (raw + span) % span - drawW;
+      const y = GROUND_Y - drawH + 6;
+      ctx.drawImage(foregroundImg, region.sx, region.sy, region.sw, region.sh, x, y, drawW, drawH);
+    }
+  }
+
+  const towerImg = STONE_TOWER_SPRITES.image;
+  if (towerImg) {
+    for (const tower of TOWERS) {
+      const variantIndex = bossProximity >= tower.transitionPoint ? tower.brokenVariant : tower.intactVariant;
+      const region = STONE_TOWER_SPRITES.variants[variantIndex];
+      const drawW = region.sw * tower.scale;
+      const drawH = region.sh * tower.scale;
+      const y = GROUND_Y - 4 - drawH;
+      const wrapped = ((tower.x - sceneryScroll) % SCENERY_SPAN + SCENERY_SPAN) % SCENERY_SPAN;
+      for (const dx of [wrapped, wrapped - SCENERY_SPAN]) {
+        if (dx + drawW < 0 || dx > WIDTH) continue;
+        ctx.drawImage(towerImg, region.sx, region.sy, region.sw, region.sh, dx, y, drawW, drawH);
+      }
+    }
+  }
+
+  if (foregroundImg) {
+    for (const d of FOREGROUND_DECOR) {
+      const region = FOREGROUND_SPRITES.decor[d.variant];
+      const drawW = region.sw * d.scale;
+      const drawH = region.sh * d.scale;
+      const span = WIDTH + drawW + 120;
+      const raw = (d.x - scrollNear) % span;
+      const x = (raw + span) % span - drawW;
+      const y = GROUND_Y - 2 - drawH;
+      ctx.drawImage(foregroundImg, region.sx, region.sy, region.sw, region.sh, x, y, drawW, drawH);
+    }
   }
 
   ctx.fillStyle = "rgba(180, 210, 255, 0.08)";
