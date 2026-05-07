@@ -269,7 +269,7 @@ export function drawBackground() {
 
   const groundImg = GROUND_SPRITES.image;
   if (groundImg) {
-    const groundVariantIndex = bossProximity < 0.33 ? 0 : bossProximity < 0.66 ? 2 : 3;
+    const groundVariantIndex = 1;
     const gRegion = GROUND_SPRITES.variants[groundVariantIndex];
     // Match tile width to viewport scale — keep aspect ratio of source region.
     const tileW = gRegion.sw;
