@@ -90,128 +90,120 @@ function PauseScreen({ snapshot }: { snapshot: GameSnapshot }) {
   const skillEnergyPercent = Math.max(0, Math.min(100, (player.skillEnergy / player.skillEnergyMax) * 100));
 
   return (
-    <div className="absolute inset-0 z-30 flex items-center justify-center" style={{ background: "rgba(5,10,22,0.82)", backdropFilter: "blur(2px)" }}>
-      <div
-        className="relative flex flex-col gap-0 text-white"
-        style={{
-          width: 300,
-          border: "2px solid rgba(100,180,255,0.35)",
-          background: "linear-gradient(160deg, rgba(8,18,38,0.97) 0%, rgba(14,25,50,0.97) 100%)",
-          boxShadow: "0 0 0 1px rgba(38,213,255,0.12), 0 8px 40px rgba(0,0,0,0.7)",
-          imageRendering: "pixelated",
-        }}
-      >
-        {/* header */}
-        <div className="flex items-center justify-between px-4 py-3" style={{ borderBottom: "1px solid rgba(38,213,255,0.18)" }}>
-          <span className="text-[11px] tracking-[3px] uppercase opacity-60">— PAUSED —</span>
-          <span className="text-[11px] tracking-[2px] opacity-60">ESC / P</span>
-        </div>
-
-        {/* title */}
-        <div className="px-4 pt-3 pb-1 text-[13px] tracking-[2px]" style={{ color: "#26d5ff", fontWeight: 700, letterSpacing: "0.15em" }}>
-          竈門炭治郎
-        </div>
-
-        {/* divider */}
-        <div className="mx-4 mb-3" style={{ height: 1, background: "linear-gradient(90deg, rgba(38,213,255,0.5) 0%, transparent 100%)" }} />
-
-        {/* stats */}
-        <div className="px-4 pb-4 flex flex-col gap-4">
-
-          {/* HP */}
-          <div>
-            <div className="flex items-center justify-between mb-1 text-[11px]">
-              <span style={{ color: "#7fc8e0" }}>生命值</span>
-              <span style={{ color: "#26d5ff" }}>{Math.max(0, Math.floor(player.hp))} / {player.maxHp}</span>
-            </div>
-            <div className="relative h-[6px] w-full overflow-hidden" style={{ background: "#0d2135" }}>
-              <div
-                className="absolute inset-y-0 left-0 h-full transition-none"
-                style={{ width: `${hpPercent}%`, background: "linear-gradient(90deg,#2a8a3a,#5aff6a)" }}
-              />
-            </div>
+    <div className="absolute inset-0 z-30 flex items-center justify-center" style={{ background: "rgba(5,10,22,0.65)" }}>
+      <div className="relative flex items-center justify-center" style={{ width: "96%", maxWidth: 960 }}>
+        <img
+          src="assets/sprites/ui/pasue_ui.png"
+          alt=""
+          draggable={false}
+          className="w-full"
+          style={{ imageRendering: "pixelated", display: "block" }}
+        />
+        {/* Content overlay aligned to sprite center panel */}
+        <div
+          className="absolute flex flex-col pt-2"
+          style={{ inset: "20% 33% 11% 33%", overflow: "hidden" }}
+        >
+          {/* header */}
+          <div className="flex items-center justify-between text-[9px] tracking-[2px] uppercase text-white opacity-55">
+            <span>— PAUSED —</span>
+            <span style={{ letterSpacing: 2 }}>ESC / P</span>
           </div>
 
-          {/* Attack */}
-          <div className="flex items-center justify-between text-[11px]">
-            <span style={{ color: "#7fc8e0" }}>攻击力</span>
-            <span>
+          {/* title row: name + attack inline */}
+          <div className="flex items-baseline justify-between pt-0.5">
+            <span className="text-[12px] font-bold tracking-[0.12em]" style={{ color: "#26d5ff" }}>竈門炭治郎</span>
+            <span className="text-[10px]">
+              <span style={{ color: "#7fc8e0" }}>攻击 </span>
               <span style={{ color: "#26d5ff", fontWeight: 700 }}>{totalAttack}</span>
               {player.attackBonus > 0 && (
-                <span style={{ color: "#7fe8d0", fontSize: 10 }}> ({player.baseAttack}+{player.attackBonus})</span>
+                <span style={{ color: "#7fe8d0" }}> ({player.baseAttack}+{player.attackBonus})</span>
               )}
             </span>
           </div>
 
           {/* divider */}
-          <div style={{ height: 1, background: "rgba(38,213,255,0.1)" }} />
+          <div className="my-1" style={{ height: 1, background: "linear-gradient(90deg, rgba(38,213,255,0.5) 0%, transparent 100%)" }} />
 
-          {/* Current skill */}
-          <div>
-            <div className="flex items-center justify-between mb-1 text-[11px]">
-              <span style={{ color: "#7fc8e0" }}>当前技能</span>
-              <span style={{ color: "#26d5ff" }}>{activeSkill.name}</span>
-            </div>
-
-            {/* skill charges */}
-            <div className="flex items-center justify-between mb-2 text-[11px]">
-              <span style={{ color: "#7fc8e0" }}>技能充能</span>
-              <div className="flex items-center gap-1">
-                {Array.from({ length: player.maxSkillCharges }).map((_, i) => (
-                  <div
-                    key={i}
-                    style={{
-                      width: 18,
-                      height: 18,
-                      border: `2px solid ${i < player.skillCharges ? "rgba(38,213,255,0.9)" : "rgba(38,213,255,0.25)"}`,
-                      background: i < player.skillCharges ? "rgba(38,213,255,0.22)" : "rgba(38,213,255,0.04)",
-                      boxShadow: i < player.skillCharges ? "0 0 6px rgba(38,213,255,0.4)" : "none",
-                    }}
-                  />
-                ))}
-                <span style={{ color: "#26d5ff", marginLeft: 4 }}>{player.skillCharges}/{player.maxSkillCharges}</span>
+          {/* stats */}
+          <div className="flex flex-col gap-1.5 py-3">
+            {/* HP */}
+            <div className="mb-3">
+              <div className="flex items-center justify-between mb-0.5 text-[10px]">
+                <span style={{ color: "#7fc8e0" }}>生命值</span>
+                <span style={{ color: "#26d5ff" }}>{Math.max(0, Math.floor(player.hp))} / {player.maxHp}</span>
+              </div>
+              <div className="relative h-[5px] w-full overflow-hidden" style={{ background: "#0d2135" }}>
+                <div
+                  className="absolute inset-y-0 left-0 h-full"
+                  style={{ width: `${hpPercent}%`, background: "linear-gradient(90deg,#2a8a3a,#5aff6a)" }}
+                />
               </div>
             </div>
 
-            {/* energy bar */}
-            <div className="flex items-center justify-between mb-1 text-[11px]">
-              <span style={{ color: "#7fc8e0" }}>充能进度</span>
-              <span style={{ color: "#7fe8ff" }}>{Math.floor(player.skillEnergy)}/{player.skillEnergyMax}</span>
-            </div>
-            <div className="relative h-[6px] w-full overflow-hidden" style={{ background: "#0d2135" }}>
-              <div
-                className="absolute inset-y-0 left-0 h-full"
-                style={{ width: `${skillEnergyPercent}%`, background: "linear-gradient(90deg,#1a6b8a,#7fe8ff)" }}
-              />
-            </div>
-          </div>
+            {/* Skill: tiles + charges + energy, consolidated */}
+            <div>
+              <div className="flex items-center justify-between mb-0.5 text-[10px]">
+                <span style={{ color: "#7fc8e0" }}>技能</span>
+                <span className="flex items-center gap-1" style={{ color: "#26d5ff" }}>
+                  {Array.from({ length: player.maxSkillCharges }).map((_, i) => (
+                    <span
+                      key={i}
+                      style={{
+                        width: 7,
+                        height: 7,
+                        borderRadius: "50%",
+                        background: i < player.skillCharges ? "#26d5ff" : "transparent",
+                        border: `1px solid ${i < player.skillCharges ? "#26d5ff" : "rgba(38,213,255,0.4)"}`,
+                        boxShadow: i < player.skillCharges ? "0 0 4px rgba(38,213,255,0.6)" : "none",
+                        display: "inline-block",
+                      }}
+                    />
+                  ))}
+                  <span style={{ marginLeft: 2 }}>{player.skillCharges}/{player.maxSkillCharges}</span>
+                </span>
+              </div>
 
-          {/* All skills */}
-          <div>
-            <div className="mb-2 text-[11px]" style={{ color: "#7fc8e0" }}>技能列表</div>
-            <div className="flex flex-col gap-1">
-              {SKILLS.map((skill, i) => (
+              {/* skill tiles — replaces separate "current" + "all skills" blocks */}
+              <div className="flex gap-1 mb-1">
+                {SKILLS.map((skill, i) => {
+                  const active = i === player.skillIndex;
+                  return (
+                    <div
+                      key={skill.id}
+                      className="flex-1 text-center text-[10px]"
+                      style={{
+                        padding: "2px 4px",
+                        background: active ? "rgba(38,213,255,0.18)" : "transparent",
+                        border: `1px solid ${active ? "rgba(38,213,255,0.55)" : "rgba(38,213,255,0.12)"}`,
+                        color: active ? "#26d5ff" : "#4a7a9a",
+                        fontWeight: active ? 700 : 400,
+                      }}
+                    >
+                      {i + 1}. {skill.name}
+                    </div>
+                  );
+                })}
+              </div>
+
+              {/* active skill energy bar */}
+              <div className="relative h-[5px] w-full overflow-hidden" style={{ background: "#0d2135" }}>
                 <div
-                  key={skill.id}
-                  className="flex items-center justify-between text-[11px] px-2 py-1"
-                  style={{
-                    background: i === player.skillIndex ? "rgba(38,213,255,0.12)" : "transparent",
-                    border: `1px solid ${i === player.skillIndex ? "rgba(38,213,255,0.35)" : "rgba(38,213,255,0.08)"}`,
-                  }}
-                >
-                  <span style={{ color: i === player.skillIndex ? "#26d5ff" : "#4a7a9a" }}>
-                    {i + 1}. {skill.name}
-                  </span>
-                  {i === player.skillIndex && <span style={{ color: "#26d5ff", fontSize: 9, letterSpacing: 1 }}>当前</span>}
-                </div>
-              ))}
+                  className="absolute inset-y-0 left-0 h-full"
+                  style={{ width: `${skillEnergyPercent}%`, background: "linear-gradient(90deg,#1a6b8a,#7fe8ff)" }}
+                />
+              </div>
+              <div className="flex justify-between text-[9px] mt-0.5" style={{ color: "#7fe8ff", opacity: 0.8 }}>
+                <span>{activeSkill.name} 充能</span>
+                <span>{Math.floor(player.skillEnergy)}/{player.skillEnergyMax}</span>
+              </div>
             </div>
           </div>
-        </div>
 
-        {/* footer */}
-        <div className="px-4 py-2 text-center text-[10px] opacity-40" style={{ borderTop: "1px solid rgba(38,213,255,0.12)" }}>
-          按 ESC 或 P 继续游戏
+          {/* footer */}
+          <div className="pt-1 text-center text-[9px] opacity-40 text-white">
+            按 ESC 或 P 继续游戏
+          </div>
         </div>
       </div>
     </div>
@@ -236,7 +228,7 @@ function Hud() {
 
   return (
     <>
-      <div className="pointer-events-none absolute left-4 top-4 z-10 hidden text-[12px] text-white md:block">
+      <div className="pointer-events-none absolute left-6 top-6 z-10 hidden text-[12px] text-white md:block">
         <div style={{ position: "relative", width: HUD_UI.statusBarContainerW, height: HUD_UI.statusBarContainerH }}>
           {/* HP fill — upper track */}
           <div style={{ position: "absolute", zIndex: 0, left: HUD_UI.hpFillLeft, top: HUD_UI.hpFillTop, width: HUD_UI.hpFillW, height: HUD_UI.hpFillH, overflow: "hidden", borderRadius: 1 }}>
@@ -268,7 +260,7 @@ function Hud() {
       </div>
 
       {boss ? (
-        <div className="pointer-events-none absolute left-1/2 top-4 z-10 hidden -translate-x-1/2 rounded border border-white/10 bg-black/40 px-4 py-2 text-white md:block" style={{ width: HUD_UI.bossBarWidth }}>
+        <div className="pointer-events-none absolute left-1/2 top-6 z-10 hidden -translate-x-1/2 rounded border border-white/10 bg-black/40 px-4 py-2 text-white md:block" style={{ width: HUD_UI.bossBarWidth }}>
           <div className="mb-1 text-center text-[12px]">下弦之鬼·阶段 {boss.phase}</div>
           <div className="relative h-3 w-full overflow-hidden bg-[#443246]">
             <GhostBar value={bossHp} max={bossHpMax} ghostValue={ghostBossHp} color="#ff6e93" ghostColor="#9a3a5a" />
