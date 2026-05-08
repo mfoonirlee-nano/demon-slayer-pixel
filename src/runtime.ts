@@ -15,7 +15,7 @@ import { drawBackground, drawForeground } from "./background";
 
 import { updatePlayer, drawPlayer, triggerAttack, castSelectedSkill, selectSkill, tryJump } from "./entities/player";
 import { spawnEnemy, updateEnemies, drawEnemy } from "./entities/enemy";
-import { spawnBoss, updateBoss, drawBoss } from "./entities/boss";
+import { spawnBoss, updateBoss, drawBoss, updateBossSkill1Effects, drawBossSkill1Effects } from "./entities/boss";
 import {
   spawnNextMapSegment,
   resetMapGenerator,
@@ -124,6 +124,7 @@ function loop(ts: number) {
     updateChests(dt);
     updateEnemies();
     updateBoss();
+    updateBossSkill1Effects();
     updateProjectiles();
     updateParticles();
     updateSkillBursts();
@@ -168,6 +169,7 @@ function loop(ts: number) {
   drawSkillBursts();
   for (const e of state.enemies) drawEnemy(e);
   drawBoss();
+  drawBossSkill1Effects();
   drawSkill1Effects();
   drawSkill2Effects();
   drawHitBursts();

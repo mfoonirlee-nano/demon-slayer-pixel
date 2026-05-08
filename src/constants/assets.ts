@@ -188,6 +188,47 @@ export const BOSS_SHEET: SpriteSheet = {
   image: null,
 };
 
+export const BOSS_SKILL1_SHEET: SpriteSheet = {
+  src: "assets/sprites/enemies/boss_skill1.png",
+  frameW: 400,
+  frameH: 400,
+  count: 6,
+  image: null,
+};
+
+export const BOSS_SKILL1_EFFECT_SHEET: SpriteSheet = {
+  src: "assets/sprites/enemies/boss_skill1_effect.png",
+  frameW: 400,
+  frameH: 350,
+  count: 6,
+  image: null,
+};
+
+export const BOSS_SKILL1_CONFIG = {
+  castDuration: 54,
+  spawnAtFrame: 28,
+  castFrameDuration: 9,
+  drawW: 280,
+  drawH: 280,
+  drawOffsetX: 104,
+  drawOffsetY: 150,
+  effectDrawScale: 0.42,
+  effectSpawnYOffset: 10,
+  effectSpawnXOffset: 18,
+  effectSpeed: 20,
+  effectGravity: 0.45,
+  effectMinTravelFrames: 14,
+  effectMaxInitialVy: -22,
+  effectMinInitialVy: 6,
+  effectFrameDuration: 7,
+  damageMultiplier: 2,
+  cooldown: 260,
+  initialCooldown: 150,
+  hitPlayerCooldown: 24,
+  hitEnemyCooldown: 18,
+  minPhase: 1,
+} as const;
+
 type SpriteRegion = { sx: number; sy: number; sw: number; sh: number };
 
 export const SKY_SPRITES: {

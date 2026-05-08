@@ -2,6 +2,8 @@ import {
   PLAYER_SHEETS,
   ENEMY_SHEETS,
   BOSS_SHEET,
+  BOSS_SKILL1_SHEET,
+  BOSS_SKILL1_EFFECT_SHEET,
   SKILLS,
   SKILL1_EFFECT_SHEET,
   SKILL2_EFFECT_SHEET,
@@ -30,6 +32,8 @@ export function loadSprites(): Promise<void> {
     jobs.push(loadImage(sheet.src).then((img) => { sheet.image = img; }));
   }
   jobs.push(loadImage(BOSS_SHEET.src).then((img) => { BOSS_SHEET.image = img; }));
+  jobs.push(loadImage(BOSS_SKILL1_SHEET.src).then((img) => { BOSS_SKILL1_SHEET.image = img; }));
+  jobs.push(loadImage(BOSS_SKILL1_EFFECT_SHEET.src).then((img) => { BOSS_SKILL1_EFFECT_SHEET.image = img; }));
   jobs.push(loadImage(SKY_SPRITES.src).then((img) => { SKY_SPRITES.image = img; }));
   jobs.push(loadImage(TREE_SPRITES.src).then((img) => { TREE_SPRITES.image = img; }));
   jobs.push(loadImage(CLOUDS_SPRITES.src).then((img) => { CLOUDS_SPRITES.image = img; }));

@@ -92,7 +92,23 @@ export type BossState = {
   aiTimer: number;
   jumpCd: number;
   animSeed: number;
+  skillCd: number;
+  castTimer: number;
+  skillEffectSpawned: boolean;
+  castFacing: number;
 } | null;
+
+export type BossSkill1EffectState = {
+  x: number;
+  y: number;
+  vx: number;
+  vy: number;
+  facing: number;
+  frame: number;
+  elapsed: number;
+  damage: number;
+  hitPlayerCd: number;
+};
 
 export type ProjectileState = {
   x: number;
@@ -202,5 +218,6 @@ export type GameState = {
   skill1Effects: Skill1EffectState[];
   skill2Effects: Skill2EffectState[];
   skill3Effect: Skill3EffectState | null;
+  bossSkill1Effects: BossSkill1EffectState[];
   crystals: CrystalState[];
 };
