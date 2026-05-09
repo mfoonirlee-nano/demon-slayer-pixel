@@ -18,6 +18,7 @@ import { spawnEnemy, updateEnemies, drawEnemy } from "./entities/enemy";
 import { spawnBoss, updateBoss, drawBoss, updateBossSkill1Effects, drawBossSkill1Effects } from "./entities/boss";
 import {
   spawnNextMapSegment,
+  nextMapSpawnInterval,
   resetMapGenerator,
   updatePlatforms,
   updatePillars,
@@ -108,7 +109,7 @@ function loop(ts: number) {
     state.platformSpawnTimer -= dt;
     if (state.platformSpawnTimer <= 0) {
       spawnNextMapSegment();
-      state.platformSpawnTimer = RUNTIME_CONFIG.platformSpawnBaseInterval + Math.random() * RUNTIME_CONFIG.platformSpawnRandomInterval;
+      state.platformSpawnTimer = nextMapSpawnInterval();
     }
 
     if (!state.boss && state.bossSpawnTimer <= 0 && state.elapsed > RUNTIME_CONFIG.bossAppearAfterSeconds) {
