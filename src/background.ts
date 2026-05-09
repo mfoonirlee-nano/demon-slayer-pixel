@@ -55,7 +55,7 @@ const TREES = Array.from({ length: 12 }, (_, i) => ({
   x: seeded(i, 101) * SCENERY_SPAN,
   lushVariant: TREE_LUSH_POOL[Math.floor(seeded(i, 211) * TREE_LUSH_POOL.length)],
   witheredVariant: TREE_WITHERED_POOL[Math.floor(seeded(i, 317) * TREE_WITHERED_POOL.length)],
-  scale: 0.5 + seeded(i, 409) * 0.22,
+  scale: 0.7 + seeded(i, 409) * 0.5,
   // Proximity threshold at which this tree swaps to its withered form.
   transitionPoint: 0.15 + seeded(i, 503) * 0.75,
 }));
@@ -125,10 +125,8 @@ function buildForegroundItems(
       // test overlap with existing items (horizontal only → both anchored to ground)
       let overlapped = false;
       for (const other of items) {
-        // compute draw widths on-the-fly since items have varying sizes
-        const dx = Math.abs(x - other.x);
-        const overlapThreshold = (w + other.w) * 0.5;
-        if (dx < overlapThreshold) {
+        // check if [x, x+w] overlaps with [other.x, other.x+other.w]
+        if (x < other.x + other.w && other.x < x + w) {
           overlapped = true;
           break;
         }
@@ -147,13 +145,13 @@ function buildForegroundItems(
 const FOREGROUND_PATCH_SPAN = WIDTH + 200;
 const FOREGROUND_PATCHES = buildForegroundItems(
   6, FOREGROUND_PATCH_SPAN, FOREGROUND_SPRITES.patches,
-  0.42, 0.56, 10, 60, 701,
+  0.6, 0.9, 15, 50, 701,
 );
 
 const FOREGROUND_DECOR_SPAN = WIDTH + 180;
 const FOREGROUND_DECOR = buildForegroundItems(
   9, FOREGROUND_DECOR_SPAN, FOREGROUND_SPRITES.decor,
-  0.4, 0.58, 15, 80, 601,
+  0.5, 0.85, 15, 60, 601,
 );
 
 export function drawBackground() {

@@ -64,4 +64,4 @@
 ## 未完成
 * 增加角色的大招，静态资源为 assets/sprites/skills/ultimate_skill.png assets/sprites/skills/ultimate_skill_effect.png
 * 增加装备系统，装备仅影响角色的攻击和生命，强化技能，不会影响角色外观
-* 前景逻辑重构
+* 前景逻辑重构，包括地面、草丛、树木、石塔、鸟居

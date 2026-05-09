@@ -72,12 +72,10 @@ function GhostBar({ value, max, ghostValue, color, ghostColor }: {
 }) {
   const percent = clampMeterPercent(value, max);
   const ghostPercent = clampMeterPercent(ghostValue, max);
-  const wide = Math.max(percent, ghostPercent);
-  const narrow = Math.min(percent, ghostPercent);
   return (
     <>
-      <div className="absolute inset-y-0 left-0 h-full" style={{ width: `${wide}%`, background: ghostColor }} />
-      <div className="absolute inset-y-0 left-0 h-full" style={{ width: `${narrow}%`, background: color }} />
+      <div className="absolute inset-y-0 left-0 h-full" style={{ width: `${ghostPercent}%`, background: ghostColor }} />
+      <div className="absolute inset-y-0 left-0 h-full" style={{ width: `${percent}%`, background: color }} />
     </>
   );
 }

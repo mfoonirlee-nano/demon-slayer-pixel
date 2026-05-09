@@ -10,12 +10,12 @@ export const HUD_UI = {
   // upper track — HP fill zone (frame masks tapered right tip)
   hpFillLeft: 124,
   hpFillTop: 46,
-  hpFillW: 235,
+  hpFillW: 210,
   hpFillH: 6,
 
   // lower track — skill charge fill zone (frame masks tapered right tip)
   skillFillLeft: 124,
   skillFillTop: 69,
-  skillFillW: 235,
+  skillFillW: 210,
   skillFillH: 5,
 } as const;

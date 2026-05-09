@@ -14,6 +14,7 @@ type InputHandlers = {
 };
 
 export const keys = new Set<string>();
+export let debugCollisionBoxes = false;
 let handlers: InputHandlers = {};
 let cleanupInput: (() => void) | null = null;
 
@@ -29,6 +30,13 @@ export function setupInput(callbacks: InputHandlers) {
 
   const onKeyDown = (e: KeyboardEvent) => {
     const raw = e.key === " " ? " " : e.key.toLowerCase();
+
+    if (e.metaKey && raw === "d") {
+      e.preventDefault();
+      debugCollisionBoxes = !debugCollisionBoxes;
+      return;
+    }
+
     if (PREVENT_DEFAULT_KEYS.includes(raw as (typeof PREVENT_DEFAULT_KEYS)[number])) {
       e.preventDefault();
     }

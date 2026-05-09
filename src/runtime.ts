@@ -10,7 +10,7 @@ import {
   SKILL_FLASH,
 } from "./constants";
 import { loadSprites } from "./assets";
-import { setupInput, teardownInput } from "./input";
+import { setupInput, teardownInput, debugCollisionBoxes } from "./input";
 import { drawBackground, drawForeground } from "./background";
 
 import { updatePlayer, drawPlayer, triggerAttack, castSelectedSkill, selectSkill, tryJump } from "./entities/player";
@@ -112,7 +112,6 @@ function loop(ts: number) {
     }
 
     if (!state.boss && state.bossSpawnTimer <= 0 && state.elapsed > RUNTIME_CONFIG.bossAppearAfterSeconds) {
-      state.enemies.length = 0;
       spawnBoss();
       state.bossSpawnTimer = RUNTIME_CONFIG.disableBossSpawnTimer;
     }
@@ -176,6 +175,23 @@ function loop(ts: number) {
   drawProjectiles();
   drawParticles();
   drawForeground();
+
+  if (debugCollisionBoxes) {
+    ctx.strokeStyle = "rgba(0, 255, 0, 0.8)";
+    ctx.lineWidth = 1;
+    ctx.strokeRect(state.player.x, state.player.y, state.player.w, state.player.h);
+
+    ctx.strokeStyle = "rgba(255, 0, 0, 0.8)";
+    for (const e of state.enemies) {
+      ctx.strokeRect(e.x, e.y, e.w, e.h);
+    }
+
+    if (state.boss) {
+      ctx.strokeStyle = "rgba(255, 128, 0, 0.8)";
+      ctx.strokeRect(state.boss.x, state.boss.y, state.boss.w, state.boss.h);
+    }
+  }
+
   publishCurrentState();
   queueNextFrame();
 }
