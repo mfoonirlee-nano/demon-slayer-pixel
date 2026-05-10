@@ -34,10 +34,10 @@ export const PLATFORM_WIDTH = {
 
 // Markov transition matrix: adjacent-layer biased so high platforms remain reachable.
 export const LAYER_TRANSITIONS = {
-  low:  { low: 0.18, mid: 0.82, high: 0,    top: 0    },
-  mid:  { low: 0.34, mid: 0.18, high: 0.48, top: 0    },
-  high: { low: 0,    mid: 0.34, high: 0.18, top: 0.48 },
-  top:  { low: 0,    mid: 0,    high: 0.82, top: 0.18 },
+  low:  { low: 0.42, mid: 0.58, high: 0,    top: 0    },
+  mid:  { low: 0.52, mid: 0.18, high: 0.30, top: 0    },
+  high: { low: 0,    mid: 0.62, high: 0.24, top: 0.14 },
+  top:  { low: 0,    mid: 0,    high: 0.72, top: 0.28 },
 } as const;
 
 // Chain cluster config (2–3 stepping-stone platforms spawned together)
@@ -130,6 +130,7 @@ export const MAP_GENERATION_CONFIG = {
   segment: {
     maxRecentKinds: 4,
     retryCount: 8,
+    lowLayerRecoveryThreshold: 2,
     firstPlatformJitterX: 26,
     stairStepMin: 96,
     stairStepMax: 114,

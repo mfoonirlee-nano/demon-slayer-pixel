@@ -58,6 +58,7 @@ let lastLayer: PlatformLayer = "low";
 let sameLayerStreak = 0;
 let tension = 0;
 let rewardDebt = 0;
+let lowLayerDrought = 0;
 let recentKinds: SegmentKind[] = [];
 
 export function resetMapGenerator() {
@@ -65,6 +66,7 @@ export function resetMapGenerator() {
   sameLayerStreak = 0;
   tension = 0;
   rewardDebt = 0;
+  lowLayerDrought = 0;
   recentKinds = [];
 }
 
@@ -296,6 +298,10 @@ function applySegmentAftermath(result: SegmentSpawnResult) {
   } else {
     tension += tensionGainFor(result.difficulty);
   }
+
+  lowLayerDrought = result.platforms.some((platform) => yToLayer(platform.baseY) === "low")
+    ? 0
+    : lowLayerDrought + 1;
 }
 
 function canReachNextPlatform(
@@ -337,6 +343,10 @@ function weightedPick<T extends string>(weights: Record<T, number>): T {
   return Object.keys(weights)[0] as T;
 }
 
+function shouldRecoverLowLayer(): boolean {
+  return lowLayerDrought >= MAP_GENERATION_CONFIG.segment.lowLayerRecoveryThreshold;
+}
+
 function pickSegmentKind(): SegmentKind {
   const difficulty = difficultyRatio();
   const highTension = tension >= MAP_GENERATION_CONFIG.tension.highThreshold;
@@ -355,6 +365,17 @@ function pickSegmentKind(): SegmentKind {
 
   for (const kind of recentKinds) {
     weights[kind] *= 0.45;
+  }
+
+  if (shouldRecoverLowLayer()) {
+    weights.breather *= 2.4;
+    weights.safeBridge *= 1.8;
+    weights.stairDown *= 3.2;
+    weights.stairUp *= 0.35;
+    weights.zigzag *= 0.45;
+    weights.gapJump *= 0.45;
+    weights.hoverPair *= 0.25;
+    weights.rewardRisk *= 0.35;
   }
 
   return weightedPick(weights);
@@ -381,6 +402,35 @@ function addPlatform(
   state.platforms.push(platform);
   platforms.push(platform);
   return platform;
+}
+
+function spawnLowRecoverySegment(): SegmentSpawnResult {
+  const vx = platformVx();
+  const platforms: PlatformState[] = [];
+  const layers: PlatformLayer[] = lastLayer === "top"
+    ? ["top", "high", "mid", "low"]
+    : lastLayer === "high"
+      ? ["high", "mid", "low"]
+      : lastLayer === "mid"
+        ? ["mid", "low"]
+        : ["low"];
+  let x = firstPlatformX();
+
+  for (let i = 0; i < layers.length; i += 1) {
+    const y = layerY(layers[i]);
+    const width = platformWidth(i === 0 ? "normal" : "chain");
+    addPlatform(platforms, x, y, width, vx, false, i > 0);
+
+    if (i < layers.length - 1) {
+      const gap = randomBetween(CHAIN_CONFIG.gapMin, CHAIN_CONFIG.gapMin + 18);
+      x += width + gap;
+    }
+  }
+
+  const lastPlatform = platforms[platforms.length - 1];
+  rememberLastPlatform(lastPlatform);
+  maybeSpawnReward(lastPlatform, false);
+  return { kind: "stairDown", difficulty: "medium", platforms };
 }
 
 function nextReachableStep(fromY: number, direction: -1 | 0 | 1, hard: boolean) {
@@ -527,6 +577,7 @@ function spawnGroundHazardSegment(): SegmentSpawnResult {
 
 function spawnPatternSegment(): SegmentSpawnResult {
   if (state.platforms.length === 0) return spawnNormalPlatform(false);
+  if (shouldRecoverLowLayer()) return spawnLowRecoverySegment();
 
   const kind = pickSegmentKind();
   if (kind === "breather") return spawnBreatherSegment();
