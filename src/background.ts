@@ -298,16 +298,6 @@ export function drawBackground() {
     }
   }
 
-  ctx.fillStyle = "rgba(180, 210, 255, 0.08)";
-  ctx.fillRect(0, GROUND_Y - 50, WIDTH, 20);
-  ctx.fillStyle = "rgba(180, 210, 255, 0.12)";
-  ctx.fillRect(0, GROUND_Y - 30, WIDTH, 14);
-  for (let i = 0; i < 3; i += 1) {
-    const fx = ((elapsed * (12 + i * 5)) % (WIDTH + 260)) - 130;
-    const fy = 120 + i * 48;
-    ctx.fillStyle = "rgba(140,190,255,0.08)";
-    ctx.fillRect(fx, fy, 220 + i * 50, 10);
-  }
 }
 
 // Draw foreground patches and decor *after* every gameplay element so they
