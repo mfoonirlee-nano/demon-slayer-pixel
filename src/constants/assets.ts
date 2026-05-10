@@ -235,8 +235,6 @@ export const SKY_SPRITES: {
   src: string;
   image: HTMLImageElement | null;
   moon: SpriteRegion;
-  cloud1: SpriteRegion;
-  cloud2: SpriteRegion;
   starSmall: SpriteRegion;
   starMedium: SpriteRegion;
   starGroup: SpriteRegion;
@@ -244,8 +242,6 @@ export const SKY_SPRITES: {
   src: "assets/sprites/background/sky_sprites.png",
   image: null,
   moon: { sx: 35, sy: 37, sw: 321, sh: 322 },
-  cloud1: { sx: 456, sy: 187, sw: 279, sh: 136 },
-  cloud2: { sx: 790, sy: 165, sw: 422, sh: 164 },
   starSmall: { sx: 107, sy: 635, sw: 57, sh: 56 },
   starMedium: { sx: 409, sy: 564, sw: 207, sh: 214 },
   starGroup: { sx: 790, sy: 544, sw: 309, sh: 286 },
@@ -274,19 +270,20 @@ export const TREE_SPRITES: {
   ],
 };
 
-export const CLOUDS_SPRITES: {
+export const CLOUD_SPRITES: Record<"big" | "small", {
   src: string;
   image: HTMLImageElement | null;
-  variants: SpriteRegion[];
-} = {
-  src: "assets/sprites/background/clouds_sprites.png",
-  image: null,
-  variants: [
-    { sx: 17, sy: 30, sw: 158, sh: 98 },
-    { sx: 199, sy: 22, sw: 142, sh: 103 },
-    { sx: 365, sy: 19, sw: 176, sh: 109 },
-  ],
+}> = {
+  big: {
+    src: "assets/sprites/cloud/cloud_big.png",
+    image: null,
+  },
+  small: {
+    src: "assets/sprites/cloud/cloud_small.png",
+    image: null,
+  },
 };
+
 
 export const STONE_TOWER_SPRITES: {
   src: string;

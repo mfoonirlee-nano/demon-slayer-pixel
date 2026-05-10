@@ -6,7 +6,6 @@ import {
   GROUND_Y,
   SKY_SPRITES,
   TREE_SPRITES,
-  CLOUDS_SPRITES,
   STONE_TOWER_SPRITES,
   FOREGROUND_SPRITES,
   GROUND_SPRITES,
@@ -14,6 +13,7 @@ import {
   RUNTIME_CONFIG,
 } from "./constants";
 import { drawMoon, getMoonSkyColors } from "./moon";
+import { drawClouds } from "./clouds";
 
 // Three-plane parallax speeds (pixels per second of elapsed time). Each plane
 // scrolls at a different rate so the scene has a true sense of depth.
@@ -67,15 +67,6 @@ const TOWERS = Array.from({ length: 6 }, (_, i) => ({
   brokenVariant: TOWER_BROKEN_POOL[Math.floor(seeded(i, 331) * TOWER_BROKEN_POOL.length)],
   scale: 0.44 + seeded(i, 421) * 0.14,
   transitionPoint: 0.2 + seeded(i, 557) * 0.7,
-}));
-
-// Sprite clouds: cycle 3 dedicated cloud variants for variety
-const CLOUDS = Array.from({ length: 5 }, (_, i) => ({
-  x: i * 260 + (i % 3) * 40,
-  y: 28 + (i % 5) * 22,
-  scale: 0.55 + (i % 3) * 0.12,
-  speed: 6 + (i % 4) * 3,
-  variant: i % 3 as 0 | 1 | 2,
 }));
 
 // Sprite stars: only small/medium variants (no group), spread across sky
@@ -201,20 +192,7 @@ export function drawBackground() {
     }
   }
 
-  // Draw sprite clouds drifting slowly across the sky
-  const cloudImg = CLOUDS_SPRITES.image;
-  if (cloudImg) {
-    for (const c of CLOUDS) {
-      const region = CLOUDS_SPRITES.variants[c.variant];
-      const drawW = region.sw * c.scale;
-      const drawH = region.sh * c.scale;
-      const x1 = ((c.x - elapsed * c.speed) % (WIDTH + drawW) + (WIDTH + drawW)) % (WIDTH + drawW) - drawW;
-      ctx.save();
-      ctx.globalAlpha = 0.78;
-      ctx.drawImage(cloudImg, region.sx, region.sy, region.sw, region.sh, x1, c.y, drawW, drawH);
-      ctx.restore();
-    }
-  }
+  drawClouds({ elapsed, moon: state.moon });
 
   // --- Background plane: far ridges, slowest drift ------------------------
   // --- Midground plane: mid + near ridges, tree/tower line ---------------

@@ -10,7 +10,7 @@ import {
   SKILL3_EFFECT_SHEET,
   SKY_SPRITES,
   TREE_SPRITES,
-  CLOUDS_SPRITES,
+  CLOUD_SPRITES,
   STONE_TOWER_SPRITES,
   FOREGROUND_SPRITES,
   GROUND_SPRITES,
@@ -36,7 +36,8 @@ export function loadSprites(): Promise<void> {
   jobs.push(loadImage(BOSS_SKILL1_EFFECT_SHEET.src).then((img) => { BOSS_SKILL1_EFFECT_SHEET.image = img; }));
   jobs.push(loadImage(SKY_SPRITES.src).then((img) => { SKY_SPRITES.image = img; }));
   jobs.push(loadImage(TREE_SPRITES.src).then((img) => { TREE_SPRITES.image = img; }));
-  jobs.push(loadImage(CLOUDS_SPRITES.src).then((img) => { CLOUDS_SPRITES.image = img; }));
+  jobs.push(loadImage(CLOUD_SPRITES.big.src).then((img) => { CLOUD_SPRITES.big.image = img; }));
+  jobs.push(loadImage(CLOUD_SPRITES.small.src).then((img) => { CLOUD_SPRITES.small.image = img; }));
   jobs.push(loadImage(STONE_TOWER_SPRITES.src).then((img) => { STONE_TOWER_SPRITES.image = img; }));
   jobs.push(loadImage(FOREGROUND_SPRITES.src).then((img) => { FOREGROUND_SPRITES.image = img; }));
   jobs.push(loadImage(GROUND_SPRITES.src).then((img) => { GROUND_SPRITES.image = img; }));
