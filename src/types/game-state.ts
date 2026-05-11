@@ -20,14 +20,6 @@ export type PlatformState = {
   baseY: number;
 };
 
-export type PillarState = {
-  x: number;
-  y: number;
-  w: number;
-  h: number;
-  vx: number;
-};
-
 export type ChestState = {
   platform: PlatformState;
   offsetX: number;
@@ -211,7 +203,6 @@ export type GameState = {
   particles: ParticleState[];
   projectiles: ProjectileState[];
   platforms: PlatformState[];
-  pillars: PillarState[];
   chests: ChestState[];
   skillBursts: SkillBurstState[];
   hitBursts: HitBurstState[];

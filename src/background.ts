@@ -5,12 +5,7 @@ import {
   HEIGHT,
   GROUND_Y,
   SKY_SPRITES,
-  TREE_SPRITES,
-  STONE_TOWER_SPRITES,
-  FOREGROUND_SPRITES,
-  GROUND_SPRITES,
   MOUNTAIN_SPRITES,
-  RUNTIME_CONFIG,
 } from "./constants";
 import { drawMoon, getMoonSkyColors } from "./moon";
 import { drawClouds } from "./clouds";
@@ -19,8 +14,7 @@ import { drawClouds } from "./clouds";
 // scrolls at a different rate so the scene has a true sense of depth.
 const PARALLAX_SPEED = {
   background: 4,    // sky elements + far mountain ridge (slowest)
-  midground: 12,    // mid/near mountains, trees, stone towers
-  foreground: 24,   // ground strip + foreground patches/decor (fastest)
+  midground: 12,    // mid/near mountains
 };
 
 // Mountain sub-parallax: each variant is placed on one of the three planes.
@@ -32,43 +26,6 @@ const MOUNTAIN_LAYERS = [
   { variantIndex: 2, plane: "midground"  as const, depthMul: 1.0, bottom: -15  },
 ];
 
-// Tree sprite pools: left/middle of sheet = living greens + red maples;
-// right side = dead / withered trees. Stone towers follow the same
-// left-to-right freshness gradient.
-const TREE_LUSH_POOL = [0, 1, 2, 3, 4, 5, 6, 7, 8];
-const TREE_WITHERED_POOL = [9, 10, 11];
-const TOWER_INTACT_POOL = [0, 1, 2, 3, 4, 5, 6];
-const TOWER_BROKEN_POOL = [7, 8, 9, 10];
-
-// Stable, non-uniform hash → produces fixed per-index "randomness".
-function seeded(i: number, salt: number): number {
-  let x = Math.imul(i + salt, 2654435761);
-  x = Math.imul(x ^ (x >>> 13), 1274126177);
-  return ((x ^ (x >>> 16)) >>> 0) / 4294967296;
-}
-
-// Scenery wraps over a world span wider than the viewport so the forest
-// doesn't feel like a repeating fence.
-const SCENERY_SPAN = WIDTH * 2;
-
-const TREES = Array.from({ length: 12 }, (_, i) => ({
-  x: seeded(i, 101) * SCENERY_SPAN,
-  lushVariant: TREE_LUSH_POOL[Math.floor(seeded(i, 211) * TREE_LUSH_POOL.length)],
-  witheredVariant: TREE_WITHERED_POOL[Math.floor(seeded(i, 317) * TREE_WITHERED_POOL.length)],
-  scale: 0.7 + seeded(i, 409) * 0.5,
-  // Proximity threshold at which this tree swaps to its withered form.
-  transitionPoint: 0.15 + seeded(i, 503) * 0.75,
-}));
-
-const TOWERS = Array.from({ length: 6 }, (_, i) => ({
-  // Offset phase so towers don't sit on top of trees at the same x.
-  x: (seeded(i, 131) * SCENERY_SPAN + SCENERY_SPAN * 0.37) % SCENERY_SPAN,
-  intactVariant: TOWER_INTACT_POOL[Math.floor(seeded(i, 229) * TOWER_INTACT_POOL.length)],
-  brokenVariant: TOWER_BROKEN_POOL[Math.floor(seeded(i, 331) * TOWER_BROKEN_POOL.length)],
-  scale: 0.44 + seeded(i, 421) * 0.14,
-  transitionPoint: 0.2 + seeded(i, 557) * 0.7,
-}));
-
 // Sprite stars: only small/medium variants (no group), spread across sky
 const STARS = Array.from({ length: 9 }, (_, i) => ({
   x: (i * 137 + (i % 5) * 43) % WIDTH,
@@ -77,73 +34,6 @@ const STARS = Array.from({ length: 9 }, (_, i) => ({
   twinkleOffset: (i * 11) % 24,
   variant: i % 2 as 0 | 1, // 0=small, 1=medium
 }));
-// Foreground placement helpers ------------------------------------------------
-interface ForegroundItem {
-  x: number;
-  variant: number;
-  scale: number;
-  w: number;
-  h: number;
-}
-
-function buildForegroundItems(
-  count: number,
-  span: number,
-  regions: readonly { sx: number; sy: number; sw: number; sh: number }[],
-  minScale: number,
-  maxScale: number,
-  padMin: number,
-  padMax: number,
-  salt: number,
-): ForegroundItem[] {
-  const items: ForegroundItem[] = [];
-  const maxAttempts = 200;
-
-  for (let i = 0; i < count; i++) {
-    for (let attempt = 0; attempt < maxAttempts; attempt++) {
-      const variant = Math.floor(seeded(i + attempt * 31 + salt, 301 + salt) * regions.length);
-      const scale = minScale + seeded(i + attempt * 31 + salt, 401 + salt) * (maxScale - minScale);
-      const w = regions[variant].sw * scale;
-      const h = regions[variant].sh * scale;
-
-      let x = seeded(i + attempt * 31 + salt, 501 + salt) * span;
-      x = ((x % span) + span) % span;
-
-      // randomly add a one-side padding so items don't always cluster near edge
-      const pad = padMin + seeded(i + attempt * 31 + salt, 601 + salt) * (padMax - padMin);
-      x = ((x + pad) % span + span) % span;
-
-      // test overlap with existing items (horizontal only → both anchored to ground)
-      let overlapped = false;
-      for (const other of items) {
-        // check if [x, x+w] overlaps with [other.x, other.x+other.w]
-        if (x < other.x + other.w && other.x < x + w) {
-          overlapped = true;
-          break;
-        }
-      }
-
-      if (!overlapped) {
-        items.push({ x, variant, scale, w, h });
-        break;
-      }
-    }
-  }
-
-  return items;
-}
-
-const FOREGROUND_PATCH_SPAN = WIDTH + 200;
-const FOREGROUND_PATCHES = buildForegroundItems(
-  6, FOREGROUND_PATCH_SPAN, FOREGROUND_SPRITES.patches,
-  0.6, 0.9, 15, 50, 701,
-);
-
-const FOREGROUND_DECOR_SPAN = WIDTH + 180;
-const FOREGROUND_DECOR = buildForegroundItems(
-  9, FOREGROUND_DECOR_SPAN, FOREGROUND_SPRITES.decor,
-  0.5, 0.85, 15, 60, 601,
-);
 
 export function drawBackground() {
   if (!ctx) return;
@@ -151,11 +41,9 @@ export function drawBackground() {
   const elapsed = state.elapsed;
   const { nightTop, nightMid, nightLow, upperOverlay, midOverlay } = getMoonSkyColors(state.moon);
 
-  // Three-plane scroll offsets — all elements below anchor to exactly one of
-  // these so parallax depth stays consistent across the scene.
+  // Parallax scroll offsets for the remaining background mountain planes.
   const scrollBackground = elapsed * PARALLAX_SPEED.background;
   const scrollMidground  = elapsed * PARALLAX_SPEED.midground;
-  const scrollForeground = elapsed * PARALLAX_SPEED.foreground;
 
   ctx.fillStyle = nightTop;
   ctx.fillRect(0, 0, WIDTH, 170);
@@ -212,99 +100,8 @@ export function drawBackground() {
     }
   }
 
-  // Boss proximity drives the lush → withered transition. Zero at game start,
-  // ramps to 1 as the boss timer ticks down; pinned at 1 once boss is active.
-  const maxTimer = RUNTIME_CONFIG.initialBossSpawnTimer;
-  const bossProximity = state.boss
-    ? 1
-    : Math.max(0, Math.min(1, 1 - state.bossSpawnTimer / maxTimer));
-
-  // Trees and stone towers share the midground plane with the mid/near ridges.
-  const sceneryScroll = scrollMidground;
-  const treeImg = TREE_SPRITES.image;
-  if (treeImg) {
-    for (const t of TREES) {
-      const variantIndex = bossProximity >= t.transitionPoint ? t.witheredVariant : t.lushVariant;
-      const region = TREE_SPRITES.variants[variantIndex];
-      const drawW = region.sw * t.scale;
-      const drawH = region.sh * t.scale;
-      const y = GROUND_Y - 6 - drawH;
-      const wrapped = ((t.x - sceneryScroll) % SCENERY_SPAN + SCENERY_SPAN) % SCENERY_SPAN;
-      for (const dx of [wrapped, wrapped - SCENERY_SPAN]) {
-        if (dx + drawW < 0 || dx > WIDTH) continue;
-        ctx.drawImage(treeImg, region.sx, region.sy, region.sw, region.sh, dx, y, drawW, drawH);
-      }
-    }
-  }
-
-  // Ground plane: tile one of 4 variants, stepping lush → withering → hostile
-  // as the boss approaches. Below the tile strip is filled with a dark base
-  // so the bottom-of-screen stays opaque if the sprite is shorter than the gap.
+  // Keep the bottom of the screen opaque without drawing grass, ground tiles,
+  // trees, towers, or other foreground scenery.
   ctx.fillStyle = "#0b1424";
   ctx.fillRect(0, GROUND_Y, WIDTH, HEIGHT - GROUND_Y);
-
-  const groundImg = GROUND_SPRITES.image;
-  if (groundImg) {
-    const groundVariantIndex = 1;
-    const gRegion = GROUND_SPRITES.variants[groundVariantIndex];
-    // Match tile width to viewport scale — keep aspect ratio of source region.
-    const tileW = gRegion.sw;
-    const tileH = gRegion.sh;
-    // Anchor top of tile strip slightly above GROUND_Y so grass/ice overlaps
-    // the play line, giving a natural "surface" rather than a hard seam.
-    const topY = GROUND_Y - 10;
-    // --- Foreground plane: ground tile strip scrolls fastest. -------------
-    const offset = ((scrollForeground % tileW) + tileW) % tileW;
-    for (let x = -offset; x < WIDTH + tileW; x += tileW) {
-      ctx.drawImage(groundImg, gRegion.sx, gRegion.sy, gRegion.sw, gRegion.sh, x, topY, tileW, tileH);
-    }
-  }
-
-  const towerImg = STONE_TOWER_SPRITES.image;
-  if (towerImg) {
-    for (const tower of TOWERS) {
-      const variantIndex = bossProximity >= tower.transitionPoint ? tower.brokenVariant : tower.intactVariant;
-      const region = STONE_TOWER_SPRITES.variants[variantIndex];
-      const drawW = region.sw * tower.scale;
-      const drawH = region.sh * tower.scale;
-      const y = GROUND_Y - 4 - drawH;
-      const wrapped = ((tower.x - sceneryScroll) % SCENERY_SPAN + SCENERY_SPAN) % SCENERY_SPAN;
-      for (const dx of [wrapped, wrapped - SCENERY_SPAN]) {
-        if (dx + drawW < 0 || dx > WIDTH) continue;
-        ctx.drawImage(towerImg, region.sx, region.sy, region.sw, region.sh, dx, y, drawW, drawH);
-      }
-    }
-  }
-
-}
-
-// Draw foreground patches and decor *after* every gameplay element so they
-// visually sit on top of the whole scene (as requested in TODO).
-export function drawForeground() {
-  if (!ctx) return;
-  const elapsed = state.elapsed;
-  // Foreground patches and decor ride the same plane as the ground strip.
-  // Patches sit a touch slower (0.9×) so flat rock tiles read as slightly
-  // more distant than the individual grass/bush clumps on top of them.
-  const scrollForeground = elapsed * PARALLAX_SPEED.foreground;
-  const foregroundImg = FOREGROUND_SPRITES.image;
-  if (!foregroundImg) return;
-
-  for (const p of FOREGROUND_PATCHES) {
-    const region = FOREGROUND_SPRITES.patches[p.variant];
-    const span = WIDTH + p.w + 120;
-    const raw = (p.x - scrollForeground * 0.9) % span;
-    const x = (raw + span) % span - p.w;
-    const y = GROUND_Y - p.h + 6;
-    ctx.drawImage(foregroundImg, region.sx, region.sy, region.sw, region.sh, x, y, p.w, p.h);
-  }
-
-  for (const d of FOREGROUND_DECOR) {
-    const region = FOREGROUND_SPRITES.decor[d.variant];
-    const span = WIDTH + d.w + 120;
-    const raw = (d.x - scrollForeground) % span;
-    const x = (raw + span) % span - d.w;
-    const y = GROUND_Y - 2 - d.h;
-    ctx.drawImage(foregroundImg, region.sx, region.sy, region.sw, region.sh, x, y, d.w, d.h);
-  }
 }

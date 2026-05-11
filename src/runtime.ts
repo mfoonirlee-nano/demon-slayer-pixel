@@ -11,7 +11,7 @@ import {
 } from "./constants";
 import { loadSprites } from "./assets";
 import { setupInput, teardownInput, debugCollisionBoxes } from "./input";
-import { drawBackground, drawForeground } from "./background";
+import { drawBackground } from "./background";
 
 import { updatePlayer, drawPlayer, triggerAttack, castSelectedSkill, selectSkill, tryJump } from "./entities/player";
 import { spawnEnemy, updateEnemies, drawEnemy } from "./entities/enemy";
@@ -21,11 +21,9 @@ import {
   nextMapSpawnInterval,
   resetMapGenerator,
   updatePlatforms,
-  updatePillars,
   updateCrystals,
   updateChests,
   drawPlatforms,
-  drawPillars,
   drawCrystals,
   drawChests,
 } from "./entities/platform";
@@ -119,7 +117,6 @@ function loop(ts: number) {
 
     updatePlayer();
     updatePlatforms(dt);
-    updatePillars();
     updateCrystals(dt);
     updateChests(dt);
     updateEnemies();
@@ -135,7 +132,6 @@ function loop(ts: number) {
   }
 
   drawBackground();
-  drawPillars();
   drawPlatforms();
   drawCrystals();
   drawChests();
@@ -175,7 +171,6 @@ function loop(ts: number) {
   drawHitBursts();
   drawProjectiles();
   drawParticles();
-  drawForeground();
 
   if (debugCollisionBoxes) {
     ctx.strokeStyle = "rgba(0, 255, 0, 0.8)";

@@ -61,18 +61,6 @@ export const HOVER_CONFIG = {
   chance: 0.20,
 } as const;
 
-// Ground pillars (visual obstacle, player must jump over)
-export const PILLAR_CONFIG = {
-  widthMin: 8,
-  widthMax: 18,
-  heightMin: 30,
-  heightMax: 60,
-  spawnChance: 0.35,   // per platform spawn cycle
-  baseColor: "#2a3a52",
-  topColor: "#3f5470",
-  cracksColor: "#1a2638",
-} as const;
-
 // Chest pickup (bigger reward than crystal, spawns on any layer)
 export const CHEST_CONFIG = {
   spawnEvery: 6,        // every N platform spawns (approximate)

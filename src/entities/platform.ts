@@ -2,7 +2,6 @@ import { state } from "../state";
 import { ctx } from "../context";
 import {
   WIDTH,
-  GROUND_Y,
   PLATFORM_CONFIG,
   PLATFORM_STYLE_LIST,
   PLATFORM_VISUAL,
@@ -15,7 +14,6 @@ import {
   LAYER_TRANSITIONS,
   CHAIN_CONFIG,
   HOVER_CONFIG,
-  PILLAR_CONFIG,
   CHEST_CONFIG,
   CHEST_VISUAL,
   MAP_GENERATION_CONFIG,
@@ -25,7 +23,6 @@ import type {
   PlatformState,
   PlatformStyle,
   PlatformLayer,
-  PillarState,
 } from "../types/game-state";
 import { hitbox } from "../utils";
 import { playTone } from "../audio";
@@ -42,8 +39,7 @@ type SegmentKind =
   | "zigzag"
   | "gapJump"
   | "hoverPair"
-  | "rewardRisk"
-  | "groundHazard";
+  | "rewardRisk";
 
 type SegmentDifficulty = "easy" | "medium" | "hard";
 
@@ -215,21 +211,6 @@ function maybeSpawnReward(platform: PlatformState, risky: boolean) {
   }
 }
 
-// --- Pillar spawn ---
-
-function spawnPillar() {
-  const h = PILLAR_CONFIG.heightMin + Math.random() * (PILLAR_CONFIG.heightMax - PILLAR_CONFIG.heightMin);
-  const w = PILLAR_CONFIG.widthMin + Math.random() * (PILLAR_CONFIG.widthMax - PILLAR_CONFIG.widthMin);
-  const pillar: PillarState = {
-    x: WIDTH + PLATFORM_CONFIG.spawnOffsetX + Math.random() * 80,
-    y: GROUND_Y - h,
-    w,
-    h,
-    vx: platformVx(),
-  };
-  state.pillars.push(pillar);
-}
-
 // --- Crystal ---
 
 export function spawnCrystalOnPlatform(platform: PlatformState) {
@@ -360,7 +341,6 @@ function pickSegmentKind(): SegmentKind {
     gapJump: highTension ? 0.3 : lerp(0.4, 1.6, difficulty),
     hoverPair: highTension ? 0.2 : lerp(0.15, 1.2, difficulty),
     rewardRisk: highTension ? 0.4 : lerp(0.25, 1.4, difficulty),
-    groundHazard: lerp(0.4, 1.3, difficulty),
   };
 
   for (const kind of recentKinds) {
@@ -569,14 +549,8 @@ function spawnRewardRiskSegment(): SegmentSpawnResult {
   return { kind: "rewardRisk", difficulty: "hard", platforms };
 }
 
-function spawnGroundHazardSegment(): SegmentSpawnResult {
-  const result = spawnNormalPlatform(false);
-  spawnPillar();
-  return { ...result, kind: "groundHazard", difficulty: "medium" };
-}
-
 function spawnPatternSegment(): SegmentSpawnResult {
-  if (state.platforms.length === 0) return spawnNormalPlatform(false);
+  if (state.platforms.length === 0) return spawnNormalPlatform();
   if (shouldRecoverLowLayer()) return spawnLowRecoverySegment();
 
   const kind = pickSegmentKind();
@@ -586,13 +560,12 @@ function spawnPatternSegment(): SegmentSpawnResult {
   if (kind === "gapJump") return spawnChainCluster();
   if (kind === "hoverPair") return spawnHoverPairSegment();
   if (kind === "rewardRisk") return spawnRewardRiskSegment();
-  if (kind === "groundHazard") return spawnGroundHazardSegment();
   return spawnNormalPlatform();
 }
 
 // --- Main spawn entry points ---
 
-function spawnNormalPlatform(allowPillar = true): SegmentSpawnResult {
+function spawnNormalPlatform(): SegmentSpawnResult {
   const nextLayer = pickVariedLayer(lastLayer);
   const y = layerY(nextLayer);
   const w = PLATFORM_WIDTH.normal.base + Math.random() * PLATFORM_WIDTH.normal.variance;
@@ -603,10 +576,6 @@ function spawnNormalPlatform(allowPillar = true): SegmentSpawnResult {
   rememberLastPlatform(platform);
 
   maybeSpawnReward(platform, isHover || nextLayer === "high" || nextLayer === "top");
-
-  if (allowPillar && Math.random() < PILLAR_CONFIG.spawnChance) {
-    spawnPillar();
-  }
 
   return {
     kind: "safeBridge",
@@ -663,15 +632,6 @@ export function updatePlatforms(dt: number) {
       p.y = p.baseY + Math.sin(p.phase * (HOVER_CONFIG.phaseSpeed / PLATFORM_CONFIG.phaseSpeed)) * p.hoverAmplitude;
     }
     if (p.x + p.w < -PLATFORM_CONFIG.despawnMargin) state.platforms.splice(i, 1);
-  }
-}
-
-export function updatePillars() {
-  if (!state.pillars) return;
-  for (let i = state.pillars.length - 1; i >= 0; i -= 1) {
-    const p = state.pillars[i];
-    p.x += p.vx;
-    if (p.x + p.w < -PLATFORM_CONFIG.despawnMargin) state.pillars.splice(i, 1);
   }
 }
 
@@ -898,21 +858,6 @@ export function drawPlatforms() {
       ctx.fillStyle = "rgba(140,210,255,0.18)";
       ctx.fillRect(p.x + 2, p.y, p.w - 4, 2);
     }
-  }
-}
-
-export function drawPillars() {
-  if (!ctx || !state.pillars) return;
-  for (const p of state.pillars) {
-    // Base body
-    ctx.fillStyle = PILLAR_CONFIG.baseColor;
-    ctx.fillRect(p.x, p.y, p.w, p.h);
-    // Top cap
-    ctx.fillStyle = PILLAR_CONFIG.topColor;
-    ctx.fillRect(p.x - 2, p.y, p.w + 4, 5);
-    // Crack detail
-    ctx.fillStyle = PILLAR_CONFIG.cracksColor;
-    ctx.fillRect(p.x + Math.floor(p.w * 0.4), p.y + 8, 1, Math.floor(p.h * 0.35));
   }
 }
 
