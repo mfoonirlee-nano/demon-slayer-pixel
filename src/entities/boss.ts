@@ -161,11 +161,15 @@ export function drawBoss() {
       BOSS_SKILL1_SHEET.count - 1,
       Math.floor(framesSinceCastStart / BOSS_SKILL1_CONFIG.castFrameDuration),
     );
+    const centerX = boss.x + boss.w / 2;
+    const feetY = boss.y + boss.h;
+    const drawX = centerX - BOSS_SKILL1_CONFIG.drawW / 2;
+    const drawY = feetY - BOSS_SKILL1_CONFIG.drawH + BOSS_SKILL1_CONFIG.drawBottomPadding;
     drawSheetFrame(
       BOSS_SKILL1_SHEET,
       frame,
-      boss.x - BOSS_SKILL1_CONFIG.drawOffsetX,
-      boss.y - BOSS_SKILL1_CONFIG.drawOffsetY,
+      drawX,
+      drawY,
       BOSS_SKILL1_CONFIG.drawW,
       BOSS_SKILL1_CONFIG.drawH,
       boss.castFacing,
@@ -176,11 +180,13 @@ export function drawBoss() {
   const frame = frameIndex(BOSS_SHEET.count, BOSS_CONFIG.baseAnimSpeed - boss.phase, state.elapsed, boss.animSeed);
   const toward = state.player.x + state.player.w / 2 - (boss.x + boss.w / 2);
   const facing = toward >= 0 ? 1 : -1;
+  const centerX = boss.x + boss.w / 2;
+  const feetY = boss.y + boss.h;
   drawSheetFrame(
     BOSS_SHEET,
     frame,
-    boss.x - BOSS_CONFIG.drawOffsetX,
-    boss.y - BOSS_CONFIG.drawOffsetY,
+    centerX - BOSS_CONFIG.drawW / 2,
+    feetY - BOSS_CONFIG.drawH,
     BOSS_CONFIG.drawW,
     BOSS_CONFIG.drawH,
     facing,

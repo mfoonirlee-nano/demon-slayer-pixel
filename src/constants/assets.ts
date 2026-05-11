@@ -210,6 +210,7 @@ export const BOSS_SKILL1_CONFIG = {
   castFrameDuration: 9,
   drawW: 280,
   drawH: 280,
+  drawBottomPadding: 34,
   drawOffsetX: 80,
   drawOffsetY: 72,
   effectDrawScale: 0.42,

@@ -5,22 +5,34 @@ import { hitbox, frameIndex } from "../utils";
 import { drawSheetFrame } from "../graphics";
 import { hurtPlayer } from "./player";
 
+function enemyCollisionSize(sheetIndex: number) {
+  const sheet = ENEMY_SHEETS[sheetIndex % ENEMY_SHEETS.length] || ENEMY_SHEETS[0];
+  const drawW = Math.round(sheet.frameW * ENEMY_DRAW_SCALE);
+  const drawH = Math.round(sheet.frameH * ENEMY_DRAW_SCALE);
+  return {
+    w: Math.round(drawW * ENEMY_CONFIG.collisionScaleX),
+    h: Math.round(drawH * ENEMY_CONFIG.collisionScaleY),
+  };
+}
+
 export function spawnEnemy() {
   if (state.enemies.length >= RUNTIME_CONFIG.enemyMaxCount) return;
   const side = Math.random() < ENEMY_CONFIG.spawnSideChance ? -1 : 1;
   const speed = ENEMY_CONFIG.baseSpeed + Math.random() * ENEMY_CONFIG.randomSpeed + state.elapsed * ENEMY_CONFIG.speedScaleByElapsed;
   const damage = Math.min(ENEMY_CONFIG.maxDamage, ENEMY_CONFIG.baseDamage + state.elapsed * ENEMY_CONFIG.damageScaleByElapsed);
+  const sheetIndex = Math.floor(Math.random() * ENEMY_SHEETS.length);
+  const size = enemyCollisionSize(sheetIndex);
   state.enemies.push({
     x: side === 1 ? WIDTH + ENEMY_CONFIG.spawnOffsetRight : ENEMY_CONFIG.spawnOffsetLeft,
-    y: GROUND_Y - ENEMY_CONFIG.yOffsetFromGround,
-    w: ENEMY_CONFIG.w,
-    h: ENEMY_CONFIG.h,
+    y: GROUND_Y - size.h,
+    w: size.w,
+    h: size.h,
     vx: -side * speed,
     hp: ENEMY_CONFIG.baseHp + state.elapsed * ENEMY_CONFIG.hpScaleByElapsed,
     damage,
     hitCd: 0,
     animSeed: Math.floor(Math.random() * ENEMY_CONFIG.animSeedMax),
-    sheetIndex: Math.floor(Math.random() * ENEMY_SHEETS.length),
+    sheetIndex,
   });
 }
 
