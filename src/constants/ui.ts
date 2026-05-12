@@ -1,6 +1,5 @@
 export const HUD_UI = {
   meterPercentMax: 100,
-  bossBarWidth: 380,
 
   // status_bar.png (875×231) rendered at 400px wide
   statusBarContainerW: 400,
@@ -18,4 +17,16 @@ export const HUD_UI = {
   skillFillTop: 69,
   skillFillW: 210,
   skillFillH: 5,
+
+  // boss_hp_bar.png (1916×821) rendered at 380px wide and cropped vertically.
+  bossBarContainerW: 380,
+  bossBarContainerH: 83,
+  bossBarImgW: 380,
+  bossBarImgTop: -38,
+
+  // transparent health slot inside boss_hp_bar.png.
+  bossFillLeft: 53,
+  bossFillTop: 39,
+  bossFillW: 274,
+  bossFillH: 10,
 } as const;

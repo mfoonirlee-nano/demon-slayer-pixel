@@ -14,6 +14,7 @@ export type PlatformState = {
   phase: number;
   style: PlatformStyle;
   kind: PlatformKind;
+  spriteIndex: number;
   trim: number;
   notch: number;
   hoverAmplitude: number;

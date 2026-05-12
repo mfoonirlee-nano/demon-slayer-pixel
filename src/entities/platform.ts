@@ -4,7 +4,6 @@ import {
   WIDTH,
   PLATFORM_CONFIG,
   PLATFORM_STYLE_LIST,
-  PLATFORM_VISUAL,
   CRYSTAL_CONFIG,
   CRYSTAL_TYPES_BY_KIND,
   CRYSTAL_VISUAL,
@@ -17,6 +16,7 @@ import {
   CHEST_CONFIG,
   CHEST_VISUAL,
   MAP_GENERATION_CONFIG,
+  PLATFORM_SPRITES,
 } from "../constants";
 import type {
   CrystalType,
@@ -159,6 +159,20 @@ function randomStyle(): PlatformStyle {
   ] as PlatformStyle;
 }
 
+function randomSpriteIndex(kind: "normal" | "chain" | "wide"): number {
+  const pool = PLATFORM_SPRITES[kind];
+  return pool[Math.floor(Math.random() * pool.length)];
+}
+
+function nearestSpriteIndex(kind: "normal" | "chain" | "wide", width: number): number {
+  const pool = PLATFORM_SPRITES[kind];
+  return pool.reduce((best, current) => {
+    const bestDelta = Math.abs(PLATFORM_SPRITES.regions[best].sw * PLATFORM_SPRITES.drawScale - width);
+    const currentDelta = Math.abs(PLATFORM_SPRITES.regions[current].sw * PLATFORM_SPRITES.drawScale - width);
+    return currentDelta < bestDelta ? current : best;
+  }, pool[0]);
+}
+
 // --- Platform spawn helpers ---
 
 function makePlatform(
@@ -169,16 +183,22 @@ function makePlatform(
   isHover: boolean,
   isChain: boolean,
 ): PlatformState {
+  const spriteKind = isChain ? "chain" : w >= 190 ? "wide" : "normal";
+  const spriteIndex = nearestSpriteIndex(spriteKind, w);
+  const sprite = PLATFORM_SPRITES.regions[spriteIndex];
+  const drawW = Math.round(sprite.sw * PLATFORM_SPRITES.drawScale);
+
   return {
     x,
     y,
     baseY: y,
-    w,
+    w: drawW,
     h: PLATFORM_CONFIG.height,
     vx,
     phase: Math.random() * FULL_CIRCLE_RADIANS,
     style: randomStyle(),
     kind: isChain ? "chain" : isHover ? "hover" : "normal",
+    spriteIndex,
     hoverAmplitude: isHover ? HOVER_CONFIG.amplitude : 0,
     trim: PLATFORM_CONFIG.trimBase + Math.floor(Math.random() * PLATFORM_CONFIG.trimVariants),
     notch: Math.random() < PLATFORM_CONFIG.notchChance
@@ -362,11 +382,7 @@ function pickSegmentKind(): SegmentKind {
 }
 
 function platformWidth(kind: "normal" | "chain" | "wide"): number {
-  if (kind === "wide") return randomBetween(136, 184);
-  if (kind === "chain") {
-    return PLATFORM_WIDTH.chain.base + Math.random() * PLATFORM_WIDTH.chain.variance;
-  }
-  return PLATFORM_WIDTH.normal.base + Math.random() * PLATFORM_WIDTH.normal.variance;
+  return Math.round(PLATFORM_SPRITES.regions[randomSpriteIndex(kind)].sw * PLATFORM_SPRITES.drawScale);
 }
 
 function addPlatform(
@@ -399,11 +415,11 @@ function spawnLowRecoverySegment(): SegmentSpawnResult {
   for (let i = 0; i < layers.length; i += 1) {
     const y = layerY(layers[i]);
     const width = platformWidth(i === 0 ? "normal" : "chain");
-    addPlatform(platforms, x, y, width, vx, false, i > 0);
+    const platform = addPlatform(platforms, x, y, width, vx, false, i > 0);
 
     if (i < layers.length - 1) {
       const gap = randomBetween(CHAIN_CONFIG.gapMin, CHAIN_CONFIG.gapMin + 18);
-      x += width + gap;
+      x += platform.w + gap;
     }
   }
 
@@ -464,9 +480,9 @@ function spawnStairSegment(kind: "stairUp" | "stairDown"): SegmentSpawnResult {
 
   for (let i = 0; i < count; i += 1) {
     const width = i === 0 ? platformWidth("normal") : platformWidth("chain");
-    addPlatform(platforms, x, y, width, vx, false, i > 0);
+    const platform = addPlatform(platforms, x, y, width, vx, false, i > 0);
     const step = nextReachableStep(y, direction, false);
-    x += width + step.gap;
+    x += platform.w + step.gap;
     y = step.y;
   }
 
@@ -485,9 +501,9 @@ function spawnZigzagSegment(): SegmentSpawnResult {
 
   for (let i = 0; i < 3; i += 1) {
     const width = platformWidth(i === 0 ? "normal" : "chain");
-    addPlatform(platforms, x, y, width, vx, false, i > 0);
+    const platform = addPlatform(platforms, x, y, width, vx, false, i > 0);
     const step = nextReachableStep(y, direction, true);
-    x += width + step.gap;
+    x += platform.w + step.gap;
     y = step.y;
     direction *= -1;
   }
@@ -513,7 +529,7 @@ function spawnHoverPairSegment(): SegmentSpawnResult {
     );
     const nextLayer = yToLayer(y) === "top" ? "high" : layerAbove(yToLayer(y));
     y = layerY(nextLayer);
-    x += width + gap;
+    x += platform.w + gap;
   }
 
   rememberLastPlatform(platforms[platforms.length - 1]);
@@ -568,7 +584,7 @@ function spawnPatternSegment(): SegmentSpawnResult {
 function spawnNormalPlatform(): SegmentSpawnResult {
   const nextLayer = pickVariedLayer(lastLayer);
   const y = layerY(nextLayer);
-  const w = PLATFORM_WIDTH.normal.base + Math.random() * PLATFORM_WIDTH.normal.variance;
+  const w = platformWidth("normal");
   const isHover = nextLayer !== "low" && Math.random() < HOVER_CONFIG.chance;
   const vx = platformVx();
   const platform = makePlatform(firstPlatformX(), y, w, vx, isHover, false);
@@ -594,7 +610,7 @@ function spawnChainCluster(): SegmentSpawnResult {
   let direction: -1 | 1 = yToLayer(y) === "high" || yToLayer(y) === "top" ? 1 : -1;
 
   for (let i = 0; i < count; i += 1) {
-    const w = PLATFORM_WIDTH.chain.base + Math.random() * PLATFORM_WIDTH.chain.variance;
+    const w = platformWidth("chain");
     const platform = makePlatform(x, y, w, vx, false, true);
     state.platforms.push(platform);
     platforms.push(platform);
@@ -604,7 +620,7 @@ function spawnChainCluster(): SegmentSpawnResult {
     }
 
     const step = nextReachableStep(y, direction, true);
-    x += w + step.gap;
+    x += platform.w + step.gap;
     y = step.y;
     direction *= -1;
   }
@@ -728,130 +744,29 @@ export function updateChests(dt: number) {
 
 // --- Draw ---
 
-function drawPlatformBase(
-  context: CanvasRenderingContext2D,
-  x: number,
-  y: number,
-  width: number,
-  height: number,
-  color: string,
-) {
-  context.fillStyle = color;
-  context.fillRect(x, y, width, height);
-}
-
 export function drawPlatforms() {
   if (!ctx) return;
+  const image = PLATFORM_SPRITES.image;
+  if (!image) return;
+  ctx.imageSmoothingEnabled = false;
 
   for (const p of state.platforms) {
-    // Chain platforms use stone style always (smaller, clean look)
-    const styleKey = p.kind === "chain" ? "stone" : p.style;
-
-    if (styleKey === PLATFORM_STYLE_LIST[2]) {
-      drawPlatformBase(ctx, p.x, p.y, p.w, p.h, PLATFORM_VISUAL.shrine.baseColor);
-      ctx.fillStyle = PLATFORM_VISUAL.shrine.topColor;
-      ctx.fillRect(
-        p.x + PLATFORM_VISUAL.shrine.topInsetX,
-        p.y + PLATFORM_VISUAL.shrine.topInsetY,
-        p.w - PLATFORM_VISUAL.shrine.topInsetWidth,
-        PLATFORM_VISUAL.shrine.topHeight,
-      );
-      for (
-        let i = PLATFORM_VISUAL.shrine.pillarStartX;
-        i < p.w - PLATFORM_VISUAL.shrine.undersideInset;
-        i += PLATFORM_VISUAL.shrine.pillarStep
-      ) {
-        ctx.fillStyle = PLATFORM_VISUAL.shrine.pillarColor;
-        ctx.fillRect(
-          p.x + i,
-          p.y + PLATFORM_VISUAL.shrine.topInsetY,
-          PLATFORM_VISUAL.shrine.pillarWidth,
-          p.h - PLATFORM_VISUAL.shrine.topInsetY,
-        );
-      }
-      ctx.fillStyle = PLATFORM_VISUAL.shrine.undersideColor;
-      ctx.fillRect(
-        p.x + PLATFORM_VISUAL.shrine.undersideInset,
-        p.y + p.h,
-        p.w - PLATFORM_VISUAL.shrine.undersideInset * 2,
-        PLATFORM_VISUAL.shrine.undersideHeight,
-      );
-    } else if (styleKey === PLATFORM_STYLE_LIST[3]) {
-      drawPlatformBase(ctx, p.x, p.y, p.w, p.h, PLATFORM_VISUAL.ruin.baseColor);
-      ctx.fillStyle = PLATFORM_VISUAL.ruin.topColor;
-      ctx.fillRect(
-        p.x + PLATFORM_VISUAL.ruin.topInset,
-        p.y + PLATFORM_VISUAL.ruin.topInset,
-        p.w - PLATFORM_VISUAL.ruin.topInset * 2,
-        PLATFORM_VISUAL.ruin.topHeight,
-      );
-      for (let i = 0; i < p.notch; i += 1) {
-        const notchX =
-          p.x + p.w * (PLATFORM_VISUAL.ruin.notchStartRatio + i * PLATFORM_VISUAL.ruin.notchStepRatio);
-        ctx.clearRect(notchX, p.y, PLATFORM_VISUAL.ruin.notchWidth, PLATFORM_VISUAL.ruin.notchHeight);
-      }
-      ctx.fillStyle = PLATFORM_VISUAL.ruin.undersideColor;
-      ctx.fillRect(
-        p.x + PLATFORM_VISUAL.ruin.undersideInset,
-        p.y + p.h,
-        p.w - PLATFORM_VISUAL.ruin.undersideInset * 2,
-        PLATFORM_VISUAL.ruin.undersideHeight,
-      );
-    } else if (styleKey === PLATFORM_STYLE_LIST[1]) {
-      drawPlatformBase(ctx, p.x, p.y, p.w, p.h, PLATFORM_VISUAL.moss.baseColor);
-      ctx.fillStyle = PLATFORM_VISUAL.moss.topColor;
-      ctx.fillRect(
-        p.x + PLATFORM_VISUAL.moss.topInsetX,
-        p.y + PLATFORM_VISUAL.moss.topInsetY,
-        p.w - PLATFORM_VISUAL.moss.topInsetWidth,
-        PLATFORM_VISUAL.moss.topHeight,
-      );
-      ctx.fillStyle = PLATFORM_VISUAL.moss.undersideColor;
-      ctx.fillRect(
-        p.x + PLATFORM_VISUAL.moss.undersideInset,
-        p.y + p.h,
-        p.w - PLATFORM_VISUAL.moss.undersideInset * 2,
-        PLATFORM_VISUAL.moss.undersideHeight,
-      );
-      for (let i = 0; i < p.w; i += PLATFORM_VISUAL.moss.grassStep) {
-        const sway =
-          Math.sin(p.phase + i * PLATFORM_VISUAL.moss.grassPhaseScale) *
-          PLATFORM_VISUAL.moss.grassSwayAmplitude;
-        ctx.fillStyle = PLATFORM_VISUAL.moss.grassColor;
-        ctx.fillRect(
-          p.x + i + PLATFORM_VISUAL.moss.grassOffsetX,
-          p.y - PLATFORM_VISUAL.moss.grassOffsetY + sway,
-          PLATFORM_VISUAL.moss.grassWidth,
-          PLATFORM_VISUAL.moss.grassHeight,
-        );
-      }
-    } else {
-      // stone (default, also used for chain)
-      drawPlatformBase(ctx, p.x, p.y, p.w, p.h, PLATFORM_VISUAL.stone.baseColor);
-      ctx.fillStyle = PLATFORM_VISUAL.stone.topColor;
-      ctx.fillRect(
-        p.x + p.trim,
-        p.y + PLATFORM_VISUAL.stone.topInsetY,
-        p.w - p.trim * 2,
-        PLATFORM_VISUAL.stone.topHeight,
-      );
-      ctx.fillStyle = PLATFORM_VISUAL.stone.undersideColor;
-      ctx.fillRect(
-        p.x + PLATFORM_VISUAL.stone.undersideInset,
-        p.y + p.h,
-        p.w - PLATFORM_VISUAL.stone.undersideInset * 2,
-        PLATFORM_VISUAL.stone.undersideHeight,
-      );
-      for (let i = PLATFORM_VISUAL.stone.detailStartX; i < p.w - 4; i += PLATFORM_VISUAL.stone.detailStep) {
-        ctx.fillStyle = PLATFORM_VISUAL.stone.detailColor;
-        ctx.fillRect(
-          p.x + i,
-          p.y + PLATFORM_VISUAL.stone.detailOffsetY,
-          PLATFORM_VISUAL.stone.detailWidth,
-          PLATFORM_VISUAL.stone.detailHeight,
-        );
-      }
-    }
+    const sprite = PLATFORM_SPRITES.regions[p.spriteIndex] ?? PLATFORM_SPRITES.regions[0];
+    const drawW = Math.round(sprite.sw * PLATFORM_SPRITES.drawScale);
+    const drawH = Math.round(sprite.sh * PLATFORM_SPRITES.drawScale);
+    const drawX = Math.round(p.x);
+    const drawY = Math.round(p.y - sprite.surfaceY * PLATFORM_SPRITES.drawScale);
+    ctx.drawImage(
+      image,
+      sprite.sx,
+      sprite.sy,
+      sprite.sw,
+      sprite.sh,
+      drawX,
+      drawY,
+      drawW,
+      drawH,
+    );
 
     // Hover indicator: faint glow strip on top edge
     if (p.kind === "hover") {

@@ -221,7 +221,7 @@ export const BOSS_SKILL1_CONFIG = {
   effectMinTravelFrames: 14,
   effectMaxInitialVy: -22,
   effectMinInitialVy: 6,
-  effectFrameDuration: 7,
+  effectFrameDuration: 14,
   damageMultiplier: 2,
   cooldown: 260,
   initialCooldown: 150,
@@ -231,6 +231,7 @@ export const BOSS_SKILL1_CONFIG = {
 } as const;
 
 type SpriteRegion = { sx: number; sy: number; sw: number; sh: number };
+type PlatformSpriteRegion = SpriteRegion & { surfaceY: number };
 type GroundTileRegion = SpriteRegion & {
   surfaceY: number;
   fillLeft: number;
@@ -256,25 +257,58 @@ export const SKY_SPRITES: {
 };
 
 export const TREE_SPRITES: {
-  src: string;
-  image: HTMLImageElement | null;
-  variants: SpriteRegion[];
+  sheets: Array<{
+    src: string;
+    image: HTMLImageElement | null;
+    variants: SpriteRegion[];
+  }>;
 } = {
-  src: "assets/sprites/background/tree_sprites.png",
-  image: null,
-  variants: [
-    { sx: 72, sy: 61, sw: 187, sh: 215 },
-    { sx: 271, sy: 103, sw: 139, sh: 173 },
-    { sx: 427, sy: 88, sw: 131, sh: 188 },
-    { sx: 576, sy: 76, sw: 175, sh: 201 },
-    { sx: 765, sy: 77, sw: 169, sh: 200 },
-    { sx: 937, sy: 115, sw: 105, sh: 162 },
-    { sx: 1070, sy: 130, sw: 107, sh: 144 },
-    { sx: 1190, sy: 138, sw: 106, sh: 136 },
-    { sx: 1314, sy: 130, sw: 111, sh: 147 },
-    { sx: 1471, sy: 97, sw: 120, sh: 180 },
-    { sx: 1614, sy: 96, sw: 135, sh: 181 },
-    { sx: 1759, sy: 96, sw: 124, sh: 180 },
+  sheets: [
+    {
+      src: "assets/sprites/tree/tree_sprites_1.png",
+      image: null,
+      variants: [
+        { sx: 36, sy: 18, sw: 318, sh: 350 },
+        { sx: 400, sy: 20, sw: 138, sh: 346 },
+        { sx: 578, sy: 18, sw: 304, sh: 350 },
+        { sx: 914, sy: 62, sw: 300, sh: 305 },
+        { sx: 1210, sy: 80, sw: 250, sh: 287 },
+        { sx: 1470, sy: 38, sw: 286, sh: 330 },
+        { sx: 36, sy: 376, sw: 160, sh: 252 },
+        { sx: 232, sy: 376, sw: 214, sh: 252 },
+        { sx: 532, sy: 378, sw: 170, sh: 250 },
+        { sx: 788, sy: 400, sw: 140, sh: 228 },
+        { sx: 960, sy: 388, sw: 320, sh: 240 },
+        { sx: 1300, sy: 388, sw: 160, sh: 240 },
+        { sx: 1500, sy: 392, sw: 260, sh: 236 },
+        { sx: 16, sy: 644, sw: 160, sh: 204 },
+        { sx: 210, sy: 646, sw: 170, sh: 202 },
+        { sx: 425, sy: 642, sw: 135, sh: 206 },
+        { sx: 610, sy: 642, sw: 210, sh: 206 },
+        { sx: 855, sy: 676, sw: 280, sh: 172 },
+        { sx: 1210, sy: 642, sw: 160, sh: 206 },
+        { sx: 1330, sy: 704, sw: 190, sh: 144 },
+        { sx: 1555, sy: 655, sw: 170, sh: 193 },
+      ],
+    },
+    {
+      src: "assets/sprites/tree/tree_sprites_2.png",
+      image: null,
+      variants: [
+        { sx: 32, sy: 84, sw: 290, sh: 382 },
+        { sx: 382, sy: 42, sw: 186, sh: 424 },
+        { sx: 610, sy: 84, sw: 270, sh: 382 },
+        { sx: 940, sy: 84, sw: 220, sh: 382 },
+        { sx: 1190, sy: 104, sw: 270, sh: 362 },
+        { sx: 1495, sy: 145, sw: 260, sh: 321 },
+        { sx: 36, sy: 532, sw: 225, sh: 270 },
+        { sx: 300, sy: 526, sw: 200, sh: 276 },
+        { sx: 520, sy: 506, sw: 250, sh: 296 },
+        { sx: 835, sy: 514, sw: 260, sh: 288 },
+        { sx: 1135, sy: 550, sw: 210, sh: 252 },
+        { sx: 1408, sy: 506, sw: 112, sh: 296 },
+      ],
+    },
   ],
 };
 
@@ -390,6 +424,55 @@ export const GROUND_TILE_SPRITES: {
       { sx: 750, sy: 0, sw: 150, sh: 150, surfaceY: 29, fillLeft: 3, fillRight: 145, fillTop: 19, fillBottom: 141 },
     ],
   },
+};
+
+export const PLATFORM_SPRITES: {
+  src: string;
+  image: HTMLImageElement | null;
+  drawScale: number;
+  regions: PlatformSpriteRegion[];
+  chain: number[];
+  normal: number[];
+  wide: number[];
+} = {
+  src: "assets/sprites/platform/platform.png",
+  image: null,
+  drawScale: 0.75,
+  regions: [
+    { sx: 29, sy: 26, sw: 114, sh: 95, surfaceY: 18 },
+    { sx: 168, sy: 21, sw: 201, sh: 112, surfaceY: 25 },
+    { sx: 388, sy: 24, sw: 201, sh: 105, surfaceY: 19 },
+    { sx: 607, sy: 28, sw: 217, sh: 106, surfaceY: 18 },
+    { sx: 879, sy: 36, sw: 60, sh: 48, surfaceY: 8 },
+    { sx: 28, sy: 152, sw: 159, sh: 89, surfaceY: 15 },
+    { sx: 195, sy: 161, sw: 63, sh: 71, surfaceY: 8 },
+    { sx: 274, sy: 161, sw: 82, sh: 79, surfaceY: 10 },
+    { sx: 374, sy: 161, sw: 59, sh: 78, surfaceY: 12 },
+    { sx: 453, sy: 161, sw: 107, sh: 81, surfaceY: 10 },
+    { sx: 581, sy: 162, sw: 60, sh: 64, surfaceY: 12 },
+    { sx: 669, sy: 148, sw: 151, sh: 107, surfaceY: 24 },
+    { sx: 856, sy: 159, sw: 89, sh: 80, surfaceY: 7 },
+    { sx: 43, sy: 269, sw: 78, sh: 84, surfaceY: 15 },
+    { sx: 168, sy: 276, sw: 113, sh: 63, surfaceY: 9 },
+    { sx: 305, sy: 270, sw: 157, sh: 105, surfaceY: 10 },
+    { sx: 527, sy: 268, sw: 83, sh: 89, surfaceY: 18 },
+    { sx: 633, sy: 263, sw: 47, sh: 110, surfaceY: 23 },
+    { sx: 709, sy: 278, sw: 135, sh: 75, surfaceY: 8 },
+    { sx: 876, sy: 277, sw: 67, sh: 63, surfaceY: 9 },
+    { sx: 37, sy: 399, sw: 151, sh: 85, surfaceY: 11 },
+    { sx: 208, sy: 391, sw: 195, sh: 103, surfaceY: 21 },
+    { sx: 423, sy: 395, sw: 148, sh: 93, surfaceY: 14 },
+    { sx: 590, sy: 380, sw: 118, sh: 101, surfaceY: 18 },
+    { sx: 727, sy: 382, sw: 142, sh: 99, surfaceY: 18 },
+    { sx: 879, sy: 393, sw: 94, sh: 52, surfaceY: 16 },
+    { sx: 36, sy: 530, sw: 140, sh: 122, surfaceY: 23 },
+    { sx: 192, sy: 533, sw: 240, sh: 120, surfaceY: 20 },
+    { sx: 448, sy: 529, sw: 423, sh: 119, surfaceY: 24 },
+    { sx: 907, sy: 549, sw: 62, sh: 61, surfaceY: 10 },
+  ],
+  chain: [4, 6, 7, 8, 10, 12, 13, 16, 17, 19, 25, 29],
+  normal: [0, 5, 9, 11, 14, 15, 18, 20, 22, 23, 24, 26],
+  wide: [1, 2, 3, 21, 27, 28],
 };
 
 // Top row: rocks, grass, bushes (standalone clutter)

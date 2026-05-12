@@ -226,7 +226,7 @@ function Hud() {
 
   return (
     <>
-      <div className="pointer-events-none absolute left-6 top-6 z-10 hidden text-[12px] text-white md:block">
+      <div className="pointer-events-none absolute left-2 top-2 z-10 hidden text-[12px] text-white md:block">
         <div style={{ position: "relative", width: HUD_UI.statusBarContainerW, height: HUD_UI.statusBarContainerH }}>
           {/* HP fill — upper track */}
           <div style={{ position: "absolute", zIndex: 0, left: HUD_UI.hpFillLeft, top: HUD_UI.hpFillTop, width: HUD_UI.hpFillW, height: HUD_UI.hpFillH, overflow: "hidden", borderRadius: 1 }}>
@@ -258,11 +258,63 @@ function Hud() {
       </div>
 
       {boss ? (
-        <div className="pointer-events-none absolute left-1/2 top-6 z-10 hidden -translate-x-1/2 rounded border border-white/10 bg-black/40 px-4 py-2 text-white md:block" style={{ width: HUD_UI.bossBarWidth }}>
-          <div className="mb-1 text-center text-[12px]">下弦之鬼·阶段 {boss.phase}</div>
-          <div className="relative h-3 w-full overflow-hidden bg-[#443246]">
-            <GhostBar value={bossHp} max={bossHpMax} ghostValue={ghostBossHp} color="#ff6e93" ghostColor="#9a3a5a" />
+        <div
+          className="pointer-events-none absolute left-1/2 top-2 z-10 hidden -translate-x-1/2 overflow-hidden text-white md:block"
+          style={{ width: HUD_UI.bossBarContainerW, height: HUD_UI.bossBarContainerH }}
+        >
+          <div
+            style={{
+              position: "absolute",
+              zIndex: 0,
+              left: HUD_UI.bossFillLeft,
+              top: HUD_UI.bossFillTop,
+              width: HUD_UI.bossFillW,
+              height: HUD_UI.bossFillH,
+              overflow: "hidden",
+              background: "#241018",
+            }}
+          >
+            <GhostBar
+              value={bossHp}
+              max={bossHpMax}
+              ghostValue={ghostBossHp}
+              color="linear-gradient(90deg,#7b111f 0%,#d82d36 58%,#ff8a55 100%)"
+              ghostColor="#5b202a"
+            />
           </div>
+          <img
+            src="assets/sprites/ui/boss_hp_bar.png"
+            alt=""
+            draggable={false}
+            style={{
+              position: "absolute",
+              zIndex: 1,
+              width: HUD_UI.bossBarImgW,
+              left: 0,
+              top: HUD_UI.bossBarImgTop,
+              imageRendering: "pixelated",
+            }}
+          />
+          <span
+            style={{
+              position: "absolute",
+              zIndex: 2,
+              left: HUD_UI.bossFillLeft,
+              top: HUD_UI.bossFillTop,
+              width: HUD_UI.bossFillW,
+              height: HUD_UI.bossFillH,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              fontSize: 7,
+              fontWeight: 700,
+              color: "#ffe0ca",
+              textShadow: "0 1px 4px rgba(0,0,0,0.95)",
+              lineHeight: 1,
+            }}
+          >
+            下弦之鬼 · 阶段 {boss.phase}
+          </span>
         </div>
       ) : null}
 

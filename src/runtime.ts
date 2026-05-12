@@ -11,7 +11,7 @@ import {
 } from "./constants";
 import { loadSprites } from "./assets";
 import { setupInput, teardownInput, debugCollisionBoxes } from "./input";
-import { drawBackground, drawGroundTiles } from "./background";
+import { drawBackground, drawGroundTiles, drawNearTrees } from "./background";
 
 import { updatePlayer, drawPlayer, triggerAttack, castSelectedSkill, selectSkill, tryJump } from "./entities/player";
 import { spawnEnemy, updateEnemies, drawEnemy } from "./entities/enemy";
@@ -132,6 +132,7 @@ function loop(ts: number) {
   }
 
   drawBackground();
+  drawNearTrees();
   drawPlatforms();
   drawCrystals();
   drawChests();
