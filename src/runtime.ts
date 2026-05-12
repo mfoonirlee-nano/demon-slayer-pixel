@@ -11,7 +11,7 @@ import {
 } from "./constants";
 import { loadSprites } from "./assets";
 import { setupInput, teardownInput, debugCollisionBoxes } from "./input";
-import { drawBackground } from "./background";
+import { drawBackground, drawGroundTiles } from "./background";
 
 import { updatePlayer, drawPlayer, triggerAttack, castSelectedSkill, selectSkill, tryJump } from "./entities/player";
 import { spawnEnemy, updateEnemies, drawEnemy } from "./entities/enemy";
@@ -171,6 +171,7 @@ function loop(ts: number) {
   drawHitBursts();
   drawProjectiles();
   drawParticles();
+  drawGroundTiles();
 
   if (debugCollisionBoxes) {
     ctx.strokeStyle = "rgba(0, 255, 0, 0.8)";

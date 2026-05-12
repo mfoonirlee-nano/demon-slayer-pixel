@@ -6,6 +6,7 @@ import {
   GROUND_Y,
   SKY_SPRITES,
   MOUNTAIN_SPRITES,
+  GROUND_TILE_SPRITES,
 } from "./constants";
 import { drawMoon, getMoonSkyColors } from "./moon";
 import { drawClouds } from "./clouds";
@@ -34,6 +35,44 @@ const STARS = Array.from({ length: 9 }, (_, i) => ({
   twinkleOffset: (i * 11) % 24,
   variant: i % 2 as 0 | 1, // 0=small, 1=medium
 }));
+
+export function drawGroundTiles() {
+  if (!ctx) return;
+
+  const tileSize = GROUND_TILE_SPRITES.tileSize;
+  const patternLength = GROUND_TILE_SPRITES.grassPerStone + 1;
+  const rows = Math.ceil((HEIGHT - GROUND_Y) / tileSize) + 2;
+
+  for (let row = 0; row < rows; row += 1) {
+    let x = 0;
+    let col = 0;
+    while (x < WIDTH) {
+      const isStone = col % patternLength === GROUND_TILE_SPRITES.grassPerStone;
+      const tileSet = isStone ? GROUND_TILE_SPRITES.stone : GROUND_TILE_SPRITES.grass;
+      const image = tileSet.image;
+      if (!image) break;
+
+      const variantIndex = isStone ? Math.floor(col / patternLength) + row : col + row * Math.ceil(WIDTH / tileSize);
+      const region = tileSet.regions[variantIndex % tileSet.regions.length];
+      const fillWidth = region.fillRight - region.fillLeft + 1;
+      const stepWidth = Math.max(1, fillWidth - GROUND_TILE_SPRITES.seamOverlap);
+
+      ctx.drawImage(
+        image,
+        region.sx,
+        region.sy,
+        region.sw,
+        region.sh,
+        x - region.fillLeft,
+        GROUND_Y + GROUND_TILE_SPRITES.drawOffsetY + row * tileSize - region.surfaceY,
+        region.sw,
+        region.sh,
+      );
+      x += stepWidth;
+      col += 1;
+    }
+  }
+}
 
 export function drawBackground() {
   if (!ctx) return;
@@ -100,8 +139,6 @@ export function drawBackground() {
     }
   }
 
-  // Keep the bottom of the screen opaque without drawing grass, ground tiles,
-  // trees, towers, or other foreground scenery.
   ctx.fillStyle = "#0b1424";
   ctx.fillRect(0, GROUND_Y, WIDTH, HEIGHT - GROUND_Y);
 }

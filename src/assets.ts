@@ -11,6 +11,7 @@ import {
   SKY_SPRITES,
   CLOUD_SPRITES,
   MOUNTAIN_SPRITES,
+  GROUND_TILE_SPRITES,
 } from "./constants";
 import { loadImage } from "./utils";
 import { state } from "./state";
@@ -34,6 +35,8 @@ export function loadSprites(): Promise<void> {
   jobs.push(loadImage(CLOUD_SPRITES.big.src).then((img) => { CLOUD_SPRITES.big.image = img; }));
   jobs.push(loadImage(CLOUD_SPRITES.small.src).then((img) => { CLOUD_SPRITES.small.image = img; }));
   jobs.push(loadImage(MOUNTAIN_SPRITES.src).then((img) => { MOUNTAIN_SPRITES.image = img; }));
+  jobs.push(loadImage(GROUND_TILE_SPRITES.grass.src).then((img) => { GROUND_TILE_SPRITES.grass.image = img; }));
+  jobs.push(loadImage(GROUND_TILE_SPRITES.stone.src).then((img) => { GROUND_TILE_SPRITES.stone.image = img; }));
   jobs.push(loadImage(SKILL1_EFFECT_SHEET.src).then((img) => { SKILL1_EFFECT_SHEET.image = img; }));
   jobs.push(loadImage(SKILL2_EFFECT_SHEET.src).then((img) => { SKILL2_EFFECT_SHEET.image = img; }));
   jobs.push(loadImage(SKILL3_EFFECT_SHEET.src).then((img) => { SKILL3_EFFECT_SHEET.image = img; }));

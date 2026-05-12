@@ -231,6 +231,13 @@ export const BOSS_SKILL1_CONFIG = {
 } as const;
 
 type SpriteRegion = { sx: number; sy: number; sw: number; sh: number };
+type GroundTileRegion = SpriteRegion & {
+  surfaceY: number;
+  fillLeft: number;
+  fillRight: number;
+  fillTop: number;
+  fillBottom: number;
+};
 
 export const SKY_SPRITES: {
   src: string;
@@ -339,6 +346,50 @@ export const GROUND_SPRITES: {
     { sx: 80, sy: 539, sw: 1520, sh: 77 },  // dirt + dead grass (withering)
     { sx: 75, sy: 731, sw: 1524, sh: 83 },  // icy blue (hostile)
   ],
+};
+
+export const GROUND_TILE_SPRITES: {
+  tileSize: number;
+  drawOffsetY: number;
+  seamOverlap: number;
+  grassPerStone: number;
+  grass: { src: string; image: HTMLImageElement | null; regions: GroundTileRegion[] };
+  stone: { src: string; image: HTMLImageElement | null; regions: GroundTileRegion[] };
+} = {
+  tileSize: 150,
+  drawOffsetY: -10,
+  seamOverlap: 52,
+  grassPerStone: 3,
+  grass: {
+    src: "assets/sprites/ground/grass_ground_150_150.png",
+    image: null,
+    regions: [
+      { sx: 0, sy: 0, sw: 150, sh: 150, surfaceY: 28, fillLeft: 1, fillRight: 145, fillTop: 18, fillBottom: 139 },
+      { sx: 150, sy: 0, sw: 150, sh: 150, surfaceY: 28, fillLeft: 2, fillRight: 141, fillTop: 18, fillBottom: 139 },
+      { sx: 300, sy: 0, sw: 150, sh: 150, surfaceY: 28, fillLeft: 9, fillRight: 125, fillTop: 17, fillBottom: 138 },
+      { sx: 450, sy: 0, sw: 150, sh: 150, surfaceY: 29, fillLeft: 6, fillRight: 139, fillTop: 0, fillBottom: 141 },
+      { sx: 600, sy: 0, sw: 150, sh: 150, surfaceY: 30, fillLeft: 5, fillRight: 142, fillTop: 3, fillBottom: 143 },
+      { sx: 750, sy: 0, sw: 150, sh: 150, surfaceY: 32, fillLeft: 4, fillRight: 138, fillTop: 3, fillBottom: 146 },
+      { sx: 0, sy: 150, sw: 150, sh: 150, surfaceY: 23, fillLeft: 0, fillRight: 144, fillTop: 14, fillBottom: 136 },
+      { sx: 150, sy: 150, sw: 150, sh: 150, surfaceY: 28, fillLeft: 7, fillRight: 144, fillTop: 17, fillBottom: 137 },
+      { sx: 300, sy: 150, sw: 150, sh: 150, surfaceY: 28, fillLeft: 19, fillRight: 134, fillTop: 20, fillBottom: 139 },
+      { sx: 450, sy: 150, sw: 150, sh: 150, surfaceY: 25, fillLeft: 9, fillRight: 126, fillTop: 15, fillBottom: 136 },
+      { sx: 600, sy: 150, sw: 150, sh: 150, surfaceY: 26, fillLeft: 11, fillRight: 136, fillTop: 15, fillBottom: 135 },
+      { sx: 750, sy: 150, sw: 150, sh: 150, surfaceY: 30, fillLeft: 8, fillRight: 137, fillTop: 17, fillBottom: 137 },
+    ],
+  },
+  stone: {
+    src: "assets/sprites/ground/stone_ground_150_150.png",
+    image: null,
+    regions: [
+      { sx: 0, sy: 0, sw: 150, sh: 150, surfaceY: 27, fillLeft: 11, fillRight: 135, fillTop: 10, fillBottom: 139 },
+      { sx: 150, sy: 0, sw: 150, sh: 150, surfaceY: 29, fillLeft: 13, fillRight: 131, fillTop: 4, fillBottom: 144 },
+      { sx: 300, sy: 0, sw: 150, sh: 150, surfaceY: 30, fillLeft: 12, fillRight: 133, fillTop: 5, fillBottom: 144 },
+      { sx: 450, sy: 0, sw: 150, sh: 150, surfaceY: 28, fillLeft: 20, fillRight: 136, fillTop: 18, fillBottom: 140 },
+      { sx: 600, sy: 0, sw: 150, sh: 150, surfaceY: 29, fillLeft: 13, fillRight: 127, fillTop: 19, fillBottom: 140 },
+      { sx: 750, sy: 0, sw: 150, sh: 150, surfaceY: 29, fillLeft: 3, fillRight: 145, fillTop: 19, fillBottom: 141 },
+    ],
+  },
 };
 
 // Top row: rocks, grass, bushes (standalone clutter)
