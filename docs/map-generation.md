@@ -1,16 +1,17 @@
 # 地图生成算法文档
 
-> 对应代码：`src/entities/platform.ts`、`src/constants/platform.ts`、`src/runtime.ts`
+> 对应代码：`src/entities/platform.ts`、`src/constants/platform.ts`、`src/constants/assets.ts`、`src/runtime.ts`
 
 ## 概览
 
-地图仍然是无限横向卷轴，但生成入口已经从“普通平台 / 链式平台二选一”改为“片段 Pattern 生成”。每次触发会选择一个带玩法意图的片段，再生成 1 到 3 个平台以及可选的柱子、宝箱、水晶。
+地图仍然是无限横向卷轴，但生成入口已经从“普通平台 / 链式平台二选一”改为“片段 Pattern 生成”。每次触发会选择一个带玩法意图的片段，再生成 1 到 3 个平台以及可选的宝箱、水晶。
 
 核心目标：
 
 - 保持随机性，但避免连续重复和不可达跳跃。
-- 用片段制造节奏：喘息、上升、下降、折返、冒险奖励、地面障碍。
+- 用片段制造节奏：喘息、上升、下降、折返、悬浮平台、冒险奖励。
 - 难度随时间增加，同时用张力值防止高压片段连续出现。
+- 平台视觉由 `assets/sprites/platform/platform.png` 提供，逻辑宽度会贴近所选 sprite 的实际宽度。
 
 ## 触发机制
 
@@ -74,9 +75,10 @@ Boss 存在时会额外增加 `0.25s`，避免 Boss 战和极端地形同时过�
 | `gapJump` | 旧链式平台的升级版，按相邻层上下交替 |
 | `hoverPair` | 两个错相位悬浮平台 |
 | `rewardRisk` | 安全主路加一个高风险奖励平台 |
-| `groundHazard` | 普通平台加地面柱子 |
 
-片段选择由权重决定。随着 `difficulty` 增加，`zigzag`、`gapJump`、`hoverPair`、`rewardRisk`、`groundHazard` 权重上升。`tension` 过高时，`breather` 和 `safeBridge` 权重上升，高风险片段权重下降。连续同层时，下一次层级选择会显著降低当前层权重，避免平台长期堆在同一个高度带。
+当前代码没有地面柱子片段，旧文档里的 `groundHazard` 已移除。
+
+片段选择由权重决定。随着 `difficulty` 增加，`zigzag`、`gapJump`、`hoverPair`、`rewardRisk` 权重上升。`tension` 过高时，`breather` 和 `safeBridge` 权重上升，高风险片段权重下降。最近出现过的片段权重会衰减到 `45%`，避免短时间连续重复。连续同层时，下一次层级选择会显著降低当前层权重，避免平台长期堆在同一个高度带。
 
 ## 可达性约束
 
@@ -113,4 +115,14 @@ Boss 存在时会额外增加 `0.25s`，避免 Boss 战和极端地形同时过�
 - `reachability`
 - `segment`
 
-旧平台尺寸、层级、悬浮、柱子、道具视觉参数仍保留在同一个常量文件中。
+旧平台尺寸、层级、悬浮、道具视觉参数仍保留在同一个常量文件中。平台贴图区域、普通/链式/宽平台候选池在 `src/constants/assets.ts` 的 `PLATFORM_SPRITES` 中维护。
+
+## 平台与奖励绘制
+
+平台逻辑仍保留 `x/y/w/h/vx/baseY/kind` 等碰撞字段，但绘制时会根据 `spriteIndex` 从平台图集中取对应区域：
+
+- `chain`：较窄的踏脚石平台，主要用于连续跳跃和高风险奖励。
+- `normal`：常规平台。
+- `wide`：宽平台，主要用于喘息片段。
+
+悬浮平台会在逻辑 `y` 上叠加正弦位移，并在绘制时加一条弱蓝色顶部光带。水晶和宝箱是程序绘制的像素形状，不依赖额外贴图；拾取后分别提升攻击、治疗生命，并播放简短音效和命中特效。

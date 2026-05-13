@@ -10,9 +10,9 @@
   * [x] 整理角色状态与快照字段，统一生命、攻击、技能资源的状态来源
   * [x] 清理 `player` / `platform` / `runtime` / `input` / `App` / `gameStore` 等核心模块中的一批存量不规范写法
   * [x] 继续按模块清理其余存量代码中的不规范写法
-* 技能类型优化，去除无效字段：frameRanges、frameWidths、frameW，以及其在仓库里的响应逻辑
-  * [x] 从 `Skill` 类型中移除 `frameRanges`、`frameWidths`、`frameW` 三个无效字段
-  * [x] 运行时 frameRanges 改由 `assets.ts` 的 Map 管理，提供 `getSkillFrameRanges()` 接口
+* 技能类型优化，去除无效字段：frameRanges、frameWidths，以及其在仓库里的响应逻辑
+  * [x] 从 `Skill` 类型中移除 `frameRanges`、`frameWidths` 两个无效字段
+  * [x] 保留 `frameW` / `frameH` / `frameCount` 作为技能图集切片的唯一尺寸来源
   * [x] 删除 `detectVariableFrameRanges` 及相关常量（IMAGE_ANALYSIS、IMAGE_PIXEL_DATA）
   * [x] `drawVariableSheetFrame`、`player.ts`、`particle.ts` 同步更新调用方式
 * 完成游戏 UI 更新，常驻UI尽量精简，只显示必要的信息
@@ -64,11 +64,7 @@
 * [x] 优化平台生成逻辑，增加第一层平台回落恢复机制，避免上层平台长期缺少入口
 * [x] 重构云渲染逻辑，移除旧云图集，改用 `assets/sprites/cloud/` 下的大云/小云精灵图
 * [x] 云层支持夜晚灰色滤镜与血月红色染色，大云慢速、小云快速移动
+* [x] 根据当前项目结构同步更新 docs 文档
 
 ## 未完成
-* boss释放的技能的特效播放的序列帧速度放慢一半
-* 增加角色的大招，静态资源为 assets/sprites/skills/ultimate_skill.png assets/sprites/skills/ultimate_skill_effect.png
-* 增加装备系统，装备仅影响角色的攻击和生命，强化技能，不会影响角色外观
-* 前景逻辑重构，包括地面、草丛、树木、石塔、鸟居、石头、竹子、木桥
-* 移动平台素材替换及生成逻辑重构
-* 树木逻辑优化，增加石塔、鸟居、房屋等元素
+* 移动平台碰撞优化，现在人像是踩在草尖上

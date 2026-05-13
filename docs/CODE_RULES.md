@@ -60,3 +60,9 @@ npm run build
 ```
 
 如果新增了常量、类型或配置，顺手检查是否已存在同类实现，避免重复定义。
+
+## 素材与文档同步
+
+- 新增或替换运行时素材时，同时检查 `src/constants/assets.ts`、`src/assets.ts` 和 `docs/SPRITES.md`。
+- 修改地图片段、平台层级、奖励或可达性参数时，同时更新 `docs/map-generation.md`。
+- 修改输入键位、HUD 快照字段、渲染顺序或运行时模块边界时，同时更新 `docs/ARCHITECTURE.md`。
