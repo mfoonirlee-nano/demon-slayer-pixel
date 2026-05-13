@@ -308,7 +308,7 @@ function PauseScreen({ snapshot }: { snapshot: GameSnapshot }) {
               </div>
 
               <div className="mt-1 flex justify-end">
-                <UltimateOrb value={player.ultimateEnergy} max={player.ultimateEnergyMax} ready={player.ultimateReady} size={36} />
+                <UltimateOrb value={player.ultimateEnergy} max={player.ultimateEnergyMax} ready={player.ultimateReady} size={24} />
               </div>
             </div>
           </div>
@@ -366,8 +366,8 @@ function Hud() {
             draggable={false}
             style={{ position: "absolute", zIndex: 2, left: 48, top: 25, width: 60, height: 60, borderRadius: "50%", objectFit: "cover" }}
           />
-          <div style={{ position: "absolute", zIndex: 3, left: 340, top: 46 }}>
-            <UltimateOrb value={player.ultimateEnergy} max={player.ultimateEnergyMax} ready={player.ultimateReady} size={42} />
+          <div style={{ position: "absolute", zIndex: 3, left: 352, top: 54 }}>
+            <UltimateOrb value={player.ultimateEnergy} max={player.ultimateEnergyMax} ready={player.ultimateReady} size={28} />
           </div>
         </div>
       </div>
