@@ -6,7 +6,6 @@ import {
   GROUND_Y,
   SKY_SPRITES,
   MOUNTAIN_SPRITES,
-  TREE_SPRITES,
   GROUND_TILE_SPRITES,
 } from "./constants";
 import { drawMoon, getMoonSkyColors } from "./moon";
@@ -17,7 +16,6 @@ import { drawClouds } from "./clouds";
 const PARALLAX_SPEED = {
   background: 4,    // sky elements + far mountain ridge (slowest)
   midground: 12,    // mid/near mountains
-  nearTrees: 18,
 };
 
 // Mountain sub-parallax: each variant is placed on one of the three planes.
@@ -36,14 +34,6 @@ const STARS = Array.from({ length: 9 }, (_, i) => ({
   scale: (0.18 + (i % 4) * 0.09) * (2 / 3) * 0.5,
   twinkleOffset: (i * 11) % 24,
   variant: i % 2 as 0 | 1, // 0=small, 1=medium
-}));
-
-const TREE_LINE = Array.from({ length: 12 }, (_, i) => ({
-  variantSeed: i * 7 + 3,
-  baseX: i * 122 + ((i % 3) - 1) * 22,
-  bottomOffset: 9 + (i % 2) * 6,
-  drawH: 150 + (i % 6) * 22,
-  alpha: 0.86 + (i % 4) * 0.035,
 }));
 
 export function drawGroundTiles() {
@@ -80,38 +70,6 @@ export function drawGroundTiles() {
       );
       x += stepWidth;
       col += 1;
-    }
-  }
-}
-
-export function drawNearTrees() {
-  if (!ctx) return;
-
-  const variants = TREE_SPRITES.sheets.flatMap((sheet) =>
-    sheet.variants.map((region) => ({ sheet, region })),
-  );
-  if (variants.length === 0 || TREE_SPRITES.sheets.every((sheet) => !sheet.image)) return;
-
-  const patternWidth = 1128;
-  const scroll = state.elapsed * PARALLAX_SPEED.nearTrees;
-  const offset = ((scroll % patternWidth) + patternWidth) % patternWidth;
-
-  for (let pass = -1; pass <= 1; pass += 1) {
-    for (const tree of TREE_LINE) {
-      const entry = variants[tree.variantSeed % variants.length];
-      const image = entry.sheet.image;
-      if (!image) continue;
-
-      const { region } = entry;
-      const drawH = tree.drawH;
-      const drawW = drawH * (region.sw / region.sh);
-      const x = tree.baseX + pass * patternWidth - offset;
-      const y = GROUND_Y + tree.bottomOffset - drawH;
-
-      ctx.save();
-      ctx.globalAlpha = tree.alpha;
-      ctx.drawImage(image, region.sx, region.sy, region.sw, region.sh, x, y, drawW, drawH);
-      ctx.restore();
     }
   }
 }

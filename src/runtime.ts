@@ -11,9 +11,10 @@ import {
 } from "./constants";
 import { loadSprites } from "./assets";
 import { setupInput, teardownInput, debugCollisionBoxes } from "./input";
-import { drawBackground, drawGroundTiles, drawNearTrees } from "./background";
+import { drawBackground, drawGroundTiles } from "./background";
+import { drawNearForeground } from "./nearForeground";
 
-import { updatePlayer, drawPlayer, triggerAttack, castSelectedSkill, selectSkill, tryJump } from "./entities/player";
+import { updatePlayer, drawPlayer, triggerAttack, castSelectedSkill, castUltimateSkill, selectSkill, tryJump } from "./entities/player";
 import { spawnEnemy, updateEnemies, drawEnemy } from "./entities/enemy";
 import { spawnBoss, updateBoss, drawBoss, updateBossSkill1Effects, drawBossSkill1Effects } from "./entities/boss";
 import {
@@ -28,7 +29,7 @@ import {
   drawChests,
 } from "./entities/platform";
 import { updateProjectiles, drawProjectiles } from "./entities/projectile";
-import { updateParticles, updateSkillBursts, updateHitBursts, updateSkill1Effects, updateSkill2Effects, updateSkill3Effect, drawParticles, drawSkillBursts, drawHitBursts, drawSkill1Effects, drawSkill2Effects, drawSkill3Effect } from "./entities/particle";
+import { updateParticles, updateSkillBursts, updateHitBursts, updateSkill1Effects, updateSkill2Effects, updateSkill3Effect, updateUltimateEffects, drawParticles, drawSkillBursts, drawHitBursts, drawSkill1Effects, drawSkill2Effects, drawSkill3Effect, drawUltimateEffects } from "./entities/particle";
 import type { GameSnapshot } from "./gameStore";
 
 let frameId = 0;
@@ -129,10 +130,11 @@ function loop(ts: number) {
     updateSkill1Effects();
     updateSkill2Effects();
     updateSkill3Effect();
+    updateUltimateEffects();
   }
 
   drawBackground();
-  drawNearTrees();
+  drawNearForeground();
   drawPlatforms();
   drawCrystals();
   drawChests();
@@ -163,6 +165,7 @@ function loop(ts: number) {
 
   drawPlayer();
   drawSkill3Effect();
+  drawUltimateEffects();
   drawSkillBursts();
   for (const e of state.enemies) drawEnemy(e);
   drawBoss();
@@ -211,6 +214,7 @@ export function startGame(options: { onStateChange?: (snapshot: GameSnapshot) =>
     onJump: tryJump,
     onAttack: triggerAttack,
     onSkill: castSelectedSkill,
+    onUltimate: castUltimateSkill,
     onSwitchSkill: selectSkill,
     onRestart: restart,
     onPause: togglePause,

@@ -30,6 +30,10 @@ export function createInitialPlayerState(): PlayerState {
     skillIndex: 0,
     skillTimer: 0,
     skillEffectSpawned: false,
+    ultimateEnergy: 0,
+    ultimateEnergyMax: PLAYER_DEFAULTS.maxUltimateEnergy,
+    ultimateTimer: 0,
+    ultimateEffectSpawned: false,
     onPlatform: null,
     skillFlash: 0,
     isPlayer: true,
@@ -58,6 +62,7 @@ export function createInitialState(): GameState {
     skill1Effects: [],
     skill2Effects: [],
     skill3Effect: null,
+    ultimateEffects: [],
     bossSkill1Effects: [],
     crystals: [],
   };
@@ -82,6 +87,7 @@ export function resetState() {
   resetCollection(state.hitBursts, next.hitBursts);
   resetCollection(state.skill1Effects, next.skill1Effects);
   resetCollection(state.skill2Effects, next.skill2Effects);
+  resetCollection(state.ultimateEffects, next.ultimateEffects);
   resetCollection(state.bossSkill1Effects, next.bossSkill1Effects);
   state.skill3Effect = next.skill3Effect;
   resetCollection(state.projectiles, next.projectiles);
@@ -122,6 +128,9 @@ export function getStateSnapshot(paused = false): GameSnapshot {
       skillCharges: state.player.skillCharges,
       maxSkillCharges: state.player.maxSkillCharges,
       skillIndex: state.player.skillIndex,
+      ultimateEnergy: state.player.ultimateEnergy,
+      ultimateEnergyMax: state.player.ultimateEnergyMax,
+      ultimateReady: state.player.ultimateEnergy >= state.player.ultimateEnergyMax,
     },
   };
 }

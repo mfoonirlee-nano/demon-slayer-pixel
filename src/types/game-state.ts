@@ -52,6 +52,10 @@ export type PlayerState = {
   skillIndex: number;
   skillTimer: number;
   skillEffectSpawned: boolean;
+  ultimateEnergy: number;
+  ultimateEnergyMax: number;
+  ultimateTimer: number;
+  ultimateEffectSpawned: boolean;
   onPlatform: PlatformState | null;
   skillFlash: number;
   isPlayer: boolean;
@@ -181,6 +185,16 @@ export type Skill3EffectState = {
   alpha: number;
 };
 
+export type UltimateEffectState = {
+  x: number;
+  y: number;
+  facing: number;
+  elapsed: number;
+  frame: number;
+  life: number;
+  maxLife: number;
+};
+
 export type CrystalState = {
   platform: PlatformState;
   offsetX: number;
@@ -210,6 +224,7 @@ export type GameState = {
   skill1Effects: Skill1EffectState[];
   skill2Effects: Skill2EffectState[];
   skill3Effect: Skill3EffectState | null;
+  ultimateEffects: UltimateEffectState[];
   bossSkill1Effects: BossSkill1EffectState[];
   crystals: CrystalState[];
 };

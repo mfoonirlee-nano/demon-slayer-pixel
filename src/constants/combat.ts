@@ -21,12 +21,14 @@ export const PLAYER_DEFAULTS = {
   baseAttack: BASIC_ATTACK.damage,
   maxSkillEnergy: 100,
   maxSkillCharges: 3,
+  maxUltimateEnergy: 100,
 } as const;
 
 export const PLAYER_LIMITS = {
   maxHp: 100,
   maxSkillEnergy: 100,
   maxSkillCharges: 3,
+  maxUltimateEnergy: 100,
   attackBonusCap: 24,
 } as const;
 
@@ -48,6 +50,17 @@ export const PLAYER_COMBAT = {
   bossKillScore: 220,
   enemyEnergyGain: 35,
   bossEnergyGain: 100,
+  enemyUltimateEnergyGain: 35 / 3,
+  bossUltimateEnergyGain: 100 / 3,
+  ultimateDamageMultiplier: 3,
+  ultimateRadius: 360,
+  ultimateCastFrameDuration: 12,
+  ultimateEffectFrameDuration: 10,
+  ultimateEffectLife: 96,
+  ultimateEffectSpawnRatio: 0.45,
+  ultimateDrawScale: 0.42,
+  ultimateEffectDrawScale: 0.68,
+  ultimateEffectYOffset: 78,
   skillEnergySpendClamp: 99,
   skillChargeResetDelay: 45,
   hurtInvincibleFrames: 28,

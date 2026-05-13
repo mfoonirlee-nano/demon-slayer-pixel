@@ -90,6 +90,46 @@ function GhostBar({ value, max, ghostValue, color, ghostColor }: {
   );
 }
 
+function UltimateOrb({ value, max, ready, size = 44 }: {
+  value: number;
+  max: number;
+  ready: boolean;
+  size?: number;
+}) {
+  const percent = clampMeterPercent(value, max) / HUD_UI.meterPercentMax;
+  const flameOpacity = percent <= 0 ? 0 : Math.min(1, 0.28 + percent * 0.92);
+  const revealHeight = percent <= 0 ? 0 : Math.max(18, percent * 100);
+
+  return (
+    <div
+      className={`ultimate-orb ${ready ? "ultimate-orb-ready" : ""}`}
+      aria-hidden="true"
+      style={{
+        width: size,
+        height: size,
+        borderColor: ready ? "#ffdf73" : percent > 0 ? "#a7271d" : "#35100f",
+        boxShadow: ready
+          ? "0 0 12px rgba(255,122,47,0.95), inset 0 0 12px rgba(255,58,28,0.8)"
+          : percent > 0
+            ? "0 0 7px rgba(180,34,24,0.65), inset 0 0 9px rgba(129,20,18,0.72)"
+            : "inset 0 0 8px rgba(0,0,0,0.9)",
+      }}
+    >
+      <div
+        className="ultimate-orb-sprite-stage"
+        style={{
+          height: `${revealHeight}%`,
+          opacity: flameOpacity,
+        }}
+      >
+        <div className="ultimate-orb-sprite" />
+      </div>
+      <div className="ultimate-orb-heat" style={{ opacity: flameOpacity }} />
+      <div className="ultimate-orb-glass" />
+    </div>
+  );
+}
+
 function DeathScreen({ elapsed }: { elapsed: number }) {
   const [frame, setFrame] = useState(0);
   const [showMessage, setShowMessage] = useState(false);
@@ -266,6 +306,16 @@ function PauseScreen({ snapshot }: { snapshot: GameSnapshot }) {
                 <span>{activeSkill.name} 充能</span>
                 <span>{Math.floor(player.skillEnergy)}/{player.skillEnergyMax}</span>
               </div>
+
+              <div className="mt-1 flex items-center justify-between">
+                <div className="flex flex-col items-start">
+                  <span className="text-[9px]" style={{ color: player.ultimateReady ? "#ffe46e" : "#ffb06a", opacity: 0.9 }}>火之神神乐</span>
+                  <span className="text-[9px]" style={{ color: "#ffb06a", opacity: 0.76 }}>
+                    {player.ultimateReady ? "L 可释放" : `${Math.floor(player.ultimateEnergy)}/${player.ultimateEnergyMax}`}
+                  </span>
+                </div>
+                <UltimateOrb value={player.ultimateEnergy} max={player.ultimateEnergyMax} ready={player.ultimateReady} size={36} />
+              </div>
             </div>
           </div>
 
@@ -282,7 +332,6 @@ function PauseScreen({ snapshot }: { snapshot: GameSnapshot }) {
 function Hud() {
   const snapshot = useAtomValue(gameSnapshotAtom);
   const { player, boss, elapsed, spritesReady, gameOver } = snapshot;
-  const activeSkill = SKILLS[player.skillIndex] || SKILLS[0];
 
   const skillValue = player.skillCharges * player.skillEnergyMax + player.skillEnergy;
   const skillMax = player.maxSkillCharges * player.skillEnergyMax;
@@ -292,8 +341,6 @@ function Hud() {
   const ghostHp = useGhostValue(player.hp);
   const ghostSkill = useGhostValue(skillValue);
   const ghostBossHp = useGhostValue(bossHp);
-
-  const skillChargePercent = clampMeterPercent(skillValue, skillMax);
 
   return (
     <>
@@ -325,6 +372,12 @@ function Hud() {
             draggable={false}
             style={{ position: "absolute", zIndex: 2, left: 48, top: 25, width: 60, height: 60, borderRadius: "50%", objectFit: "cover" }}
           />
+          <div style={{ position: "absolute", zIndex: 3, left: 340, top: 46 }}>
+            <UltimateOrb value={player.ultimateEnergy} max={player.ultimateEnergyMax} ready={player.ultimateReady} size={42} />
+          </div>
+          <span style={{ position: "absolute", zIndex: 4, left: 354, top: 86, fontSize: 8, fontWeight: 700, color: player.ultimateReady ? "#ffe46e" : "#ff8e61", textShadow: "0 1px 3px rgba(0,0,0,0.95)" }}>
+            {player.ultimateReady ? "L" : "奥"}
+          </span>
         </div>
       </div>
 
@@ -404,16 +457,17 @@ function Hud() {
 
 function TouchControls() {
   return (
-    <div className="pointer-events-none absolute inset-0 z-20 flex items-end justify-between p-4 pb-[calc(16px+env(safe-area-inset-bottom))] md:hidden">
-      <div className="pointer-events-auto flex items-end gap-3">
-        <button className="touch-btn dir-btn flex h-[58px] w-[58px] items-center justify-center rounded-[14px] border-2 border-[rgba(210,236,255,0.8)] bg-[rgba(16,31,56,0.58)] text-2xl text-[#e8f6ff] shadow-[0_1px_0_rgba(0,0,0,0.25)]" data-key="a" data-hold="true" aria-label="向左移动">◀</button>
-        <button className="touch-btn dir-btn flex h-[58px] w-[58px] items-center justify-center rounded-[14px] border-2 border-[rgba(210,236,255,0.8)] bg-[rgba(16,31,56,0.58)] text-2xl text-[#e8f6ff] shadow-[0_1px_0_rgba(0,0,0,0.25)]" data-key="d" data-hold="true" aria-label="向右移动">▶</button>
+    <div className="pointer-events-none absolute inset-0 z-20 flex items-end justify-between gap-2 p-3 pb-[calc(12px+env(safe-area-inset-bottom))] md:hidden">
+      <div className="pointer-events-auto flex items-end gap-2">
+        <button className="touch-btn dir-btn flex h-[54px] w-[54px] items-center justify-center rounded-[14px] border-2 border-[rgba(210,236,255,0.8)] bg-[rgba(16,31,56,0.58)] text-2xl text-[#e8f6ff] shadow-[0_1px_0_rgba(0,0,0,0.25)]" data-key="a" data-hold="true" aria-label="向左移动">◀</button>
+        <button className="touch-btn dir-btn flex h-[54px] w-[54px] items-center justify-center rounded-[14px] border-2 border-[rgba(210,236,255,0.8)] bg-[rgba(16,31,56,0.58)] text-2xl text-[#e8f6ff] shadow-[0_1px_0_rgba(0,0,0,0.25)]" data-key="d" data-hold="true" aria-label="向右移动">▶</button>
       </div>
-      <div className="pointer-events-auto flex items-end gap-3">
+      <div className="pointer-events-auto grid grid-cols-3 place-items-center gap-2">
         <button className="touch-btn pause-btn flex h-[44px] w-[44px] items-center justify-center rounded-[10px] border border-[rgba(150,200,255,0.5)] bg-[rgba(16,31,56,0.5)] text-[11px] text-[#b0d4f0] shadow-[0_1px_0_rgba(0,0,0,0.25)]" data-key="p" aria-label="暂停">⏸</button>
-        <button className="touch-btn jump-btn flex h-[60px] w-[60px] items-center justify-center rounded-full border-2 border-[rgba(175,220,255,0.95)] bg-[rgba(16,31,56,0.58)] text-lg text-[#e8f6ff] shadow-[0_1px_0_rgba(0,0,0,0.25)]" data-key="w" aria-label="跳跃">跳</button>
-        <button className="touch-btn attack-btn flex h-[60px] w-[60px] items-center justify-center rounded-full border-2 border-[rgba(116,236,255,0.95)] bg-[rgba(16,31,56,0.58)] text-lg text-[#e8f6ff] shadow-[0_1px_0_rgba(0,0,0,0.25)]" data-key="j" aria-label="攻击">攻</button>
-        <button className="touch-btn skill-btn flex h-[60px] w-[60px] items-center justify-center rounded-full border-2 border-[rgba(118,255,228,0.95)] bg-[rgba(16,31,56,0.58)] text-lg text-[#e8f6ff] shadow-[0_1px_0_rgba(0,0,0,0.25)]" data-key="k" aria-label="释放技能">式</button>
+        <button className="touch-btn jump-btn flex h-[56px] w-[56px] items-center justify-center rounded-full border-2 border-[rgba(175,220,255,0.95)] bg-[rgba(16,31,56,0.58)] text-lg text-[#e8f6ff] shadow-[0_1px_0_rgba(0,0,0,0.25)]" data-key="w" aria-label="跳跃">跳</button>
+        <button className="touch-btn attack-btn flex h-[56px] w-[56px] items-center justify-center rounded-full border-2 border-[rgba(116,236,255,0.95)] bg-[rgba(16,31,56,0.58)] text-lg text-[#e8f6ff] shadow-[0_1px_0_rgba(0,0,0,0.25)]" data-key="j" aria-label="攻击">攻</button>
+        <button className="touch-btn skill-btn flex h-[56px] w-[56px] items-center justify-center rounded-full border-2 border-[rgba(118,255,228,0.95)] bg-[rgba(16,31,56,0.58)] text-lg text-[#e8f6ff] shadow-[0_1px_0_rgba(0,0,0,0.25)]" data-key="k" aria-label="释放技能">式</button>
+        <button className="touch-btn ultimate-btn flex h-[56px] w-[56px] items-center justify-center rounded-full border-2 border-[rgba(255,212,112,0.95)] bg-[rgba(56,24,16,0.58)] text-lg text-[#fff1c7] shadow-[0_1px_0_rgba(0,0,0,0.25)]" data-key="l" aria-label="释放大招">奥</button>
       </div>
     </div>
   );
@@ -423,7 +477,7 @@ function AppShell() {
   return (
     <main className="mx-auto flex min-h-screen w-full max-w-[1020px] flex-col items-center justify-center px-4 py-4 text-center max-md:max-w-none max-md:px-0 max-md:py-0">
       <h1 className="mb-4 text-base tracking-[1px] md:text-2xl max-md:hidden">鬼灭之刃：炭治郎生存战</h1>
-      <p className="mb-2 text-[10px] opacity-90 md:text-[13px] max-md:hidden">A/D 移动 · W/空格 跳跃 · J 攻击 · K 释放技能 · 1/2/3 切换技能 · ESC/P 暂停 · R 重开</p>
+      <p className="mb-2 text-[10px] opacity-90 md:text-[13px] max-md:hidden">A/D 移动 · W/空格 跳跃 · J 攻击 · K 释放技能 · L 大招 · 1/2/3 切换技能 · ESC/P 暂停 · R 重开</p>
       <section className="relative w-fit max-w-full overflow-hidden border-4 border-[#3f5f8a] bg-black shadow-[0_16px_48px_rgba(0,0,0,0.5)] max-md:h-[100svh] max-md:w-screen max-md:border-0 max-md:shadow-none">
         <GameCanvas />
         <Hud />

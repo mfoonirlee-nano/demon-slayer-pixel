@@ -15,6 +15,8 @@ import {
   SKILL2_EFFECT_SHEET,
   SKILL2_EFFECT_CONFIG,
   SKILL3_EFFECT_CONFIG,
+  ULTIMATE_SKILL_SHEET,
+  SKILL_FLASH,
 } from "../constants";
 import { onGround, hitbox, frameIndex } from "../utils";
 import { drawSheetFrame, drawSkillFrame } from "../graphics";
@@ -23,7 +25,7 @@ import { emitSlash, emitHitBurst } from "./particle";
 import { keys } from "../input";
 
 export function triggerAttack() {
-  if (state.player.attackTimer > 0 || state.player.skillTimer > 0) return;
+  if (state.player.attackTimer > 0 || state.player.skillTimer > 0 || state.player.ultimateTimer > 0) return;
   state.player.attackTimer = BASIC_ATTACK.frames;
   playTone(
     PLAYER_COMBAT.tones.attackStart.frequency,
@@ -54,6 +56,16 @@ export function gainSkillEnergy(amount: number) {
   }
 }
 
+export function gainUltimateEnergy(amount: number) {
+  const p = state.player;
+  p.ultimateEnergy = Math.min(p.ultimateEnergyMax, p.ultimateEnergy + amount);
+}
+
+function gainKillEnergy(skillAmount: number, ultimateAmount: number) {
+  gainSkillEnergy(skillAmount);
+  gainUltimateEnergy(ultimateAmount);
+}
+
 export function healPlayer(amount: number) {
   const p = state.player;
   p.hp = Math.min(p.maxHp, p.hp + amount);
@@ -65,6 +77,7 @@ export function selectSkill(index: number) {
 
 export function castSelectedSkill() {
   const p = state.player;
+  if (p.ultimateTimer > 0) return;
   if (p.skillCharges <= 0) return;
   const skill = SKILLS[p.skillIndex] || SKILLS[0];
   p.skillCharges -= 1;
@@ -119,7 +132,7 @@ export function castSelectedSkill() {
     emitHitBurst(skillHitX, skillHitY, PLAYER_COMBAT.effects.skillEnemyBurstColor, PLAYER_COMBAT.skillEnemyBurstPower);
     if (e.hp <= 0) {
       p.score += PLAYER_COMBAT.enemyKillScore;
-      gainSkillEnergy(PLAYER_COMBAT.enemyEnergyGain);
+      gainKillEnergy(PLAYER_COMBAT.enemyEnergyGain, PLAYER_COMBAT.enemyUltimateEnergyGain);
       state.enemies.splice(i, 1);
     }
   }
@@ -138,7 +151,7 @@ export function castSelectedSkill() {
         emitHitBurst(bx, by, PLAYER_COMBAT.effects.skillBossBurstColor, PLAYER_COMBAT.skillBossBurstPower);
         if (boss.hp <= 0) {
           p.score += PLAYER_COMBAT.bossKillScore;
-          gainSkillEnergy(PLAYER_COMBAT.bossEnergyGain);
+          gainKillEnergy(PLAYER_COMBAT.bossEnergyGain, PLAYER_COMBAT.bossUltimateEnergyGain);
           state.boss = null;
           state.bossSpawnTimer = PLAYER_COMBAT.skillChargeResetDelay;
         }
@@ -158,6 +171,73 @@ export function castSelectedSkill() {
     "sawtooth",
     PLAYER_COMBAT.tones.skillCastSecondary.volume,
   );
+}
+
+export function castUltimateSkill() {
+  const p = state.player;
+  if (p.ultimateTimer > 0 || p.skillTimer > 0 || p.attackTimer > 0) return;
+  if (p.ultimateEnergy < p.ultimateEnergyMax) return;
+
+  p.ultimateEnergy = 0;
+  p.ultimateEffectSpawned = false;
+  p.ultimateTimer = ULTIMATE_SKILL_SHEET.count * PLAYER_COMBAT.ultimateCastFrameDuration;
+  p.skillFlash = SKILL_FLASH.maxFrames;
+
+  playTone(220, 0.16, "sawtooth", 0.07);
+  playTone(880, 0.14, "triangle", 0.06);
+}
+
+function triggerUltimateImpact() {
+  const p = state.player;
+  const cx = p.x + p.w / 2;
+  const cy = p.y + p.h - PLAYER_COMBAT.ultimateEffectYOffset;
+  const radius = PLAYER_COMBAT.ultimateRadius;
+
+  state.ultimateEffects.push({
+    x: cx,
+    y: cy,
+    facing: p.facing,
+    elapsed: 0,
+    frame: 0,
+    life: PLAYER_COMBAT.ultimateEffectLife,
+    maxLife: PLAYER_COMBAT.ultimateEffectLife,
+  });
+
+  const damage = (p.baseAttack + p.attackBonus) * PLAYER_COMBAT.ultimateDamageMultiplier;
+
+  for (let i = state.enemies.length - 1; i >= 0; i -= 1) {
+    const e = state.enemies[i];
+    const ex = e.x + e.w / 2;
+    const ey = e.y + e.h / 2;
+    if (Math.hypot(ex - cx, ey - cy) > radius) continue;
+    e.hp -= damage;
+    e.hitCd = PLAYER_COMBAT.enemyHitCooldown;
+    emitSlash(ex, ey, PLAYER_COMBAT.effects.skillEnemyBurstColor, e.w * 1.5);
+    emitHitBurst(ex, ey, PLAYER_COMBAT.effects.skillEnemyBurstColor, PLAYER_COMBAT.skillEnemyBurstPower + 1.2);
+    if (e.hp <= 0) {
+      p.score += PLAYER_COMBAT.enemyKillScore;
+      gainKillEnergy(PLAYER_COMBAT.enemyEnergyGain, PLAYER_COMBAT.enemyUltimateEnergyGain);
+      state.enemies.splice(i, 1);
+    }
+  }
+
+  if (state.boss) {
+    const boss = state.boss;
+    const bx = boss.x + boss.w / 2;
+    const by = boss.y + boss.h / 2;
+    if (Math.hypot(bx - cx, by - cy) <= radius + PLAYER_COMBAT.bossRadiusPadding) {
+      boss.hp -= damage;
+      boss.hitCd = PLAYER_COMBAT.bossHitCooldown;
+      emitSlash(bx, by, PLAYER_COMBAT.effects.bossKillSlashColor, boss.w);
+      emitHitBurst(bx, by, PLAYER_COMBAT.effects.skillBossBurstColor, PLAYER_COMBAT.skillBossBurstPower + 1.4);
+      if (boss.hp <= 0) {
+        p.score += PLAYER_COMBAT.bossKillScore;
+        gainKillEnergy(PLAYER_COMBAT.bossEnergyGain, PLAYER_COMBAT.bossUltimateEnergyGain);
+        state.boss = null;
+        state.bossSpawnTimer = PLAYER_COMBAT.skillChargeResetDelay;
+      }
+    }
+  }
 }
 
 export function attackBox() {
@@ -191,7 +271,7 @@ export function hurtPlayer(damage: number, sourceVx: number) {
       emitHitBurst(e.x + e.w / 2, e.y + e.h / 2, SKILLS[2].color, 1.5);
       if (e.hp <= 0) {
         p.score += PLAYER_COMBAT.enemyKillScore;
-        gainSkillEnergy(PLAYER_COMBAT.enemyEnergyGain);
+        gainKillEnergy(PLAYER_COMBAT.enemyEnergyGain, PLAYER_COMBAT.enemyUltimateEnergyGain);
         state.enemies.splice(i, 1);
       }
     }
@@ -201,7 +281,7 @@ export function hurtPlayer(damage: number, sourceVx: number) {
       emitHitBurst(state.boss.x + state.boss.w / 2, state.boss.y + state.boss.h * 0.4, SKILLS[2].color, 2);
       if (state.boss.hp <= 0) {
         p.score += PLAYER_COMBAT.bossKillScore;
-        gainSkillEnergy(PLAYER_COMBAT.bossEnergyGain);
+        gainKillEnergy(PLAYER_COMBAT.bossEnergyGain, PLAYER_COMBAT.bossUltimateEnergyGain);
         state.boss = null;
         state.bossSpawnTimer = PLAYER_COMBAT.skillChargeResetDelay;
       }
@@ -251,10 +331,10 @@ export function updatePlayer() {
   }
   if (keys.has("a")) {
     p.vx = -p.speed;
-    if (p.skillTimer <= 0) p.facing = -1;
+    if (p.skillTimer <= 0 && p.ultimateTimer <= 0) p.facing = -1;
   } else if (keys.has("d")) {
     p.vx = p.speed;
-    if (p.skillTimer <= 0) p.facing = 1;
+    if (p.skillTimer <= 0 && p.ultimateTimer <= 0) p.facing = 1;
   } else {
     p.vx *= PLAYER_COMBAT.groundDrag;
   }
@@ -326,6 +406,16 @@ export function updatePlayer() {
     }
   }
 
+  if (p.ultimateTimer > 0) {
+    p.ultimateTimer -= 1;
+    const total = ULTIMATE_SKILL_SHEET.count * PLAYER_COMBAT.ultimateCastFrameDuration;
+    const impactFrame = Math.floor(total * PLAYER_COMBAT.ultimateEffectSpawnRatio);
+    if (!p.ultimateEffectSpawned && total - p.ultimateTimer >= impactFrame) {
+      p.ultimateEffectSpawned = true;
+      triggerUltimateImpact();
+    }
+  }
+
   if (p.attackTimer > 0) {
     p.attackTimer -= 1;
     const box = attackBox();
@@ -347,7 +437,7 @@ export function updatePlayer() {
         );
         if (e.hp <= 0) {
           p.score += PLAYER_COMBAT.attackKillScore;
-          gainSkillEnergy(PLAYER_COMBAT.enemyEnergyGain);
+          gainKillEnergy(PLAYER_COMBAT.enemyEnergyGain, PLAYER_COMBAT.enemyUltimateEnergyGain);
           emitSlash(e.x + Math.random() * e.w, e.y + Math.random() * e.h, PLAYER_COMBAT.effects.attackKillSlashColor, e.w);
           state.enemies.splice(i, 1);
         }
@@ -373,7 +463,7 @@ export function updatePlayer() {
       );
       if (boss.hp <= 0) {
         p.score += PLAYER_COMBAT.bossKillScore;
-        gainSkillEnergy(PLAYER_COMBAT.bossEnergyGain);
+        gainKillEnergy(PLAYER_COMBAT.bossEnergyGain, PLAYER_COMBAT.bossUltimateEnergyGain);
         emitSlash(boss.x + boss.w / 2, boss.y + PLAYER_COMBAT.bossHitY, PLAYER_COMBAT.effects.bossKillSlashColor);
         playTone(
           PLAYER_COMBAT.tones.bossKill.frequency,
@@ -398,6 +488,27 @@ export function drawPlayer() {
   // All draw positions: drawX = refX - drawW * anchorX, drawY = refY - drawH * anchorY
   const refX = p.x + p.w / 2;
   const refY = p.y + p.h - PLAYER_DRAW.yOffset;
+
+  if (p.ultimateTimer > 0 && ULTIMATE_SKILL_SHEET.image) {
+    const total = ULTIMATE_SKILL_SHEET.count * PLAYER_COMBAT.ultimateCastFrameDuration;
+    const elapsedGameFrames = total - p.ultimateTimer;
+    const frame = Math.min(
+      ULTIMATE_SKILL_SHEET.count - 1,
+      Math.floor(elapsedGameFrames / PLAYER_COMBAT.ultimateCastFrameDuration),
+    );
+    const drawH = ULTIMATE_SKILL_SHEET.frameH * PLAYER_COMBAT.ultimateDrawScale;
+    const drawW = ULTIMATE_SKILL_SHEET.frameW * PLAYER_COMBAT.ultimateDrawScale;
+    drawSheetFrame(
+      ULTIMATE_SKILL_SHEET,
+      frame,
+      refX - drawW / 2,
+      refY - drawH * 0.83,
+      drawW,
+      drawH,
+      p.facing,
+    );
+    return;
+  }
 
   if (p.skillTimer > 0) {
     const skill = SKILLS[p.skillIndex] || SKILLS[0];

@@ -12,6 +12,7 @@ import {
   SKILL2_EFFECT_CONFIG,
   SKILL3_EFFECT_SHEET,
   SKILL3_EFFECT_CONFIG,
+  ULTIMATE_SKILL_EFFECT_SHEET,
   PLAYER_COMBAT,
   WIDTH,
 } from "../constants";
@@ -19,6 +20,22 @@ import type { HitBurstState, ParticleState, Skill1EffectState, Skill2EffectState
 
 const FULL_CIRCLE_RADIANS = Math.PI * 2;
 const DEFAULT_HIT_BURST_COLOR = "#9feaff";
+
+function gainKillEnergy(skillAmount: number, ultimateAmount: number) {
+  const p = state.player;
+  if (p.skillCharges < p.maxSkillCharges) {
+    p.skillEnergy += skillAmount;
+    while (p.skillEnergy >= p.skillEnergyMax && p.skillCharges < p.maxSkillCharges) {
+      p.skillEnergy -= p.skillEnergyMax;
+      p.skillCharges += 1;
+    }
+    if (p.skillCharges >= p.maxSkillCharges) {
+      p.skillCharges = p.maxSkillCharges;
+      p.skillEnergy = p.skillEnergyMax;
+    }
+  }
+  p.ultimateEnergy = Math.min(p.ultimateEnergyMax, p.ultimateEnergy + ultimateAmount);
+}
 
 export function emitSlash(x: number, y: number, color: string, spread: number = PARTICLE_CONFIG.slashDefaultSpread) {
   for (let i = 0; i < PARTICLE_CONFIG.slashCount; i += 1) {
@@ -122,18 +139,7 @@ export function updateSkill1Effects() {
       emitHitBurst(hitX, hitY, PLAYER_COMBAT.effects.skillEnemyBurstColor, PLAYER_COMBAT.skillEnemyBurstPower);
       if (enemy.hp <= 0) {
         p.score += PLAYER_COMBAT.enemyKillScore;
-        // inline energy gain to avoid circular import with player.ts
-        if (p.skillCharges < p.maxSkillCharges) {
-          p.skillEnergy += PLAYER_COMBAT.enemyEnergyGain;
-          while (p.skillEnergy >= p.skillEnergyMax && p.skillCharges < p.maxSkillCharges) {
-            p.skillEnergy -= p.skillEnergyMax;
-            p.skillCharges += 1;
-          }
-          if (p.skillCharges >= p.maxSkillCharges) {
-            p.skillCharges = p.maxSkillCharges;
-            p.skillEnergy = p.skillEnergyMax;
-          }
-        }
+        gainKillEnergy(PLAYER_COMBAT.enemyEnergyGain, PLAYER_COMBAT.enemyUltimateEnergyGain);
         state.enemies.splice(j, 1);
       }
     }
@@ -152,17 +158,7 @@ export function updateSkill1Effects() {
         emitHitBurst(bossHitX, bossHitY, PLAYER_COMBAT.effects.skillBossBurstColor, PLAYER_COMBAT.skillBossBurstPower);
         if (boss.hp <= 0) {
           p.score += PLAYER_COMBAT.bossKillScore;
-          if (p.skillCharges < p.maxSkillCharges) {
-            p.skillEnergy += PLAYER_COMBAT.bossEnergyGain;
-            while (p.skillEnergy >= p.skillEnergyMax && p.skillCharges < p.maxSkillCharges) {
-              p.skillEnergy -= p.skillEnergyMax;
-              p.skillCharges += 1;
-            }
-            if (p.skillCharges >= p.maxSkillCharges) {
-              p.skillCharges = p.maxSkillCharges;
-              p.skillEnergy = p.skillEnergyMax;
-            }
-          }
+          gainKillEnergy(PLAYER_COMBAT.bossEnergyGain, PLAYER_COMBAT.bossUltimateEnergyGain);
           state.boss = null;
           state.bossSpawnTimer = PLAYER_COMBAT.skillChargeResetDelay;
         }
@@ -211,17 +207,7 @@ export function updateSkill2Effects() {
       emitHitBurst(hitX, hitY, PLAYER_COMBAT.effects.skillEnemyBurstColor, PLAYER_COMBAT.skillEnemyBurstPower);
       if (enemy.hp <= 0) {
         p.score += PLAYER_COMBAT.enemyKillScore;
-        if (p.skillCharges < p.maxSkillCharges) {
-          p.skillEnergy += PLAYER_COMBAT.enemyEnergyGain;
-          while (p.skillEnergy >= p.skillEnergyMax && p.skillCharges < p.maxSkillCharges) {
-            p.skillEnergy -= p.skillEnergyMax;
-            p.skillCharges += 1;
-          }
-          if (p.skillCharges >= p.maxSkillCharges) {
-            p.skillCharges = p.maxSkillCharges;
-            p.skillEnergy = p.skillEnergyMax;
-          }
-        }
+        gainKillEnergy(PLAYER_COMBAT.enemyEnergyGain, PLAYER_COMBAT.enemyUltimateEnergyGain);
         state.enemies.splice(j, 1);
       }
     }
@@ -239,17 +225,7 @@ export function updateSkill2Effects() {
         emitHitBurst(bossHitX, bossHitY, PLAYER_COMBAT.effects.skillBossBurstColor, PLAYER_COMBAT.skillBossBurstPower);
         if (boss.hp <= 0) {
           p.score += PLAYER_COMBAT.bossKillScore;
-          if (p.skillCharges < p.maxSkillCharges) {
-            p.skillEnergy += PLAYER_COMBAT.bossEnergyGain;
-            while (p.skillEnergy >= p.skillEnergyMax && p.skillCharges < p.maxSkillCharges) {
-              p.skillEnergy -= p.skillEnergyMax;
-              p.skillCharges += 1;
-            }
-            if (p.skillCharges >= p.maxSkillCharges) {
-              p.skillCharges = p.maxSkillCharges;
-              p.skillEnergy = p.skillEnergyMax;
-            }
-          }
+          gainKillEnergy(PLAYER_COMBAT.bossEnergyGain, PLAYER_COMBAT.bossUltimateEnergyGain);
           state.boss = null;
           state.bossSpawnTimer = PLAYER_COMBAT.skillChargeResetDelay;
         }
@@ -270,6 +246,20 @@ export function updateHitBursts() {
       s.size *= PARTICLE_CONFIG.sizeFade;
     }
     if (b.life <= 0) state.hitBursts.splice(i, 1);
+  }
+}
+
+export function updateUltimateEffects() {
+  const sheet = ULTIMATE_SKILL_EFFECT_SHEET;
+  for (let i = state.ultimateEffects.length - 1; i >= 0; i -= 1) {
+    const eff = state.ultimateEffects[i];
+    eff.elapsed += 1;
+    eff.life -= 1;
+    eff.frame = Math.min(
+      sheet.count - 1,
+      Math.floor(eff.elapsed / PLAYER_COMBAT.ultimateEffectFrameDuration),
+    );
+    if (eff.life <= 0) state.ultimateEffects.splice(i, 1);
   }
 }
 
@@ -393,4 +383,26 @@ export function drawSkill3Effect() {
   ctx.globalAlpha = eff.alpha;
   ctx.drawImage(sheet.image, sx, 0, sheet.frameW, sheet.frameH, cx - drawW / 2, cy - drawH / 2, drawW, drawH);
   ctx.restore();
+}
+
+export function drawUltimateEffects() {
+  if (!ctx) return;
+  const sheet = ULTIMATE_SKILL_EFFECT_SHEET;
+  if (!sheet.image) return;
+  const drawW = sheet.frameW * PLAYER_COMBAT.ultimateEffectDrawScale;
+  const drawH = sheet.frameH * PLAYER_COMBAT.ultimateEffectDrawScale;
+  const p = state.player;
+  const cx = p.x + p.w / 2;
+  const cy = p.y + p.h - PLAYER_COMBAT.ultimateEffectYOffset;
+  for (const eff of state.ultimateEffects) {
+    const sx = eff.frame * sheet.frameW;
+    const alpha = Math.min(1, eff.life / Math.max(1, eff.maxLife - sheet.count * PLAYER_COMBAT.ultimateEffectFrameDuration) + 0.35);
+    ctx.save();
+    ctx.globalAlpha = alpha;
+    ctx.globalCompositeOperation = "lighter";
+    ctx.translate(cx, cy);
+    ctx.scale(eff.facing, 1);
+    ctx.drawImage(sheet.image, sx, 0, sheet.frameW, sheet.frameH, -drawW / 2, -drawH / 2, drawW, drawH);
+    ctx.restore();
+  }
 }

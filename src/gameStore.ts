@@ -20,6 +20,9 @@ export type PlayerSnapshot = {
   skillCharges: number;
   maxSkillCharges: number;
   skillIndex: number;
+  ultimateEnergy: number;
+  ultimateEnergyMax: number;
+  ultimateReady: boolean;
 };
 
 export type GameSnapshot = {
@@ -51,6 +54,9 @@ const initialSnapshot: GameSnapshot = {
     skillCharges: PLAYER_DEFAULTS.maxSkillCharges,
     maxSkillCharges: PLAYER_DEFAULTS.maxSkillCharges,
     skillIndex: 0,
+    ultimateEnergy: 0,
+    ultimateEnergyMax: PLAYER_DEFAULTS.maxUltimateEnergy,
+    ultimateReady: false,
   },
 };
 

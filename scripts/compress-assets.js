@@ -1,5 +1,8 @@
+/* global console */
 import tinify from "tinify";
-import { readFileSync, statSync } from "fs";
+import { readFileSync, statSync } from "node:fs";
+import process from "node:process";
+import { URL } from "node:url";
 
 const envPath = new URL("../.env", import.meta.url).pathname;
 const envContent = readFileSync(envPath, "utf-8");

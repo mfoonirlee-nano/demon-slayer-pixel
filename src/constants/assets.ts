@@ -180,6 +180,22 @@ export const SKILL3_EFFECT_CONFIG = {
   damageMultiplier: 2,
 } as const;
 
+export const ULTIMATE_SKILL_SHEET: SpriteSheet = {
+  src: "assets/sprites/skills/ultimate_skill.png",
+  frameW: 400,
+  frameH: 496,
+  count: 6,
+  image: null,
+};
+
+export const ULTIMATE_SKILL_EFFECT_SHEET: SpriteSheet = {
+  src: "assets/sprites/skills/ultimate_skill_effect.png",
+  frameW: 432,
+  frameH: 496,
+  count: 5,
+  image: null,
+};
+
 export const BOSS_SHEET: SpriteSheet = {
   src: "assets/sprites/enemies/boss.png",
   frameW: 350,
@@ -216,12 +232,12 @@ export const BOSS_SKILL1_CONFIG = {
   effectDrawScale: 0.42,
   effectSpawnYOffset: 10,
   effectSpawnXOffset: 18,
-  effectSpeed: 20,
+  effectSpeed: 16,
   effectGravity: 0.45,
   effectMinTravelFrames: 14,
   effectMaxInitialVy: -22,
   effectMinInitialVy: 6,
-  effectFrameDuration: 14,
+  effectFrameDuration: 28,
   damageMultiplier: 2,
   cooldown: 260,
   initialCooldown: 150,
@@ -314,7 +330,7 @@ export const STONE_TOWER_SPRITES: {
   image: HTMLImageElement | null;
   variants: SpriteRegion[];
 } = {
-  src: "assets/sprites/background/stone_twoer_sprites.png",
+  src: "assets/sprites/background/stone_tower_sprites2.png",
   image: null,
   variants: [
     { sx: 68, sy: 15, sw: 108, sh: 161 },
@@ -328,6 +344,44 @@ export const STONE_TOWER_SPRITES: {
     { sx: 1441, sy: 27, sw: 73, sh: 149 },
     { sx: 1560, sy: 34, sw: 117, sh: 142 },
     { sx: 1730, sy: 34, sw: 115, sh: 142 },
+  ],
+};
+
+export const STONE_TOWER_SMALL_SPRITES: {
+  src: string;
+  image: HTMLImageElement | null;
+  variants: SpriteRegion[];
+} = {
+  src: "assets/sprites/background/stone_tower_sprites.png",
+  image: null,
+  variants: [
+    { sx: 8, sy: 8, sw: 85, sh: 204 },
+    { sx: 111, sy: 78, sw: 90, sh: 134 },
+    { sx: 217, sy: 25, sw: 75, sh: 187 },
+    { sx: 309, sy: 31, sw: 81, sh: 181 },
+    { sx: 404, sy: 102, sw: 74, sh: 110 },
+    { sx: 493, sy: 43, sw: 84, sh: 169 },
+    { sx: 593, sy: 96, sw: 70, sh: 116 },
+    { sx: 681, sy: 98, sw: 70, sh: 114 },
+  ],
+};
+
+export const TORII_SPRITES: {
+  src: string;
+  image: HTMLImageElement | null;
+  variants: SpriteRegion[];
+} = {
+  src: "assets/sprites/background/torii_sprites.png",
+  image: null,
+  variants: [
+    { sx: 12, sy: 12, sw: 185, sh: 196 },
+    { sx: 218, sy: 13, sw: 164, sh: 195 },
+    { sx: 405, sy: 24, sw: 137, sh: 184 },
+    { sx: 567, sy: 28, sw: 147, sh: 180 },
+    { sx: 731, sy: 86, sw: 111, sh: 122 },
+    { sx: 862, sy: 35, sw: 122, sh: 173 },
+    { sx: 1002, sy: 32, sw: 150, sh: 176 },
+    { sx: 1171, sy: 40, sw: 144, sh: 168 },
   ],
 };
 
@@ -421,36 +475,36 @@ export const PLATFORM_SPRITES: {
   image: null,
   drawScale: 0.75,
   regions: [
-    { sx: 29, sy: 26, sw: 114, sh: 95, surfaceY: 18 },
-    { sx: 168, sy: 21, sw: 201, sh: 112, surfaceY: 25 },
-    { sx: 388, sy: 24, sw: 201, sh: 105, surfaceY: 19 },
-    { sx: 607, sy: 28, sw: 217, sh: 106, surfaceY: 18 },
-    { sx: 879, sy: 36, sw: 60, sh: 48, surfaceY: 8 },
-    { sx: 28, sy: 152, sw: 159, sh: 89, surfaceY: 15 },
-    { sx: 195, sy: 161, sw: 63, sh: 71, surfaceY: 8 },
-    { sx: 274, sy: 161, sw: 82, sh: 79, surfaceY: 10 },
-    { sx: 374, sy: 161, sw: 59, sh: 78, surfaceY: 12 },
-    { sx: 453, sy: 161, sw: 107, sh: 81, surfaceY: 10 },
-    { sx: 581, sy: 162, sw: 60, sh: 64, surfaceY: 12 },
-    { sx: 669, sy: 148, sw: 151, sh: 107, surfaceY: 24 },
-    { sx: 856, sy: 159, sw: 89, sh: 80, surfaceY: 7 },
-    { sx: 43, sy: 269, sw: 78, sh: 84, surfaceY: 15 },
-    { sx: 168, sy: 276, sw: 113, sh: 63, surfaceY: 9 },
-    { sx: 305, sy: 270, sw: 157, sh: 105, surfaceY: 10 },
-    { sx: 527, sy: 268, sw: 83, sh: 89, surfaceY: 18 },
-    { sx: 633, sy: 263, sw: 47, sh: 110, surfaceY: 23 },
-    { sx: 709, sy: 278, sw: 135, sh: 75, surfaceY: 8 },
-    { sx: 876, sy: 277, sw: 67, sh: 63, surfaceY: 9 },
-    { sx: 37, sy: 399, sw: 151, sh: 85, surfaceY: 11 },
-    { sx: 208, sy: 391, sw: 195, sh: 103, surfaceY: 21 },
-    { sx: 423, sy: 395, sw: 148, sh: 93, surfaceY: 14 },
-    { sx: 590, sy: 380, sw: 118, sh: 101, surfaceY: 18 },
-    { sx: 727, sy: 382, sw: 142, sh: 99, surfaceY: 18 },
-    { sx: 879, sy: 393, sw: 94, sh: 52, surfaceY: 16 },
-    { sx: 36, sy: 530, sw: 140, sh: 122, surfaceY: 23 },
-    { sx: 192, sy: 533, sw: 240, sh: 120, surfaceY: 20 },
-    { sx: 448, sy: 529, sw: 423, sh: 119, surfaceY: 24 },
-    { sx: 907, sy: 549, sw: 62, sh: 61, surfaceY: 10 },
+    { sx: 44, sy: 65, sw: 142, sh: 45, surfaceY: 16 },
+    { sx: 210, sy: 58, sw: 212, sh: 54, surfaceY: 19 },
+    { sx: 448, sy: 65, sw: 200, sh: 48, surfaceY: 15 },
+    { sx: 668, sy: 64, sw: 186, sh: 45, surfaceY: 17 },
+    { sx: 887, sy: 74, sw: 60, sh: 36, surfaceY: 10 },
+    { sx: 45, sy: 175, sw: 142, sh: 44, surfaceY: 16 },
+    { sx: 209, sy: 183, sw: 58, sh: 41, surfaceY: 10 },
+    { sx: 295, sy: 184, sw: 73, sh: 40, surfaceY: 11 },
+    { sx: 391, sy: 184, sw: 60, sh: 38, surfaceY: 10 },
+    { sx: 475, sy: 182, sw: 104, sh: 45, surfaceY: 11 },
+    { sx: 598, sy: 182, sw: 56, sh: 40, surfaceY: 11 },
+    { sx: 681, sy: 165, sw: 163, sh: 58, surfaceY: 21 },
+    { sx: 873, sy: 174, sw: 77, sh: 49, surfaceY: 11 },
+    { sx: 48, sy: 279, sw: 74, sh: 45, surfaceY: 14 },
+    { sx: 165, sy: 286, sw: 121, sh: 41, surfaceY: 11 },
+    { sx: 317, sy: 283, sw: 155, sh: 54, surfaceY: 12 },
+    { sx: 523, sy: 270, sw: 81, sh: 56, surfaceY: 15 },
+    { sx: 637, sy: 270, sw: 48, sh: 59, surfaceY: 14 },
+    { sx: 719, sy: 289, sw: 131, sh: 45, surfaceY: 10 },
+    { sx: 886, sy: 286, sw: 60, sh: 42, surfaceY: 10 },
+    { sx: 42, sy: 399, sw: 151, sh: 45, surfaceY: 15 },
+    { sx: 217, sy: 394, sw: 190, sh: 54, surfaceY: 18 },
+    { sx: 430, sy: 398, sw: 145, sh: 48, surfaceY: 15 },
+    { sx: 597, sy: 384, sw: 110, sh: 54, surfaceY: 13 },
+    { sx: 732, sy: 388, sw: 134, sh: 53, surfaceY: 16 },
+    { sx: 889, sy: 401, sw: 61, sh: 38, surfaceY: 14 },
+    { sx: 42, sy: 509, sw: 140, sh: 57, surfaceY: 21 },
+    { sx: 204, sy: 516, sw: 237, sh: 57, surfaceY: 21 },
+    { sx: 466, sy: 509, sw: 404, sh: 54, surfaceY: 22 },
+    { sx: 900, sy: 531, sw: 50, sh: 39, surfaceY: 11 },
   ],
   chain: [4, 6, 7, 8, 10, 12, 13, 16, 17, 19, 25, 29],
   normal: [0, 5, 9, 11, 14, 15, 18, 20, 22, 23, 24, 26],
