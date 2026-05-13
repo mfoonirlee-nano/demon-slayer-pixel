@@ -131,8 +131,7 @@ body {
 
 .ultimate-orb-sprite-stage {
   position: absolute;
-  inset-inline: 0;
-  bottom: 0;
+  inset: 0;
   overflow: hidden;
   filter: drop-shadow(0 0 5px rgba(255, 92, 24, 0.86));
 }
@@ -142,12 +141,16 @@ body {
   inset-inline: 0;
   bottom: 0;
   aspect-ratio: 1;
-  background-image: url("assets/sprites/ui/ultimate_orb_sheet.png");
+  background-image: url("assets/sprites/ui/ultimate_orb_charge_sheet.png");
   background-repeat: no-repeat;
   background-size: 800% 100%;
   background-position: 0 0;
   image-rendering: pixelated;
   image-rendering: crisp-edges;
+}
+
+.ultimate-orb-sprite-animated {
+  background-image: url("assets/sprites/ui/ultimate_orb_sheet.png");
   animation: ultimate-orb-sprite-play 720ms step-end infinite;
 }
 

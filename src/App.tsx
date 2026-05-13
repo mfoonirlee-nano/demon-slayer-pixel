@@ -98,7 +98,8 @@ function UltimateOrb({ value, max, ready, size = 44 }: {
 }) {
   const percent = clampMeterPercent(value, max) / HUD_UI.meterPercentMax;
   const flameOpacity = percent <= 0 ? 0 : Math.min(1, 0.28 + percent * 0.92);
-  const revealHeight = percent <= 0 ? 0 : Math.max(18, percent * 100);
+  const chargeFrame = Math.min(7, Math.floor(percent * 8));
+  const chargeFramePosition = chargeFrame / 7 * 100;
 
   return (
     <div
@@ -117,12 +118,11 @@ function UltimateOrb({ value, max, ready, size = 44 }: {
     >
       <div
         className="ultimate-orb-sprite-stage"
-        style={{
-          height: `${revealHeight}%`,
-          opacity: flameOpacity,
-        }}
       >
-        <div className="ultimate-orb-sprite" />
+        <div
+          className={`ultimate-orb-sprite ${ready ? "ultimate-orb-sprite-animated" : ""}`}
+          style={ready ? undefined : { backgroundPosition: `${chargeFramePosition}% 0` }}
+        />
       </div>
       <div className="ultimate-orb-heat" style={{ opacity: flameOpacity }} />
       <div className="ultimate-orb-glass" />
@@ -307,13 +307,7 @@ function PauseScreen({ snapshot }: { snapshot: GameSnapshot }) {
                 <span>{Math.floor(player.skillEnergy)}/{player.skillEnergyMax}</span>
               </div>
 
-              <div className="mt-1 flex items-center justify-between">
-                <div className="flex flex-col items-start">
-                  <span className="text-[9px]" style={{ color: player.ultimateReady ? "#ffe46e" : "#ffb06a", opacity: 0.9 }}>火之神神乐</span>
-                  <span className="text-[9px]" style={{ color: "#ffb06a", opacity: 0.76 }}>
-                    {player.ultimateReady ? "L 可释放" : `${Math.floor(player.ultimateEnergy)}/${player.ultimateEnergyMax}`}
-                  </span>
-                </div>
+              <div className="mt-1 flex justify-end">
                 <UltimateOrb value={player.ultimateEnergy} max={player.ultimateEnergyMax} ready={player.ultimateReady} size={36} />
               </div>
             </div>
@@ -375,9 +369,6 @@ function Hud() {
           <div style={{ position: "absolute", zIndex: 3, left: 340, top: 46 }}>
             <UltimateOrb value={player.ultimateEnergy} max={player.ultimateEnergyMax} ready={player.ultimateReady} size={42} />
           </div>
-          <span style={{ position: "absolute", zIndex: 4, left: 354, top: 86, fontSize: 8, fontWeight: 700, color: player.ultimateReady ? "#ffe46e" : "#ff8e61", textShadow: "0 1px 3px rgba(0,0,0,0.95)" }}>
-            {player.ultimateReady ? "L" : "奥"}
-          </span>
         </div>
       </div>
 
