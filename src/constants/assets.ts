@@ -265,7 +265,7 @@ export const TREE_SPRITES: {
 } = {
   sheets: [
     {
-      src: "assets/sprites/tree/tree_sprites_1.png",
+      src: "assets/sprites/tree/tree_sprites.png",
       image: null,
       variants: [
         { sx: 36, sy: 18, sw: 318, sh: 350 },
@@ -289,24 +289,6 @@ export const TREE_SPRITES: {
         { sx: 1210, sy: 642, sw: 160, sh: 206 },
         { sx: 1330, sy: 704, sw: 190, sh: 144 },
         { sx: 1555, sy: 655, sw: 170, sh: 193 },
-      ],
-    },
-    {
-      src: "assets/sprites/tree/tree_sprites_2.png",
-      image: null,
-      variants: [
-        { sx: 32, sy: 84, sw: 290, sh: 382 },
-        { sx: 382, sy: 42, sw: 186, sh: 424 },
-        { sx: 610, sy: 84, sw: 270, sh: 382 },
-        { sx: 940, sy: 84, sw: 220, sh: 382 },
-        { sx: 1190, sy: 104, sw: 270, sh: 362 },
-        { sx: 1495, sy: 145, sw: 260, sh: 321 },
-        { sx: 36, sy: 532, sw: 225, sh: 270 },
-        { sx: 300, sy: 526, sw: 200, sh: 276 },
-        { sx: 520, sy: 506, sw: 250, sh: 296 },
-        { sx: 835, sy: 514, sw: 260, sh: 288 },
-        { sx: 1135, sy: 550, sw: 210, sh: 252 },
-        { sx: 1408, sy: 506, sw: 112, sh: 296 },
       ],
     },
   ],

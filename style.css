@@ -29,6 +29,78 @@ body {
   image-rendering: crisp-edges;
 }
 
+.death-screen {
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
+}
+
+.death-sprite-frame {
+  width: 272px;
+  height: 203px;
+  flex: 0 0 203px;
+  overflow: hidden;
+  position: relative;
+}
+
+.death-sprite-sheet {
+  display: block;
+  max-width: none;
+  position: absolute;
+  left: 0;
+  top: 0;
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
+  transform-origin: 0 0;
+}
+
+.death-message {
+  min-height: 7.5rem;
+  margin-top: clamp(1.5rem, 5vh, 3rem);
+  opacity: 0;
+  transform: translateY(8px);
+  letter-spacing: 0.08em;
+  text-shadow:
+    2px 0 #220000,
+    -2px 0 #220000,
+    0 2px #220000,
+    0 -2px #220000,
+    3px 3px 0 #050000;
+}
+
+.death-message-visible {
+  animation: death-message-fade-in 420ms ease-out both;
+}
+
+.death-survival-text {
+  color: #c8c0ac;
+  font-size: clamp(0.8rem, 2.4vw, 1.05rem);
+  line-height: 1.7;
+}
+
+.death-restart-text {
+  color: #8b1110;
+  font-size: clamp(0.72rem, 2vw, 0.92rem);
+  line-height: 1.6;
+  text-shadow:
+    2px 0 #1a0000,
+    -2px 0 #1a0000,
+    0 2px #1a0000,
+    0 -2px #1a0000,
+    0 0 8px rgba(120, 0, 0, 0.5);
+}
+
+@keyframes death-message-fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
 .touch-btn {
   user-select: none;
   -webkit-user-select: none;

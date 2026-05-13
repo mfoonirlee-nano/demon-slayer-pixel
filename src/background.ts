@@ -39,7 +39,7 @@ const STARS = Array.from({ length: 9 }, (_, i) => ({
 }));
 
 const TREE_LINE = Array.from({ length: 12 }, (_, i) => ({
-  variantIndex: (i * 7 + 3) % 33,
+  variantSeed: i * 7 + 3,
   baseX: i * 122 + ((i % 3) - 1) * 22,
   bottomOffset: 9 + (i % 2) * 6,
   drawH: 150 + (i % 6) * 22,
@@ -98,7 +98,7 @@ export function drawNearTrees() {
 
   for (let pass = -1; pass <= 1; pass += 1) {
     for (const tree of TREE_LINE) {
-      const entry = variants[tree.variantIndex % variants.length];
+      const entry = variants[tree.variantSeed % variants.length];
       const image = entry.sheet.image;
       if (!image) continue;
 
