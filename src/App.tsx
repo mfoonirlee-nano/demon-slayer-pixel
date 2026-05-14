@@ -327,8 +327,8 @@ function Hud() {
   const snapshot = useAtomValue(gameSnapshotAtom);
   const { player, boss, elapsed, spritesReady, gameOver } = snapshot;
 
-  const skillValue = player.skillCharges * player.skillEnergyMax + player.skillEnergy;
-  const skillMax = player.maxSkillCharges * player.skillEnergyMax;
+  const skillValue = player.skillEnergy;
+  const skillMax = player.skillEnergyMax;
   const bossHp = boss?.hp ?? 0;
   const bossHpMax = boss?.hpMax ?? 1;
 

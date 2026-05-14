@@ -41,19 +41,8 @@ export function getPlayerAttackDamage() {
 
 export function gainSkillEnergy(amount: number) {
   const p = state.player;
-  if (p.skillCharges >= p.maxSkillCharges) {
-    p.skillEnergy = p.skillEnergyMax;
-    return;
-  }
-  p.skillEnergy += amount;
-  while (p.skillEnergy >= p.skillEnergyMax && p.skillCharges < p.maxSkillCharges) {
-    p.skillEnergy -= p.skillEnergyMax;
-    p.skillCharges += 1;
-  }
-  if (p.skillCharges >= p.maxSkillCharges) {
-    p.skillCharges = p.maxSkillCharges;
-    p.skillEnergy = p.skillEnergyMax;
-  }
+  p.skillEnergy = Math.min(p.skillEnergyMax, p.skillEnergy + amount);
+  syncSkillCharges();
 }
 
 export function gainUltimateEnergy(amount: number) {
@@ -64,6 +53,14 @@ export function gainUltimateEnergy(amount: number) {
 function gainKillEnergy(skillAmount: number, ultimateAmount: number) {
   gainSkillEnergy(skillAmount);
   gainUltimateEnergy(ultimateAmount);
+}
+
+function syncSkillCharges() {
+  const p = state.player;
+  p.skillCharges = Math.min(
+    p.maxSkillCharges,
+    Math.floor(p.skillEnergy / PLAYER_COMBAT.skillCastEnergyCost),
+  );
 }
 
 export function healPlayer(amount: number) {
@@ -78,12 +75,10 @@ export function selectSkill(index: number) {
 export function castSelectedSkill() {
   const p = state.player;
   if (p.ultimateTimer > 0) return;
-  if (p.skillCharges <= 0) return;
+  if (p.skillEnergy < PLAYER_COMBAT.skillCastEnergyCost) return;
   const skill = SKILLS[p.skillIndex] || SKILLS[0];
-  p.skillCharges -= 1;
-  if (p.skillCharges < p.maxSkillCharges) {
-    p.skillEnergy = Math.min(p.skillEnergy, PLAYER_COMBAT.skillEnergySpendClamp);
-  }
+  p.skillEnergy = Math.max(0, p.skillEnergy - PLAYER_COMBAT.skillCastEnergyCost);
+  syncSkillCharges();
   p.skillFlash = 0;
   p.skillTimer = Math.ceil(skill.frameCount * 60 / PLAYER_DRAW.skillAnimFps);
   p.skillEffectSpawned = skill.id !== SKILL_IDS.skill1 && skill.id !== SKILL_IDS.skill2;

@@ -23,17 +23,11 @@ const DEFAULT_HIT_BURST_COLOR = "#9feaff";
 
 function gainKillEnergy(skillAmount: number, ultimateAmount: number) {
   const p = state.player;
-  if (p.skillCharges < p.maxSkillCharges) {
-    p.skillEnergy += skillAmount;
-    while (p.skillEnergy >= p.skillEnergyMax && p.skillCharges < p.maxSkillCharges) {
-      p.skillEnergy -= p.skillEnergyMax;
-      p.skillCharges += 1;
-    }
-    if (p.skillCharges >= p.maxSkillCharges) {
-      p.skillCharges = p.maxSkillCharges;
-      p.skillEnergy = p.skillEnergyMax;
-    }
-  }
+  p.skillEnergy = Math.min(p.skillEnergyMax, p.skillEnergy + skillAmount);
+  p.skillCharges = Math.min(
+    p.maxSkillCharges,
+    Math.floor(p.skillEnergy / PLAYER_COMBAT.skillCastEnergyCost),
+  );
   p.ultimateEnergy = Math.min(p.ultimateEnergyMax, p.ultimateEnergy + ultimateAmount);
 }
 

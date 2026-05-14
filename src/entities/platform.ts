@@ -755,7 +755,8 @@ export function drawPlatforms() {
     const drawW = Math.round(sprite.sw * PLATFORM_SPRITES.drawScale);
     const drawH = Math.round(sprite.sh * PLATFORM_SPRITES.drawScale);
     const drawX = Math.round(p.x);
-    const drawY = Math.round(p.y - sprite.surfaceY * PLATFORM_SPRITES.drawScale);
+    const visualSurfaceY = p.y - PLATFORM_CONFIG.collisionSurfaceInsetY;
+    const drawY = Math.round(visualSurfaceY - sprite.surfaceY * PLATFORM_SPRITES.drawScale);
     ctx.drawImage(
       image,
       sprite.sx,
@@ -771,7 +772,7 @@ export function drawPlatforms() {
     // Hover indicator: faint glow strip on top edge
     if (p.kind === "hover") {
       ctx.fillStyle = "rgba(140,210,255,0.18)";
-      ctx.fillRect(p.x + 2, p.y, p.w - 4, 2);
+      ctx.fillRect(p.x + 2, visualSurfaceY, p.w - 4, 2);
     }
   }
 }
