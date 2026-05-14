@@ -474,7 +474,6 @@ function AppShell() {
         <Hud />
         <TouchControls />
       </section>
-      <p className="mt-2 text-[10px] opacity-90 md:text-[13px] max-md:hidden">目标：生存并迎战阶段式 Boss（下弦之鬼）。</p>
     </main>
   );
 }
