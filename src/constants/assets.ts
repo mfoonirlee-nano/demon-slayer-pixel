@@ -95,6 +95,17 @@ export const PLAYER_SHEETS: Record<PlayerAnimationState, PlayerSheet> = {
     // feet sit at 93.8% from sprite top (sprite hangs 9px below reference point)
     anchorY: 0.938,
   },
+  [PLAYER_ANIMATION_STATES.fallAttack]: {
+    src: "assets/sprites/player/player_fall_attack.png",
+    frameW: 400,
+    frameH: 400,
+    count: 6,
+    image: null,
+    drawW: 150,
+    drawH: 150,
+    animSpeed: 4,
+    anchorY: 0.88,
+  },
 };
 
 export const ENEMY_SHEETS: SpriteSheet[] = [

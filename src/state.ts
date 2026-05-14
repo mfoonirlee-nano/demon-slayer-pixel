@@ -20,6 +20,8 @@ export function createInitialPlayerState(): PlayerState {
     maxHp: PLAYER_DEFAULTS.maxHp,
     invincible: 0,
     attackTimer: 0,
+    fallAttackTimer: 0,
+    fallAttackRecoveryTimer: 0,
     score: 0,
     baseAttack: PLAYER_DEFAULTS.baseAttack,
     attackBonus: 0,

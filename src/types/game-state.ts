@@ -42,6 +42,8 @@ export type PlayerState = {
   maxHp: number;
   invincible: number;
   attackTimer: number;
+  fallAttackTimer: number;
+  fallAttackRecoveryTimer: number;
   score: number;
   baseAttack: number;
   attackBonus: number;

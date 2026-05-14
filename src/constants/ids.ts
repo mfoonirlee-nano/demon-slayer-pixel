@@ -6,6 +6,7 @@ export const PLAYER_ANIMATION_STATES = {
   run: "run",
   jump: "jump",
   attack: "attack",
+  fallAttack: "fallAttack",
 } as const satisfies Record<PlayerAnimationState, PlayerAnimationState>;
 
 export const SKILL_IDS = {

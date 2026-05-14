@@ -9,6 +9,23 @@ export const BASIC_ATTACK = {
   height: 48,
 } as const;
 
+export const FALL_ATTACK = {
+  startVelocity: 5,
+  diveVelocity: 7,
+  maxVelocity: 12,
+  horizontalDrag: 0.9,
+  radius: 92,
+  height: 78,
+  damageMultiplier: 1.65,
+  bossDamageMultiplier: 1.35,
+  enemyHitCooldown: 12,
+  bossHitCooldown: 10,
+  landingInvincibleFrames: 8,
+  recoveryFrames: 10,
+  color: "#8feaff",
+  impactBurstPower: 2.2,
+} as const;
+
 export const PLAYER_DEFAULTS = {
   x: 148,
   yOffsetFromGround: 94,

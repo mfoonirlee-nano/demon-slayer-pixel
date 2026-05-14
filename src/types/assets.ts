@@ -1,6 +1,6 @@
 export type SkillId = "skill1" | "skill2" | "skill3";
 
-export type PlayerAnimationState = "idle" | "run" | "jump" | "attack";
+export type PlayerAnimationState = "idle" | "run" | "jump" | "attack" | "fallAttack";
 
 export type Skill = {
   // 技能的唯一标识符

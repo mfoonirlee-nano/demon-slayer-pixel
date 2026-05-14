@@ -4,6 +4,7 @@ import {
   GROUND_Y,
   WIDTH,
   BASIC_ATTACK,
+  FALL_ATTACK,
   SKILLS,
   SKILL_IDS,
   PLAYER_SHEETS,
@@ -18,14 +19,30 @@ import {
   ULTIMATE_SKILL_SHEET,
   SKILL_FLASH,
 } from "../constants";
-import { onGround, hitbox, frameIndex } from "../utils";
+import { onGround, hitbox, frameIndex, nearestRectHitPoint, overlapHitPoint } from "../utils";
 import { drawSheetFrame, drawSkillFrame } from "../graphics";
 import { playTone } from "../audio";
 import { emitSlash, emitHitBurst } from "./particle";
 import { keys } from "../input";
 
 export function triggerAttack() {
-  if (state.player.attackTimer > 0 || state.player.skillTimer > 0 || state.player.ultimateTimer > 0) return;
+  const p = state.player;
+  if (
+    p.attackTimer > 0
+    || p.fallAttackTimer > 0
+    || p.fallAttackRecoveryTimer > 0
+    || p.skillTimer > 0
+    || p.ultimateTimer > 0
+  ) return;
+
+  if (!onGround(p, p.onPlatform)) {
+    p.fallAttackTimer = 1;
+    p.vy = Math.max(p.vy, FALL_ATTACK.startVelocity);
+    p.onPlatform = null;
+    playTone(220, 0.08, "triangle", 0.055);
+    return;
+  }
+
   state.player.attackTimer = BASIC_ATTACK.frames;
   playTone(
     PLAYER_COMBAT.tones.attackStart.frequency,
@@ -75,6 +92,7 @@ export function selectSkill(index: number) {
 export function castSelectedSkill() {
   const p = state.player;
   if (p.ultimateTimer > 0) return;
+  if (p.fallAttackTimer > 0 || p.fallAttackRecoveryTimer > 0) return;
   if (p.skillEnergy < PLAYER_COMBAT.skillCastEnergyCost) return;
   const skill = SKILLS[p.skillIndex] || SKILLS[0];
   p.skillEnergy = Math.max(0, p.skillEnergy - PLAYER_COMBAT.skillCastEnergyCost);
@@ -121,8 +139,7 @@ export function castSelectedSkill() {
     const damage = (skill.enemyBase + ratio * skill.enemyScale) * (1 + p.attackBonus * PLAYER_COMBAT.attackBonusScale);
     e.hp -= damage;
     e.hitCd = PLAYER_COMBAT.enemyHitCooldown;
-    const skillHitX = e.x + Math.random() * e.w;
-    const skillHitY = e.y + Math.random() * e.h;
+    const { x: skillHitX, y: skillHitY } = nearestRectHitPoint(e, cx, cy);
     emitSlash(skillHitX, skillHitY, skill.color, e.w);
     emitHitBurst(skillHitX, skillHitY, PLAYER_COMBAT.effects.skillEnemyBurstColor, PLAYER_COMBAT.skillEnemyBurstPower);
     if (e.hp <= 0) {
@@ -142,8 +159,9 @@ export function castSelectedSkill() {
         const ratio = Math.max(PLAYER_COMBAT.bossMinDamageRatio, 1 - dist / (radius + PLAYER_COMBAT.bossRadiusPadding));
         boss.hp -= skill.bossBase * ratio;
         boss.hitCd = PLAYER_COMBAT.bossHitCooldown;
-        emitSlash(bx, by, PLAYER_COMBAT.effects.skillBossSlashColor);
-        emitHitBurst(bx, by, PLAYER_COMBAT.effects.skillBossBurstColor, PLAYER_COMBAT.skillBossBurstPower);
+        const { x: bossHitX, y: bossHitY } = nearestRectHitPoint(boss, cx, cy);
+        emitSlash(bossHitX, bossHitY, PLAYER_COMBAT.effects.skillBossSlashColor);
+        emitHitBurst(bossHitX, bossHitY, PLAYER_COMBAT.effects.skillBossBurstColor, PLAYER_COMBAT.skillBossBurstPower);
         if (boss.hp <= 0) {
           p.score += PLAYER_COMBAT.bossKillScore;
           gainKillEnergy(PLAYER_COMBAT.bossEnergyGain, PLAYER_COMBAT.bossUltimateEnergyGain);
@@ -170,7 +188,13 @@ export function castSelectedSkill() {
 
 export function castUltimateSkill() {
   const p = state.player;
-  if (p.ultimateTimer > 0 || p.skillTimer > 0 || p.attackTimer > 0) return;
+  if (
+    p.ultimateTimer > 0
+    || p.skillTimer > 0
+    || p.attackTimer > 0
+    || p.fallAttackTimer > 0
+    || p.fallAttackRecoveryTimer > 0
+  ) return;
   if (p.ultimateEnergy < p.ultimateEnergyMax) return;
 
   p.ultimateEnergy = 0;
@@ -246,6 +270,62 @@ export function attackBox() {
     damage: getPlayerAttackDamage(),
     color: BASIC_ATTACK.color,
   };
+}
+
+function fallAttackBox() {
+  const p = state.player;
+  return {
+    x: p.x + p.w / 2 - FALL_ATTACK.radius,
+    y: p.y + p.h - FALL_ATTACK.height,
+    w: FALL_ATTACK.radius * 2,
+    h: FALL_ATTACK.height,
+    damage: getPlayerAttackDamage() * FALL_ATTACK.damageMultiplier,
+    color: FALL_ATTACK.color,
+  };
+}
+
+function triggerFallAttackImpact() {
+  const p = state.player;
+  const box = fallAttackBox();
+  const cx = p.x + p.w / 2;
+  const impactY = p.y + p.h;
+
+  for (let i = state.enemies.length - 1; i >= 0; i -= 1) {
+    const e = state.enemies[i];
+    if (!hitbox(box, e) || e.hitCd > 0) continue;
+    const { x: hitX, y: hitY } = overlapHitPoint(box, e);
+    e.hp -= box.damage;
+    e.hitCd = FALL_ATTACK.enemyHitCooldown;
+    emitSlash(hitX, hitY, box.color, e.w * 1.25);
+    emitHitBurst(hitX, hitY, PLAYER_COMBAT.effects.skillEnemyBurstColor, FALL_ATTACK.impactBurstPower);
+    if (e.hp <= 0) {
+      p.score += PLAYER_COMBAT.attackKillScore;
+      gainKillEnergy(PLAYER_COMBAT.enemyEnergyGain, PLAYER_COMBAT.enemyUltimateEnergyGain);
+      state.enemies.splice(i, 1);
+    }
+  }
+
+  if (state.boss && hitbox(box, state.boss) && state.boss.hitCd <= 0) {
+    const boss = state.boss;
+    const { x: bossHitX, y: bossHitY } = overlapHitPoint(box, boss);
+    boss.hp -= getPlayerAttackDamage() * FALL_ATTACK.bossDamageMultiplier;
+    boss.hitCd = FALL_ATTACK.bossHitCooldown;
+    emitSlash(bossHitX, bossHitY, box.color, boss.w * 0.9);
+    emitHitBurst(bossHitX, bossHitY, PLAYER_COMBAT.effects.skillBossBurstColor, FALL_ATTACK.impactBurstPower + 0.6);
+    if (boss.hp <= 0) {
+      p.score += PLAYER_COMBAT.bossKillScore;
+      gainKillEnergy(PLAYER_COMBAT.bossEnergyGain, PLAYER_COMBAT.bossUltimateEnergyGain);
+      emitSlash(boss.x + boss.w / 2, boss.y + PLAYER_COMBAT.bossHitY, PLAYER_COMBAT.effects.bossKillSlashColor);
+      state.boss = null;
+      state.bossSpawnTimer = PLAYER_COMBAT.skillChargeResetDelay;
+    }
+  }
+
+  emitSlash(cx, impactY - 8, box.color, FALL_ATTACK.radius * 0.8);
+  emitHitBurst(cx, impactY - 6, box.color, FALL_ATTACK.impactBurstPower + 0.4);
+  p.invincible = Math.max(p.invincible, FALL_ATTACK.landingInvincibleFrames);
+  playTone(150, 0.08, "sawtooth", 0.06);
+  playTone(520, 0.06, "triangle", 0.045);
 }
 
 export function hurtPlayer(damage: number, sourceVx: number) {
@@ -335,6 +415,11 @@ export function updatePlayer() {
   }
 
   p.vy += GRAVITY;
+  if (p.fallAttackTimer > 0) {
+    p.fallAttackTimer += 1;
+    p.vx *= FALL_ATTACK.horizontalDrag;
+    p.vy = Math.min(Math.max(p.vy, FALL_ATTACK.diveVelocity), FALL_ATTACK.maxVelocity);
+  }
   const prevBottom = p.y + p.h;
   p.x += p.vx;
   p.y += p.vy;
@@ -361,6 +446,17 @@ export function updatePlayer() {
   if (!landed && p.y + p.h >= GROUND_Y) {
     p.y = GROUND_Y - p.h;
     p.vy = 0;
+    landed = true;
+  }
+
+  if (landed && p.fallAttackTimer > 0) {
+    triggerFallAttackImpact();
+    p.fallAttackTimer = 0;
+    p.fallAttackRecoveryTimer = FALL_ATTACK.recoveryFrames;
+  }
+
+  if (p.fallAttackRecoveryTimer > 0) {
+    p.fallAttackRecoveryTimer -= 1;
   }
 
   if (p.skillTimer > 0) {
@@ -418,8 +514,7 @@ export function updatePlayer() {
     for (let i = state.enemies.length - 1; i >= 0; i -= 1) {
       const e = state.enemies[i];
       if (hitbox(box, e) && e.hitCd <= 0) {
-        const atkHitX = e.x + Math.random() * e.w;
-        const atkHitY = e.y + e.h * 0.2 + Math.random() * e.h * 0.6;
+        const { x: atkHitX, y: atkHitY } = overlapHitPoint(box, e);
         e.hp -= box.damage;
         e.hitCd = PLAYER_COMBAT.attackEnemyHitCooldown;
         emitSlash(atkHitX, atkHitY, box.color, e.w);
@@ -443,10 +538,11 @@ export function updatePlayer() {
       const boss = state.boss;
       boss.hp -= box.damage;
       boss.hitCd = PLAYER_COMBAT.attackBossHitCooldown;
-      emitSlash(boss.x + boss.w * PLAYER_COMBAT.bossHitXRatio, boss.y + PLAYER_COMBAT.bossHitY, box.color);
+      const { x: bossHitX, y: bossHitY } = overlapHitPoint(box, boss);
+      emitSlash(bossHitX, bossHitY, box.color);
       emitHitBurst(
-        boss.x + boss.w * PLAYER_COMBAT.bossHitXRatio,
-        boss.y + PLAYER_COMBAT.bossHitY,
+        bossHitX,
+        bossHitY,
         PLAYER_COMBAT.effects.attackBossBurstColor,
         PLAYER_COMBAT.attackBossBurstPower,
       );
@@ -526,7 +622,9 @@ export function drawPlayer() {
   }
 
   const isLanded = onGround(p, p.onPlatform);
-  const stateName = p.skillTimer > 0 || p.attackTimer > 0
+  const stateName = p.fallAttackTimer > 0 || p.fallAttackRecoveryTimer > 0
+    ? PLAYER_ANIMATION_STATES.fallAttack
+    : p.skillTimer > 0 || p.attackTimer > 0
     ? PLAYER_ANIMATION_STATES.attack
     : !isLanded
       ? PLAYER_ANIMATION_STATES.jump
@@ -536,6 +634,14 @@ export function drawPlayer() {
 
   const sheet = PLAYER_SHEETS[stateName];
   const { drawW, drawH, animSpeed, anchorX = 0.5, anchorY = 1, flipX } = sheet;
-  const frame = frameIndex(sheet.count, animSpeed, state.elapsed);
+  let frame = frameIndex(sheet.count, animSpeed, state.elapsed);
+  if (stateName === PLAYER_ANIMATION_STATES.fallAttack) {
+    if (p.fallAttackTimer > 0) {
+      frame = Math.min(sheet.count - 2, Math.floor(Math.max(0, p.fallAttackTimer - 1) / animSpeed));
+    } else {
+      const elapsedRecovery = FALL_ATTACK.recoveryFrames - p.fallAttackRecoveryTimer;
+      frame = Math.min(sheet.count - 1, sheet.count - 2 + Math.floor(elapsedRecovery / animSpeed));
+    }
+  }
   drawSheetFrame(sheet, frame, refX - drawW * anchorX, refY - drawH * anchorY, drawW, drawH, p.facing * (flipX ? -1 : 1));
 }
