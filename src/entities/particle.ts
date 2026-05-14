@@ -17,6 +17,7 @@ import {
   WIDTH,
 } from "../constants";
 import type { HitBurstState, ParticleState, Skill1EffectState, Skill2EffectState, SkillBurstState } from "../types/game-state";
+import { overlapHitPoint } from "../utils";
 
 const FULL_CIRCLE_RADIANS = Math.PI * 2;
 const DEFAULT_HIT_BURST_COLOR = "#9feaff";
@@ -125,8 +126,10 @@ export function updateSkill1Effects() {
       const overlapX = effRight > enemy.x && effLeft < enemy.x + enemy.w;
       const overlapY = effBottom > enemy.y && effTop < enemy.y + enemy.h;
       if (!overlapX || !overlapY) continue;
-      const hitX = enemy.x + Math.random() * enemy.w;
-      const hitY = enemy.y + Math.random() * enemy.h;
+      const { x: hitX, y: hitY } = overlapHitPoint(
+        { x: effLeft, y: effTop, w: drawW, h: drawH },
+        enemy,
+      );
       enemy.hp -= damage;
       enemy.hitCd = SKILL1_EFFECT_CONFIG.hitCooldown;
       emitSlash(hitX, hitY, PLAYER_COMBAT.effects.skillEnemyBurstColor, enemy.w);
@@ -146,8 +149,10 @@ export function updateSkill1Effects() {
       if (overlapX && overlapY) {
         boss.hp -= damage;
         boss.hitCd = SKILL1_EFFECT_CONFIG.hitCooldown;
-        const bossHitX = Math.max(boss.x, Math.min(boss.x + boss.w, eff.x));
-        const bossHitY = boss.y + boss.h * 0.4;
+        const { x: bossHitX, y: bossHitY } = overlapHitPoint(
+          { x: effLeft, y: effTop, w: drawW, h: drawH },
+          boss,
+        );
         emitSlash(bossHitX, bossHitY, PLAYER_COMBAT.effects.skillBossSlashColor);
         emitHitBurst(bossHitX, bossHitY, PLAYER_COMBAT.effects.skillBossBurstColor, PLAYER_COMBAT.skillBossBurstPower);
         if (boss.hp <= 0) {
@@ -193,8 +198,10 @@ export function updateSkill2Effects() {
       const overlapX = effRight > enemy.x && effLeft < enemy.x + enemy.w;
       const overlapY = effBottom > enemy.y && effTop < enemy.y + enemy.h;
       if (!overlapX || !overlapY) continue;
-      const hitX = enemy.x + Math.random() * enemy.w;
-      const hitY = enemy.y + Math.random() * enemy.h;
+      const { x: hitX, y: hitY } = overlapHitPoint(
+        { x: effLeft, y: effTop, w: drawW, h: drawH },
+        enemy,
+      );
       enemy.hp -= damage;
       enemy.hitCd = SKILL2_EFFECT_CONFIG.hitCooldown;
       emitSlash(hitX, hitY, PLAYER_COMBAT.effects.skillEnemyBurstColor, enemy.w);
@@ -213,8 +220,10 @@ export function updateSkill2Effects() {
       if (overlapX && overlapY) {
         boss.hp -= damage;
         boss.hitCd = SKILL2_EFFECT_CONFIG.hitCooldown;
-        const bossHitX = Math.max(boss.x, Math.min(boss.x + boss.w, eff.x));
-        const bossHitY = boss.y + boss.h * 0.4;
+        const { x: bossHitX, y: bossHitY } = overlapHitPoint(
+          { x: effLeft, y: effTop, w: drawW, h: drawH },
+          boss,
+        );
         emitSlash(bossHitX, bossHitY, PLAYER_COMBAT.effects.skillBossSlashColor);
         emitHitBurst(bossHitX, bossHitY, PLAYER_COMBAT.effects.skillBossBurstColor, PLAYER_COMBAT.skillBossBurstPower);
         if (boss.hp <= 0) {

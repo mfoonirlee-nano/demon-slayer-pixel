@@ -202,7 +202,7 @@ function PauseScreen({ snapshot }: { snapshot: GameSnapshot }) {
     <div className="absolute inset-0 z-30 flex items-center justify-center" style={{ background: "rgba(5,10,22,0.65)" }}>
       <div className="relative flex items-center justify-center" style={{ width: "96%", maxWidth: 960 }}>
         <img
-          src="assets/sprites/ui/pasue_ui.png"
+          src="assets/sprites/ui/pause_bg_v3.png"
           alt=""
           draggable={false}
           className="w-full"
@@ -210,8 +210,8 @@ function PauseScreen({ snapshot }: { snapshot: GameSnapshot }) {
         />
         {/* Content overlay aligned to sprite center panel */}
         <div
-          className="absolute flex flex-col pt-2"
-          style={{ inset: "20% 33% 11% 33%", overflow: "hidden" }}
+          className="absolute flex flex-col pt-3"
+          style={{ inset: "17% 17% 8% 17%", overflow: "hidden" }}
         >
           {/* header */}
           <div className="flex items-center justify-between text-[9px] tracking-[2px] uppercase text-white opacity-55">
@@ -235,7 +235,7 @@ function PauseScreen({ snapshot }: { snapshot: GameSnapshot }) {
           <div className="my-1" style={{ height: 1, background: "linear-gradient(90deg, rgba(38,213,255,0.5) 0%, transparent 100%)" }} />
 
           {/* stats */}
-          <div className="flex flex-col gap-1.5 py-3">
+          <div className="flex flex-col gap-2 py-4">
             {/* HP */}
             <div className="mb-3">
               <div className="flex items-center justify-between mb-0.5 text-[10px]">
@@ -314,7 +314,7 @@ function PauseScreen({ snapshot }: { snapshot: GameSnapshot }) {
           </div>
 
           {/* footer */}
-          <div className="pt-1 text-center text-[9px] opacity-40 text-white">
+          <div className="pt-2 text-center text-[9px] opacity-45 text-white">
             按 ESC 或 P 继续游戏
           </div>
         </div>
