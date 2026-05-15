@@ -7,6 +7,8 @@ export type Skill = {
   id: SkillId;
   // 技能的名称，通常用于展示
   name: string;
+  // 技能说明，用于暂停面板展示
+  description: string;
   // 技能序列图（SpriteSheet）的相对路径
   src: string;
   // 动画的帧数

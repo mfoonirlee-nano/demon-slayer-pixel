@@ -91,6 +91,19 @@ export const MAP_GENERATION_CONFIG = {
     lateVariance: 0.55,
     bossExtraDelay: 0.25,
   },
+  density: {
+    targetGapEarly: 280,
+    targetGapLate: 205,
+    jitterEarly: 0.35,
+    jitterLate: 0.16,
+    minInterval: 0.62,
+    maxInterval: 3.2,
+    assumedFps: 60,
+  },
+  overlap: {
+    minHorizontalGap: 8,
+    maxResolveAttempts: 10,
+  },
   tension: {
     patternDecay: 0.35,
     breatherRelief: 1.4,

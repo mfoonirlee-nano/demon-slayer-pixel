@@ -1,6 +1,15 @@
 import { useEffect, useRef, useState } from "react";
 import { Provider, useAtomValue } from "jotai";
-import { WIDTH, HEIGHT, SKILLS, HUD_UI } from "./constants";
+import {
+  WIDTH,
+  HEIGHT,
+  SKILLS,
+  HUD_UI,
+  PLAYER_COMBAT,
+  SKILL1_EFFECT_CONFIG,
+  SKILL2_EFFECT_CONFIG,
+  SKILL3_EFFECT_CONFIG,
+} from "./constants";
 import { setCanvas } from "./context";
 import { startGame } from "./runtime";
 import { gameSnapshotAtom, gameStore, setGameSnapshot, type GameSnapshot } from "./gameStore";
@@ -88,6 +97,12 @@ function GhostBar({ value, max, ghostValue, color, ghostColor }: {
       <div className="absolute inset-y-0 left-0 h-full" style={{ width: `${percent}%`, background: color }} />
     </>
   );
+}
+
+function formatSkillDamageFormula(skill: (typeof SKILLS)[number]) {
+  if (skill.id === "skill1") return `伤害公式：角色攻击力 x ${SKILL1_EFFECT_CONFIG.damageMultiplier}`;
+  if (skill.id === "skill2") return `伤害公式：角色攻击力 x ${SKILL2_EFFECT_CONFIG.damageMultiplier}`;
+  return `伤害公式：角色攻击力 x ${SKILL3_EFFECT_CONFIG.damageMultiplier}，最多 ${SKILL3_EFFECT_CONFIG.maxHits} 次`;
 }
 
 function UltimateOrb({ value, max, ready, size = 44 }: {
@@ -194,9 +209,14 @@ function DeathScreen({ elapsed }: { elapsed: number }) {
 function PauseScreen({ snapshot }: { snapshot: GameSnapshot }) {
   const { player } = snapshot;
   const activeSkill = SKILLS[player.skillIndex] || SKILLS[0];
+  const damageFormula = formatSkillDamageFormula(activeSkill);
   const totalAttack = player.baseAttack + player.attackBonus;
-  const hpPercent = Math.max(0, Math.min(100, (player.hp / player.maxHp) * 100));
-  const skillEnergyPercent = Math.max(0, Math.min(100, (player.skillEnergy / player.skillEnergyMax) * 100));
+  const skillChargeProgress = Math.min(100, Math.floor(player.skillEnergy / PLAYER_COMBAT.skillCastEnergyCost * 100));
+  const skillEnergyText = `${skillChargeProgress} / 100`;
+  const ultimateEnergyText = `${Math.floor(player.ultimateEnergy)} / ${player.ultimateEnergyMax}`;
+  const attackText = player.attackBonus > 0
+    ? `${totalAttack} (${player.baseAttack}+${player.attackBonus})`
+    : `${totalAttack}`;
 
   return (
     <div className="absolute inset-0 z-30 flex items-center justify-center" style={{ background: "rgba(5,10,22,0.65)" }}>
@@ -211,70 +231,60 @@ function PauseScreen({ snapshot }: { snapshot: GameSnapshot }) {
         {/* Content overlay aligned to sprite center panel */}
         <div
           className="absolute flex flex-col pt-3"
-          style={{ inset: "17% 17% 8% 17%", overflow: "hidden" }}
+          style={{ inset: "20% 17% 6% 17%", overflow: "hidden" }}
         >
-          {/* header */}
-          <div className="flex items-center justify-between text-[9px] tracking-[2px] uppercase text-white opacity-55">
-            <span>— PAUSED —</span>
-            <span style={{ letterSpacing: 2 }}>ESC / P</span>
-          </div>
-
-          {/* title row: name + attack inline */}
+          {/* title row */}
           <div className="flex items-baseline justify-between pt-0.5">
             <span className="text-[12px] font-bold tracking-[0.12em]" style={{ color: "#26d5ff" }}>竈門炭治郎</span>
-            <span className="text-[10px]">
-              <span style={{ color: "#7fc8e0" }}>攻击 </span>
-              <span style={{ color: "#26d5ff", fontWeight: 700 }}>{totalAttack}</span>
-              {player.attackBonus > 0 && (
-                <span style={{ color: "#7fe8d0" }}> ({player.baseAttack}+{player.attackBonus})</span>
-              )}
-            </span>
+            <span className="text-[10px]" style={{ color: "#7fc8e0" }}>当前技能：<span style={{ color: "#26d5ff" }}>{activeSkill.name}</span></span>
           </div>
 
           {/* divider */}
           <div className="my-1" style={{ height: 1, background: "linear-gradient(90deg, rgba(38,213,255,0.5) 0%, transparent 100%)" }} />
 
-          {/* stats */}
-          <div className="flex flex-col gap-2 py-4">
-            {/* HP */}
-            <div className="mb-3">
-              <div className="flex items-center justify-between mb-0.5 text-[10px]">
-                <span style={{ color: "#7fc8e0" }}>生命值</span>
-                <span style={{ color: "#26d5ff" }}>{Math.max(0, Math.floor(player.hp))} / {player.maxHp}</span>
-              </div>
-              <div className="relative h-[5px] w-full overflow-hidden" style={{ background: "#0d2135" }}>
-                <div
-                  className="absolute inset-y-0 left-0 h-full"
-                  style={{ width: `${hpPercent}%`, background: "linear-gradient(90deg,#2a8a3a,#5aff6a)" }}
-                />
+          <div className="grid flex-1 grid-cols-[0.9fr_1.3fr] gap-3 py-2 text-left">
+            <div
+              className="p-2"
+              style={{
+                background: "rgba(5,17,30,0.34)",
+              }}
+            >
+              <div className="mb-1 text-[9px] tracking-[1px]" style={{ color: "#7fc8e0" }}>基础数值</div>
+              <div className="grid gap-1 text-[10px]">
+                <div className="flex justify-between">
+                  <span style={{ color: "#7fc8e0" }}>生命值</span>
+                  <span style={{ color: "#26d5ff", fontWeight: 700 }}>{Math.max(0, Math.floor(player.hp))} / {player.maxHp}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span style={{ color: "#7fc8e0" }}>攻击力</span>
+                  <span style={{ color: "#26d5ff", fontWeight: 700 }}>{attackText}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span style={{ color: "#7fc8e0" }}>技能充能</span>
+                  <span style={{ color: "#26d5ff", fontWeight: 700 }}>{skillEnergyText}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span style={{ color: "#7fc8e0" }}>大招充能</span>
+                  <span style={{ color: player.ultimateReady ? "#ffd46e" : "#26d5ff", fontWeight: 700 }}>{ultimateEnergyText}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span style={{ color: "#7fc8e0" }}>分数</span>
+                  <span style={{ color: "#26d5ff", fontWeight: 700 }}>{player.score}</span>
+                </div>
               </div>
             </div>
 
-            {/* Skill: tiles + charges + energy, consolidated */}
-            <div>
-              <div className="flex items-center justify-between mb-0.5 text-[10px]">
-                <span style={{ color: "#7fc8e0" }}>技能</span>
-                <span className="flex items-center gap-1" style={{ color: "#26d5ff" }}>
-                  {Array.from({ length: player.maxSkillCharges }).map((_, i) => (
-                    <span
-                      key={i}
-                      style={{
-                        width: 7,
-                        height: 7,
-                        borderRadius: "50%",
-                        background: i < player.skillCharges ? "#26d5ff" : "transparent",
-                        border: `1px solid ${i < player.skillCharges ? "#26d5ff" : "rgba(38,213,255,0.4)"}`,
-                        boxShadow: i < player.skillCharges ? "0 0 4px rgba(38,213,255,0.6)" : "none",
-                        display: "inline-block",
-                      }}
-                    />
-                  ))}
-                  <span style={{ marginLeft: 2 }}>{player.skillCharges}/{player.maxSkillCharges}</span>
-                </span>
+            <div
+              className="p-2"
+              style={{
+                background: "linear-gradient(180deg, rgba(9,32,52,0.64), rgba(5,17,30,0.32))",
+              }}
+            >
+              <div className="mb-1 flex items-center justify-between text-[9px] tracking-[1px]">
+                <span style={{ color: "#7fc8e0" }}>当前技能</span>
+                <span style={{ color: "#26d5ff" }}>{activeSkill.name}</span>
               </div>
-
-              {/* skill tiles — replaces separate "current" + "all skills" blocks */}
-              <div className="flex gap-1 mb-1">
+              <div className="mb-2 grid grid-cols-3 gap-1">
                 {SKILLS.map((skill, i) => {
                   const active = i === player.skillIndex;
                   return (
@@ -294,27 +304,17 @@ function PauseScreen({ snapshot }: { snapshot: GameSnapshot }) {
                   );
                 })}
               </div>
-
-              {/* active skill energy bar */}
-              <div className="relative h-[5px] w-full overflow-hidden" style={{ background: "#0d2135" }}>
-                <div
-                  className="absolute inset-y-0 left-0 h-full"
-                  style={{ width: `${skillEnergyPercent}%`, background: "linear-gradient(90deg,#1a6b8a,#7fe8ff)" }}
-                />
+              <div className="text-[9px] leading-[1.45]" style={{ color: "#c8efff" }}>
+                {activeSkill.description}
               </div>
-              <div className="flex justify-between text-[9px] mt-0.5" style={{ color: "#7fe8ff", opacity: 0.8 }}>
-                <span>{activeSkill.name} 充能</span>
-                <span>{Math.floor(player.skillEnergy)}/{player.skillEnergyMax}</span>
-              </div>
-
-              <div className="mt-1 flex justify-end">
-                <UltimateOrb value={player.ultimateEnergy} max={player.ultimateEnergyMax} ready={player.ultimateReady} size={24} />
+              <div className="mt-2 text-[8px] leading-[1.35]" style={{ color: "#7fc8e0" }}>
+                {damageFormula}
               </div>
             </div>
           </div>
 
           {/* footer */}
-          <div className="pt-2 text-center text-[9px] opacity-45 text-white">
+          <div className="mt-auto pt-3 text-center text-[11px] opacity-55 text-white" style={{ transform: "translateY(10px)" }}>
             按 ESC 或 P 继续游戏
           </div>
         </div>

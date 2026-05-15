@@ -5,6 +5,7 @@ export const SKILLS: Skill[] = [
   {
     id: SKILL_IDS.skill1,
     name: "壹之型",
+    description: "向前释放一条水龙冲击，给路径上的敌人造成伤害。",
     src: "assets/sprites/skills/skill1.png",
     frameCount: 5,
     frameW: 800,
@@ -21,6 +22,7 @@ export const SKILLS: Skill[] = [
   {
     id: SKILL_IDS.skill2,
     name: "贰之型",
+    description: "向前挥出大范围水之呼吸剑气，席卷路径上的敌人。",
     src: "assets/sprites/skills/skill2.png",
     frameCount: 6,
     frameW: 500,
@@ -36,6 +38,7 @@ export const SKILLS: Skill[] = [
   {
     id: SKILL_IDS.skill3,
     name: "叁之型",
+    description: "展开防护水幕，受到攻击时反击身边的敌人。",
     src: "assets/sprites/skills/skill3.png",
     frameCount: 5,
     frameW: 540,

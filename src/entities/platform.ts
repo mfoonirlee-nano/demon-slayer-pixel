@@ -129,6 +129,12 @@ function platformVx(): number {
   );
 }
 
+function expectedPlatformSpeed(): number {
+  return PLATFORM_CONFIG.baseSpeed +
+    PLATFORM_CONFIG.randomSpeed / 2 +
+    state.elapsed * PLATFORM_CONFIG.speedScaleByElapsed;
+}
+
 function clamp(value: number, min: number, max: number): number {
   return Math.max(min, Math.min(max, value));
 }
@@ -147,10 +153,18 @@ function difficultyRatio(): number {
 
 export function nextMapSpawnInterval(): number {
   const difficulty = difficultyRatio();
-  const interval = MAP_GENERATION_CONFIG.spawnInterval;
-  const base = lerp(interval.earlyBase, interval.lateBase, difficulty);
-  const variance = lerp(interval.earlyVariance, interval.lateVariance, difficulty);
-  return base + Math.random() * variance + (state.boss ? interval.bossExtraDelay : 0);
+  const density = MAP_GENERATION_CONFIG.density;
+  const targetGap = lerp(density.targetGapEarly, density.targetGapLate, difficulty);
+  const expectedPixelsPerSecond = expectedPlatformSpeed() * density.assumedFps;
+  const base = targetGap / expectedPixelsPerSecond;
+  const jitter = lerp(density.jitterEarly, density.jitterLate, difficulty);
+  const interval = base * (1 + Math.random() * jitter);
+
+  return clamp(
+    interval + (state.boss ? MAP_GENERATION_CONFIG.spawnInterval.bossExtraDelay : 0),
+    density.minInterval,
+    density.maxInterval,
+  );
 }
 
 function randomStyle(): PlatformStyle {
@@ -205,6 +219,42 @@ function makePlatform(
       ? 0
       : PLATFORM_CONFIG.notchBase + Math.floor(Math.random() * PLATFORM_CONFIG.notchVariants),
   };
+}
+
+function platformVerticalBounds(platform: PlatformState): { top: number; bottom: number } {
+  return {
+    top: platform.baseY - platform.hoverAmplitude,
+    bottom: platform.baseY + platform.hoverAmplitude + platform.h,
+  };
+}
+
+function platformRectsOverlap(a: PlatformState, b: PlatformState): boolean {
+  const gap = MAP_GENERATION_CONFIG.overlap.minHorizontalGap;
+  const aBounds = platformVerticalBounds(a);
+  const bBounds = platformVerticalBounds(b);
+  const overlapX = a.x < b.x + b.w + gap && a.x + a.w + gap > b.x;
+  const overlapY = aBounds.top < bBounds.bottom && aBounds.bottom > bBounds.top;
+  return overlapX && overlapY;
+}
+
+function nextNonOverlappingX(platform: PlatformState): number {
+  let x = platform.x;
+
+  for (let attempt = 0; attempt < MAP_GENERATION_CONFIG.overlap.maxResolveAttempts; attempt += 1) {
+    platform.x = x;
+    const blocker = state.platforms.find((existing) => platformRectsOverlap(platform, existing));
+    if (!blocker) return x;
+
+    x = blocker.x + blocker.w + MAP_GENERATION_CONFIG.overlap.minHorizontalGap;
+  }
+
+  return x;
+}
+
+function placePlatform(platform: PlatformState): PlatformState {
+  platform.x = nextNonOverlappingX(platform);
+  state.platforms.push(platform);
+  return platform;
 }
 
 function consumeChestSlot(platform: PlatformState): boolean {
@@ -394,8 +444,7 @@ function addPlatform(
   isHover: boolean,
   isChain: boolean,
 ): PlatformState {
-  const platform = makePlatform(x, y, width, vx, isHover, isChain);
-  state.platforms.push(platform);
+  const platform = placePlatform(makePlatform(x, y, width, vx, isHover, isChain));
   platforms.push(platform);
   return platform;
 }
@@ -419,7 +468,7 @@ function spawnLowRecoverySegment(): SegmentSpawnResult {
 
     if (i < layers.length - 1) {
       const gap = randomBetween(CHAIN_CONFIG.gapMin, CHAIN_CONFIG.gapMin + 18);
-      x += platform.w + gap;
+      x = platform.x + platform.w + gap;
     }
   }
 
@@ -460,8 +509,7 @@ function spawnBreatherSegment(): SegmentSpawnResult {
       ? pickVariedLayer(lastLayer)
       : "low";
   const y = layerY(targetLayer);
-  const platform = makePlatform(firstPlatformX(), y, platformWidth("wide"), platformVx(), false, false);
-  state.platforms.push(platform);
+  const platform = placePlatform(makePlatform(firstPlatformX(), y, platformWidth("wide"), platformVx(), false, false));
   rememberLastPlatform(platform);
   maybeSpawnReward(platform, false);
   return { kind: "breather", difficulty: "easy", platforms: [platform] };
@@ -482,7 +530,7 @@ function spawnStairSegment(kind: "stairUp" | "stairDown"): SegmentSpawnResult {
     const width = i === 0 ? platformWidth("normal") : platformWidth("chain");
     const platform = addPlatform(platforms, x, y, width, vx, false, i > 0);
     const step = nextReachableStep(y, direction, false);
-    x += platform.w + step.gap;
+    x = platform.x + platform.w + step.gap;
     y = step.y;
   }
 
@@ -503,7 +551,7 @@ function spawnZigzagSegment(): SegmentSpawnResult {
     const width = platformWidth(i === 0 ? "normal" : "chain");
     const platform = addPlatform(platforms, x, y, width, vx, false, i > 0);
     const step = nextReachableStep(y, direction, true);
-    x += platform.w + step.gap;
+    x = platform.x + platform.w + step.gap;
     y = step.y;
     direction *= -1;
   }
@@ -529,7 +577,7 @@ function spawnHoverPairSegment(): SegmentSpawnResult {
     );
     const nextLayer = yToLayer(y) === "top" ? "high" : layerAbove(yToLayer(y));
     y = layerY(nextLayer);
-    x += platform.w + gap;
+    x = platform.x + platform.w + gap;
   }
 
   rememberLastPlatform(platforms[platforms.length - 1]);
@@ -587,8 +635,7 @@ function spawnNormalPlatform(): SegmentSpawnResult {
   const w = platformWidth("normal");
   const isHover = nextLayer !== "low" && Math.random() < HOVER_CONFIG.chance;
   const vx = platformVx();
-  const platform = makePlatform(firstPlatformX(), y, w, vx, isHover, false);
-  state.platforms.push(platform);
+  const platform = placePlatform(makePlatform(firstPlatformX(), y, w, vx, isHover, false));
   rememberLastPlatform(platform);
 
   maybeSpawnReward(platform, isHover || nextLayer === "high" || nextLayer === "top");
@@ -611,8 +658,7 @@ function spawnChainCluster(): SegmentSpawnResult {
 
   for (let i = 0; i < count; i += 1) {
     const w = platformWidth("chain");
-    const platform = makePlatform(x, y, w, vx, false, true);
-    state.platforms.push(platform);
+    const platform = placePlatform(makePlatform(x, y, w, vx, false, true));
     platforms.push(platform);
 
     if (i === count - 1) {
@@ -620,7 +666,7 @@ function spawnChainCluster(): SegmentSpawnResult {
     }
 
     const step = nextReachableStep(y, direction, true);
-    x += platform.w + step.gap;
+    x = platform.x + platform.w + step.gap;
     y = step.y;
     direction *= -1;
   }
