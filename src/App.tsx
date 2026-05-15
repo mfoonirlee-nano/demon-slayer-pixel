@@ -1,25 +1,65 @@
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState, type AnimationEvent, type CSSProperties } from "react";
 import { Provider, useAtomValue } from "jotai";
 import {
   WIDTH,
   HEIGHT,
+  GROUND_Y,
   SKILLS,
   HUD_UI,
   PLAYER_COMBAT,
+  PLAYER_DEFAULTS,
+  PLAYER_DRAW,
+  PLAYER_SHEETS,
+  PLAYER_ANIMATION_STATES,
   SKILL1_EFFECT_CONFIG,
   SKILL2_EFFECT_CONFIG,
   SKILL3_EFFECT_CONFIG,
+  SKY_SPRITES,
 } from "./constants";
+import { loadSprites } from "./assets";
 import { setCanvas } from "./context";
 import { startGame } from "./runtime";
 import { gameSnapshotAtom, gameStore, setGameSnapshot, type GameSnapshot } from "./gameStore";
+
+type AppPhase = "menu" | "intro" | "playing";
+type CustomCssProperties = CSSProperties & Record<`--${string}`, string>;
+
+const INTRO_DURATION_MS = 1100;
+const INTRO_COMPLETION_FALLBACK_MS = INTRO_DURATION_MS + 120;
+const SKY_SPRITE_SHEET_WIDTH = 1250;
+const SKY_SPRITE_SHEET_HEIGHT = 880;
+const START_MOON_SIZE = 168;
+const START_MOON_SCALE = START_MOON_SIZE / SKY_SPRITES.moon.sw;
+const RUN_SHEET = PLAYER_SHEETS[PLAYER_ANIMATION_STATES.run];
+const INTRO_PLAYER_START_X = -140;
+const INTRO_PLAYER_END_X = PLAYER_DEFAULTS.x + PLAYER_DEFAULTS.w / 2 - RUN_SHEET.drawW / 2;
+const INTRO_PLAYER_BOTTOM = HEIGHT - (GROUND_Y - PLAYER_DRAW.yOffset);
+
+function gamePercent(value: number, total: number) {
+  return `${(value / total) * 100}%`;
+}
+
+const moonSheetStyle: CSSProperties = {
+  width: SKY_SPRITE_SHEET_WIDTH * START_MOON_SCALE,
+  height: SKY_SPRITE_SHEET_HEIGHT * START_MOON_SCALE,
+  maxWidth: "none",
+  transform: `translate3d(-${SKY_SPRITES.moon.sx * START_MOON_SCALE}px, -${SKY_SPRITES.moon.sy * START_MOON_SCALE}px, 0)`,
+};
+
+const introRunnerStyle: CustomCssProperties = {
+  "--intro-player-start-left": gamePercent(INTRO_PLAYER_START_X, WIDTH),
+  "--intro-player-end-left": gamePercent(INTRO_PLAYER_END_X, WIDTH),
+  "--intro-player-bottom": gamePercent(INTRO_PLAYER_BOTTOM, HEIGHT),
+  "--intro-player-width": gamePercent(RUN_SHEET.drawW, WIDTH),
+  "--intro-player-height": gamePercent(RUN_SHEET.drawH, HEIGHT),
+};
 
 function clampMeterPercent(value: number, maxValue: number) {
   if (maxValue <= 0) return 0;
   return Math.max(0, Math.min(HUD_UI.meterPercentMax, (value / maxValue) * HUD_UI.meterPercentMax));
 }
 
-function GameCanvas() {
+function GameCanvas({ active }: { active: boolean }) {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
 
   useEffect(() => {
@@ -27,13 +67,19 @@ function GameCanvas() {
     if (!canvas) return;
 
     setCanvas(canvas);
+    if (!active) {
+      return () => {
+        setCanvas(null);
+      };
+    }
+
     const stopGame = startGame({ onStateChange: setGameSnapshot });
 
     return () => {
       stopGame();
       setCanvas(null);
     };
-  }, []);
+  }, [active]);
 
   return (
     <canvas
@@ -44,6 +90,98 @@ function GameCanvas() {
       aria-label="Demon Slayer Pixel Survival"
       className="pixel-canvas block h-auto w-[960px] max-w-full bg-[#0b1220] max-md:h-[100svh] max-md:w-screen max-md:max-w-none"
     />
+  );
+}
+
+function StartMoon() {
+  return (
+    <div className="start-moon-crop" aria-hidden="true">
+      <img
+        src={SKY_SPRITES.src}
+        alt=""
+        draggable={false}
+        className="start-moon-sheet"
+        style={moonSheetStyle}
+      />
+    </div>
+  );
+}
+
+function StartScreen({
+  assetsReady,
+  startQueued,
+  onStart,
+}: {
+  assetsReady: boolean;
+  startQueued: boolean;
+  onStart: () => void;
+}) {
+  const promptText = assetsReady ? "按任意键开始" : "加载像素贴图中...";
+  const promptClassName = startQueued && !assetsReady
+    ? "start-prompt start-prompt-loading"
+    : "start-prompt";
+
+  return (
+    <div
+      className="start-screen absolute inset-0 z-40 overflow-hidden text-left"
+      role="button"
+      tabIndex={0}
+      aria-label={promptText}
+      onPointerDown={(event) => {
+        event.preventDefault();
+        onStart();
+      }}
+      onClick={onStart}
+    >
+      <div className="start-ridge start-ridge-back" aria-hidden="true" />
+      <div className="start-ridge start-ridge-front" aria-hidden="true" />
+      <StartMoon />
+      <img
+        src="assets/sprites/ui/start_blade.png"
+        alt=""
+        draggable={false}
+        className="start-blade"
+      />
+      <div className="start-content">
+        <div className="start-title">鬼灭之刃</div>
+        <div className="start-subtitle">炭治郎生存战</div>
+        <div className={promptClassName}>{promptText}</div>
+      </div>
+    </div>
+  );
+}
+
+function IntroScreen({ onComplete }: { onComplete: () => void }) {
+  const completedRef = useRef(false);
+
+  const complete = useCallback(() => {
+    if (completedRef.current) return;
+    completedRef.current = true;
+    onComplete();
+  }, [onComplete]);
+
+  useEffect(() => {
+    const timer = window.setTimeout(complete, INTRO_COMPLETION_FALLBACK_MS);
+    return () => window.clearTimeout(timer);
+  }, [complete]);
+
+  const handleAnimationEnd = (event: AnimationEvent<HTMLDivElement>) => {
+    if (event.animationName === "intro-runner-enter") {
+      complete();
+    }
+  };
+
+  return (
+    <div className="intro-screen start-screen absolute inset-0 z-40 overflow-hidden text-left" aria-hidden="true">
+      <div className="start-ridge start-ridge-back" />
+      <div className="start-ridge start-ridge-front" />
+      <StartMoon />
+      <div
+        className="intro-runner"
+        style={introRunnerStyle}
+        onAnimationEnd={handleAnimationEnd}
+      />
+    </div>
   );
 }
 
@@ -465,14 +603,78 @@ function TouchControls() {
 }
 
 function AppShell() {
+  const [phase, setPhase] = useState<AppPhase>("menu");
+  const [assetsReady, setAssetsReady] = useState(false);
+  const [startQueued, setStartQueued] = useState(false);
+  const isPlaying = phase === "playing";
+
+  useEffect(() => {
+    let disposed = false;
+
+    loadSprites()
+      .then(() => {
+        if (!disposed) setAssetsReady(true);
+      })
+      .catch((err) => {
+        console.error("[app] preload sprites failed:", err);
+        if (!disposed) setAssetsReady(true);
+      });
+
+    return () => {
+      disposed = true;
+    };
+  }, []);
+
+  const requestStart = useCallback(() => {
+    if (phase !== "menu") return;
+    setStartQueued(true);
+    if (assetsReady) {
+      setPhase("intro");
+    }
+  }, [assetsReady, phase]);
+
+  useEffect(() => {
+    if (phase === "menu" && startQueued && assetsReady) {
+      setPhase("intro");
+    }
+  }, [assetsReady, phase, startQueued]);
+
+  useEffect(() => {
+    if (phase !== "menu") return;
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      event.preventDefault();
+      requestStart();
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [phase, requestStart]);
+
+  const completeIntro = useCallback(() => {
+    setPhase("playing");
+  }, []);
+
   return (
     <main className="mx-auto flex min-h-screen w-full max-w-[1020px] flex-col items-center justify-center px-4 py-4 text-center max-md:max-w-none max-md:px-0 max-md:py-0">
-      <h1 className="mb-4 text-base tracking-[1px] md:text-2xl max-md:hidden">鬼灭之刃：炭治郎生存战</h1>
-      <p className="mb-2 text-[10px] opacity-90 md:text-[13px] max-md:hidden">A/D 移动 · W/空格 跳跃 · J 攻击 · K 释放技能 · L 大招 · 1/2/3 切换技能 · ESC/P 暂停 · R 重开</p>
+      {isPlaying ? (
+        <>
+          <h1 className="mb-4 text-base tracking-[1px] md:text-2xl max-md:hidden">鬼灭之刃：炭治郎生存战</h1>
+          <p className="mb-2 text-[10px] opacity-90 md:text-[13px] max-md:hidden">A/D 移动 · W/空格 跳跃 · J 攻击 · K 释放技能 · L 大招 · 1/2/3 切换技能 · ESC/P 暂停 · R 重开</p>
+        </>
+      ) : null}
       <section className="relative w-fit max-w-full overflow-hidden border-4 border-[#3f5f8a] bg-black shadow-[0_16px_48px_rgba(0,0,0,0.5)] max-md:h-[100svh] max-md:w-screen max-md:border-0 max-md:shadow-none">
-        <GameCanvas />
-        <Hud />
-        <TouchControls />
+        <GameCanvas active={isPlaying} />
+        {isPlaying ? (
+          <>
+            <Hud />
+            <TouchControls />
+          </>
+        ) : null}
+        {phase === "menu" ? (
+          <StartScreen assetsReady={assetsReady} startQueued={startQueued} onStart={requestStart} />
+        ) : null}
+        {phase === "intro" ? <IntroScreen onComplete={completeIntro} /> : null}
       </section>
     </main>
   );

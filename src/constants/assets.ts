@@ -133,6 +133,27 @@ export const ENEMY_SHEETS: SpriteSheet[] = [
     count: 4,
     image: null,
   },
+  {
+    src: "assets/sprites/enemies/enemy_4.png",
+    frameW: 288,
+    frameH: 360,
+    count: 4,
+    image: null,
+  },
+  {
+    src: "assets/sprites/enemies/enemy_5.png",
+    frameW: 320,
+    frameH: 360,
+    count: 4,
+    image: null,
+  },
+  {
+    src: "assets/sprites/enemies/enemy_6.png",
+    frameW: 314,
+    frameH: 145,
+    count: 4,
+    image: null,
+  },
 ];
 
 export const ENEMY_REF_DRAW_W = 120;
