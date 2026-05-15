@@ -49,8 +49,6 @@
 
 `skill2_effect.png` 当前设计为三道不同角度和大小重叠的月牙状水流剑气。它是透明 PNG，6 帧从形成、增强到消散，运行时仍按 `380x450` 切片，并由 `drawSkill2Effects()` 根据玩家 `facing` 做水平翻转。
 
-`skill2_effect_source.png` 是绿幕生成源图，只用于后续重做或回溯，不参与 `loadSprites()`。
-
 ### 敌人和 Boss
 
 | 文件 | 总尺寸 | 帧数 | 单帧 | 常量 |
@@ -77,18 +75,6 @@
 
 ## 脚本说明
 
-### `scripts_redraw_sprites.py`
-
-用于批量生成、重绘或调整 sprite sheet。适合批量统一尺寸、重新排帧、或从原始素材生成横向动画图集。
-
-### `scripts_make_sprites_transparent.py`
-
-用于移除精灵图背景色，常见输入是纯白、纯黑或绿幕背景。输出应为带 alpha 通道的 PNG。
-
-### `scripts_optimize_origin_sprites.py`
-
-用于优化原始素材，包含批量裁剪、尺寸调整或色彩空间处理等预处理工作。
-
 ### `scripts/compress-assets.js`
 
 通过 TinyPNG 压缩传入的 `.png` 文件。需要项目根目录 `.env` 中配置 `TINYPNG_API_KEY=...`。
@@ -98,9 +84,6 @@
 ## 常用命令
 
 ```bash
-pip install Pillow
-python3 scripts_redraw_sprites.py
-python3 scripts_make_sprites_transparent.py
 node scripts/compress-assets.js assets/sprites/skills/skill2_effect.png
 ```
 
