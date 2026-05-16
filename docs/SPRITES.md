@@ -4,6 +4,13 @@
 
 新增或替换 sprite sheet 时，优先保持已有切片规格不变。只有总尺寸、单帧尺寸、帧数或运行时用途发生变化时，才同步修改 `src/constants/assets.ts`。
 
+## 图片生成基础原则
+
+- 新增、重绘或编辑 sprite 图片内容时，必须使用 Codex 的 Image Gen skill (`imagegen`) 生成或编辑位图素材。
+- 禁止使用 Python 代码生成、绘制、重绘或合成图片内容，也不要新增这类 Python 生成脚本。
+- Python 仅可用于确定性的后处理或检查，例如绿幕抠透明、压缩、尺寸校验；这些步骤不能改变图片创作内容。
+- 项目用素材生成后必须落到 `assets/sprites/` 对应目录中，不能只保留在 Image Gen 的默认输出目录。
+
 ## 当前资源目录
 
 - `assets/sprites/player/`: 玩家待机、跑动、跳跃、普通攻击和下落攻击序列帧。
@@ -41,7 +48,7 @@
 | `skill1.png` | `4000x420` | 5 | `800x420` | `SKILLS.skill1` |
 | `skill2.png` | `3000x500` | 6 | `500x500` | `SKILLS.skill2` |
 | `skill3.png` | `2700x470` | 5 | `540x470` | `SKILLS.skill3` |
-| `skill1_effect.png` | `1920x150` | 6 | `320x150` | `SKILL1_EFFECT_SHEET` |
+| `skill1_effect.png` | `1750x150` | 7 | `250x150` | `SKILL1_EFFECT_SHEET` |
 | `skill2_effect.png` | `2280x450` | 6 | `380x450` | `SKILL2_EFFECT_SHEET` |
 | `skill3_effect.png` | `2400x300` | 6 | `400x300` | `SKILL3_EFFECT_SHEET` |
 | `ultimate_skill.png` | `2400x496` | 6 | `400x496` | `ULTIMATE_SKILL_SHEET` |
@@ -65,8 +72,8 @@
 
 ## 资源更新流程
 
-1. 生成或编辑图片时，优先输出为透明 PNG。
-2. 如果使用绿幕源图，先保存 `*_source.png`，再抠成运行时透明资源。
+1. 生成或编辑图片内容时，使用 Image Gen skill (`imagegen`)，优先输出为透明 PNG。
+2. 如果使用绿幕源图，先保存 `*_source.png`，再通过确定性后处理抠成运行时透明资源。
 3. 对横向序列帧，确保总宽度等于 `frameW * count`，总高度等于 `frameH`。
 4. 替换已有运行时素材时，如果切片规格不变，只需要覆盖 PNG。
 5. 如果切片规格变化，必须同步更新 `src/constants/assets.ts` 中的 `frameW`、`frameH`、`count`，并检查绘制缩放和碰撞范围。

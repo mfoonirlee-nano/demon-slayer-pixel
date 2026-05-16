@@ -94,7 +94,7 @@ export const PLAYER_SHEETS: Record<PlayerAnimationState, PlayerSheet> = {
     image: null,
     drawW: 146,
     drawH: 146,
-    animSpeed: 3,
+    animSpeed: 4,
     // feet sit at 93.8% from sprite top (sprite hangs 9px below reference point)
     anchorY: 0.938,
   },
@@ -161,9 +161,9 @@ export const ENEMY_DRAW_SCALE = ENEMY_REF_DRAW_W / ENEMY_SHEETS[1].frameW;
 
 export const SKILL1_EFFECT_SHEET: SpriteSheet = {
   src: "assets/sprites/skills/skill1_effect.png",
-  frameW: 320,
+  frameW: 250,
   frameH: 150,
-  count: 6,
+  count: 7,
   image: null,
 };
 
@@ -173,9 +173,9 @@ export const SKILL1_EFFECT_CONFIG = {
   // horizontal speed in px/frame
   speed: 8,
   // frame animate speed in game-frames per anim-frame
-  frameDuration: 5,
+  frameDuration: 8,
   // last N frames to loop once the initial run ends
-  loopFromFrame: 2,
+  loopFromFrame: 1,
   // damage multiplier relative to player base+bonus attack
   damageMultiplier: 1.2,
   // frames between successive hits on the same target
@@ -191,7 +191,7 @@ export const SKILL2_EFFECT_SHEET: SpriteSheet = {
 };
 
 export const SKILL2_EFFECT_CONFIG = {
-  drawScale: 0.52,
+  drawScale: 0.72,
   speed: 6,
   frameDuration: 4,
   // 3-5 character widths (player w=34), using 4 widths ≈ 136px
@@ -430,9 +430,9 @@ export const MOUNTAIN_SPRITES: {
   src: "assets/sprites/background/mountains.png",
   image: null,
   variants: [
-    { sx: 14, sy: 82,  sw: 1639, sh: 175 },   // far
-    { sx: 6,  sy: 308, sw: 1659, sh: 223 },   // mid
-    { sx: 6,  sy: 562, sw: 1660, sh: 318 },   // near (pines at base)
+    { sx: 14, sy: 82, sw: 1639, sh: 175 },   // far
+    { sx: 6, sy: 308, sw: 1659, sh: 223 },   // mid
+    { sx: 6, sy: 562, sw: 1660, sh: 318 },   // near (pines at base)
   ],
 };
 

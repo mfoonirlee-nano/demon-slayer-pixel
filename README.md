@@ -44,7 +44,7 @@ npm run build
 详细的文档位于 `docs/` 目录下：
 
 - [📂 项目架构 (ARCHITECTURE.md)](docs/ARCHITECTURE.md)：深入了解代码模块设计与游戏循环逻辑。
-- [🎨 素材处理 (SPRITES.md)](docs/SPRITES.md)：说明如何使用 Python 脚本生成和优化像素精灵图。
+- [🎨 素材处理 (SPRITES.md)](docs/SPRITES.md)：说明如何使用 Image Gen 生成、处理和接入像素精灵图。
 - [📏 项目规则 (CODE_RULES.md)](docs/CODE_RULES.md)：统一约束命名、注释、TypeScript 与 magic number 的处理方式。
 
 ### 代码目录概览
@@ -66,4 +66,3 @@ demon-slayer-pixel/
 ## 致谢
 - 代码构建：codex3
 - 像素素材：nanobanana2
-
