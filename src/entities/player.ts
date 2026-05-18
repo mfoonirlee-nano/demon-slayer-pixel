@@ -22,6 +22,7 @@ import {
 import { onGround, hitbox, frameIndex, nearestRectHitPoint, overlapHitPoint } from "../utils";
 import { drawSheetFrame, drawSkillFrame } from "../graphics";
 import { playTone } from "../audio";
+import { recordBossCoverKill, recordEnemyCoverKill } from "../coverProgress";
 import { emitSlash, emitHitBurst } from "./particle";
 import { keys } from "../input";
 
@@ -144,6 +145,7 @@ export function castSelectedSkill() {
     emitHitBurst(skillHitX, skillHitY, PLAYER_COMBAT.effects.skillEnemyBurstColor, PLAYER_COMBAT.skillEnemyBurstPower);
     if (e.hp <= 0) {
       p.score += PLAYER_COMBAT.enemyKillScore;
+      recordEnemyCoverKill();
       gainKillEnergy(PLAYER_COMBAT.enemyEnergyGain, PLAYER_COMBAT.enemyUltimateEnergyGain);
       state.enemies.splice(i, 1);
     }
@@ -164,6 +166,7 @@ export function castSelectedSkill() {
         emitHitBurst(bossHitX, bossHitY, PLAYER_COMBAT.effects.skillBossBurstColor, PLAYER_COMBAT.skillBossBurstPower);
         if (boss.hp <= 0) {
           p.score += PLAYER_COMBAT.bossKillScore;
+          recordBossCoverKill();
           gainKillEnergy(PLAYER_COMBAT.bossEnergyGain, PLAYER_COMBAT.bossUltimateEnergyGain);
           state.boss = null;
           state.bossSpawnTimer = PLAYER_COMBAT.skillChargeResetDelay;
@@ -235,6 +238,7 @@ function triggerUltimateImpact() {
     emitHitBurst(ex, ey, PLAYER_COMBAT.effects.skillEnemyBurstColor, PLAYER_COMBAT.skillEnemyBurstPower + 1.2);
     if (e.hp <= 0) {
       p.score += PLAYER_COMBAT.enemyKillScore;
+      recordEnemyCoverKill();
       gainKillEnergy(PLAYER_COMBAT.enemyEnergyGain, PLAYER_COMBAT.enemyUltimateEnergyGain);
       state.enemies.splice(i, 1);
     }
@@ -251,6 +255,7 @@ function triggerUltimateImpact() {
       emitHitBurst(bx, by, PLAYER_COMBAT.effects.skillBossBurstColor, PLAYER_COMBAT.skillBossBurstPower + 1.4);
       if (boss.hp <= 0) {
         p.score += PLAYER_COMBAT.bossKillScore;
+        recordBossCoverKill();
         gainKillEnergy(PLAYER_COMBAT.bossEnergyGain, PLAYER_COMBAT.bossUltimateEnergyGain);
         state.boss = null;
         state.bossSpawnTimer = PLAYER_COMBAT.skillChargeResetDelay;
@@ -300,6 +305,7 @@ function triggerFallAttackImpact() {
     emitHitBurst(hitX, hitY, PLAYER_COMBAT.effects.skillEnemyBurstColor, FALL_ATTACK.impactBurstPower);
     if (e.hp <= 0) {
       p.score += PLAYER_COMBAT.attackKillScore;
+      recordEnemyCoverKill();
       gainKillEnergy(PLAYER_COMBAT.enemyEnergyGain, PLAYER_COMBAT.enemyUltimateEnergyGain);
       state.enemies.splice(i, 1);
     }
@@ -314,6 +320,7 @@ function triggerFallAttackImpact() {
     emitHitBurst(bossHitX, bossHitY, PLAYER_COMBAT.effects.skillBossBurstColor, FALL_ATTACK.impactBurstPower + 0.6);
     if (boss.hp <= 0) {
       p.score += PLAYER_COMBAT.bossKillScore;
+      recordBossCoverKill();
       gainKillEnergy(PLAYER_COMBAT.bossEnergyGain, PLAYER_COMBAT.bossUltimateEnergyGain);
       emitSlash(boss.x + boss.w / 2, boss.y + PLAYER_COMBAT.bossHitY, PLAYER_COMBAT.effects.bossKillSlashColor);
       state.boss = null;
@@ -346,6 +353,7 @@ export function hurtPlayer(damage: number, sourceVx: number) {
       emitHitBurst(e.x + e.w / 2, e.y + e.h / 2, SKILLS[2].color, 1.5);
       if (e.hp <= 0) {
         p.score += PLAYER_COMBAT.enemyKillScore;
+        recordEnemyCoverKill();
         gainKillEnergy(PLAYER_COMBAT.enemyEnergyGain, PLAYER_COMBAT.enemyUltimateEnergyGain);
         state.enemies.splice(i, 1);
       }
@@ -356,6 +364,7 @@ export function hurtPlayer(damage: number, sourceVx: number) {
       emitHitBurst(state.boss.x + state.boss.w / 2, state.boss.y + state.boss.h * 0.4, SKILLS[2].color, 2);
       if (state.boss.hp <= 0) {
         p.score += PLAYER_COMBAT.bossKillScore;
+        recordBossCoverKill();
         gainKillEnergy(PLAYER_COMBAT.bossEnergyGain, PLAYER_COMBAT.bossUltimateEnergyGain);
         state.boss = null;
         state.bossSpawnTimer = PLAYER_COMBAT.skillChargeResetDelay;
@@ -527,6 +536,7 @@ export function updatePlayer() {
         );
         if (e.hp <= 0) {
           p.score += PLAYER_COMBAT.attackKillScore;
+          recordEnemyCoverKill();
           gainKillEnergy(PLAYER_COMBAT.enemyEnergyGain, PLAYER_COMBAT.enemyUltimateEnergyGain);
           emitSlash(e.x + Math.random() * e.w, e.y + Math.random() * e.h, PLAYER_COMBAT.effects.attackKillSlashColor, e.w);
           state.enemies.splice(i, 1);
@@ -554,6 +564,7 @@ export function updatePlayer() {
       );
       if (boss.hp <= 0) {
         p.score += PLAYER_COMBAT.bossKillScore;
+        recordBossCoverKill();
         gainKillEnergy(PLAYER_COMBAT.bossEnergyGain, PLAYER_COMBAT.bossUltimateEnergyGain);
         emitSlash(boss.x + boss.w / 2, boss.y + PLAYER_COMBAT.bossHitY, PLAYER_COMBAT.effects.bossKillSlashColor);
         playTone(

@@ -1,58 +1,66 @@
-import { useCallback, useEffect, useRef, useState, type AnimationEvent, type CSSProperties } from "react";
+import { useCallback, useEffect, useRef, useState, type CSSProperties } from "react";
 import { Provider, useAtomValue } from "jotai";
 import {
   WIDTH,
   HEIGHT,
-  GROUND_Y,
   SKILLS,
   HUD_UI,
   PLAYER_COMBAT,
-  PLAYER_DEFAULTS,
-  PLAYER_DRAW,
-  PLAYER_SHEETS,
-  PLAYER_ANIMATION_STATES,
   SKILL1_EFFECT_CONFIG,
   SKILL2_EFFECT_CONFIG,
   SKILL3_EFFECT_CONFIG,
-  SKY_SPRITES,
 } from "./constants";
 import { loadSprites } from "./assets";
 import { setCanvas } from "./context";
 import { startGame } from "./runtime";
 import { gameSnapshotAtom, gameStore, setGameSnapshot, type GameSnapshot } from "./gameStore";
+import { getCoverProgress } from "./coverProgress";
 
-type AppPhase = "menu" | "intro" | "playing";
+type AppPhase = "menu" | "playing";
 type CustomCssProperties = CSSProperties & Record<`--${string}`, string>;
 
-const INTRO_DURATION_MS = 1100;
-const INTRO_COMPLETION_FALLBACK_MS = INTRO_DURATION_MS + 120;
-const SKY_SPRITE_SHEET_WIDTH = 1250;
-const SKY_SPRITE_SHEET_HEIGHT = 880;
-const START_MOON_SIZE = 168;
-const START_MOON_SCALE = START_MOON_SIZE / SKY_SPRITES.moon.sw;
-const RUN_SHEET = PLAYER_SHEETS[PLAYER_ANIMATION_STATES.run];
-const INTRO_PLAYER_START_X = -140;
-const INTRO_PLAYER_END_X = PLAYER_DEFAULTS.x + PLAYER_DEFAULTS.w / 2 - RUN_SHEET.drawW / 2;
-const INTRO_PLAYER_BOTTOM = HEIGHT - (GROUND_Y - PLAYER_DRAW.yOffset);
+const COVER_LAYERS = [
+  { src: "assets/sprites/ui/cover/moon.png", className: "cover-moon" },
+  { src: "assets/sprites/ui/cover/background.png", className: "cover-background" },
+  { src: "assets/sprites/ui/cover/house.png", className: "cover-house" },
+  { src: "assets/sprites/ui/cover/stone_lantern.png", className: "cover-stone-lantern" },
+  { src: "assets/sprites/ui/cover/lantern_light.png", className: "cover-lantern-light" },
+];
 
-function gamePercent(value: number, total: number) {
-  return `${(value / total) * 100}%`;
+function lerp(from: number, to: number, progress: number) {
+  return from + (to - from) * progress;
 }
 
-const moonSheetStyle: CSSProperties = {
-  width: SKY_SPRITE_SHEET_WIDTH * START_MOON_SCALE,
-  height: SKY_SPRITE_SHEET_HEIGHT * START_MOON_SCALE,
-  maxWidth: "none",
-  transform: `translate3d(-${SKY_SPRITES.moon.sx * START_MOON_SCALE}px, -${SKY_SPRITES.moon.sy * START_MOON_SCALE}px, 0)`,
-};
+function coverStyleFromProgress(progress: number): CustomCssProperties {
+  const darknessOpacity = lerp(0.96, 0.18, progress);
+  return {
+    "--cover-darkness-opacity": darknessOpacity.toFixed(3),
+    "--cover-darkness-mid-opacity": lerp(darknessOpacity * 0.82, 0.08, progress).toFixed(3),
+    "--cover-clear-opacity": lerp(0.035, 0, progress).toFixed(3),
+    "--cover-sweep-radius": `${lerp(16, 44, progress).toFixed(2)}vmin`,
+    "--cover-clear-core": `${lerp(16, 28, progress).toFixed(2)}%`,
+    "--cover-soft-edge": `${lerp(58, 76, progress).toFixed(2)}%`,
+  };
+}
 
-const introRunnerStyle: CustomCssProperties = {
-  "--intro-player-start-left": gamePercent(INTRO_PLAYER_START_X, WIDTH),
-  "--intro-player-end-left": gamePercent(INTRO_PLAYER_END_X, WIDTH),
-  "--intro-player-bottom": gamePercent(INTRO_PLAYER_BOTTOM, HEIGHT),
-  "--intro-player-width": gamePercent(RUN_SHEET.drawW, WIDTH),
-  "--intro-player-height": gamePercent(RUN_SHEET.drawH, HEIGHT),
-};
+function useCoverProgress() {
+  const [progress, setProgress] = useState(() => getCoverProgress());
+
+  useEffect(() => {
+    const syncProgress = () => setProgress(getCoverProgress());
+    const intervalId = window.setInterval(syncProgress, 1000);
+
+    window.addEventListener("focus", syncProgress);
+    window.addEventListener("storage", syncProgress);
+    return () => {
+      window.clearInterval(intervalId);
+      window.removeEventListener("focus", syncProgress);
+      window.removeEventListener("storage", syncProgress);
+    };
+  }, []);
+
+  return progress;
+}
 
 function clampMeterPercent(value: number, maxValue: number) {
   if (maxValue <= 0) return 0;
@@ -93,20 +101,6 @@ function GameCanvas({ active }: { active: boolean }) {
   );
 }
 
-function StartMoon() {
-  return (
-    <div className="start-moon-crop" aria-hidden="true">
-      <img
-        src={SKY_SPRITES.src}
-        alt=""
-        draggable={false}
-        className="start-moon-sheet"
-        style={moonSheetStyle}
-      />
-    </div>
-  );
-}
-
 function StartScreen({
   assetsReady,
   startQueued,
@@ -116,6 +110,7 @@ function StartScreen({
   startQueued: boolean;
   onStart: () => void;
 }) {
+  const progress = useCoverProgress();
   const promptText = assetsReady ? "按任意键开始" : "加载像素贴图中...";
   const promptClassName = startQueued && !assetsReady
     ? "start-prompt start-prompt-loading"
@@ -133,54 +128,19 @@ function StartScreen({
       }}
       onClick={onStart}
     >
-      <div className="start-ridge start-ridge-back" aria-hidden="true" />
-      <div className="start-ridge start-ridge-front" aria-hidden="true" />
-      <StartMoon />
-      <img
-        src="assets/sprites/ui/start_blade.png"
-        alt=""
-        draggable={false}
-        className="start-blade"
-      />
-      <div className="start-content">
-        <div className="start-title">鬼灭之刃</div>
-        <div className="start-subtitle">炭治郎生存战</div>
-        <div className={promptClassName}>{promptText}</div>
+      <div className="cover-stage" style={coverStyleFromProgress(progress)} aria-hidden="true">
+        {COVER_LAYERS.map((layer) => (
+          <img
+            key={layer.src}
+            src={layer.src}
+            alt=""
+            draggable={false}
+            className={`cover-layer ${layer.className}`}
+          />
+        ))}
+        <div className="cover-darkness" />
       </div>
-    </div>
-  );
-}
-
-function IntroScreen({ onComplete }: { onComplete: () => void }) {
-  const completedRef = useRef(false);
-
-  const complete = useCallback(() => {
-    if (completedRef.current) return;
-    completedRef.current = true;
-    onComplete();
-  }, [onComplete]);
-
-  useEffect(() => {
-    const timer = window.setTimeout(complete, INTRO_COMPLETION_FALLBACK_MS);
-    return () => window.clearTimeout(timer);
-  }, [complete]);
-
-  const handleAnimationEnd = (event: AnimationEvent<HTMLDivElement>) => {
-    if (event.animationName === "intro-runner-enter") {
-      complete();
-    }
-  };
-
-  return (
-    <div className="intro-screen start-screen absolute inset-0 z-40 overflow-hidden text-left" aria-hidden="true">
-      <div className="start-ridge start-ridge-back" />
-      <div className="start-ridge start-ridge-front" />
-      <StartMoon />
-      <div
-        className="intro-runner"
-        style={introRunnerStyle}
-        onAnimationEnd={handleAnimationEnd}
-      />
+      <div className={promptClassName}>{promptText}</div>
     </div>
   );
 }
@@ -629,13 +589,13 @@ function AppShell() {
     if (phase !== "menu") return;
     setStartQueued(true);
     if (assetsReady) {
-      setPhase("intro");
+      setPhase("playing");
     }
   }, [assetsReady, phase]);
 
   useEffect(() => {
     if (phase === "menu" && startQueued && assetsReady) {
-      setPhase("intro");
+      setPhase("playing");
     }
   }, [assetsReady, phase, startQueued]);
 
@@ -650,10 +610,6 @@ function AppShell() {
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [phase, requestStart]);
-
-  const completeIntro = useCallback(() => {
-    setPhase("playing");
-  }, []);
 
   return (
     <main className="mx-auto flex min-h-screen w-full max-w-[1020px] flex-col items-center justify-center px-4 py-4 text-center max-md:max-w-none max-md:px-0 max-md:py-0">
@@ -674,7 +630,6 @@ function AppShell() {
         {phase === "menu" ? (
           <StartScreen assetsReady={assetsReady} startQueued={startQueued} onStart={requestStart} />
         ) : null}
-        {phase === "intro" ? <IntroScreen onComplete={completeIntro} /> : null}
       </section>
     </main>
   );
