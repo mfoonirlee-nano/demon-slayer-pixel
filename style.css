@@ -84,13 +84,13 @@ body {
 
 .cover-darkness {
   --scan-x: 50%;
-  --scan-y: 58%;
+  --scan-y: 80%;
   position: absolute;
   inset: 0;
   z-index: 5;
   background:
     radial-gradient(
-      circle var(--cover-sweep-radius) at var(--scan-x) var(--scan-y),
+      ellipse var(--cover-sweep-width) var(--cover-sweep-height) at var(--scan-x) var(--scan-y),
       rgba(0, 0, 0, var(--cover-clear-opacity)) 0%,
       rgba(0, 0, 0, var(--cover-clear-opacity)) var(--cover-clear-core),
       rgba(0, 0, 0, var(--cover-darkness-mid-opacity)) var(--cover-soft-edge),
@@ -134,44 +134,44 @@ body {
 @property --scan-y {
   syntax: "<percentage>";
   inherits: false;
-  initial-value: 58%;
+  initial-value: 80%;
 }
 
 @keyframes cover-sweep {
   0%,
   100% {
-    --scan-x: 17%;
+    --scan-x: 14%;
+    --scan-y: 86%;
+  }
+
+  16% {
+    --scan-x: 31%;
+    --scan-y: 82%;
+  }
+
+  32% {
+    --scan-x: 50%;
     --scan-y: 78%;
   }
 
-  14% {
-    --scan-x: 34%;
-    --scan-y: 58%;
+  48% {
+    --scan-x: 70%;
+    --scan-y: 76%;
   }
 
-  31% {
-    --scan-x: 30%;
-    --scan-y: 21%;
+  64% {
+    --scan-x: 84%;
+    --scan-y: 83%;
   }
 
-  47% {
-    --scan-x: 73%;
-    --scan-y: 26%;
+  80% {
+    --scan-x: 58%;
+    --scan-y: 86%;
   }
 
-  62% {
-    --scan-x: 80%;
-    --scan-y: 66%;
-  }
-
-  77% {
-    --scan-x: 52%;
+  91% {
+    --scan-x: 24%;
     --scan-y: 80%;
-  }
-
-  90% {
-    --scan-x: 21%;
-    --scan-y: 48%;
   }
 }
 

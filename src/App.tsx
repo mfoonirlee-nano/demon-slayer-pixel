@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState, type CSSProperties } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Provider, useAtomValue } from "jotai";
 import {
   WIDTH,
@@ -14,52 +14,9 @@ import { loadSprites } from "./assets";
 import { setCanvas } from "./context";
 import { startGame } from "./runtime";
 import { gameSnapshotAtom, gameStore, setGameSnapshot, type GameSnapshot } from "./gameStore";
-import { getCoverProgress } from "./coverProgress";
+import { StartScreen } from "./startScreen";
 
 type AppPhase = "menu" | "playing";
-type CustomCssProperties = CSSProperties & Record<`--${string}`, string>;
-
-const COVER_LAYERS = [
-  { src: "assets/sprites/ui/cover/background.png", className: "cover-background" },
-  { src: "assets/sprites/ui/cover/lantern_light.png", className: "cover-light" },
-  { src: "assets/sprites/ui/cover/moon.png", className: "cover-moon-emitter" },
-  { src: "assets/sprites/ui/cover/emissive_objects.png", className: "cover-warm-emitters" },
-];
-
-function lerp(from: number, to: number, progress: number) {
-  return from + (to - from) * progress;
-}
-
-function coverStyleFromProgress(progress: number): CustomCssProperties {
-  const darknessOpacity = lerp(0.96, 0.18, progress);
-  return {
-    "--cover-darkness-opacity": darknessOpacity.toFixed(3),
-    "--cover-darkness-mid-opacity": lerp(darknessOpacity * 0.82, 0.08, progress).toFixed(3),
-    "--cover-clear-opacity": lerp(0.035, 0, progress).toFixed(3),
-    "--cover-sweep-radius": `${lerp(16, 44, progress).toFixed(2)}vmin`,
-    "--cover-clear-core": `${lerp(16, 28, progress).toFixed(2)}%`,
-    "--cover-soft-edge": `${lerp(58, 76, progress).toFixed(2)}%`,
-  };
-}
-
-function useCoverProgress() {
-  const [progress, setProgress] = useState(() => getCoverProgress());
-
-  useEffect(() => {
-    const syncProgress = () => setProgress(getCoverProgress());
-    const intervalId = window.setInterval(syncProgress, 1000);
-
-    window.addEventListener("focus", syncProgress);
-    window.addEventListener("storage", syncProgress);
-    return () => {
-      window.clearInterval(intervalId);
-      window.removeEventListener("focus", syncProgress);
-      window.removeEventListener("storage", syncProgress);
-    };
-  }, []);
-
-  return progress;
-}
 
 function clampMeterPercent(value: number, maxValue: number) {
   if (maxValue <= 0) return 0;
@@ -97,50 +54,6 @@ function GameCanvas({ active }: { active: boolean }) {
       aria-label="Demon Slayer Pixel Survival"
       className="pixel-canvas block h-auto w-[960px] max-w-full bg-[#0b1220] max-md:h-[100svh] max-md:w-screen max-md:max-w-none"
     />
-  );
-}
-
-function StartScreen({
-  assetsReady,
-  startQueued,
-  onStart,
-}: {
-  assetsReady: boolean;
-  startQueued: boolean;
-  onStart: () => void;
-}) {
-  const progress = useCoverProgress();
-  const promptText = assetsReady ? "按任意键开始" : "加载像素贴图中...";
-  const promptClassName = startQueued && !assetsReady
-    ? "start-prompt start-prompt-loading"
-    : "start-prompt";
-
-  return (
-    <div
-      className="start-screen absolute inset-0 z-40 overflow-hidden text-left"
-      role="button"
-      tabIndex={0}
-      aria-label={promptText}
-      onPointerDown={(event) => {
-        event.preventDefault();
-        onStart();
-      }}
-      onClick={onStart}
-    >
-      <div className="cover-stage" style={coverStyleFromProgress(progress)} aria-hidden="true">
-        {COVER_LAYERS.map((layer) => (
-          <img
-            key={layer.src}
-            src={layer.src}
-            alt=""
-            draggable={false}
-            className={`cover-layer ${layer.className}`}
-          />
-        ))}
-        <div className="cover-darkness" />
-      </div>
-      <div className={promptClassName}>{promptText}</div>
-    </div>
   );
 }
 

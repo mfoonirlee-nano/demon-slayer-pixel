@@ -1,0 +1,109 @@
+import { useEffect, useState, type CSSProperties } from "react";
+import { getCoverProgress } from "./coverProgress";
+
+type CustomCssProperties = CSSProperties & Record<`--${string}`, string>;
+
+type StartScreenProps = {
+  assetsReady: boolean;
+  startQueued: boolean;
+  onStart: () => void;
+};
+
+const COVER_LAYERS = [
+  { src: "assets/sprites/ui/cover/background.png", className: "cover-background" },
+  { src: "assets/sprites/ui/cover/lantern_light.png", className: "cover-light" },
+  { src: "assets/sprites/ui/cover/moon.png", className: "cover-moon-emitter" },
+  { src: "assets/sprites/ui/cover/emissive_objects.png", className: "cover-warm-emitters" },
+];
+
+const CSS_VALUE_PRECISION = 3;
+const COVER_PROGRESS_SYNC_MS = 1000;
+const DARKNESS_OPACITY_START = 0.96;
+const DARKNESS_OPACITY_END = 0.18;
+const DARKNESS_MID_SCALE = 0.82;
+const DARKNESS_MID_END = 0.08;
+const CLEAR_OPACITY_START = 0.035;
+const SWEEP_WIDTH_START_VMIN = 28;
+const SWEEP_WIDTH_END_VMIN = 58;
+const SWEEP_HEIGHT_START_VMIN = 9;
+const SWEEP_HEIGHT_END_VMIN = 22;
+const CLEAR_CORE_START_PERCENT = 16;
+const CLEAR_CORE_END_PERCENT = 28;
+const SOFT_EDGE_START_PERCENT = 58;
+const SOFT_EDGE_END_PERCENT = 76;
+
+function lerp(from: number, to: number, progress: number) {
+  return from + (to - from) * progress;
+}
+
+function coverStyleFromProgress(progress: number): CustomCssProperties {
+  const darknessOpacity = lerp(DARKNESS_OPACITY_START, DARKNESS_OPACITY_END, progress);
+  return {
+    "--cover-darkness-opacity": darknessOpacity.toFixed(CSS_VALUE_PRECISION),
+    "--cover-darkness-mid-opacity": lerp(
+      darknessOpacity * DARKNESS_MID_SCALE,
+      DARKNESS_MID_END,
+      progress,
+    ).toFixed(CSS_VALUE_PRECISION),
+    "--cover-clear-opacity": lerp(CLEAR_OPACITY_START, 0, progress).toFixed(CSS_VALUE_PRECISION),
+    "--cover-sweep-width": `${lerp(SWEEP_WIDTH_START_VMIN, SWEEP_WIDTH_END_VMIN, progress).toFixed(2)}vmin`,
+    "--cover-sweep-height": `${lerp(SWEEP_HEIGHT_START_VMIN, SWEEP_HEIGHT_END_VMIN, progress).toFixed(2)}vmin`,
+    "--cover-clear-core": `${lerp(CLEAR_CORE_START_PERCENT, CLEAR_CORE_END_PERCENT, progress).toFixed(2)}%`,
+    "--cover-soft-edge": `${lerp(SOFT_EDGE_START_PERCENT, SOFT_EDGE_END_PERCENT, progress).toFixed(2)}%`,
+  };
+}
+
+function useCoverProgress() {
+  const [progress, setProgress] = useState(() => getCoverProgress());
+
+  useEffect(() => {
+    const syncProgress = () => setProgress(getCoverProgress());
+    const intervalId = window.setInterval(syncProgress, COVER_PROGRESS_SYNC_MS);
+
+    window.addEventListener("focus", syncProgress);
+    window.addEventListener("storage", syncProgress);
+    return () => {
+      window.clearInterval(intervalId);
+      window.removeEventListener("focus", syncProgress);
+      window.removeEventListener("storage", syncProgress);
+    };
+  }, []);
+
+  return progress;
+}
+
+export function StartScreen({ assetsReady, startQueued, onStart }: StartScreenProps) {
+  const progress = useCoverProgress();
+  const promptText = assetsReady ? "按任意键开始" : "加载像素贴图中...";
+  const promptClassName = startQueued && !assetsReady
+    ? "start-prompt start-prompt-loading"
+    : "start-prompt";
+
+  return (
+    <div
+      className="start-screen absolute inset-0 z-40 overflow-hidden text-left"
+      role="button"
+      tabIndex={0}
+      aria-label={promptText}
+      onPointerDown={(event) => {
+        event.preventDefault();
+        onStart();
+      }}
+      onClick={onStart}
+    >
+      <div className="cover-stage" style={coverStyleFromProgress(progress)} aria-hidden="true">
+        {COVER_LAYERS.map((layer) => (
+          <img
+            key={layer.src}
+            src={layer.src}
+            alt=""
+            draggable={false}
+            className={`cover-layer ${layer.className}`}
+          />
+        ))}
+        <div className="cover-darkness" />
+      </div>
+      <div className={promptClassName}>{promptText}</div>
+    </div>
+  );
+}

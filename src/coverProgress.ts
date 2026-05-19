@@ -17,7 +17,7 @@ export function readCoverKills() {
   const storage = getStorage();
   if (!storage) return 0;
 
-  let stored = 0;
+  let stored: number;
   try {
     stored = Number(storage.getItem(COVER_KILLS_STORAGE_KEY));
   } catch {
