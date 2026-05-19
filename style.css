@@ -32,7 +32,7 @@ body {
 .start-screen {
   cursor: pointer;
   color: #f7f3e9;
-  background: #030812;
+  background: #1e3691;
   image-rendering: pixelated;
   image-rendering: crisp-edges;
 }
@@ -42,7 +42,7 @@ body {
   inset: 0;
   overflow: hidden;
   pointer-events: none;
-  background: #030812;
+  background: #1e3691;
 }
 
 .cover-layer {
@@ -78,7 +78,7 @@ body {
 .cover-lantern-light {
   z-index: 5;
   mix-blend-mode: screen;
-  animation: cover-lantern-breathe 3s ease-in-out infinite;
+  animation: cover-lantern-breathe 2.8s ease-in-out infinite;
 }
 
 .cover-darkness {
@@ -177,26 +177,26 @@ body {
 @keyframes cover-moon-breathe {
   0%,
   100% {
-    opacity: 0.88;
-    filter: brightness(0.95);
+    opacity: 0.22;
+    filter: brightness(0.92);
   }
 
   50% {
-    opacity: 1;
-    filter: brightness(1.1);
+    opacity: 0.56;
+    filter: brightness(1.16);
   }
 }
 
 @keyframes cover-lantern-breathe {
   0%,
   100% {
-    opacity: 0.68;
-    filter: brightness(0.85);
+    opacity: 0.34;
+    filter: brightness(0.72);
   }
 
   48% {
-    opacity: 1;
-    filter: brightness(1.26);
+    opacity: 0.96;
+    filter: brightness(1.55);
   }
 }
 
