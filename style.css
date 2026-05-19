@@ -105,23 +105,24 @@ body {
   bottom: clamp(28px, 7%, 54px);
   z-index: 6;
   width: min(86%, 520px);
-  transform: translateX(-50%);
-  color: #f7f3e9;
+  transform: translate(-50%, 0);
+  color: #f1dfbd;
   font-size: clamp(10px, 1.35vw, 13px);
   line-height: 1.6;
   letter-spacing: 0;
   text-align: center;
   text-shadow:
-    2px 0 #030812,
-    -2px 0 #030812,
-    0 2px #030812,
-    0 -2px #030812,
-    0 0 12px rgba(255, 202, 126, 0.42);
-  animation: start-prompt-pulse 1100ms steps(2, end) infinite;
+    2px 0 rgba(3, 8, 18, 0.9),
+    -2px 0 rgba(3, 8, 18, 0.9),
+    0 2px rgba(3, 8, 18, 0.9),
+    0 -2px rgba(3, 8, 18, 0.9),
+    0 0 10px rgba(244, 178, 94, 0.34);
+  animation: start-prompt-breathe 2400ms ease-in-out infinite;
+  will-change: opacity, transform;
 }
 
 .start-prompt-loading {
-  color: #7fc8e0;
+  color: #8fc1d0;
   animation: none;
 }
 
@@ -214,15 +215,16 @@ body {
   }
 }
 
-@keyframes start-prompt-pulse {
+@keyframes start-prompt-breathe {
   0%,
-  45% {
-    opacity: 1;
+  100% {
+    opacity: 0.72;
+    transform: translate(-50%, 1px);
   }
 
-  46%,
-  100% {
-    opacity: 0.38;
+  50% {
+    opacity: 1;
+    transform: translate(-50%, 0);
   }
 }
 
