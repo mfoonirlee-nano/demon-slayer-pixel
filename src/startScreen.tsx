@@ -1,5 +1,5 @@
 import { useEffect, useState, type CSSProperties } from "react";
-import { getCoverProgress } from "./coverProgress";
+import { getCoverProgress, readCoverKills } from "./coverProgress";
 
 type CustomCssProperties = CSSProperties & Record<`--${string}`, string>;
 
@@ -31,6 +31,9 @@ const CLEAR_CORE_START_PERCENT = 16;
 const CLEAR_CORE_END_PERCENT = 28;
 const SOFT_EDGE_START_PERCENT = 58;
 const SOFT_EDGE_END_PERCENT = 76;
+const KILL_DIGIT_COLUMNS = 5;
+const KILL_DIGIT_ROWS = 2;
+const BACKGROUND_POSITION_MAX_PERCENT = 100;
 
 function lerp(from: number, to: number, progress: number) {
   return from + (to - from) * progress;
@@ -54,26 +57,54 @@ function coverStyleFromProgress(progress: number): CustomCssProperties {
 }
 
 function useCoverProgress() {
-  const [progress, setProgress] = useState(() => getCoverProgress());
+  const [kills, setKills] = useState(() => readCoverKills());
 
   useEffect(() => {
-    const syncProgress = () => setProgress(getCoverProgress());
-    const intervalId = window.setInterval(syncProgress, COVER_PROGRESS_SYNC_MS);
+    const syncKills = () => setKills(readCoverKills());
+    const intervalId = window.setInterval(syncKills, COVER_PROGRESS_SYNC_MS);
 
-    window.addEventListener("focus", syncProgress);
-    window.addEventListener("storage", syncProgress);
+    window.addEventListener("focus", syncKills);
+    window.addEventListener("storage", syncKills);
     return () => {
       window.clearInterval(intervalId);
-      window.removeEventListener("focus", syncProgress);
-      window.removeEventListener("storage", syncProgress);
+      window.removeEventListener("focus", syncKills);
+      window.removeEventListener("storage", syncKills);
     };
   }, []);
 
-  return progress;
+  return {
+    kills,
+    progress: getCoverProgress(kills),
+  };
+}
+
+function CoverKillCounter({ value }: { value: number }) {
+  const kills = Math.max(0, Math.floor(value));
+  if (kills <= 0) return null;
+
+  return (
+    <div className="cover-kill-counter" aria-label={`击杀 ${kills}`}>
+      {String(kills).split("").map((digit, index) => {
+        const digitIndex = Number(digit);
+        const column = digitIndex % KILL_DIGIT_COLUMNS;
+        const row = Math.floor(digitIndex / KILL_DIGIT_COLUMNS);
+        const x = (column / (KILL_DIGIT_COLUMNS - 1)) * BACKGROUND_POSITION_MAX_PERCENT;
+        const y = (row / (KILL_DIGIT_ROWS - 1)) * BACKGROUND_POSITION_MAX_PERCENT;
+
+        return (
+          <span
+            key={`${index}-${digit}`}
+            className="cover-kill-counter-digit"
+            style={{ backgroundPosition: `${x}% ${y}%` }}
+          />
+        );
+      })}
+    </div>
+  );
 }
 
 export function StartScreen({ assetsReady, startQueued, onStart }: StartScreenProps) {
-  const progress = useCoverProgress();
+  const { kills, progress } = useCoverProgress();
   const promptText = assetsReady ? "按任意键开始" : "加载像素贴图中...";
   const promptClassName = startQueued && !assetsReady
     ? "start-prompt start-prompt-loading"
@@ -103,6 +134,7 @@ export function StartScreen({ assetsReady, startQueued, onStart }: StartScreenPr
         ))}
         <div className="cover-darkness" />
       </div>
+      <CoverKillCounter value={kills} />
       <div className={promptClassName}>{promptText}</div>
     </div>
   );
