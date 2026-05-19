@@ -58,27 +58,28 @@ body {
   image-rendering: crisp-edges;
 }
 
-.cover-moon {
-  z-index: 1;
-  animation: cover-moon-breathe 6.4s ease-in-out infinite;
-}
-
 .cover-background {
+  z-index: 1;
+}
+
+.cover-light {
   z-index: 2;
-}
-
-.cover-house {
-  z-index: 3;
-}
-
-.cover-stone-lantern {
-  z-index: 4;
-}
-
-.cover-lantern-light {
-  z-index: 5;
   mix-blend-mode: screen;
-  animation: cover-lantern-breathe 2.8s ease-in-out infinite;
+  animation: cover-light-breathe 4.8s ease-in-out infinite;
+}
+
+.cover-moon-emitter {
+  z-index: 3;
+  mix-blend-mode: screen;
+  filter: drop-shadow(0 0 8px rgba(148, 176, 255, 0.35));
+  animation: cover-moon-emitter-breathe 7.2s ease-in-out infinite;
+}
+
+.cover-warm-emitters {
+  z-index: 4;
+  mix-blend-mode: screen;
+  filter: drop-shadow(0 0 5px rgba(255, 170, 72, 0.36));
+  animation: cover-warm-emitters-breathe 2.9s ease-in-out infinite;
 }
 
 .cover-darkness {
@@ -86,7 +87,7 @@ body {
   --scan-y: 58%;
   position: absolute;
   inset: 0;
-  z-index: 6;
+  z-index: 5;
   background:
     radial-gradient(
       circle var(--cover-sweep-radius) at var(--scan-x) var(--scan-y),
@@ -102,7 +103,7 @@ body {
   position: absolute;
   left: 50%;
   bottom: clamp(28px, 7%, 54px);
-  z-index: 7;
+  z-index: 6;
   width: min(86%, 520px);
   transform: translateX(-50%);
   color: #f7f3e9;
@@ -174,29 +175,42 @@ body {
   }
 }
 
-@keyframes cover-moon-breathe {
+@keyframes cover-light-breathe {
   0%,
   100% {
-    opacity: 0.22;
-    filter: brightness(0.92);
+    opacity: 0.58;
+    filter: brightness(0.94);
   }
 
   50% {
-    opacity: 0.56;
-    filter: brightness(1.16);
+    opacity: 0.78;
+    filter: brightness(1.08);
   }
 }
 
-@keyframes cover-lantern-breathe {
+@keyframes cover-moon-emitter-breathe {
   0%,
   100% {
-    opacity: 0.34;
-    filter: brightness(0.72);
+    opacity: 0.88;
+    filter: brightness(0.96) drop-shadow(0 0 6px rgba(148, 176, 255, 0.26));
+  }
+
+  50% {
+    opacity: 1;
+    filter: brightness(1.08) drop-shadow(0 0 10px rgba(148, 176, 255, 0.42));
+  }
+}
+
+@keyframes cover-warm-emitters-breathe {
+  0%,
+  100% {
+    opacity: 0.68;
+    filter: brightness(0.88) drop-shadow(0 0 4px rgba(255, 170, 72, 0.28));
   }
 
   48% {
-    opacity: 0.96;
-    filter: brightness(1.55);
+    opacity: 1;
+    filter: brightness(1.24) drop-shadow(0 0 7px rgba(255, 170, 72, 0.48));
   }
 }
 

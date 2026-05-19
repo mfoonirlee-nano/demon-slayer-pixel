@@ -20,11 +20,10 @@ type AppPhase = "menu" | "playing";
 type CustomCssProperties = CSSProperties & Record<`--${string}`, string>;
 
 const COVER_LAYERS = [
-  { src: "assets/sprites/ui/cover/moon.png", className: "cover-moon" },
   { src: "assets/sprites/ui/cover/background.png", className: "cover-background" },
-  { src: "assets/sprites/ui/cover/house.png", className: "cover-house" },
-  { src: "assets/sprites/ui/cover/stone_lantern.png", className: "cover-stone-lantern" },
-  { src: "assets/sprites/ui/cover/lantern_light.png", className: "cover-lantern-light" },
+  { src: "assets/sprites/ui/cover/lantern_light.png", className: "cover-light" },
+  { src: "assets/sprites/ui/cover/moon.png", className: "cover-moon-emitter" },
+  { src: "assets/sprites/ui/cover/emissive_objects.png", className: "cover-warm-emitters" },
 ];
 
 function lerp(from: number, to: number, progress: number) {
