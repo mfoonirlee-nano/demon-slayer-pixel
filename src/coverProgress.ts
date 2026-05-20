@@ -1,5 +1,5 @@
 const COVER_KILLS_STORAGE_KEY = "demon-slayer-cover-kills";
-const COVER_PROGRESS_TARGET_KILLS = 50;
+const COVER_PROGRESS_TARGET_KILLS = 5000;
 const ENEMY_KILL_WEIGHT = 1;
 const BOSS_KILL_WEIGHT = 10;
 

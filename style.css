@@ -85,12 +85,14 @@ body {
 .cover-darkness {
   --scan-x: 50%;
   --scan-y: 80%;
+  --scan-x-final: calc(var(--cover-sweep-center-x, 49%) + (var(--scan-x) - 49%) * var(--cover-sweep-scale-x, 1));
+  --scan-y-final: calc(var(--cover-sweep-center-y, 81%) + (var(--scan-y) - 81%) * var(--cover-sweep-scale-y, 1));
   position: absolute;
   inset: 0;
   z-index: 5;
   background:
     radial-gradient(
-      ellipse var(--cover-sweep-width) var(--cover-sweep-height) at var(--scan-x) var(--scan-y),
+      ellipse var(--cover-sweep-width) var(--cover-sweep-height) at var(--scan-x-final) var(--scan-y-final),
       rgba(0, 0, 0, var(--cover-clear-opacity)) 0%,
       rgba(0, 0, 0, var(--cover-clear-opacity)) var(--cover-clear-core),
       rgba(0, 0, 0, var(--cover-darkness-mid-opacity)) var(--cover-soft-edge),

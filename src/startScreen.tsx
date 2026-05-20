@@ -31,6 +31,14 @@ const CLEAR_CORE_START_PERCENT = 16;
 const CLEAR_CORE_END_PERCENT = 28;
 const SOFT_EDGE_START_PERCENT = 58;
 const SOFT_EDGE_END_PERCENT = 76;
+const SWEEP_CENTER_X_START = 49;
+const SWEEP_CENTER_X_END = 50;
+const SWEEP_SCALE_X_START = 1.0;
+const SWEEP_SCALE_X_END = 1.2;
+const SWEEP_CENTER_Y_START = 81;
+const SWEEP_CENTER_Y_END = 55;
+const SWEEP_SCALE_Y_START = 1.0;
+const SWEEP_SCALE_Y_END = 7.0;
 const KILL_DIGIT_COLUMNS = 5;
 const KILL_DIGIT_ROWS = 2;
 const BACKGROUND_POSITION_MAX_PERCENT = 100;
@@ -53,6 +61,10 @@ function coverStyleFromProgress(progress: number): CustomCssProperties {
     "--cover-sweep-height": `${lerp(SWEEP_HEIGHT_START_VMIN, SWEEP_HEIGHT_END_VMIN, progress).toFixed(2)}vmin`,
     "--cover-clear-core": `${lerp(CLEAR_CORE_START_PERCENT, CLEAR_CORE_END_PERCENT, progress).toFixed(2)}%`,
     "--cover-soft-edge": `${lerp(SOFT_EDGE_START_PERCENT, SOFT_EDGE_END_PERCENT, progress).toFixed(2)}%`,
+    "--cover-sweep-center-x": `${lerp(SWEEP_CENTER_X_START, SWEEP_CENTER_X_END, progress).toFixed(2)}%`,
+    "--cover-sweep-scale-x": lerp(SWEEP_SCALE_X_START, SWEEP_SCALE_X_END, progress).toFixed(CSS_VALUE_PRECISION),
+    "--cover-sweep-center-y": `${lerp(SWEEP_CENTER_Y_START, SWEEP_CENTER_Y_END, progress).toFixed(2)}%`,
+    "--cover-sweep-scale-y": lerp(SWEEP_SCALE_Y_START, SWEEP_SCALE_Y_END, progress).toFixed(CSS_VALUE_PRECISION),
   };
 }
 
