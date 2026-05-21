@@ -8,6 +8,8 @@
 
 当前 Boss 是单例配置，没有 Boss 注册表，也没有 Boss 击杀次数或幕数状态。Boss 死亡奖励和重生计时分散在多个伤害分支中处理。
 
+美术与设定文案见 [../../art/bosses/spider-string.md](../../art/bosses/spider-string.md)。本文只维护当前源码已经生效的 Boss 数值和行为。
+
 ## Key Formulas
 
 出场：

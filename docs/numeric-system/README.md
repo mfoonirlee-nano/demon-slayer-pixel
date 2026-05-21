@@ -10,6 +10,7 @@
 - `future/` 只记录目标设计和后续落地顺序，不表示已经实现。
 - `current/` 不包含装备、经验、幕数驱动进度等未实现系统。
 - `future/` 中的新敌人与新 Boss 第一版等待正式素材接入，不使用临时图形占位。
+- 原画、角色文案和视觉制作 brief 不在本目录维护，统一放在 [../art/README.md](../art/README.md)。
 
 ## Core Formula Entrypoints
 
