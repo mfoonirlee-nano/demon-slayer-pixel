@@ -1,8 +1,10 @@
-# 未来 Boss 类型与技能池
+# Boss 类型与技能池
+
+> 实现状态：目标设计，未实现。当前源码仍是单例 Boss，没有 Boss 注册表或轮换池。
 
 ## Purpose
 
-定义未来 Boss 注册表、血量曲线、技能池、召唤池和 Boss 击杀循环。该文档是目标设计，当前源码仍是单例 Boss。
+定义 Boss 注册表、血量曲线、技能池、召唤池和 Boss 击杀循环。
 
 ## Target Design
 
@@ -80,17 +82,17 @@ Boss 技能解锁建议：
 
 ## Boss Archetype Candidates
 
-以下条目只维护玩法定位、解锁节奏和实现边界。原画、角色文案、登场提示和动画 brief 见 [../../art/bosses/README.md](../../art/bosses/README.md)。
+以下条目只维护玩法定位、解锁节奏和实现边界。原画、角色文案、登场提示和动画 brief 见 [../art/bosses/README.md](../art/bosses/README.md)。
 
 | ID | Display Name | 玩法定位 | 推荐解锁 | 美术设定 |
 | --- | --- | --- | ---: | --- |
-| `lower_moon_spider_string` | 下弦之鬼 · 蛛弦 | 追猎 + 召唤 + 单向蛛网技 | `act >= 1` | [spider-string.md](../../art/bosses/spider-string.md) |
-| `lower_moon_mist_bone` | 下弦之鬼 · 雾骨 | 区域封锁 + 骨刺弹幕 | `act >= 2` | [mist-bone.md](../../art/bosses/mist-bone.md) |
-| `lower_moon_mirror_dream` | 下弦之鬼 · 镜魇 | 分身干扰 + 反射投射物 | `act >= 2` | [mirror-dream.md](../../art/bosses/mirror-dream.md) |
-| `lower_moon_fang_gale` | 下弦之鬼 · 牙岚 | 高速冲刺 + 近身连击 | `act >= 3` | [fang-gale.md](../../art/bosses/fang-gale.md) |
-| `lower_moon_lantern_ember` | 下弦之鬼 · 灯烬 | 召唤强化 + 火线封路 | `act >= 3` | [lantern-ember.md](../../art/bosses/lantern-ember.md) |
-| `lower_moon_dead_bell` | 下弦之鬼 · 枯铃 | 节奏压迫 + 组合弹幕 | `act >= 4` | [dead-bell.md](../../art/bosses/dead-bell.md) |
-| `grand_boss_blood_moon_many_faces` | 终幕之鬼 · 万相血月 | 终盘复合型特殊挑战 | `act >= 5` | [blood-moon-many-faces.md](../../art/bosses/blood-moon-many-faces.md) |
+| `lower_moon_spider_string` | 下弦之鬼 · 蛛弦 | 追猎 + 召唤 + 单向蛛网技 | `act >= 1` | [spider-string.md](../art/bosses/spider-string.md) |
+| `lower_moon_mist_bone` | 下弦之鬼 · 雾骨 | 区域封锁 + 骨刺弹幕 | `act >= 2` | [mist-bone.md](../art/bosses/mist-bone.md) |
+| `lower_moon_mirror_dream` | 下弦之鬼 · 镜魇 | 分身干扰 + 反射投射物 | `act >= 2` | [mirror-dream.md](../art/bosses/mirror-dream.md) |
+| `lower_moon_fang_gale` | 下弦之鬼 · 牙岚 | 高速冲刺 + 近身连击 | `act >= 3` | [fang-gale.md](../art/bosses/fang-gale.md) |
+| `lower_moon_lantern_ember` | 下弦之鬼 · 灯烬 | 召唤强化 + 火线封路 | `act >= 3` | [lantern-ember.md](../art/bosses/lantern-ember.md) |
+| `lower_moon_dead_bell` | 下弦之鬼 · 枯铃 | 节奏压迫 + 组合弹幕 | `act >= 4` | [dead-bell.md](../art/bosses/dead-bell.md) |
+| `grand_boss_blood_moon_many_faces` | 终幕之鬼 · 万相血月 | 终盘复合型特殊挑战 | `act >= 5` | [blood-moon-many-faces.md](../art/bosses/blood-moon-many-faces.md) |
 
 终盘大 Boss 建议不进入普通轮换池，应作为击败基础 Boss 后的特殊挑战。它可以复用多个 Boss 的代表机制，但每阶段只启用一个主特性和一个副特性，避免同屏堆叠过多危险源。
 

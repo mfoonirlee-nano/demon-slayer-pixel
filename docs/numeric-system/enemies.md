@@ -1,8 +1,10 @@
-# 当前普通敌人数值
+# 普通敌人数值
+
+> 实现状态：已实现。本文记录当前源码中已经生效的普通敌人数值。
 
 ## Purpose
 
-记录当前普通敌人的生成、生命、伤害、速度成长和素材选择方式。
+记录当前普通敌人的生成、生命、伤害、速度成长和素材选择方式。未实现的敌人类型注册表和生成权重见 [enemy-archetypes.md](enemy-archetypes.md)。
 
 ## Current State
 
@@ -70,4 +72,3 @@ h = drawH * 0.78
 - `src/entities/enemy.ts`
 - `src/runtime.ts`
 - `src/types/game-state.ts`
-

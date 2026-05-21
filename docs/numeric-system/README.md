@@ -6,25 +6,28 @@
 
 ## Document Boundary
 
-- `current/` 只记录当前源码中真实生效的数值、状态和公式。
-- `future/` 只记录目标设计和后续落地顺序，不表示已经实现。
-- `current/` 不包含装备、经验、幕数驱动进度等未实现系统。
-- `future/` 中的新敌人与新 Boss 第一版等待正式素材接入，不使用临时图形占位。
+- 本目录按主题组织，不用目录名区分已实现和未实现。
+- 每篇文档在正文开头标注实现状态。
+- 未实现内容只作为目标设计或落地计划，不表示源码已经接入。
+- 新敌人与新 Boss 第一版等待正式素材接入，不使用临时图形占位。
 - 原画、角色文案和视觉制作 brief 不在本目录维护，统一放在 [../art/README.md](../art/README.md)。
 
 ## Core Formula Entrypoints
 
-| 主题 | 当前实现 | 目标方案 |
+| 文档 | 状态 | 内容 |
 | --- | --- | --- |
-| 总览与边界 | [current/overview.md](current/overview.md) | [future/overview.md](future/overview.md) |
-| 玩家、普攻、技能、大招 | [current/player.md](current/player.md) | [future/progression.md](future/progression.md) |
-| 普通敌人 | [current/enemies.md](current/enemies.md) | [future/enemy-archetypes.md](future/enemy-archetypes.md) |
-| Boss | [current/boss.md](current/boss.md) | [future/boss-archetypes.md](future/boss-archetypes.md) |
-| 成长 | [current/rewards.md](current/rewards.md) | [future/progression.md](future/progression.md) |
-| 装备 | 未实现 | [future/equipment.md](future/equipment.md) |
-| 奖励 | [current/rewards.md](current/rewards.md) | [future/equipment.md](future/equipment.md) |
-| 时间缩放与刷怪节奏 | [current/runtime-scaling.md](current/runtime-scaling.md) | [future/overview.md](future/overview.md) |
-| 后续落地顺序 | 不适用 | [future/implementation-order.md](future/implementation-order.md) |
+| [overview.md](overview.md) | 已实现 | 当前运行时数值边界、单位约定和关键状态 |
+| [player.md](player.md) | 已实现 | 玩家、普攻、下落攻击、技能、大招、受伤与无敌 |
+| [enemies.md](enemies.md) | 已实现 | 普通敌人的生成、生命、伤害、速度成长和素材选择 |
+| [boss.md](boss.md) | 已实现 | 当前 Boss 出场、阶段、AI、召唤、投射物和专属技能 |
+| [rewards.md](rewards.md) | 已实现 | 得分、技能能量、大招能量、水晶、宝箱和奖励预算 |
+| [runtime-scaling.md](runtime-scaling.md) | 已实现 | 时间缩放、刷怪节奏、Boss 出场计时和平台生成 |
+| [act-and-threat.md](act-and-threat.md) | 目标设计，未实现 | Boss 击杀驱动幕数、统一威胁值和注册表边界 |
+| [enemy-archetypes.md](enemy-archetypes.md) | 目标设计，部分未实现 | 敌人类型、生成权重、技能解锁和素材接入边界 |
+| [boss-archetypes.md](boss-archetypes.md) | 目标设计，未实现 | Boss 注册表、血量曲线、技能池、召唤池和击杀循环 |
+| [progression.md](progression.md) | 目标设计，未实现 | 经验、等级、升级三选一和局内成长 |
+| [equipment.md](equipment.md) | 目标设计，未实现 | 装备槽位、Boss 掉落三选一和装备属性 |
+| [implementation-order.md](implementation-order.md) | 目标设计，未实现 | 后续代码落地顺序和验证点 |
 
 ## Code Sources
 

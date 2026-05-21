@@ -1,4 +1,6 @@
-# 当前玩家数值
+# 玩家数值
+
+> 实现状态：已实现。本文记录当前源码中已经生效的玩家战斗数值。
 
 ## Purpose
 
@@ -125,4 +127,3 @@ Boss 判定半径额外增加 `40`，最低伤害比例为 `0.2`。当前释放�
 - `src/entities/player.ts`
 - `src/entities/particle.ts`
 - `src/App.tsx`
-

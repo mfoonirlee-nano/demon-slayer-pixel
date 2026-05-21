@@ -1,14 +1,16 @@
-# 当前 Boss 数值
+# Boss 数值
+
+> 实现状态：已实现。本文记录当前源码中已经生效的 Boss 数值和行为。
 
 ## Purpose
 
-记录当前 Boss 出场、阶段、AI 行为、召唤、投射物、专属技能和血量曲线。
+记录当前 Boss 出场、阶段、AI 行为、召唤、投射物、专属技能和血量曲线。未实现的 Boss 注册表和轮换设计见 [boss-archetypes.md](boss-archetypes.md)。
 
 ## Current State
 
 当前 Boss 是单例配置，没有 Boss 注册表，也没有 Boss 击杀次数或幕数状态。Boss 死亡奖励和重生计时分散在多个伤害分支中处理。
 
-美术与设定文案见 [../../art/bosses/spider-string.md](../../art/bosses/spider-string.md)。本文只维护当前源码已经生效的 Boss 数值和行为。
+美术与设定文案见 [../art/bosses/spider-string.md](../art/bosses/spider-string.md)。本文只维护当前源码已经生效的 Boss 数值和行为。
 
 ## Key Formulas
 
