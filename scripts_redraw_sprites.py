@@ -3,7 +3,10 @@ import os
 import struct
 import zlib
 
-ROOT = '/Users/bytedance/Work/demon-slayer/assets/sprites'
+from scripts_sprite_sheet_utils import SPRITES_DIR, reframe_sheet_rgba
+
+
+ROOT = SPRITES_DIR
 os.makedirs(ROOT, exist_ok=True)
 
 
@@ -191,13 +194,32 @@ def draw_water_arc(img, W, H, cx, cy, r, thickness, phase, start_deg=10, end_deg
         pset(img, W, H, x, y, c3)
 
 
+def paste_frame(dst, dst_w, frame_x, frame_w, frame_h, frame_rgba):
+    row_bytes = frame_w * 4
+    for y in range(frame_h):
+        src = y * row_bytes
+        dst_i = (y * dst_w + frame_x) * 4
+        dst[dst_i:dst_i + row_bytes] = frame_rgba[src:src + row_bytes]
+
+
+def render_fitted_frame(fw, fh, pose, draw_fn, anchor_y='bottom'):
+    overscan = max(16, fw // 2, fh // 2)
+    temp_w = fw + overscan * 2
+    temp_h = fh + overscan * 2
+    temp = new_img(temp_w, temp_h)
+    draw_fn(temp, temp_w, temp_h, overscan, overscan, pose)
+    spec = dict(frame_w=fw, frame_h=fh, count=1, padding=max(2, min(fw, fh) // 12), anchor_y=anchor_y)
+    _, _, frame_rgba, _, _, _ = reframe_sheet_rgba(temp, temp_w, temp_h, spec, use_detected_regions=True)
+    return frame_rgba
+
+
 def render_player_sheet(path, fw, fh, poses):
     W = fw * len(poses)
     H = fh
     img = new_img(W, H)
     for i, pose in enumerate(poses):
-        ox = i * fw
-        draw_tanjiro_frame(img, W, H, ox, 0, pose)
+        frame_rgba = render_fitted_frame(fw, fh, pose, draw_tanjiro_frame, anchor_y='bottom')
+        paste_frame(img, W, i * fw, fw, fh, frame_rgba)
     save_png(path, W, H, img)
 
 
@@ -262,7 +284,8 @@ def render_sheet(path, fw, fh, poses, draw_fn):
     H = fh
     img = new_img(W, H)
     for i, pose in enumerate(poses):
-        draw_fn(img, W, H, i * fw, 0, pose)
+        frame_rgba = render_fitted_frame(fw, fh, pose, draw_fn, anchor_y='bottom')
+        paste_frame(img, W, i * fw, fw, fh, frame_rgba)
     save_png(path, W, H, img)
 
 
@@ -302,12 +325,18 @@ BOSS = [
     dict(bob=-1, arm=-1, jaw=0),
 ]
 
-render_player_sheet(os.path.join(ROOT, 'player_idle.png'), 48, 48, PLAYER['idle'])
-render_player_sheet(os.path.join(ROOT, 'player_run.png'), 48, 48, PLAYER['run'])
-render_player_sheet(os.path.join(ROOT, 'player_jump.png'), 48, 48, PLAYER['jump'])
-render_player_sheet(os.path.join(ROOT, 'player_attack.png'), 64, 48, PLAYER['attack'])
-render_water_fx_sheet(os.path.join(ROOT, 'water_slash.png'))
-render_sheet(os.path.join(ROOT, 'enemy.png'), 24, 36, ENEMY, draw_enemy)
-render_sheet(os.path.join(ROOT, 'boss.png'), 36, 48, BOSS, draw_boss)
 
-print('high-detail sprites redrawn at', ROOT)
+def main():
+    render_player_sheet(os.path.join(ROOT, 'player_idle.png'), 48, 48, PLAYER['idle'])
+    render_player_sheet(os.path.join(ROOT, 'player_run.png'), 48, 48, PLAYER['run'])
+    render_player_sheet(os.path.join(ROOT, 'player_jump.png'), 48, 48, PLAYER['jump'])
+    render_player_sheet(os.path.join(ROOT, 'player_attack.png'), 64, 48, PLAYER['attack'])
+    render_water_fx_sheet(os.path.join(ROOT, 'water_slash.png'))
+    render_sheet(os.path.join(ROOT, 'enemy.png'), 24, 36, ENEMY, draw_enemy)
+    render_sheet(os.path.join(ROOT, 'boss.png'), 36, 48, BOSS, draw_boss)
+
+    print('high-detail sprites redrawn at', ROOT)
+
+
+if __name__ == '__main__':
+    main()

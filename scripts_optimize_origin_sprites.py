@@ -1,115 +1,17 @@
 import os
-import struct
-import zlib
 from collections import Counter, deque
 
+from scripts_sprite_sheet_utils import (
+    SPRITES_DIR,
+    parse_png_rgba,
+    reframe_sheet_if_known,
+    save_png_rgba,
+    sprite_rel_for_origin,
+)
 
 ROOT = os.path.dirname(os.path.abspath(__file__))
 SRC_DIR = os.path.join(ROOT, "assets", "origin")
-DST_DIR = os.path.join(ROOT, "assets", "sprites")
-
-
-def parse_png_rgba(path):
-    with open(path, "rb") as f:
-        data = f.read()
-    if data[:8] != b"\x89PNG\r\n\x1a\n":
-        raise ValueError(f"Not PNG: {path}")
-
-    pos = 8
-    width = height = None
-    bit_depth = color_type = interlace = None
-    idat = bytearray()
-
-    while pos < len(data):
-        ln = struct.unpack("!I", data[pos:pos + 4])[0]
-        typ = data[pos + 4:pos + 8]
-        chunk = data[pos + 8:pos + 8 + ln]
-        pos += 12 + ln
-
-        if typ == b"IHDR":
-            width, height, bit_depth, color_type, _, _, interlace = struct.unpack("!IIBBBBB", chunk)
-            if bit_depth != 8 or color_type != 6 or interlace != 0:
-                raise ValueError(
-                    f"Unsupported PNG mode in {path}: bit_depth={bit_depth}, "
-                    f"color_type={color_type}, interlace={interlace}"
-                )
-        elif typ == b"IDAT":
-            idat.extend(chunk)
-        elif typ == b"IEND":
-            break
-
-    raw = zlib.decompress(bytes(idat))
-    stride = width * 4
-    out = bytearray(width * height * 4)
-
-    def paeth(a, b, c):
-        p = a + b - c
-        pa = abs(p - a)
-        pb = abs(p - b)
-        pc = abs(p - c)
-        if pa <= pb and pa <= pc:
-            return a
-        if pb <= pc:
-            return b
-        return c
-
-    in_pos = 0
-    prev = bytearray(stride)
-    for y in range(height):
-        ftype = raw[in_pos]
-        in_pos += 1
-        row = bytearray(raw[in_pos:in_pos + stride])
-        in_pos += stride
-
-        if ftype == 1:
-            for i in range(stride):
-                left = row[i - 4] if i >= 4 else 0
-                row[i] = (row[i] + left) & 0xFF
-        elif ftype == 2:
-            for i in range(stride):
-                row[i] = (row[i] + prev[i]) & 0xFF
-        elif ftype == 3:
-            for i in range(stride):
-                left = row[i - 4] if i >= 4 else 0
-                up = prev[i]
-                row[i] = (row[i] + ((left + up) >> 1)) & 0xFF
-        elif ftype == 4:
-            for i in range(stride):
-                left = row[i - 4] if i >= 4 else 0
-                up = prev[i]
-                up_left = prev[i - 4] if i >= 4 else 0
-                row[i] = (row[i] + paeth(left, up, up_left)) & 0xFF
-        elif ftype != 0:
-            raise ValueError(f"Unsupported filter type {ftype} in {path}")
-
-        out[y * stride:(y + 1) * stride] = row
-        prev = row
-
-    return width, height, out
-
-
-def save_png_rgba(path, w, h, rgba):
-    def chunk(tag, payload):
-        return (
-            struct.pack("!I", len(payload))
-            + tag
-            + payload
-            + struct.pack("!I", zlib.crc32(tag + payload) & 0xFFFFFFFF)
-        )
-
-    raw = bytearray()
-    stride = w * 4
-    for y in range(h):
-        raw.append(0)
-        raw.extend(rgba[y * stride:(y + 1) * stride])
-
-    ihdr = struct.pack("!IIBBBBB", w, h, 8, 6, 0, 0, 0)
-    png = bytearray(b"\x89PNG\r\n\x1a\n")
-    png.extend(chunk(b"IHDR", ihdr))
-    png.extend(chunk(b"IDAT", zlib.compress(bytes(raw), 9)))
-    png.extend(chunk(b"IEND", b""))
-    with open(path, "wb") as f:
-        f.write(png)
+DST_DIR = SPRITES_DIR
 
 
 def qbin(r, g, b):
@@ -134,7 +36,7 @@ def build_bg_palette(rgba, w, h):
         c[qbin(rgba[p], rgba[p + 1], rgba[p + 2])] += 1
 
     if not c:
-        return set()
+        return set(), []
 
     total = sum(c.values())
     picked = []
@@ -274,7 +176,7 @@ def clear_bg_noise_by_neighbors(rgba, w, h, bg_bins, bg_centers, rounds=2, min_t
 def transparentize_connected_bg(rgba, w, h):
     bg_bins, bg_centers = build_bg_palette(rgba, w, h)
     if not bg_bins:
-        return 0, 0
+        return 0, 0, 0
 
     visited = bytearray(w * h)
     q = deque()
@@ -319,11 +221,13 @@ def transparentize_connected_bg(rgba, w, h):
     return removed, speck_removed, neighbor_removed
 
 
-def process_one(src_path, dst_path):
+def process_one(src_path, dst_path, sprite_rel):
     w, h, rgba = parse_png_rgba(src_path)
     removed, speck_removed, neighbor_removed = transparentize_connected_bg(rgba, w, h)
+    w, h, rgba, reframed, detected_regions, scaled = reframe_sheet_if_known(sprite_rel, rgba, w, h)
+    os.makedirs(os.path.dirname(dst_path), exist_ok=True)
     save_png_rgba(dst_path, w, h, rgba)
-    return w, h, removed, speck_removed, neighbor_removed
+    return w, h, removed, speck_removed, neighbor_removed, reframed, detected_regions, scaled
 
 
 def main():
@@ -331,25 +235,32 @@ def main():
         raise SystemExit(f"missing source dir: {SRC_DIR}")
     os.makedirs(DST_DIR, exist_ok=True)
 
-    names = sorted(
-        f for f in os.listdir(SRC_DIR)
-        if f.lower().endswith(".png")
-    )
-    if not names:
+    sources = []
+    for dirpath, _, files in os.walk(SRC_DIR):
+        for name in files:
+            if name.lower().endswith(".png"):
+                src = os.path.join(dirpath, name)
+                rel = os.path.relpath(src, SRC_DIR)
+                sources.append((src, sprite_rel_for_origin(rel)))
+    sources.sort(key=lambda item: item[1])
+
+    if not sources:
         print("no png files found in", SRC_DIR)
         return
 
-    for name in names:
-        src = os.path.join(SRC_DIR, name)
-        dst = os.path.join(DST_DIR, name)
+    for src, sprite_rel in sources:
+        dst = os.path.join(DST_DIR, sprite_rel)
         try:
-            w, h, removed, speck_removed, neighbor_removed = process_one(src, dst)
+            w, h, removed, speck_removed, neighbor_removed, reframed, detected_regions, scaled = process_one(
+                src, dst, sprite_rel
+            )
             print(
-                f"{name}: {w}x{h}, bg_removed={removed}, speck_removed={speck_removed}, "
-                f"neighbor_removed={neighbor_removed}, out={dst}"
+                f"{sprite_rel}: {w}x{h}, bg_removed={removed}, speck_removed={speck_removed}, "
+                f"neighbor_removed={neighbor_removed}, reframed={reframed}, "
+                f"detected_regions={detected_regions}, scaled_frames={scaled}, out={dst}"
             )
         except Exception as e:
-            print(f"{name}: skipped ({e})")
+            print(f"{sprite_rel}: skipped ({e})")
 
 
 if __name__ == "__main__":
