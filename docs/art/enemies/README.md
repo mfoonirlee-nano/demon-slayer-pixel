@@ -38,6 +38,7 @@
 | `duelist` | 双刃裂鬼 | 素材已接入；近战斩击行为未实现 | [duelist.md](duelist.md) |
 | `brute` | 甲壳重鬼 | 素材已接入；重型行为未实现 | [brute.md](brute.md) |
 | `leaper` | 裂足跳鬼 | 未实现 | [leaper.md](leaper.md) |
+| `glider` | 膜翼巡鬼 | 未实现 | [glider.md](glider.md) |
 | `burrower` | 土潜鬼 | 未实现 | [burrower.md](burrower.md) |
 | `splitter` | 裂影鬼 | 未实现 | [splitter.md](splitter.md) |
 | `binder` | 缚咒鬼 | 未实现 | [binder.md](binder.md) |
@@ -52,6 +53,7 @@
 - `duelist` 的双刃范围明确，但不能像 Boss 级大招。
 - `brute` 必须靠体量和甲壳读出高血重型定位。
 - `leaper` 不看颜色也能通过长腿和压低姿态认出。
+- `glider` 必须靠低空翼膜和收翼俯冲读出飞行威胁。
 - `burrower` 潜行时仍有地面轨迹，不会凭空消失。
 - `splitter` 活着时就能看出身体中线裂缝。
 - `binder` 的威胁来自地面区域，而不是飞行弹幕。
@@ -67,4 +69,3 @@
 - 现有 6 个敌人先补行为关键帧，不需要推翻当前主体设计。
 - 第一批新敌人可先做 `leaper`、`binder`、`warden`，因为它们最能验证新行为的可读性。
 - `burrower` 和 `splitter` 需要额外动效支持，适合第二批制作。
-
