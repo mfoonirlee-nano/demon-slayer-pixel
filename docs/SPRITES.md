@@ -70,6 +70,17 @@
 | `boss_skill1.png` | `2400x400` | 6 | `400x400` | `BOSS_SKILL1_SHEET` |
 | `boss_skill1_effect.png` | `2400x350` | 6 | `400x350` | `BOSS_SKILL1_EFFECT_SHEET` |
 
+Runner 专属动作素材：
+
+| 文件 | 总尺寸 | 帧数 | 单帧 | 运行时状态 | 备注 |
+| --- | ---: | ---: | ---: | --- | --- |
+| `runner_approach.png` | `1500x250` | 6 | `250x250` | `approach` | 低身急跑，角前指 |
+| `runner_windup.png` | `1000x250` | 4 | `250x250` | `windup` | 静止压低，角对准玩家 |
+| `runner_dash.png` | `1250x250` | 5 | `250x250` | `dash` | 身体拉成长斜线，带少量尘迹 |
+| `runner_recover.png` | `750x250` | 3 | `250x250` | `recover` | 冲过后刹停，露出反打窗口 |
+
+以上 runner 专属动作素材均有对应 `*_source.png` 绿幕制作源图；当前运行时仍直接加载 `enemy_3.png`。
+
 ## 资源更新流程
 
 1. 生成或编辑图片内容时，使用 Image Gen skill (`imagegen`)，优先输出为透明 PNG。
