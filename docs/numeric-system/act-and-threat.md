@@ -21,10 +21,11 @@
 bossKills: number;
 ```
 
-`act` 推荐通过 helper 派生，不作为唯一权威状态：
+`act` 推荐通过 helper 派生，不作为唯一权威状态。敌人内容解锁需要支持第 5 幕、第 6 幕+，因此 `act` 不应硬截断；平台、奖励、Boss 等仍可用单独的 late-game 档位把第 4 幕后合并调参。
 
 ```ts
-act = Math.min(4, bossKills + 1)
+act = bossKills + 1
+lateGameBand = Math.min(4, act)
 ```
 
 ## Key Formulas
@@ -98,5 +99,5 @@ platformSpeed = baseSpeed + randomSpeed + bossKills * 0.18 + Math.min(elapsed, 2
 
 - 先增加 `bossKills` 和 helper，再让各系统逐步读取派生的 `act` 和 `threatScalar`。
 - 实体更新逻辑只读取配置和当前运行状态，不直接写死“第几幕出现什么”。
-- 第 4 幕后不再增加固定幕，而是继续通过 `bossKills` 提高威胁值，并从完整内容池中按权重轮换。
+- 第 4 幕后平台、奖励和 Boss 可以继续使用 late-game 档位调参；敌人池允许第 5 幕、第 6 幕+ 继续解锁新 archetype，并通过轮换控制同幕常规池规模。
 - 新敌人和新 Boss 第一版等待正式素材接入，不使用临时图形占位。
