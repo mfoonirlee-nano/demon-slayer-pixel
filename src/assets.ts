@@ -1,6 +1,7 @@
 import {
   PLAYER_SHEETS,
   ENEMY_SHEETS,
+  RUNNER_SHEETS,
   BOSS_SHEET,
   BOSS_SKILL1_SHEET,
   BOSS_SKILL1_EFFECT_SHEET,
@@ -33,6 +34,10 @@ export function loadSprites(): Promise<void> {
     jobs.push(loadImage(sheet.src).then((img) => { sheet.image = img; }));
   }
   for (const sheet of ENEMY_SHEETS) {
+    jobs.push(loadImage(sheet.src).then((img) => { sheet.image = img; }));
+  }
+  for (const sheet of Object.values(RUNNER_SHEETS)) {
+    if (ENEMY_SHEETS.includes(sheet)) continue;
     jobs.push(loadImage(sheet.src).then((img) => { sheet.image = img; }));
   }
   jobs.push(loadImage(BOSS_SHEET.src).then((img) => { BOSS_SHEET.image = img; }));

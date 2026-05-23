@@ -1,5 +1,6 @@
 import { PLAYER_ANIMATION_STATES, SKILL_IDS } from "./ids";
 import type { PlayerAnimationState, PlayerSheet, Skill, SpriteSheet } from "../types/assets";
+import type { RunnerPhase } from "../types/game-state";
 
 export const SKILLS: Skill[] = [
   {
@@ -127,10 +128,10 @@ export const ENEMY_SHEETS: SpriteSheet[] = [
     image: null,
   },
   {
-    src: "assets/sprites/enemies/enemy_3.png",
-    frameW: 233,
+    src: "assets/sprites/enemies/runner_approach.png",
+    frameW: 250,
     frameH: 250,
-    count: 4,
+    count: 6,
     image: null,
   },
   {
@@ -155,6 +156,33 @@ export const ENEMY_SHEETS: SpriteSheet[] = [
     image: null,
   },
 ];
+
+export const RUNNER_SHEET_INDEX = 2;
+
+export const RUNNER_SHEETS: Record<RunnerPhase, SpriteSheet> = {
+  approach: ENEMY_SHEETS[RUNNER_SHEET_INDEX],
+  windup: {
+    src: "assets/sprites/enemies/runner_windup.png",
+    frameW: 250,
+    frameH: 250,
+    count: 4,
+    image: null,
+  },
+  dash: {
+    src: "assets/sprites/enemies/runner_dash.png",
+    frameW: 250,
+    frameH: 250,
+    count: 5,
+    image: null,
+  },
+  recover: {
+    src: "assets/sprites/enemies/runner_recover.png",
+    frameW: 250,
+    frameH: 250,
+    count: 3,
+    image: null,
+  },
+};
 
 export const ENEMY_REF_DRAW_W = 120;
 export const ENEMY_DRAW_SCALE = ENEMY_REF_DRAW_W / ENEMY_SHEETS[1].frameW;

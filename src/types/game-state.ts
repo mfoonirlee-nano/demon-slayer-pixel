@@ -4,6 +4,7 @@ export type PlatformStyle = "stone" | "moss" | "shrine" | "ruin";
 export type CrystalType = "atk" | "hp";
 export type PlatformKind = "normal" | "hover" | "chain";
 export type PlatformLayer = "low" | "mid" | "high" | "top";
+export type RunnerPhase = "approach" | "windup" | "dash" | "recover";
 
 export type PlatformState = {
   x: number;
@@ -74,6 +75,10 @@ export type EnemyState = {
   hitCd: number;
   animSeed: number;
   sheetIndex: number;
+  runnerPhase?: RunnerPhase;
+  runnerTimer?: number;
+  runnerFacing?: number;
+  runnerApproachSpeed?: number;
 };
 
 export type BossState = {
