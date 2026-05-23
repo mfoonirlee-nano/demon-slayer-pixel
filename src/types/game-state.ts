@@ -5,6 +5,7 @@ export type CrystalType = "atk" | "hp";
 export type PlatformKind = "normal" | "hover" | "chain";
 export type PlatformLayer = "low" | "mid" | "high" | "top";
 export type RunnerPhase = "approach" | "windup" | "dash" | "recover";
+export type BrutePhase = "advance" | "brace" | "stomp" | "recover";
 
 export type PlatformState = {
   x: number;
@@ -79,6 +80,11 @@ export type EnemyState = {
   runnerTimer?: number;
   runnerFacing?: number;
   runnerApproachSpeed?: number;
+  brutePhase?: BrutePhase;
+  bruteTimer?: number;
+  bruteFacing?: number;
+  bruteBaseSpeed?: number;
+  bruteStompHit?: boolean;
 };
 
 export type BossState = {

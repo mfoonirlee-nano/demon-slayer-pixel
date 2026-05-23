@@ -15,6 +15,7 @@ import { ctx } from "../context";
 import { playTone } from "../audio";
 import { hurtPlayer } from "./player";
 import { spawnEnemy } from "./enemy";
+import { damageEnemy } from "./enemies/common";
 
 export function spawnBoss() {
   const hp = BOSS_CONFIG.baseHp + state.elapsed * BOSS_CONFIG.hpScaleByElapsed;
@@ -264,8 +265,7 @@ export function updateBossSkill1Effects() {
       const overlapX = effRight > enemy.x && effLeft < enemy.x + enemy.w;
       const overlapY = effBottom > enemy.y && effTop < enemy.y + enemy.h;
       if (!overlapX || !overlapY) continue;
-      enemy.hp -= eff.damage;
-      enemy.hitCd = BOSS_SKILL1_CONFIG.hitEnemyCooldown;
+      damageEnemy(enemy, eff.damage, BOSS_SKILL1_CONFIG.hitEnemyCooldown);
       if (enemy.hp <= 0) state.enemies.splice(j, 1);
     }
 

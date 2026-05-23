@@ -24,6 +24,7 @@ import { drawSheetFrame, drawSkillFrame } from "../graphics";
 import { playTone } from "../audio";
 import { recordBossCoverKill, recordEnemyCoverKill } from "../coverProgress";
 import { emitSlash, emitHitBurst } from "./particle";
+import { damageEnemy } from "./enemies/common";
 import { keys } from "../input";
 
 export function triggerAttack() {
@@ -138,8 +139,7 @@ export function castSelectedSkill() {
     if (dist > radius) continue;
     const ratio = 1 - dist / radius;
     const damage = (skill.enemyBase + ratio * skill.enemyScale) * (1 + p.attackBonus * PLAYER_COMBAT.attackBonusScale);
-    e.hp -= damage;
-    e.hitCd = PLAYER_COMBAT.enemyHitCooldown;
+    damageEnemy(e, damage, PLAYER_COMBAT.enemyHitCooldown);
     const { x: skillHitX, y: skillHitY } = nearestRectHitPoint(e, cx, cy);
     emitSlash(skillHitX, skillHitY, skill.color, e.w);
     emitHitBurst(skillHitX, skillHitY, PLAYER_COMBAT.effects.skillEnemyBurstColor, PLAYER_COMBAT.skillEnemyBurstPower);
@@ -232,8 +232,7 @@ function triggerUltimateImpact() {
     const ex = e.x + e.w / 2;
     const ey = e.y + e.h / 2;
     if (Math.hypot(ex - cx, ey - cy) > radius) continue;
-    e.hp -= damage;
-    e.hitCd = PLAYER_COMBAT.enemyHitCooldown;
+    damageEnemy(e, damage, PLAYER_COMBAT.enemyHitCooldown, "ultimate");
     emitSlash(ex, ey, PLAYER_COMBAT.effects.skillEnemyBurstColor, e.w * 1.5);
     emitHitBurst(ex, ey, PLAYER_COMBAT.effects.skillEnemyBurstColor, PLAYER_COMBAT.skillEnemyBurstPower + 1.2);
     if (e.hp <= 0) {
@@ -299,8 +298,7 @@ function triggerFallAttackImpact() {
     const e = state.enemies[i];
     if (!hitbox(box, e) || e.hitCd > 0) continue;
     const { x: hitX, y: hitY } = overlapHitPoint(box, e);
-    e.hp -= box.damage;
-    e.hitCd = FALL_ATTACK.enemyHitCooldown;
+    damageEnemy(e, box.damage, FALL_ATTACK.enemyHitCooldown);
     emitSlash(hitX, hitY, box.color, e.w * 1.25);
     emitHitBurst(hitX, hitY, PLAYER_COMBAT.effects.skillEnemyBurstColor, FALL_ATTACK.impactBurstPower);
     if (e.hp <= 0) {
@@ -348,7 +346,7 @@ export function hurtPlayer(damage: number, sourceVx: number) {
     for (let i = state.enemies.length - 1; i >= 0; i -= 1) {
       const e = state.enemies[i];
       if (!hitbox(p, e)) continue;
-      e.hp -= counterDamage;
+      damageEnemy(e, counterDamage);
       emitSlash(e.x + e.w / 2, e.y + e.h / 2, SKILLS[2].color, e.w);
       emitHitBurst(e.x + e.w / 2, e.y + e.h / 2, SKILLS[2].color, 1.5);
       if (e.hp <= 0) {
@@ -524,8 +522,7 @@ export function updatePlayer() {
       const e = state.enemies[i];
       if (hitbox(box, e) && e.hitCd <= 0) {
         const { x: atkHitX, y: atkHitY } = overlapHitPoint(box, e);
-        e.hp -= box.damage;
-        e.hitCd = PLAYER_COMBAT.attackEnemyHitCooldown;
+        damageEnemy(e, box.damage, PLAYER_COMBAT.attackEnemyHitCooldown);
         emitSlash(atkHitX, atkHitY, box.color, e.w);
         emitHitBurst(atkHitX, atkHitY, PLAYER_COMBAT.effects.attackEnemyBurstColor, PLAYER_COMBAT.attackEnemyBurstPower);
         playTone(

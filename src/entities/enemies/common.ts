@@ -24,10 +24,35 @@ export type EnemyArchetype = {
   speed: () => number;
   hpMultiplier?: number;
   drawScale?: number;
+  collisionScaleX?: number;
+  collisionScaleY?: number;
   init?: (enemy: EnemyState, context: EnemySpawnContext) => void;
   update: (enemy: EnemyState) => void;
   draw: (enemy: EnemyState) => void;
 };
+
+export type EnemyDamageKind = "normal" | "ultimate";
+
+const BRUTE_ARMORED_DAMAGE_SCALE = 0.55;
+
+function enemyDamageScale(enemy: EnemyState, kind: EnemyDamageKind) {
+  if (kind === "ultimate") return 1;
+  return enemy.brutePhase === "brace" || enemy.brutePhase === "stomp"
+    ? BRUTE_ARMORED_DAMAGE_SCALE
+    : 1;
+}
+
+export function damageEnemy(
+  enemy: EnemyState,
+  damage: number,
+  hitCooldown?: number,
+  kind: EnemyDamageKind = "normal",
+) {
+  const appliedDamage = damage * enemyDamageScale(enemy, kind);
+  enemy.hp -= appliedDamage;
+  if (hitCooldown !== undefined) enemy.hitCd = hitCooldown;
+  return appliedDamage;
+}
 
 export function commonEnemySpeed() {
   return ENEMY_CONFIG.baseSpeed + Math.random() * ENEMY_CONFIG.randomSpeed;
@@ -51,8 +76,8 @@ export function enemyCollisionSize(sheetIndex: number, archetype: EnemyArchetype
   const drawW = Math.round(sheet.frameW * drawScale);
   const drawH = Math.round(sheet.frameH * drawScale);
   return {
-    w: Math.round(drawW * ENEMY_CONFIG.collisionScaleX),
-    h: Math.round(drawH * ENEMY_CONFIG.collisionScaleY),
+    w: Math.round(drawW * ENEMY_CONFIG.collisionScaleX * (archetype.collisionScaleX ?? 1)),
+    h: Math.round(drawH * ENEMY_CONFIG.collisionScaleY * (archetype.collisionScaleY ?? 1)),
   };
 }
 

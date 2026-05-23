@@ -1,6 +1,6 @@
 import { PLAYER_ANIMATION_STATES, SKILL_IDS } from "./ids";
 import type { PlayerAnimationState, PlayerSheet, Skill, SpriteSheet } from "../types/assets";
-import type { RunnerPhase } from "../types/game-state";
+import type { BrutePhase, RunnerPhase } from "../types/game-state";
 
 export const SKILLS: Skill[] = [
   {
@@ -152,10 +152,37 @@ export const ENEMY_SHEETS: SpriteSheet[] = [
     src: "assets/sprites/enemies/enemy_6.png",
     frameW: 314,
     frameH: 145,
-    count: 4,
+    count: 6,
     image: null,
   },
 ];
+
+export const BRUTE_SHEET_INDEX = 5;
+
+export const BRUTE_SHEETS: Record<BrutePhase, SpriteSheet> = {
+  advance: ENEMY_SHEETS[BRUTE_SHEET_INDEX],
+  brace: {
+    src: "assets/sprites/enemies/brute_brace.png",
+    frameW: 314,
+    frameH: 145,
+    count: 4,
+    image: null,
+  },
+  stomp: {
+    src: "assets/sprites/enemies/brute_stomp.png",
+    frameW: 314,
+    frameH: 145,
+    count: 5,
+    image: null,
+  },
+  recover: {
+    src: "assets/sprites/enemies/brute_recover.png",
+    frameW: 314,
+    frameH: 145,
+    count: 3,
+    image: null,
+  },
+};
 
 export const RUNNER_SHEET_INDEX = 2;
 

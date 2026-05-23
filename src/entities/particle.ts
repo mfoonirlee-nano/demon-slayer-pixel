@@ -18,6 +18,7 @@ import {
 } from "../constants";
 import type { HitBurstState, ParticleState, Skill1EffectState, Skill2EffectState, SkillBurstState } from "../types/game-state";
 import { overlapHitPoint } from "../utils";
+import { damageEnemy } from "./enemies/common";
 
 const FULL_CIRCLE_RADIANS = Math.PI * 2;
 const DEFAULT_HIT_BURST_COLOR = "#9feaff";
@@ -130,8 +131,7 @@ export function updateSkill1Effects() {
         { x: effLeft, y: effTop, w: drawW, h: drawH },
         enemy,
       );
-      enemy.hp -= damage;
-      enemy.hitCd = SKILL1_EFFECT_CONFIG.hitCooldown;
+      damageEnemy(enemy, damage, SKILL1_EFFECT_CONFIG.hitCooldown);
       emitSlash(hitX, hitY, PLAYER_COMBAT.effects.skillEnemyBurstColor, enemy.w);
       emitHitBurst(hitX, hitY, PLAYER_COMBAT.effects.skillEnemyBurstColor, PLAYER_COMBAT.skillEnemyBurstPower);
       if (enemy.hp <= 0) {
@@ -202,8 +202,7 @@ export function updateSkill2Effects() {
         { x: effLeft, y: effTop, w: drawW, h: drawH },
         enemy,
       );
-      enemy.hp -= damage;
-      enemy.hitCd = SKILL2_EFFECT_CONFIG.hitCooldown;
+      damageEnemy(enemy, damage, SKILL2_EFFECT_CONFIG.hitCooldown);
       emitSlash(hitX, hitY, PLAYER_COMBAT.effects.skillEnemyBurstColor, enemy.w);
       emitHitBurst(hitX, hitY, PLAYER_COMBAT.effects.skillEnemyBurstColor, PLAYER_COMBAT.skillEnemyBurstPower);
       if (enemy.hp <= 0) {

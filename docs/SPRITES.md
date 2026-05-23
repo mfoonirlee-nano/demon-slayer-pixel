@@ -65,7 +65,7 @@
 | `enemy_3.png` | `932x250` | 4 | `233x250` | `ENEMY_SHEETS[2]` |
 | `enemy_4.png` | `1152x360` | 4 | `288x360` | `ENEMY_SHEETS[3]` |
 | `enemy_5.png` | `1280x360` | 4 | `320x360` | `ENEMY_SHEETS[4]` |
-| `enemy_6.png` | `1256x145` | 4 | `314x145` | `ENEMY_SHEETS[5]` |
+| `enemy_6.png` | `1884x145` | 6 | `314x145` | `ENEMY_SHEETS[5]` |
 | `boss.png` | `1400x419` | 4 | `350x419` | `BOSS_SHEET` |
 | `boss_skill1.png` | `2400x400` | 6 | `400x400` | `BOSS_SKILL1_SHEET` |
 | `boss_skill1_effect.png` | `2400x350` | 6 | `400x350` | `BOSS_SKILL1_EFFECT_SHEET` |
@@ -79,7 +79,18 @@ Runner 专属动作素材：
 | `runner_dash.png` | `1250x250` | 5 | `250x250` | `dash` | 身体拉成长斜线，带少量尘迹 |
 | `runner_recover.png` | `750x250` | 3 | `250x250` | `recover` | 冲过后刹停，露出反打窗口 |
 
-以上 runner 专属动作素材均有对应 `*_source.png` 绿幕制作源图；当前运行时仍直接加载 `enemy_3.png`。
+以上 runner 专属动作素材均有对应 `*_source.png` 绿幕制作源图。
+
+Brute 专属动作素材：
+
+| 文件 | 总尺寸 | 帧数 | 单帧 | 运行时状态 | 备注 |
+| --- | ---: | ---: | ---: | --- | --- |
+| `enemy_6.png` | `1884x145` | 6 | `314x145` | `advance` | 慢速推进，低矮重型起伏 |
+| `brute_brace.png` | `1256x145` | 4 | `314x145` | `brace` | 停顿压低，头部/前甲与囊泡逐帧发亮 |
+| `brute_stomp.png` | `1570x145` | 5 | `314x145` | `stomp` | 短距离前顶，头部/前甲高亮并内置前方气浪 |
+| `brute_recover.png` | `942x145` | 3 | `314x145` | `recover` | 同推进尺度的低姿态硬直，绿色亮度逐帧衰减 |
+
+以上 brute 专属动作素材均有对应 `*_source.png` 绿幕制作源图；`brace` / `stomp` / `recover` 的读招高亮、前方气浪和恢复衰减已烘进图集，运行时不再额外绘制头光、地裂或气浪覆盖层。
 
 ## 资源更新流程
 

@@ -4,13 +4,17 @@ import type { EnemyState } from "../types/game-state";
 import { hitbox } from "../utils";
 import { hurtPlayer } from "./player";
 import { createEnemyState, enemyBaseHp, enemyDamage } from "./enemies/common";
+import { canSpawnBrute, isBruteSheet } from "./enemies/brute";
 import { enemyArchetypeForSheet } from "./enemies/registry";
 
 export function spawnEnemy() {
   if (state.enemies.length >= RUNTIME_CONFIG.enemyMaxCount) return;
 
   const side = Math.random() < ENEMY_CONFIG.spawnSideChance ? -1 : 1;
-  const sheetIndex = Math.floor(Math.random() * ENEMY_SHEETS.length);
+  let sheetIndex = Math.floor(Math.random() * ENEMY_SHEETS.length);
+  if (isBruteSheet(sheetIndex) && !canSpawnBrute() && ENEMY_SHEETS.length > 1) {
+    sheetIndex = Math.floor(Math.random() * (ENEMY_SHEETS.length - 1));
+  }
   const archetype = enemyArchetypeForSheet(sheetIndex);
   const spawnContext = {
     side,
