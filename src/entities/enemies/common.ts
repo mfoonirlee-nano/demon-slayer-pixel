@@ -33,7 +33,7 @@ export type EnemyArchetype = {
 
 export type EnemyDamageKind = "normal" | "ultimate";
 
-const BRUTE_ARMORED_DAMAGE_SCALE = 0.55;
+const BRUTE_ARMORED_DAMAGE_SCALE = 0.5;
 
 function enemyDamageScale(enemy: EnemyState, kind: EnemyDamageKind) {
   if (kind === "ultimate") return 1;
