@@ -6,6 +6,9 @@ export type PlatformKind = "normal" | "hover" | "chain";
 export type PlatformLayer = "low" | "mid" | "high" | "top";
 export type RunnerPhase = "approach" | "windup" | "dash" | "recover";
 export type BrutePhase = "advance" | "brace" | "stomp" | "recover";
+export type CasterPhase = "move" | "windup" | "cast" | "recover" | "hit";
+export type CasterAiPhase = "seekRange" | "windup" | "cast" | "recover";
+export type ProjectileKind = "boss" | "casterWisp";
 
 export type PlatformState = {
   x: number;
@@ -85,6 +88,12 @@ export type EnemyState = {
   bruteFacing?: number;
   bruteBaseSpeed?: number;
   bruteStompHit?: boolean;
+  casterPhase?: CasterAiPhase;
+  casterTimer?: number;
+  casterFacing?: number;
+  casterBaseSpeed?: number;
+  casterCastSpawned?: boolean;
+  casterId?: number;
 };
 
 export type BossState = {
@@ -121,13 +130,20 @@ export type BossSkill1EffectState = {
 };
 
 export type ProjectileState = {
+  kind?: ProjectileKind;
   x: number;
   y: number;
   w: number;
   h: number;
   vx: number;
+  vy?: number;
   life: number;
   damage: number;
+  ownerId?: number;
+  frame?: number;
+  elapsed?: number;
+  speed?: number;
+  turnRate?: number;
 };
 
 export type ParticleState = {

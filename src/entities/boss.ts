@@ -114,6 +114,7 @@ export function updateBoss() {
       const dir = Math.sign(toward) || 1;
       for (let i = 0; i < boss.phase; i += 1) {
         state.projectiles.push({
+          kind: "boss",
           x: boss.x + boss.w / 2,
           y: boss.y + BOSS_CONFIG.projectileYOffset + i * BOSS_CONFIG.projectileYOffsetStep,
           w: BOSS_CONFIG.projectileW,

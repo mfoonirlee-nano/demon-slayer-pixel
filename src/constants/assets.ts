@@ -1,6 +1,6 @@
 import { PLAYER_ANIMATION_STATES, SKILL_IDS } from "./ids";
 import type { PlayerAnimationState, PlayerSheet, Skill, SpriteSheet } from "../types/assets";
-import type { BrutePhase, RunnerPhase } from "../types/game-state";
+import type { BrutePhase, CasterPhase, RunnerPhase } from "../types/game-state";
 
 export const SKILLS: Skill[] = [
   {
@@ -156,6 +156,48 @@ export const ENEMY_SHEETS: SpriteSheet[] = [
     image: null,
   },
 ];
+
+export const CASTER_SHEET_INDEX = 3;
+
+export const CASTER_SHEETS: Record<CasterPhase, SpriteSheet> = {
+  move: ENEMY_SHEETS[CASTER_SHEET_INDEX],
+  windup: {
+    src: "assets/sprites/enemies/caster_windup.png",
+    frameW: 288,
+    frameH: 360,
+    count: 4,
+    image: null,
+  },
+  cast: {
+    src: "assets/sprites/enemies/caster_cast.png",
+    frameW: 288,
+    frameH: 360,
+    count: 4,
+    image: null,
+  },
+  recover: {
+    src: "assets/sprites/enemies/caster_recover.png",
+    frameW: 288,
+    frameH: 360,
+    count: 3,
+    image: null,
+  },
+  hit: {
+    src: "assets/sprites/enemies/caster_hit.png",
+    frameW: 288,
+    frameH: 360,
+    count: 3,
+    image: null,
+  },
+};
+
+export const CASTER_WISP_SHEET: SpriteSheet = {
+  src: "assets/sprites/enemies/caster_wisp.png",
+  frameW: 96,
+  frameH: 96,
+  count: 4,
+  image: null,
+};
 
 export const BRUTE_SHEET_INDEX = 5;
 

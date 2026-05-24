@@ -70,6 +70,19 @@
 | `boss_skill1.png` | `2400x400` | 6 | `400x400` | `BOSS_SKILL1_SHEET` |
 | `boss_skill1_effect.png` | `2400x350` | 6 | `400x350` | `BOSS_SKILL1_EFFECT_SHEET` |
 
+Caster 专属动作素材：
+
+| 文件 | 总尺寸 | 帧数 | 单帧 | 运行时状态 | 备注 |
+| --- | ---: | ---: | ---: | --- | --- |
+| `enemy_4.png` | `1152x360` | 4 | `288x360` | `move` | 慢速前行，提灯暖橙光和面具红眼清晰 |
+| `caster_windup.png` | `1152x360` | 4 | `288x360` | `windup` | 提灯逐帧抬高，灯芯增强，手势准备施法 |
+| `caster_cast.png` | `1152x360` | 4 | `288x360` | `cast` | 提灯前伸并内置局部符点/火光释放提示，不包含飞行鬼火 |
+| `caster_recover.png` | `864x360` | 3 | `288x360` | `recover` | 施法后手臂回落，灯光变弱，读出硬直 |
+| `caster_hit.png` | `864x360` | 3 | `288x360` | `hit` | 面具后仰、提灯闪烁，读出打断感 |
+| `caster_wisp.png` | `384x96` | 4 | `96x96` | `projectile` | 独立暖橙鬼火投射物，运行时轻微追踪玩家 |
+
+以上 caster 专属动作素材均有对应 `*_source.png` 绿幕制作源图；动作素材由 `CASTER_SHEETS` 暴露并预加载，鬼火由 `CASTER_WISP_SHEET` 暴露并预加载。`enemy_4` 现在使用专属远程状态机，鬼火不再作为 `caster_cast` 帧的一部分。
+
 Runner 专属动作素材：
 
 | 文件 | 总尺寸 | 帧数 | 单帧 | 运行时状态 | 备注 |

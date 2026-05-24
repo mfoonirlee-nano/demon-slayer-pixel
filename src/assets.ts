@@ -1,6 +1,8 @@
 import {
   PLAYER_SHEETS,
   ENEMY_SHEETS,
+  CASTER_SHEETS,
+  CASTER_WISP_SHEET,
   RUNNER_SHEETS,
   BRUTE_SHEETS,
   BOSS_SHEET,
@@ -37,6 +39,11 @@ export function loadSprites(): Promise<void> {
   for (const sheet of ENEMY_SHEETS) {
     jobs.push(loadImage(sheet.src).then((img) => { sheet.image = img; }));
   }
+  for (const sheet of Object.values(CASTER_SHEETS)) {
+    if (ENEMY_SHEETS.includes(sheet)) continue;
+    jobs.push(loadImage(sheet.src).then((img) => { sheet.image = img; }));
+  }
+  jobs.push(loadImage(CASTER_WISP_SHEET.src).then((img) => { CASTER_WISP_SHEET.image = img; }));
   for (const sheet of Object.values(RUNNER_SHEETS)) {
     if (ENEMY_SHEETS.includes(sheet)) continue;
     jobs.push(loadImage(sheet.src).then((img) => { sheet.image = img; }));
