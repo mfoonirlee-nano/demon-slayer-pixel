@@ -2,7 +2,7 @@
 
 ## Implementation Status
 
-- 素材状态：已实现并接入，当前对应 `assets/sprites/enemies/boss.png`、`boss_skill1.png` 和 `boss_skill1_effect.png`。
+- 素材状态：已实现并接入，当前对应 `assets/sprites/enemies/boss/boss.png`、`boss_skill1.png` 和 `boss_skill1_effect.png`。
 - 玩法状态：当前 Boss 已实现追踪、弹幕、召唤和单向蛛网技能；`蛛弦` 设定名尚未接入 HUD。
 
 ## Role

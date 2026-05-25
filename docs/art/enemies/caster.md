@@ -2,7 +2,7 @@
 
 ## Implementation Status
 
-- 素材状态：多状态素材已实现并接入预加载，移动图集对应 `assets/sprites/enemies/caster_move.png`，额外状态为 `caster_windup.png`、`caster_cast.png`、`caster_recover.png`、`caster_hit.png`，独立鬼火为 `caster_wisp.png`。
+- 素材状态：多状态素材已实现并接入预加载，移动图集对应 `assets/sprites/enemies/caster/caster_move.png`，额外状态在 `assets/sprites/enemies/caster/`，独立鬼火为 `caster_wisp.png`。
 - 玩法状态：已接入专属 `caster` archetype，状态机为 `seekRange -> windup -> cast -> recover -> seekRange`，鬼火投射物会低速朝玩家方向飞行并轻微追踪。
 
 ## Role

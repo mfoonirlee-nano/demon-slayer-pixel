@@ -2,7 +2,7 @@
 
 ## Implementation Status
 
-- 素材状态：已实现并接入，当前对应 `assets/sprites/enemies/duelist.png`。
+- 素材状态：已实现并接入，当前对应 `assets/sprites/enemies/duelist/duelist.png`。
 - 玩法状态：专属 `duelist` archetype、近身斩击前摇和斩击盒尚未实现；当前仍与其他普通敌人共享同一套追踪 AI。
 
 ## Role

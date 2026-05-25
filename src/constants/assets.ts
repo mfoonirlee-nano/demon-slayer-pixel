@@ -114,42 +114,42 @@ export const PLAYER_SHEETS: Record<PlayerAnimationState, PlayerSheet> = {
 
 export const ENEMY_SHEETS: SpriteSheet[] = [
   {
-    src: "assets/sprites/enemies/chaser.png",
+    src: "assets/sprites/enemies/chaser/chaser.png",
     frameW: 287,
     frameH: 282,
     count: 4,
     image: null,
   },
   {
-    src: "assets/sprites/enemies/crawler.png",
+    src: "assets/sprites/enemies/crawler/crawler.png",
     frameW: 314,
     frameH: 145,
     count: 4,
     image: null,
   },
   {
-    src: "assets/sprites/enemies/runner_approach.png",
+    src: "assets/sprites/enemies/runner/runner_approach.png",
     frameW: 250,
     frameH: 250,
     count: 6,
     image: null,
   },
   {
-    src: "assets/sprites/enemies/caster_move.png",
+    src: "assets/sprites/enemies/caster/caster_move.png",
     frameW: 288,
     frameH: 360,
     count: 4,
     image: null,
   },
   {
-    src: "assets/sprites/enemies/duelist.png",
+    src: "assets/sprites/enemies/duelist/duelist.png",
     frameW: 320,
     frameH: 360,
     count: 4,
     image: null,
   },
   {
-    src: "assets/sprites/enemies/brute_advance.png",
+    src: "assets/sprites/enemies/brute/brute_advance.png",
     frameW: 314,
     frameH: 145,
     count: 6,
@@ -162,21 +162,21 @@ export const CRAWLER_SHEET_INDEX = 1;
 export const CRAWLER_SHEETS: Record<CrawlerPhase, SpriteSheet> = {
   move: ENEMY_SHEETS[CRAWLER_SHEET_INDEX],
   windup: {
-    src: "assets/sprites/enemies/crawler_windup.png",
+    src: "assets/sprites/enemies/crawler/crawler_windup.png",
     frameW: 314,
     frameH: 145,
     count: 4,
     image: null,
   },
   lunge: {
-    src: "assets/sprites/enemies/crawler_lunge.png",
+    src: "assets/sprites/enemies/crawler/crawler_lunge.png",
     frameW: 314,
     frameH: 145,
     count: 5,
     image: null,
   },
   recover: {
-    src: "assets/sprites/enemies/crawler_recover.png",
+    src: "assets/sprites/enemies/crawler/crawler_recover.png",
     frameW: 314,
     frameH: 145,
     count: 3,
@@ -189,28 +189,28 @@ export const CASTER_SHEET_INDEX = 3;
 export const CASTER_SHEETS: Record<CasterPhase, SpriteSheet> = {
   move: ENEMY_SHEETS[CASTER_SHEET_INDEX],
   windup: {
-    src: "assets/sprites/enemies/caster_windup.png",
+    src: "assets/sprites/enemies/caster/caster_windup.png",
     frameW: 288,
     frameH: 360,
     count: 4,
     image: null,
   },
   cast: {
-    src: "assets/sprites/enemies/caster_cast.png",
+    src: "assets/sprites/enemies/caster/caster_cast.png",
     frameW: 288,
     frameH: 360,
     count: 4,
     image: null,
   },
   recover: {
-    src: "assets/sprites/enemies/caster_recover.png",
+    src: "assets/sprites/enemies/caster/caster_recover.png",
     frameW: 288,
     frameH: 360,
     count: 3,
     image: null,
   },
   hit: {
-    src: "assets/sprites/enemies/caster_hit.png",
+    src: "assets/sprites/enemies/caster/caster_hit.png",
     frameW: 288,
     frameH: 360,
     count: 3,
@@ -219,7 +219,7 @@ export const CASTER_SHEETS: Record<CasterPhase, SpriteSheet> = {
 };
 
 export const CASTER_WISP_SHEET: SpriteSheet = {
-  src: "assets/sprites/enemies/caster_wisp.png",
+  src: "assets/sprites/enemies/caster/caster_wisp.png",
   frameW: 96,
   frameH: 96,
   count: 4,
@@ -231,21 +231,21 @@ export const BRUTE_SHEET_INDEX = 5;
 export const BRUTE_SHEETS: Record<BrutePhase, SpriteSheet> = {
   advance: ENEMY_SHEETS[BRUTE_SHEET_INDEX],
   brace: {
-    src: "assets/sprites/enemies/brute_brace.png",
+    src: "assets/sprites/enemies/brute/brute_brace.png",
     frameW: 314,
     frameH: 145,
     count: 4,
     image: null,
   },
   stomp: {
-    src: "assets/sprites/enemies/brute_stomp.png",
+    src: "assets/sprites/enemies/brute/brute_stomp.png",
     frameW: 314,
     frameH: 145,
     count: 5,
     image: null,
   },
   recover: {
-    src: "assets/sprites/enemies/brute_recover.png",
+    src: "assets/sprites/enemies/brute/brute_recover.png",
     frameW: 314,
     frameH: 145,
     count: 3,
@@ -258,21 +258,21 @@ export const RUNNER_SHEET_INDEX = 2;
 export const RUNNER_SHEETS: Record<RunnerPhase, SpriteSheet> = {
   approach: ENEMY_SHEETS[RUNNER_SHEET_INDEX],
   windup: {
-    src: "assets/sprites/enemies/runner_windup.png",
+    src: "assets/sprites/enemies/runner/runner_windup.png",
     frameW: 250,
     frameH: 250,
     count: 4,
     image: null,
   },
   dash: {
-    src: "assets/sprites/enemies/runner_dash.png",
+    src: "assets/sprites/enemies/runner/runner_dash.png",
     frameW: 250,
     frameH: 250,
     count: 5,
     image: null,
   },
   recover: {
-    src: "assets/sprites/enemies/runner_recover.png",
+    src: "assets/sprites/enemies/runner/runner_recover.png",
     frameW: 250,
     frameH: 250,
     count: 3,
@@ -356,7 +356,7 @@ export const ULTIMATE_SKILL_EFFECT_SHEET: SpriteSheet = {
 };
 
 export const BOSS_SHEET: SpriteSheet = {
-  src: "assets/sprites/enemies/boss.png",
+  src: "assets/sprites/enemies/boss/boss.png",
   frameW: 350,
   frameH: 419,
   count: 4,
@@ -364,7 +364,7 @@ export const BOSS_SHEET: SpriteSheet = {
 };
 
 export const BOSS_SKILL1_SHEET: SpriteSheet = {
-  src: "assets/sprites/enemies/boss_skill1.png",
+  src: "assets/sprites/enemies/boss/boss_skill1.png",
   frameW: 400,
   frameH: 400,
   count: 6,
@@ -372,7 +372,7 @@ export const BOSS_SKILL1_SHEET: SpriteSheet = {
 };
 
 export const BOSS_SKILL1_EFFECT_SHEET: SpriteSheet = {
-  src: "assets/sprites/enemies/boss_skill1_effect.png",
+  src: "assets/sprites/enemies/boss/boss_skill1_effect.png",
   frameW: 400,
   frameH: 350,
   count: 6,

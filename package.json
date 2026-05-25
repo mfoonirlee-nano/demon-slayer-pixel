@@ -16,7 +16,7 @@
   "keywords": [],
   "author": "",
   "lint-staged": {
-    "*.png": "node scripts/compress-assets.js"
+    "*.webp": "node scripts/compress-assets.js"
   },
   "license": "ISC",
   "dependencies": {
