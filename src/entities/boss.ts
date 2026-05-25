@@ -1,4 +1,5 @@
 import { state } from "../state";
+import { canAutoSpawnEntities } from "../debug";
 import {
   WIDTH,
   GROUND_Y,
@@ -131,14 +132,16 @@ export function updateBoss() {
         BOSS_CONFIG.tones.projectile.volume,
       );
     } else {
-      spawnEnemy();
-      if (boss.phase >= BOSS_CONFIG.summonExtraEnemyPhase) spawnEnemy();
-      playTone(
-        BOSS_CONFIG.tones.summon.frequency,
-        BOSS_CONFIG.tones.summon.duration,
-        "square",
-        BOSS_CONFIG.tones.summon.volume,
-      );
+      if (canAutoSpawnEntities()) {
+        spawnEnemy();
+        if (boss.phase >= BOSS_CONFIG.summonExtraEnemyPhase) spawnEnemy();
+        playTone(
+          BOSS_CONFIG.tones.summon.frequency,
+          BOSS_CONFIG.tones.summon.duration,
+          "square",
+          BOSS_CONFIG.tones.summon.volume,
+        );
+      }
     }
     boss.aiTimer = BOSS_CONFIG.aiBaseCooldown - boss.phase * BOSS_CONFIG.aiPhaseReduction;
   }

@@ -12,6 +12,7 @@ import {
 } from "./constants";
 import { loadSprites } from "./assets";
 import { setCanvas } from "./context";
+import { DebugPanel } from "./debug";
 import { startGame } from "./runtime";
 import { gameSnapshotAtom, gameStore, setGameSnapshot, type GameSnapshot } from "./gameStore";
 import { StartScreen } from "./startScreen";
@@ -348,6 +349,8 @@ function Hud() {
 
   return (
     <>
+      <DebugPanel />
+
       <div className="pointer-events-none absolute left-2 top-2 z-10 hidden text-[12px] text-white md:block">
         <div style={{ position: "relative", width: HUD_UI.statusBarContainerW, height: HUD_UI.statusBarContainerH }}>
           {/* HP fill — upper track */}

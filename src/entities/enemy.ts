@@ -1,5 +1,10 @@
 import { state } from "../state";
-import { WIDTH, ENEMY_SHEETS, ENEMY_CONFIG, RUNTIME_CONFIG } from "../constants";
+import {
+  WIDTH,
+  ENEMY_SHEETS,
+  ENEMY_CONFIG,
+  RUNTIME_CONFIG,
+} from "../constants";
 import type { EnemyState } from "../types/game-state";
 import { hitbox } from "../utils";
 import { hurtPlayer } from "./player";
@@ -7,14 +12,7 @@ import { createEnemyState, enemyBaseHp, enemyDamage } from "./enemies/common";
 import { canSpawnBrute, isBruteSheet } from "./enemies/brute";
 import { enemyArchetypeForSheet } from "./enemies/registry";
 
-export function spawnEnemy() {
-  if (state.enemies.length >= RUNTIME_CONFIG.enemyMaxCount) return;
-
-  const side = Math.random() < ENEMY_CONFIG.spawnSideChance ? -1 : 1;
-  let sheetIndex = Math.floor(Math.random() * ENEMY_SHEETS.length);
-  if (isBruteSheet(sheetIndex) && !canSpawnBrute() && ENEMY_SHEETS.length > 1) {
-    sheetIndex = Math.floor(Math.random() * (ENEMY_SHEETS.length - 1));
-  }
+function createSpawnedEnemy(sheetIndex: number, side: number): EnemyState {
   const archetype = enemyArchetypeForSheet(sheetIndex);
   const spawnContext = {
     side,
@@ -25,7 +23,23 @@ export function spawnEnemy() {
   };
   const enemy = createEnemyState(spawnContext, archetype);
   archetype.init?.(enemy, spawnContext);
-  state.enemies.push(enemy);
+  return enemy;
+}
+
+export function spawnEnemy() {
+  if (state.enemies.length >= RUNTIME_CONFIG.enemyMaxCount) return;
+
+  const side = Math.random() < ENEMY_CONFIG.spawnSideChance ? -1 : 1;
+  let sheetIndex = Math.floor(Math.random() * ENEMY_SHEETS.length);
+  if (isBruteSheet(sheetIndex) && !canSpawnBrute() && ENEMY_SHEETS.length > 1) {
+    sheetIndex = Math.floor(Math.random() * (ENEMY_SHEETS.length - 1));
+  }
+  state.enemies.push(createSpawnedEnemy(sheetIndex, side));
+}
+
+export function spawnEnemyBySheetIndex(sheetIndex: number, side = 1) {
+  if (!ENEMY_SHEETS[sheetIndex]) return;
+  state.enemies.push(createSpawnedEnemy(sheetIndex, side));
 }
 
 export function updateEnemies() {

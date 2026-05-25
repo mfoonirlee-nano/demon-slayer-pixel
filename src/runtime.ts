@@ -1,6 +1,7 @@
 import { state, resetState, getStateSnapshot } from "./state";
 import { ctx } from "./context";
 import { updateMoon } from "./moon";
+import { canAutoSpawnEntities, setDebugRuntimeActions } from "./debug";
 import {
   WIDTH,
   HEIGHT,
@@ -15,9 +16,10 @@ import { drawBackground, drawGroundTiles } from "./background";
 import { drawNearForeground } from "./nearForeground";
 
 import { updatePlayer, drawPlayer, triggerAttack, castSelectedSkill, castUltimateSkill, selectSkill, tryJump } from "./entities/player";
-import { spawnEnemy, updateEnemies, drawEnemy } from "./entities/enemy";
+import { spawnEnemy, spawnEnemyBySheetIndex, updateEnemies, drawEnemy } from "./entities/enemy";
 import { spawnBoss, updateBoss, drawBoss, updateBossSkill1Effects, drawBossSkill1Effects } from "./entities/boss";
 import {
+  spawnMapSegmentOfKind,
   spawnNextMapSegment,
   nextMapSpawnInterval,
   resetMapGenerator,
@@ -58,6 +60,14 @@ function restart() {
   publishCurrentState();
 }
 
+setDebugRuntimeActions({
+  canSpawn: () => !state.gameOver,
+  publish: publishCurrentState,
+  spawnEnemySheet: spawnEnemyBySheetIndex,
+  spawnPlatformSegment: spawnMapSegmentOfKind,
+  spawnBoss,
+});
+
 function drawLoadingState() {
   if (!ctx) return;
   drawBackground();
@@ -94,10 +104,12 @@ function loop(ts: number) {
 
   if (!state.gameOver) {
     state.elapsed += dt;
-    state.spawnTimer -= dt;
-    state.bossSpawnTimer -= dt;
+    if (canAutoSpawnEntities()) {
+      state.spawnTimer -= dt;
+      state.bossSpawnTimer -= dt;
+    }
 
-    if (!state.boss && state.spawnTimer <= 0) {
+    if (canAutoSpawnEntities() && !state.boss && state.spawnTimer <= 0) {
       spawnEnemy();
       state.spawnTimer = Math.max(
         RUNTIME_CONFIG.enemySpawnMinInterval,
@@ -105,13 +117,13 @@ function loop(ts: number) {
       );
     }
 
-    state.platformSpawnTimer -= dt;
-    if (state.platformSpawnTimer <= 0) {
+    if (canAutoSpawnEntities()) state.platformSpawnTimer -= dt;
+    if (canAutoSpawnEntities() && state.platformSpawnTimer <= 0) {
       spawnNextMapSegment();
       state.platformSpawnTimer = nextMapSpawnInterval();
     }
 
-    if (!state.boss && state.bossSpawnTimer <= 0 && state.elapsed > RUNTIME_CONFIG.bossAppearAfterSeconds) {
+    if (canAutoSpawnEntities() && !state.boss && state.bossSpawnTimer <= 0 && state.elapsed > RUNTIME_CONFIG.bossAppearAfterSeconds) {
       spawnBoss();
       state.bossSpawnTimer = RUNTIME_CONFIG.disableBossSpawnTimer;
     }

@@ -31,7 +31,7 @@ import { healPlayer } from "./player";
 
 const FULL_CIRCLE_RADIANS = Math.PI * 2;
 
-type SegmentKind =
+export type SegmentKind =
   | "breather"
   | "safeBridge"
   | "stairUp"
@@ -613,18 +613,21 @@ function spawnRewardRiskSegment(): SegmentSpawnResult {
   return { kind: "rewardRisk", difficulty: "hard", platforms };
 }
 
-function spawnPatternSegment(): SegmentSpawnResult {
-  if (state.platforms.length === 0) return spawnNormalPlatform();
-  if (shouldRecoverLowLayer()) return spawnLowRecoverySegment();
-
-  const kind = pickSegmentKind();
+function spawnSegmentKind(kind: SegmentKind): SegmentSpawnResult {
   if (kind === "breather") return spawnBreatherSegment();
+  if (kind === "safeBridge") return spawnNormalPlatform();
   if (kind === "stairUp" || kind === "stairDown") return spawnStairSegment(kind);
   if (kind === "zigzag") return spawnZigzagSegment();
   if (kind === "gapJump") return spawnChainCluster();
   if (kind === "hoverPair") return spawnHoverPairSegment();
-  if (kind === "rewardRisk") return spawnRewardRiskSegment();
-  return spawnNormalPlatform();
+  return spawnRewardRiskSegment();
+}
+
+function spawnPatternSegment(): SegmentSpawnResult {
+  if (state.platforms.length === 0) return spawnNormalPlatform();
+  if (shouldRecoverLowLayer()) return spawnLowRecoverySegment();
+
+  return spawnSegmentKind(pickSegmentKind());
 }
 
 // --- Main spawn entry points ---
@@ -680,6 +683,13 @@ export function spawnNextMapSegment() {
   rewardDebt += MAP_GENERATION_CONFIG.reward.debtPerSegment;
 
   const result = spawnPatternSegment();
+  applySegmentAftermath(result);
+}
+
+export function spawnMapSegmentOfKind(kind: SegmentKind) {
+  rewardDebt += MAP_GENERATION_CONFIG.reward.debtPerSegment;
+
+  const result = spawnSegmentKind(kind);
   applySegmentAftermath(result);
 }
 
