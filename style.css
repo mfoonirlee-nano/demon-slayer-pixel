@@ -297,9 +297,12 @@ body {
   width: clamp(32px, 5.5vw, 62px);
   height: clamp(45px, 7.75vw, 88px);
   flex: 0 0 auto;
-  background-image: url("assets/sprites/ui/numbers.png");
-  background-repeat: no-repeat;
-  background-size: 500% 200%;
+  overflow: hidden;
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
+}
+
+.cover-kill-counter-digit image {
   image-rendering: pixelated;
   image-rendering: crisp-edges;
 }

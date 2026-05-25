@@ -2,8 +2,8 @@
 
 ## Implementation Status
 
-- 素材状态：已实现并接入，当前对应 `assets/sprites/enemies/enemy_3.png`。
-- 动作序列帧：已新增 `runner_approach.png`、`runner_windup.png`、`runner_dash.png`、`runner_recover.png`，用于后续按行为状态接入。
+- 素材状态：已实现并接入，当前运行时移动图集对应 `assets/sprites/enemies/runner_approach.png`；原 4 帧基础图已按代号重命名为 `runner.png`。
+- 动作序列帧：已新增 `runner_approach.png`、`runner_windup.png`、`runner_dash.png`、`runner_recover.png`，用于按行为状态接入。
 - 玩法状态：已接入专属 `runner` archetype。当前实现为“接近玩家 -> 前摇停顿 -> 直线冲刺 -> 恢复硬直”的快攻循环。
 - 代码入口：`src/entities/enemy.ts`；数值入口：`src/constants/combat.ts` 的 `ENEMY_CONFIG.runner*`。
 

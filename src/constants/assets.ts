@@ -1,6 +1,6 @@
 import { PLAYER_ANIMATION_STATES, SKILL_IDS } from "./ids";
 import type { PlayerAnimationState, PlayerSheet, Skill, SpriteSheet } from "../types/assets";
-import type { BrutePhase, CasterPhase, RunnerPhase } from "../types/game-state";
+import type { BrutePhase, CasterPhase, CrawlerPhase, RunnerPhase } from "../types/game-state";
 
 export const SKILLS: Skill[] = [
   {
@@ -114,14 +114,14 @@ export const PLAYER_SHEETS: Record<PlayerAnimationState, PlayerSheet> = {
 
 export const ENEMY_SHEETS: SpriteSheet[] = [
   {
-    src: "assets/sprites/enemies/enemy_1.png",
+    src: "assets/sprites/enemies/chaser.png",
     frameW: 287,
     frameH: 282,
     count: 4,
     image: null,
   },
   {
-    src: "assets/sprites/enemies/enemy_2.png",
+    src: "assets/sprites/enemies/crawler.png",
     frameW: 314,
     frameH: 145,
     count: 4,
@@ -135,27 +135,54 @@ export const ENEMY_SHEETS: SpriteSheet[] = [
     image: null,
   },
   {
-    src: "assets/sprites/enemies/enemy_4.png",
+    src: "assets/sprites/enemies/caster_move.png",
     frameW: 288,
     frameH: 360,
     count: 4,
     image: null,
   },
   {
-    src: "assets/sprites/enemies/enemy_5.png",
+    src: "assets/sprites/enemies/duelist.png",
     frameW: 320,
     frameH: 360,
     count: 4,
     image: null,
   },
   {
-    src: "assets/sprites/enemies/enemy_6.png",
+    src: "assets/sprites/enemies/brute_advance.png",
     frameW: 314,
     frameH: 145,
     count: 6,
     image: null,
   },
 ];
+
+export const CRAWLER_SHEET_INDEX = 1;
+
+export const CRAWLER_SHEETS: Record<CrawlerPhase, SpriteSheet> = {
+  move: ENEMY_SHEETS[CRAWLER_SHEET_INDEX],
+  windup: {
+    src: "assets/sprites/enemies/crawler_windup.png",
+    frameW: 314,
+    frameH: 145,
+    count: 4,
+    image: null,
+  },
+  lunge: {
+    src: "assets/sprites/enemies/crawler_lunge.png",
+    frameW: 314,
+    frameH: 145,
+    count: 5,
+    image: null,
+  },
+  recover: {
+    src: "assets/sprites/enemies/crawler_recover.png",
+    frameW: 314,
+    frameH: 145,
+    count: 3,
+    image: null,
+  },
+};
 
 export const CASTER_SHEET_INDEX = 3;
 

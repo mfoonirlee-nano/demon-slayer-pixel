@@ -2,6 +2,7 @@ import { useState } from "react";
 import {
   BRUTE_SHEET_INDEX,
   CASTER_SHEET_INDEX,
+  CRAWLER_SHEET_INDEX,
   ENEMY_SHEETS,
   RUNNER_SHEET_INDEX,
 } from "./constants";
@@ -18,7 +19,6 @@ type DebugRuntimeActions = {
 };
 
 const CHASER_SHEET_INDEX = 0;
-const CRAWLER_SHEET_INDEX = 1;
 const DUELIST_SHEET_INDEX = 4;
 
 const DEBUG_ENEMY_SHEET_INDEX: Record<DebugEnemyKind, number> = {

@@ -61,7 +61,7 @@ h = drawH * 0.78
 敌人素材：
 
 - 生成时从 `ENEMY_SHEETS` 随机选择 `sheetIndex`。
-- 当前 `ENEMY_SHEETS` 包含 `enemy_1.png` 到 `enemy_6.png` 六个表。
+- 当前 `ENEMY_SHEETS` 包含 `chaser.png`、`crawler.png`、`runner_approach.png`、`caster_move.png`、`duelist.png`、`brute_advance.png` 六个表。
 - 绘制缩放由 `ENEMY_DRAW_SCALE = 120 / ENEMY_SHEETS[1].frameW` 决定。
 
 ## Code Sources

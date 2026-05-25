@@ -2,7 +2,7 @@
 
 ## Implementation Status
 
-- 素材状态：已重做并接入，当前 `enemy_6.png` 是 `advance`，另有 `brute_brace.png`、`brute_stomp.png`、`brute_recover.png`；攻击读招已烘进动作图集。
+- 素材状态：已重做并接入，当前 `brute_advance.png` 是 `advance`，另有 `brute_brace.png`、`brute_stomp.png`、`brute_recover.png`；攻击读招已烘进动作图集。
 - 玩法状态：已接入专属 `brute` archetype，当前实现为 `advance -> brace -> stomp -> recover` 的慢速重型循环。
 - 代码入口：`src/entities/enemies/brute.ts`；资源入口：`src/constants/assets.ts` 的 `BRUTE_SHEET_INDEX` / `BRUTE_SHEETS`。
 

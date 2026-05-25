@@ -41,7 +41,11 @@ const SWEEP_SCALE_Y_START = 1.0;
 const SWEEP_SCALE_Y_END = 7.0;
 const KILL_DIGIT_COLUMNS = 5;
 const KILL_DIGIT_ROWS = 2;
-const BACKGROUND_POSITION_MAX_PERCENT = 100;
+const KILL_DIGIT_SHEET_SRC = "assets/sprites/ui/numbers.png";
+const KILL_DIGIT_SHEET_W = 1672;
+const KILL_DIGIT_SHEET_H = 941;
+const KILL_DIGIT_FRAME_W = Math.floor(KILL_DIGIT_SHEET_W / KILL_DIGIT_COLUMNS);
+const KILL_DIGIT_FRAME_H = Math.floor(KILL_DIGIT_SHEET_H / KILL_DIGIT_ROWS);
 
 function lerp(from: number, to: number, progress: number) {
   return from + (to - from) * progress;
@@ -100,15 +104,23 @@ function CoverKillCounter({ value }: { value: number }) {
         const digitIndex = Number(digit);
         const column = digitIndex % KILL_DIGIT_COLUMNS;
         const row = Math.floor(digitIndex / KILL_DIGIT_COLUMNS);
-        const x = (column / (KILL_DIGIT_COLUMNS - 1)) * BACKGROUND_POSITION_MAX_PERCENT;
-        const y = (row / (KILL_DIGIT_ROWS - 1)) * BACKGROUND_POSITION_MAX_PERCENT;
 
         return (
-          <span
+          <svg
             key={`${index}-${digit}`}
             className="cover-kill-counter-digit"
-            style={{ backgroundPosition: `${x}% ${y}%` }}
-          />
+            viewBox={`0 0 ${KILL_DIGIT_FRAME_W} ${KILL_DIGIT_FRAME_H}`}
+            aria-hidden="true"
+            focusable="false"
+          >
+            <image
+              href={KILL_DIGIT_SHEET_SRC}
+              x={-column * KILL_DIGIT_FRAME_W}
+              y={-row * KILL_DIGIT_FRAME_H}
+              width={KILL_DIGIT_SHEET_W}
+              height={KILL_DIGIT_SHEET_H}
+            />
+          </svg>
         );
       })}
     </div>

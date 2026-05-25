@@ -2,7 +2,7 @@
 
 ## Implementation Status
 
-- 素材状态：已实现并接入，当前对应 `assets/sprites/enemies/enemy_1.png`。
+- 素材状态：已实现并接入，当前对应 `assets/sprites/enemies/chaser.png`。
 - 玩法状态：专属 `chaser` archetype、独立数值和行为尚未实现；当前仍与其他普通敌人共享同一套追踪 AI。
 - 目标玩法：第一幕开始出现，从屏幕一侧横穿冲向另一侧，未被击杀则折返重复；生命、攻击和速度随幕数成长。
 

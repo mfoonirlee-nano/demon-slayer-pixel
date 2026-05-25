@@ -10,10 +10,10 @@ const CASTER_WISP_DRAW = {
   w: 38,
   h: 38,
   frameDuration: 6,
-  despawnMarginY: 80,
 } as const;
 
 const FULL_CIRCLE = Math.PI * 2;
+const PROJECTILE_VERTICAL_DESPAWN_MARGIN = 80;
 
 function playerCenterX() {
   return state.player.x + state.player.w / 2;
@@ -61,11 +61,21 @@ function updateBossProjectile(projectile: ProjectileState) {
   projectile.x += projectile.vx;
 }
 
+function casterWispOutOfBounds(projectile: ProjectileState) {
+  const drawX = projectile.x + projectile.w / 2 - CASTER_WISP_DRAW.w / 2;
+  const drawY = projectile.y + projectile.h / 2 - CASTER_WISP_DRAW.h / 2;
+  return drawX + CASTER_WISP_DRAW.w < 0
+    || drawX > WIDTH
+    || drawY + CASTER_WISP_DRAW.h < 0
+    || drawY > HEIGHT;
+}
+
 function projectileOutOfBounds(projectile: ProjectileState) {
+  if (projectile.kind === "casterWisp") return casterWispOutOfBounds(projectile);
   return projectile.x < -PROJECTILE_CONFIG.despawnMargin
     || projectile.x > WIDTH + PROJECTILE_CONFIG.despawnMargin
-    || projectile.y < -CASTER_WISP_DRAW.despawnMarginY
-    || projectile.y > HEIGHT + CASTER_WISP_DRAW.despawnMarginY;
+    || projectile.y < -PROJECTILE_VERTICAL_DESPAWN_MARGIN
+    || projectile.y > HEIGHT + PROJECTILE_VERTICAL_DESPAWN_MARGIN;
 }
 
 export function updateProjectiles() {
@@ -79,13 +89,13 @@ export function updateProjectiles() {
     } else {
       updateBossProjectile(p);
     }
-    p.life -= 1;
+    if (p.kind !== "casterWisp") p.life -= 1;
     if (hitbox(state.player, p)) {
       hurtPlayer(p.damage, p.vx);
       state.projectiles.splice(i, 1);
       continue;
     }
-    if (p.life <= 0 || projectileOutOfBounds(p)) {
+    if ((p.kind !== "casterWisp" && p.life <= 0) || projectileOutOfBounds(p)) {
       state.projectiles.splice(i, 1);
     }
   }
@@ -104,7 +114,7 @@ export function drawProjectiles() {
         drawY,
         CASTER_WISP_DRAW.w,
         CASTER_WISP_DRAW.h,
-        p.vx >= 0 ? 1 : -1,
+        p.vx >= 0 ? -1 : 1,
       );
       continue;
     }

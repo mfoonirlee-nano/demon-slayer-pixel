@@ -60,33 +60,45 @@
 
 | 文件 | 总尺寸 | 帧数 | 单帧 | 常量 |
 | --- | ---: | ---: | ---: | --- |
-| `enemy_1.png` | `1148x282` | 4 | `287x282` | `ENEMY_SHEETS[0]` |
-| `enemy_2.png` | `1256x145` | 4 | `314x145` | `ENEMY_SHEETS[1]` |
-| `enemy_3.png` | `932x250` | 4 | `233x250` | `ENEMY_SHEETS[2]` |
-| `enemy_4.png` | `1152x360` | 4 | `288x360` | `ENEMY_SHEETS[3]` |
-| `enemy_5.png` | `1280x360` | 4 | `320x360` | `ENEMY_SHEETS[4]` |
-| `enemy_6.png` | `1884x145` | 6 | `314x145` | `ENEMY_SHEETS[5]` |
+| `chaser.png` | `1148x282` | 4 | `287x282` | `ENEMY_SHEETS[0]` |
+| `crawler.png` | `1256x145` | 4 | `314x145` | `ENEMY_SHEETS[1]` |
+| `runner_approach.png` | `1500x250` | 6 | `250x250` | `ENEMY_SHEETS[2]` |
+| `caster_move.png` | `1152x360` | 4 | `288x360` | `ENEMY_SHEETS[3]` |
+| `duelist.png` | `1280x360` | 4 | `320x360` | `ENEMY_SHEETS[4]` |
+| `brute_advance.png` | `1884x145` | 6 | `314x145` | `ENEMY_SHEETS[5]` |
 | `boss.png` | `1400x419` | 4 | `350x419` | `BOSS_SHEET` |
 | `boss_skill1.png` | `2400x400` | 6 | `400x400` | `BOSS_SKILL1_SHEET` |
 | `boss_skill1_effect.png` | `2400x350` | 6 | `400x350` | `BOSS_SKILL1_EFFECT_SHEET` |
+
+Crawler 专属动作素材：
+
+| 文件 | 总尺寸 | 帧数 | 单帧 | 运行时状态 | 备注 |
+| --- | ---: | ---: | ---: | --- | --- |
+| `crawler.png` | `1256x145` | 4 | `314x145` | `move` | 低矮贴地移动，腿部交替但主体稳定 |
+| `crawler_windup.png` | `1256x145` | 4 | `314x145` | `windup` | 停住压低，前肢张开，红眼和前爪作为读招 |
+| `crawler_lunge.png` | `1570x145` | 5 | `314x145` | `lunge` | 短距离贴地前扑，前爪和少量尘迹/气弧烘进图集 |
+| `crawler_recover.png` | `942x145` | 3 | `314x145` | `recover` | 扑击后停顿，腿部回收，给玩家反打窗口 |
+
+Crawler 动作素材不提交 `*_source.png` 绿幕制作源图；运行时只加载以上透明 PNG。
 
 Caster 专属动作素材：
 
 | 文件 | 总尺寸 | 帧数 | 单帧 | 运行时状态 | 备注 |
 | --- | ---: | ---: | ---: | --- | --- |
-| `enemy_4.png` | `1152x360` | 4 | `288x360` | `move` | 慢速前行，提灯暖橙光和面具红眼清晰 |
+| `caster_move.png` | `1152x360` | 4 | `288x360` | `move` | 慢速前行，提灯暖橙光和面具红眼清晰 |
 | `caster_windup.png` | `1152x360` | 4 | `288x360` | `windup` | 提灯逐帧抬高，灯芯增强，手势准备施法 |
 | `caster_cast.png` | `1152x360` | 4 | `288x360` | `cast` | 提灯前伸并内置局部符点/火光释放提示，不包含飞行鬼火 |
 | `caster_recover.png` | `864x360` | 3 | `288x360` | `recover` | 施法后手臂回落，灯光变弱，读出硬直 |
 | `caster_hit.png` | `864x360` | 3 | `288x360` | `hit` | 面具后仰、提灯闪烁，读出打断感 |
 | `caster_wisp.png` | `384x96` | 4 | `96x96` | `projectile` | 独立暖橙鬼火投射物，运行时轻微追踪玩家 |
 
-以上 caster 专属动作素材均有对应 `*_source.png` 绿幕制作源图；动作素材由 `CASTER_SHEETS` 暴露并预加载，鬼火由 `CASTER_WISP_SHEET` 暴露并预加载。`enemy_4` 现在使用专属远程状态机，鬼火不再作为 `caster_cast` 帧的一部分。
+以上 caster 专属动作素材均有对应 `*_source.png` 绿幕制作源图；动作素材由 `CASTER_SHEETS` 暴露并预加载，鬼火由 `CASTER_WISP_SHEET` 暴露并预加载。`caster_move` 现在使用专属远程状态机，鬼火不再作为 `caster_cast` 帧的一部分。
 
 Runner 专属动作素材：
 
 | 文件 | 总尺寸 | 帧数 | 单帧 | 运行时状态 | 备注 |
 | --- | ---: | ---: | ---: | --- | --- |
+| `runner.png` | `932x250` | 4 | `233x250` | `base` | 原基础移动图集，当前运行时使用 `runner_approach.png` |
 | `runner_approach.png` | `1500x250` | 6 | `250x250` | `approach` | 低身急跑，角前指 |
 | `runner_windup.png` | `1000x250` | 4 | `250x250` | `windup` | 静止压低，角对准玩家 |
 | `runner_dash.png` | `1250x250` | 5 | `250x250` | `dash` | 身体拉成长斜线，带少量尘迹 |
@@ -98,7 +110,7 @@ Brute 专属动作素材：
 
 | 文件 | 总尺寸 | 帧数 | 单帧 | 运行时状态 | 备注 |
 | --- | ---: | ---: | ---: | --- | --- |
-| `enemy_6.png` | `1884x145` | 6 | `314x145` | `advance` | 慢速推进，低矮重型起伏 |
+| `brute_advance.png` | `1884x145` | 6 | `314x145` | `advance` | 慢速推进，低矮重型起伏 |
 | `brute_brace.png` | `1256x145` | 4 | `314x145` | `brace` | 停顿压低，头部/前甲与囊泡逐帧发亮 |
 | `brute_stomp.png` | `1570x145` | 5 | `314x145` | `stomp` | 短距离前顶，头部/前甲高亮并内置前方气浪 |
 | `brute_recover.png` | `942x145` | 3 | `314x145` | `recover` | 同推进尺度的低姿态硬直，头部/前甲从亮绿色恢复原色 |
