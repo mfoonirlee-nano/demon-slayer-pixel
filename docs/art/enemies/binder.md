@@ -2,8 +2,19 @@
 
 ## Implementation Status
 
-- 素材状态：未实现。
-- 玩法状态：未实现。
+- 素材状态：已实现，运行时透明 PNG 位于 `assets/sprites/enemies/binder/`。
+- 玩法状态：已实现 v1。`elapsed >= 90s` 后进入普通刷怪池，同屏最多 `1` 个；施法生成短时地面咒圈，只降低玩家水平移动速度。
+
+## Runtime Spec
+
+| 资源 | 总尺寸 | 帧数 | 单帧 | 运行时状态 |
+| --- | ---: | ---: | ---: | --- |
+| `binder_move.png` | `1040x320` | 4 | `260x320` | `move` |
+| `binder_windup.png` | `1040x320` | 4 | `260x320` | `windup` |
+| `binder_cast.png` | `1040x320` | 4 | `260x320` | `cast` |
+| `binder_recover.png` | `780x320` | 3 | `260x320` | `recover` |
+| `binder_hit.png` | `780x320` | 3 | `260x320` | `hit` 预留 |
+| `binder_zone.png` | `960x120` | 4 | `240x120` | 地面减速咒圈 |
 
 ## Role
 
@@ -53,4 +64,3 @@
 
 - 不要把它画成高伤法师；它的卖点是控场。
 - 不要让咒圈过亮或过大，避免遮挡玩家和平台。
-

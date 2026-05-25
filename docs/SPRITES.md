@@ -68,6 +68,7 @@
 | `enemies/caster/caster_move.png` | `1152x360` | 4 | `288x360` | `ENEMY_SHEETS[3]` |
 | `enemies/duelist/duelist.png` | `1280x360` | 4 | `320x360` | `ENEMY_SHEETS[4]` |
 | `enemies/brute/brute_advance.png` | `1884x145` | 6 | `314x145` | `ENEMY_SHEETS[5]` |
+| `enemies/binder/binder_move.png` | `1040x320` | 4 | `260x320` | `ENEMY_SHEETS[6]` |
 | `enemies/boss/boss.png` | `1400x419` | 4 | `350x419` | `BOSS_SHEET` |
 | `enemies/boss/boss_skill1.png` | `2400x400` | 6 | `400x400` | `BOSS_SKILL1_SHEET` |
 | `enemies/boss/boss_skill1_effect.png` | `2400x350` | 6 | `400x350` | `BOSS_SKILL1_EFFECT_SHEET` |
@@ -100,13 +101,23 @@ Runner 专属动作素材：
 
 | 路径 | 总尺寸 | 帧数 | 单帧 | 运行时状态 | 备注 |
 | --- | ---: | ---: | ---: | --- | --- |
-| `enemies/runner/runner.png` | `932x250` | 4 | `233x250` | `base` | 原基础移动图集，当前运行时使用 `runner_approach.png` |
 | `enemies/runner/runner_approach.png` | `1500x250` | 6 | `250x250` | `approach` | 低身急跑，角前指 |
 | `enemies/runner/runner_windup.png` | `1000x250` | 4 | `250x250` | `windup` | 静止压低，角对准玩家 |
 | `enemies/runner/runner_dash.png` | `1250x250` | 5 | `250x250` | `dash` | 身体拉成长斜线，带少量尘迹 |
 | `enemies/runner/runner_recover.png` | `750x250` | 3 | `250x250` | `recover` | 冲过后刹停，露出反打窗口 |
 
 以上 runner 专属动作素材均有对应 `*_source.png` 绿幕制作源图。
+
+Duelist 专属动作素材：
+
+| 路径 | 总尺寸 | 帧数 | 单帧 | 运行时状态 | 备注 |
+| --- | ---: | ---: | ---: | --- | --- |
+| `enemies/duelist/duelist.png` | `1280x360` | 4 | `320x360` | `approach` | 双刃低位推进，黑红破布和骨刃轮廓清晰 |
+| `enemies/duelist/duelist_windup.png` | `1280x360` | 4 | `320x360` | `windup` | 停步压低，双刃外展，暗红刃缘作为读招 |
+| `enemies/duelist/duelist_slash.png` | `1600x360` | 5 | `320x360` | `slash` | 短距离双刃斩击，关键帧弧形斩线已烘进图集 |
+| `enemies/duelist/duelist_recover.png` | `960x360` | 3 | `320x360` | `recover` | 斩后收刀硬直，胸口和肩线暴露形成反打窗口 |
+
+Duelist 动作素材不提交 `*_source.png` 绿幕制作源图；运行时只加载以上透明 PNG。斩击读招、双刃弧线和恢复硬直姿态已烘进图集，运行时只负责状态切换和关键帧斩击盒。
 
 Brute 专属动作素材：
 
@@ -118,6 +129,19 @@ Brute 专属动作素材：
 | `enemies/brute/brute_recover.png` | `942x145` | 3 | `314x145` | `recover` | 同推进尺度的低姿态硬直，头部/前甲从亮绿色恢复原色 |
 
 以上 brute 专属动作素材均有对应 `*_source.png` 绿幕制作源图；`brace` / `stomp` / `recover` 的读招高亮、前方气浪和恢复衰减已烘进图集，运行时不再额外绘制头光、地裂或气浪覆盖层。
+
+Binder 专属动作素材：
+
+| 路径 | 总尺寸 | 帧数 | 单帧 | 运行时状态 | 备注 |
+| --- | ---: | ---: | ---: | --- | --- |
+| `enemies/binder/binder_move.png` | `1040x320` | 4 | `260x320` | `move` | 瘦高灰黑长袍、符纸和暗红咒线的后期控场敌人 |
+| `enemies/binder/binder_windup.png` | `1040x320` | 4 | `260x320` | `windup` | 拉紧咒线并指向地面，读出施法前摇 |
+| `enemies/binder/binder_cast.png` | `1040x320` | 4 | `260x320` | `cast` | 咒线甩向地面，在玩家当前位置生成减速咒圈 |
+| `enemies/binder/binder_recover.png` | `780x320` | 3 | `260x320` | `recover` | 咒线回收，符纸下落，给玩家反打窗口 |
+| `enemies/binder/binder_hit.png` | `780x320` | 3 | `260x320` | `hit` | 正式受击素材预留，v1 不改变通用受击状态机 |
+| `enemies/binder/binder_zone.png` | `960x120` | 4 | `240x120` | `bindingZone` | 暗红/紫色地面咒圈，约 `150` 帧内使玩家水平移动速度乘以 `0.45` |
+
+Binder 运行时由 `BINDER_SHEETS` 和 `BINDER_ZONE_SHEET` 暴露并预加载。普通刷怪在 `elapsed >= 90s` 后才会抽取 binder；同屏最多 `1` 个 binder，主咒圈最多 `1` 个。咒圈不造成伤害，不禁用跳跃或攻击。
 
 ## 资源更新流程
 

@@ -4,8 +4,11 @@ import {
   CRAWLER_SHEETS,
   CASTER_SHEETS,
   CASTER_WISP_SHEET,
+  DUELIST_SHEETS,
   RUNNER_SHEETS,
   BRUTE_SHEETS,
+  BINDER_SHEETS,
+  BINDER_ZONE_SHEET,
   BOSS_SHEET,
   BOSS_SKILL1_SHEET,
   BOSS_SKILL1_EFFECT_SHEET,
@@ -49,6 +52,10 @@ export function loadSprites(): Promise<void> {
     jobs.push(loadImage(sheet.src).then((img) => { sheet.image = img; }));
   }
   jobs.push(loadImage(CASTER_WISP_SHEET.src).then((img) => { CASTER_WISP_SHEET.image = img; }));
+  for (const sheet of Object.values(DUELIST_SHEETS)) {
+    if (ENEMY_SHEETS.includes(sheet)) continue;
+    jobs.push(loadImage(sheet.src).then((img) => { sheet.image = img; }));
+  }
   for (const sheet of Object.values(RUNNER_SHEETS)) {
     if (ENEMY_SHEETS.includes(sheet)) continue;
     jobs.push(loadImage(sheet.src).then((img) => { sheet.image = img; }));
@@ -57,6 +64,11 @@ export function loadSprites(): Promise<void> {
     if (ENEMY_SHEETS.includes(sheet)) continue;
     jobs.push(loadImage(sheet.src).then((img) => { sheet.image = img; }));
   }
+  for (const sheet of Object.values(BINDER_SHEETS)) {
+    if (ENEMY_SHEETS.includes(sheet)) continue;
+    jobs.push(loadImage(sheet.src).then((img) => { sheet.image = img; }));
+  }
+  jobs.push(loadImage(BINDER_ZONE_SHEET.src).then((img) => { BINDER_ZONE_SHEET.image = img; }));
   jobs.push(loadImage(BOSS_SHEET.src).then((img) => { BOSS_SHEET.image = img; }));
   jobs.push(loadImage(BOSS_SKILL1_SHEET.src).then((img) => { BOSS_SKILL1_SHEET.image = img; }));
   jobs.push(loadImage(BOSS_SKILL1_EFFECT_SHEET.src).then((img) => { BOSS_SKILL1_EFFECT_SHEET.image = img; }));

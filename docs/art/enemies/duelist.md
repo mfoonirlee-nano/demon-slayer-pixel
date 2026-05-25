@@ -2,8 +2,9 @@
 
 ## Implementation Status
 
-- 素材状态：已实现并接入，当前对应 `assets/sprites/enemies/duelist/duelist.png`。
-- 玩法状态：专属 `duelist` archetype、近身斩击前摇和斩击盒尚未实现；当前仍与其他普通敌人共享同一套追踪 AI。
+- 素材状态：已重做并接入，当前 `assets/sprites/enemies/duelist/duelist.png` 是 `approach`，另有 `duelist_windup.png`、`duelist_slash.png`、`duelist_recover.png`。
+- 玩法状态：已接入专属 `duelist` archetype，当前实现为 `approach -> windup -> slash -> recover` 的近战精英循环。
+- 代码入口：`src/entities/enemies/duelist.ts`；资源入口：`src/constants/assets.ts` 的 `DUELIST_SHEET_INDEX` / `DUELIST_SHEETS`。
 
 ## Role
 

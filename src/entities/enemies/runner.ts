@@ -15,12 +15,13 @@ const RUNNER_CONFIG = {
   dashMaxSpeed: 5.2,
   windupMinFrames: 14,
   windupFrameJitter: 5,
-  dashMinFrames: 18,
-  dashFrameJitter: 7,
+  dashMinFrames: 28,
+  dashFrameJitter: 8,
   recoverFrames: 24,
   hpMultiplier: 0.75,
   maxActiveDashes: 2,
   drawScale: 1.2,
+  dashDrawScaleMultiplier: 1.12,
   dashAnimSpeed: 3,
   windupAnimSpeed: 5,
   defaultAnimSpeed: 7,
@@ -172,8 +173,11 @@ function drawRunner(enemy: EnemyState) {
       ? RUNNER_CONFIG.windupAnimSpeed
       : RUNNER_CONFIG.defaultAnimSpeed;
   const facing = enemy.runnerFacing ?? (enemy.vx >= 0 ? 1 : -1);
+  const drawScale = enemyDrawScale(RUNNER_ARCHETYPE) * (
+    phase === "dash" ? RUNNER_CONFIG.dashDrawScaleMultiplier : 1
+  );
   drawRunnerDust(enemy, phase, facing);
-  drawEnemyFrame(enemy, sheet, enemyDrawScale(RUNNER_ARCHETYPE), animSpeed, state.elapsed, facing);
+  drawEnemyFrame(enemy, sheet, drawScale, animSpeed, state.elapsed, facing);
 }
 
 export const RUNNER_ARCHETYPE: EnemyArchetype = {

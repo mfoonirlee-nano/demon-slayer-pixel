@@ -25,6 +25,7 @@ import { playTone } from "../audio";
 import { recordBossCoverKill, recordEnemyCoverKill } from "../coverProgress";
 import { emitSlash, emitHitBurst } from "./particle";
 import { damageEnemy } from "./enemies/common";
+import { bindingZonePlayerMoveScale } from "./enemies/binder";
 import { keys } from "../input";
 
 export function triggerAttack() {
@@ -411,11 +412,12 @@ export function updatePlayer() {
   if (p.onPlatform && state.platforms.includes(p.onPlatform)) {
     p.x += p.onPlatform.vx;
   }
+  const moveScale = bindingZonePlayerMoveScale();
   if (keys.has("a")) {
-    p.vx = -p.speed;
+    p.vx = -p.speed * moveScale;
     if (p.skillTimer <= 0 && p.ultimateTimer <= 0) p.facing = -1;
   } else if (keys.has("d")) {
-    p.vx = p.speed;
+    p.vx = p.speed * moveScale;
     if (p.skillTimer <= 0 && p.ultimateTimer <= 0) p.facing = 1;
   } else {
     p.vx *= PLAYER_COMBAT.groundDrag;

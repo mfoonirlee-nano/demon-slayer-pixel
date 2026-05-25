@@ -6,9 +6,12 @@ export type PlatformKind = "normal" | "hover" | "chain";
 export type PlatformLayer = "low" | "mid" | "high" | "top";
 export type CrawlerPhase = "move" | "windup" | "lunge" | "recover";
 export type RunnerPhase = "approach" | "windup" | "dash" | "recover";
+export type DuelistPhase = "approach" | "windup" | "slash" | "recover";
 export type BrutePhase = "advance" | "brace" | "stomp" | "recover";
 export type CasterPhase = "move" | "windup" | "cast" | "recover" | "hit";
 export type CasterAiPhase = "seekRange" | "windup" | "cast" | "recover";
+export type BinderPhase = "move" | "windup" | "cast" | "recover" | "hit";
+export type BinderAiPhase = "seekRange" | "windup" | "cast" | "recover";
 export type ProjectileKind = "boss" | "casterWisp";
 
 export type PlatformState = {
@@ -89,6 +92,11 @@ export type EnemyState = {
   runnerTimer?: number;
   runnerFacing?: number;
   runnerApproachSpeed?: number;
+  duelistPhase?: DuelistPhase;
+  duelistTimer?: number;
+  duelistFacing?: number;
+  duelistBaseSpeed?: number;
+  duelistSlashHit?: boolean;
   brutePhase?: BrutePhase;
   bruteTimer?: number;
   bruteFacing?: number;
@@ -100,6 +108,11 @@ export type EnemyState = {
   casterBaseSpeed?: number;
   casterCastSpawned?: boolean;
   casterId?: number;
+  binderPhase?: BinderAiPhase;
+  binderTimer?: number;
+  binderFacing?: number;
+  binderBaseSpeed?: number;
+  binderCastSpawned?: boolean;
 };
 
 export type BossState = {
@@ -133,6 +146,16 @@ export type BossSkill1EffectState = {
   elapsed: number;
   damage: number;
   hitPlayerCd: number;
+};
+
+export type BindingZoneState = {
+  x: number;
+  y: number;
+  radius: number;
+  life: number;
+  maxLife: number;
+  elapsed: number;
+  frame: number;
 };
 
 export type ProjectileState = {
@@ -252,6 +275,7 @@ export type GameState = {
   enemies: EnemyState[];
   particles: ParticleState[];
   projectiles: ProjectileState[];
+  bindingZones: BindingZoneState[];
   platforms: PlatformState[];
   chests: ChestState[];
   skillBursts: SkillBurstState[];

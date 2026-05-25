@@ -1,14 +1,16 @@
 import { useState } from "react";
 import {
+  BINDER_SHEET_INDEX,
   BRUTE_SHEET_INDEX,
   CASTER_SHEET_INDEX,
   CRAWLER_SHEET_INDEX,
+  DUELIST_SHEET_INDEX,
   ENEMY_SHEETS,
   RUNNER_SHEET_INDEX,
 } from "./constants";
 import type { SegmentKind } from "./entities/platform";
 
-export type DebugEnemyKind = "chaser" | "crawler" | "runner" | "caster" | "duelist" | "brute";
+export type DebugEnemyKind = "chaser" | "crawler" | "runner" | "caster" | "duelist" | "brute" | "binder";
 
 type DebugRuntimeActions = {
   canSpawn: () => boolean;
@@ -19,7 +21,6 @@ type DebugRuntimeActions = {
 };
 
 const CHASER_SHEET_INDEX = 0;
-const DUELIST_SHEET_INDEX = 4;
 
 const DEBUG_ENEMY_SHEET_INDEX: Record<DebugEnemyKind, number> = {
   chaser: CHASER_SHEET_INDEX,
@@ -28,6 +29,7 @@ const DEBUG_ENEMY_SHEET_INDEX: Record<DebugEnemyKind, number> = {
   caster: CASTER_SHEET_INDEX,
   duelist: DUELIST_SHEET_INDEX,
   brute: BRUTE_SHEET_INDEX,
+  binder: BINDER_SHEET_INDEX,
 };
 
 const DEBUG_ENEMY_OPTIONS: Array<{ kind: DebugEnemyKind; label: string }> = [
@@ -37,6 +39,7 @@ const DEBUG_ENEMY_OPTIONS: Array<{ kind: DebugEnemyKind; label: string }> = [
   { kind: "caster", label: "caster" },
   { kind: "duelist", label: "duelist" },
   { kind: "brute", label: "brute" },
+  { kind: "binder", label: "binder" },
 ];
 
 const DEBUG_PLATFORM_OPTIONS: Array<{ kind: SegmentKind; label: string }> = [

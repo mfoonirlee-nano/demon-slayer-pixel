@@ -57,6 +57,7 @@ export function createInitialState(): GameState {
     enemies: [],
     particles: [],
     projectiles: [],
+    bindingZones: [],
     platforms: [],
     chests: [],
     skillBursts: [],
@@ -93,6 +94,7 @@ export function resetState() {
   resetCollection(state.bossSkill1Effects, next.bossSkill1Effects);
   state.skill3Effect = next.skill3Effect;
   resetCollection(state.projectiles, next.projectiles);
+  resetCollection(state.bindingZones, next.bindingZones);
   state.elapsed = next.elapsed;
   state.spawnTimer = next.spawnTimer;
   state.bossSpawnTimer = next.bossSpawnTimer;

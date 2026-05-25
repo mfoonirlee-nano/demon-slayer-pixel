@@ -10,7 +10,11 @@ import { hitbox } from "../utils";
 import { hurtPlayer } from "./player";
 import { createEnemyState, enemyBaseHp, enemyDamage } from "./enemies/common";
 import { canSpawnBrute, isBruteSheet } from "./enemies/brute";
+import { BINDER_UNLOCK_SECONDS, canSpawnBinder, isBinderSheet } from "./enemies/binder";
+import { canSpawnDuelist, isDuelistSheet } from "./enemies/duelist";
 import { enemyArchetypeForSheet } from "./enemies/registry";
+
+const CHASER_SHEET_INDEX = 0;
 
 function createSpawnedEnemy(sheetIndex: number, side: number): EnemyState {
   const archetype = enemyArchetypeForSheet(sheetIndex);
@@ -26,19 +30,37 @@ function createSpawnedEnemy(sheetIndex: number, side: number): EnemyState {
   return enemy;
 }
 
+function canSpawnSheetIndex(sheetIndex: number) {
+  if (!ENEMY_SHEETS[sheetIndex]) return false;
+  if (isBruteSheet(sheetIndex)) return canSpawnBrute();
+  if (isBinderSheet(sheetIndex)) return canSpawnBinder();
+  if (isDuelistSheet(sheetIndex)) return canSpawnDuelist();
+  return true;
+}
+
+function canRandomSpawnSheetIndex(sheetIndex: number) {
+  if (isBinderSheet(sheetIndex) && state.elapsed < BINDER_UNLOCK_SECONDS) return false;
+  return canSpawnSheetIndex(sheetIndex);
+}
+
+function randomSpawnSheetIndex() {
+  const candidates = ENEMY_SHEETS
+    .map((_, sheetIndex) => sheetIndex)
+    .filter(canRandomSpawnSheetIndex);
+  if (candidates.length === 0) return CHASER_SHEET_INDEX;
+  return candidates[Math.floor(Math.random() * candidates.length)];
+}
+
 export function spawnEnemy() {
   if (state.enemies.length >= RUNTIME_CONFIG.enemyMaxCount) return;
 
   const side = Math.random() < ENEMY_CONFIG.spawnSideChance ? -1 : 1;
-  let sheetIndex = Math.floor(Math.random() * ENEMY_SHEETS.length);
-  if (isBruteSheet(sheetIndex) && !canSpawnBrute() && ENEMY_SHEETS.length > 1) {
-    sheetIndex = Math.floor(Math.random() * (ENEMY_SHEETS.length - 1));
-  }
+  const sheetIndex = randomSpawnSheetIndex();
   state.enemies.push(createSpawnedEnemy(sheetIndex, side));
 }
 
 export function spawnEnemyBySheetIndex(sheetIndex: number, side = 1) {
-  if (!ENEMY_SHEETS[sheetIndex]) return;
+  if (!canSpawnSheetIndex(sheetIndex)) return;
   state.enemies.push(createSpawnedEnemy(sheetIndex, side));
 }
 

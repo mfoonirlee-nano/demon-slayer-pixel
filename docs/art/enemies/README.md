@@ -35,7 +35,7 @@
 | `crawler` | 伏地蛛鬼 | 素材已接入；专属数值/行为未实现 | [crawler.md](crawler.md) |
 | `runner` | 角突鬼 | 素材已接入；专属数值/行为未实现 | [runner.md](runner.md) |
 | `caster` | 提灯咒鬼 | 多状态素材已接入；远程鬼火行为已实现 | [caster.md](caster.md) |
-| `duelist` | 双刃裂鬼 | 素材已接入；近战斩击行为未实现 | [duelist.md](duelist.md) |
+| `duelist` | 双刃裂鬼 | 多状态素材已接入；近战斩击行为已实现 | [duelist.md](duelist.md) |
 | `brute` | 甲壳重鬼 | 素材已接入；重型行为未实现 | [brute.md](brute.md) |
 | `leaper` | 裂足跳鬼 | 未实现 | [leaper.md](leaper.md) |
 | `glider` | 膜翼巡鬼 | 未实现 | [glider.md](glider.md) |

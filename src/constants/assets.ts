@@ -1,6 +1,6 @@
 import { PLAYER_ANIMATION_STATES, SKILL_IDS } from "./ids";
 import type { PlayerAnimationState, PlayerSheet, Skill, SpriteSheet } from "../types/assets";
-import type { BrutePhase, CasterPhase, CrawlerPhase, RunnerPhase } from "../types/game-state";
+import type { BinderPhase, BrutePhase, CasterPhase, CrawlerPhase, DuelistPhase, RunnerPhase } from "../types/game-state";
 
 export const SKILLS: Skill[] = [
   {
@@ -155,6 +155,13 @@ export const ENEMY_SHEETS: SpriteSheet[] = [
     count: 6,
     image: null,
   },
+  {
+    src: "assets/sprites/enemies/binder/binder_move.png",
+    frameW: 260,
+    frameH: 320,
+    count: 4,
+    image: null,
+  },
 ];
 
 export const CRAWLER_SHEET_INDEX = 1;
@@ -226,6 +233,33 @@ export const CASTER_WISP_SHEET: SpriteSheet = {
   image: null,
 };
 
+export const DUELIST_SHEET_INDEX = 4;
+
+export const DUELIST_SHEETS: Record<DuelistPhase, SpriteSheet> = {
+  approach: ENEMY_SHEETS[DUELIST_SHEET_INDEX],
+  windup: {
+    src: "assets/sprites/enemies/duelist/duelist_windup.png",
+    frameW: 320,
+    frameH: 360,
+    count: 4,
+    image: null,
+  },
+  slash: {
+    src: "assets/sprites/enemies/duelist/duelist_slash.png",
+    frameW: 320,
+    frameH: 360,
+    count: 5,
+    image: null,
+  },
+  recover: {
+    src: "assets/sprites/enemies/duelist/duelist_recover.png",
+    frameW: 320,
+    frameH: 360,
+    count: 3,
+    image: null,
+  },
+};
+
 export const BRUTE_SHEET_INDEX = 5;
 
 export const BRUTE_SHEETS: Record<BrutePhase, SpriteSheet> = {
@@ -278,6 +312,48 @@ export const RUNNER_SHEETS: Record<RunnerPhase, SpriteSheet> = {
     count: 3,
     image: null,
   },
+};
+
+export const BINDER_SHEET_INDEX = 6;
+
+export const BINDER_SHEETS: Record<BinderPhase, SpriteSheet> = {
+  move: ENEMY_SHEETS[BINDER_SHEET_INDEX],
+  windup: {
+    src: "assets/sprites/enemies/binder/binder_windup.png",
+    frameW: 260,
+    frameH: 320,
+    count: 4,
+    image: null,
+  },
+  cast: {
+    src: "assets/sprites/enemies/binder/binder_cast.png",
+    frameW: 260,
+    frameH: 320,
+    count: 4,
+    image: null,
+  },
+  recover: {
+    src: "assets/sprites/enemies/binder/binder_recover.png",
+    frameW: 260,
+    frameH: 320,
+    count: 3,
+    image: null,
+  },
+  hit: {
+    src: "assets/sprites/enemies/binder/binder_hit.png",
+    frameW: 260,
+    frameH: 320,
+    count: 3,
+    image: null,
+  },
+};
+
+export const BINDER_ZONE_SHEET: SpriteSheet = {
+  src: "assets/sprites/enemies/binder/binder_zone.png",
+  frameW: 240,
+  frameH: 120,
+  count: 4,
+  image: null,
 };
 
 export const ENEMY_REF_DRAW_W = 120;

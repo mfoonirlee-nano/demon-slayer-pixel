@@ -18,7 +18,6 @@ SPRITE_SHEET_SPECS = {
     "enemies/crawler/crawler_windup.png": dict(frame_w=314, frame_h=145, count=4, padding=6, anchor_y="bottom"),
     "enemies/crawler/crawler_lunge.png": dict(frame_w=314, frame_h=145, count=5, padding=6, anchor_y="bottom"),
     "enemies/crawler/crawler_recover.png": dict(frame_w=314, frame_h=145, count=3, padding=6, anchor_y="bottom"),
-    "enemies/runner/runner.png": dict(frame_w=233, frame_h=250, count=4, padding=8, anchor_y="bottom"),
     "enemies/runner/runner_approach.png": dict(frame_w=250, frame_h=250, count=6, padding=8, anchor_y="bottom"),
     "enemies/runner/runner_windup.png": dict(frame_w=250, frame_h=250, count=4, padding=8, anchor_y="bottom"),
     "enemies/runner/runner_dash.png": dict(frame_w=250, frame_h=250, count=5, padding=8, anchor_y="bottom"),
