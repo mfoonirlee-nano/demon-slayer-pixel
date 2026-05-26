@@ -22,11 +22,37 @@ import {
 import { onGround, hitbox, frameIndex, nearestRectHitPoint, overlapHitPoint } from "../utils";
 import { drawSheetFrame, drawSkillFrame } from "../graphics";
 import { playTone } from "../audio";
+import { ctx } from "../context";
 import { recordBossCoverKill, recordEnemyCoverKill } from "../coverProgress";
 import { emitSlash, emitHitBurst } from "./particle";
 import { damageEnemy } from "./enemies/common";
 import { bindingZonePlayerMoveScale } from "./enemies/binder";
 import { keys } from "../input";
+
+const HALF_RATIO = 0.5;
+const FULL_CIRCLE = Math.PI * 2;
+
+const PLAYER_BINDING_SLOW_EFFECT = {
+  filter: "sepia(0.38) saturate(1.55) hue-rotate(282deg) brightness(0.86)",
+  pulseSpeed: 12,
+  pulseBaseAlpha: 0.28,
+  pulseAlphaScale: 0.18,
+  ringColor: "#9b214f",
+  strandColor: "#b8325a",
+  accentColor: "#d7a857",
+  ringYOffset: 10,
+  ringWidthScale: 0.92,
+  ringHeight: 7,
+  strandTopRatio: 0.42,
+  strandMidRatio: 0.64,
+  strandBottomRatio: 0.82,
+  strandInset: 5,
+  strandSag: 8,
+  controlLeadRatio: 0.24,
+  controlTrailRatio: 0.76,
+  lineWidth: 2,
+  accentLineWidth: 1,
+} as const;
 
 export function triggerAttack() {
   const p = state.player;
@@ -581,9 +607,87 @@ export function updatePlayer() {
   if (p.invincible > 0) p.invincible -= 1;
 }
 
+function drawWithBindingSlowFilter(isSlowed: boolean, draw: () => void) {
+  if (!isSlowed || !ctx) {
+    draw();
+    return;
+  }
+
+  ctx.save();
+  ctx.filter = PLAYER_BINDING_SLOW_EFFECT.filter;
+  draw();
+  ctx.restore();
+}
+
+function drawBindingSlowEffect() {
+  if (!ctx) return;
+
+  const p = state.player;
+  const pulseWave = Math.sin(state.elapsed * PLAYER_BINDING_SLOW_EFFECT.pulseSpeed) * HALF_RATIO + HALF_RATIO;
+  const alpha = PLAYER_BINDING_SLOW_EFFECT.pulseBaseAlpha
+    + pulseWave * PLAYER_BINDING_SLOW_EFFECT.pulseAlphaScale;
+  const centerX = p.x + p.w * HALF_RATIO;
+  const footY = p.y + p.h - PLAYER_BINDING_SLOW_EFFECT.ringYOffset;
+  const leftX = p.x + PLAYER_BINDING_SLOW_EFFECT.strandInset;
+  const rightX = p.x + p.w - PLAYER_BINDING_SLOW_EFFECT.strandInset;
+  const leadX = p.x + p.w * PLAYER_BINDING_SLOW_EFFECT.controlLeadRatio;
+  const trailX = p.x + p.w * PLAYER_BINDING_SLOW_EFFECT.controlTrailRatio;
+  const topY = p.y + p.h * PLAYER_BINDING_SLOW_EFFECT.strandTopRatio;
+  const midY = p.y + p.h * PLAYER_BINDING_SLOW_EFFECT.strandMidRatio;
+  const bottomY = p.y + p.h * PLAYER_BINDING_SLOW_EFFECT.strandBottomRatio;
+
+  ctx.save();
+  ctx.globalAlpha = alpha;
+  ctx.strokeStyle = PLAYER_BINDING_SLOW_EFFECT.ringColor;
+  ctx.lineWidth = PLAYER_BINDING_SLOW_EFFECT.lineWidth;
+  ctx.beginPath();
+  ctx.ellipse(
+    centerX,
+    footY,
+    p.w * PLAYER_BINDING_SLOW_EFFECT.ringWidthScale,
+    PLAYER_BINDING_SLOW_EFFECT.ringHeight,
+    0,
+    0,
+    FULL_CIRCLE,
+  );
+  ctx.stroke();
+
+  ctx.strokeStyle = PLAYER_BINDING_SLOW_EFFECT.strandColor;
+  ctx.beginPath();
+  ctx.moveTo(leftX, topY);
+  ctx.bezierCurveTo(
+    leadX,
+    topY + PLAYER_BINDING_SLOW_EFFECT.strandSag,
+    trailX,
+    midY - PLAYER_BINDING_SLOW_EFFECT.strandSag,
+    rightX,
+    midY,
+  );
+  ctx.moveTo(rightX, midY);
+  ctx.bezierCurveTo(
+    trailX,
+    midY + PLAYER_BINDING_SLOW_EFFECT.strandSag,
+    leadX,
+    bottomY - PLAYER_BINDING_SLOW_EFFECT.strandSag,
+    leftX,
+    bottomY,
+  );
+  ctx.stroke();
+
+  ctx.globalAlpha = alpha * PLAYER_BINDING_SLOW_EFFECT.pulseAlphaScale;
+  ctx.strokeStyle = PLAYER_BINDING_SLOW_EFFECT.accentColor;
+  ctx.lineWidth = PLAYER_BINDING_SLOW_EFFECT.accentLineWidth;
+  ctx.beginPath();
+  ctx.moveTo(centerX, topY);
+  ctx.lineTo(centerX, bottomY);
+  ctx.stroke();
+  ctx.restore();
+}
+
 export function drawPlayer() {
   const p = state.player;
   if (p.invincible > 0 && Math.floor(p.invincible / PLAYER_COMBAT.blinkInterval) % 2 === 0) return;
+  const isBindingSlowed = bindingZonePlayerMoveScale() < 1;
 
   // Unified reference point: player center X, feet Y minus global sprite padding.
   // All draw positions: drawX = refX - drawW * anchorX, drawY = refY - drawH * anchorY
@@ -599,15 +703,18 @@ export function drawPlayer() {
     );
     const drawH = ULTIMATE_SKILL_SHEET.frameH * PLAYER_COMBAT.ultimateDrawScale;
     const drawW = ULTIMATE_SKILL_SHEET.frameW * PLAYER_COMBAT.ultimateDrawScale;
-    drawSheetFrame(
-      ULTIMATE_SKILL_SHEET,
-      frame,
-      refX - drawW / 2,
-      refY - drawH * 0.83,
-      drawW,
-      drawH,
-      p.facing,
-    );
+    drawWithBindingSlowFilter(isBindingSlowed, () => {
+      drawSheetFrame(
+        ULTIMATE_SKILL_SHEET,
+        frame,
+        refX - drawW / 2,
+        refY - drawH * 0.83,
+        drawW,
+        drawH,
+        p.facing,
+      );
+    });
+    if (isBindingSlowed) drawBindingSlowEffect();
     return;
   }
 
@@ -626,7 +733,10 @@ export function drawPlayer() {
       const anchorY = skill.anchorY ?? 1;
       // When facing left, the sprite is mirrored, so the horizontal anchor mirrors too.
       const effectiveAnchorX = p.facing === 1 ? anchorX : (1 - anchorX);
-      drawSkillFrame(skill, frame, refX - drawW * effectiveAnchorX, refY - drawH * anchorY, drawW, drawH, p.facing);
+      drawWithBindingSlowFilter(isBindingSlowed, () => {
+        drawSkillFrame(skill, frame, refX - drawW * effectiveAnchorX, refY - drawH * anchorY, drawW, drawH, p.facing);
+      });
+      if (isBindingSlowed) drawBindingSlowEffect();
       return;
     }
   }
@@ -653,5 +763,8 @@ export function drawPlayer() {
       frame = Math.min(sheet.count - 1, sheet.count - 2 + Math.floor(elapsedRecovery / animSpeed));
     }
   }
-  drawSheetFrame(sheet, frame, refX - drawW * anchorX, refY - drawH * anchorY, drawW, drawH, p.facing * (flipX ? -1 : 1));
+  drawWithBindingSlowFilter(isBindingSlowed, () => {
+    drawSheetFrame(sheet, frame, refX - drawW * anchorX, refY - drawH * anchorY, drawW, drawH, p.facing * (flipX ? -1 : 1));
+  });
+  if (isBindingSlowed) drawBindingSlowEffect();
 }

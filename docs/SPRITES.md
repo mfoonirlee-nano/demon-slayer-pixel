@@ -139,9 +139,9 @@ Binder 专属动作素材：
 | `enemies/binder/binder_cast.png` | `1040x320` | 4 | `260x320` | `cast` | 咒线甩向地面，在玩家当前位置生成减速咒圈 |
 | `enemies/binder/binder_recover.png` | `780x320` | 3 | `260x320` | `recover` | 咒线回收，符纸下落，给玩家反打窗口 |
 | `enemies/binder/binder_hit.png` | `780x320` | 3 | `260x320` | `hit` | 正式受击素材预留，v1 不改变通用受击状态机 |
-| `enemies/binder/binder_zone.png` | `960x120` | 4 | `240x120` | `bindingZone` | 暗红/紫色地面咒圈，约 `150` 帧内使玩家水平移动速度乘以 `0.45` |
+| `enemies/binder/binder_zone.png` | `960x120` | 4 | `240x120` | `bindingZone` | 偏侧面视角的暗红/紫色地面咒圈；首帧出现，后 3 帧循环维持，约 `150` 帧内使玩家水平移动速度乘以 `0.45` |
 
-Binder 运行时由 `BINDER_SHEETS` 和 `BINDER_ZONE_SHEET` 暴露并预加载。普通刷怪在 `elapsed >= 90s` 后才会抽取 binder；同屏最多 `1` 个 binder，主咒圈最多 `1` 个。咒圈不造成伤害，不禁用跳跃或攻击。
+Binder 运行时由 `BINDER_SHEETS` 和 `BINDER_ZONE_SHEET` 暴露并预加载。普通刷怪在 `elapsed >= 90s` 后才会抽取 binder；同屏最多 `1` 个 binder，主咒圈最多 `1` 个。咒圈不造成伤害，不禁用跳跃或攻击；玩家进入咒圈时会叠加偏红紫的减速滤镜和束缚线反馈。
 
 ## 资源更新流程
 
