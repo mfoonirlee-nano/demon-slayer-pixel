@@ -62,7 +62,7 @@
 
 | 路径 | 总尺寸 | 帧数 | 单帧 | 常量 |
 | --- | ---: | ---: | ---: | --- |
-| `enemies/chaser/chaser.png` | `1148x282` | 4 | `287x282` | `ENEMY_SHEETS[0]` |
+| `enemies/chaser/chaser.png` | `2296x282` | 8 | `287x282` | `ENEMY_SHEETS[0]` |
 | `enemies/crawler/crawler.png` | `1256x145` | 4 | `314x145` | `ENEMY_SHEETS[1]` |
 | `enemies/runner/runner_approach.png` | `1500x250` | 6 | `250x250` | `ENEMY_SHEETS[2]` |
 | `enemies/caster/caster_move.png` | `1152x360` | 4 | `288x360` | `ENEMY_SHEETS[3]` |

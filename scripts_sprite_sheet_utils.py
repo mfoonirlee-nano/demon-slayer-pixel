@@ -13,7 +13,7 @@ SPRITE_SHEET_SPECS = {
     "player/player_jump.png": dict(frame_w=300, frame_h=310, count=6, padding=8, anchor_y="bottom"),
     "player/player_attack.png": dict(frame_w=400, frame_h=400, count=6, padding=12, anchor_y="bottom"),
     "player/player_fall_attack.png": dict(frame_w=400, frame_h=400, count=6, padding=12, anchor_y="bottom"),
-    "enemies/chaser/chaser.png": dict(frame_w=287, frame_h=282, count=4, padding=8, anchor_y="bottom"),
+    "enemies/chaser/chaser.png": dict(frame_w=287, frame_h=282, count=8, padding=8, anchor_y="bottom"),
     "enemies/crawler/crawler.png": dict(frame_w=314, frame_h=145, count=4, padding=6, anchor_y="bottom"),
     "enemies/crawler/crawler_windup.png": dict(frame_w=314, frame_h=145, count=4, padding=6, anchor_y="bottom"),
     "enemies/crawler/crawler_lunge.png": dict(frame_w=314, frame_h=145, count=5, padding=6, anchor_y="bottom"),
