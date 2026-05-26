@@ -34,6 +34,7 @@ const BINDER_CONFIG = {
   zoneVerticalRadiusScale: 0.58,
   zoneMoveScale: 0.45,
   zoneFrameDuration: 10,
+  zoneLoopStartFrame: 1,
   zoneFadeFrames: 16,
   zoneAlpha: 0.88,
   zoneDrawWidthScale: 2.52,
@@ -260,7 +261,14 @@ export function updateBindingZones() {
     const zone = state.bindingZones[index];
     zone.life -= 1;
     zone.elapsed += 1;
-    zone.frame = Math.floor(zone.elapsed / BINDER_CONFIG.zoneFrameDuration) % BINDER_ZONE_SHEET.count;
+    const rawFrame = Math.floor(zone.elapsed / BINDER_CONFIG.zoneFrameDuration);
+    if (rawFrame < BINDER_CONFIG.zoneLoopStartFrame) {
+      zone.frame = rawFrame;
+    } else {
+      const loopCount = BINDER_ZONE_SHEET.count - BINDER_CONFIG.zoneLoopStartFrame;
+      zone.frame = BINDER_CONFIG.zoneLoopStartFrame
+        + (rawFrame - BINDER_CONFIG.zoneLoopStartFrame) % loopCount;
+    }
     if (zone.life <= 0) state.bindingZones.splice(index, 1);
   }
 }
