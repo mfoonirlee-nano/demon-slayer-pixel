@@ -1,16 +1,16 @@
 # 敌人类型与生成权重
 
-> 实现状态：分阶段实现中。`crawler`、`runner`、`caster`、`brute` 已接入专属状态机；其余条目仍是目标设计。
+> 实现状态：分阶段实现中。`chaser`、`crawler`、`runner`、`caster`、`duelist`、`brute`、`binder` 已接入运行时 archetype 或专属状态机；按幕生成池、预算模型和其余敌人仍是目标设计。
 
 ## Purpose
 
-定义普通敌人 archetype、生成权重、技能随进度解锁、同屏限制和素材接入边界。本文只描述后续目标，不表示源码已经接入这些敌人数值或行为。
+定义普通敌人 archetype、生成权重、技能随进度解锁、同屏限制和素材接入边界。本文主要描述后续目标；当前已经接入的行为以 [enemies.md](enemies.md) 为准。
 
 ## Target Design
 
 敌人设计先解决两个问题：
 
-- 当前 6 张敌人素材只随机换外观，玩法压力没有差异。
+- 当前已有多种敌人状态机，但普通刷怪还没有按幕数组织敌人池和预算。
 - 幕数推进后，需要用敌人组合改变战斗问题，而不是只提高血量和速度。
 
 普通敌人进入注册表：
@@ -57,19 +57,20 @@ k = bossKills = act - 1
 | `glider` | 待制作 | 低空飞行 | 低空悬停，前摇后俯冲掠过 | `4` | 空中和平台边缘压力 |
 | `burrower` | 待制作 | 潜行包抄 | 短暂潜入，地面标记后从玩家附近钻出 | `5` | 后期反风筝压力 |
 | `splitter` | 待制作 | 分裂压迫 | 死亡后分裂为两个低血残影 | `5` | 后期清场顺序压力 |
-| `binder` | 待制作 | 控场干扰 | 前摇后生成短时束缚或减速区域 | `6` | 后期控场压力 |
+| `binder` | `binder_move.png` | 控场干扰 | 前摇后生成短时束缚或减速区域 | `6` | 后期控场压力 |
 | `warden` | 待制作 | 支援核心 | 给附近敌人提供小幅加速或减伤光环 | `6` | 后期目标优先级压力 |
 
 现有素材改造目标：
 
 | 当前素材 | 视觉特征 | 当前问题 | 目标改造 |
 | --- | --- | --- | --- |
-| `chaser.png` | 裸身奔跑鬼 | 和所有敌人同数值 | 作为默认 `chaser`，承担横穿追击的基础怪规则 |
+| `chaser.png` | 裸身奔跑鬼 | 已接入基础追踪；目标横穿/重入场规则未实现 | 作为默认 `chaser`，承担横穿追击的基础怪规则 |
 | `crawler.png` | 低矮蛛形 | 已接入低伏前扑玩法 | 作为 `crawler`，低血高速，短前摇前扑后有恢复硬直；普攻必须稳定可命中 |
-| `runner_approach.png` | 角鬼奔跑/挥臂 | 动作像冲锋但只普通追踪 | 作为 `runner`，增加前摇冲刺 |
-| `caster_move.png` | 提灯面具鬼 | 外观像远程/召唤单位 | 作为 `caster`，正式接入投射物前不进入远程生成池 |
-| `duelist.png` | 双刃鬼 | 外观像近战精英但同质化 | 作为 `duelist`，增加近身斩击窗口 |
-| `brute_advance.png` | 甲壳虫鬼 | 外观像重型单位但同质化 | 作为 `brute`，高血慢速，限制同时存在数量 |
+| `runner_approach.png` | 角鬼奔跑/挥臂 | 已接入前摇冲刺状态机 | 作为 `runner`，按幕数控制快攻压力和同时冲刺数量 |
+| `caster_move.png` | 提灯面具鬼 | 已接入远程鬼火状态机 | 作为 `caster`，按幕数控制生成权重和投射物密度 |
+| `duelist.png` | 双刃鬼 | 已接入近战斩击状态机 | 作为 `duelist`，按幕数控制近身压力和同时威胁数量 |
+| `brute_advance.png` | 甲壳虫鬼 | 已接入重型 brace/stomp 状态机 | 作为 `brute`，高血慢速，限制同时存在数量 |
+| `binder_move.png` | 符咒长袍鬼 | 已接入控场咒圈状态机 | 作为 `binder`，目标设计中改为后期幕数或轮换 profile 解锁 |
 
 新增敌人面向原画师的形象说明见 [../art/enemies/README.md](../art/enemies/README.md)。第一版新增敌人等待正式素材、前摇动画和命中特效准备好后再进入生成池。
 
@@ -473,11 +474,11 @@ chaserDashSpeed = 2.20 + actIndex * 0.12 + random(0, 0.25)
 ## Implementation Notes
 
 - 本文档只定义目标设计；当前已实现敌人数值见 [enemies.md](enemies.md)。
-- 第一阶段可以先建立 `sheetId -> archetypeId` 映射，让现有 6 张正式素材获得不同数值。
+- 第一阶段已建立 `sheetIndex -> archetype` 映射；后续需要把它升级为显式 `ENEMY_ARCHETYPES` 和 `ACT_ENEMY_POOLS`。
 - 先实现 `ACT_ENEMY_POOLS`，不要让所有已解锁 archetype 自动加入当前幕常规刷怪。
 - 第一幕常规池必须只包含 `chaser`、`crawler`、`runner` 三种。
 - 第 4 幕后常规池最多约 `8` 种；新增敌人通过替换、降权和退池轮换进入。
-- `caster` 的远程行为必须等投射物来源、命中规则和反制方式一起实现后再进入生成池。
+- `caster` 的远程行为已接入；后续重点是按幕数控制生成权重、投射物密度和 active cap。
 - 击杀奖励应从 archetype 读取，不再由所有敌人共享同一套固定奖励。
 - `brute`、`caster`、`glider`、`burrower`、`splitter`、`binder`、`warden` 需要 active cap 或 spawn budget，避免组合不可解。
 - `leaper`、`glider`、`burrower`、`binder` 必须有清晰落点、俯冲线、钻出点或区域预警。

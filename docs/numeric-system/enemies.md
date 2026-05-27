@@ -1,14 +1,31 @@
 # 普通敌人数值
 
-> 实现状态：已实现。本文记录当前源码中已经生效的普通敌人数值。
+> 实现状态：部分实现。本文记录当前源码中已经生效的普通敌人数值、archetype 状态机和仍未接入的幕数生成池。
 
 ## Purpose
 
-记录当前普通敌人的生成、生命、伤害、速度成长和素材选择方式。未实现的敌人类型注册表和生成权重见 [enemy-archetypes.md](enemy-archetypes.md)。
+记录当前普通敌人的生成、生命、伤害、速度成长、已接入 archetype 和素材选择方式。未实现的按幕生成权重、预算和轮换规则见 [enemy-archetypes.md](enemy-archetypes.md)。
 
 ## Current State
 
-当前普通敌人只有一套数值和 AI。生成时会随机选择一个敌人贴图，但所有贴图共享同一套生命、伤害、速度、追踪和奖励规则。
+当前普通敌人已经拆出多个运行时 archetype。生成时仍从 `ENEMY_SHEETS` 中随机选择 sheet，并通过 `enemyArchetypeForSheet()` 映射到对应行为；基础生命和接触伤害仍主要按 `elapsed` 统一成长。
+
+已接入的运行时行为：
+
+- `chaser`：基础追踪。
+- `crawler`：低伏接近、前摇、前扑、恢复。
+- `runner`：接近、前摇、冲刺、恢复。
+- `duelist`：接近、前摇、短距离斩击、恢复。
+- `brute`：慢速推进、brace、stomp、恢复，brace/stomp 期间降低非大招伤害。
+- `caster`：保持施法距离，前摇后发射追踪鬼火。
+- `binder`：保持施法距离，前摇后生成减速/伤害咒圈；当前按 `elapsed >= 90s` 才进入随机候选。
+
+当前仍未实现：
+
+- 没有 `bossKills`、`act` 或统一 `threatScalar`。
+- 没有按幕常规敌人池、轮换池或生成预算。
+- `leaper`、`glider`、`burrower`、`splitter`、`warden` 没有运行时实现。
+- Boss 召唤仍调用普通 `spawnEnemy()`，尚未读取 Boss archetype 的召唤池配置。
 
 无 Boss 时，运行时按刷怪计时器生成普通敌人。Boss 存在时常规刷怪暂停，但 Boss 召唤分支仍会调用 `spawnEnemy()`。
 
@@ -38,9 +55,9 @@ max(0.38, 1.2 - elapsed * 0.012)
 
 | 项 | 当前公式或值 |
 | --- | --- |
-| 生命 | `16 + elapsed * 0.3` |
+| 基础生命 | `16 + elapsed * 0.3`，再乘 archetype `hpMultiplier` |
 | 接触伤害 | `min(20, 3 + elapsed * 0.1)` |
-| 初始速度 | `0.72 + random(0..1.08) + elapsed / 60` |
+| 基础速度 | 默认 `0.72 + random(0..1.08) + elapsed / 60`；专属 archetype 可覆盖 |
 | 最大绝对速度 | `3.2` |
 | 追踪转向力 | `0.03` |
 | 离屏销毁边距 | `120` |
@@ -61,8 +78,20 @@ h = drawH * 0.78
 敌人素材：
 
 - 生成时从 `ENEMY_SHEETS` 随机选择 `sheetIndex`。
-- 当前 `ENEMY_SHEETS` 包含 `chaser.png`、`crawler.png`、`runner_approach.png`、`caster_move.png`、`duelist.png`、`brute_advance.png` 六个表。
+- 当前 `ENEMY_SHEETS` 包含 `chaser.png`、`crawler.png`、`runner_approach.png`、`caster_move.png`、`duelist.png`、`brute_advance.png`、`binder_move.png` 七个表。
 - 绘制缩放由 `ENEMY_DRAW_SCALE = 120 / ENEMY_SHEETS[1].frameW` 决定。
+
+当前 archetype 摘要：
+
+| Archetype | 生命倍率 | 生成限制 | 行为摘要 |
+| --- | ---: | --- | --- |
+| `chaser` | `1` | 无专属限制 | 基础追踪玩家横向位置 |
+| `crawler` | `0.65` | 同时前扑最多 `2` | 触发距离内前摇后低伏前扑 |
+| `runner` | `0.75` | 同时冲刺最多 `2` | 进入距离后前摇并高速冲刺 |
+| `duelist` | `1.35` | 同场最多 `3`，同时攻击威胁最多 `1` | 近身前摇后短距离斩击 |
+| `brute` | `4.25` | 同场最多 `2`，同时攻击最多 `1` | 慢速高血，brace/stomp 期间非大招伤害减半 |
+| `caster` | `1` | 每个 caster 鬼火最多 `2` | 保持距离，前摇后发射追踪鬼火 |
+| `binder` | `1.5` | `elapsed >= 90s` 后随机生成，同场最多 `1`，咒圈最多 `1` | 保持距离，前摇后生成减速/伤害咒圈 |
 
 ## Code Sources
 
@@ -70,5 +99,6 @@ h = drawH * 0.78
 - `src/constants/assets.ts`
 - `src/constants/runtime.ts`
 - `src/entities/enemy.ts`
+- `src/entities/enemies/`
 - `src/runtime.ts`
 - `src/types/game-state.ts`

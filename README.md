@@ -43,6 +43,7 @@ npm run build
 
 详细的文档位于 `docs/` 目录下：
 
+- [游戏原案总入口 (game-design/README.md)](docs/game-design/README.md)：游戏定位、核心循环、系统状态、内容优先级、UI/反馈和验收指标。
 - [📂 项目架构 (ARCHITECTURE.md)](docs/ARCHITECTURE.md)：深入了解代码模块设计与游戏循环逻辑。
 - [🎨 素材处理 (SPRITES.md)](docs/SPRITES.md)：说明如何使用 Image Gen 生成、处理和接入像素精灵图。
 - [📏 项目规则 (CODE_RULES.md)](docs/CODE_RULES.md)：统一约束命名、注释、TypeScript 与 magic number 的处理方式。

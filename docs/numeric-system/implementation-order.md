@@ -59,7 +59,7 @@ attackBonusCap = 24 + bossKills * 8 + equipmentCapBonus
 - 新增 `ACT_ENEMY_POOLS`，显式配置每幕常规池和轮换池。
 - `spawnEnemy()` 改为按当前幕选择 archetype。
 - `EnemyState` 增加 `archetypeId`、`aiState`、`aiTimer`、`targetX`、`targetY`、`attackCd`。
-- 先让现有 6 张正式素材映射到 `chaser`、`crawler`、`runner`、`duelist`、`brute`、`caster`。
+- 现有运行时已通过 `sheetIndex -> archetype` 映射接入 `chaser`、`crawler`、`runner`、`duelist`、`brute`、`caster`、`binder`；后续需要整理为显式配置表。
 - 新增素材未接入前只准备配置和无渲染验证，不进入实际生成池。
 - 为 `caster` 增加最小远程攻击能力，复用现有 projectile 逻辑。
 - 用 `enemySpawnBudget` 和 active cap 替代单纯 `enemyMaxCount`。

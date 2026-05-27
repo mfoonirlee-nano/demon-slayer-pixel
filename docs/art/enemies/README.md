@@ -31,17 +31,17 @@
 
 | Enemy | 工作名 | 实现状态 | 文件 |
 | --- | --- | --- | --- |
-| `chaser` | 裸身追鬼 | 素材已接入；专属数值/行为未实现 | [chaser.md](chaser.md) |
-| `crawler` | 伏地蛛鬼 | 素材已接入；专属数值/行为未实现 | [crawler.md](crawler.md) |
-| `runner` | 角突鬼 | 素材已接入；专属数值/行为未实现 | [runner.md](runner.md) |
+| `chaser` | 裸身追鬼 | 素材已接入；基础追踪行为已实现 | [chaser.md](chaser.md) |
+| `crawler` | 伏地蛛鬼 | 素材已接入；低伏前扑行为已实现 | [crawler.md](crawler.md) |
+| `runner` | 角突鬼 | 素材已接入；前摇冲刺行为已实现 | [runner.md](runner.md) |
 | `caster` | 提灯咒鬼 | 多状态素材已接入；远程鬼火行为已实现 | [caster.md](caster.md) |
 | `duelist` | 双刃裂鬼 | 多状态素材已接入；近战斩击行为已实现 | [duelist.md](duelist.md) |
-| `brute` | 甲壳重鬼 | 素材已接入；重型行为未实现 | [brute.md](brute.md) |
+| `brute` | 甲壳重鬼 | 素材已接入；重型 brace/stomp 行为已实现 | [brute.md](brute.md) |
 | `leaper` | 裂足跳鬼 | 未实现 | [leaper.md](leaper.md) |
 | `glider` | 膜翼巡鬼 | 未实现 | [glider.md](glider.md) |
 | `burrower` | 土潜鬼 | 未实现 | [burrower.md](burrower.md) |
 | `splitter` | 裂影鬼 | 未实现 | [splitter.md](splitter.md) |
-| `binder` | 缚咒鬼 | 未实现 | [binder.md](binder.md) |
+| `binder` | 缚咒鬼 | 多状态素材已接入；控场咒圈行为已实现 | [binder.md](binder.md) |
 | `warden` | 御阵鬼 | 未实现 | [warden.md](warden.md) |
 
 ## Readability Checklist
@@ -66,6 +66,6 @@
 - 原画阶段先出黑白 silhouette 小稿，每个敌人至少 3 个方案。
 - 通过 silhouette 后再上色，不先做细节。
 - 动画师需要优先拿到前摇和攻击关键帧，而不是完整待机循环。
-- 现有 6 个敌人先补行为关键帧，不需要推翻当前主体设计。
-- 第一批新敌人可先做 `leaper`、`binder`、`warden`，因为它们最能验证新行为的可读性。
+- 已接入敌人继续补行为关键帧和可读性打磨，不需要推翻当前主体设计。
+- 第一批新敌人可先做 `leaper`、`glider`、`warden`，因为它们能验证跳跃、空中和支援行为的可读性。
 - `burrower` 和 `splitter` 需要额外动效支持，适合第二批制作。
