@@ -117,7 +117,7 @@ export const ENEMY_SHEETS: SpriteSheet[] = [
     src: "assets/sprites/enemies/chaser/chaser.png",
     frameW: 287,
     frameH: 282,
-    count: 8,
+    count: 6,
     image: null,
   },
   {

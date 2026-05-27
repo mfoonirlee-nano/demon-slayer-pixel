@@ -41,6 +41,12 @@ const BINDER_CONFIG = {
   zoneRadius: 76,
   zoneVerticalRadiusScale: 0.58,
   zoneMoveScale: 0.45,
+  zoneDamageFirstFrame: 24,
+  zoneDamageIntervalFrames: 36,
+  zoneDamageInvincibleFrames: 10,
+  zoneDamageBase: 2,
+  zoneDamagePerMinute: 1.25,
+  zoneDamageMax: 7,
   zoneFrameDuration: 10,
   zoneLoopStartFrame: 1,
   zoneFadeFrames: 16,
@@ -88,6 +94,32 @@ function isBinder(enemy: Pick<EnemyState, "sheetIndex">) {
 
 function bindingZoneCount() {
   return state.bindingZones.length;
+}
+
+function bindingZoneDamage() {
+  return Math.min(
+    BINDER_CONFIG.zoneDamageMax,
+    BINDER_CONFIG.zoneDamageBase + difficultyK() * BINDER_CONFIG.zoneDamagePerMinute,
+  );
+}
+
+function isPlayerInBindingZone(zone: { x: number; y: number; radius: number }) {
+  const player = state.player;
+  const footX = player.x + player.w / HALF_DIVISOR;
+  const footY = player.y + player.h;
+  const radiusY = zone.radius * BINDER_CONFIG.zoneVerticalRadiusScale;
+  const dx = (footX - zone.x) / zone.radius;
+  const dy = (footY - zone.y) / radiusY;
+  return dx * dx + dy * dy <= 1;
+}
+
+function applyBindingZoneDamage() {
+  const player = state.player;
+  if (player.invincible > 0) return;
+
+  player.hp = Math.max(0, player.hp - bindingZoneDamage());
+  player.invincible = BINDER_CONFIG.zoneDamageInvincibleFrames;
+  if (player.hp <= 0) state.gameOver = true;
 }
 
 function enterBinderPhase(enemy: EnemyState, phase: BinderAiPhase) {
@@ -270,6 +302,13 @@ export function updateBindingZones() {
     const zone = state.bindingZones[index];
     zone.life -= 1;
     zone.elapsed += 1;
+    if (
+      zone.elapsed >= BINDER_CONFIG.zoneDamageFirstFrame
+      && (zone.elapsed - BINDER_CONFIG.zoneDamageFirstFrame) % BINDER_CONFIG.zoneDamageIntervalFrames === 0
+      && isPlayerInBindingZone(zone)
+    ) {
+      applyBindingZoneDamage();
+    }
     const rawFrame = Math.floor(zone.elapsed / BINDER_CONFIG.zoneFrameDuration);
     if (rawFrame < BINDER_CONFIG.zoneLoopStartFrame) {
       zone.frame = rawFrame;
@@ -283,15 +322,8 @@ export function updateBindingZones() {
 }
 
 export function bindingZonePlayerMoveScale() {
-  const player = state.player;
-  const footX = player.x + player.w / HALF_DIVISOR;
-  const footY = player.y + player.h;
-
   for (const zone of state.bindingZones) {
-    const radiusY = zone.radius * BINDER_CONFIG.zoneVerticalRadiusScale;
-    const dx = (footX - zone.x) / zone.radius;
-    const dy = (footY - zone.y) / radiusY;
-    if (dx * dx + dy * dy <= 1) return BINDER_CONFIG.zoneMoveScale;
+    if (isPlayerInBindingZone(zone)) return BINDER_CONFIG.zoneMoveScale;
   }
 
   return 1;
