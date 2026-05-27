@@ -1,6 +1,14 @@
 import { ctx } from "../../context";
 import { state } from "../../state";
-import { BINDER_SHEET_INDEX, BINDER_SHEETS, BINDER_ZONE_SHEET, ENEMY_SHEETS, GROUND_Y } from "../../constants";
+import {
+  BINDER_SHEET_INDEX,
+  BINDER_SHEETS,
+  BINDER_ZONE_BACK_SHEET,
+  BINDER_ZONE_FRONT_SHEET,
+  BINDER_ZONE_SHEET,
+  ENEMY_SHEETS,
+  GROUND_Y,
+} from "../../constants";
 import { drawSheetFrame } from "../../graphics";
 import type { BinderAiPhase, BinderPhase, EnemyState } from "../../types/game-state";
 import { frameIndex } from "../../utils";
@@ -288,11 +296,11 @@ export function bindingZonePlayerMoveScale() {
   return 1;
 }
 
-export function drawBindingZones() {
+function drawBindingZoneLayer(sheet: typeof BINDER_ZONE_SHEET) {
   if (!ctx) return;
   for (const zone of state.bindingZones) {
     const drawW = Math.round(zone.radius * BINDER_CONFIG.zoneDrawWidthScale);
-    const drawH = Math.round(drawW * BINDER_ZONE_SHEET.frameH / BINDER_ZONE_SHEET.frameW);
+    const drawH = Math.round(drawW * sheet.frameH / sheet.frameW);
     const fade = Math.min(
       1,
       zone.elapsed / BINDER_CONFIG.zoneFadeFrames,
@@ -301,7 +309,7 @@ export function drawBindingZones() {
     ctx.save();
     ctx.globalAlpha = BINDER_CONFIG.zoneAlpha * fade;
     drawSheetFrame(
-      BINDER_ZONE_SHEET,
+      sheet,
       zone.frame,
       zone.x - drawW / HALF_DIVISOR,
       zone.y - drawH / HALF_DIVISOR,
@@ -310,4 +318,16 @@ export function drawBindingZones() {
     );
     ctx.restore();
   }
+}
+
+export function drawBindingZonesBack() {
+  drawBindingZoneLayer(BINDER_ZONE_BACK_SHEET);
+}
+
+export function drawBindingZonesFront() {
+  drawBindingZoneLayer(BINDER_ZONE_FRONT_SHEET);
+}
+
+export function drawBindingZones() {
+  drawBindingZoneLayer(BINDER_ZONE_SHEET);
 }

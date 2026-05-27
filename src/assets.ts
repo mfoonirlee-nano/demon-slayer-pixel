@@ -9,6 +9,8 @@ import {
   BRUTE_SHEETS,
   BINDER_SHEETS,
   BINDER_ZONE_SHEET,
+  BINDER_ZONE_BACK_SHEET,
+  BINDER_ZONE_FRONT_SHEET,
   BOSS_SHEET,
   BOSS_SKILL1_SHEET,
   BOSS_SKILL1_EFFECT_SHEET,
@@ -69,6 +71,8 @@ export function loadSprites(): Promise<void> {
     jobs.push(loadImage(sheet.src).then((img) => { sheet.image = img; }));
   }
   jobs.push(loadImage(BINDER_ZONE_SHEET.src).then((img) => { BINDER_ZONE_SHEET.image = img; }));
+  jobs.push(loadImage(BINDER_ZONE_BACK_SHEET.src).then((img) => { BINDER_ZONE_BACK_SHEET.image = img; }));
+  jobs.push(loadImage(BINDER_ZONE_FRONT_SHEET.src).then((img) => { BINDER_ZONE_FRONT_SHEET.image = img; }));
   jobs.push(loadImage(BOSS_SHEET.src).then((img) => { BOSS_SHEET.image = img; }));
   jobs.push(loadImage(BOSS_SKILL1_SHEET.src).then((img) => { BOSS_SKILL1_SHEET.image = img; }));
   jobs.push(loadImage(BOSS_SKILL1_EFFECT_SHEET.src).then((img) => { BOSS_SKILL1_EFFECT_SHEET.image = img; }));
@@ -83,7 +87,9 @@ export function loadSprites(): Promise<void> {
   jobs.push(loadImage(TORII_SPRITES.src).then((img) => { TORII_SPRITES.image = img; }));
   jobs.push(loadImage(MOUNTAIN_SPRITES.src).then((img) => { MOUNTAIN_SPRITES.image = img; }));
   jobs.push(loadImage(GROUND_TILE_SPRITES.grass.src).then((img) => { GROUND_TILE_SPRITES.grass.image = img; }));
+  jobs.push(loadImage(GROUND_TILE_SPRITES.grass.frontSrc).then((img) => { GROUND_TILE_SPRITES.grass.frontImage = img; }));
   jobs.push(loadImage(GROUND_TILE_SPRITES.stone.src).then((img) => { GROUND_TILE_SPRITES.stone.image = img; }));
+  jobs.push(loadImage(GROUND_TILE_SPRITES.stone.frontSrc).then((img) => { GROUND_TILE_SPRITES.stone.frontImage = img; }));
   jobs.push(loadImage(PLATFORM_SPRITES.src).then((img) => { PLATFORM_SPRITES.image = img; }));
   jobs.push(loadImage(SKILL1_EFFECT_SHEET.src).then((img) => { SKILL1_EFFECT_SHEET.image = img; }));
   jobs.push(loadImage(SKILL2_EFFECT_SHEET.src).then((img) => { SKILL2_EFFECT_SHEET.image = img; }));

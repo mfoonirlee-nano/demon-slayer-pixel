@@ -14,7 +14,9 @@
 | `binder_cast.png` | `1040x320` | 4 | `260x320` | `cast` |
 | `binder_recover.png` | `780x320` | 3 | `260x320` | `recover` |
 | `binder_hit.png` | `780x320` | 3 | `260x320` | `hit` 预留 |
-| `binder_zone.png` | `960x120` | 4 | `240x120` | 横版侧视地面减速咒圈，首帧出现，后 3 帧循环维持 |
+| `binder_zone.png` | `1920x120` | 8 | `240x120` | 完整横版侧视地面减速咒圈源图，旋转/脉冲/短光束逐帧变化 |
+| `binder_zone_back.png` | `1920x120` | 8 | `240x120` | 咒圈上半/远端层，参与草地透视遮挡 |
+| `binder_zone_front.png` | `1920x120` | 8 | `240x120` | 咒圈下半/近端亮边层，提升减速范围可读性 |
 
 ## Role
 

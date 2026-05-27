@@ -352,7 +352,23 @@ export const BINDER_ZONE_SHEET: SpriteSheet = {
   src: "assets/sprites/enemies/binder/binder_zone.png",
   frameW: 240,
   frameH: 120,
-  count: 4,
+  count: 8,
+  image: null,
+};
+
+export const BINDER_ZONE_BACK_SHEET: SpriteSheet = {
+  src: "assets/sprites/enemies/binder/binder_zone_back.png",
+  frameW: 240,
+  frameH: 120,
+  count: 8,
+  image: null,
+};
+
+export const BINDER_ZONE_FRONT_SHEET: SpriteSheet = {
+  src: "assets/sprites/enemies/binder/binder_zone_front.png",
+  frameW: 240,
+  frameH: 120,
+  count: 8,
   image: null,
 };
 
@@ -658,16 +674,30 @@ export const GROUND_TILE_SPRITES: {
   drawOffsetY: number;
   seamOverlap: number;
   grassPerStone: number;
-  grass: { src: string; image: HTMLImageElement | null; regions: GroundTileRegion[] };
-  stone: { src: string; image: HTMLImageElement | null; regions: GroundTileRegion[] };
+  grass: {
+    src: string;
+    image: HTMLImageElement | null;
+    frontSrc: string;
+    frontImage: HTMLImageElement | null;
+    regions: GroundTileRegion[];
+  };
+  stone: {
+    src: string;
+    image: HTMLImageElement | null;
+    frontSrc: string;
+    frontImage: HTMLImageElement | null;
+    regions: GroundTileRegion[];
+  };
 } = {
   tileSize: 150,
   drawOffsetY: -10,
   seamOverlap: 52,
   grassPerStone: 3,
   grass: {
-    src: "assets/sprites/ground/grass_ground_150_150.png",
+    src: "assets/sprites/ground/grass_ground_150_150_base.png",
     image: null,
+    frontSrc: "assets/sprites/ground/grass_ground_150_150_front.png",
+    frontImage: null,
     regions: [
       { sx: 0, sy: 0, sw: 150, sh: 150, surfaceY: 28, fillLeft: 1, fillRight: 145, fillTop: 18, fillBottom: 139 },
       { sx: 150, sy: 0, sw: 150, sh: 150, surfaceY: 28, fillLeft: 2, fillRight: 141, fillTop: 18, fillBottom: 139 },
@@ -684,8 +714,10 @@ export const GROUND_TILE_SPRITES: {
     ],
   },
   stone: {
-    src: "assets/sprites/ground/stone_ground_150_150.png",
+    src: "assets/sprites/ground/stone_ground_150_150_base.png",
     image: null,
+    frontSrc: "assets/sprites/ground/stone_ground_150_150_front.png",
+    frontImage: null,
     regions: [
       { sx: 0, sy: 0, sw: 150, sh: 150, surfaceY: 27, fillLeft: 11, fillRight: 135, fillTop: 10, fillBottom: 139 },
       { sx: 150, sy: 0, sw: 150, sh: 150, surfaceY: 29, fillLeft: 13, fillRight: 131, fillTop: 4, fillBottom: 144 },

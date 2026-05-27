@@ -36,7 +36,9 @@ const STARS = Array.from({ length: 9 }, (_, i) => ({
   variant: i % 2 as 0 | 1, // 0=small, 1=medium
 }));
 
-export function drawGroundTiles() {
+type GroundTileLayer = "base" | "front";
+
+function drawGroundTileLayer(layer: GroundTileLayer) {
   if (!ctx) return;
 
   const tileSize = GROUND_TILE_SPRITES.tileSize;
@@ -49,7 +51,7 @@ export function drawGroundTiles() {
     while (x < WIDTH) {
       const isStone = col % patternLength === GROUND_TILE_SPRITES.grassPerStone;
       const tileSet = isStone ? GROUND_TILE_SPRITES.stone : GROUND_TILE_SPRITES.grass;
-      const image = tileSet.image;
+      const image = layer === "front" ? tileSet.frontImage : tileSet.image;
       if (!image) break;
 
       const variantIndex = isStone ? Math.floor(col / patternLength) + row : col + row * Math.ceil(WIDTH / tileSize);
@@ -72,6 +74,19 @@ export function drawGroundTiles() {
       col += 1;
     }
   }
+}
+
+export function drawGroundTileBase() {
+  drawGroundTileLayer("base");
+}
+
+export function drawGroundTileFront() {
+  drawGroundTileLayer("front");
+}
+
+export function drawGroundTiles() {
+  drawGroundTileBase();
+  drawGroundTileFront();
 }
 
 export function drawBackground() {

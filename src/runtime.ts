@@ -12,12 +12,12 @@ import {
 } from "./constants";
 import { loadSprites } from "./assets";
 import { setupInput, teardownInput, debugCollisionBoxes } from "./input";
-import { drawBackground, drawGroundTiles } from "./background";
+import { drawBackground, drawGroundTileBase, drawGroundTileFront } from "./background";
 import { drawNearForeground } from "./nearForeground";
 
 import { updatePlayer, drawPlayer, triggerAttack, castSelectedSkill, castUltimateSkill, selectSkill, tryJump } from "./entities/player";
 import { spawnEnemy, spawnEnemyBySheetIndex, updateEnemies, drawEnemy } from "./entities/enemy";
-import { updateBindingZones, drawBindingZones } from "./entities/enemies/binder";
+import { updateBindingZones, drawBindingZonesBack, drawBindingZonesFront } from "./entities/enemies/binder";
 import { spawnBoss, updateBoss, drawBoss, updateBossSkill1Effects, drawBossSkill1Effects } from "./entities/boss";
 import {
   spawnMapSegmentOfKind,
@@ -149,10 +149,11 @@ function loop(ts: number) {
 
   drawBackground();
   drawNearForeground();
+  drawGroundTileBase();
   drawPlatforms();
   drawCrystals();
   drawChests();
-  drawBindingZones();
+  drawBindingZonesBack();
 
   if (state.player.skillFlash > 0) {
     const flashT = state.player.skillFlash / SKILL_FLASH.maxFrames;
@@ -187,10 +188,11 @@ function loop(ts: number) {
   drawBossSkill1Effects();
   drawSkill1Effects();
   drawSkill2Effects();
+  drawGroundTileFront();
+  drawBindingZonesFront();
   drawHitBursts();
   drawProjectiles();
   drawParticles();
-  drawGroundTiles();
 
   if (debugCollisionBoxes) {
     ctx.strokeStyle = "rgba(0, 255, 0, 0.8)";
