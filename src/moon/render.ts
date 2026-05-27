@@ -1,29 +1,14 @@
 import { ctx } from "../context";
-import { WIDTH, SKY_SPRITES } from "../constants";
+import { SKY_SPRITES } from "../constants";
 import { colorLerp } from "../utils";
 import {
   MOON_GLOW_CONFIG,
   MOON_LAYOUT,
   MOON_MOTION_CONFIG,
   MOON_SKY_CONFIG,
-  MOON_STAR_CONFIG,
   MOON_SURFACE_CONFIG,
 } from "./constants";
 import type { MoonState } from "./types";
-
-type StarPoint = {
-  x: number;
-  y: number;
-  size: number;
-  twinkle: number;
-};
-
-const STAR_FIELD: StarPoint[] = Array.from({ length: MOON_STAR_CONFIG.count }, (_, i) => ({
-  x: (i * MOON_STAR_CONFIG.xStep) % WIDTH,
-  y: MOON_STAR_CONFIG.minY + ((i * MOON_STAR_CONFIG.yStep) % MOON_STAR_CONFIG.yRange),
-  size: i % MOON_STAR_CONFIG.largeEvery === 0 ? MOON_STAR_CONFIG.largeSize : MOON_STAR_CONFIG.smallSize,
-  twinkle: (i * MOON_STAR_CONFIG.twinkleStep) % MOON_STAR_CONFIG.twinkleRange,
-}));
 
 function rgba(color: readonly number[], alpha: number) {
   return `rgba(${color[0]},${color[1]},${color[2]},${alpha})`;
@@ -73,20 +58,6 @@ function getMoonMotion(elapsed: number, bloodLerp: number) {
   };
 }
 
-function drawMoonStars(context: CanvasRenderingContext2D, elapsed: number, bloodLerp: number) {
-  for (const star of STAR_FIELD) {
-    const twinkleOn = Math.floor(elapsed * MOON_STAR_CONFIG.twinkleSpeed + star.twinkle) % MOON_STAR_CONFIG.twinkleOffModulo !== 0;
-    const suppressed = bloodLerp > MOON_STAR_CONFIG.skipThreshold
-      && (star.twinkle + Math.floor(elapsed * MOON_STAR_CONFIG.bloodTwinkleSpeed)) % MOON_STAR_CONFIG.skipModulo === 0;
-    if (!twinkleOn || suppressed) continue;
-
-    context.fillStyle = star.size === MOON_STAR_CONFIG.largeSize
-      ? rgba(MOON_STAR_CONFIG.brightColor, 1 - bloodLerp * MOON_STAR_CONFIG.brightDimAlpha)
-      : rgba(MOON_STAR_CONFIG.dimColor, 1 - bloodLerp * MOON_STAR_CONFIG.dimDimAlpha);
-    context.fillRect(star.x, star.y, star.size, star.size);
-  }
-}
-
 export function drawMoon(options: { elapsed: number; moon: MoonState }) {
   if (!ctx) return;
 
@@ -107,8 +78,6 @@ export function drawMoon(options: { elapsed: number; moon: MoonState }) {
   const farGlowAlpha = Math.max(0, MOON_GLOW_CONFIG.farGlowAlpha + (MOON_GLOW_CONFIG.bloodFarAlpha - MOON_GLOW_CONFIG.farGlowAlpha) * bloodLerp + motion.basePulse * 0.03);
   const currentOuterColor = lerpColor(MOON_GLOW_CONFIG.outerGlowColor, MOON_GLOW_CONFIG.bloodOuterColor, bloodLerp);
   const outerGlowAlpha = Math.max(0, MOON_GLOW_CONFIG.outerGlowAlpha + (MOON_GLOW_CONFIG.bloodOuterAlpha - MOON_GLOW_CONFIG.outerGlowAlpha) * bloodLerp + motion.basePulse * 0.05);
-
-  drawMoonStars(context, elapsed, bloodLerp);
 
   // 最外层散射（radialGradient 替代 shadowBlur）
   drawGlow(context, moonX, moonY, farGlowRadius, currentFarColor, farGlowAlpha * 2.2);

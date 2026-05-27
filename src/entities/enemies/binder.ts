@@ -45,6 +45,7 @@ const BINDER_CONFIG = {
   zoneLoopStartFrame: 1,
   zoneFadeFrames: 16,
   zoneAlpha: 0.88,
+  zoneFrontAlphaScale: 0.8,
   zoneDrawWidthScale: 2.52,
   drawScale: 1,
   hpMultiplier: 1.5,
@@ -296,7 +297,7 @@ export function bindingZonePlayerMoveScale() {
   return 1;
 }
 
-function drawBindingZoneLayer(sheet: typeof BINDER_ZONE_SHEET) {
+function drawBindingZoneLayer(sheet: typeof BINDER_ZONE_SHEET, alphaScale = 1) {
   if (!ctx) return;
   for (const zone of state.bindingZones) {
     const drawW = Math.round(zone.radius * BINDER_CONFIG.zoneDrawWidthScale);
@@ -307,7 +308,7 @@ function drawBindingZoneLayer(sheet: typeof BINDER_ZONE_SHEET) {
       zone.life / BINDER_CONFIG.zoneFadeFrames,
     );
     ctx.save();
-    ctx.globalAlpha = BINDER_CONFIG.zoneAlpha * fade;
+    ctx.globalAlpha = BINDER_CONFIG.zoneAlpha * alphaScale * fade;
     drawSheetFrame(
       sheet,
       zone.frame,
@@ -325,7 +326,7 @@ export function drawBindingZonesBack() {
 }
 
 export function drawBindingZonesFront() {
-  drawBindingZoneLayer(BINDER_ZONE_FRONT_SHEET);
+  drawBindingZoneLayer(BINDER_ZONE_FRONT_SHEET, BINDER_CONFIG.zoneFrontAlphaScale);
 }
 
 export function drawBindingZones() {

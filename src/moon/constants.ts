@@ -23,28 +23,6 @@ export const MOON_SKY_CONFIG = {
   midOverlayAlpha: 0.05,
 } as const;
 
-export const MOON_STAR_CONFIG = {
-  count: 70,
-  xStep: 137,
-  yStep: 73,
-  minY: 22,
-  yRange: 190,
-  largeEvery: 9,
-  largeSize: 3,
-  smallSize: 2,
-  twinkleStep: 11,
-  twinkleRange: 24,
-  twinkleSpeed: 12,
-  bloodTwinkleSpeed: 10,
-  twinkleOffModulo: 6,
-  skipThreshold: 0.58,
-  skipModulo: 4,
-  brightColor: [219, 233, 255] as const,
-  dimColor: [168, 198, 255] as const,
-  brightDimAlpha: 0.75,
-  dimDimAlpha: 0.83,
-} as const;
-
 export const MOON_MOTION_CONFIG = {
   colorCycleSpeed: 0.08,
   moonDrift: {
