@@ -28,6 +28,7 @@
 | [boss-archetypes.md](boss-archetypes.md) | 目标设计，未实现 | Boss 注册表、血量曲线、技能池、召唤池和击杀循环 |
 | [progression.md](progression.md) | 目标设计，未实现 | 经验、等级、升级三选一和局内成长 |
 | [equipment.md](equipment.md) | 目标设计，未实现 | 装备槽位、Boss 掉落三选一和装备属性 |
+| [endgame-ascension.md](endgame-ascension.md) | 目标设计，未实现 | 通关后血月试炼进阶难度层、词条池和横向解锁约束 |
 | [implementation-order.md](implementation-order.md) | 目标设计，未实现 | 后续代码落地顺序和验证点 |
 
 ## Code Sources

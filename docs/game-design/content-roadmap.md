@@ -8,9 +8,10 @@
 | --- | --- | --- |
 | P0 | 统一当前实现状态、验收指标和原案入口 | 文档不会把目标设计写成当前功能 |
 | P1 | `defeatBoss()`、`bossKills`、`act`、`threatScalar`、基础配置入口 | Boss 击杀只结算一次，幕数可稳定派生 |
-| P2 | 敌人按幕生成池、Boss 注册表、平台/奖励读取幕数 | 第 1-4 幕有明显体验差异 |
+| P2 | 敌人按幕生成池、Boss 注册表、平台/奖励读取幕数 | 第 1-6 幕（intro 段）有明显逐幕体验差异 |
 | P3 | XP 升级三选一、Boss 装备三选一、选择 overlay | 单局成长闭环成立 |
-| P4 | 新 Boss、新敌人、BGM/SFX、UI polish | 内容池能支撑长期轮换 |
+| P4 | 6 基础 Boss、12 敌人、6 觉醒形态、终幕万相血月、BGM/SFX、UI polish | 13 幕内容骨架成立，觉醒段构成难度墙 |
+| P5 | 通关后血月试炼进阶难度（见 [../numeric-system/endgame-ascension.md](../numeric-system/endgame-ascension.md)） | 首次通关后有横向重玩动力 |
 
 ## Enemy Content
 
@@ -31,15 +32,35 @@
 
 ## Boss Content
 
-| Boss | 当前状态 | 玩法定位 | 后续需求 | 优先级 |
-| --- | --- | --- | --- | --- |
-| `lower_moon_spider_string` | 当前 Boss 素材和玩法已接入，设定名未完整接入 HUD | 追猎 + 召唤 + 单向蛛网技 | 迁入 Boss 注册表，补登场提示、击败提示和阶段视觉增强 | P1 |
-| `lower_moon_mist_bone` | 未实现 | 区域封锁 + 骨刺弹幕 | 正式素材、地面危险区、延迟爆发读法 | P4 |
-| `lower_moon_mirror_dream` | 未实现 | 分身干扰 + 反射投射物 | 分身规则、真假可读性、反射物安全窗口 | P4 |
-| `lower_moon_fang_gale` | 未实现 | 高速冲刺 + 近身连击 | 冲刺前摇、刹车恢复、连击上限 | P4 |
-| `lower_moon_lantern_ember` | 未实现 | 召唤强化 + 火线封路 | 召唤物联动、火线区域、Boss 与小怪 cap | P4 |
-| `lower_moon_dead_bell` | 未实现 | 节奏压迫 + 组合弹幕 | 停拍窗口、声波环和节奏提示 | P4 |
-| `grand_boss_blood_moon_many_faces` | 未实现，终盘特殊挑战 | 多机制换相 | 不进入普通轮换池；每阶段只启用一个主特性和一个副特性 | P4 |
+13 幕 = 6 基础 Boss（1-6 幕）+ 6 觉醒形态（7-12 幕）+ 1 终极 Boss（13 幕）。解锁幕严格对齐权威幕表 [act-structure.md](act-structure.md)。
+
+基础 Boss（第 1-6 幕）：
+
+| Boss | 基础幕 | 当前状态 | 玩法定位 | 后续需求 | 优先级 |
+| --- | ---: | --- | --- | --- | --- |
+| `lower_moon_spider_string` | 1 | 当前 Boss 素材和玩法已接入，设定名未完整接入 HUD | 追猎 + 召唤 + 单向蛛网技 | 迁入 Boss 注册表，补登场提示、击败提示和阶段视觉增强 | P1 |
+| `lower_moon_mist_bone` | 2 | 未实现 | 区域封锁 + 骨刺弹幕（延迟爆发） | 正式素材、地面危险区、延迟爆发读法 | P4 |
+| `lower_moon_mirror_dream` | 3 | 未实现 | 分身干扰 + 反射投射物 | 分身规则、真假可读性、反射物安全窗口 | P4 |
+| `lower_moon_fang_gale` | 4 | 未实现 | 高速冲刺 + 近身连击 | 冲刺前摇、刹车恢复、连击上限 | P4 |
+| `lower_moon_lantern_ember` | 5 | 未实现 | 召唤强化 + 火线封路 | 召唤物联动、火线区域、Boss 与小怪 cap | P4 |
+| `lower_moon_dead_bell` | 6 | 未实现 | 节奏压迫 + 声波环 + 停拍窗口 | 停拍窗口、声波环和节奏提示 | P4 |
+
+觉醒形态（第 7-12 幕，复用基础精灵 + 觉醒视觉态 + 一招觉醒血鬼术，见 [../numeric-system/boss-archetypes.md](../numeric-system/boss-archetypes.md)）：
+
+| 觉醒 Boss | 觉醒幕 | 觉醒血鬼术新招 | 后续需求 | 优先级 |
+| --- | ---: | --- | --- | --- |
+| 蛛弦·觉醒 | 7 | 千丝牢笼（全屏蛛网分段收束） | 觉醒叠加逻辑、全屏蛛网特效、预警线 | P4 |
+| 雾骨·觉醒 | 8 | 浓雾葬（视野遮蔽 + 多点延迟骨爆） | 遮蔽特效、多点预警、落点记忆容错 | P4 |
+| 镜魇·觉醒 | 9 | 真影错位（每阶段真假互换 + 同步反射） | 真假身随机化、反射上一个技能逻辑 | P4 |
+| 牙岚·觉醒 | 10 | 岚牙连闪（三段跨场冲刺连段） | 三段连段读招、跳/反击窗口 | P4 |
+| 灯烬·觉醒 | 11 | 燎原灯阵（火线移动网格 + 灰烬叠加） | 移动网格生成、灰烬减速区叠加 | P4 |
+| 枯铃·觉醒 | 12 | 双调枯铃（双频错相声波 + 强制停拍反震） | 双频声波环、停拍反震判定 | P4 |
+
+终极 Boss（第 13 幕）：
+
+| Boss | 幕 | 当前状态 | 玩法定位 | 后续需求 | 优先级 |
+| --- | ---: | --- | --- | --- | --- |
+| `grand_boss_blood_moon_many_faces` | 13 | 未实现，单局通关终点 | 5 阶段换相借招 | 不进入任何轮换池；每阶段只 1 主 + 1 副特性；换相借前 5 名鬼的招 | P4 |
 
 ## Skill Content
 
@@ -59,7 +80,7 @@
 | 内容 | 当前状态 | 后续需求 | 优先级 |
 | --- | --- | --- | --- |
 | 片段生成 | 已实现 8 种片段、张力、奖励预算、低层恢复 | 接入按幕权重和 `threatScalar` | P2 |
-| 平台速度 | 当前按 `elapsed` 线性增长 | 改为 `elapsed + bossKills` 混合增长 | P2 |
+| 平台速度 | 当前按 `elapsed` 线性增长 | 改为 `elapsed + bossKills` 混合增长，觉醒幕自然提速（见 [../numeric-system/act-and-threat.md](../numeric-system/act-and-threat.md)） | P2 |
 | 水晶 | 攻击/治疗水晶已实现 | 按幕调整数值和风险路线收益 | P3 |
 | 宝箱 | 攻击/治疗宝箱已实现 | 与装备系统区分，避免 Boss 掉落价值被稀释 | P3 |
 | XP | 未实现 | 击杀奖励统一 helper 后接入 | P3 |
@@ -70,9 +91,10 @@
 音乐方向已经有完整 prompt，但 runtime 当前只有简单 tone SFX。接入顺序建议：
 
 1. Start Screen、Act 1、Spider String 三首先验证音色。
-2. 补 Boss intro sting、victory、game over、low health warning。
-3. 再生成 Act 2、Act 3、Act 4+ 和其他 Boss 主题。
-4. 所有 BGM 导入前先确认 loop seam，无爆音和断点。
+2. 补 Boss intro sting、victory（终幕通关）、game over、low health warning。
+3. 再生成 intro 段（1-6 幕）其余 Boss 主题，然后是 awakened 段（7-12 幕）觉醒变奏与终幕万相血月主题。
+4. 觉醒段建议复用基础幕主题的变奏（变速 / 加层 / 调式变化），呼应「觉醒形态复用基础精灵」的成本策略。
+5. 所有 BGM 导入前先确认 loop seam，无爆音和断点。
 
 音频实现前不要把 prompt 文档当作已接入素材。
 

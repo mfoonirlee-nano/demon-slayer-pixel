@@ -36,6 +36,23 @@ Boss 掉落：
 - 同槽位新装备可以替换旧装备。
 - 不生成没有正式素材或未配置效果的装备。
 
+13 幕一共 13 次 Boss 击杀对 3 个槽位 = 替换式构筑：后期掉落必须比前期更强，否则中后期换装无意义。装备**品质分级随 `actBand` 提升**（仍是单局内、死亡清空）：
+
+| 品质 | 掉落幕段（actBand） | 属性带 | 说明 |
+| --- | --- | --- | --- |
+| 普通（白） | intro 1-6 | 属性池下限～中段 | 教学期，给方向感而非碾压 |
+| 精良（蓝） | awakened 7-12 | 属性池中段～上限 | 匹配觉醒幕更高威胁 |
+| 觉醒（金） | final 13 | 属性池上限 + 一条额外词条 | 终幕掉落，仍只在本局生效 |
+
+```ts
+// Boss 掉落时按 actBand 决定品质带，再在带内 roll 具体数值
+function equipmentTier(actBand) {
+  return actBand === "final" ? "awakened"
+       : actBand === "awakened" ? "fine"
+       : "common";
+}
+```
+
 ## Key Formulas
 
 动态攻击上限建议：
@@ -43,6 +60,8 @@ Boss 掉落：
 ```ts
 attackBonusCap = 24 + bossKills * 8 + equipmentCapBonus
 ```
+
+13 幕强度核对：`bossKills` 在终幕前最大为 `12`，对应 `attackBonusCap = 24 + 96 = 120`（不含装备额外上限）。这条上限必须和 [act-and-threat.md](act-and-threat.md) 的分段 `threatScalar`（觉醒幕从 `bossKills=6` 起每次击杀 `+0.34`）一起核对玩家/敌人强度比：目标是觉醒幕「陡但可解」、终幕「巅峰但可解」，而非攻击上限跑赢威胁导致后期无脑碾压。核对口径与逐幕比值见 [../game-design/balance-acceptance.md](../game-design/balance-acceptance.md)。
 
 派生攻击：
 
@@ -69,6 +88,8 @@ skillEnergyCost = clamp(30 - equipmentSkillCostReduction, 24, 30)
 | `charm` | `skillEnergyGainFlat` | `+2` 到 `+5` |
 | `charm` | `ultimateEnergyGainMultiplier` | `+8%` 到 `+20%` |
 | `charm` | `skillCostReduction` | `1` 到 `6` |
+
+三档数值（如 `+4 / +7 / +10`）对应上面的普通 / 精良 / 觉醒品质带；`actBand` 决定 roll 落在哪一档。
 
 ## Code Sources
 

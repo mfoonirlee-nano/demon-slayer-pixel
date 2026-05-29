@@ -21,6 +21,7 @@ docs/
 ├── game-design/
 │   ├── README.md
 │   ├── game-overview.md
+│   ├── act-structure.md
 │   ├── run-loop.md
 │   ├── system-status.md
 │   ├── content-roadmap.md
@@ -38,6 +39,7 @@ docs/
 │   ├── boss-archetypes.md
 │   ├── progression.md
 │   ├── equipment.md
+│   ├── endgame-ascension.md
 │   └── implementation-order.md
 ├── art/
 │   ├── README.md
@@ -56,6 +58,7 @@ docs/
 | 文档 | 内容 | 主要用途 |
 | --- | --- | --- |
 | [game-overview.md](game-overview.md) | 游戏定位、核心体验、目标玩家、设计支柱、不可做边界 | 给所有后续设计定方向 |
+| [act-structure.md](act-structure.md) | 13 幕闯关阶梯总表、Boss/敌人逐幕解锁、目标时长与击杀率 | 全项目唯一权威幕表 |
 | [run-loop.md](run-loop.md) | 核心循环、单局节奏、幕数推进、失败体验、教学节奏 | 定义“一局应该怎么玩” |
 | [system-status.md](system-status.md) | 当前实现状态、目标状态、优先级、源码/文档依据 | 防止实现状态混淆 |
 | [content-roadmap.md](content-roadmap.md) | 敌人、Boss、技能、地图、奖励、音乐内容扩展优先级 | 安排内容制作和系统接入 |

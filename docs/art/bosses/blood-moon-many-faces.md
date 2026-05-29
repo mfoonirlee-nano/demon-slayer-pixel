@@ -3,11 +3,11 @@
 ## Implementation Status
 
 - 素材状态：未实现。
-- 玩法状态：未实现；定位为终盘特殊挑战，不作为普通轮换 Boss。
+- 玩法状态：未实现；定位为**第 13 幕终极 Boss**、单局通关终点，不作为普通轮换 Boss。幕表见 [../../game-design/act-structure.md](../../game-design/act-structure.md)，数值见 [../../numeric-system/boss-archetypes.md](../../numeric-system/boss-archetypes.md)。
 
 ## Role
 
-终盘复合型 Boss，集合追猎、封锁、分身、冲刺、召唤和节奏弹幕。
+第 13 幕终极 Boss，5 阶段换相借招，集合前 6 名下弦之鬼的追猎、封锁、分身、冲刺、召唤和节奏弹幕。击败即单局通关，出胜利结算；首次通关解锁血月试炼进阶（见 [../../numeric-system/endgame-ascension.md](../../numeric-system/endgame-ascension.md)）。5 阶段阈值 `[0.8, 0.6, 0.4, 0.2]`，血量为普通 Boss 的 `2.2x-2.8x` 但单次技能伤害下调，在场额外召唤物 ≤ 4。
 
 ## Setting Copy
 

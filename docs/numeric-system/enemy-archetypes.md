@@ -210,7 +210,7 @@ enemyActiveCost = sum(enemy.archetype.spawnCost)
 | 5 | `0.15` | `0` | `0.13` | `0.14` | `0` | `0.11` | `0.14` | `0.12` | `0.10` | `0.11` | `0` | `0` |
 | 6+ | `0.11` | `0` | `0` | `0.13` | `0` | `0` | `0.13` | `0.12` | `0.12` | `0.12` | `0.14` | `0.13` |
 
-第 6 幕+ 轮换 profile 示例：
+轮换 profile（第 6 幕首次启用，第 7-12 觉醒幕逐幕切换主导 profile）：
 
 | Profile | 替入 | 替出 | 用途 |
 | --- | --- | --- | --- |
@@ -218,6 +218,24 @@ enemyActiveCost = sum(enemy.archetype.spawnCost)
 | 快攻压力 | `runner` | `burrower` | 让冲刺、近战、远程形成更直接的反应测试 |
 | 垂直压力 | `leaper` | `glider` | 切换跳跃落点与低空俯冲，不同时堆满 |
 | 重型压力 | `brute` | `splitter` | 降低分裂复杂度，改为高血阻挡 |
+
+## 觉醒幕敌人差异化（第 7-12 幕）
+
+12 种敌人**全部在第 1-6 幕解锁完毕**，第 7-12 幕**不引入任何新敌人素材**。觉醒幕的杂兵差异化只靠两点（权威约束见 [../game-design/act-structure.md](../game-design/act-structure.md)）：
+
+1. **觉醒 Boss 的强化召唤池**：召唤池加入 `burrower` / `splitter` / `warden` 等后期机制敌人（见下方表）。
+2. **逐幕切换主导 profile**：每个觉醒幕由一个主导 profile 决定常规池组合，让觉醒段每幕杂兵手感不同，而非堆同一组：
+
+| 觉醒幕 | 觉醒 Boss | 主导 profile | 常规池侧重 |
+| ---: | --- | --- | --- |
+| 7 | 蛛弦·觉醒 | 低位压力 | `crawler`/`burrower` 贴地与潜行，配合全屏蛛网 |
+| 8 | 雾骨·觉醒 | 垂直压力 | `leaper`/`glider` 占垂直空间，配合视野遮蔽 |
+| 9 | 镜魇·觉醒 | 快攻压力 | `runner`/`duelist` 逼近，配合分身干扰 |
+| 10 | 牙岚·觉醒 | 快攻压力 | `runner`/`burrower` 反应测试，呼应三段冲刺 |
+| 11 | 灯烬·觉醒 | 重型压力 | `brute`/`splitter` 阻塞，配合火线网格走位 |
+| 12 | 枯铃·觉醒 | 低位 + 重型 | `binder`/`warden` 控场支援，配合停拍反震 |
+
+常规刷怪池始终 ≤ 8 种，靠退池 + 降权 + 轮换控制；觉醒幕不放开 12 种同屏。终幕（第 13 幕）用终盘限定池，额外召唤 ≤ 4（见 act-structure.md）。
 
 同屏限制建议：
 
@@ -243,7 +261,9 @@ Boss 召唤池建议：
 | 阶段 1 | `chaser`、少量 `crawler` |
 | 阶段 2 | `chaser`、`runner`、`duelist`、少量 `leaper` |
 | 阶段 3 | `runner`、`duelist`、少量 `brute` 或 `caster` |
-| 后期 Boss | 当前幕常规池里抽取 `3-5` 种，排除 `warden` 或给 `warden` 强 cap |
+| 基础 Boss（1-6 幕） | 当前幕常规池里抽取 `3-5` 种，排除 `warden` 或给 `warden` 强 cap |
+| 觉醒 Boss（7-12 幕） | 在基础召唤池上加入 `burrower` / `splitter` / `warden`，同屏召唤上限不变 |
+| 终幕万相血月（13 幕） | 终盘限定池，在场额外召唤物 ≤ `4` |
 
 ## Behavior Design
 
@@ -492,4 +512,6 @@ chaserDashSpeed = 2.20 + actIndex * 0.12 + random(0, 0.25)
 - 第 1 幕常规池固定为 `chaser`、`crawler`、`runner`。
 - 第 2-4 幕分别增加 `2`、`2`、`1` 种，常规池从 `5` 到 `8`。
 - 第 5 幕和第 6 幕+ 通过老敌人退池或轮换保持常规池约 `8` 种。
+- 12 种敌人在第 1-6 幕解锁完毕，第 7-12 觉醒幕不引入新敌人素材，只靠强化召唤池 + 逐幕切换主导 profile 差异化。
+- 觉醒幕主导 profile（7-12 幕）必须与 [../game-design/act-structure.md](../game-design/act-structure.md) 的觉醒顺序一致。
 - 高复杂敌人必须有 active cap，不允许多个控场、潜行、分裂、支援机制同屏无上限叠加。

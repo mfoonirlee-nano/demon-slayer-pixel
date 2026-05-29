@@ -112,6 +112,37 @@ currentSkillBonusMultiplier = min(1.24, currentSkillBonusMultiplier + 0.08);
 
 `attackBonusCap` 使用装备系统文档中的动态攻击上限定义；如果装备系统尚未实现，第一版可以沿用当前攻击加成上限 `24`。
 
+## 长局奖励池防枯竭（13 幕）
+
+一次完整 1→13 清版约 18-22 分钟，`runLevel` 会被推到约 `20-30`。若上限固定，中后期升级会频繁出现「无可选项」或全是无效选项，三选一失去意义。解决办法是让上限随 `actBand` 放宽，并补一档随幕解锁的高阶选项，而不是无限叠加单一属性。
+
+上限随 `actBand` 放宽（仍是单局内、死亡清空，不违反「无局外永久战力」）：
+
+| 选项 | intro（1-6） | awakened（7-12） | final（13） |
+| --- | --- | --- | --- |
+| 攻击训练 | `+2` / cap 走 `attackBonusCap` | `+3` / cap 走 `attackBonusCap` | `+3` |
+| 体魄训练 | `maxHp <= 160` | `maxHp <= 200` | `maxHp <= 220` |
+| 呼吸蓄力 | `skillEnergyMax <= 120` | `skillEnergyMax <= 150` | `skillEnergyMax <= 160` |
+| 集中爆发 | 叠加 `<= +32%` | 叠加 `<= +48%` | 叠加 `<= +56%` |
+| 技能专精 | 单技能 `<= +24%` | 单技能 `<= +36%` | 单技能 `<= +44%` |
+
+```ts
+// 上限随 actBand 提高；rollThreeUpgradeChoices 已传入 act，可直接派生 actBand
+function upgradeCaps(actBand) {
+  switch (actBand) {
+    case "intro":    return { maxHp: 160, skillEnergyMax: 120, ultMul: 1.32, skillMul: 1.24 };
+    case "awakened": return { maxHp: 200, skillEnergyMax: 150, ultMul: 1.48, skillMul: 1.36 };
+    case "final":    return { maxHp: 220, skillEnergyMax: 160, ultMul: 1.56, skillMul: 1.44 };
+  }
+}
+```
+
+防枯竭规则：
+
+- 候选池按当前 `actBand` 的上限判定是否「已满」，未满才进池——觉醒幕放宽上限后，前期已满的选项会重新进入候选。
+- 仍保留「可选项不足 3 个就降级为 2/1 个」的回退，但放宽上限后正常局应几乎不触发。
+- 玩家强度上限随 `actBand` 抬升，必须与 [act-and-threat.md](act-and-threat.md) 的分段 `threatScalar` 一起核对强度比（见 [../game-design/balance-acceptance.md](../game-design/balance-acceptance.md)），确保觉醒幕是「陡但可解」。
+
 ## Input and UI
 
 HUD 要求：
