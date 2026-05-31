@@ -380,7 +380,7 @@ export const SKILL1_EFFECT_SHEET: SpriteSheet = {
   src: "assets/sprites/skills/skill1_effect.png",
   frameW: 320,
   frameH: 160,
-  count: 8,
+  count: 5,
   image: null,
 };
 
@@ -390,9 +390,9 @@ export const SKILL1_EFFECT_CONFIG = {
   // horizontal speed in px/frame
   speed: 8,
   // frame animate speed in game-frames per anim-frame
-  frameDuration: 8,
+  frameDuration: 5,
   // last N frames to loop once the initial run ends
-  loopFromFrame: 2,
+  loopFromFrame: 1,
   // damage multiplier relative to player base+bonus attack
   damageMultiplier: 1.2,
   // frames between successive hits on the same target

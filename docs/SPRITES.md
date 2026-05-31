@@ -44,13 +44,13 @@
 | `skill1.png` | `4000x420` | 5 | `800x420` | `SKILLS.skill1` |
 | `skill2.png` | `3000x500` | 6 | `500x500` | `SKILLS.skill2` |
 | `skill3.png` | `2700x470` | 5 | `540x470` | `SKILLS.skill3` |
-| `skill1_effect.png` | `2560x160` | 8 | `320x160` | `SKILL1_EFFECT_SHEET` |
+| `skill1_effect.png` | `1600x160` | 5 | `320x160` | `SKILL1_EFFECT_SHEET` |
 | `skill2_effect.png` | `2520x420` | 6 | `420x420` | `SKILL2_EFFECT_SHEET` |
 | `skill3_effect.png` | `2520x320` | 6 | `420x320` | `SKILL3_EFFECT_SHEET` |
 | `ultimate_skill.png` | `2400x496` | 6 | `400x496` | `ULTIMATE_SKILL_SHEET` |
 | `ultimate_skill_effect.png` | `3840x360` | 8 | `480x360` | `ULTIMATE_SKILL_EFFECT_SHEET` |
 
-玩家技能特效以 `assets/art/player-concept.png`、`assets/art/player-skills-concept.png` 和 `assets/art/player-ultimate-concept.png` 为视觉基准：深蓝水之呼吸、银白浪尖、泡沫碎点和月形水纹。`skill1_effect.png` 是 8 帧右向水龙投射物，`loopFromFrame` 从第 3 帧开始循环；`skill2_effect.png` 是 6 帧贴身半月潮刃；`skill3_effect.png` 是 6 帧环身防反水幕；`ultimate_skill_effect.png` 是 8 帧月蓝半月潮环，按 `PLAYER_COMBAT.ultimateEffectFrameDuration` 播放。以上透明 PNG 均由运行时根据玩家 `facing` 或中心点绘制，不改变技能伤害、命中冷却或玩法。
+玩家技能特效以 `assets/art/player-concept.png`、`assets/art/player-skills-concept.png` 和 `assets/art/player-ultimate-concept.png` 为视觉基准：深蓝水之呼吸、银白浪尖、泡沫碎点和月形水纹。`skill1_effect.png` 是 5 帧右向水龙投射物，和 `SKILLS.skill1` 的 5 帧动作对应，水龙不会进入消失帧，`loopFromFrame` 从第 2 帧开始循环并直接冲出屏幕；`skill2_effect.png` 是 6 帧贴身半月潮刃，和 `SKILLS.skill2` 的 6 帧动作对应；`skill3_effect.png` 是 6 帧环身防反水幕；`ultimate_skill_effect.png` 是 8 帧月蓝半月潮环，按 `PLAYER_COMBAT.ultimateEffectFrameDuration` 播放。以上透明 PNG 均由运行时根据玩家 `facing` 或中心点绘制，不改变技能伤害、命中冷却或玩法。
 
 ### 敌人和 Boss
 
