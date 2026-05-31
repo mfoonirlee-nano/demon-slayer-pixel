@@ -378,21 +378,21 @@ export const ENEMY_DRAW_SCALE = ENEMY_REF_DRAW_W / ENEMY_SHEETS[1].frameW;
 
 export const SKILL1_EFFECT_SHEET: SpriteSheet = {
   src: "assets/sprites/skills/skill1_effect.png",
-  frameW: 250,
-  frameH: 150,
-  count: 7,
+  frameW: 320,
+  frameH: 160,
+  count: 8,
   image: null,
 };
 
 export const SKILL1_EFFECT_CONFIG = {
   // draw scale relative to frame height
-  drawScale: 0.66,
+  drawScale: 0.625,
   // horizontal speed in px/frame
   speed: 8,
   // frame animate speed in game-frames per anim-frame
   frameDuration: 8,
   // last N frames to loop once the initial run ends
-  loopFromFrame: 1,
+  loopFromFrame: 2,
   // damage multiplier relative to player base+bonus attack
   damageMultiplier: 1.2,
   // frames between successive hits on the same target
@@ -401,14 +401,14 @@ export const SKILL1_EFFECT_CONFIG = {
 
 export const SKILL2_EFFECT_SHEET: SpriteSheet = {
   src: "assets/sprites/skills/skill2_effect.png",
-  frameW: 380,
-  frameH: 450,
+  frameW: 420,
+  frameH: 420,
   count: 6,
   image: null,
 };
 
 export const SKILL2_EFFECT_CONFIG = {
-  drawScale: 0.72,
+  drawScale: 0.667,
   speed: 6,
   frameDuration: 4,
   // 3-5 character widths (player w=34), using 4 widths ≈ 136px
@@ -419,8 +419,8 @@ export const SKILL2_EFFECT_CONFIG = {
 
 export const SKILL3_EFFECT_SHEET: SpriteSheet = {
   src: "assets/sprites/skills/skill3_effect.png",
-  frameW: 400,
-  frameH: 300,
+  frameW: 420,
+  frameH: 320,
   count: 6,
   image: null,
 };
@@ -442,9 +442,9 @@ export const ULTIMATE_SKILL_SHEET: SpriteSheet = {
 
 export const ULTIMATE_SKILL_EFFECT_SHEET: SpriteSheet = {
   src: "assets/sprites/skills/ultimate_skill_effect.png",
-  frameW: 432,
-  frameH: 496,
-  count: 5,
+  frameW: 480,
+  frameH: 360,
+  count: 8,
   image: null,
 };
 

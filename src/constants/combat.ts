@@ -72,7 +72,7 @@ export const PLAYER_COMBAT = {
   ultimateDamageMultiplier: 3,
   ultimateRadius: 360,
   ultimateCastFrameDuration: 12,
-  ultimateEffectFrameDuration: 10,
+  ultimateEffectFrameDuration: 8,
   ultimateEffectLife: 96,
   ultimateEffectSpawnRatio: 0.45,
   ultimateDrawScale: 0.42,
