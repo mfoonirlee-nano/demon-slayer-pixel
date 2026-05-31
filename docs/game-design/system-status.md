@@ -21,7 +21,7 @@
 | 开始界面 | 封面、加载状态、任意键/点击开始、本地击杀视觉进度已实现 | 补首次游玩提示和未来模式入口，不加入复杂菜单 | 已实现 | P4 | `src/startScreen.tsx`、`src/coverProgress.ts` |
 | 玩家移动 | 左右移动、跳跃、平台承载、移动端触控已实现 | 保持当前手感，后续只围绕敌人与地图调参 | 已实现 | P0 | `src/entities/player.ts`、`src/input.ts` |
 | 普攻与下落攻击 | 普攻、下落攻击、命中、击退、粒子和音效已实现 | 补更明确的命中/击杀反馈规范 | 已实现 | P4 | `src/entities/player.ts`、`docs/numeric-system/player.md` |
-| 技能与大招 | 三个技能、大招、技能能量、大招能量已实现 | 建立 `SKILL_DEFS` 注册表和解锁/升级读取方式 | 部分实现 | P3 | `src/constants/assets.ts`、`src/entities/player.ts` |
+| 技能与大招 | 三个技能、大招、技能能量、大招能量已实现 | 建立 `SKILL_DEFS` 注册表、`ultimateLevel` 和解锁/升级读取方式 | 部分实现 | P3 | `src/constants/assets.ts`、`src/entities/player.ts` |
 | 普通敌人 | `chaser`、`crawler`、`runner`、`caster`、`duelist`、`brute`、`binder` 已有运行时 archetype/state machine；生成仍主要按时间和随机 sheet | 显式 `ENEMY_ARCHETYPES`、`ACT_ENEMY_POOLS`、预算、同屏 cap、按幕轮换 | 部分实现 | P1 | `src/entities/enemies/`、`src/entities/enemy.ts` |
 | Boss | 当前单例 Boss 已实现入场、阶段、追踪、弹幕、召唤和 Boss 技能 1；原案定位为 `下弦之鬼 · 蛛弦` | `BOSS_ARCHETYPES`、Boss 池、Boss 轮换、统一死亡入口 `defeatBoss()` | 部分实现 | P1 | `src/entities/boss.ts`、`docs/art/bosses/spider-string.md` |
 | Boss 击杀推进 | Boss 死亡奖励分散在玩家多个伤害分支；无 `bossKills` | 所有 Boss 死亡路径统一调用 `defeatBoss()`，推进 `bossKills`、装备掉落和重生节奏 | 目标设计，未实现 | P1 | `src/entities/player.ts`、`docs/numeric-system/boss-archetypes.md` |

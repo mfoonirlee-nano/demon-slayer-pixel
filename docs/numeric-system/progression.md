@@ -8,13 +8,14 @@
 
 ## Target Design
 
-经验系统只提供单局内成长。每局开始时等级和经验重置，重开后不保留。
+经验系统只提供单局内成长。每局开始时经验等级、经验和大招强化等级重置，重开后不保留。
 
 新增运行时状态：
 
 ```ts
 runXp: number;
 runLevel: number;
+ultimateLevel: number;
 pendingUpgradeChoices: UpgradeChoice[];
 ```
 
@@ -23,8 +24,11 @@ pendingUpgradeChoices: UpgradeChoice[];
 ```ts
 runXp = 0;
 runLevel = 1;
+ultimateLevel = 0;
 pendingUpgradeChoices = [];
 ```
+
+`ultimateLevel = 0` 表示本局尚未获得“大招强化”奖励；第一次选择后进入 Lv1，后续最高提升到 Lv3。
 
 升级流程：
 
@@ -41,6 +45,7 @@ pendingUpgradeChoices = [];
 
 - 不引入局外永久属性。
 - 升级奖励不能绕过攻击上限、技能能量上限和最大生命上限的定义。
+- 大招强化等级只在当前局内生效，`ultimateLevel` 上限为 `3`，死亡或重开后清空回 `0`。
 - 经验和装备分工明确：经验提供稳定小幅成长，Boss 掉落装备提供更明显的构筑方向。
 - 技能解锁可以读取 `act`，但不依赖经验等级单独推进。
 - 升级三选一和 Boss 装备三选一应分队列处理，同一时间只展示一个选择 overlay。
@@ -89,6 +94,7 @@ while (runXp >= xpToNextLevel(runLevel) && pendingUpgradeChoices.length === 0) {
 | 体魄训练 | `maxHp + 8`，并治疗 `8` | `maxHp <= 160` |
 | 呼吸蓄力 | `skillEnergyMax + 6` | `skillEnergyMax <= 120` |
 | 集中爆发 | 大招能量获取 `+8%` | 叠加加成 `<= +32%` |
+| 终式精进 | `ultimateLevel + 1` | `ultimateLevel <= 3` |
 | 技能专精 | 当前技能额外特效伤害 `+8%` | 单技能加成 `<= +24%` |
 
 奖励生成规则：
@@ -107,10 +113,28 @@ maxHp = min(160, maxHp + 8);
 hp = min(maxHp, hp + 8);
 skillEnergyMax = min(120, skillEnergyMax + 6);
 ultimateEnergyGainMultiplier = min(1.32, ultimateEnergyGainMultiplier + 0.08);
+ultimateLevel = min(3, ultimateLevel + 1);
 currentSkillBonusMultiplier = min(1.24, currentSkillBonusMultiplier + 0.08);
 ```
 
 `attackBonusCap` 使用装备系统文档中的动态攻击上限定义；如果装备系统尚未实现，第一版可以沿用当前攻击加成上限 `24`。
+
+大招强化等级：
+
+| 等级 | 定位 | 成长方向 |
+| --- | --- | --- |
+| Lv1 | 基础月潮状态 | 小幅提升移动速度、跳跃能力、普攻节奏和伤害，普攻生成短促残影水刃 |
+| Lv2 | 稳定强化状态 | 延长持续时间，残影水刃触发更稳定，移动和跳跃提升更明显 |
+| Lv3 | 终阶爆发状态 | 残影斩命中反馈和追加伤害更强，但仍保留有限持续时间 |
+
+后续实现字段先按趋势定义，不在本文锁死具体数值：
+
+- `duration` 随等级增加。
+- `moveSpeedMultiplier` 随等级增加。
+- `jumpMultiplier` 或空中控制随等级增加。
+- `attackSpeedMultiplier` 随等级增加。
+- `damageMultiplier` 和残影追加伤害随等级增加。
+- 大招期间不提供长期无敌；如需保护，只允许开启动作短暂抗打断或减伤。
 
 ## 长局奖励池防枯竭（13 幕）
 
@@ -124,6 +148,7 @@ currentSkillBonusMultiplier = min(1.24, currentSkillBonusMultiplier + 0.08);
 | 体魄训练 | `maxHp <= 160` | `maxHp <= 200` | `maxHp <= 220` |
 | 呼吸蓄力 | `skillEnergyMax <= 120` | `skillEnergyMax <= 150` | `skillEnergyMax <= 160` |
 | 集中爆发 | 叠加 `<= +32%` | 叠加 `<= +48%` | 叠加 `<= +56%` |
+| 终式精进 | `ultimateLevel <= 3` | `ultimateLevel <= 3` | `ultimateLevel <= 3` |
 | 技能专精 | 单技能 `<= +24%` | 单技能 `<= +36%` | 单技能 `<= +44%` |
 
 ```ts

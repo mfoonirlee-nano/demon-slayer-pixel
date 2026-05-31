@@ -106,6 +106,7 @@ attackBonusCap = 24 + bossKills * 8 + equipmentCapBonus
 ### 5. 经验和装备
 
 - 接入 XP 和升级三选一。
+- 升级奖励接入大招强化等级 `ultimateLevel`，局内上限 `3`，死亡或重开清空。
 - Boss 击杀后接入装备三选一。
 - 派生攻击、动态攻击上限、技能消耗、资源获取统一走 helper。
 
