@@ -1,20 +1,21 @@
 # 经验与局内成长
 
-> 实现状态：目标设计，未实现。当前源码没有经验、等级或升级三选一状态；本文是后续实现依据，不表示功能已经接入。
+> 实现状态：目标设计，未实现。当前源码没有经验、角色等级、普通技能等级、大招强化等级或升级三选一状态；本文是后续实现依据，不表示功能已经接入。
 
 ## Purpose
 
-定义经验、等级、升级三选一和局内成长边界。
+定义经验、角色等级、普通技能等级、大招强化等级、升级三选一和局内成长边界。
 
 ## Target Design
 
-经验系统只提供单局内成长。每局开始时经验等级、经验和大招强化等级重置，重开后不保留。
+经验系统只提供单局内成长。每局开始时经验、角色等级、普通技能等级和大招强化等级重置，重开后不保留。
 
 新增运行时状态：
 
 ```ts
 runXp: number;
 runLevel: number;
+skillLevels: Record<SkillId, 1 | 2 | 3>;
 ultimateLevel: number;
 pendingUpgradeChoices: UpgradeChoice[];
 ```
@@ -24,9 +25,16 @@ pendingUpgradeChoices: UpgradeChoice[];
 ```ts
 runXp = 0;
 runLevel = 1;
+skillLevels = {
+  skill1: 1,
+  skill2: 1,
+  skill3: 1,
+};
 ultimateLevel = 0;
 pendingUpgradeChoices = [];
 ```
+
+已解锁普通技能初始等级为 Lv1，最高提升到 Lv3；后续新解锁技能进入本局时也从 Lv1 开始。
 
 `ultimateLevel = 0` 表示本局尚未获得“大招强化”奖励；第一次选择后进入 Lv1，后续最高提升到 Lv3。
 
@@ -45,6 +53,7 @@ pendingUpgradeChoices = [];
 
 - 不引入局外永久属性。
 - 升级奖励不能绕过攻击上限、技能能量上限和最大生命上限的定义。
+- 普通技能等级只在当前局内生效，每个技能独立记录，初始 Lv1，上限 Lv3，死亡或重开后清空回 Lv1。
 - 大招强化等级只在当前局内生效，`ultimateLevel` 上限为 `3`，死亡或重开后清空回 `0`。
 - 经验和装备分工明确：经验提供稳定小幅成长，Boss 掉落装备提供更明显的构筑方向。
 - 技能解锁可以读取 `act`，但不依赖经验等级单独推进。
@@ -95,7 +104,7 @@ while (runXp >= xpToNextLevel(runLevel) && pendingUpgradeChoices.length === 0) {
 | 呼吸蓄力 | `skillEnergyMax + 6` | `skillEnergyMax <= 120` |
 | 集中爆发 | 大招能量获取 `+8%` | 叠加加成 `<= +32%` |
 | 终式精进 | `ultimateLevel + 1` | `ultimateLevel <= 3` |
-| 技能专精 | 当前技能额外特效伤害 `+8%` | 单技能加成 `<= +24%` |
+| 技能精进 | 指定已解锁普通技能等级 `+1` | 单技能等级 `<= 3` |
 
 奖励生成规则：
 
@@ -114,10 +123,26 @@ hp = min(maxHp, hp + 8);
 skillEnergyMax = min(120, skillEnergyMax + 6);
 ultimateEnergyGainMultiplier = min(1.32, ultimateEnergyGainMultiplier + 0.08);
 ultimateLevel = min(3, ultimateLevel + 1);
-currentSkillBonusMultiplier = min(1.24, currentSkillBonusMultiplier + 0.08);
+skillLevels[chosenSkillId] = min(3, skillLevels[chosenSkillId] + 1);
 ```
 
 `attackBonusCap` 使用装备系统文档中的动态攻击上限定义；如果装备系统尚未实现，第一版可以沿用当前攻击加成上限 `24`。
+
+普通技能等级：
+
+| 等级 | 定位 | 成长方向 |
+| --- | --- | --- |
+| Lv1 | 基础形态 | 技能拥有完整功能，满足该技能的核心定位 |
+| Lv2 | 稳定强化 | 小幅提高伤害、命中反馈或关键效果稳定性 |
+| Lv3 | 专精形态 | 强化该技能最核心的战术价值，但不改变技能类型 |
+
+普通技能等级奖励必须绑定一个具体 `skillId`，例如 `skill1` 的 `水龙破精进`。达到 Lv3 的技能不进入候选池。技能等级成长字段由 `SKILL_DEFS` 按技能类型定义，可以包含：
+
+- `damageMultiplier`。
+- `effectScale` 或命中形状小幅修正。
+- `effectDuration`，仅适用于控场、防反或破甲类技能。
+- `resourceRefund` 或击杀返还，必须有上限。
+- `bossEffectMultiplier`，用于限制控场、破甲、反击对 Boss 的强度。
 
 大招强化等级：
 
@@ -149,15 +174,15 @@ currentSkillBonusMultiplier = min(1.24, currentSkillBonusMultiplier + 0.08);
 | 呼吸蓄力 | `skillEnergyMax <= 120` | `skillEnergyMax <= 150` | `skillEnergyMax <= 160` |
 | 集中爆发 | 叠加 `<= +32%` | 叠加 `<= +48%` | 叠加 `<= +56%` |
 | 终式精进 | `ultimateLevel <= 3` | `ultimateLevel <= 3` | `ultimateLevel <= 3` |
-| 技能专精 | 单技能 `<= +24%` | 单技能 `<= +36%` | 单技能 `<= +44%` |
+| 技能精进 | 单技能 `<= Lv3` | 单技能 `<= Lv3` | 单技能 `<= Lv3` |
 
 ```ts
 // 上限随 actBand 提高；rollThreeUpgradeChoices 已传入 act，可直接派生 actBand
 function upgradeCaps(actBand) {
   switch (actBand) {
-    case "intro":    return { maxHp: 160, skillEnergyMax: 120, ultMul: 1.32, skillMul: 1.24 };
-    case "awakened": return { maxHp: 200, skillEnergyMax: 150, ultMul: 1.48, skillMul: 1.36 };
-    case "final":    return { maxHp: 220, skillEnergyMax: 160, ultMul: 1.56, skillMul: 1.44 };
+    case "intro":    return { maxHp: 160, skillEnergyMax: 120, ultMul: 1.32, skillLevelMax: 3 };
+    case "awakened": return { maxHp: 200, skillEnergyMax: 150, ultMul: 1.48, skillLevelMax: 3 };
+    case "final":    return { maxHp: 220, skillEnergyMax: 160, ultMul: 1.56, skillLevelMax: 3 };
   }
 }
 ```
@@ -179,7 +204,7 @@ HUD 要求：
 升级 overlay 要求：
 
 - 存在 `pendingUpgradeChoices` 时显示 3 个升级奖励选项。
-- 每个选项展示名称、数值效果和当前叠加/上限状态。
+- 每个选项展示名称、数值效果和当前叠加/等级上限状态。
 - overlay 显示期间暂停战斗画面更新，但保留当前画面作为背景。
 - 选择后立即关闭 overlay；如果连续升级，下一组 overlay 随后出现。
 

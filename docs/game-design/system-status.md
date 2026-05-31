@@ -21,7 +21,7 @@
 | 开始界面 | 封面、加载状态、任意键/点击开始、本地击杀视觉进度已实现 | 补首次游玩提示和未来模式入口，不加入复杂菜单 | 已实现 | P4 | `src/startScreen.tsx`、`src/coverProgress.ts` |
 | 玩家移动 | 左右移动、跳跃、平台承载、移动端触控已实现 | 保持当前手感，后续只围绕敌人与地图调参 | 已实现 | P0 | `src/entities/player.ts`、`src/input.ts` |
 | 普攻与下落攻击 | 普攻、下落攻击、命中、击退、粒子和音效已实现 | 补更明确的命中/击杀反馈规范 | 已实现 | P4 | `src/entities/player.ts`、`docs/numeric-system/player.md` |
-| 技能与大招 | 三个技能、大招、技能能量、大招能量已实现 | 建立 `SKILL_DEFS` 注册表、`ultimateLevel` 和解锁/升级读取方式 | 部分实现 | P3 | `src/constants/assets.ts`、`src/entities/player.ts` |
+| 技能与大招 | 三个技能、大招、技能能量、大招能量已实现 | 建立 `SKILL_DEFS` 注册表、`skillLevels`、`ultimateLevel` 和解锁/升级读取方式 | 部分实现 | P3 | `src/constants/assets.ts`、`src/entities/player.ts` |
 | 普通敌人 | `chaser`、`crawler`、`runner`、`caster`、`duelist`、`brute`、`binder` 已有运行时 archetype/state machine；生成仍主要按时间和随机 sheet | 显式 `ENEMY_ARCHETYPES`、`ACT_ENEMY_POOLS`、预算、同屏 cap、按幕轮换 | 部分实现 | P1 | `src/entities/enemies/`、`src/entities/enemy.ts` |
 | Boss | 当前单例 Boss 已实现入场、阶段、追踪、弹幕、召唤和 Boss 技能 1；原案定位为 `下弦之鬼 · 蛛弦` | `BOSS_ARCHETYPES`、Boss 池、Boss 轮换、统一死亡入口 `defeatBoss()` | 部分实现 | P1 | `src/entities/boss.ts`、`docs/art/bosses/spider-string.md` |
 | Boss 击杀推进 | Boss 死亡奖励分散在玩家多个伤害分支；无 `bossKills` | 所有 Boss 死亡路径统一调用 `defeatBoss()`，推进 `bossKills`、装备掉落和重生节奏 | 目标设计，未实现 | P1 | `src/entities/player.ts`、`docs/numeric-system/boss-archetypes.md` |
@@ -32,9 +32,9 @@
 | 通关后进阶难度 | 未实现 | 血月试炼可叠加难度层（横向解锁，不给局外永久战力） | 目标设计，未实现 | P5 | `docs/numeric-system/endgame-ascension.md` |
 | 地图生成 | 片段式平台生成、张力、奖励预算、低层恢复和防重叠已实现 | 按幕数调整片段权重和平台速度，保留喘息片段 | 部分实现 | P2 | `src/entities/platform.ts`、`docs/map-generation.md` |
 | 奖励拾取 | 分数、技能能量、大招能量、攻击水晶、治疗水晶、宝箱已实现 | 加入 XP、升级三选一、Boss 装备三选一，奖励队列互斥 | 部分实现 | P2 | `src/entities/platform.ts`、`docs/numeric-system/rewards.md` |
-| 经验升级 | 当前无 XP、等级或升级选择 | 单局 XP、等级、升级三选一，overlay 暂停战斗 | 目标设计，未实现 | P2 | `docs/numeric-system/progression.md` |
+| 经验升级 | 当前无 XP、角色等级、普通技能等级、大招强化等级或升级选择 | 单局 XP、角色等级、普通技能等级、大招强化等级、升级三选一，overlay 暂停战斗 | 目标设计，未实现 | P2 | `docs/numeric-system/progression.md` |
 | 装备系统 | 当前无装备槽、装备掉落或装备属性派生 | Boss 击杀后三选一，`weapon/haori/charm` 三槽位，单局内构筑 | 目标设计，未实现 | P2 | `docs/numeric-system/equipment.md` |
-| HUD | 常驻生命、技能图标/能量、大招球、Boss 血条已实现 | 补等级、XP、幕数、选择队列状态；移动端也要有等价信息密度 | 部分实现 | P2 | `src/App.tsx`、`src/gameStore.ts` |
+| HUD | 常驻生命、技能图标/能量、大招球、Boss 血条已实现 | 补角色等级、当前技能等级、XP、幕数、选择队列状态；移动端也要有等价信息密度 | 部分实现 | P2 | `src/App.tsx`、`src/gameStore.ts` |
 | Pause overlay | 暂停面板、技能说明、关键数值已实现 | 统一 overlay 规范、输入规则和移动端布局 | 部分实现 | P3 | `src/App.tsx` |
 | Death overlay | 死亡动画、生存时间、`R` 重开已实现 | 增加主要死亡原因和简短复盘提示 | 部分实现 | P3 | `src/App.tsx` |
 | 移动端触控 | 移动、跳跃、攻击、技能、大招、暂停按钮已实现 | 增加选择 overlay 的触屏输入规范 | 部分实现 | P3 | `src/App.tsx`、`src/input.ts` |
