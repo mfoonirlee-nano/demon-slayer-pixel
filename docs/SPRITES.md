@@ -29,17 +29,13 @@
 
 | 文件 | 总尺寸 | 帧数 | 单帧 | 运行时状态 | 备注 |
 | --- | ---: | ---: | ---: | --- | --- |
-| `player_idle.png` | `1920x380` | 6 | `320x380` | `idle` | 常规待机 |
-| `player_run.png` | `1920x430` | 6 | `320x430` | `run` | 运行时 `flipX: true` |
-| `player_jump.png` | `1800x310` | 6 | `300x310` | `jump` | 跳跃 |
-| `player_attack.png` | `2400x400` | 6 | `400x400` | `attack` | 当前普通攻击运行时资源 |
-| `player_fall_attack.png` | `2400x400` | 6 | `400x400` | `fallAttack` | 下落攻击 |
+| `player_idle.png` | `3072x480` | 8 | `384x480` | `idle` | 右向待机，轻微呼吸、衣摆和发束摆动 |
+| `player_run.png` | `3584x420` | 8 | `448x420` | `run` | 右向低身前冲，不再依赖 `flipX: true` |
+| `player_jump.png` | `2688x420` | 6 | `448x420` | `jump` | 起跳、滞空、下落和落地准备 |
+| `player_attack.png` | `5120x480` | 8 | `640x480` | `attack` | 普攻按 `BASIC_ATTACK.frames` 线性播放完整 8 帧 |
+| `player_fall_attack.png` | `5120x560` | 8 | `640x560` | `fallAttack` | 前 5 帧为空中下刺，后 3 帧为落地恢复 |
 
-辅助/参考资源：
-
-- `player_attack_2.png`: 6 帧攻击备选图，当前未在 `PLAYER_SHEETS` 中加载。
-- `player_attack_spaced.png`: 新生成的 6 帧攻击参考图，`3000x400`，单帧 `500x400`，透明背景，帧间留白更大。
-- `player_attack_spaced_source.png`: `player_attack_spaced.png` 的绿幕源图，只用于制作留档，不参与运行时加载。
+玩家运行时图集以 `assets/art/player-concept.png` 为角色身份基准：深蓝羽织、水纹衣摆、金属护具、月形腰饰和蓝白水流刀光。所有玩家运行时图集源方向统一朝右；朝左由 `drawSheetFrame()` 根据玩家 `facing` 镜像绘制。普攻帧由 `attackTimer` 映射到完整 `attack` 图集，不使用全局 elapsed 循环；下落攻击由 `fallAttackTimer` 映射到 0-4 帧，由 `fallAttackRecoveryTimer` 映射到 5-7 帧。
 
 ### 技能和技能特效
 

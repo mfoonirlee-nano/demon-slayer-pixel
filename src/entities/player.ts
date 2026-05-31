@@ -756,12 +756,23 @@ export function drawPlayer() {
   const { drawW, drawH, animSpeed, anchorX = 0.5, anchorY = 1, flipX } = sheet;
   let frame = frameIndex(sheet.count, animSpeed, state.elapsed);
   if (stateName === PLAYER_ANIMATION_STATES.fallAttack) {
+    const airFrameCount = 5;
+    const recoveryFrameCount = sheet.count - airFrameCount;
     if (p.fallAttackTimer > 0) {
-      frame = Math.min(sheet.count - 2, Math.floor(Math.max(0, p.fallAttackTimer - 1) / animSpeed));
+      frame = Math.min(airFrameCount - 1, Math.floor(Math.max(0, p.fallAttackTimer - 1) / animSpeed));
     } else {
       const elapsedRecovery = FALL_ATTACK.recoveryFrames - p.fallAttackRecoveryTimer;
-      frame = Math.min(sheet.count - 1, sheet.count - 2 + Math.floor(elapsedRecovery / animSpeed));
+      frame = airFrameCount + Math.min(
+        recoveryFrameCount - 1,
+        Math.floor(Math.max(0, elapsedRecovery) * recoveryFrameCount / FALL_ATTACK.recoveryFrames),
+      );
     }
+  } else if (stateName === PLAYER_ANIMATION_STATES.attack && p.attackTimer > 0) {
+    const elapsedAttack = BASIC_ATTACK.frames - p.attackTimer;
+    frame = Math.min(
+      sheet.count - 1,
+      Math.floor(Math.max(0, elapsedAttack) * sheet.count / BASIC_ATTACK.frames),
+    );
   }
   drawWithBindingSlowFilter(isBindingSlowed, () => {
     drawSheetFrame(sheet, frame, refX - drawW * anchorX, refY - drawH * anchorY, drawW, drawH, p.facing * (flipX ? -1 : 1));
