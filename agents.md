@@ -62,6 +62,7 @@ Strong success criteria let you loop independently. Weak criteria ("make it work
 
 - Do not start headless browsers.
 - Do not start game processes.
+- When deleting files under `dist/assets`, run `npm run clean:dist-assets` instead of direct `rm` commands.
 
 ---
 

@@ -44,7 +44,7 @@
 | `skill1.png` | `4000x420` | 5 | `800x420` | `SKILLS.skill1` |
 | `skill2.png` | `3000x500` | 6 | `500x500` | `SKILLS.skill2` |
 | `skill3.png` | `2700x470` | 5 | `540x470` | `SKILLS.skill3` |
-| `skill1_effect.png` | `1600x160` | 5 | `320x160` | `SKILL1_EFFECT_SHEET` |
+| `skill1_effect.png` | `2400x160` | 5 | `480x160` | `SKILL1_EFFECT_SHEET` |
 | `skill2_effect.png` | `2520x420` | 6 | `420x420` | `SKILL2_EFFECT_SHEET` |
 | `skill3_effect.png` | `2520x320` | 6 | `420x320` | `SKILL3_EFFECT_SHEET` |
 | `ultimate_skill.png` | `2400x496` | 6 | `400x496` | `ULTIMATE_SKILL_SHEET` |

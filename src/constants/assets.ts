@@ -378,7 +378,7 @@ export const ENEMY_DRAW_SCALE = ENEMY_REF_DRAW_W / ENEMY_SHEETS[1].frameW;
 
 export const SKILL1_EFFECT_SHEET: SpriteSheet = {
   src: "assets/sprites/skills/skill1_effect.png",
-  frameW: 320,
+  frameW: 480,
   frameH: 160,
   count: 5,
   image: null,
@@ -426,7 +426,8 @@ export const SKILL3_EFFECT_SHEET: SpriteSheet = {
 };
 
 export const SKILL3_EFFECT_CONFIG = {
-  drawScale: 0.5,
+  drawScale: 0.72,
+  centerYOffset: 72,
   frameDuration: 6,
   maxHits: 3,
   damageMultiplier: 2,

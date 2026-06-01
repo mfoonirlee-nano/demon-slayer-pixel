@@ -379,7 +379,7 @@ export function drawSkill3Effect() {
   const drawW = sheet.frameW * SKILL3_EFFECT_CONFIG.drawScale;
   const drawH = sheet.frameH * SKILL3_EFFECT_CONFIG.drawScale;
   const cx = p.x + p.w / 2;
-  const cy = p.y + p.h - 72;
+  const cy = p.y + p.h - SKILL3_EFFECT_CONFIG.centerYOffset;
   const sx = eff.frame * sheet.frameW;
   ctx.save();
   ctx.globalAlpha = eff.alpha;

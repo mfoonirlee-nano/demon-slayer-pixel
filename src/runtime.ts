@@ -187,8 +187,8 @@ function loop(ts: number) {
   drawBoss();
   drawBossSkill1Effects();
   drawSkill1Effects();
-  drawSkill2Effects();
   drawGroundTileFront();
+  drawSkill2Effects();
   drawBindingZonesFront();
   drawHitBursts();
   drawProjectiles();
