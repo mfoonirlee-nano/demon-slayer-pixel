@@ -38,12 +38,12 @@
 
 | Boss | 基础幕 | 当前状态 | 玩法定位 | 后续需求 | 优先级 |
 | --- | ---: | --- | --- | --- | --- |
-| `lower_moon_spider_string` | 1 | 当前 Boss 素材和玩法已接入，设定名未完整接入 HUD | 追猎 + 召唤 + 单向蛛网技 | 迁入 Boss 注册表，补登场提示、击败提示和阶段视觉增强 | P1 |
+| `lower_moon_spider_string` | 1 | 当前 Boss 素材、玩法、HUD 名称已接入 | 追猎 + 召唤 + 单向蛛网技 | 补登场提示、击败提示和阶段视觉增强 | P1 |
 | `lower_moon_mist_bone` | 2 | 未实现 | 区域封锁 + 骨刺弹幕（延迟爆发） | 正式素材、地面危险区、延迟爆发读法 | P4 |
 | `lower_moon_mirror_dream` | 3 | 未实现 | 分身干扰 + 反射投射物 | 分身规则、真假可读性、反射物安全窗口 | P4 |
 | `lower_moon_fang_gale` | 4 | 未实现 | 高速冲刺 + 近身连击 | 冲刺前摇、刹车恢复、连击上限 | P4 |
 | `lower_moon_lantern_ember` | 5 | 未实现 | 召唤强化 + 火线封路 | 召唤物联动、火线区域、Boss 与小怪 cap | P4 |
-| `lower_moon_dead_bell` | 6 | 未实现 | 节奏压迫 + 声波环 + 停拍窗口 | 停拍窗口、声波环和节奏提示 | P4 |
+| `lower_moon_dead_bell` | 6 | v1 运行时已接入；暂与蛛弦双 Boss 轮换 | 节奏压迫 + 声波环 + 停拍窗口 | 觉醒视觉态、登场提示和节奏提示强化 | P4 |
 
 觉醒形态（第 7-12 幕，复用基础精灵 + 觉醒视觉态 + 一招觉醒血鬼术，见 [../numeric-system/boss-archetypes.md](../numeric-system/boss-archetypes.md)）：
 

@@ -68,6 +68,12 @@
 | `enemies/boss/boss.png` | `1400x419` | 4 | `350x419` | `BOSS_SHEET` |
 | `enemies/boss/boss_skill1.png` | `2400x400` | 6 | `400x400` | `BOSS_SKILL1_SHEET` |
 | `enemies/boss/boss_skill1_effect.png` | `2400x350` | 6 | `400x350` | `BOSS_SKILL1_EFFECT_SHEET` |
+| `enemies/boss/dead_bell.png` | `1400x419` | 4 | `350x419` | `DEAD_BELL_SHEET` |
+| `enemies/boss/dead_bell_cast.png` | `2400x400` | 6 | `400x400` | `DEAD_BELL_CAST_SHEET` |
+| `enemies/boss/dead_bell_wave.png` | `2400x350` | 6 | `400x350` | `DEAD_BELL_WAVE_SHEET` |
+| `enemies/boss/dead_bell_blade.png` | `2520x180` | 6 | `420x180` | `DEAD_BELL_BLADE_SHEET` |
+
+Boss 当前运行时轮换只启用 `蛛弦` 与 `枯铃`。`蛛弦` 继续使用原 `boss*` 三张图；`枯铃` 使用独立本体、摇铃施法、声波环和横向音刃图集。`dead_bell_wave.png` 的前帧用于内圈预警与扩散声波，`dead_bell_blade.png` 用于阶段 2+ 的横向音刃。以上枯铃素材不提交 `*_source.png` 绿幕制作源图；运行时只加载透明 PNG。
 
 Crawler 专属动作素材：
 

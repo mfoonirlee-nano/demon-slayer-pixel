@@ -119,9 +119,14 @@ export function drawProjectiles() {
       continue;
     }
 
-    ctx.fillStyle = PROJECTILE_CONFIG.primaryColor;
+    const primaryColor = p.kind === "bossBone" ? "#d7d2c2" : PROJECTILE_CONFIG.primaryColor;
+    const highlightColor = p.kind === "bossBone" ? "#f4f0de" : PROJECTILE_CONFIG.highlightColor;
+    const outlineColor = p.kind === "bossBone" ? "#4e5966" : PROJECTILE_CONFIG.primaryColor;
+    ctx.fillStyle = outlineColor;
     ctx.fillRect(p.x, p.y, p.w, p.h);
-    ctx.fillStyle = PROJECTILE_CONFIG.highlightColor;
+    ctx.fillStyle = primaryColor;
+    ctx.fillRect(p.x + 1, p.y + 1, Math.max(1, p.w - 2), Math.max(1, p.h - 2));
+    ctx.fillStyle = highlightColor;
     ctx.fillRect(p.x + PROJECTILE_CONFIG.highlightOffset, p.y + PROJECTILE_CONFIG.highlightOffset, PROJECTILE_CONFIG.highlightSize, PROJECTILE_CONFIG.highlightSize);
   }
 }

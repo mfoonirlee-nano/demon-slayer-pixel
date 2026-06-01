@@ -19,6 +19,7 @@ import {
 import type { HitBurstState, ParticleState, Skill1EffectState, Skill2EffectState, SkillBurstState } from "../types/game-state";
 import { overlapHitPoint } from "../utils";
 import { damageEnemy } from "./enemies/common";
+import { defeatBoss } from "./bosses/defeat";
 
 const FULL_CIRCLE_RADIANS = Math.PI * 2;
 const DEFAULT_HIT_BURST_COLOR = "#9feaff";
@@ -155,12 +156,7 @@ export function updateSkill1Effects() {
         );
         emitSlash(bossHitX, bossHitY, PLAYER_COMBAT.effects.skillBossSlashColor);
         emitHitBurst(bossHitX, bossHitY, PLAYER_COMBAT.effects.skillBossBurstColor, PLAYER_COMBAT.skillBossBurstPower);
-        if (boss.hp <= 0) {
-          p.score += PLAYER_COMBAT.bossKillScore;
-          gainKillEnergy(PLAYER_COMBAT.bossEnergyGain, PLAYER_COMBAT.bossUltimateEnergyGain);
-          state.boss = null;
-          state.bossSpawnTimer = PLAYER_COMBAT.skillChargeResetDelay;
-        }
+        defeatBoss();
       }
     }
 
@@ -225,12 +221,7 @@ export function updateSkill2Effects() {
         );
         emitSlash(bossHitX, bossHitY, PLAYER_COMBAT.effects.skillBossSlashColor);
         emitHitBurst(bossHitX, bossHitY, PLAYER_COMBAT.effects.skillBossBurstColor, PLAYER_COMBAT.skillBossBurstPower);
-        if (boss.hp <= 0) {
-          p.score += PLAYER_COMBAT.bossKillScore;
-          gainKillEnergy(PLAYER_COMBAT.bossEnergyGain, PLAYER_COMBAT.bossUltimateEnergyGain);
-          state.boss = null;
-          state.bossSpawnTimer = PLAYER_COMBAT.skillChargeResetDelay;
-        }
+        defeatBoss();
       }
     }
 

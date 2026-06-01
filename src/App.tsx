@@ -441,7 +441,7 @@ function Hud() {
               lineHeight: 1,
             }}
           >
-            下弦之鬼 · 阶段 {boss.phase}
+            {boss.phaseTitle}
           </span>
         </div>
       ) : null}

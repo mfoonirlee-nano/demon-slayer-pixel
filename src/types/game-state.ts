@@ -12,7 +12,13 @@ export type CasterPhase = "move" | "windup" | "cast" | "recover" | "hit";
 export type CasterAiPhase = "seekRange" | "windup" | "cast" | "recover";
 export type BinderPhase = "move" | "windup" | "cast" | "recover" | "hit";
 export type BinderAiPhase = "seekRange" | "windup" | "cast" | "recover";
-export type ProjectileKind = "boss" | "casterWisp";
+export type BossArchetypeId =
+  | "spider-string"
+  | "dead-bell";
+export type BossActionState = "move" | "cast" | "windup" | "dash" | "recover";
+export type BossSkillEffectKind = "spiderString";
+export type BossSkillMode = "spiderString" | "deadBellSingle" | "deadBellDouble" | "deadBellCombo";
+export type ProjectileKind = "boss" | "bossBone" | "casterWisp";
 
 export type PlatformState = {
   x: number;
@@ -116,6 +122,7 @@ export type EnemyState = {
 };
 
 export type BossState = {
+  id: BossArchetypeId;
   x: number;
   y: number;
   w: number;
@@ -130,13 +137,20 @@ export type BossState = {
   aiTimer: number;
   jumpCd: number;
   animSeed: number;
+  actionState: BossActionState;
+  actionTimer: number;
+  facing: number;
   skillCd: number;
   castTimer: number;
   skillEffectSpawned: boolean;
   castFacing: number;
+  skillHitDone: boolean;
+  skillMode: BossSkillMode;
+  recoveryTimer: number;
 } | null;
 
 export type BossSkill1EffectState = {
+  kind?: BossSkillEffectKind;
   x: number;
   y: number;
   vx: number;
@@ -146,6 +160,38 @@ export type BossSkill1EffectState = {
   elapsed: number;
   damage: number;
   hitPlayerCd: number;
+  warningFrames?: number;
+  radius?: number;
+  hitDone?: boolean;
+};
+
+export type DeadBellWaveState = {
+  x: number;
+  y: number;
+  radius: number;
+  maxRadius: number;
+  thickness: number;
+  warningFrames: number;
+  expandFrames: number;
+  delay: number;
+  elapsed: number;
+  frame: number;
+  damage: number;
+  hitPlayer: boolean;
+};
+
+export type DeadBellBladeState = {
+  x: number;
+  y: number;
+  w: number;
+  h: number;
+  vx: number;
+  facing: number;
+  delay: number;
+  elapsed: number;
+  frame: number;
+  life: number;
+  damage: number;
 };
 
 export type BindingZoneState = {
@@ -266,6 +312,7 @@ export type GameState = {
   last: number;
   spawnTimer: number;
   bossSpawnTimer: number;
+  bossKills: number;
   platformSpawnTimer: number;
   gameOver: boolean;
   boss: BossState;
@@ -285,5 +332,7 @@ export type GameState = {
   skill3Effect: Skill3EffectState | null;
   ultimateEffects: UltimateEffectState[];
   bossSkill1Effects: BossSkill1EffectState[];
+  deadBellWaves: DeadBellWaveState[];
+  deadBellBlades: DeadBellBladeState[];
   crystals: CrystalState[];
 };

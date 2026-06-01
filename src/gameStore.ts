@@ -3,6 +3,9 @@ import { createStore } from "jotai/vanilla";
 import { PLAYER_DEFAULTS } from "./constants";
 
 export type BossSnapshot = {
+  id: string;
+  displayName: string;
+  phaseTitle: string;
   hp: number;
   hpMax: number;
   phase: number;

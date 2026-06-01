@@ -1,4 +1,5 @@
 import { GROUND_Y, PLAYER_DEFAULTS, RUNTIME_CONFIG } from "./constants";
+import { bossArchetypeForId } from "./entities/bosses/registry";
 import type { GameSnapshot } from "./gameStore";
 import { createInitialMoonState } from "./moon";
 import type { GameState, PlayerState } from "./types/game-state";
@@ -48,6 +49,7 @@ export function createInitialState(): GameState {
     last: 0,
     spawnTimer: 0,
     bossSpawnTimer: RUNTIME_CONFIG.initialBossSpawnTimer,
+    bossKills: 0,
     platformSpawnTimer: 0,
     gameOver: false,
     boss: null,
@@ -67,6 +69,8 @@ export function createInitialState(): GameState {
     skill3Effect: null,
     ultimateEffects: [],
     bossSkill1Effects: [],
+    deadBellWaves: [],
+    deadBellBlades: [],
     crystals: [],
   };
 }
@@ -92,12 +96,15 @@ export function resetState() {
   resetCollection(state.skill2Effects, next.skill2Effects);
   resetCollection(state.ultimateEffects, next.ultimateEffects);
   resetCollection(state.bossSkill1Effects, next.bossSkill1Effects);
+  resetCollection(state.deadBellWaves, next.deadBellWaves);
+  resetCollection(state.deadBellBlades, next.deadBellBlades);
   state.skill3Effect = next.skill3Effect;
   resetCollection(state.projectiles, next.projectiles);
   resetCollection(state.bindingZones, next.bindingZones);
   state.elapsed = next.elapsed;
   state.spawnTimer = next.spawnTimer;
   state.bossSpawnTimer = next.bossSpawnTimer;
+  state.bossKills = next.bossKills;
   state.platformSpawnTimer = next.platformSpawnTimer;
   state.boss = next.boss;
   state.gameOver = next.gameOver;
@@ -115,6 +122,9 @@ export function getStateSnapshot(paused = false): GameSnapshot {
     enemiesCount: state.enemies.length,
     boss: state.boss
       ? {
+          id: state.boss.id,
+          displayName: bossArchetypeForId(state.boss.id).displayName,
+          phaseTitle: bossArchetypeForId(state.boss.id).phaseTitle(state.boss.phase),
           hp: state.boss.hp,
           hpMax: state.boss.hpMax,
           phase: state.boss.phase,

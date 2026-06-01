@@ -23,12 +23,12 @@ Boss 需要保持比普通敌人更强的轮廓识别和阶段变化。设计重
 
 | Boss | 工作名 | 基础幕 | 觉醒幕 | 实现状态 | 文件 |
 | --- | --- | ---: | ---: | --- | --- |
-| `lower_moon_spider_string` | 下弦之鬼 · 蛛弦 | 1 | 7 | 当前 Boss 素材已接入；设定名未接入 HUD | [spider-string.md](spider-string.md) |
+| `lower_moon_spider_string` | 下弦之鬼 · 蛛弦 | 1 | 7 | 当前 Boss 素材、玩法、HUD 名称已接入 | [spider-string.md](spider-string.md) |
 | `lower_moon_mist_bone` | 下弦之鬼 · 雾骨 | 2 | 8 | 未实现 | [mist-bone.md](mist-bone.md) |
 | `lower_moon_mirror_dream` | 下弦之鬼 · 镜魇 | 3 | 9 | 未实现 | [mirror-dream.md](mirror-dream.md) |
 | `lower_moon_fang_gale` | 下弦之鬼 · 牙岚 | 4 | 10 | 未实现 | [fang-gale.md](fang-gale.md) |
 | `lower_moon_lantern_ember` | 下弦之鬼 · 灯烬 | 5 | 11 | 未实现 | [lantern-ember.md](lantern-ember.md) |
-| `lower_moon_dead_bell` | 下弦之鬼 · 枯铃 | 6 | 12 | 未实现 | [dead-bell.md](dead-bell.md) |
+| `lower_moon_dead_bell` | 下弦之鬼 · 枯铃 | 6 | 12 | v1 运行时已接入；暂与蛛弦双 Boss 轮换 | [dead-bell.md](dead-bell.md) |
 | `grand_boss_blood_moon_many_faces` | 终幕之鬼 · 万相血月 | 13 | — | 未实现；第 13 幕终极 Boss，击败即通关 | [blood-moon-many-faces.md](blood-moon-many-faces.md) |
 
 觉醒形态优先复用基础 Boss 精灵 + 觉醒视觉态（变色 / 特效密度提升 / 关键物件状态变化），只有觉醒招新特效需要少量新素材。

@@ -14,6 +14,10 @@ import {
   BOSS_SHEET,
   BOSS_SKILL1_SHEET,
   BOSS_SKILL1_EFFECT_SHEET,
+  DEAD_BELL_SHEET,
+  DEAD_BELL_CAST_SHEET,
+  DEAD_BELL_WAVE_SHEET,
+  DEAD_BELL_BLADE_SHEET,
   SKILLS,
   SKILL1_EFFECT_SHEET,
   SKILL2_EFFECT_SHEET,
@@ -76,6 +80,10 @@ export function loadSprites(): Promise<void> {
   jobs.push(loadImage(BOSS_SHEET.src).then((img) => { BOSS_SHEET.image = img; }));
   jobs.push(loadImage(BOSS_SKILL1_SHEET.src).then((img) => { BOSS_SKILL1_SHEET.image = img; }));
   jobs.push(loadImage(BOSS_SKILL1_EFFECT_SHEET.src).then((img) => { BOSS_SKILL1_EFFECT_SHEET.image = img; }));
+  jobs.push(loadImage(DEAD_BELL_SHEET.src).then((img) => { DEAD_BELL_SHEET.image = img; }));
+  jobs.push(loadImage(DEAD_BELL_CAST_SHEET.src).then((img) => { DEAD_BELL_CAST_SHEET.image = img; }));
+  jobs.push(loadImage(DEAD_BELL_WAVE_SHEET.src).then((img) => { DEAD_BELL_WAVE_SHEET.image = img; }));
+  jobs.push(loadImage(DEAD_BELL_BLADE_SHEET.src).then((img) => { DEAD_BELL_BLADE_SHEET.image = img; }));
   jobs.push(loadImage(SKY_SPRITES.src).then((img) => { SKY_SPRITES.image = img; }));
   jobs.push(loadImage(CLOUD_SPRITES.big.src).then((img) => { CLOUD_SPRITES.big.image = img; }));
   jobs.push(loadImage(CLOUD_SPRITES.small.src).then((img) => { CLOUD_SPRITES.small.image = img; }));

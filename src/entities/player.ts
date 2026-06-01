@@ -23,10 +23,11 @@ import { onGround, hitbox, frameIndex, nearestRectHitPoint, overlapHitPoint } fr
 import { drawSheetFrame, drawSkillFrame } from "../graphics";
 import { playTone } from "../audio";
 import { ctx } from "../context";
-import { recordBossCoverKill, recordEnemyCoverKill } from "../coverProgress";
+import { recordEnemyCoverKill } from "../coverProgress";
 import { emitSlash, emitHitBurst } from "./particle";
 import { damageEnemy } from "./enemies/common";
 import { bindingZonePlayerMoveScale } from "./enemies/binder";
+import { defeatBoss } from "./bosses/defeat";
 import { keys } from "../input";
 
 const HALF_RATIO = 0.5;
@@ -191,13 +192,7 @@ export function castSelectedSkill() {
         const { x: bossHitX, y: bossHitY } = nearestRectHitPoint(boss, cx, cy);
         emitSlash(bossHitX, bossHitY, PLAYER_COMBAT.effects.skillBossSlashColor);
         emitHitBurst(bossHitX, bossHitY, PLAYER_COMBAT.effects.skillBossBurstColor, PLAYER_COMBAT.skillBossBurstPower);
-        if (boss.hp <= 0) {
-          p.score += PLAYER_COMBAT.bossKillScore;
-          recordBossCoverKill();
-          gainKillEnergy(PLAYER_COMBAT.bossEnergyGain, PLAYER_COMBAT.bossUltimateEnergyGain);
-          state.boss = null;
-          state.bossSpawnTimer = PLAYER_COMBAT.skillChargeResetDelay;
-        }
+        defeatBoss();
       }
     }
   }
@@ -279,13 +274,7 @@ function triggerUltimateImpact() {
       boss.hitCd = PLAYER_COMBAT.bossHitCooldown;
       emitSlash(bx, by, PLAYER_COMBAT.effects.bossKillSlashColor, boss.w);
       emitHitBurst(bx, by, PLAYER_COMBAT.effects.skillBossBurstColor, PLAYER_COMBAT.skillBossBurstPower + 1.4);
-      if (boss.hp <= 0) {
-        p.score += PLAYER_COMBAT.bossKillScore;
-        recordBossCoverKill();
-        gainKillEnergy(PLAYER_COMBAT.bossEnergyGain, PLAYER_COMBAT.bossUltimateEnergyGain);
-        state.boss = null;
-        state.bossSpawnTimer = PLAYER_COMBAT.skillChargeResetDelay;
-      }
+      defeatBoss();
     }
   }
 }
@@ -344,12 +333,8 @@ function triggerFallAttackImpact() {
     emitSlash(bossHitX, bossHitY, box.color, boss.w * 0.9);
     emitHitBurst(bossHitX, bossHitY, PLAYER_COMBAT.effects.skillBossBurstColor, FALL_ATTACK.impactBurstPower + 0.6);
     if (boss.hp <= 0) {
-      p.score += PLAYER_COMBAT.bossKillScore;
-      recordBossCoverKill();
-      gainKillEnergy(PLAYER_COMBAT.bossEnergyGain, PLAYER_COMBAT.bossUltimateEnergyGain);
       emitSlash(boss.x + boss.w / 2, boss.y + PLAYER_COMBAT.bossHitY, PLAYER_COMBAT.effects.bossKillSlashColor);
-      state.boss = null;
-      state.bossSpawnTimer = PLAYER_COMBAT.skillChargeResetDelay;
+      defeatBoss();
     }
   }
 
@@ -387,13 +372,7 @@ export function hurtPlayer(damage: number, sourceVx: number) {
       state.boss.hp -= counterDamage;
       emitSlash(state.boss.x + state.boss.w / 2, state.boss.y + state.boss.h * 0.4, SKILLS[2].color);
       emitHitBurst(state.boss.x + state.boss.w / 2, state.boss.y + state.boss.h * 0.4, SKILLS[2].color, 2);
-      if (state.boss.hp <= 0) {
-        p.score += PLAYER_COMBAT.bossKillScore;
-        recordBossCoverKill();
-        gainKillEnergy(PLAYER_COMBAT.bossEnergyGain, PLAYER_COMBAT.bossUltimateEnergyGain);
-        state.boss = null;
-        state.bossSpawnTimer = PLAYER_COMBAT.skillChargeResetDelay;
-      }
+      defeatBoss();
     }
 
     playTone(440, 0.08, "triangle", 0.15);
@@ -588,18 +567,8 @@ export function updatePlayer() {
         PLAYER_COMBAT.tones.bossHit.volume,
       );
       if (boss.hp <= 0) {
-        p.score += PLAYER_COMBAT.bossKillScore;
-        recordBossCoverKill();
-        gainKillEnergy(PLAYER_COMBAT.bossEnergyGain, PLAYER_COMBAT.bossUltimateEnergyGain);
         emitSlash(boss.x + boss.w / 2, boss.y + PLAYER_COMBAT.bossHitY, PLAYER_COMBAT.effects.bossKillSlashColor);
-        playTone(
-          PLAYER_COMBAT.tones.bossKill.frequency,
-          PLAYER_COMBAT.tones.bossKill.duration,
-          "triangle",
-          PLAYER_COMBAT.tones.bossKill.volume,
-        );
-        state.boss = null;
-        state.bossSpawnTimer = PLAYER_COMBAT.skillChargeResetDelay;
+        defeatBoss();
       }
     }
   }

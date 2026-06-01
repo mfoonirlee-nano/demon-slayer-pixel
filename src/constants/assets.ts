@@ -473,6 +473,74 @@ export const BOSS_SKILL1_EFFECT_SHEET: SpriteSheet = {
   image: null,
 };
 
+export const DEAD_BELL_SHEET: SpriteSheet = {
+  src: "assets/sprites/enemies/boss/dead_bell.png",
+  frameW: 350,
+  frameH: 419,
+  count: 4,
+  image: null,
+};
+
+export const DEAD_BELL_CAST_SHEET: SpriteSheet = {
+  src: "assets/sprites/enemies/boss/dead_bell_cast.png",
+  frameW: 400,
+  frameH: 400,
+  count: 6,
+  image: null,
+};
+
+export const DEAD_BELL_WAVE_SHEET: SpriteSheet = {
+  src: "assets/sprites/enemies/boss/dead_bell_wave.png",
+  frameW: 400,
+  frameH: 350,
+  count: 6,
+  image: null,
+};
+
+export const DEAD_BELL_BLADE_SHEET: SpriteSheet = {
+  src: "assets/sprites/enemies/boss/dead_bell_blade.png",
+  frameW: 420,
+  frameH: 180,
+  count: 6,
+  image: null,
+};
+
+export const DEAD_BELL_CONFIG = {
+  castDuration: 64,
+  comboCastDuration: 86,
+  spawnAtFrame: 30,
+  comboSpawnAtFrame: 34,
+  castFrameDuration: 9,
+  drawW: 228,
+  drawH: 228,
+  drawBottomPadding: 26,
+  waveDrawYOffset: 70,
+  waveWarningFrames: 24,
+  waveExpandFrames: 76,
+  waveFrameDuration: 10,
+  waveStartRadius: 54,
+  waveMaxRadius: 390,
+  waveThickness: 34,
+  delayedWaveFrames: 34,
+  bladeWarningFrames: 20,
+  bladeFrameDuration: 6,
+  bladeDrawW: 270,
+  bladeDrawH: 116,
+  bladeHitW: 238,
+  bladeHitH: 34,
+  bladeSpeed: 7.4,
+  bladeLife: 120,
+  bladeYOffset: 58,
+  upperBladeY: 330,
+  lowerBladeY: 424,
+  damageBase: 11,
+  damagePhase: 3,
+  skillCooldown: 238,
+  comboCooldown: 288,
+  initialCooldown: 120,
+  recoveryFrames: 46,
+} as const;
+
 export const BOSS_SKILL1_CONFIG = {
   castDuration: 54,
   spawnAtFrame: 28,
