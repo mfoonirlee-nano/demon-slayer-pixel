@@ -3,6 +3,7 @@ import {
   WIDTH,
   ENEMY_SHEETS,
   ENEMY_CONFIG,
+  LANTERN_EMBER_CONFIG,
   RUNTIME_CONFIG,
 } from "../constants";
 import type { EnemyState } from "../types/game-state";
@@ -67,12 +68,21 @@ export function spawnEnemyBySheetIndex(sheetIndex: number, side = 1) {
 export function updateEnemies() {
   for (let i = state.enemies.length - 1; i >= 0; i -= 1) {
     const enemy = state.enemies[i];
+    const lanternBuffed = (enemy.lanternBuffTimer ?? 0) > 0;
     enemy.hitCd -= 1;
 
     enemyArchetypeForSheet(enemy.sheetIndex).update(enemy);
 
+    if (lanternBuffed) {
+      enemy.x += enemy.vx * LANTERN_EMBER_CONFIG.buffSpeedExtraScale;
+      enemy.lanternBuffTimer = Math.max(0, (enemy.lanternBuffTimer ?? 0) - 1);
+    }
+
     if (hitbox(state.player, enemy)) {
-      hurtPlayer(enemy.damage, enemy.vx);
+      const damage = lanternBuffed
+        ? enemy.damage * LANTERN_EMBER_CONFIG.buffDamageScale
+        : enemy.damage;
+      hurtPlayer(damage, enemy.vx);
     }
 
     if (enemy.x < -ENEMY_CONFIG.despawnMargin || enemy.x > WIDTH + ENEMY_CONFIG.despawnMargin) {

@@ -71,6 +71,13 @@ export function createInitialState(): GameState {
     bossSkill1Effects: [],
     deadBellWaves: [],
     deadBellBlades: [],
+    mirrorShards: [],
+    mirrorAfterimages: [],
+    lanternEmberLures: [],
+    lanternEmberFirelines: [],
+    lanternEmberBuffTethers: [],
+    lanternEmberAwakenedGrids: [],
+    lanternEmberAshZones: [],
     crystals: [],
   };
 }
@@ -98,6 +105,13 @@ export function resetState() {
   resetCollection(state.bossSkill1Effects, next.bossSkill1Effects);
   resetCollection(state.deadBellWaves, next.deadBellWaves);
   resetCollection(state.deadBellBlades, next.deadBellBlades);
+  resetCollection(state.mirrorShards, next.mirrorShards);
+  resetCollection(state.mirrorAfterimages, next.mirrorAfterimages);
+  resetCollection(state.lanternEmberLures, next.lanternEmberLures);
+  resetCollection(state.lanternEmberFirelines, next.lanternEmberFirelines);
+  resetCollection(state.lanternEmberBuffTethers, next.lanternEmberBuffTethers);
+  resetCollection(state.lanternEmberAwakenedGrids, next.lanternEmberAwakenedGrids);
+  resetCollection(state.lanternEmberAshZones, next.lanternEmberAshZones);
   state.skill3Effect = next.skill3Effect;
   resetCollection(state.projectiles, next.projectiles);
   resetCollection(state.bindingZones, next.bindingZones);
@@ -114,17 +128,20 @@ export function resetState() {
 }
 
 export function getStateSnapshot(paused = false): GameSnapshot {
+  const bossArchetype = state.boss ? bossArchetypeForId(state.boss.id) : null;
   return {
     elapsed: state.elapsed,
     gameOver: state.gameOver,
     paused,
     spritesReady: state.spritesReady,
     enemiesCount: state.enemies.length,
-    boss: state.boss
+    boss: state.boss && bossArchetype
       ? {
           id: state.boss.id,
-          displayName: bossArchetypeForId(state.boss.id).displayName,
-          phaseTitle: bossArchetypeForId(state.boss.id).phaseTitle(state.boss.phase),
+          displayName: bossArchetype.displayName,
+          phaseTitle: state.boss.awakened && bossArchetype.awakenedPhaseTitle
+            ? bossArchetype.awakenedPhaseTitle(state.boss.phase)
+            : bossArchetype.phaseTitle(state.boss.phase),
           hp: state.boss.hp,
           hpMax: state.boss.hpMax,
           phase: state.boss.phase,

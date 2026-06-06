@@ -2,8 +2,8 @@
 
 ## Implementation Status
 
-- 素材状态：未实现。
-- 玩法状态：未实现；目标定位为分身干扰和反射投射物 Boss。
+- 素材状态：基础形态已实现，位于 `assets/sprites/enemies/boss/mirror-dream/`；不提交 `*_source.png` 制作源图。
+- 玩法状态：基础三招已接入；`真影错位` 觉醒技未实现。
 
 ## Role
 

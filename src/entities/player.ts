@@ -18,6 +18,7 @@ import {
   SKILL3_EFFECT_CONFIG,
   ULTIMATE_SKILL_SHEET,
   SKILL_FLASH,
+  LANTERN_EMBER_CONFIG,
 } from "../constants";
 import { onGround, hitbox, frameIndex, nearestRectHitPoint, overlapHitPoint } from "../utils";
 import { drawSheetFrame, drawSkillFrame } from "../graphics";
@@ -54,6 +55,19 @@ const PLAYER_BINDING_SLOW_EFFECT = {
   lineWidth: 2,
   accentLineWidth: 1,
 } as const;
+
+function lanternAshZonePlayerMoveScale() {
+  for (const zone of state.lanternEmberAshZones) {
+    const footX = state.player.x + state.player.w / 2;
+    const footY = state.player.y + state.player.h;
+    const radiusY = zone.radius * LANTERN_EMBER_CONFIG.ashZoneVerticalRadiusScale;
+    const dx = (footX - zone.x) / zone.radius;
+    const dy = (footY - zone.y) / radiusY;
+    if (dx * dx + dy * dy <= 1) return LANTERN_EMBER_CONFIG.ashZoneMoveScale;
+  }
+
+  return 1;
+}
 
 export function triggerAttack() {
   const p = state.player;
@@ -417,7 +431,7 @@ export function updatePlayer() {
   if (p.onPlatform && state.platforms.includes(p.onPlatform)) {
     p.x += p.onPlatform.vx;
   }
-  const moveScale = bindingZonePlayerMoveScale();
+  const moveScale = Math.min(bindingZonePlayerMoveScale(), lanternAshZonePlayerMoveScale());
   if (keys.has("a")) {
     p.vx = -p.speed * moveScale;
     if (p.skillTimer <= 0 && p.ultimateTimer <= 0) p.facing = -1;
@@ -656,7 +670,7 @@ function drawBindingSlowEffect() {
 export function drawPlayer() {
   const p = state.player;
   if (p.invincible > 0 && Math.floor(p.invincible / PLAYER_COMBAT.blinkInterval) % 2 === 0) return;
-  const isBindingSlowed = bindingZonePlayerMoveScale() < 1;
+  const isBindingSlowed = Math.min(bindingZonePlayerMoveScale(), lanternAshZonePlayerMoveScale()) < 1;
 
   // Unified reference point: player center X, feet Y minus global sprite padding.
   // All draw positions: drawX = refX - drawW * anchorX, drawY = refY - drawH * anchorY

@@ -14,11 +14,26 @@ export type BinderPhase = "move" | "windup" | "cast" | "recover" | "hit";
 export type BinderAiPhase = "seekRange" | "windup" | "cast" | "recover";
 export type BossArchetypeId =
   | "spider-string"
-  | "dead-bell";
+  | "mirror-dream"
+  | "lantern-ember"
+  | "dead-bell"
+  | "blood-moon-many-faces";
 export type BossActionState = "move" | "cast" | "windup" | "dash" | "recover";
 export type BossSkillEffectKind = "spiderString";
-export type BossSkillMode = "spiderString" | "deadBellSingle" | "deadBellDouble" | "deadBellCombo";
+export type BossSkillMode =
+  | "spiderString"
+  | "deadBellSingle"
+  | "deadBellDouble"
+  | "deadBellCombo"
+  | "mirrorShard"
+  | "mirrorAfterimage"
+  | "mirrorNightmare"
+  | "lanternLure"
+  | "lanternFireline"
+  | "lanternBuff"
+  | "lanternAwakenedGrid";
 export type ProjectileKind = "boss" | "bossBone" | "casterWisp";
+export type MirrorShardKind = "shard" | "nightmare";
 
 export type PlatformState = {
   x: number;
@@ -119,6 +134,7 @@ export type EnemyState = {
   binderFacing?: number;
   binderBaseSpeed?: number;
   binderCastSpawned?: boolean;
+  lanternBuffTimer?: number;
 };
 
 export type BossState = {
@@ -147,6 +163,7 @@ export type BossState = {
   skillHitDone: boolean;
   skillMode: BossSkillMode;
   recoveryTimer: number;
+  awakened: boolean;
 } | null;
 
 export type BossSkill1EffectState = {
@@ -191,6 +208,96 @@ export type DeadBellBladeState = {
   elapsed: number;
   frame: number;
   life: number;
+  damage: number;
+};
+
+export type MirrorShardState = {
+  kind: MirrorShardKind;
+  x: number;
+  y: number;
+  w: number;
+  h: number;
+  vx: number;
+  vy: number;
+  facing: number;
+  frame: number;
+  elapsed: number;
+  life: number;
+  damage: number;
+  bouncesRemaining: number;
+};
+
+export type MirrorAfterimageState = {
+  x: number;
+  y: number;
+  w: number;
+  h: number;
+  facing: number;
+  elapsed: number;
+  frame: number;
+  life: number;
+  maxLife: number;
+  spawnAt?: number;
+  spawned: boolean;
+  damage: number;
+};
+
+export type LanternEmberLureState = {
+  x: number;
+  y: number;
+  vx: number;
+  facing: number;
+  elapsed: number;
+  frame: number;
+  life: number;
+};
+
+export type LanternEmberFirelineState = {
+  x: number;
+  y: number;
+  w: number;
+  h: number;
+  warningFrames: number;
+  elapsed: number;
+  frame: number;
+  life: number;
+  damage: number;
+  hitPlayer: boolean;
+};
+
+export type LanternEmberBuffTetherState = {
+  fromX: number;
+  fromY: number;
+  toX: number;
+  toY: number;
+  facing: number;
+  elapsed: number;
+  frame: number;
+  life: number;
+};
+
+export type LanternEmberAwakenedGridState = {
+  x: number;
+  y: number;
+  w: number;
+  h: number;
+  vx: number;
+  warningFrames: number;
+  elapsed: number;
+  frame: number;
+  life: number;
+  damage: number;
+  hitPlayerCd: number;
+};
+
+export type LanternEmberAshZoneState = {
+  x: number;
+  y: number;
+  radius: number;
+  life: number;
+  maxLife: number;
+  elapsed: number;
+  frame: number;
   damage: number;
 };
 
@@ -334,5 +441,12 @@ export type GameState = {
   bossSkill1Effects: BossSkill1EffectState[];
   deadBellWaves: DeadBellWaveState[];
   deadBellBlades: DeadBellBladeState[];
+  mirrorShards: MirrorShardState[];
+  mirrorAfterimages: MirrorAfterimageState[];
+  lanternEmberLures: LanternEmberLureState[];
+  lanternEmberFirelines: LanternEmberFirelineState[];
+  lanternEmberBuffTethers: LanternEmberBuffTetherState[];
+  lanternEmberAwakenedGrids: LanternEmberAwakenedGridState[];
+  lanternEmberAshZones: LanternEmberAshZoneState[];
   crystals: CrystalState[];
 };

@@ -8,6 +8,14 @@ import {
   DEAD_BELL_CONFIG,
   DEAD_BELL_SHEET,
   DEAD_BELL_WAVE_SHEET,
+  LANTERN_EMBER_CONFIG,
+  LANTERN_EMBER_LURE_EFFECT_SHEET,
+  LANTERN_EMBER_SHEET,
+  LANTERN_EMBER_SUMMON_SHEET,
+  MIRROR_DREAM_CAST_SHEET,
+  MIRROR_DREAM_CONFIG,
+  MIRROR_DREAM_SHEET,
+  MIRROR_SHARD_SHEET,
 } from "../../constants";
 import type { SpriteSheet } from "../../types/assets";
 import type { BossArchetypeId, BossSkillMode } from "../../types/game-state";
@@ -16,6 +24,7 @@ export type BossArchetype = {
   id: BossArchetypeId;
   displayName: string;
   phaseTitle: (phase: number) => string;
+  awakenedPhaseTitle?: (phase: number) => string;
   unlockAct: number;
   awakenedUnlockAct: number;
   hpBase: number;
@@ -45,6 +54,8 @@ export type BossArchetype = {
 
 export const BOSS_ARCHETYPE_IDS = {
   spiderString: "spider-string",
+  mirrorDream: "mirror-dream",
+  lanternEmber: "lantern-ember",
   deadBell: "dead-bell",
 } as const satisfies Record<string, BossArchetypeId>;
 
@@ -81,6 +92,67 @@ export const BOSS_ARCHETYPES: Record<RegisteredBossArchetypeId, BossArchetype> =
       effect: BOSS_SKILL1_EFFECT_SHEET,
     },
   },
+  "mirror-dream": {
+    id: BOSS_ARCHETYPE_IDS.mirrorDream,
+    displayName: "镜魇",
+    phaseTitle: (phase) => `下弦之鬼 · 镜魇 · 阶段 ${phase}`,
+    unlockAct: 4,
+    awakenedUnlockAct: 9,
+    hpBase: 500,
+    hpPerKill: 54,
+    hpScaleByElapsed: 1.7,
+    collisionW: BOSS_CONFIG.w,
+    collisionH: BOSS_CONFIG.h,
+    yOffsetFromGround: BOSS_CONFIG.yOffsetFromGround,
+    phaseThresholds: [BOSS_CONFIG.phaseTwoThreshold, BOSS_CONFIG.phaseThreeThreshold],
+    contactDamageBase: 10,
+    contactDamagePhase: 2,
+    aiBaseCooldown: 108,
+    aiPhaseReduction: 10,
+    skillInitialCooldown: MIRROR_DREAM_CONFIG.initialCooldown,
+    skillMode: "mirrorShard",
+    drawW: MIRROR_DREAM_CONFIG.drawW,
+    drawH: MIRROR_DREAM_CONFIG.drawH,
+    castDrawW: MIRROR_DREAM_CONFIG.castDrawW,
+    castDrawH: MIRROR_DREAM_CONFIG.castDrawH,
+    castBottomPadding: MIRROR_DREAM_CONFIG.castBottomPadding,
+    sheets: {
+      move: MIRROR_DREAM_SHEET,
+      cast: MIRROR_DREAM_CAST_SHEET,
+      effect: MIRROR_SHARD_SHEET,
+    },
+  },
+  "lantern-ember": {
+    id: BOSS_ARCHETYPE_IDS.lanternEmber,
+    displayName: "灯烬",
+    phaseTitle: (phase) => `下弦之鬼 · 灯烬 · 阶段 ${phase}`,
+    awakenedPhaseTitle: (phase) => `下弦之鬼 · 灯烬·觉醒 · 阶段 ${phase}`,
+    unlockAct: 5,
+    awakenedUnlockAct: 11,
+    hpBase: 540,
+    hpPerKill: 58,
+    hpScaleByElapsed: 1.35,
+    collisionW: BOSS_CONFIG.w,
+    collisionH: BOSS_CONFIG.h,
+    yOffsetFromGround: BOSS_CONFIG.yOffsetFromGround,
+    phaseThresholds: [BOSS_CONFIG.phaseTwoThreshold, BOSS_CONFIG.phaseThreeThreshold],
+    contactDamageBase: 9,
+    contactDamagePhase: 2,
+    aiBaseCooldown: 116,
+    aiPhaseReduction: 10,
+    skillInitialCooldown: LANTERN_EMBER_CONFIG.initialCooldown,
+    skillMode: "lanternLure",
+    drawW: LANTERN_EMBER_CONFIG.drawW,
+    drawH: LANTERN_EMBER_CONFIG.drawH,
+    castDrawW: LANTERN_EMBER_CONFIG.castDrawW,
+    castDrawH: LANTERN_EMBER_CONFIG.castDrawH,
+    castBottomPadding: LANTERN_EMBER_CONFIG.castBottomPadding,
+    sheets: {
+      move: LANTERN_EMBER_SHEET,
+      cast: LANTERN_EMBER_SUMMON_SHEET,
+      effect: LANTERN_EMBER_LURE_EFFECT_SHEET,
+    },
+  },
   "dead-bell": {
     id: BOSS_ARCHETYPE_IDS.deadBell,
     displayName: "枯铃",
@@ -115,6 +187,8 @@ export const BOSS_ARCHETYPES: Record<RegisteredBossArchetypeId, BossArchetype> =
 
 export const BOSS_V1_SEQUENCE: BossArchetypeId[] = [
   BOSS_ARCHETYPE_IDS.spiderString,
+  BOSS_ARCHETYPE_IDS.mirrorDream,
+  BOSS_ARCHETYPE_IDS.lanternEmber,
   BOSS_ARCHETYPE_IDS.deadBell,
 ];
 

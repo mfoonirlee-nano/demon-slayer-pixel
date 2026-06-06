@@ -8,8 +8,33 @@ import {
   DEAD_BELL_BLADE_SHEET,
   DEAD_BELL_CONFIG,
   DEAD_BELL_WAVE_SHEET,
+  LANTERN_EMBER_ASH_ZONE_SHEET,
+  LANTERN_EMBER_AWAKENED_GRID_SHEET,
+  LANTERN_EMBER_BUFF_CAST_SHEET,
+  LANTERN_EMBER_BUFF_TETHER_SHEET,
+  LANTERN_EMBER_CONFIG,
+  LANTERN_EMBER_FIRELINE_CAST_SHEET,
+  LANTERN_EMBER_FIRELINE_SHEET,
+  LANTERN_EMBER_LURE_EFFECT_SHEET,
+  LANTERN_EMBER_SUMMON_SHEET,
+  MIRROR_AFTERIMAGE_SHEET,
+  MIRROR_DREAM_CONFIG,
+  MIRROR_NIGHTMARE_SHEET,
+  MIRROR_SHARD_SHEET,
 } from "../constants";
-import type { BossSkill1EffectState, BossState, DeadBellBladeState, DeadBellWaveState } from "../types/game-state";
+import type {
+  BossSkill1EffectState,
+  BossState,
+  DeadBellBladeState,
+  DeadBellWaveState,
+  LanternEmberAshZoneState,
+  LanternEmberAwakenedGridState,
+  LanternEmberBuffTetherState,
+  LanternEmberFirelineState,
+  LanternEmberLureState,
+  MirrorAfterimageState,
+  MirrorShardState,
+} from "../types/game-state";
 import { clamp, hitbox, frameIndex } from "../utils";
 import { drawSheetFrame } from "../graphics";
 import { ctx } from "../context";
@@ -23,6 +48,9 @@ type LiveBoss = NonNullable<BossState>;
 
 export function spawnBoss() {
   const archetype = bossArchetypeForKillCount(state.bossKills);
+  const act = state.bossKills + 1;
+  const awakened = archetype.id === BOSS_ARCHETYPE_IDS.lanternEmber
+    && act >= archetype.awakenedUnlockAct;
   const hp = archetype.hpBase
     + state.bossKills * archetype.hpPerKill
     + state.elapsed * archetype.hpScaleByElapsed;
@@ -53,6 +81,7 @@ export function spawnBoss() {
     skillHitDone: false,
     skillMode: archetype.skillMode,
     recoveryTimer: 0,
+    awakened,
   };
   playTone(
     BOSS_CONFIG.tones.spawnPrimary.frequency,
@@ -93,6 +122,10 @@ export function updateBoss() {
 
   if (boss.id === BOSS_ARCHETYPE_IDS.deadBell) {
     updateDeadBellBoss(boss);
+  } else if (boss.id === BOSS_ARCHETYPE_IDS.lanternEmber) {
+    updateLanternEmberBoss(boss);
+  } else if (boss.id === BOSS_ARCHETYPE_IDS.mirrorDream) {
+    updateMirrorDreamBoss(boss);
   } else {
     updateSpiderStringBoss(boss);
   }
@@ -100,9 +133,12 @@ export function updateBoss() {
 
 function updateBossPhase(boss: LiveBoss) {
   const archetype = bossArchetypeForId(boss.id);
+  const phaseThresholds = boss.awakened
+    ? [0.75, 0.5, 0.25]
+    : archetype.phaseThresholds;
   const hpRatio = boss.hp / boss.hpMax;
   boss.phase = 1;
-  for (const threshold of archetype.phaseThresholds) {
+  for (const threshold of phaseThresholds) {
     if (hpRatio < threshold) boss.phase += 1;
   }
 }
@@ -236,6 +272,264 @@ function updateDeadBellBoss(boss: LiveBoss) {
   damagePlayerOnContact(boss);
 }
 
+function updateMirrorDreamBoss(boss: LiveBoss) {
+  if (boss.recoveryTimer > 0) {
+    boss.recoveryTimer -= 1;
+    boss.vx *= MIRROR_DREAM_CONFIG.drag;
+    if (boss.recoveryTimer <= 0) {
+      boss.actionState = "move";
+      boss.actionTimer = 0;
+    }
+    damagePlayerOnContact(boss);
+    return;
+  }
+
+  if (boss.castTimer > 0) {
+    boss.vx = 0;
+    const framesSinceCastStart = MIRROR_DREAM_CONFIG.castDuration - boss.castTimer;
+
+    boss.castTimer -= 1;
+    if (!boss.skillEffectSpawned && framesSinceCastStart >= MIRROR_DREAM_CONFIG.spawnAtFrame) {
+      boss.skillEffectSpawned = true;
+      spawnMirrorDreamPattern(boss);
+    }
+    if (boss.castTimer <= 0) {
+      boss.actionState = "recover";
+      boss.actionTimer = 0;
+      boss.recoveryTimer = MIRROR_DREAM_CONFIG.recoveryFrames;
+    }
+    damagePlayerOnContact(boss);
+    return;
+  }
+
+  if (boss.skillCd <= 0) {
+    startMirrorDreamCast(boss);
+    return;
+  }
+
+  moveMirrorDreamBoss(boss);
+  damagePlayerOnContact(boss);
+}
+
+function updateLanternEmberBoss(boss: LiveBoss) {
+  if (boss.recoveryTimer > 0) {
+    boss.recoveryTimer -= 1;
+    boss.vx *= LANTERN_EMBER_CONFIG.drag;
+    if (boss.recoveryTimer <= 0) {
+      boss.actionState = "move";
+      boss.actionTimer = 0;
+    }
+    damagePlayerOnContact(boss);
+    return;
+  }
+
+  if (boss.castTimer > 0) {
+    boss.vx = 0;
+    const castDuration = lanternCastDuration(boss);
+    const framesSinceCastStart = castDuration - boss.castTimer;
+    const spawnAtFrame = boss.skillMode === "lanternAwakenedGrid"
+      ? LANTERN_EMBER_CONFIG.awakenedSpawnAtFrame
+      : LANTERN_EMBER_CONFIG.spawnAtFrame;
+
+    boss.castTimer -= 1;
+    if (!boss.skillEffectSpawned && framesSinceCastStart >= spawnAtFrame) {
+      boss.skillEffectSpawned = true;
+      spawnLanternEmberPattern(boss);
+    }
+    if (boss.castTimer <= 0) {
+      boss.actionState = "recover";
+      boss.actionTimer = 0;
+      boss.recoveryTimer = LANTERN_EMBER_CONFIG.recoveryFrames;
+    }
+    damagePlayerOnContact(boss);
+    return;
+  }
+
+  if (boss.skillCd <= 0) {
+    startLanternEmberCast(boss);
+    return;
+  }
+
+  moveLanternEmberBoss(boss);
+  damagePlayerOnContact(boss);
+}
+
+function lanternCastDuration(boss: LiveBoss) {
+  return boss.skillMode === "lanternAwakenedGrid"
+    ? LANTERN_EMBER_CONFIG.awakenedCastDuration
+    : LANTERN_EMBER_CONFIG.castDuration;
+}
+
+function startLanternEmberCast(boss: LiveBoss) {
+  const toPlayer = state.player.x + state.player.w / 2 - (boss.x + boss.w / 2);
+  boss.castFacing = toPlayer >= 0 ? 1 : -1;
+  boss.facing = boss.castFacing;
+  boss.skillMode = nextLanternEmberSkill(boss);
+  boss.castTimer = lanternCastDuration(boss);
+  boss.skillEffectSpawned = false;
+  boss.actionState = "cast";
+  boss.actionTimer = 0;
+  boss.skillCd = lanternSkillCooldown(boss);
+  boss.vx = 0;
+
+  playTone(190, 0.13, "sawtooth", 0.055);
+  playTone(360, 0.09, "triangle", 0.045);
+}
+
+function nextLanternEmberSkill(boss: LiveBoss) {
+  const roll = Math.random();
+  if (boss.awakened && (boss.phase >= 4 || roll < 0.26)) return "lanternAwakenedGrid";
+  if (boss.phase >= 3 && state.enemies.length > 0 && roll < 0.56) return "lanternBuff";
+  if (boss.phase >= 2 && roll < 0.76) return "lanternFireline";
+  return "lanternLure";
+}
+
+function lanternSkillCooldown(boss: LiveBoss) {
+  if (boss.skillMode === "lanternAwakenedGrid") return LANTERN_EMBER_CONFIG.awakenedCooldown;
+  if (boss.skillMode === "lanternBuff") return LANTERN_EMBER_CONFIG.buffCooldown;
+  if (boss.skillMode === "lanternFireline") return LANTERN_EMBER_CONFIG.firelineCooldown;
+  return Math.max(150, LANTERN_EMBER_CONFIG.summonCooldown - boss.phase * 10);
+}
+
+function moveLanternEmberBoss(boss: LiveBoss) {
+  const toward = state.player.x + state.player.w / 2 - (boss.x + boss.w / 2);
+  boss.facing = toward >= 0 ? 1 : -1;
+  boss.actionState = "move";
+  boss.vx += Math.sign(toward) * (
+    LANTERN_EMBER_CONFIG.moveSteeringForce
+    + boss.phase * LANTERN_EMBER_CONFIG.phaseSteeringForce
+  );
+  boss.vx *= LANTERN_EMBER_CONFIG.drag;
+  boss.vx = clamp(
+    boss.vx,
+    -(LANTERN_EMBER_CONFIG.maxVelocityBase + boss.phase * LANTERN_EMBER_CONFIG.maxVelocityPhase),
+    LANTERN_EMBER_CONFIG.maxVelocityBase + boss.phase * LANTERN_EMBER_CONFIG.maxVelocityPhase,
+  );
+  boss.x += boss.vx;
+  boss.x = clamp(boss.x, 0, WIDTH - boss.w);
+}
+
+function spawnLanternEmberPattern(boss: LiveBoss) {
+  if (boss.skillMode === "lanternFireline") {
+    spawnLanternFireline(boss);
+  } else if (boss.skillMode === "lanternBuff") {
+    spawnLanternBuff(boss);
+  } else if (boss.skillMode === "lanternAwakenedGrid") {
+    spawnLanternAwakenedGrid(boss);
+  } else {
+    spawnLanternSummon(boss);
+  }
+}
+
+function spawnLanternSummon(boss: LiveBoss) {
+  const count = boss.phase >= LANTERN_EMBER_CONFIG.summonExtraEnemyPhase
+    ? LANTERN_EMBER_CONFIG.summonMaxEnemies
+    : 1;
+  if (canAutoSpawnEntities()) {
+    for (let i = 0; i < count; i += 1) spawnEnemy();
+  }
+  state.lanternEmberLures.push({
+    x: boss.x + boss.w / 2 + boss.castFacing * 36,
+    y: boss.y + LANTERN_EMBER_CONFIG.lureYOffset,
+    vx: boss.castFacing * LANTERN_EMBER_CONFIG.lureSpeed,
+    facing: boss.castFacing,
+    elapsed: 0,
+    frame: 0,
+    life: LANTERN_EMBER_CONFIG.lureLife,
+  });
+  playTone(150, 0.14, "square", 0.05);
+}
+
+function spawnLanternFireline(boss: LiveBoss) {
+  const w = LANTERN_EMBER_CONFIG.firelineHitW
+    + Math.max(0, boss.phase - 1) * LANTERN_EMBER_CONFIG.firelinePhaseW;
+  const playerCenter = state.player.x + state.player.w / 2;
+  const x = clamp(playerCenter - w / 2, 0, WIDTH - w);
+  state.lanternEmberFirelines.push({
+    x,
+    y: state.player.onPlatform?.y ?? GROUND_Y,
+    w,
+    h: LANTERN_EMBER_CONFIG.firelineHitH,
+    warningFrames: LANTERN_EMBER_CONFIG.firelineWarningFrames,
+    elapsed: 0,
+    frame: 0,
+    life: LANTERN_EMBER_CONFIG.firelineLife,
+    damage: LANTERN_EMBER_CONFIG.firelineDamageBase + boss.phase * LANTERN_EMBER_CONFIG.firelineDamagePhase,
+    hitPlayer: false,
+  });
+  playTone(120, 0.16, "sawtooth", 0.055);
+}
+
+function spawnLanternBuff(boss: LiveBoss) {
+  const targets = nearestLanternBuffTargets(boss);
+  for (const enemy of targets) {
+    enemy.lanternBuffTimer = Math.max(enemy.lanternBuffTimer ?? 0, LANTERN_EMBER_CONFIG.buffFrames);
+    state.lanternEmberBuffTethers.push({
+      fromX: boss.x + boss.w / 2,
+      fromY: boss.y + LANTERN_EMBER_CONFIG.lureYOffset,
+      toX: enemy.x + enemy.w / 2,
+      toY: enemy.y + enemy.h / 2,
+      facing: boss.castFacing,
+      elapsed: 0,
+      frame: 0,
+      life: LANTERN_EMBER_CONFIG.buffTetherLife,
+    });
+  }
+  if (targets.length === 0) spawnLanternSummon(boss);
+  playTone(260, 0.11, "sawtooth", 0.045);
+}
+
+function nearestLanternBuffTargets(boss: LiveBoss) {
+  const bossCenterX = boss.x + boss.w / 2;
+  const bossCenterY = boss.y + boss.h / 2;
+  return state.enemies
+    .map((enemy) => ({
+      enemy,
+      dist: Math.hypot(enemy.x + enemy.w / 2 - bossCenterX, enemy.y + enemy.h / 2 - bossCenterY),
+    }))
+    .filter(({ dist }) => dist <= LANTERN_EMBER_CONFIG.buffRadius)
+    .sort((a, b) => a.dist - b.dist)
+    .slice(0, LANTERN_EMBER_CONFIG.buffMaxTargets)
+    .map(({ enemy }) => enemy);
+}
+
+function spawnLanternAwakenedGrid(boss: LiveBoss) {
+  const direction = boss.castFacing || 1;
+  state.lanternEmberAwakenedGrids.push({
+    x: direction > 0 ? -LANTERN_EMBER_CONFIG.awakenedGridPeriod : 0,
+    y: GROUND_Y,
+    w: WIDTH + LANTERN_EMBER_CONFIG.awakenedGridPeriod * 2,
+    h: LANTERN_EMBER_CONFIG.awakenedGridHitH,
+    vx: direction * LANTERN_EMBER_CONFIG.awakenedGridSpeed,
+    warningFrames: LANTERN_EMBER_CONFIG.awakenedGridWarningFrames,
+    elapsed: 0,
+    frame: 0,
+    life: LANTERN_EMBER_CONFIG.awakenedGridLife,
+    damage: LANTERN_EMBER_CONFIG.awakenedGridDamageBase + boss.phase * LANTERN_EMBER_CONFIG.awakenedGridDamagePhase,
+    hitPlayerCd: 0,
+  });
+  spawnLanternAshZone(boss);
+  playTone(100, 0.2, "sawtooth", 0.06);
+}
+
+function spawnLanternAshZone(boss: LiveBoss) {
+  const x = clamp(
+    state.player.x + state.player.w / 2 + boss.castFacing * 42,
+    LANTERN_EMBER_CONFIG.ashZoneRadius,
+    WIDTH - LANTERN_EMBER_CONFIG.ashZoneRadius,
+  );
+  state.lanternEmberAshZones.push({
+    x,
+    y: state.player.onPlatform?.y ?? GROUND_Y,
+    radius: LANTERN_EMBER_CONFIG.ashZoneRadius,
+    life: LANTERN_EMBER_CONFIG.ashZoneLife,
+    maxLife: LANTERN_EMBER_CONFIG.ashZoneLife,
+    elapsed: 0,
+    frame: 0,
+    damage: LANTERN_EMBER_CONFIG.ashZoneDamageBase + boss.phase * LANTERN_EMBER_CONFIG.ashZoneDamagePhase,
+  });
+}
+
 function moveChasingBoss(boss: LiveBoss) {
   const toward = state.player.x + state.player.w / 2 - (boss.x + boss.w / 2);
   boss.facing = toward >= 0 ? 1 : -1;
@@ -258,6 +552,32 @@ function moveDeadBellBoss(boss: LiveBoss) {
   boss.vx += Math.sign(toward) * (0.045 + boss.phase * 0.012);
   boss.vx *= 0.9;
   boss.vx = clamp(boss.vx, -(3.2 + boss.phase * 0.35), 3.2 + boss.phase * 0.35);
+  boss.x += boss.vx;
+  boss.x = clamp(boss.x, 0, WIDTH - boss.w);
+}
+
+function moveMirrorDreamBoss(boss: LiveBoss) {
+  const playerCenter = state.player.x + state.player.w / 2;
+  const bossCenter = boss.x + boss.w / 2;
+  const toPlayer = playerCenter - bossCenter;
+  boss.facing = toPlayer >= 0 ? 1 : -1;
+  boss.actionState = "move";
+
+  const distance = Math.abs(toPlayer);
+  if (distance < MIRROR_DREAM_CONFIG.closeDistance) {
+    boss.vx -= Math.sign(toPlayer) * (MIRROR_DREAM_CONFIG.retreatForce + boss.phase * 0.006);
+  } else if (distance > MIRROR_DREAM_CONFIG.preferredDistance) {
+    boss.vx += Math.sign(toPlayer) * (MIRROR_DREAM_CONFIG.steeringForce + boss.phase * 0.005);
+  } else {
+    boss.vx *= 0.84;
+  }
+
+  boss.vx *= MIRROR_DREAM_CONFIG.drag;
+  boss.vx = clamp(
+    boss.vx,
+    -(MIRROR_DREAM_CONFIG.maxVelocity + boss.phase * 0.2),
+    MIRROR_DREAM_CONFIG.maxVelocity + boss.phase * 0.2,
+  );
   boss.x += boss.vx;
   boss.x = clamp(boss.x, 0, WIDTH - boss.w);
 }
@@ -349,6 +669,179 @@ function spawnDeadBellBlade(boss: LiveBoss, centerY: number, delay: number) {
   });
 }
 
+function startMirrorDreamCast(boss: LiveBoss) {
+  const toPlayer = state.player.x + state.player.w / 2 - (boss.x + boss.w / 2);
+  boss.castFacing = toPlayer >= 0 ? 1 : -1;
+  boss.facing = boss.castFacing;
+  boss.skillMode = nextMirrorDreamSkill(boss);
+  boss.castTimer = MIRROR_DREAM_CONFIG.castDuration;
+  boss.skillEffectSpawned = false;
+  boss.actionState = "cast";
+  boss.actionTimer = 0;
+  boss.skillCd = Math.max(150, MIRROR_DREAM_CONFIG.skillCooldown - boss.phase * 18);
+  boss.vx = 0;
+
+  playTone(260, 0.12, "triangle", 0.055);
+  playTone(520, 0.08, "sine", 0.045);
+}
+
+function nextMirrorDreamSkill(boss: LiveBoss) {
+  const roll = Math.random();
+  if (boss.phase >= 3 && roll < 0.42) return "mirrorNightmare";
+  if (boss.phase >= 2 && roll < 0.32) return "mirrorNightmare";
+  return roll < 0.66 ? "mirrorAfterimage" : "mirrorShard";
+}
+
+function spawnMirrorDreamPattern(boss: LiveBoss) {
+  if (boss.skillMode === "mirrorAfterimage") {
+    spawnMirrorAfterimage(boss, undefined);
+    teleportMirrorDreamBoss(boss);
+    playTone(620, 0.08, "sine", 0.05);
+    return;
+  }
+
+  if (boss.skillMode === "mirrorNightmare") {
+    spawnMirrorNightmareImages(boss);
+    playTone(140, 0.18, "triangle", 0.055);
+    playTone(740, 0.09, "sine", 0.04);
+    return;
+  }
+
+  spawnMirrorShardFromBoss(boss);
+}
+
+function spawnMirrorAfterimage(boss: LiveBoss, spawnAt: number | undefined, centerX = boss.x + boss.w / 2) {
+  const life = spawnAt === undefined
+    ? MIRROR_DREAM_CONFIG.afterimageLife
+    : spawnAt + MIRROR_DREAM_CONFIG.nightmareBreakFadeFrames;
+  state.mirrorAfterimages.push({
+    x: centerX - boss.w / 2,
+    y: boss.y,
+    w: boss.w,
+    h: boss.h,
+    facing: boss.facing,
+    elapsed: 0,
+    frame: 0,
+    life,
+    maxLife: life,
+    spawnAt,
+    spawned: false,
+    damage: MIRROR_DREAM_CONFIG.damageBase + boss.phase * MIRROR_DREAM_CONFIG.damagePhase,
+  });
+}
+
+function teleportMirrorDreamBoss(boss: LiveBoss) {
+  const playerCenter = state.player.x + state.player.w / 2;
+  const bossCenter = boss.x + boss.w / 2;
+  const side = bossCenter < playerCenter ? 1 : -1;
+  const preferredCenter = playerCenter + side * MIRROR_DREAM_CONFIG.teleportPlayerOffset;
+  const fallbackCenter = playerCenter - side * MIRROR_DREAM_CONFIG.teleportAwayOffset;
+  const minCenter = boss.w / 2;
+  const maxCenter = WIDTH - boss.w / 2;
+  const targetCenter = preferredCenter >= minCenter && preferredCenter <= maxCenter
+    ? preferredCenter
+    : fallbackCenter;
+
+  boss.x = clamp(targetCenter - boss.w / 2, 0, WIDTH - boss.w);
+  boss.vx = 0;
+  const toPlayer = playerCenter - (boss.x + boss.w / 2);
+  boss.facing = toPlayer >= 0 ? 1 : -1;
+  boss.castFacing = boss.facing;
+}
+
+function spawnMirrorNightmareImages(boss: LiveBoss) {
+  const count = Math.min(
+    MIRROR_DREAM_CONFIG.nightmareMaxImages,
+    MIRROR_DREAM_CONFIG.nightmareBaseImages + boss.phase,
+  );
+  const playerCenter = state.player.x + state.player.w / 2;
+  const half = (count - 1) / 2;
+
+  for (let i = 0; i < count; i += 1) {
+    const offset = (i - half) * MIRROR_DREAM_CONFIG.nightmareSpacing;
+    const centerX = clamp(playerCenter + offset, boss.w / 2, WIDTH - boss.w / 2);
+    const spawnAt = MIRROR_DREAM_CONFIG.nightmareFirstBreakFrame + i * MIRROR_DREAM_CONFIG.nightmareBreakDelay;
+    boss.facing = centerX < playerCenter ? 1 : -1;
+    spawnMirrorAfterimage(boss, spawnAt, centerX);
+  }
+  boss.facing = boss.castFacing;
+}
+
+function spawnMirrorShardFromBoss(boss: LiveBoss) {
+  const startX = boss.x + boss.w / 2 + boss.castFacing * 34;
+  const startY = boss.y + boss.h * 0.36;
+  const targetX = state.player.x + state.player.w / 2;
+  const targetY = state.player.y + state.player.h / 2;
+  const dir = Math.sign(targetX - startX) || boss.castFacing;
+  const travelFrames = Math.max(28, Math.abs(targetX - startX) / MIRROR_DREAM_CONFIG.shardSpeed);
+  const vy = clamp((targetY - startY) / travelFrames, -2.4, 2.4);
+  spawnMirrorShard({
+    kind: "shard",
+    centerX: startX,
+    centerY: startY,
+    vx: dir * (MIRROR_DREAM_CONFIG.shardSpeed + boss.phase * 0.25),
+    vy,
+    damage: MIRROR_DREAM_CONFIG.damageBase + boss.phase * MIRROR_DREAM_CONFIG.damagePhase,
+    bouncesRemaining: 1,
+  });
+  playTone(480, 0.08, "sawtooth", 0.045);
+}
+
+function spawnMirrorNightmareShard(afterimage: MirrorAfterimageState) {
+  const centerX = afterimage.x + afterimage.w / 2;
+  const centerY = afterimage.y + afterimage.h * 0.38;
+  const targetX = state.player.x + state.player.w / 2;
+  const targetY = state.player.y + state.player.h / 2;
+  const dx = targetX - centerX;
+  const dy = targetY - centerY;
+  const distance = Math.max(1, Math.hypot(dx, dy));
+  const speed = MIRROR_DREAM_CONFIG.nightmareSpeed;
+  spawnMirrorShard({
+    kind: "nightmare",
+    centerX,
+    centerY,
+    vx: dx / distance * speed,
+    vy: dy / distance * speed,
+    damage: afterimage.damage,
+    bouncesRemaining: 0,
+  });
+  playTone(660, 0.06, "triangle", 0.035);
+}
+
+function spawnMirrorShard(params: {
+  kind: MirrorShardState["kind"];
+  centerX: number;
+  centerY: number;
+  vx: number;
+  vy: number;
+  damage: number;
+  bouncesRemaining: number;
+}) {
+  const hitW = params.kind === "nightmare"
+    ? MIRROR_DREAM_CONFIG.nightmareHitW
+    : MIRROR_DREAM_CONFIG.shardHitW;
+  const hitH = params.kind === "nightmare"
+    ? MIRROR_DREAM_CONFIG.nightmareHitH
+    : MIRROR_DREAM_CONFIG.shardHitH;
+  state.mirrorShards.push({
+    kind: params.kind,
+    x: params.centerX - hitW / 2,
+    y: params.centerY - hitH / 2,
+    w: hitW,
+    h: hitH,
+    vx: params.vx,
+    vy: params.vy,
+    facing: params.vx >= 0 ? 1 : -1,
+    frame: 0,
+    elapsed: 0,
+    life: params.kind === "nightmare"
+      ? MIRROR_DREAM_CONFIG.nightmareLife
+      : MIRROR_DREAM_CONFIG.shardLife,
+    damage: params.damage,
+    bouncesRemaining: params.bouncesRemaining,
+  });
+}
+
 export function drawBoss() {
   const boss = state.boss;
   if (!boss) return;
@@ -358,21 +851,16 @@ export function drawBoss() {
   const feetY = boss.y + boss.h;
 
   if (boss.castTimer > 0) {
-    const castDuration = boss.skillMode === "deadBellCombo"
-      ? DEAD_BELL_CONFIG.comboCastDuration
-      : boss.id === BOSS_ARCHETYPE_IDS.deadBell
-        ? DEAD_BELL_CONFIG.castDuration
-        : BOSS_SKILL1_CONFIG.castDuration;
-    const frameDuration = boss.id === BOSS_ARCHETYPE_IDS.deadBell
-      ? DEAD_BELL_CONFIG.castFrameDuration
-      : BOSS_SKILL1_CONFIG.castFrameDuration;
+    const castSheet = bossCastSheet(boss);
+    const castDuration = bossCastDuration(boss);
+    const frameDuration = bossCastFrameDuration(boss);
     const framesSinceCastStart = castDuration - boss.castTimer;
     const frame = Math.min(
-      archetype.sheets.cast.count - 1,
+      castSheet.count - 1,
       Math.floor(framesSinceCastStart / frameDuration),
     );
     drawSheetFrame(
-      archetype.sheets.cast,
+      castSheet,
       frame,
       centerX - archetype.castDrawW / 2,
       feetY - archetype.castDrawH + archetype.castBottomPadding,
@@ -400,6 +888,32 @@ export function drawBoss() {
     boss.facing,
   );
   drawDeadBellBeatCue(boss);
+}
+
+function bossCastSheet(boss: LiveBoss) {
+  const archetype = bossArchetypeForId(boss.id);
+  if (boss.id !== BOSS_ARCHETYPE_IDS.lanternEmber) return archetype.sheets.cast;
+  if (boss.skillMode === "lanternFireline") return LANTERN_EMBER_FIRELINE_CAST_SHEET;
+  if (boss.skillMode === "lanternBuff") return LANTERN_EMBER_BUFF_CAST_SHEET;
+  return LANTERN_EMBER_SUMMON_SHEET;
+}
+
+function bossCastDuration(boss: LiveBoss) {
+  if (boss.id === BOSS_ARCHETYPE_IDS.deadBell) {
+    return boss.skillMode === "deadBellCombo"
+      ? DEAD_BELL_CONFIG.comboCastDuration
+      : DEAD_BELL_CONFIG.castDuration;
+  }
+  if (boss.id === BOSS_ARCHETYPE_IDS.lanternEmber) return lanternCastDuration(boss);
+  if (boss.id === BOSS_ARCHETYPE_IDS.mirrorDream) return MIRROR_DREAM_CONFIG.castDuration;
+  return BOSS_SKILL1_CONFIG.castDuration;
+}
+
+function bossCastFrameDuration(boss: LiveBoss) {
+  if (boss.id === BOSS_ARCHETYPE_IDS.deadBell) return DEAD_BELL_CONFIG.castFrameDuration;
+  if (boss.id === BOSS_ARCHETYPE_IDS.lanternEmber) return LANTERN_EMBER_CONFIG.castFrameDuration;
+  if (boss.id === BOSS_ARCHETYPE_IDS.mirrorDream) return MIRROR_DREAM_CONFIG.castFrameDuration;
+  return BOSS_SKILL1_CONFIG.castFrameDuration;
 }
 
 function drawDeadBellBeatCue(boss: LiveBoss) {
@@ -588,6 +1102,222 @@ function updateDeadBellBlades() {
   }
 }
 
+export function updateMirrorDreamEffects() {
+  updateMirrorAfterimages();
+  updateMirrorShards();
+}
+
+export function updateLanternEmberEffects() {
+  updateLanternLures();
+  updateLanternBuffTethers();
+  updateLanternFirelines();
+  updateLanternAwakenedGrids();
+  updateLanternAshZones();
+}
+
+function updateLanternLures() {
+  for (let i = state.lanternEmberLures.length - 1; i >= 0; i -= 1) {
+    const lure = state.lanternEmberLures[i] as LanternEmberLureState;
+    lure.elapsed += 1;
+    lure.life -= 1;
+    lure.x += lure.vx;
+    lure.frame = Math.min(
+      LANTERN_EMBER_LURE_EFFECT_SHEET.count - 1,
+      Math.floor(lure.elapsed / LANTERN_EMBER_CONFIG.lureFrameDuration),
+    );
+    if (lure.life <= 0) state.lanternEmberLures.splice(i, 1);
+  }
+}
+
+function updateLanternBuffTethers() {
+  for (let i = state.lanternEmberBuffTethers.length - 1; i >= 0; i -= 1) {
+    const tether = state.lanternEmberBuffTethers[i] as LanternEmberBuffTetherState;
+    tether.elapsed += 1;
+    tether.life -= 1;
+    tether.frame = Math.min(
+      LANTERN_EMBER_BUFF_TETHER_SHEET.count - 1,
+      Math.floor(tether.elapsed / LANTERN_EMBER_CONFIG.buffTetherFrameDuration),
+    );
+    if (tether.life <= 0) state.lanternEmberBuffTethers.splice(i, 1);
+  }
+}
+
+function updateLanternFirelines() {
+  for (let i = state.lanternEmberFirelines.length - 1; i >= 0; i -= 1) {
+    const fireline = state.lanternEmberFirelines[i] as LanternEmberFirelineState;
+    fireline.elapsed += 1;
+    fireline.life -= 1;
+    const activeElapsed = Math.max(0, fireline.elapsed - fireline.warningFrames);
+    fireline.frame = fireline.elapsed <= fireline.warningFrames
+      ? 0
+      : Math.min(
+        LANTERN_EMBER_FIRELINE_SHEET.count - 1,
+        1 + Math.floor(activeElapsed / LANTERN_EMBER_CONFIG.firelineFrameDuration),
+      );
+
+    if (!fireline.hitPlayer && fireline.elapsed > fireline.warningFrames && isPlayerInLanternFireline(fireline)) {
+      fireline.hitPlayer = true;
+      hurtPlayer(fireline.damage, state.player.x + state.player.w / 2 - (fireline.x + fireline.w / 2));
+    }
+
+    if (fireline.life <= 0) state.lanternEmberFirelines.splice(i, 1);
+  }
+}
+
+function updateLanternAwakenedGrids() {
+  for (let i = state.lanternEmberAwakenedGrids.length - 1; i >= 0; i -= 1) {
+    const grid = state.lanternEmberAwakenedGrids[i] as LanternEmberAwakenedGridState;
+    grid.elapsed += 1;
+    grid.life -= 1;
+    if (grid.hitPlayerCd > 0) grid.hitPlayerCd -= 1;
+    if (grid.elapsed > grid.warningFrames) grid.x += grid.vx;
+
+    const activeElapsed = Math.max(0, grid.elapsed - grid.warningFrames);
+    grid.frame = grid.elapsed <= grid.warningFrames
+      ? 0
+      : Math.min(
+        LANTERN_EMBER_AWAKENED_GRID_SHEET.count - 1,
+        1 + Math.floor(activeElapsed / LANTERN_EMBER_CONFIG.awakenedGridFrameDuration),
+      );
+
+    if (grid.elapsed > grid.warningFrames && grid.hitPlayerCd <= 0 && isPlayerInLanternGrid(grid)) {
+      hurtPlayer(grid.damage, grid.vx);
+      grid.hitPlayerCd = LANTERN_EMBER_CONFIG.awakenedGridHitCooldown;
+    }
+
+    if (grid.life <= 0) state.lanternEmberAwakenedGrids.splice(i, 1);
+  }
+}
+
+function updateLanternAshZones() {
+  for (let i = state.lanternEmberAshZones.length - 1; i >= 0; i -= 1) {
+    const zone = state.lanternEmberAshZones[i] as LanternEmberAshZoneState;
+    zone.elapsed += 1;
+    zone.life -= 1;
+    if (
+      zone.elapsed >= LANTERN_EMBER_CONFIG.ashZoneDamageFirstFrame
+      && (zone.elapsed - LANTERN_EMBER_CONFIG.ashZoneDamageFirstFrame) % LANTERN_EMBER_CONFIG.ashZoneDamageIntervalFrames === 0
+      && isPlayerInLanternAshZone(zone)
+      && state.player.invincible <= 0
+    ) {
+      hurtPlayer(zone.damage, zone.x - (state.player.x + state.player.w / 2));
+      state.player.invincible = Math.max(state.player.invincible, LANTERN_EMBER_CONFIG.ashZoneDamageInvincibleFrames);
+    }
+
+    const rawFrame = Math.floor(zone.elapsed / LANTERN_EMBER_CONFIG.ashZoneFrameDuration);
+    if (rawFrame < LANTERN_EMBER_CONFIG.ashZoneLoopStartFrame) {
+      zone.frame = rawFrame;
+    } else {
+      const loopCount = LANTERN_EMBER_ASH_ZONE_SHEET.count - LANTERN_EMBER_CONFIG.ashZoneLoopStartFrame;
+      zone.frame = LANTERN_EMBER_CONFIG.ashZoneLoopStartFrame
+        + (rawFrame - LANTERN_EMBER_CONFIG.ashZoneLoopStartFrame) % loopCount;
+    }
+
+    if (zone.life <= 0) state.lanternEmberAshZones.splice(i, 1);
+  }
+}
+
+function isPlayerInLanternFireline(fireline: LanternEmberFirelineState) {
+  const p = state.player;
+  const footX = p.x + p.w / 2;
+  const footY = p.y + p.h;
+  return footX >= fireline.x
+    && footX <= fireline.x + fireline.w
+    && footY >= fireline.y - fireline.h
+    && footY <= fireline.y + 12;
+}
+
+function positiveModulo(value: number, divisor: number) {
+  return ((value % divisor) + divisor) % divisor;
+}
+
+function isPlayerInLanternGrid(grid: LanternEmberAwakenedGridState) {
+  const p = state.player;
+  const footX = p.x + p.w / 2;
+  const footY = p.y + p.h;
+  if (footY < grid.y - grid.h || footY > grid.y + 14) return false;
+  const localX = positiveModulo(footX - grid.x, LANTERN_EMBER_CONFIG.awakenedGridPeriod);
+  return localX <= LANTERN_EMBER_CONFIG.awakenedGridDangerW;
+}
+
+function isPlayerInLanternAshZone(zone: LanternEmberAshZoneState) {
+  const p = state.player;
+  const footX = p.x + p.w / 2;
+  const footY = p.y + p.h;
+  const radiusY = zone.radius * LANTERN_EMBER_CONFIG.ashZoneVerticalRadiusScale;
+  const dx = (footX - zone.x) / zone.radius;
+  const dy = (footY - zone.y) / radiusY;
+  return dx * dx + dy * dy <= 1;
+}
+
+function updateMirrorAfterimages() {
+  for (let i = state.mirrorAfterimages.length - 1; i >= 0; i -= 1) {
+    const afterimage = state.mirrorAfterimages[i] as MirrorAfterimageState;
+    afterimage.elapsed += 1;
+    afterimage.life -= 1;
+    afterimage.frame = Math.min(
+      MIRROR_AFTERIMAGE_SHEET.count - 1,
+      Math.floor(afterimage.elapsed / MIRROR_DREAM_CONFIG.afterimageFrameDuration),
+    );
+
+    if (
+      afterimage.spawnAt !== undefined
+      && !afterimage.spawned
+      && afterimage.elapsed >= afterimage.spawnAt
+    ) {
+      afterimage.spawned = true;
+      afterimage.life = Math.min(afterimage.life, MIRROR_DREAM_CONFIG.nightmareBreakFadeFrames);
+      spawnMirrorNightmareShard(afterimage);
+    }
+
+    if (afterimage.life <= 0) state.mirrorAfterimages.splice(i, 1);
+  }
+}
+
+function updateMirrorShards() {
+  for (let i = state.mirrorShards.length - 1; i >= 0; i -= 1) {
+    const shard = state.mirrorShards[i] as MirrorShardState;
+    const sheet = shard.kind === "nightmare" ? MIRROR_NIGHTMARE_SHEET : MIRROR_SHARD_SHEET;
+    const frameDuration = shard.kind === "nightmare"
+      ? MIRROR_DREAM_CONFIG.nightmareFrameDuration
+      : MIRROR_DREAM_CONFIG.shardFrameDuration;
+
+    shard.elapsed += 1;
+    shard.life -= 1;
+    shard.x += shard.vx;
+    shard.y += shard.vy;
+    shard.frame = Math.min(sheet.count - 1, Math.floor(shard.elapsed / frameDuration));
+
+    const hitLeftWall = shard.x <= 0 && shard.vx < 0;
+    const hitRightWall = shard.x + shard.w >= WIDTH && shard.vx > 0;
+    if (shard.kind === "shard" && shard.bouncesRemaining > 0 && (hitLeftWall || hitRightWall)) {
+      shard.x = clamp(shard.x, 0, WIDTH - shard.w);
+      shard.vx *= -1;
+      shard.facing = shard.vx >= 0 ? 1 : -1;
+      shard.bouncesRemaining -= 1;
+      shard.frame = Math.min(MIRROR_SHARD_SHEET.count - 1, 4);
+      playTone(720, 0.05, "triangle", 0.035);
+    }
+
+    if (hitbox(state.player, shard)) {
+      hurtPlayer(shard.damage, shard.vx);
+      state.mirrorShards.splice(i, 1);
+      continue;
+    }
+
+    const drawW = shard.kind === "nightmare"
+      ? MIRROR_DREAM_CONFIG.nightmareDrawW
+      : MIRROR_DREAM_CONFIG.shardDrawW;
+    const offLeft = shard.x + shard.w < -drawW;
+    const offRight = shard.x > WIDTH + drawW;
+    const offTop = shard.y + shard.h < -drawW;
+    const offBottom = shard.y > GROUND_Y + drawW;
+    if (shard.life <= 0 || offLeft || offRight || offTop || offBottom) {
+      state.mirrorShards.splice(i, 1);
+    }
+  }
+}
+
 export function drawBossSkill1Effects() {
   const sheet = bossArchetypeForId(BOSS_ARCHETYPE_IDS.spiderString).sheets.effect;
   if (!ctx || !sheet.image) return;
@@ -600,6 +1330,166 @@ export function drawBossSkill1Effects() {
     ctx.scale(e.facing, 1);
     ctx.drawImage(sheet.image, sx, 0, sheet.frameW, sheet.frameH, -drawW / 2, -drawH / 2, drawW, drawH);
     ctx.restore();
+  }
+}
+
+export function drawMirrorDreamEffects() {
+  drawMirrorAfterimages();
+  drawMirrorShards();
+}
+
+export function drawLanternEmberEffects() {
+  drawLanternAshZones();
+  drawLanternFirelines();
+  drawLanternAwakenedGrids();
+  drawLanternLures();
+  drawLanternBuffTethers();
+}
+
+function drawLanternLures() {
+  if (!ctx) return;
+  for (const lure of state.lanternEmberLures) {
+    const fade = clamp(lure.life / LANTERN_EMBER_CONFIG.lureLife, 0, 1);
+    ctx.save();
+    ctx.globalAlpha = 0.36 + fade * 0.64;
+    drawSheetFrame(
+      LANTERN_EMBER_LURE_EFFECT_SHEET,
+      lure.frame,
+      lure.x - LANTERN_EMBER_CONFIG.lureDrawW / 2,
+      lure.y - LANTERN_EMBER_CONFIG.lureDrawH / 2,
+      LANTERN_EMBER_CONFIG.lureDrawW,
+      LANTERN_EMBER_CONFIG.lureDrawH,
+      lure.facing,
+    );
+    ctx.restore();
+  }
+}
+
+function drawLanternFirelines() {
+  if (!ctx) return;
+  for (const fireline of state.lanternEmberFirelines) {
+    const warning = fireline.elapsed <= fireline.warningFrames;
+    const fade = clamp(fireline.life / LANTERN_EMBER_CONFIG.firelineLife, 0, 1);
+    const drawH = LANTERN_EMBER_CONFIG.firelineDrawH;
+    ctx.save();
+    ctx.globalAlpha = warning ? 0.45 : 0.35 + fade * 0.65;
+    drawSheetFrame(
+      LANTERN_EMBER_FIRELINE_SHEET,
+      fireline.frame,
+      fireline.x,
+      fireline.y - drawH + LANTERN_EMBER_CONFIG.firelineYOffset,
+      fireline.w,
+      drawH,
+    );
+    ctx.restore();
+  }
+}
+
+function drawLanternAwakenedGrids() {
+  if (!ctx) return;
+  for (const grid of state.lanternEmberAwakenedGrids) {
+    const warning = grid.elapsed <= grid.warningFrames;
+    const fade = clamp(grid.life / LANTERN_EMBER_CONFIG.awakenedGridLife, 0, 1);
+    ctx.save();
+    ctx.globalAlpha = warning ? 0.38 : 0.32 + fade * 0.6;
+    drawSheetFrame(
+      LANTERN_EMBER_AWAKENED_GRID_SHEET,
+      grid.frame,
+      grid.x,
+      grid.y - LANTERN_EMBER_CONFIG.awakenedGridDrawH,
+      LANTERN_EMBER_CONFIG.awakenedGridDrawW,
+      LANTERN_EMBER_CONFIG.awakenedGridDrawH,
+    );
+    ctx.restore();
+  }
+}
+
+function drawLanternAshZones() {
+  if (!ctx) return;
+  for (const zone of state.lanternEmberAshZones) {
+    const drawW = Math.round(zone.radius * LANTERN_EMBER_CONFIG.ashZoneDrawWidthScale);
+    const drawH = Math.round(drawW * LANTERN_EMBER_ASH_ZONE_SHEET.frameH / LANTERN_EMBER_ASH_ZONE_SHEET.frameW);
+    const fade = Math.min(
+      1,
+      zone.elapsed / 18,
+      zone.life / 18,
+    );
+    ctx.save();
+    ctx.globalAlpha = 0.78 * fade;
+    drawSheetFrame(
+      LANTERN_EMBER_ASH_ZONE_SHEET,
+      zone.frame,
+      zone.x - drawW / 2,
+      zone.y - drawH,
+      drawW,
+      drawH,
+    );
+    ctx.restore();
+  }
+}
+
+function drawLanternBuffTethers() {
+  const image = LANTERN_EMBER_BUFF_TETHER_SHEET.image;
+  if (!ctx || !image) return;
+  const sheet = LANTERN_EMBER_BUFF_TETHER_SHEET;
+  for (const tether of state.lanternEmberBuffTethers) {
+    const dx = tether.toX - tether.fromX;
+    const dy = tether.toY - tether.fromY;
+    const drawW = Math.max(LANTERN_EMBER_CONFIG.buffTetherDrawW, Math.hypot(dx, dy));
+    const drawH = LANTERN_EMBER_CONFIG.buffTetherDrawH;
+    const sx = tether.frame * sheet.frameW;
+    const fade = clamp(tether.life / LANTERN_EMBER_CONFIG.buffTetherLife, 0, 1);
+    ctx.save();
+    ctx.globalAlpha = 0.35 + fade * 0.65;
+    ctx.translate(tether.fromX, tether.fromY);
+    ctx.rotate(Math.atan2(dy, dx));
+    ctx.drawImage(image, sx, 0, sheet.frameW, sheet.frameH, 0, -drawH / 2, drawW, drawH);
+    ctx.restore();
+  }
+}
+
+function drawMirrorAfterimages() {
+  if (!ctx) return;
+  for (const afterimage of state.mirrorAfterimages) {
+    const centerX = afterimage.x + afterimage.w / 2;
+    const feetY = afterimage.y + afterimage.h;
+    const lifeT = clamp(afterimage.life / afterimage.maxLife, 0, 1);
+    ctx.save();
+    ctx.globalAlpha = MIRROR_DREAM_CONFIG.afterimageAlpha * (0.24 + lifeT * 0.76);
+    drawSheetFrame(
+      MIRROR_AFTERIMAGE_SHEET,
+      afterimage.frame,
+      centerX - MIRROR_DREAM_CONFIG.afterimageDrawW / 2,
+      feetY - MIRROR_DREAM_CONFIG.afterimageDrawH + MIRROR_DREAM_CONFIG.afterimageBottomPadding,
+      MIRROR_DREAM_CONFIG.afterimageDrawW,
+      MIRROR_DREAM_CONFIG.afterimageDrawH,
+      afterimage.facing,
+    );
+    ctx.restore();
+  }
+}
+
+function drawMirrorShards() {
+  if (!ctx) return;
+  for (const shard of state.mirrorShards) {
+    const sheet = shard.kind === "nightmare" ? MIRROR_NIGHTMARE_SHEET : MIRROR_SHARD_SHEET;
+    const drawW = shard.kind === "nightmare"
+      ? MIRROR_DREAM_CONFIG.nightmareDrawW
+      : MIRROR_DREAM_CONFIG.shardDrawW;
+    const drawH = shard.kind === "nightmare"
+      ? MIRROR_DREAM_CONFIG.nightmareDrawH
+      : MIRROR_DREAM_CONFIG.shardDrawH;
+    const centerX = shard.x + shard.w / 2;
+    const centerY = shard.y + shard.h / 2;
+    drawSheetFrame(
+      sheet,
+      shard.frame,
+      centerX - drawW / 2,
+      centerY - drawH / 2,
+      drawW,
+      drawH,
+      shard.facing,
+    );
   }
 }
 

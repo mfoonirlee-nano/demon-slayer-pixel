@@ -18,7 +18,7 @@ import { drawNearForeground } from "./nearForeground";
 import { updatePlayer, drawPlayer, triggerAttack, castSelectedSkill, castUltimateSkill, selectSkill, tryJump } from "./entities/player";
 import { spawnEnemy, spawnEnemyBySheetIndex, updateEnemies, drawEnemy } from "./entities/enemy";
 import { updateBindingZones, drawBindingZonesBack, drawBindingZonesFront } from "./entities/enemies/binder";
-import { spawnBoss, updateBoss, drawBoss, updateBossSkill1Effects, drawBossSkill1Effects, updateDeadBellEffects, drawDeadBellEffects } from "./entities/boss";
+import { spawnBoss, updateBoss, drawBoss, updateBossSkill1Effects, drawBossSkill1Effects, updateDeadBellEffects, drawDeadBellEffects, updateMirrorDreamEffects, drawMirrorDreamEffects, updateLanternEmberEffects, drawLanternEmberEffects } from "./entities/boss";
 import {
   spawnMapSegmentOfKind,
   spawnNextMapSegment,
@@ -138,6 +138,8 @@ function loop(ts: number) {
     updateBoss();
     updateBossSkill1Effects();
     updateDeadBellEffects();
+    updateMirrorDreamEffects();
+    updateLanternEmberEffects();
     updateProjectiles();
     updateParticles();
     updateSkillBursts();
@@ -188,6 +190,8 @@ function loop(ts: number) {
   drawBoss();
   drawBossSkill1Effects();
   drawDeadBellEffects();
+  drawMirrorDreamEffects();
+  drawLanternEmberEffects();
   drawSkill1Effects();
   drawGroundTileFront();
   drawSkill2Effects();

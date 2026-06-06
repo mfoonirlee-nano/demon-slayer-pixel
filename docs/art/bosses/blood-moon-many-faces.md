@@ -2,8 +2,29 @@
 
 ## Implementation Status
 
-- 素材状态：未实现。
+- 素材状态：基础待机、换相、恢复、死亡、五招施法和五招特效透明 PNG 已实现并预加载，位于 `assets/sprites/enemies/boss/blood-moon-many-faces/`；不提交 `*_source.png` 制作源图。
 - 玩法状态：未实现；定位为**第 13 幕终极 Boss**、单局通关终点，不作为普通轮换 Boss。幕表见 [../../game-design/act-structure.md](../../game-design/act-structure.md)，数值见 [../../numeric-system/boss-archetypes.md](../../numeric-system/boss-archetypes.md)。
+
+## Runtime Assets
+
+本轮只完成素材和加载接入，不改变伤害、碰撞、阶段阈值、胜利结算或 Boss 生成逻辑。
+
+| 图集 | 总尺寸 | 帧数 | 单帧 | 用途 |
+| --- | ---: | ---: | ---: | --- |
+| `blood_moon.png` | `1400x419` | 4 | `350x419` | 常态/移动，血月背光、破碎骨面、黑红破袍和少量镜/铃残相 |
+| `blood_moon_phase_shift.png` | `2400x400` | 6 | `400x400` | 换相，蛛丝、雾骨、镜片、牙突、鬼灯、枯铃依次浮现 |
+| `blood_moon_recover.png` | `1200x400` | 3 | `400x400` | 施法后硬直恢复 |
+| `blood_moon_death.png` | `2400x419` | 6 | `400x419` | 残相剥落、血月光轮碎裂 |
+| `blood_moon_spider_mist_cast.png` | `2400x400` | 6 | `400x400` | 蛛雾缚路施法本体 |
+| `blood_moon_mirror_fang_cast.png` | `2400x400` | 6 | `400x400` | 镜牙错步施法本体 |
+| `blood_moon_lantern_bell_cast.png` | `2400x400` | 6 | `400x400` | 灯铃催命施法本体 |
+| `blood_moon_sixfold_cast.png` | `2400x400` | 6 | `400x400` | 六相轮转施法本体 |
+| `blood_moon_many_faces_cast.png` | `2400x400` | 6 | `400x400` | 血月万相施法本体 |
+| `blood_moon_spider_mist_effect.png` | `3360x220` | 8 | `420x220` | 蛛丝、白雾和骨钉路径特效 |
+| `blood_moon_mirror_fang_effect.png` | `2880x260` | 6 | `480x260` | 碎镜和牙突冲刺特效 |
+| `blood_moon_lantern_bell_effect.png` | `3360x350` | 8 | `420x350` | 鬼灯、枯铃和声波环特效 |
+| `blood_moon_sixfold_effect.png` | `3360x350` | 8 | `420x350` | 六术标记轮换特效 |
+| `blood_moon_many_faces_effect.png` | `5760x420` | 12 | `480x420` | 血月与六残影终结技特效 |
 
 ## Role
 
