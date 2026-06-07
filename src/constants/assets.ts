@@ -1,6 +1,6 @@
 import { PLAYER_ANIMATION_STATES, SKILL_IDS } from "./ids";
 import type { PlayerAnimationState, PlayerSheet, Skill, SpriteSheet } from "../types/assets";
-import type { BinderPhase, BrutePhase, CasterPhase, CrawlerPhase, DuelistPhase, RunnerPhase } from "../types/game-state";
+import type { BinderPhase, BrutePhase, CasterPhase, CrawlerPhase, DuelistPhase, GliderPhase, RunnerPhase } from "../types/game-state";
 
 export const SKILLS: Skill[] = [
   {
@@ -161,6 +161,13 @@ export const ENEMY_SHEETS: SpriteSheet[] = [
     frameW: 260,
     frameH: 320,
     count: 4,
+    image: null,
+  },
+  {
+    src: "assets/sprites/enemies/glider/glider_hover.png",
+    frameW: 360,
+    frameH: 240,
+    count: 6,
     image: null,
   },
 ];
@@ -371,6 +378,36 @@ export const BINDER_ZONE_FRONT_SHEET: SpriteSheet = {
   frameH: 120,
   count: 8,
   image: null,
+};
+
+export const GLIDER_SHEET_INDEX = 7;
+
+const GLIDER_DIVE_SHEET: SpriteSheet = {
+  src: "assets/sprites/enemies/glider/glider_dive.png",
+  frameW: 360,
+  frameH: 240,
+  count: 5,
+  image: null,
+};
+
+export const GLIDER_SHEETS: Record<GliderPhase, SpriteSheet> = {
+  hover: ENEMY_SHEETS[GLIDER_SHEET_INDEX],
+  windup: {
+    src: "assets/sprites/enemies/glider/glider_windup.png",
+    frameW: 360,
+    frameH: 240,
+    count: 4,
+    image: null,
+  },
+  dive: GLIDER_DIVE_SHEET,
+  pass: GLIDER_DIVE_SHEET,
+  recover: {
+    src: "assets/sprites/enemies/glider/glider_recover.png",
+    frameW: 360,
+    frameH: 240,
+    count: 3,
+    image: null,
+  },
 };
 
 export const ENEMY_REF_DRAW_W = 120;

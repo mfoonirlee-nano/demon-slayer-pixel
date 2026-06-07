@@ -65,6 +65,7 @@
 | `enemies/duelist/duelist.png` | `1280x360` | 4 | `320x360` | `ENEMY_SHEETS[4]` |
 | `enemies/brute/brute_advance.png` | `1884x145` | 6 | `314x145` | `ENEMY_SHEETS[5]` |
 | `enemies/binder/binder_move.png` | `1040x320` | 4 | `260x320` | `ENEMY_SHEETS[6]` |
+| `enemies/glider/glider_hover.png` | `2160x240` | 6 | `360x240` | `ENEMY_SHEETS[7]` |
 | `enemies/boss/spider-string/boss.png` | `1400x419` | 4 | `350x419` | `BOSS_SHEET` |
 | `enemies/boss/spider-string/boss_skill1.png` | `2400x400` | 6 | `400x400` | `BOSS_SKILL1_SHEET` |
 | `enemies/boss/spider-string/boss_skill1_effect.png` | `2400x350` | 6 | `400x350` | `BOSS_SKILL1_EFFECT_SHEET` |
@@ -175,6 +176,17 @@ Binder 专属动作素材：
 | `enemies/binder/binder_zone_front.png` | `1920x120` | 8 | `240x120` | `bindingZoneFront` | 咒圈下半/近端亮边层，在地面前景后以较低不透明度绘制 |
 
 Binder 运行时由 `BINDER_SHEETS`、`BINDER_ZONE_SHEET`、`BINDER_ZONE_BACK_SHEET` 和 `BINDER_ZONE_FRONT_SHEET` 暴露并预加载。普通刷怪在 `elapsed >= 90s` 后才会抽取 binder；同屏最多 `1` 个 binder，主咒圈最多 `1` 个。咒圈不禁用跳跃或攻击；玩家进入咒圈时会被减速、低频受到随局内时间提升的伤害，并叠加偏红紫的减速滤镜和束缚线反馈。
+
+Glider 专属动作素材：
+
+| 路径 | 总尺寸 | 帧数 | 单帧 | 运行时状态 | 备注 |
+| --- | ---: | ---: | ---: | --- | --- |
+| `enemies/glider/glider_hover.png` | `2160x240` | 6 | `360x240` | `hover` | 低空翼膜拍动循环，第一帧与末帧为相邻低翼姿态 |
+| `enemies/glider/glider_windup.png` | `1440x240` | 4 | `360x240` | `windup` | 收翼停顿，眼点和翼膜裂缝烘入暗橙红前摇读招 |
+| `enemies/glider/glider_dive.png` | `1800x240` | 5 | `360x240` | `dive` / `pass` | 窄身爪前伸俯冲，少量风痕烘入图集；`pass` 复用末帧掠过姿态 |
+| `enemies/glider/glider_recover.png` | `1080x240` | 3 | `360x240` | `recover` | 掠过后翼膜重新打开，身体上抬形成反击窗口 |
+
+Glider 运行时由 `GLIDER_SHEETS` 暴露并预加载。普通刷怪在 `elapsed >= 70s` 后才会抽取 glider，作为第 4 幕解锁的当前时间近似；同屏最多 `2` 个 glider，同时处于 `windup` / `dive` / `pass` 压力状态的 glider 最多 `1` 个。Glider 不创建投射物，俯冲预警只依赖 windup 图集内的眼点和翼膜裂缝。
 
 地面瓦片分层资源：
 

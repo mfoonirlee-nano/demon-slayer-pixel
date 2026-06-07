@@ -2,8 +2,15 @@
 
 ## Implementation Status
 
-- 素材状态：未实现。
-- 玩法状态：未实现。
+- 素材状态：已实现，运行时透明 PNG 位于 `assets/sprites/enemies/glider/`。
+- 玩法状态：已实现 v1，代码入口为 `src/entities/enemies/glider.ts`，当前用 `elapsed >= 70s` 近似第 4 幕解锁。
+
+| 资产 | 总尺寸 | 帧数 | 单帧 | 运行时状态 |
+| --- | ---: | ---: | ---: | --- |
+| `glider_hover.png` | `2160x240` | 6 | `360x240` | `hover` |
+| `glider_windup.png` | `1440x240` | 4 | `360x240` | `windup` |
+| `glider_dive.png` | `1800x240` | 5 | `360x240` | `dive` / `pass` |
+| `glider_recover.png` | `1080x240` | 3 | `360x240` | `recover` |
 
 ## Role
 

@@ -8,6 +8,7 @@ import {
   RUNNER_SHEETS,
   BRUTE_SHEETS,
   BINDER_SHEETS,
+  GLIDER_SHEETS,
   BINDER_ZONE_SHEET,
   BINDER_ZONE_BACK_SHEET,
   BINDER_ZONE_FRONT_SHEET,
@@ -100,6 +101,10 @@ export function loadSprites(): Promise<void> {
     jobs.push(loadImage(sheet.src).then((img) => { sheet.image = img; }));
   }
   for (const sheet of Object.values(BINDER_SHEETS)) {
+    if (ENEMY_SHEETS.includes(sheet)) continue;
+    jobs.push(loadImage(sheet.src).then((img) => { sheet.image = img; }));
+  }
+  for (const sheet of new Set(Object.values(GLIDER_SHEETS))) {
     if (ENEMY_SHEETS.includes(sheet)) continue;
     jobs.push(loadImage(sheet.src).then((img) => { sheet.image = img; }));
   }

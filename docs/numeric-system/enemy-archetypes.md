@@ -1,6 +1,6 @@
 # 敌人类型与生成权重
 
-> 实现状态：分阶段实现中。`chaser`、`crawler`、`runner`、`caster`、`duelist`、`brute`、`binder` 已接入运行时 archetype 或专属状态机；按幕生成池、预算模型和其余敌人仍是目标设计。
+> 实现状态：分阶段实现中。`chaser`、`crawler`、`runner`、`caster`、`duelist`、`brute`、`glider`、`binder` 已接入运行时 archetype 或专属状态机；按幕生成池、预算模型和其余敌人仍是目标设计。
 
 ## Purpose
 
@@ -54,7 +54,7 @@ k = bossKills = act - 1
 | `leaper` | 待制作 | 跳跃突袭 | 蓄力后抛物线跳向玩家落点 | `2` | 平台和落点压力 |
 | `brute` | `brute_advance.png` | 高血目标 | 慢速高血，短霸体窗压迫空间 | `3` | 中期阻挡压力 |
 | `caster` | `caster_move.png` | 远程施压 | 保持距离，周期性发射投射物或召唤标记 | `3` | 中后期远程压力 |
-| `glider` | 待制作 | 低空飞行 | 低空悬停，前摇后俯冲掠过 | `4` | 空中和平台边缘压力 |
+| `glider` | `glider_hover.png` | 低空飞行 | 低空悬停，前摇后俯冲掠过 | `4` | 空中和平台边缘压力 |
 | `burrower` | 待制作 | 潜行包抄 | 短暂潜入，地面标记后从玩家附近钻出 | `5` | 后期反风筝压力 |
 | `splitter` | 待制作 | 分裂压迫 | 死亡后分裂为两个低血残影 | `5` | 后期清场顺序压力 |
 | `binder` | `binder_move.png` | 控场干扰 | 前摇后生成短时束缚或减速区域 | `6` | 后期控场压力 |
@@ -70,9 +70,10 @@ k = bossKills = act - 1
 | `caster_move.png` | 提灯面具鬼 | 已接入远程鬼火状态机 | 作为 `caster`，按幕数控制生成权重和投射物密度 |
 | `duelist.png` | 双刃鬼 | 已接入近战斩击状态机 | 作为 `duelist`，按幕数控制近身压力和同时威胁数量 |
 | `brute_advance.png` | 甲壳虫鬼 | 已接入重型 brace/stomp 状态机 | 作为 `brute`，高血慢速，限制同时存在数量 |
+| `glider_hover.png` | 膜翼巡鬼 | 已接入低空悬停/俯冲状态机，当前按 `elapsed >= 70s` 进入随机候选 | 作为 `glider`，目标设计中改为第 4 幕解锁并纳入预算 |
 | `binder_move.png` | 符咒长袍鬼 | 已接入控场咒圈状态机 | 作为 `binder`，目标设计中改为后期幕数或轮换 profile 解锁 |
 
-新增敌人面向原画师的形象说明见 [../art/enemies/README.md](../art/enemies/README.md)。第一版新增敌人等待正式素材、前摇动画和命中特效准备好后再进入生成池。
+新增敌人面向原画师的形象说明见 [../art/enemies/README.md](../art/enemies/README.md)。仍未接入的新增敌人等待正式素材、前摇动画和命中特效准备好后再进入生成池。
 
 ## Future Interfaces
 
