@@ -3,6 +3,7 @@ import {
   WIDTH,
   ENEMY_SHEETS,
   ENEMY_CONFIG,
+  LEAPER_UNLOCK_SECONDS,
   LANTERN_EMBER_CONFIG,
   RUNTIME_CONFIG,
 } from "../constants";
@@ -14,6 +15,7 @@ import { canSpawnBrute, isBruteSheet } from "./enemies/brute";
 import { BINDER_UNLOCK_SECONDS, canSpawnBinder, isBinderSheet } from "./enemies/binder";
 import { canSpawnDuelist, isDuelistSheet } from "./enemies/duelist";
 import { GLIDER_UNLOCK_SECONDS, canSpawnGlider, isGliderSheet } from "./enemies/glider";
+import { canSpawnLeaper, isLeaperSheet } from "./enemies/leaper";
 import { enemyArchetypeForSheet } from "./enemies/registry";
 
 const CHASER_SHEET_INDEX = 0;
@@ -38,12 +40,14 @@ function canSpawnSheetIndex(sheetIndex: number) {
   if (isBinderSheet(sheetIndex)) return canSpawnBinder();
   if (isDuelistSheet(sheetIndex)) return canSpawnDuelist();
   if (isGliderSheet(sheetIndex)) return canSpawnGlider();
+  if (isLeaperSheet(sheetIndex)) return canSpawnLeaper();
   return true;
 }
 
 function canRandomSpawnSheetIndex(sheetIndex: number) {
   if (isBinderSheet(sheetIndex) && state.elapsed < BINDER_UNLOCK_SECONDS) return false;
   if (isGliderSheet(sheetIndex) && state.elapsed < GLIDER_UNLOCK_SECONDS) return false;
+  if (isLeaperSheet(sheetIndex) && state.elapsed < LEAPER_UNLOCK_SECONDS) return false;
   return canSpawnSheetIndex(sheetIndex);
 }
 

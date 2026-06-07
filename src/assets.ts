@@ -9,6 +9,7 @@ import {
   BRUTE_SHEETS,
   BINDER_SHEETS,
   GLIDER_SHEETS,
+  LEAPER_SHEETS,
   BINDER_ZONE_SHEET,
   BINDER_ZONE_BACK_SHEET,
   BINDER_ZONE_FRONT_SHEET,
@@ -105,6 +106,10 @@ export function loadSprites(): Promise<void> {
     jobs.push(loadImage(sheet.src).then((img) => { sheet.image = img; }));
   }
   for (const sheet of new Set(Object.values(GLIDER_SHEETS))) {
+    if (ENEMY_SHEETS.includes(sheet)) continue;
+    jobs.push(loadImage(sheet.src).then((img) => { sheet.image = img; }));
+  }
+  for (const sheet of Object.values(LEAPER_SHEETS)) {
     if (ENEMY_SHEETS.includes(sheet)) continue;
     jobs.push(loadImage(sheet.src).then((img) => { sheet.image = img; }));
   }

@@ -1,6 +1,6 @@
 import { PLAYER_ANIMATION_STATES, SKILL_IDS } from "./ids";
 import type { PlayerAnimationState, PlayerSheet, Skill, SpriteSheet } from "../types/assets";
-import type { BinderPhase, BrutePhase, CasterPhase, CrawlerPhase, DuelistPhase, GliderPhase, RunnerPhase } from "../types/game-state";
+import type { BinderPhase, BrutePhase, CasterPhase, CrawlerPhase, DuelistPhase, GliderPhase, LeaperPhase, RunnerPhase } from "../types/game-state";
 
 export const SKILLS: Skill[] = [
   {
@@ -167,6 +167,13 @@ export const ENEMY_SHEETS: SpriteSheet[] = [
     src: "assets/sprites/enemies/glider/glider_hover.png",
     frameW: 360,
     frameH: 240,
+    count: 6,
+    image: null,
+  },
+  {
+    src: "assets/sprites/enemies/leaper/leaper_stalk.png",
+    frameW: 320,
+    frameH: 320,
     count: 6,
     image: null,
   },
@@ -405,6 +412,41 @@ export const GLIDER_SHEETS: Record<GliderPhase, SpriteSheet> = {
     src: "assets/sprites/enemies/glider/glider_recover.png",
     frameW: 360,
     frameH: 240,
+    count: 3,
+    image: null,
+  },
+};
+
+export const LEAPER_SHEET_INDEX = 8;
+export const LEAPER_UNLOCK_SECONDS = 35;
+
+export const LEAPER_SHEETS: Record<LeaperPhase, SpriteSheet> = {
+  stalk: ENEMY_SHEETS[LEAPER_SHEET_INDEX],
+  windup: {
+    src: "assets/sprites/enemies/leaper/leaper_windup.png",
+    frameW: 320,
+    frameH: 320,
+    count: 4,
+    image: null,
+  },
+  leap: {
+    src: "assets/sprites/enemies/leaper/leaper_leap.png",
+    frameW: 320,
+    frameH: 320,
+    count: 5,
+    image: null,
+  },
+  impact: {
+    src: "assets/sprites/enemies/leaper/leaper_impact.png",
+    frameW: 320,
+    frameH: 320,
+    count: 4,
+    image: null,
+  },
+  recover: {
+    src: "assets/sprites/enemies/leaper/leaper_recover.png",
+    frameW: 320,
+    frameH: 320,
     count: 3,
     image: null,
   },

@@ -51,7 +51,7 @@ k = bossKills = act - 1
 | `crawler` | `crawler.png` | 低矮穿插 | 低血贴地追踪，短前摇后低伏前扑 | `1` | 前期核心，后期轮换 |
 | `runner` | `runner_approach.png` | 快攻压力 | 短前摇后冲刺，迫使跳跃或远程处理 | `1` | 前中期核心，后期轮换 |
 | `duelist` | `duelist.png` | 近战精英 | 接近后短距离斩击 | `2` | 中期近战压力 |
-| `leaper` | 待制作 | 跳跃突袭 | 蓄力后抛物线跳向玩家落点 | `2` | 平台和落点压力 |
+| `leaper` | `leaper_stalk.png` | 跳跃突袭 | 蓄力后抛物线跳向玩家落点 | `2` | 平台和落点压力 |
 | `brute` | `brute_advance.png` | 高血目标 | 慢速高血，短霸体窗压迫空间 | `3` | 中期阻挡压力 |
 | `caster` | `caster_move.png` | 远程施压 | 保持距离，周期性发射投射物或召唤标记 | `3` | 中后期远程压力 |
 | `glider` | `glider_hover.png` | 低空飞行 | 低空悬停，前摇后俯冲掠过 | `4` | 空中和平台边缘压力 |

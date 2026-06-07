@@ -66,6 +66,7 @@
 | `enemies/brute/brute_advance.png` | `1884x145` | 6 | `314x145` | `ENEMY_SHEETS[5]` |
 | `enemies/binder/binder_move.png` | `1040x320` | 4 | `260x320` | `ENEMY_SHEETS[6]` |
 | `enemies/glider/glider_hover.png` | `2160x240` | 6 | `360x240` | `ENEMY_SHEETS[7]` |
+| `enemies/leaper/leaper_stalk.png` | `1920x320` | 6 | `320x320` | `ENEMY_SHEETS[8]` |
 | `enemies/boss/spider-string/boss.png` | `1400x419` | 4 | `350x419` | `BOSS_SHEET` |
 | `enemies/boss/spider-string/boss_skill1.png` | `2400x400` | 6 | `400x400` | `BOSS_SKILL1_SHEET` |
 | `enemies/boss/spider-string/boss_skill1_effect.png` | `2400x350` | 6 | `400x350` | `BOSS_SKILL1_EFFECT_SHEET` |
@@ -187,6 +188,18 @@ Glider 专属动作素材：
 | `enemies/glider/glider_recover.png` | `1080x240` | 3 | `360x240` | `recover` | 掠过后翼膜重新打开，身体上抬形成反击窗口 |
 
 Glider 运行时由 `GLIDER_SHEETS` 暴露并预加载。普通刷怪在 `elapsed >= 70s` 后才会抽取 glider，作为第 4 幕解锁的当前时间近似；同屏最多 `2` 个 glider，同时处于 `windup` / `dive` / `pass` 压力状态的 glider 最多 `1` 个。Glider 不创建投射物，俯冲预警只依赖 windup 图集内的眼点和翼膜裂缝。
+
+Leaper 专属动作素材：
+
+| 路径 | 总尺寸 | 帧数 | 单帧 | 运行时状态 | 备注 |
+| --- | ---: | ---: | ---: | --- | --- |
+| `enemies/leaper/leaper_stalk.png` | `1920x320` | 6 | `320x320` | `stalk` | 低伏跟踪循环，长反折腿和分裂钩足是主要轮廓 |
+| `enemies/leaper/leaper_windup.png` | `1280x320` | 4 | `320x320` | `windup` | 压低蓄力，膝盖和脚爪赤红裂纹作为起跳读招 |
+| `enemies/leaper/leaper_leap.png` | `1600x320` | 5 | `320x320` | `leap` | 固定落点的抛物线跳跃姿态，腿部拉伸和收束读出空中轨迹 |
+| `enemies/leaper/leaper_impact.png` | `1280x320` | 4 | `320x320` | `impact` | 落地深蹲，低矮尘土半环和红褐裂纹已烘进图集 |
+| `enemies/leaper/leaper_recover.png` | `960x320` | 3 | `320x320` | `recover` | 拔出脚爪并重新压低，形成落地后的反打窗口 |
+
+Leaper 运行时由 `LEAPER_SHEETS` 暴露并预加载。普通刷怪在 `elapsed >= 35s` 后才会抽取 leaper，作为第 2 幕解锁的当前时间近似；同屏最多 `2` 个 leaper，同时处于 `windup` / `leap` / `impact` 锁定落点状态的 leaper 最多 `1` 个。落点预警是运行时绘制的低调红褐地面标记，落地尘土和裂纹已烘入 `impact` 图集。
 
 地面瓦片分层资源：
 
