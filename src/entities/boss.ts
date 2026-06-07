@@ -42,6 +42,7 @@ import { playTone } from "../audio";
 import { hurtPlayer } from "./player";
 import { spawnEnemy } from "./enemy";
 import { damageEnemy } from "./enemies/common";
+import { resolveEnemyDefeat } from "./enemies/defeat";
 import { BOSS_ARCHETYPE_IDS, bossArchetypeForId, bossArchetypeForKillCount } from "./bosses/registry";
 
 type LiveBoss = NonNullable<BossState>;
@@ -1019,7 +1020,7 @@ export function updateBossSkill1Effects() {
       const overlapY = effBottom > enemy.y && effTop < enemy.y + enemy.h;
       if (!overlapX || !overlapY) continue;
       damageEnemy(enemy, eff.damage, BOSS_SKILL1_CONFIG.hitEnemyCooldown);
-      if (enemy.hp <= 0) state.enemies.splice(j, 1);
+      resolveEnemyDefeat(enemy, j, "none");
     }
 
     const offLeft = eff.facing === -1 && effRight < 0;

@@ -1,6 +1,6 @@
 import { PLAYER_ANIMATION_STATES, SKILL_IDS } from "./ids";
 import type { PlayerAnimationState, PlayerSheet, Skill, SpriteSheet } from "../types/assets";
-import type { BinderPhase, BrutePhase, CasterPhase, CrawlerPhase, DuelistPhase, GliderPhase, LeaperPhase, RunnerPhase } from "../types/game-state";
+import type { BinderPhase, BrutePhase, CasterPhase, CrawlerPhase, DuelistPhase, GliderPhase, LeaperPhase, RunnerPhase, SplitterPhase } from "../types/game-state";
 
 export const SKILLS: Skill[] = [
   {
@@ -173,6 +173,13 @@ export const ENEMY_SHEETS: SpriteSheet[] = [
   {
     src: "assets/sprites/enemies/leaper/leaper_stalk.png",
     frameW: 320,
+    frameH: 320,
+    count: 6,
+    image: null,
+  },
+  {
+    src: "assets/sprites/enemies/splitter/splitter_move.png",
+    frameW: 288,
     frameH: 320,
     count: 6,
     image: null,
@@ -448,6 +455,41 @@ export const LEAPER_SHEETS: Record<LeaperPhase, SpriteSheet> = {
     frameW: 320,
     frameH: 320,
     count: 3,
+    image: null,
+  },
+};
+
+export const SPLITTER_SHEET_INDEX = 9;
+export const SPLITTER_UNLOCK_SECONDS = 90;
+
+export const SPLITTER_SHEETS: Record<SplitterPhase | "splitlingMove", SpriteSheet> = {
+  move: ENEMY_SHEETS[SPLITTER_SHEET_INDEX],
+  hit: {
+    src: "assets/sprites/enemies/splitter/splitter_hit.png",
+    frameW: 288,
+    frameH: 320,
+    count: 3,
+    image: null,
+  },
+  split: {
+    src: "assets/sprites/enemies/splitter/splitter_split.png",
+    frameW: 288,
+    frameH: 320,
+    count: 6,
+    image: null,
+  },
+  birth: {
+    src: "assets/sprites/enemies/splitter/splitling_birth.png",
+    frameW: 240,
+    frameH: 240,
+    count: 6,
+    image: null,
+  },
+  splitlingMove: {
+    src: "assets/sprites/enemies/splitter/splitling_move.png",
+    frameW: 240,
+    frameH: 240,
+    count: 6,
     image: null,
   },
 };

@@ -29,9 +29,20 @@ export type EnemyArchetype = {
   init?: (enemy: EnemyState, context: EnemySpawnContext) => void;
   update: (enemy: EnemyState) => void;
   draw: (enemy: EnemyState) => void;
+  onDefeated?: (enemy: EnemyState, context: EnemyDefeatContext) => boolean;
+  contactDamageDisabled?: (enemy: EnemyState) => boolean;
+  shouldRemove?: (enemy: EnemyState) => boolean;
 };
 
 export type EnemyDamageKind = "normal" | "ultimate";
+export type EnemyDefeatRewardKind = "none" | "enemy" | "enemyNoCover" | "attack";
+
+export type EnemyDefeatContext = {
+  index: number;
+  reward: EnemyDefeatRewardKind;
+  applyReward: () => void;
+  remove: () => void;
+};
 
 const BRUTE_ARMORED_DAMAGE_SCALE = 0.5;
 

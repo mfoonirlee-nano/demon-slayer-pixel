@@ -8,10 +8,11 @@ import {
   ENEMY_SHEETS,
   GLIDER_SHEET_INDEX,
   RUNNER_SHEET_INDEX,
+  SPLITTER_SHEET_INDEX,
 } from "./constants";
 import type { SegmentKind } from "./entities/platform";
 
-export type DebugEnemyKind = "chaser" | "crawler" | "runner" | "caster" | "duelist" | "brute" | "binder" | "glider";
+export type DebugEnemyKind = "chaser" | "crawler" | "runner" | "caster" | "duelist" | "brute" | "binder" | "glider" | "splitter";
 
 type DebugRuntimeActions = {
   canSpawn: () => boolean;
@@ -32,6 +33,7 @@ const DEBUG_ENEMY_SHEET_INDEX: Record<DebugEnemyKind, number> = {
   brute: BRUTE_SHEET_INDEX,
   binder: BINDER_SHEET_INDEX,
   glider: GLIDER_SHEET_INDEX,
+  splitter: SPLITTER_SHEET_INDEX,
 };
 
 const DEBUG_ENEMY_OPTIONS: Array<{ kind: DebugEnemyKind; label: string }> = [
@@ -43,6 +45,7 @@ const DEBUG_ENEMY_OPTIONS: Array<{ kind: DebugEnemyKind; label: string }> = [
   { kind: "brute", label: "brute" },
   { kind: "binder", label: "binder" },
   { kind: "glider", label: "glider" },
+  { kind: "splitter", label: "splitter" },
 ];
 
 const DEBUG_PLATFORM_OPTIONS: Array<{ kind: SegmentKind; label: string }> = [

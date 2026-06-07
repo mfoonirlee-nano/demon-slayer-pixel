@@ -19,20 +19,11 @@ import {
 import type { HitBurstState, ParticleState, Skill1EffectState, Skill2EffectState, SkillBurstState } from "../types/game-state";
 import { overlapHitPoint } from "../utils";
 import { damageEnemy } from "./enemies/common";
+import { resolveEnemyDefeat } from "./enemies/defeat";
 import { defeatBoss } from "./bosses/defeat";
 
 const FULL_CIRCLE_RADIANS = Math.PI * 2;
 const DEFAULT_HIT_BURST_COLOR = "#9feaff";
-
-function gainKillEnergy(skillAmount: number, ultimateAmount: number) {
-  const p = state.player;
-  p.skillEnergy = Math.min(p.skillEnergyMax, p.skillEnergy + skillAmount);
-  p.skillCharges = Math.min(
-    p.maxSkillCharges,
-    Math.floor(p.skillEnergy / PLAYER_COMBAT.skillCastEnergyCost),
-  );
-  p.ultimateEnergy = Math.min(p.ultimateEnergyMax, p.ultimateEnergy + ultimateAmount);
-}
 
 export function emitSlash(x: number, y: number, color: string, spread: number = PARTICLE_CONFIG.slashDefaultSpread) {
   for (let i = 0; i < PARTICLE_CONFIG.slashCount; i += 1) {
@@ -135,11 +126,7 @@ export function updateSkill1Effects() {
       damageEnemy(enemy, damage, SKILL1_EFFECT_CONFIG.hitCooldown);
       emitSlash(hitX, hitY, PLAYER_COMBAT.effects.skillEnemyBurstColor, enemy.w);
       emitHitBurst(hitX, hitY, PLAYER_COMBAT.effects.skillEnemyBurstColor, PLAYER_COMBAT.skillEnemyBurstPower);
-      if (enemy.hp <= 0) {
-        p.score += PLAYER_COMBAT.enemyKillScore;
-        gainKillEnergy(PLAYER_COMBAT.enemyEnergyGain, PLAYER_COMBAT.enemyUltimateEnergyGain);
-        state.enemies.splice(j, 1);
-      }
+      resolveEnemyDefeat(enemy, j, "enemyNoCover");
     }
 
     // damage boss
@@ -201,11 +188,7 @@ export function updateSkill2Effects() {
       damageEnemy(enemy, damage, SKILL2_EFFECT_CONFIG.hitCooldown);
       emitSlash(hitX, hitY, PLAYER_COMBAT.effects.skillEnemyBurstColor, enemy.w);
       emitHitBurst(hitX, hitY, PLAYER_COMBAT.effects.skillEnemyBurstColor, PLAYER_COMBAT.skillEnemyBurstPower);
-      if (enemy.hp <= 0) {
-        p.score += PLAYER_COMBAT.enemyKillScore;
-        gainKillEnergy(PLAYER_COMBAT.enemyEnergyGain, PLAYER_COMBAT.enemyUltimateEnergyGain);
-        state.enemies.splice(j, 1);
-      }
+      resolveEnemyDefeat(enemy, j, "enemyNoCover");
     }
 
     if (state.boss && state.boss.hitCd <= 0) {

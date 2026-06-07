@@ -67,6 +67,7 @@
 | `enemies/binder/binder_move.png` | `1040x320` | 4 | `260x320` | `ENEMY_SHEETS[6]` |
 | `enemies/glider/glider_hover.png` | `2160x240` | 6 | `360x240` | `ENEMY_SHEETS[7]` |
 | `enemies/leaper/leaper_stalk.png` | `1920x320` | 6 | `320x320` | `ENEMY_SHEETS[8]` |
+| `enemies/splitter/splitter_move.png` | `1728x320` | 6 | `288x320` | `ENEMY_SHEETS[9]` |
 | `enemies/boss/spider-string/boss.png` | `1400x419` | 4 | `350x419` | `BOSS_SHEET` |
 | `enemies/boss/spider-string/boss_skill1.png` | `2400x400` | 6 | `400x400` | `BOSS_SKILL1_SHEET` |
 | `enemies/boss/spider-string/boss_skill1_effect.png` | `2400x350` | 6 | `400x350` | `BOSS_SKILL1_EFFECT_SHEET` |
@@ -200,6 +201,18 @@ Leaper 专属动作素材：
 | `enemies/leaper/leaper_recover.png` | `960x320` | 3 | `320x320` | `recover` | 拔出脚爪并重新压低，形成落地后的反打窗口 |
 
 Leaper 运行时由 `LEAPER_SHEETS` 暴露并预加载。普通刷怪在 `elapsed >= 35s` 后才会抽取 leaper，作为第 2 幕解锁的当前时间近似；同屏最多 `2` 个 leaper，同时处于 `windup` / `leap` / `impact` 锁定落点状态的 leaper 最多 `1` 个。落点预警是运行时绘制的低调红褐地面标记，落地尘土和裂纹已烘入 `impact` 图集。
+
+Splitter 专属动作素材：
+
+| 路径 | 总尺寸 | 帧数 | 单帧 | 运行时状态 | 备注 |
+| --- | ---: | ---: | ---: | --- | --- |
+| `enemies/splitter/splitter_move.png` | `1728x320` | 6 | `288x320` | `move` | 本体慢速追踪，双半脸面具和胸腹中线裂缝是主要读法 |
+| `enemies/splitter/splitter_hit.png` | `864x320` | 3 | `288x320` | `hit` | 受击短暂后仰，裂缝用暗紫红增强但不接近玩家水蓝 |
+| `enemies/splitter/splitter_split.png` | `1728x320` | 6 | `288x320` | `split` | 本体死亡后从中线撕开，散出黑紫烟并生成两个分裂体 |
+| `enemies/splitter/splitling_birth.png` | `1440x240` | 6 | `240x240` | `birth` | 分裂体短暂半透明出生，期间不造成接触伤害 |
+| `enemies/splitter/splitling_move.png` | `1440x240` | 6 | `240x240` | `splitlingMove` | 低矮残缺半身快速追踪，死亡不再分裂 |
+
+Splitter 运行时由 `SPLITTER_SHEETS` 暴露并预加载。普通刷怪在 `elapsed >= 90s` 后才会抽取 splitter；同屏本体最多 `2` 个。本体死亡时先进入短分裂状态并禁用接触伤害，动画结束后生成两个更小更快的 splitling。splitling 击杀不给分数，仅给少量能量，避免刷分。
 
 地面瓦片分层资源：
 

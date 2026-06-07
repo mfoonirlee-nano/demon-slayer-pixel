@@ -24,9 +24,9 @@ import { onGround, hitbox, frameIndex, nearestRectHitPoint, overlapHitPoint } fr
 import { drawSheetFrame, drawSkillFrame } from "../graphics";
 import { playTone } from "../audio";
 import { ctx } from "../context";
-import { recordEnemyCoverKill } from "../coverProgress";
 import { emitSlash, emitHitBurst } from "./particle";
 import { damageEnemy } from "./enemies/common";
+import { resolveEnemyDefeat } from "./enemies/defeat";
 import { bindingZonePlayerMoveScale } from "./enemies/binder";
 import { defeatBoss } from "./bosses/defeat";
 import { keys } from "../input";
@@ -111,11 +111,6 @@ export function gainUltimateEnergy(amount: number) {
   p.ultimateEnergy = Math.min(p.ultimateEnergyMax, p.ultimateEnergy + amount);
 }
 
-function gainKillEnergy(skillAmount: number, ultimateAmount: number) {
-  gainSkillEnergy(skillAmount);
-  gainUltimateEnergy(ultimateAmount);
-}
-
 function syncSkillCharges() {
   const p = state.player;
   p.skillCharges = Math.min(
@@ -185,12 +180,7 @@ export function castSelectedSkill() {
     const { x: skillHitX, y: skillHitY } = nearestRectHitPoint(e, cx, cy);
     emitSlash(skillHitX, skillHitY, skill.color, e.w);
     emitHitBurst(skillHitX, skillHitY, PLAYER_COMBAT.effects.skillEnemyBurstColor, PLAYER_COMBAT.skillEnemyBurstPower);
-    if (e.hp <= 0) {
-      p.score += PLAYER_COMBAT.enemyKillScore;
-      recordEnemyCoverKill();
-      gainKillEnergy(PLAYER_COMBAT.enemyEnergyGain, PLAYER_COMBAT.enemyUltimateEnergyGain);
-      state.enemies.splice(i, 1);
-    }
+    resolveEnemyDefeat(e, i, "enemy");
   }
 
   if (state.boss) {
@@ -271,12 +261,7 @@ function triggerUltimateImpact() {
     damageEnemy(e, damage, PLAYER_COMBAT.enemyHitCooldown, "ultimate");
     emitSlash(ex, ey, PLAYER_COMBAT.effects.skillEnemyBurstColor, e.w * 1.5);
     emitHitBurst(ex, ey, PLAYER_COMBAT.effects.skillEnemyBurstColor, PLAYER_COMBAT.skillEnemyBurstPower + 1.2);
-    if (e.hp <= 0) {
-      p.score += PLAYER_COMBAT.enemyKillScore;
-      recordEnemyCoverKill();
-      gainKillEnergy(PLAYER_COMBAT.enemyEnergyGain, PLAYER_COMBAT.enemyUltimateEnergyGain);
-      state.enemies.splice(i, 1);
-    }
+    resolveEnemyDefeat(e, i, "enemy");
   }
 
   if (state.boss) {
@@ -331,12 +316,7 @@ function triggerFallAttackImpact() {
     damageEnemy(e, box.damage, FALL_ATTACK.enemyHitCooldown);
     emitSlash(hitX, hitY, box.color, e.w * 1.25);
     emitHitBurst(hitX, hitY, PLAYER_COMBAT.effects.skillEnemyBurstColor, FALL_ATTACK.impactBurstPower);
-    if (e.hp <= 0) {
-      p.score += PLAYER_COMBAT.attackKillScore;
-      recordEnemyCoverKill();
-      gainKillEnergy(PLAYER_COMBAT.enemyEnergyGain, PLAYER_COMBAT.enemyUltimateEnergyGain);
-      state.enemies.splice(i, 1);
-    }
+    resolveEnemyDefeat(e, i, "attack");
   }
 
   if (state.boss && hitbox(box, state.boss) && state.boss.hitCd <= 0) {
@@ -375,12 +355,7 @@ export function hurtPlayer(damage: number, sourceVx: number) {
       damageEnemy(e, counterDamage);
       emitSlash(e.x + e.w / 2, e.y + e.h / 2, SKILLS[2].color, e.w);
       emitHitBurst(e.x + e.w / 2, e.y + e.h / 2, SKILLS[2].color, 1.5);
-      if (e.hp <= 0) {
-        p.score += PLAYER_COMBAT.enemyKillScore;
-        recordEnemyCoverKill();
-        gainKillEnergy(PLAYER_COMBAT.enemyEnergyGain, PLAYER_COMBAT.enemyUltimateEnergyGain);
-        state.enemies.splice(i, 1);
-      }
+      resolveEnemyDefeat(e, i, "enemy");
     }
     if (state.boss && hitbox(p, state.boss)) {
       state.boss.hp -= counterDamage;
@@ -552,12 +527,8 @@ export function updatePlayer() {
           "triangle",
           PLAYER_COMBAT.tones.attackHit.volume,
         );
-        if (e.hp <= 0) {
-          p.score += PLAYER_COMBAT.attackKillScore;
-          recordEnemyCoverKill();
-          gainKillEnergy(PLAYER_COMBAT.enemyEnergyGain, PLAYER_COMBAT.enemyUltimateEnergyGain);
+        if (resolveEnemyDefeat(e, i, "attack")) {
           emitSlash(e.x + Math.random() * e.w, e.y + Math.random() * e.h, PLAYER_COMBAT.effects.attackKillSlashColor, e.w);
-          state.enemies.splice(i, 1);
         }
       }
     }

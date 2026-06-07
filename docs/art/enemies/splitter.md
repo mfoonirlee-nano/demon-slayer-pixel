@@ -2,8 +2,8 @@
 
 ## Implementation Status
 
-- 素材状态：未实现。
-- 玩法状态：未实现。
+- 素材状态：已实现，运行时透明 PNG 位于 `assets/sprites/enemies/splitter/`。
+- 玩法状态：已实现。本体约 `90s` 后进入随机刷怪池；死亡后短暂分裂并生成两个 splitling，splitling 不再分裂。
 
 ## Role
 
@@ -53,4 +53,3 @@
 
 - 不要把分裂做成两个完整本体，否则奖励和威胁感会误导。
 - 不要让裂缝颜色过亮，以免像玩家技能效果。
-
