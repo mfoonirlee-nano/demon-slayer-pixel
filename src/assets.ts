@@ -11,6 +11,7 @@ import {
   GLIDER_SHEETS,
   LEAPER_SHEETS,
   SPLITTER_SHEETS,
+  WARDEN_SHEETS,
   BINDER_ZONE_SHEET,
   BINDER_ZONE_BACK_SHEET,
   BINDER_ZONE_FRONT_SHEET,
@@ -115,6 +116,10 @@ export function loadSprites(): Promise<void> {
     jobs.push(loadImage(sheet.src).then((img) => { sheet.image = img; }));
   }
   for (const sheet of Object.values(SPLITTER_SHEETS)) {
+    if (ENEMY_SHEETS.includes(sheet)) continue;
+    jobs.push(loadImage(sheet.src).then((img) => { sheet.image = img; }));
+  }
+  for (const sheet of Object.values(WARDEN_SHEETS)) {
     if (ENEMY_SHEETS.includes(sheet)) continue;
     jobs.push(loadImage(sheet.src).then((img) => { sheet.image = img; }));
   }

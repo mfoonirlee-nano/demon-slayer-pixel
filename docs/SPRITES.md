@@ -68,6 +68,7 @@
 | `enemies/glider/glider_hover.png` | `2160x240` | 6 | `360x240` | `ENEMY_SHEETS[7]` |
 | `enemies/leaper/leaper_stalk.png` | `1920x320` | 6 | `320x320` | `ENEMY_SHEETS[8]` |
 | `enemies/splitter/splitter_move.png` | `1728x320` | 6 | `288x320` | `ENEMY_SHEETS[9]` |
+| `enemies/warden/warden_move.png` | `1280x360` | 4 | `320x360` | `ENEMY_SHEETS[10]` |
 | `enemies/boss/spider-string/boss.png` | `1400x419` | 4 | `350x419` | `BOSS_SHEET` |
 | `enemies/boss/spider-string/boss_skill1.png` | `2400x400` | 6 | `400x400` | `BOSS_SKILL1_SHEET` |
 | `enemies/boss/spider-string/boss_skill1_effect.png` | `2400x350` | 6 | `400x350` | `BOSS_SKILL1_EFFECT_SHEET` |
@@ -213,6 +214,16 @@ Splitter 专属动作素材：
 | `enemies/splitter/splitling_move.png` | `1440x240` | 6 | `240x240` | `splitlingMove` | 低矮残缺半身快速追踪，死亡不再分裂 |
 
 Splitter 运行时由 `SPLITTER_SHEETS` 暴露并预加载。普通刷怪在 `elapsed >= 90s` 后才会抽取 splitter；同屏本体最多 `2` 个。本体死亡时先进入短分裂状态并禁用接触伤害，动画结束后生成两个更小更快的 splitling。splitling 击杀不给分数，仅给少量能量，避免刷分。
+
+Warden 专属动作素材：
+
+| 路径 | 总尺寸 | 帧数 | 单帧 | 运行时状态 | 备注 |
+| --- | ---: | ---: | ---: | --- | --- |
+| `enemies/warden/warden_move.png` | `1280x360` | 4 | `320x360` | `move` | 稳重缓慢的后排 reposition，背架和提灯保持高轮廓 |
+| `enemies/warden/warden_aura.png` | `1280x360` | 4 | `320x360` | `aura` | 双手抬起维持仪式，背架与灯芯出现低饱和金绿读法 |
+| `enemies/warden/warden_hit.png` | `960x360` | 3 | `320x360` | `hit` | 被击中时阵架倾斜、铃杖下落，光环短暂失效 |
+
+Warden 运行时由 `WARDEN_SHEETS` 暴露并预加载。普通刷怪在 `elapsed >= 120s` 后才会抽取 warden；同屏最多 `1` 个。`warden` 不发射投射物，主要威胁是给半径约 `180px` 内其他敌人提供 `+12%` 移速光环；被击中进入 `hit` 时会中断光环。光环边界和被强化敌人的脚下标记由运行时低透明绘制，不影响 Boss。
 
 地面瓦片分层资源：
 

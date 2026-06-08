@@ -5,6 +5,7 @@ import {
   ENEMY_CONFIG,
   LEAPER_UNLOCK_SECONDS,
   SPLITTER_UNLOCK_SECONDS,
+  WARDEN_UNLOCK_SECONDS,
   LANTERN_EMBER_CONFIG,
   RUNTIME_CONFIG,
 } from "../constants";
@@ -18,6 +19,7 @@ import { canSpawnDuelist, isDuelistSheet } from "./enemies/duelist";
 import { GLIDER_UNLOCK_SECONDS, canSpawnGlider, isGliderSheet } from "./enemies/glider";
 import { canSpawnLeaper, isLeaperSheet } from "./enemies/leaper";
 import { canSpawnSplitter, isSplitterSheet } from "./enemies/splitter";
+import { applyWardenAuraBuffs, canSpawnWarden, isWardenSheet } from "./enemies/warden";
 import { enemyArchetypeForSheet } from "./enemies/registry";
 
 const CHASER_SHEET_INDEX = 0;
@@ -44,6 +46,7 @@ function canSpawnSheetIndex(sheetIndex: number) {
   if (isGliderSheet(sheetIndex)) return canSpawnGlider();
   if (isLeaperSheet(sheetIndex)) return canSpawnLeaper();
   if (isSplitterSheet(sheetIndex)) return canSpawnSplitter();
+  if (isWardenSheet(sheetIndex)) return canSpawnWarden();
   return true;
 }
 
@@ -52,6 +55,7 @@ function canRandomSpawnSheetIndex(sheetIndex: number) {
   if (isGliderSheet(sheetIndex) && state.elapsed < GLIDER_UNLOCK_SECONDS) return false;
   if (isLeaperSheet(sheetIndex) && state.elapsed < LEAPER_UNLOCK_SECONDS) return false;
   if (isSplitterSheet(sheetIndex) && state.elapsed < SPLITTER_UNLOCK_SECONDS) return false;
+  if (isWardenSheet(sheetIndex) && state.elapsed < WARDEN_UNLOCK_SECONDS) return false;
   return canSpawnSheetIndex(sheetIndex);
 }
 
@@ -93,7 +97,14 @@ export function updateEnemies() {
       enemy.x += enemy.vx * LANTERN_EMBER_CONFIG.buffSpeedExtraScale;
       enemy.lanternBuffTimer = Math.max(0, (enemy.lanternBuffTimer ?? 0) - 1);
     }
+  }
 
+  applyWardenAuraBuffs();
+
+  for (let i = state.enemies.length - 1; i >= 0; i -= 1) {
+    const enemy = state.enemies[i];
+    const lanternBuffed = (enemy.lanternBuffTimer ?? 0) > 0;
+    const archetype = enemyArchetypeForSheet(enemy.sheetIndex);
     if (!archetype.contactDamageDisabled?.(enemy) && hitbox(state.player, enemy)) {
       const damage = lanternBuffed
         ? enemy.damage * LANTERN_EMBER_CONFIG.buffDamageScale

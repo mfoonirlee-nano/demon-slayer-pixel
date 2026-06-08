@@ -15,6 +15,7 @@ export type BinderAiPhase = "seekRange" | "windup" | "cast" | "recover";
 export type GliderPhase = "hover" | "windup" | "dive" | "pass" | "recover";
 export type LeaperPhase = "stalk" | "windup" | "leap" | "impact" | "recover";
 export type SplitterPhase = "move" | "hit" | "split" | "birth";
+export type WardenPhase = "move" | "aura" | "hit";
 export type BossArchetypeId =
   | "spider-string"
   | "mirror-dream"
@@ -157,6 +158,11 @@ export type EnemyState = {
   splitterBaseSpeed?: number;
   splitterVariant?: "parent" | "child";
   splitterHasSplit?: boolean;
+  wardenPhase?: WardenPhase;
+  wardenTimer?: number;
+  wardenFacing?: number;
+  wardenBaseSpeed?: number;
+  wardenBuffedFrames?: number;
   lanternBuffTimer?: number;
 };
 

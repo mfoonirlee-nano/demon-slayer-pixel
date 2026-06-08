@@ -8,6 +8,7 @@ import { GLIDER_ARCHETYPE, isGliderSheet } from "./glider";
 import { LEAPER_ARCHETYPE, isLeaperSheet } from "./leaper";
 import { RUNNER_ARCHETYPE, isRunnerSheet } from "./runner";
 import { SPLITTER_ARCHETYPE, isSplitterSheet } from "./splitter";
+import { WARDEN_ARCHETYPE, isWardenSheet } from "./warden";
 import type { EnemyArchetype } from "./common";
 
 export function enemyArchetypeForSheet(sheetIndex: number): EnemyArchetype {
@@ -20,5 +21,6 @@ export function enemyArchetypeForSheet(sheetIndex: number): EnemyArchetype {
   if (isGliderSheet(sheetIndex)) return GLIDER_ARCHETYPE;
   if (isLeaperSheet(sheetIndex)) return LEAPER_ARCHETYPE;
   if (isSplitterSheet(sheetIndex)) return SPLITTER_ARCHETYPE;
+  if (isWardenSheet(sheetIndex)) return WARDEN_ARCHETYPE;
   return CHASER_ARCHETYPE;
 }

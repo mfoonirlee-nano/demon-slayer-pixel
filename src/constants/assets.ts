@@ -1,6 +1,6 @@
 import { PLAYER_ANIMATION_STATES, SKILL_IDS } from "./ids";
 import type { PlayerAnimationState, PlayerSheet, Skill, SpriteSheet } from "../types/assets";
-import type { BinderPhase, BrutePhase, CasterPhase, CrawlerPhase, DuelistPhase, GliderPhase, LeaperPhase, RunnerPhase, SplitterPhase } from "../types/game-state";
+import type { BinderPhase, BrutePhase, CasterPhase, CrawlerPhase, DuelistPhase, GliderPhase, LeaperPhase, RunnerPhase, SplitterPhase, WardenPhase } from "../types/game-state";
 
 export const SKILLS: Skill[] = [
   {
@@ -182,6 +182,13 @@ export const ENEMY_SHEETS: SpriteSheet[] = [
     frameW: 288,
     frameH: 320,
     count: 6,
+    image: null,
+  },
+  {
+    src: "assets/sprites/enemies/warden/warden_move.png",
+    frameW: 320,
+    frameH: 360,
+    count: 4,
     image: null,
   },
 ];
@@ -490,6 +497,27 @@ export const SPLITTER_SHEETS: Record<SplitterPhase | "splitlingMove", SpriteShee
     frameW: 240,
     frameH: 240,
     count: 6,
+    image: null,
+  },
+};
+
+export const WARDEN_SHEET_INDEX = 10;
+export const WARDEN_UNLOCK_SECONDS = 120;
+
+export const WARDEN_SHEETS: Record<WardenPhase, SpriteSheet> = {
+  move: ENEMY_SHEETS[WARDEN_SHEET_INDEX],
+  aura: {
+    src: "assets/sprites/enemies/warden/warden_aura.png",
+    frameW: 320,
+    frameH: 360,
+    count: 4,
+    image: null,
+  },
+  hit: {
+    src: "assets/sprites/enemies/warden/warden_hit.png",
+    frameW: 320,
+    frameH: 360,
+    count: 3,
     image: null,
   },
 };

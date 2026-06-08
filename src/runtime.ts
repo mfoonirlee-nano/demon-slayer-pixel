@@ -18,6 +18,7 @@ import { drawNearForeground } from "./nearForeground";
 import { updatePlayer, drawPlayer, triggerAttack, castSelectedSkill, castUltimateSkill, selectSkill, tryJump } from "./entities/player";
 import { spawnEnemy, spawnEnemyBySheetIndex, updateEnemies, drawEnemy } from "./entities/enemy";
 import { updateBindingZones, drawBindingZonesBack, drawBindingZonesFront } from "./entities/enemies/binder";
+import { drawWardenAuraIndicators } from "./entities/enemies/warden";
 import { spawnBoss, updateBoss, drawBoss, updateBossSkill1Effects, drawBossSkill1Effects, updateDeadBellEffects, drawDeadBellEffects, updateMirrorDreamEffects, drawMirrorDreamEffects, updateLanternEmberEffects, drawLanternEmberEffects } from "./entities/boss";
 import {
   spawnMapSegmentOfKind,
@@ -186,6 +187,7 @@ function loop(ts: number) {
   drawSkill3Effect();
   drawUltimateEffects();
   drawSkillBursts();
+  drawWardenAuraIndicators();
   for (const e of state.enemies) drawEnemy(e);
   drawBoss();
   drawBossSkill1Effects();
