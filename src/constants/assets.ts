@@ -522,6 +522,14 @@ export const WARDEN_SHEETS: Record<WardenPhase, SpriteSheet> = {
   },
 };
 
+export const WARDEN_AURA_EFFECT_SHEET: SpriteSheet = {
+  src: "assets/sprites/enemies/warden/warden_aura_effect.png",
+  frameW: 240,
+  frameH: 120,
+  count: 8,
+  image: null,
+};
+
 export const ENEMY_REF_DRAW_W = 120;
 export const ENEMY_DRAW_SCALE = ENEMY_REF_DRAW_W / ENEMY_SHEETS[1].frameW;
 

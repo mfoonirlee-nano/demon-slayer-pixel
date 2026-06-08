@@ -1,6 +1,6 @@
 import { ctx } from "../../context";
 import { state } from "../../state";
-import { ENEMY_SHEETS, WARDEN_SHEET_INDEX, WARDEN_SHEETS } from "../../constants";
+import { ENEMY_SHEETS, WARDEN_AURA_EFFECT_SHEET, WARDEN_SHEET_INDEX, WARDEN_SHEETS } from "../../constants";
 import { drawSheetFrame } from "../../graphics";
 import type { EnemyState, WardenPhase } from "../../types/game-state";
 import { frameIndex } from "../../utils";
@@ -38,11 +38,10 @@ const WARDEN_CONFIG = {
   collisionScaleY: 0.82,
   moveAnimSpeed: 8,
   auraAnimSpeed: 10,
-  auraRingColor: "166, 194, 131",
-  auraAccentColor: "220, 194, 120",
+  auraEffectFrameDuration: 7,
+  auraEffectDrawW: 198,
+  auraEffectAlpha: 0.82,
   auraMarkColor: "178, 214, 142",
-  auraDrawRadiusX: 88,
-  auraDrawRadiusY: 24,
 } as const;
 
 function randomFrameCount(min: number, jitter: number) {
@@ -243,24 +242,13 @@ function drawAuraRing(enemy: EnemyState) {
   const pulse = 0.55 + 0.12 * Math.sin(state.elapsed * 5.8 + enemy.animSeed);
   const centerX = enemyCenterX(enemy);
   const feetY = enemyFeetY(enemy) - 6;
+  const sheet = WARDEN_AURA_EFFECT_SHEET;
+  const frame = frameIndex(sheet.count, WARDEN_CONFIG.auraEffectFrameDuration, state.elapsed, enemy.animSeed);
+  const drawW = WARDEN_CONFIG.auraEffectDrawW;
+  const drawH = Math.round(drawW * sheet.frameH / sheet.frameW);
   ctx.save();
-  ctx.globalAlpha = pulse;
-  ctx.strokeStyle = `rgba(${WARDEN_CONFIG.auraRingColor}, 0.82)`;
-  ctx.lineWidth = 1.5;
-  ctx.beginPath();
-  ctx.ellipse(centerX, feetY, WARDEN_CONFIG.auraDrawRadiusX, WARDEN_CONFIG.auraDrawRadiusY, 0, 0, FULL_CIRCLE);
-  ctx.stroke();
-  ctx.strokeStyle = `rgba(${WARDEN_CONFIG.auraAccentColor}, 0.56)`;
-  ctx.beginPath();
-  ctx.ellipse(centerX, feetY, WARDEN_CONFIG.auraDrawRadiusX * 0.74, WARDEN_CONFIG.auraDrawRadiusY * 0.58, 0, 0, FULL_CIRCLE);
-  ctx.stroke();
-  for (let i = 0; i < 4; i += 1) {
-    const angle = (i / 4) * FULL_CIRCLE + state.elapsed * 0.7;
-    const x = centerX + Math.cos(angle) * WARDEN_CONFIG.auraDrawRadiusX * 0.88;
-    const y = feetY + Math.sin(angle) * WARDEN_CONFIG.auraDrawRadiusY * 0.88;
-    ctx.fillStyle = `rgba(${WARDEN_CONFIG.auraAccentColor}, 0.85)`;
-    ctx.fillRect(x - 1, y - 4, 2, 8);
-  }
+  ctx.globalAlpha = WARDEN_CONFIG.auraEffectAlpha * pulse;
+  drawSheetFrame(sheet, frame, centerX - drawW / HALF_DIVISOR, feetY - drawH, drawW, drawH);
   ctx.restore();
 }
 

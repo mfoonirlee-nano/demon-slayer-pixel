@@ -69,6 +69,7 @@
 | `enemies/leaper/leaper_stalk.png` | `1920x320` | 6 | `320x320` | `ENEMY_SHEETS[8]` |
 | `enemies/splitter/splitter_move.png` | `1728x320` | 6 | `288x320` | `ENEMY_SHEETS[9]` |
 | `enemies/warden/warden_move.png` | `1280x360` | 4 | `320x360` | `ENEMY_SHEETS[10]` |
+| `enemies/warden/warden_aura_effect.png` | `1920x120` | 8 | `240x120` | `WARDEN_AURA_EFFECT_SHEET` |
 | `enemies/boss/spider-string/boss.png` | `1400x419` | 4 | `350x419` | `BOSS_SHEET` |
 | `enemies/boss/spider-string/boss_skill1.png` | `2400x400` | 6 | `400x400` | `BOSS_SKILL1_SHEET` |
 | `enemies/boss/spider-string/boss_skill1_effect.png` | `2400x350` | 6 | `400x350` | `BOSS_SKILL1_EFFECT_SHEET` |
@@ -221,9 +222,10 @@ Warden 专属动作素材：
 | --- | ---: | ---: | ---: | --- | --- |
 | `enemies/warden/warden_move.png` | `1280x360` | 4 | `320x360` | `move` | 稳重缓慢的后排 reposition，背架和提灯保持高轮廓 |
 | `enemies/warden/warden_aura.png` | `1280x360` | 4 | `320x360` | `aura` | 双手抬起维持仪式，背架与灯芯出现低饱和金绿读法 |
+| `enemies/warden/warden_aura_effect.png` | `1920x120` | 8 | `240x120` | `auraEffect` | 低透明金绿仪式环技能序列帧，由运行时按 warden 脚底绘制 |
 | `enemies/warden/warden_hit.png` | `960x360` | 3 | `320x360` | `hit` | 被击中时阵架倾斜、铃杖下落，光环短暂失效 |
 
-Warden 运行时由 `WARDEN_SHEETS` 暴露并预加载。普通刷怪在 `elapsed >= 120s` 后才会抽取 warden；同屏最多 `1` 个。`warden` 不发射投射物，主要威胁是给半径约 `180px` 内其他敌人提供 `+12%` 移速光环；被击中进入 `hit` 时会中断光环。光环边界和被强化敌人的脚下标记由运行时低透明绘制，不影响 Boss。
+Warden 运行时由 `WARDEN_SHEETS` 和 `WARDEN_AURA_EFFECT_SHEET` 暴露并预加载。普通刷怪在 `elapsed >= 120s` 后才会抽取 warden；同屏最多 `1` 个。`warden` 不发射投射物，主要威胁是给半径约 `180px` 内其他敌人提供 `+12%` 移速光环；被击中进入 `hit` 时会中断光环。光环本体使用独立技能效果序列帧，被强化敌人的脚下小标记仍由运行时低透明绘制，不影响 Boss。
 
 地面瓦片分层资源：
 
