@@ -1,6 +1,6 @@
 import { PLAYER_ANIMATION_STATES, SKILL_IDS } from "./ids";
 import type { PlayerAnimationState, PlayerSheet, Skill, SpriteSheet } from "../types/assets";
-import type { BinderPhase, BrutePhase, CasterPhase, CrawlerPhase, DuelistPhase, GliderPhase, LeaperPhase, RunnerPhase, SplitterPhase, WardenPhase } from "../types/game-state";
+import type { BinderPhase, BrutePhase, BurrowerPhase, CasterPhase, CrawlerPhase, DuelistPhase, GliderPhase, LeaperPhase, RunnerPhase, SplitterPhase, WardenPhase } from "../types/game-state";
 
 export const SKILLS: Skill[] = [
   {
@@ -189,6 +189,13 @@ export const ENEMY_SHEETS: SpriteSheet[] = [
     frameW: 320,
     frameH: 360,
     count: 4,
+    image: null,
+  },
+  {
+    src: "assets/sprites/enemies/burrower/burrower_move.png",
+    frameW: 314,
+    frameH: 180,
+    count: 6,
     image: null,
   },
 ];
@@ -528,6 +535,41 @@ export const WARDEN_AURA_EFFECT_SHEET: SpriteSheet = {
   frameH: 120,
   count: 8,
   image: null,
+};
+
+export const BURROWER_SHEET_INDEX = 11;
+export const BURROWER_UNLOCK_SECONDS = 90;
+
+export const BURROWER_SHEETS: Record<BurrowerPhase, SpriteSheet> = {
+  move: ENEMY_SHEETS[BURROWER_SHEET_INDEX],
+  sink: {
+    src: "assets/sprites/enemies/burrower/burrower_sink.png",
+    frameW: 314,
+    frameH: 180,
+    count: 4,
+    image: null,
+  },
+  burrow: {
+    src: "assets/sprites/enemies/burrower/burrower_burrow.png",
+    frameW: 314,
+    frameH: 180,
+    count: 6,
+    image: null,
+  },
+  emerge: {
+    src: "assets/sprites/enemies/burrower/burrower_emerge.png",
+    frameW: 314,
+    frameH: 180,
+    count: 5,
+    image: null,
+  },
+  recover: {
+    src: "assets/sprites/enemies/burrower/burrower_recover.png",
+    frameW: 314,
+    frameH: 180,
+    count: 3,
+    image: null,
+  },
 };
 
 export const ENEMY_REF_DRAW_W = 120;

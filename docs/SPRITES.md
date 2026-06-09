@@ -69,6 +69,7 @@
 | `enemies/leaper/leaper_stalk.png` | `1920x320` | 6 | `320x320` | `ENEMY_SHEETS[8]` |
 | `enemies/splitter/splitter_move.png` | `1728x320` | 6 | `288x320` | `ENEMY_SHEETS[9]` |
 | `enemies/warden/warden_move.png` | `1280x360` | 4 | `320x360` | `ENEMY_SHEETS[10]` |
+| `enemies/burrower/burrower_move.png` | `1884x180` | 6 | `314x180` | `ENEMY_SHEETS[11]` |
 | `enemies/warden/warden_aura_effect.png` | `1920x120` | 8 | `240x120` | `WARDEN_AURA_EFFECT_SHEET` |
 | `enemies/boss/spider-string/boss.png` | `1400x419` | 4 | `350x419` | `BOSS_SHEET` |
 | `enemies/boss/spider-string/boss_skill1.png` | `2400x400` | 6 | `400x400` | `BOSS_SKILL1_SHEET` |
@@ -226,6 +227,18 @@ Warden 专属动作素材：
 | `enemies/warden/warden_hit.png` | `960x360` | 3 | `320x360` | `hit` | 被击中时阵架倾斜、铃杖下落，光环短暂失效 |
 
 Warden 运行时由 `WARDEN_SHEETS` 和 `WARDEN_AURA_EFFECT_SHEET` 暴露并预加载。普通刷怪在 `elapsed >= 120s` 后才会抽取 warden；同屏最多 `1` 个。`warden` 不发射投射物，主要威胁是给半径约 `180px` 内其他敌人提供 `+12%` 移速光环；被击中进入 `hit` 时会中断光环。光环本体使用独立技能效果序列帧，被强化敌人的脚下小标记仍由运行时低透明绘制，不影响 Boss。
+
+Burrower 专属动作素材：
+
+| 路径 | 总尺寸 | 帧数 | 单帧 | 运行时状态 | 备注 |
+| --- | ---: | ---: | ---: | --- | --- |
+| `enemies/burrower/burrower_move.png` | `1884x180` | `6` | `314x180` | `move` | 低矮铲爪贴地移动，甲壳和头甲保持主要轮廓 |
+| `enemies/burrower/burrower_sink.png` | `1256x180` | `4` | `314x180` | `sink` | 铲爪抬起、头甲下压，进入潜行前摇 |
+| `enemies/burrower/burrower_burrow.png` | `1884x180` | `6` | `314x180` | `burrow` | 只显示土包、裂缝和少量背刺，不显示完整身体 |
+| `enemies/burrower/burrower_emerge.png` | `1570x180` | `5` | `314x180` | `emerge` | 铲爪破土、头甲顶出，关键伤害帧读法烘入图集 |
+| `enemies/burrower/burrower_recover.png` | `942x180` | `3` | `314x180` | `recover` | 钻出后抖落泥土，暴露反打窗口 |
+
+Burrower 运行时由 `BURROWER_SHEETS` 暴露并预加载。普通刷怪在 `elapsed >= 90s` 后才会抽取 burrower；同屏最多 `1` 个。潜行时接触伤害关闭，使用 `burrower_burrow.png` 显示地面轨迹；钻出点锁定在玩家附近约半个身位偏移，不直接覆盖玩家中心，`emerge` 期间只触发一次钻出伤害。
 
 地面瓦片分层资源：
 

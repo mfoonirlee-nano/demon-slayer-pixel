@@ -1,5 +1,6 @@
 import { BINDER_ARCHETYPE, isBinderSheet } from "./binder";
 import { BRUTE_ARCHETYPE, isBruteSheet } from "./brute";
+import { BURROWER_ARCHETYPE, isBurrowerSheet } from "./burrower";
 import { CASTER_ARCHETYPE, isCasterSheet } from "./caster";
 import { CHASER_ARCHETYPE } from "./chaser";
 import { CRAWLER_ARCHETYPE, isCrawlerSheet } from "./crawler";
@@ -22,5 +23,6 @@ export function enemyArchetypeForSheet(sheetIndex: number): EnemyArchetype {
   if (isLeaperSheet(sheetIndex)) return LEAPER_ARCHETYPE;
   if (isSplitterSheet(sheetIndex)) return SPLITTER_ARCHETYPE;
   if (isWardenSheet(sheetIndex)) return WARDEN_ARCHETYPE;
+  if (isBurrowerSheet(sheetIndex)) return BURROWER_ARCHETYPE;
   return CHASER_ARCHETYPE;
 }

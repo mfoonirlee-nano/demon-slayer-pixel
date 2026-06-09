@@ -2,8 +2,8 @@
 
 ## Implementation Status
 
-- 素材状态：未实现。
-- 玩法状态：未实现。
+- 素材状态：已接入运行时透明 PNG。
+- 玩法状态：已接入潜入、潜行、钻出和恢复状态机。
 
 ## Role
 
@@ -44,6 +44,16 @@
 | 钻出 | 铲爪先破土，头甲随后顶出，形成明确攻击帧 |
 | 恢复 | 抖落泥土，短暂停顿，给玩家普攻窗口 |
 
+## Runtime Sprite Sheets
+
+| 文件 | 帧数 | 单帧 | 运行时状态 |
+| --- | ---: | ---: | --- |
+| `assets/sprites/enemies/burrower/burrower_move.png` | `6` | `314x180` | `move` |
+| `assets/sprites/enemies/burrower/burrower_sink.png` | `4` | `314x180` | `sink` |
+| `assets/sprites/enemies/burrower/burrower_burrow.png` | `6` | `314x180` | `burrow` |
+| `assets/sprites/enemies/burrower/burrower_emerge.png` | `5` | `314x180` | `emerge` |
+| `assets/sprites/enemies/burrower/burrower_recover.png` | `3` | `314x180` | `recover` |
+
 ## Effects
 
 - 潜行轨迹：地面隆起线，移动速度可读。
@@ -53,4 +63,3 @@
 
 - 不要完全隐形，玩家必须能追踪威胁。
 - 不要让钻出点直接覆盖玩家中心，视觉上要留半个身位反应空间。
-

@@ -16,6 +16,7 @@ export type GliderPhase = "hover" | "windup" | "dive" | "pass" | "recover";
 export type LeaperPhase = "stalk" | "windup" | "leap" | "impact" | "recover";
 export type SplitterPhase = "move" | "hit" | "split" | "birth";
 export type WardenPhase = "move" | "aura" | "hit";
+export type BurrowerPhase = "move" | "sink" | "burrow" | "emerge" | "recover";
 export type BossArchetypeId =
   | "spider-string"
   | "mirror-dream"
@@ -163,6 +164,14 @@ export type EnemyState = {
   wardenFacing?: number;
   wardenBaseSpeed?: number;
   wardenBuffedFrames?: number;
+  burrowerPhase?: BurrowerPhase;
+  burrowerTimer?: number;
+  burrowerPhaseDuration?: number;
+  burrowerFacing?: number;
+  burrowerBaseSpeed?: number;
+  burrowerTargetX?: number;
+  burrowerBurrowStartX?: number;
+  burrowerEmergeHit?: boolean;
   lanternBuffTimer?: number;
 };
 

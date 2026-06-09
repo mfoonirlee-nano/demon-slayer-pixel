@@ -6,6 +6,7 @@ import {
   LEAPER_UNLOCK_SECONDS,
   SPLITTER_UNLOCK_SECONDS,
   WARDEN_UNLOCK_SECONDS,
+  BURROWER_UNLOCK_SECONDS,
   LANTERN_EMBER_CONFIG,
   RUNTIME_CONFIG,
 } from "../constants";
@@ -20,6 +21,7 @@ import { GLIDER_UNLOCK_SECONDS, canSpawnGlider, isGliderSheet } from "./enemies/
 import { canSpawnLeaper, isLeaperSheet } from "./enemies/leaper";
 import { canSpawnSplitter, isSplitterSheet } from "./enemies/splitter";
 import { applyWardenAuraBuffs, canSpawnWarden, isWardenSheet } from "./enemies/warden";
+import { canSpawnBurrower, isBurrowerSheet } from "./enemies/burrower";
 import { enemyArchetypeForSheet } from "./enemies/registry";
 
 const CHASER_SHEET_INDEX = 0;
@@ -47,6 +49,7 @@ function canSpawnSheetIndex(sheetIndex: number) {
   if (isLeaperSheet(sheetIndex)) return canSpawnLeaper();
   if (isSplitterSheet(sheetIndex)) return canSpawnSplitter();
   if (isWardenSheet(sheetIndex)) return canSpawnWarden();
+  if (isBurrowerSheet(sheetIndex)) return canSpawnBurrower();
   return true;
 }
 
@@ -56,6 +59,7 @@ function canRandomSpawnSheetIndex(sheetIndex: number) {
   if (isLeaperSheet(sheetIndex) && state.elapsed < LEAPER_UNLOCK_SECONDS) return false;
   if (isSplitterSheet(sheetIndex) && state.elapsed < SPLITTER_UNLOCK_SECONDS) return false;
   if (isWardenSheet(sheetIndex) && state.elapsed < WARDEN_UNLOCK_SECONDS) return false;
+  if (isBurrowerSheet(sheetIndex) && state.elapsed < BURROWER_UNLOCK_SECONDS) return false;
   return canSpawnSheetIndex(sheetIndex);
 }
 

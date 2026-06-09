@@ -13,6 +13,7 @@ import {
   SPLITTER_SHEETS,
   WARDEN_SHEETS,
   WARDEN_AURA_EFFECT_SHEET,
+  BURROWER_SHEETS,
   BINDER_ZONE_SHEET,
   BINDER_ZONE_BACK_SHEET,
   BINDER_ZONE_FRONT_SHEET,
@@ -125,6 +126,10 @@ export function loadSprites(): Promise<void> {
     jobs.push(loadImage(sheet.src).then((img) => { sheet.image = img; }));
   }
   jobs.push(loadImage(WARDEN_AURA_EFFECT_SHEET.src).then((img) => { WARDEN_AURA_EFFECT_SHEET.image = img; }));
+  for (const sheet of Object.values(BURROWER_SHEETS)) {
+    if (ENEMY_SHEETS.includes(sheet)) continue;
+    jobs.push(loadImage(sheet.src).then((img) => { sheet.image = img; }));
+  }
   jobs.push(loadImage(BINDER_ZONE_SHEET.src).then((img) => { BINDER_ZONE_SHEET.image = img; }));
   jobs.push(loadImage(BINDER_ZONE_BACK_SHEET.src).then((img) => { BINDER_ZONE_BACK_SHEET.image = img; }));
   jobs.push(loadImage(BINDER_ZONE_FRONT_SHEET.src).then((img) => { BINDER_ZONE_FRONT_SHEET.image = img; }));

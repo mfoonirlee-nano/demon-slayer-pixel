@@ -1,6 +1,6 @@
 # 敌人类型与生成权重
 
-> 实现状态：分阶段实现中。`chaser`、`crawler`、`runner`、`caster`、`duelist`、`brute`、`glider`、`binder` 已接入运行时 archetype 或专属状态机；按幕生成池、预算模型和其余敌人仍是目标设计。
+> 实现状态：分阶段实现中。`chaser`、`crawler`、`runner`、`caster`、`duelist`、`brute`、`glider`、`binder`、`burrower` 已接入运行时 archetype 或专属状态机；按幕生成池、预算模型和其余敌人仍是目标设计。
 
 ## Purpose
 
@@ -55,7 +55,7 @@ k = bossKills = act - 1
 | `brute` | `brute_advance.png` | 高血目标 | 慢速高血，短霸体窗压迫空间 | `3` | 中期阻挡压力 |
 | `caster` | `caster_move.png` | 远程施压 | 保持距离，周期性发射投射物或召唤标记 | `3` | 中后期远程压力 |
 | `glider` | `glider_hover.png` | 低空飞行 | 低空悬停，前摇后俯冲掠过 | `4` | 空中和平台边缘压力 |
-| `burrower` | 待制作 | 潜行包抄 | 短暂潜入，地面标记后从玩家附近钻出 | `5` | 后期反风筝压力 |
+| `burrower` | `burrower_move.png` | 潜行包抄 | 短暂潜入，地面标记后从玩家附近钻出 | `5` | 后期反风筝压力 |
 | `splitter` | 待制作 | 分裂压迫 | 死亡后分裂为两个低血残影 | `5` | 后期清场顺序压力 |
 | `binder` | `binder_move.png` | 控场干扰 | 前摇后生成短时束缚或减速区域 | `6` | 后期控场压力 |
 | `warden` | 待制作 | 支援核心 | 给附近敌人提供小幅加速或减伤光环 | `6` | 后期目标优先级压力 |
@@ -72,6 +72,7 @@ k = bossKills = act - 1
 | `brute_advance.png` | 甲壳虫鬼 | 已接入重型 brace/stomp 状态机 | 作为 `brute`，高血慢速，限制同时存在数量 |
 | `glider_hover.png` | 膜翼巡鬼 | 已接入低空悬停/俯冲状态机，当前按 `elapsed >= 70s` 进入随机候选 | 作为 `glider`，目标设计中改为第 4 幕解锁并纳入预算 |
 | `binder_move.png` | 符咒长袍鬼 | 已接入控场咒圈状态机 | 作为 `binder`，目标设计中改为后期幕数或轮换 profile 解锁 |
+| `burrower_move.png` | 铲爪土潜鬼 | 已接入潜入、地面轨迹、钻出和恢复状态机，当前按 `elapsed >= 90s` 进入随机候选 | 作为 `burrower`，目标设计中改为第 5 幕解锁并纳入预算 |
 
 新增敌人面向原画师的形象说明见 [../art/enemies/README.md](../art/enemies/README.md)。仍未接入的新增敌人等待正式素材、前摇动画和命中特效准备好后再进入生成池。
 
@@ -250,7 +251,7 @@ enemyActiveCost = sum(enemy.archetype.spawnCost)
 | `brute` | `2` | 第 3 幕初次出现最多 `1` |
 | `caster` | `2` | 每个 `caster` 投射物最多 `2` 个 |
 | `glider` | `2` | 同时俯冲最多 `1` 个 |
-| `burrower` | `2` | 同时潜行最多 `1` 个，钻出点不能重叠玩家中心 |
+| `burrower` | `1` | 同时潜行最多 `1` 个，钻出点不能重叠玩家中心 |
 | `splitter` | `2` | 分裂体总数进入预算，分裂体不能继续分裂 |
 | `binder` | `1` | 束缚区域同时最多 `1` 个主区域 |
 | `warden` | `1` | 光环不影响 Boss，同场最多 `1` 个 |
@@ -413,12 +414,12 @@ chaserDashSpeed = 2.20 + actIndex * 0.12 + random(0, 0.25)
 | --- | --- |
 | 出现幕数 | 第 5 幕开始 |
 | 主要压力 | 身后威胁和站位变化 |
-| 状态机 | `approach -> windup -> burrow -> warning -> emerge -> recover` |
-| 攻击窗口 | 蓄力后潜入地面 `36-48` 帧，玩家附近出现标记，随后钻出攻击 |
-| 恢复窗口 | 钻出后 `20-30` 帧抖落泥土，给普攻窗口 |
+| 状态机 | `move -> sink -> burrow -> emerge -> recover` |
+| 攻击窗口 | 潜入与地面轨迹合计约 `28-32` 帧预警，随后从玩家附近半身偏移点钻出 |
+| 恢复窗口 | 钻出后约 `24-31` 帧抖落泥土，给普攻窗口 |
 | 玩家反制 | 离开标记区域、叁之型防守、钻出后的恢复帧普攻 |
 | 不可做边界 | 潜行期间不完全隐形；钻出点不能直接覆盖玩家中心 |
-| 同屏限制 | 最多 `2`，同时潜行最多 `1` |
+| 同屏限制 | 最多 `1` |
 | 可读性约束 | 地面隆起线和裂纹必须可追踪，和 `crawler` 的贴地移动区分 |
 
 ### `splitter`
