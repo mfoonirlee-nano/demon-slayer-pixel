@@ -160,12 +160,12 @@ Brute 专属动作素材：
 
 | 路径 | 总尺寸 | 帧数 | 单帧 | 运行时状态 | 备注 |
 | --- | ---: | ---: | ---: | --- | --- |
-| `enemies/brute/brute_advance.png` | `1884x145` | 6 | `314x145` | `advance` | 慢速推进，低矮重型起伏 |
-| `enemies/brute/brute_brace.png` | `1256x145` | 4 | `314x145` | `brace` | 停顿压低，头部/前甲与囊泡逐帧发亮 |
-| `enemies/brute/brute_stomp.png` | `1570x145` | 5 | `314x145` | `stomp` | 短距离前顶，头部/前甲高亮并内置前方气浪 |
-| `enemies/brute/brute_recover.png` | `942x145` | 3 | `314x145` | `recover` | 同推进尺度的低姿态硬直，头部/前甲从亮绿色恢复原色 |
+| `enemies/brute/brute_advance.png` | `1884x145` | 6 | `314x145` | `advance` | 旧低伏甲壳推进，待替换为站立持盾推进 |
+| `enemies/brute/brute_brace.png` | `1256x145` | 4 | `314x145` | `brace` | 旧压低前摇，待替换为举盾防御/盾裂读招 |
+| `enemies/brute/brute_stomp.png` | `1570x145` | 5 | `314x145` | `stomp` | 旧短距离前顶，待替换为盾击或破盾后横扫 |
+| `enemies/brute/brute_recover.png` | `942x145` | 3 | `314x145` | `recover` | 旧低姿态硬直，待替换为盾击后硬直/破盾硬直 |
 
-以上 brute 专属动作素材均有对应 `*_source.png` 绿幕制作源图；`brace` / `stomp` / `recover` 的读招高亮、前方气浪和恢复衰减已烘进图集，运行时不再额外绘制头光、地裂或气浪覆盖层。
+以上 brute 专属动作素材仍是旧运行时图集。新设定以 `docs/art/enemies/brute.md` 和 `assets/art/brute-concept.png` 为基准，后续图集应改为站立厚重近战敌人，并在盾牌完整、盾牌受击、盾牌破碎和破盾后攻击之间保持清晰轮廓差异。
 
 Binder 专属动作素材：
 

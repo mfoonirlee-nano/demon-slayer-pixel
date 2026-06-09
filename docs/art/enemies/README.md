@@ -36,7 +36,7 @@
 | `runner` | 角突鬼 | 素材已接入；前摇冲刺行为已实现 | [runner.md](runner.md) |
 | `caster` | 提灯咒鬼 | 多状态素材已接入；远程鬼火行为已实现 | [caster.md](caster.md) |
 | `duelist` | 双刃裂鬼 | 多状态素材已接入；近战斩击行为已实现 | [duelist.md](duelist.md) |
-| `brute` | 甲壳重鬼 | 素材已接入；重型 brace/stomp 行为已实现 | [brute.md](brute.md) |
+| `brute` | 盾甲重鬼 | 原画设定已重构为站立持盾重型；运行时仍待重做 | [brute.md](brute.md) |
 | `leaper` | 裂足跳鬼 | 多状态素材已接入；锁定落点跳跃行为已实现 | [leaper.md](leaper.md) |
 | `glider` | 膜翼巡鬼 | 多状态素材已接入；低空俯冲行为已实现 | [glider.md](glider.md) |
 | `burrower` | 土潜鬼 | 多状态素材已接入；潜入/钻出行为已实现 | [burrower.md](burrower.md) |
@@ -51,7 +51,7 @@
 - `runner` 冲刺前摇不看速度也能从姿态读出。
 - `caster` 的提灯必须始终是最亮识别点。
 - `duelist` 的双刃范围明确，但不能像 Boss 级大招。
-- `brute` 必须靠体量和甲壳读出高血重型定位。
+- `brute` 必须靠站立体量、前置盾牌和破盾状态读出高防重型定位。
 - `leaper` 不看颜色也能通过长腿和压低姿态认出。
 - `glider` 必须靠低空翼膜和收翼俯冲读出飞行威胁。
 - `burrower` 潜行时仍有地面轨迹，不会凭空消失。
