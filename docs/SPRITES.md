@@ -63,7 +63,7 @@
 | `enemies/runner/runner_approach.png` | `1500x250` | 6 | `250x250` | `ENEMY_SHEETS[2]` |
 | `enemies/caster/caster_move.png` | `1152x360` | 4 | `288x360` | `ENEMY_SHEETS[3]` |
 | `enemies/duelist/duelist.png` | `1280x360` | 4 | `320x360` | `ENEMY_SHEETS[4]` |
-| `enemies/brute/brute_advance.png` | `1884x145` | 6 | `314x145` | `ENEMY_SHEETS[5]` |
+| `enemies/brute/brute_advance.png` | `1920x360` | 6 | `320x360` | `ENEMY_SHEETS[5]` |
 | `enemies/binder/binder_move.png` | `1040x320` | 4 | `260x320` | `ENEMY_SHEETS[6]` |
 | `enemies/glider/glider_hover.png` | `2160x240` | 6 | `360x240` | `ENEMY_SHEETS[7]` |
 | `enemies/leaper/leaper_stalk.png` | `1920x320` | 6 | `320x320` | `ENEMY_SHEETS[8]` |
@@ -160,12 +160,16 @@ Brute 专属动作素材：
 
 | 路径 | 总尺寸 | 帧数 | 单帧 | 运行时状态 | 备注 |
 | --- | ---: | ---: | ---: | --- | --- |
-| `enemies/brute/brute_advance.png` | `1884x145` | 6 | `314x145` | `advance` | 旧低伏甲壳推进，待替换为站立持盾推进 |
-| `enemies/brute/brute_brace.png` | `1256x145` | 4 | `314x145` | `brace` | 旧压低前摇，待替换为举盾防御/盾裂读招 |
-| `enemies/brute/brute_stomp.png` | `1570x145` | 5 | `314x145` | `stomp` | 旧短距离前顶，待替换为盾击或破盾后横扫 |
-| `enemies/brute/brute_recover.png` | `942x145` | 3 | `314x145` | `recover` | 旧低姿态硬直，待替换为盾击后硬直/破盾硬直 |
+| `enemies/brute/brute_advance.png` | `1920x360` | 6 | `320x360` | `advance` | 完整盾牌小步推进，首尾为相邻步态 |
+| `enemies/brute/brute_guard.png` | `1280x360` | 4 | `320x360` | `guard` | 举盾防御，盾面裂纹和符钉读招烘入图集 |
+| `enemies/brute/brute_shield_bash.png` | `1600x360` | 5 | `320x360` | `shieldBash` | 短距离盾击，命中盒只触发一次 |
+| `enemies/brute/brute_recover.png` | `960x360` | 3 | `320x360` | `recover` | 持盾攻击后硬直，盾牌仍完整 |
+| `enemies/brute/brute_shield_break.png` | `1280x360` | 4 | `320x360` | `shieldBreak` | 盾牌碎裂、碎片飞出并暴露胸腹 |
+| `enemies/brute/brute_broken_advance.png` | `1920x360` | 6 | `320x360` | `brokenAdvance` | 无盾沉重推进，轮廓明显变窄 |
+| `enemies/brute/brute_cleave.png` | `1600x360` | 5 | `320x360` | `cleave` | 破盾后慢速横扫，挥臂弧线烘入图集 |
+| `enemies/brute/brute_broken_recover.png` | `960x360` | 3 | `320x360` | `brokenRecover` | 无盾攻击后硬直，胸腹持续暴露 |
 
-以上 brute 专属动作素材仍是旧运行时图集。新设定以 `docs/art/enemies/brute.md` 和 `assets/art/brute-concept.png` 为基准，后续图集应改为站立厚重近战敌人，并在盾牌完整、盾牌受击、盾牌破碎和破盾后攻击之间保持清晰轮廓差异。
+Brute 运行时由 `BRUTE_SHEETS` 暴露并预加载。非大招伤害先扣盾牌耐久，盾牌归零后进入 `shieldBreak -> brokenRecover -> brokenAdvance`；大招对本体造成完整伤害，若 brute 存活且盾未破，会同步触发破盾。以上运行时只加载透明 PNG，不提交 `*_source.png` 绿幕制作源图。
 
 Binder 专属动作素材：
 

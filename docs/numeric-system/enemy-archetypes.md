@@ -69,7 +69,7 @@ k = bossKills = act - 1
 | `runner_approach.png` | 角鬼奔跑/挥臂 | 已接入前摇冲刺状态机 | 作为 `runner`，按幕数控制快攻压力和同时冲刺数量 |
 | `caster_move.png` | 提灯面具鬼 | 已接入远程鬼火状态机 | 作为 `caster`，按幕数控制生成权重和投射物密度 |
 | `duelist.png` | 双刃鬼 | 已接入近战斩击状态机 | 作为 `duelist`，按幕数控制近身压力和同时威胁数量 |
-| `brute_advance.png` | 旧低伏甲壳鬼 | 已接入旧重型 brace/stomp 状态机；新设定改为站立持盾敌人 | 后续重做为 `brute`，用独立盾牌耐久和破盾防御下降制造正面阻挡 |
+| `brute_advance.png` | 站立持盾重鬼 | 已接入盾牌耐久、盾击、破盾硬直和无盾横扫状态机 | 作为 `brute`，后续按幕数控制正面阻挡压力和生成预算 |
 | `glider_hover.png` | 膜翼巡鬼 | 已接入低空悬停/俯冲状态机，当前按 `elapsed >= 70s` 进入随机候选 | 作为 `glider`，目标设计中改为第 4 幕解锁并纳入预算 |
 | `binder_move.png` | 符咒长袍鬼 | 已接入控场咒圈状态机 | 作为 `binder`，目标设计中改为后期幕数或轮换 profile 解锁 |
 | `burrower_move.png` | 铲爪土潜鬼 | 已接入潜入、地面轨迹、钻出和恢复状态机，当前按 `elapsed >= 90s` 进入随机候选 | 作为 `burrower`，目标设计中改为第 5 幕解锁并纳入预算 |
@@ -365,8 +365,8 @@ chaserDashSpeed = 2.20 + actIndex * 0.12 + random(0, 0.25)
 | 项 | 目标 |
 | --- | --- |
 | 出现幕数 | 第 3 幕开始；第 6 幕后可与 `splitter` 轮换 |
-| 主要压力 | 正面盾牌减伤、持续占位和破盾目标优先级 |
-| 状态机 | 目标为 `advance -> guard -> shieldBash -> recover`；盾牌耐久归零后进入 `shieldBreak`，再改用 `cleave` |
+| 主要压力 | 盾牌耐久、持续占位和破盾目标优先级 |
+| 状态机 | `advance -> guard -> shieldBash -> recover`；盾牌耐久归零后进入 `shieldBreak`，再改用 `brokenAdvance -> cleave -> brokenRecover` |
 | 攻击窗口 | 盾牌完整时短前摇盾击；破盾后用更慢的拳击、骨槌或残盾横扫 |
 | 恢复窗口 | 攻击后 `24-34` 帧停顿；破盾瞬间额外 `28-40` 帧硬直 |
 | 玩家反制 | 集火破盾、贰之型群体压制、下落攻击、大招 |

@@ -4,6 +4,7 @@ import {
   ENEMY_SHEETS,
   ENEMY_DRAW_SCALE,
   ENEMY_CONFIG,
+  BRUTE_SHEET_INDEX,
 } from "../../constants";
 import type { SpriteSheet } from "../../types/assets";
 import type { EnemyState } from "../../types/game-state";
@@ -36,6 +37,7 @@ export type EnemyArchetype = {
 
 export type EnemyDamageKind = "normal" | "ultimate";
 export type EnemyDefeatRewardKind = "none" | "enemy" | "enemyNoCover" | "attack";
+export const BRUTE_SHIELD_BREAK_FRAMES = 34;
 
 export type EnemyDefeatContext = {
   index: number;
@@ -44,13 +46,35 @@ export type EnemyDefeatContext = {
   remove: () => void;
 };
 
-const BRUTE_ARMORED_DAMAGE_SCALE = 0.5;
+function breakBruteShield(enemy: EnemyState) {
+  if (enemy.bruteShieldBroken) return;
+  enemy.bruteShieldHp = 0;
+  enemy.bruteShieldBroken = true;
+  enemy.brutePhase = "shieldBreak";
+  enemy.bruteTimer = BRUTE_SHIELD_BREAK_FRAMES;
+  enemy.bruteAttackHit = false;
+  enemy.vx = 0;
+}
 
-function enemyDamageScale(enemy: EnemyState, kind: EnemyDamageKind) {
-  if (kind === "ultimate") return 1;
-  return enemy.brutePhase === "brace" || enemy.brutePhase === "stomp"
-    ? BRUTE_ARMORED_DAMAGE_SCALE
-    : 1;
+function damageBrute(enemy: EnemyState, damage: number, kind: EnemyDamageKind) {
+  if (kind === "ultimate") {
+    enemy.hp -= damage;
+    if (enemy.hp > 0) breakBruteShield(enemy);
+    return damage;
+  }
+
+  if (enemy.bruteShieldBroken || (enemy.bruteShieldHp ?? 0) <= 0) {
+    enemy.hp -= damage;
+    return damage;
+  }
+
+  const shieldHp = enemy.bruteShieldHp ?? 0;
+  const shieldDamage = Math.min(damage, shieldHp);
+  const bodyDamage = Math.max(0, damage - shieldHp);
+  enemy.bruteShieldHp = shieldHp - shieldDamage;
+  if (enemy.bruteShieldHp <= 0) breakBruteShield(enemy);
+  enemy.hp -= bodyDamage;
+  return shieldDamage + bodyDamage;
 }
 
 export function damageEnemy(
@@ -59,8 +83,10 @@ export function damageEnemy(
   hitCooldown?: number,
   kind: EnemyDamageKind = "normal",
 ) {
-  const appliedDamage = damage * enemyDamageScale(enemy, kind);
-  enemy.hp -= appliedDamage;
+  const appliedDamage = enemy.sheetIndex === BRUTE_SHEET_INDEX
+    ? damageBrute(enemy, damage, kind)
+    : damage;
+  if (enemy.sheetIndex !== BRUTE_SHEET_INDEX) enemy.hp -= appliedDamage;
   if (hitCooldown !== undefined) enemy.hitCd = hitCooldown;
   return appliedDamage;
 }

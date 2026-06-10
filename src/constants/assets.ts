@@ -151,8 +151,8 @@ export const ENEMY_SHEETS: SpriteSheet[] = [
   },
   {
     src: "assets/sprites/enemies/brute/brute_advance.png",
-    frameW: 314,
-    frameH: 145,
+    frameW: 320,
+    frameH: 360,
     count: 6,
     image: null,
   },
@@ -300,24 +300,52 @@ export const BRUTE_SHEET_INDEX = 5;
 
 export const BRUTE_SHEETS: Record<BrutePhase, SpriteSheet> = {
   advance: ENEMY_SHEETS[BRUTE_SHEET_INDEX],
-  brace: {
-    src: "assets/sprites/enemies/brute/brute_brace.png",
-    frameW: 314,
-    frameH: 145,
+  guard: {
+    src: "assets/sprites/enemies/brute/brute_guard.png",
+    frameW: 320,
+    frameH: 360,
     count: 4,
     image: null,
   },
-  stomp: {
-    src: "assets/sprites/enemies/brute/brute_stomp.png",
-    frameW: 314,
-    frameH: 145,
+  shieldBash: {
+    src: "assets/sprites/enemies/brute/brute_shield_bash.png",
+    frameW: 320,
+    frameH: 360,
     count: 5,
     image: null,
   },
   recover: {
     src: "assets/sprites/enemies/brute/brute_recover.png",
-    frameW: 314,
-    frameH: 145,
+    frameW: 320,
+    frameH: 360,
+    count: 3,
+    image: null,
+  },
+  shieldBreak: {
+    src: "assets/sprites/enemies/brute/brute_shield_break.png",
+    frameW: 320,
+    frameH: 360,
+    count: 4,
+    image: null,
+  },
+  brokenAdvance: {
+    src: "assets/sprites/enemies/brute/brute_broken_advance.png",
+    frameW: 320,
+    frameH: 360,
+    count: 6,
+    image: null,
+  },
+  cleave: {
+    src: "assets/sprites/enemies/brute/brute_cleave.png",
+    frameW: 320,
+    frameH: 360,
+    count: 5,
+    image: null,
+  },
+  brokenRecover: {
+    src: "assets/sprites/enemies/brute/brute_broken_recover.png",
+    frameW: 320,
+    frameH: 360,
     count: 3,
     image: null,
   },

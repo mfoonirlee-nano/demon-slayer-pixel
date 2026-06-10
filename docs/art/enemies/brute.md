@@ -2,9 +2,9 @@
 
 ## Implementation Status
 
-- 设定状态：重构目标已切换为站立厚重近战敌人，核心机制是前置盾牌防御物；盾牌被打掉后防御下降并露出反打窗口。
-- 素材状态：`assets/art/brute-concept.png` 是新原画基准；当前运行时图集仍是旧低伏甲壳版，后续需要重绘为站立持盾动作。
-- 玩法状态：当前代码仍是 `advance -> brace -> stomp -> recover` 的旧慢速重型循环；目标实现见下方 Gameplay Loop。
+- 设定状态：已切换为站立厚重近战敌人，核心机制是前置盾牌防御物；盾牌被打掉后防御下降并露出反打窗口。
+- 素材状态：`assets/art/brute-concept.png` 是新原画基准；运行时图集已替换为 `320x360` 站立持盾/破盾动作。
+- 玩法状态：当前代码实现 `advance -> guard -> shieldBash -> recover`，破盾后切换为 `shieldBreak -> brokenRecover -> brokenAdvance -> cleave`。
 - 代码入口：`src/entities/enemies/brute.ts`；资源入口：`src/constants/assets.ts` 的 `BRUTE_SHEET_INDEX` / `BRUTE_SHEETS`。
 
 ## Role
@@ -20,7 +20,7 @@
 | `shieldBash` | 盾牌未破时短距离盾击或肩撞，只触发一次近战命中盒 | 让完整盾牌状态有正面威胁 |
 | `shieldBreak` | 盾牌耐久归零时进入 `28-40` 帧破盾硬直，碎片飞出并暴露胸腹 | 奖励持续输出，明确防御下降 |
 | `cleave` | 破盾后改用慢速拳击、骨槌或前臂横扫，前摇更明显 | 保留近战威胁，但不再拥有正面防御优势 |
-| `recover` | 攻击后停顿 `24-34` 帧；破盾后恢复帧更低、防线更空 | 露出稳定反打窗口 |
+| `recover` / `brokenRecover` | 攻击后停顿；破盾后恢复帧更低、防线更空 | 露出稳定反打窗口 |
 
 ## Target Tuning
 
@@ -28,10 +28,11 @@
 | --- | ---: | --- |
 | 触发距离 | `145-165px` | 进入距离后举盾或盾击 |
 | 推进速度 | 低于 `duelist`，接近旧 brute | 保持重型压迫，不追求贴脸速度 |
-| 本体生命 | 基础敌人生命的 `3.0-3.5x` | 本体仍厚，但不把所有耐久堆在生命条里 |
-| 盾牌耐久 | 约本体生命的 `35-45%` | 独立防御物，破坏后不再恢复 |
-| 完整盾牌减伤 | 正面非大招伤害降低 `55-70%` | 迫使玩家先破盾、绕位或用高价值技能 |
-| 破盾后防御 | 移除盾牌减伤，可追加 `1.15x` 受伤倍率 | 让“打掉盾牌”在手感上立即变快 |
+| 本体生命 | 基础敌人生命的 `3.25x` | 本体仍厚，但不把所有耐久堆在生命条里 |
+| 盾牌耐久 | 本体生命的 `40%` | 独立防御物，破坏后不再恢复 |
+| 完整盾牌规则 | 非大招伤害先扣盾牌，溢出才进本体 | 迫使玩家先破盾或使用高价值技能 |
+| 大招规则 | 大招绕过盾牌打满本体伤害，存活时同步破盾 | 保留大招的强打断和破防价值 |
+| 破盾后防御 | 不再拥有盾牌耐久 | 让“打掉盾牌”在手感上立即变快 |
 | 同屏上限 | `2` | 避免高血单位堆场 |
 | 同时攻击 | `1` | 避免多个盾击叠加不可读 |
 
@@ -67,11 +68,20 @@
 | 破盾后攻击 | 用拳、骨槌或残盾臂横扫，前摇比盾击更夸张 |
 | 死亡 | 先跪倒，再让残盾和重甲坠地，暗红裂光熄灭 |
 
-## Sprite Rework Notes
+## Runtime Sprite Sheets
 
-- 如果先做最小代码改造，可复用旧状态名：`advance` = 持盾推进，`brace` = 举盾防御，`stomp` = 盾击或破盾后横扫，`recover` = 攻击硬直。
-- 如果做完整重构，建议新增盾牌状态字段和独立盾牌耐久，动画至少包含 `advance`、`guard`、`shield_bash`、`shield_break`、`cleave`、`recover`。
-- 新图集单帧高度应接近 `duelist` / `binder` 这类站立敌人，而不是旧 brute 的 `314x145` 低伏画布。
+| 状态 | 文件 | 规格 |
+| --- | --- | --- |
+| `advance` | `assets/sprites/enemies/brute/brute_advance.png` | 6 帧，`320x360` |
+| `guard` | `assets/sprites/enemies/brute/brute_guard.png` | 4 帧，`320x360` |
+| `shieldBash` | `assets/sprites/enemies/brute/brute_shield_bash.png` | 5 帧，`320x360` |
+| `recover` | `assets/sprites/enemies/brute/brute_recover.png` | 3 帧，`320x360` |
+| `shieldBreak` | `assets/sprites/enemies/brute/brute_shield_break.png` | 4 帧，`320x360` |
+| `brokenAdvance` | `assets/sprites/enemies/brute/brute_broken_advance.png` | 6 帧，`320x360` |
+| `cleave` | `assets/sprites/enemies/brute/brute_cleave.png` | 5 帧，`320x360` |
+| `brokenRecover` | `assets/sprites/enemies/brute/brute_broken_recover.png` | 3 帧，`320x360` |
+
+以上图集均为透明 PNG，底部锚定并朝右；盾裂、碎片和横扫读法全部烘入 sprite。
 
 ## Avoid
 

@@ -7,7 +7,15 @@ export type PlatformLayer = "low" | "mid" | "high" | "top";
 export type CrawlerPhase = "move" | "windup" | "lunge" | "recover";
 export type RunnerPhase = "approach" | "windup" | "dash" | "recover";
 export type DuelistPhase = "approach" | "windup" | "slash" | "recover";
-export type BrutePhase = "advance" | "brace" | "stomp" | "recover";
+export type BrutePhase =
+  | "advance"
+  | "guard"
+  | "shieldBash"
+  | "recover"
+  | "shieldBreak"
+  | "brokenAdvance"
+  | "cleave"
+  | "brokenRecover";
 export type CasterPhase = "move" | "windup" | "cast" | "recover" | "hit";
 export type CasterAiPhase = "seekRange" | "windup" | "cast" | "recover";
 export type BinderPhase = "move" | "windup" | "cast" | "recover" | "hit";
@@ -127,7 +135,9 @@ export type EnemyState = {
   bruteTimer?: number;
   bruteFacing?: number;
   bruteBaseSpeed?: number;
-  bruteStompHit?: boolean;
+  bruteShieldHp?: number;
+  bruteShieldBroken?: boolean;
+  bruteAttackHit?: boolean;
   casterPhase?: CasterAiPhase;
   casterTimer?: number;
   casterFacing?: number;
