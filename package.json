@@ -1,7 +1,7 @@
 {
-  "name": "demon-slayer-pixel",
+  "name": "moonlit-tide-survivor",
   "version": "1.0.0",
-  "description": "一个基于 React 19、Jotai、Tailwind CSS 与 TypeScript 的 2D 像素风生存小游戏。玩家扮演炭治郎，在不断刷新的小怪与阶段式 Boss 战中尽可能生存并提高分数。",
+  "description": "一个基于 React 19、Jotai、Tailwind CSS 与 TypeScript 的 2D 像素风动作生存小游戏。玩家扮演原创潮刃者，在不断刷新的夜妖与阶段式 Boss 战中尽可能生存并提高分数。",
   "type": "module",
   "scripts": {
     "dev": "vite",

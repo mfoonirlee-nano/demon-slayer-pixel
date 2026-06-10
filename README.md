@@ -1,14 +1,14 @@
-# 鬼灭之刃：炭治郎生存战（Pixel Survival）
+# 月潮夜行（Moonlit Tide Survivor）
 
-一个基于 `React 19 + Jotai + Tailwind CSS + TypeScript` 的 2D 像素风生存小游戏。  
-玩家扮演炭治郎，在不断刷新的小怪与阶段式 Boss 战中尽可能生存并提高分数。
+一个基于 `React 19 + Jotai + Tailwind CSS + TypeScript` 的 2D 像素风动作生存小游戏。  
+玩家扮演原创潮刃者，在不断刷新的夜妖与阶段式 Boss 战中尽可能生存并提高分数。
 
 ## 游戏特性
 
 - **Canvas 渲染内核**：保留原有像素风游戏渲染与玩法循环。
 - **React 外壳 + 状态桥接**：使用 React 19、Jotai、Tailwind CSS、TypeScript 与 Vite 承载界面与 HUD。
 - **双端支持**：适配键盘操作与移动端触控/虚拟按键。
-- **丰富系统**：包含招式系统、平台掉落、分阶段 Boss 战。
+- **丰富系统**：包含剑式系统、平台掉落、分阶段 Boss 战。
 - **动态特效**：基于粒子的战斗视觉反馈。
 
 ## 操作说明
@@ -16,7 +16,7 @@
 - `A` / `D`：左右移动
 - `W` / `Space`：跳跃
 - `J`：普通攻击
-- `K`：释放技能（水车/其他招式，需有可用充能）
+- `K`：释放技能（潮刃剑式，需有可用充能）
 - `R`：游戏结束后重开
 
 ## 开发与本地运行
@@ -50,7 +50,7 @@ npm run build
 
 ### 代码目录概览
 ```text
-demon-slayer-pixel/
+moonlit-tide-survivor/
 ├── docs/                # 项目详细文档
 ├── src/                 # 源代码目录
 │   ├── entities/        # 游戏实体实现（玩家、敌人、Boss等）
