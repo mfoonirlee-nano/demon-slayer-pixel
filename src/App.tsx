@@ -52,7 +52,7 @@ function GameCanvas({ active }: { active: boolean }) {
       id="game"
       width={WIDTH}
       height={HEIGHT}
-      aria-label="Demon Slayer Pixel Survival"
+      aria-label="Moonlit Tide Survivor"
       className="pixel-canvas block h-auto w-[960px] max-w-full bg-[#0b1220] max-md:h-[100svh] max-md:w-screen max-md:max-w-none"
     />
   );
@@ -246,7 +246,7 @@ function PauseScreen({ snapshot }: { snapshot: GameSnapshot }) {
         >
           {/* title row */}
           <div className="flex items-baseline justify-between pt-0.5">
-            <span className="text-[12px] font-bold tracking-[0.12em]" style={{ color: "#26d5ff" }}>竈門炭治郎</span>
+            <span className="text-[12px] font-bold tracking-[0.12em]" style={{ color: "#26d5ff" }}>潮刃者</span>
             <span className="text-[10px]" style={{ color: "#7fc8e0" }}>当前技能：<span style={{ color: "#26d5ff" }}>{activeSkill.name}</span></span>
           </div>
 
@@ -530,7 +530,7 @@ function AppShell() {
     <main className="mx-auto flex min-h-screen w-full max-w-[1020px] flex-col items-center justify-center px-4 py-4 text-center max-md:max-w-none max-md:px-0 max-md:py-0">
       {isPlaying ? (
         <>
-          <h1 className="mb-4 text-base tracking-[1px] md:text-2xl max-md:hidden">鬼灭之刃：炭治郎生存战</h1>
+          <h1 className="mb-4 text-base tracking-[1px] md:text-2xl max-md:hidden">月潮夜行</h1>
           <p className="mb-2 text-[10px] opacity-90 md:text-[13px] max-md:hidden">A/D 移动 · W/空格 跳跃 · J 攻击 · K 释放技能 · L 大招 · 1/2/3 切换技能 · ESC/P 暂停 · R 重开</p>
         </>
       ) : null}
