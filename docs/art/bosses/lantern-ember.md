@@ -2,7 +2,7 @@
 
 ## Implementation Status
 
-- 素材状态：已实现，运行时透明 PNG 位于 `assets/sprites/enemies/boss/lantern-ember/`；`lantern_ember_death.png` 为当前全局即时击败流程的后续死亡状态机预留素材。
+- 素材状态：已实现，运行时透明 PNG 位于 `assets/sprites/boss/lantern-ember/`；`lantern_ember_death.png` 为当前全局即时击败流程的后续死亡状态机预留素材。
 - 玩法状态：已接入当前 Boss 轮换；基础形态包含召唤、贴地火线和召唤强化，觉醒形态包含燎原灯阵和灰烬减速区。
 
 ## Role

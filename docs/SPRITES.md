@@ -54,7 +54,7 @@
 
 ### 敌人和 Boss
 
-敌人图集按敌人拆分在 `assets/sprites/enemies/<enemy>/` 下；Boss 图集按 Boss 拆分在 `assets/sprites/enemies/boss/<boss>/` 下。
+敌人图集按敌人拆分在 `assets/sprites/enemies/<enemy>/` 下；Boss 图集按 Boss 拆分在 `assets/sprites/boss/<boss>/` 下。
 
 | 路径 | 总尺寸 | 帧数 | 单帧 | 常量 |
 | --- | ---: | ---: | ---: | --- |
@@ -71,42 +71,42 @@
 | `enemies/warden/warden_move.png` | `1280x360` | 4 | `320x360` | `ENEMY_SHEETS[10]` |
 | `enemies/burrower/burrower_move.png` | `1884x180` | 6 | `314x180` | `ENEMY_SHEETS[11]` |
 | `enemies/warden/warden_aura_effect.png` | `1920x120` | 8 | `240x120` | `WARDEN_AURA_EFFECT_SHEET` |
-| `enemies/boss/spider-string/boss.png` | `1400x419` | 4 | `350x419` | `BOSS_SHEET` |
-| `enemies/boss/spider-string/boss_skill1.png` | `2400x400` | 6 | `400x400` | `BOSS_SKILL1_SHEET` |
-| `enemies/boss/spider-string/boss_skill1_effect.png` | `2400x350` | 6 | `400x350` | `BOSS_SKILL1_EFFECT_SHEET` |
-| `enemies/boss/dead_bell/dead_bell.png` | `1400x419` | 4 | `350x419` | `DEAD_BELL_SHEET` |
-| `enemies/boss/dead_bell/dead_bell_cast.png` | `2400x400` | 6 | `400x400` | `DEAD_BELL_CAST_SHEET` |
-| `enemies/boss/dead_bell/dead_bell_wave.png` | `2400x350` | 6 | `400x350` | `DEAD_BELL_WAVE_SHEET` |
-| `enemies/boss/dead_bell/dead_bell_blade.png` | `2520x180` | 6 | `420x180` | `DEAD_BELL_BLADE_SHEET` |
-| `enemies/boss/mirror-dream/mirror_dream.png` | `1400x419` | 4 | `350x419` | `MIRROR_DREAM_SHEET` |
-| `enemies/boss/mirror-dream/mirror_dream_cast.png` | `2400x400` | 6 | `400x400` | `MIRROR_DREAM_CAST_SHEET` |
-| `enemies/boss/mirror-dream/mirror_shard.png` | `2400x350` | 6 | `400x350` | `MIRROR_SHARD_SHEET` |
-| `enemies/boss/mirror-dream/mirror_afterimage.png` | `2400x400` | 6 | `400x400` | `MIRROR_AFTERIMAGE_SHEET` |
-| `enemies/boss/mirror-dream/mirror_nightmare.png` | `2400x350` | 6 | `400x350` | `MIRROR_NIGHTMARE_SHEET` |
-| `enemies/boss/lantern-ember/lantern_ember_move.png` | `1400x419` | 4 | `350x419` | `LANTERN_EMBER_SHEET` |
-| `enemies/boss/lantern-ember/lantern_ember_summon.png` | `2400x400` | 6 | `400x400` | `LANTERN_EMBER_SUMMON_SHEET` |
-| `enemies/boss/lantern-ember/lantern_ember_fireline_cast.png` | `2400x400` | 6 | `400x400` | `LANTERN_EMBER_FIRELINE_CAST_SHEET` |
-| `enemies/boss/lantern-ember/lantern_ember_buff_cast.png` | `2400x400` | 6 | `400x400` | `LANTERN_EMBER_BUFF_CAST_SHEET` |
-| `enemies/boss/lantern-ember/lantern_ember_death.png` | `2400x400` | 6 | `400x400` | `LANTERN_EMBER_DEATH_SHEET` |
-| `enemies/boss/lantern-ember/lantern_ember_lure_effect.png` | `2400x350` | 6 | `400x350` | `LANTERN_EMBER_LURE_EFFECT_SHEET` |
-| `enemies/boss/lantern-ember/lantern_ember_fireline.png` | `3840x120` | 8 | `480x120` | `LANTERN_EMBER_FIRELINE_SHEET` |
-| `enemies/boss/lantern-ember/lantern_ember_buff_tether.png` | `2400x350` | 6 | `400x350` | `LANTERN_EMBER_BUFF_TETHER_SHEET` |
-| `enemies/boss/lantern-ember/lantern_ember_awakened_grid.png` | `3840x180` | 8 | `480x180` | `LANTERN_EMBER_AWAKENED_GRID_SHEET` |
-| `enemies/boss/lantern-ember/lantern_ember_ash_zone.png` | `2880x140` | 8 | `360x140` | `LANTERN_EMBER_ASH_ZONE_SHEET` |
-| `enemies/boss/blood-moon-many-faces/blood_moon.png` | `1400x419` | 4 | `350x419` | `BLOOD_MOON_SHEET` |
-| `enemies/boss/blood-moon-many-faces/blood_moon_phase_shift.png` | `2400x400` | 6 | `400x400` | `BLOOD_MOON_PHASE_SHIFT_SHEET` |
-| `enemies/boss/blood-moon-many-faces/blood_moon_recover.png` | `1200x400` | 3 | `400x400` | `BLOOD_MOON_RECOVER_SHEET` |
-| `enemies/boss/blood-moon-many-faces/blood_moon_death.png` | `2400x419` | 6 | `400x419` | `BLOOD_MOON_DEATH_SHEET` |
-| `enemies/boss/blood-moon-many-faces/blood_moon_spider_mist_cast.png` | `2400x400` | 6 | `400x400` | `BLOOD_MOON_SPIDER_MIST_CAST_SHEET` |
-| `enemies/boss/blood-moon-many-faces/blood_moon_mirror_fang_cast.png` | `2400x400` | 6 | `400x400` | `BLOOD_MOON_MIRROR_FANG_CAST_SHEET` |
-| `enemies/boss/blood-moon-many-faces/blood_moon_lantern_bell_cast.png` | `2400x400` | 6 | `400x400` | `BLOOD_MOON_LANTERN_BELL_CAST_SHEET` |
-| `enemies/boss/blood-moon-many-faces/blood_moon_sixfold_cast.png` | `2400x400` | 6 | `400x400` | `BLOOD_MOON_SIXFOLD_CAST_SHEET` |
-| `enemies/boss/blood-moon-many-faces/blood_moon_many_faces_cast.png` | `2400x400` | 6 | `400x400` | `BLOOD_MOON_MANY_FACES_CAST_SHEET` |
-| `enemies/boss/blood-moon-many-faces/blood_moon_spider_mist_effect.png` | `3360x220` | 8 | `420x220` | `BLOOD_MOON_SPIDER_MIST_EFFECT_SHEET` |
-| `enemies/boss/blood-moon-many-faces/blood_moon_mirror_fang_effect.png` | `2880x260` | 6 | `480x260` | `BLOOD_MOON_MIRROR_FANG_EFFECT_SHEET` |
-| `enemies/boss/blood-moon-many-faces/blood_moon_lantern_bell_effect.png` | `3360x350` | 8 | `420x350` | `BLOOD_MOON_LANTERN_BELL_EFFECT_SHEET` |
-| `enemies/boss/blood-moon-many-faces/blood_moon_sixfold_effect.png` | `3360x350` | 8 | `420x350` | `BLOOD_MOON_SIXFOLD_EFFECT_SHEET` |
-| `enemies/boss/blood-moon-many-faces/blood_moon_many_faces_effect.png` | `5760x420` | 12 | `480x420` | `BLOOD_MOON_MANY_FACES_EFFECT_SHEET` |
+| `boss/spider-string/boss.png` | `1400x419` | 4 | `350x419` | `BOSS_SHEET` |
+| `boss/spider-string/boss_skill1.png` | `2400x400` | 6 | `400x400` | `BOSS_SKILL1_SHEET` |
+| `boss/spider-string/boss_skill1_effect.png` | `2400x350` | 6 | `400x350` | `BOSS_SKILL1_EFFECT_SHEET` |
+| `boss/dead_bell/dead_bell.png` | `1400x419` | 4 | `350x419` | `DEAD_BELL_SHEET` |
+| `boss/dead_bell/dead_bell_cast.png` | `2400x400` | 6 | `400x400` | `DEAD_BELL_CAST_SHEET` |
+| `boss/dead_bell/dead_bell_wave.png` | `2400x350` | 6 | `400x350` | `DEAD_BELL_WAVE_SHEET` |
+| `boss/dead_bell/dead_bell_blade.png` | `2520x180` | 6 | `420x180` | `DEAD_BELL_BLADE_SHEET` |
+| `boss/mirror-dream/mirror_dream.png` | `1400x419` | 4 | `350x419` | `MIRROR_DREAM_SHEET` |
+| `boss/mirror-dream/mirror_dream_cast.png` | `2400x400` | 6 | `400x400` | `MIRROR_DREAM_CAST_SHEET` |
+| `boss/mirror-dream/mirror_shard.png` | `2400x350` | 6 | `400x350` | `MIRROR_SHARD_SHEET` |
+| `boss/mirror-dream/mirror_afterimage.png` | `2400x400` | 6 | `400x400` | `MIRROR_AFTERIMAGE_SHEET` |
+| `boss/mirror-dream/mirror_nightmare.png` | `2400x350` | 6 | `400x350` | `MIRROR_NIGHTMARE_SHEET` |
+| `boss/lantern-ember/lantern_ember_move.png` | `1400x419` | 4 | `350x419` | `LANTERN_EMBER_SHEET` |
+| `boss/lantern-ember/lantern_ember_summon.png` | `2400x400` | 6 | `400x400` | `LANTERN_EMBER_SUMMON_SHEET` |
+| `boss/lantern-ember/lantern_ember_fireline_cast.png` | `2400x400` | 6 | `400x400` | `LANTERN_EMBER_FIRELINE_CAST_SHEET` |
+| `boss/lantern-ember/lantern_ember_buff_cast.png` | `2400x400` | 6 | `400x400` | `LANTERN_EMBER_BUFF_CAST_SHEET` |
+| `boss/lantern-ember/lantern_ember_death.png` | `2400x400` | 6 | `400x400` | `LANTERN_EMBER_DEATH_SHEET` |
+| `boss/lantern-ember/lantern_ember_lure_effect.png` | `2400x350` | 6 | `400x350` | `LANTERN_EMBER_LURE_EFFECT_SHEET` |
+| `boss/lantern-ember/lantern_ember_fireline.png` | `3840x120` | 8 | `480x120` | `LANTERN_EMBER_FIRELINE_SHEET` |
+| `boss/lantern-ember/lantern_ember_buff_tether.png` | `2400x350` | 6 | `400x350` | `LANTERN_EMBER_BUFF_TETHER_SHEET` |
+| `boss/lantern-ember/lantern_ember_awakened_grid.png` | `3840x180` | 8 | `480x180` | `LANTERN_EMBER_AWAKENED_GRID_SHEET` |
+| `boss/lantern-ember/lantern_ember_ash_zone.png` | `2880x140` | 8 | `360x140` | `LANTERN_EMBER_ASH_ZONE_SHEET` |
+| `boss/blood-moon-many-faces/blood_moon.png` | `1400x419` | 4 | `350x419` | `BLOOD_MOON_SHEET` |
+| `boss/blood-moon-many-faces/blood_moon_phase_shift.png` | `2400x400` | 6 | `400x400` | `BLOOD_MOON_PHASE_SHIFT_SHEET` |
+| `boss/blood-moon-many-faces/blood_moon_recover.png` | `1200x400` | 3 | `400x400` | `BLOOD_MOON_RECOVER_SHEET` |
+| `boss/blood-moon-many-faces/blood_moon_death.png` | `2400x419` | 6 | `400x419` | `BLOOD_MOON_DEATH_SHEET` |
+| `boss/blood-moon-many-faces/blood_moon_spider_mist_cast.png` | `2400x400` | 6 | `400x400` | `BLOOD_MOON_SPIDER_MIST_CAST_SHEET` |
+| `boss/blood-moon-many-faces/blood_moon_mirror_fang_cast.png` | `2400x400` | 6 | `400x400` | `BLOOD_MOON_MIRROR_FANG_CAST_SHEET` |
+| `boss/blood-moon-many-faces/blood_moon_lantern_bell_cast.png` | `2400x400` | 6 | `400x400` | `BLOOD_MOON_LANTERN_BELL_CAST_SHEET` |
+| `boss/blood-moon-many-faces/blood_moon_sixfold_cast.png` | `2400x400` | 6 | `400x400` | `BLOOD_MOON_SIXFOLD_CAST_SHEET` |
+| `boss/blood-moon-many-faces/blood_moon_many_faces_cast.png` | `2400x400` | 6 | `400x400` | `BLOOD_MOON_MANY_FACES_CAST_SHEET` |
+| `boss/blood-moon-many-faces/blood_moon_spider_mist_effect.png` | `3360x220` | 8 | `420x220` | `BLOOD_MOON_SPIDER_MIST_EFFECT_SHEET` |
+| `boss/blood-moon-many-faces/blood_moon_mirror_fang_effect.png` | `2880x260` | 6 | `480x260` | `BLOOD_MOON_MIRROR_FANG_EFFECT_SHEET` |
+| `boss/blood-moon-many-faces/blood_moon_lantern_bell_effect.png` | `3360x350` | 8 | `420x350` | `BLOOD_MOON_LANTERN_BELL_EFFECT_SHEET` |
+| `boss/blood-moon-many-faces/blood_moon_sixfold_effect.png` | `3360x350` | 8 | `420x350` | `BLOOD_MOON_SIXFOLD_EFFECT_SHEET` |
+| `boss/blood-moon-many-faces/blood_moon_many_faces_effect.png` | `5760x420` | 12 | `480x420` | `BLOOD_MOON_MANY_FACES_EFFECT_SHEET` |
 
 Boss 当前运行时轮换为 `蛛弦 -> 镜魇 -> 灯烬 -> 枯铃`。`蛛弦` 使用 `spider-string/` 下的 `boss*` 三张图；`镜魇` 使用 `mirror-dream/` 下的本体、共用施法、月镜碎片、假身留影和镜中噩梦图集；`灯烬` 使用 `lantern-ember/` 下的本体、三张施法、召唤牵引、贴地火线、强化连线、觉醒火线网格、灰烬减速区和死亡预留图集；`枯铃` 使用 `dead_bell/` 下的本体、摇铃施法、声波环和横向音刃图集。`mirror_shard.png` 用于可左右边界折返一次的反射弹；`mirror_afterimage.png` 用于不造成接触伤害的假身；`mirror_nightmare.png` 用于镜影破碎后朝玩家方向发射的碎光。`灯烬` 的觉醒形态复用基础本体，运行时增加移动火线网格和灰烬减速区；当前击败流程仍沿用全局 Boss 即时结算，`lantern_ember_death.png` 作为后续死亡状态机素材预留。`万相血月` 素材已在 `blood-moon-many-faces/` 下准备并预加载，但未加入当前 Boss 轮换，也未实现第 13 幕状态机。以上 Boss 素材不提交 `*_source.png` 绿幕制作源图；运行时只加载透明 PNG。
 

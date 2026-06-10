@@ -2,7 +2,7 @@
 
 ## Implementation Status
 
-- 素材状态：基础待机、换相、恢复、死亡、五招施法和五招特效透明 PNG 已实现并预加载，位于 `assets/sprites/enemies/boss/blood-moon-many-faces/`；不提交 `*_source.png` 制作源图。
+- 素材状态：基础待机、换相、恢复、死亡、五招施法和五招特效透明 PNG 已实现并预加载，位于 `assets/sprites/boss/blood-moon-many-faces/`；不提交 `*_source.png` 制作源图。
 - 玩法状态：未实现；定位为**第 13 幕终极 Boss**、单局通关终点，不作为普通轮换 Boss。幕表见 [../../game-design/act-structure.md](../../game-design/act-structure.md)，数值见 [../../numeric-system/boss-archetypes.md](../../numeric-system/boss-archetypes.md)。
 
 ## Runtime Assets
