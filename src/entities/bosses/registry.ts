@@ -65,7 +65,7 @@ export const BOSS_ARCHETYPES: Record<RegisteredBossArchetypeId, BossArchetype> =
   "spider-string": {
     id: BOSS_ARCHETYPE_IDS.spiderString,
     displayName: "蛛弦",
-    phaseTitle: (phase) => `下弦之鬼 · 蛛弦 · 阶段 ${phase}`,
+    phaseTitle: (phase) => `血月眷属 · 蛛弦 · 阶段 ${phase}`,
     unlockAct: 1,
     awakenedUnlockAct: 7,
     hpBase: BOSS_CONFIG.baseHp,
@@ -95,7 +95,7 @@ export const BOSS_ARCHETYPES: Record<RegisteredBossArchetypeId, BossArchetype> =
   "mirror-dream": {
     id: BOSS_ARCHETYPE_IDS.mirrorDream,
     displayName: "镜魇",
-    phaseTitle: (phase) => `下弦之鬼 · 镜魇 · 阶段 ${phase}`,
+    phaseTitle: (phase) => `血月眷属 · 镜魇 · 阶段 ${phase}`,
     unlockAct: 4,
     awakenedUnlockAct: 9,
     hpBase: 500,
@@ -125,8 +125,8 @@ export const BOSS_ARCHETYPES: Record<RegisteredBossArchetypeId, BossArchetype> =
   "lantern-ember": {
     id: BOSS_ARCHETYPE_IDS.lanternEmber,
     displayName: "灯烬",
-    phaseTitle: (phase) => `下弦之鬼 · 灯烬 · 阶段 ${phase}`,
-    awakenedPhaseTitle: (phase) => `下弦之鬼 · 灯烬·觉醒 · 阶段 ${phase}`,
+    phaseTitle: (phase) => `血月眷属 · 灯烬 · 阶段 ${phase}`,
+    awakenedPhaseTitle: (phase) => `血月眷属 · 灯烬·蚀醒 · 阶段 ${phase}`,
     unlockAct: 5,
     awakenedUnlockAct: 11,
     hpBase: 540,
@@ -156,7 +156,7 @@ export const BOSS_ARCHETYPES: Record<RegisteredBossArchetypeId, BossArchetype> =
   "dead-bell": {
     id: BOSS_ARCHETYPE_IDS.deadBell,
     displayName: "枯铃",
-    phaseTitle: (phase) => `下弦之鬼 · 枯铃 · 阶段 ${phase}`,
+    phaseTitle: (phase) => `血月眷属 · 枯铃 · 阶段 ${phase}`,
     unlockAct: 6,
     awakenedUnlockAct: 12,
     hpBase: 520,
