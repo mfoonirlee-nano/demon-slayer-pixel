@@ -1,4 +1,5 @@
 import { state } from "../../state";
+import { playSfx } from "../../audio";
 import { BRUTE_SHEET_INDEX, BRUTE_SHEETS, ENEMY_SHEETS } from "../../constants";
 import { drawSheetFrame } from "../../graphics";
 import type { BrutePhase, EnemyState } from "../../types/game-state";
@@ -134,8 +135,10 @@ function enterBrutePhase(enemy: EnemyState, phase: BrutePhase) {
   enemy.bruteAttackHit = false;
   if (phase === "guard") {
     enemy.bruteTimer = randomFrameCount(BRUTE_CONFIG.guardMinFrames, BRUTE_CONFIG.guardFrameJitter);
+    playSfx("enemyShieldGuard");
   } else if (phase === "shieldBash") {
     enemy.bruteTimer = randomFrameCount(BRUTE_CONFIG.shieldBashMinFrames, BRUTE_CONFIG.shieldBashFrameJitter);
+    playSfx("enemyShieldBash");
   } else if (phase === "recover") {
     enemy.bruteTimer = randomFrameCount(BRUTE_CONFIG.recoverMinFrames, BRUTE_CONFIG.recoverFrameJitter);
   } else if (phase === "shieldBreak") {
@@ -147,6 +150,7 @@ function enterBrutePhase(enemy: EnemyState, phase: BrutePhase) {
     );
   } else if (phase === "cleave") {
     enemy.bruteTimer = randomFrameCount(BRUTE_CONFIG.cleaveMinFrames, BRUTE_CONFIG.cleaveFrameJitter);
+    playSfx("enemyCleave");
   } else {
     enemy.bruteTimer = 0;
   }

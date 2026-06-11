@@ -1,6 +1,7 @@
 import { ctx } from "../../context";
 import { drawSheetFrame } from "../../graphics";
 import { state } from "../../state";
+import { playSfx } from "../../audio";
 import {
   ENEMY_CONFIG,
   ENEMY_DRAW_SCALE,
@@ -101,6 +102,7 @@ function enterSplitterSplit(enemy: EnemyState) {
   enemy.splitterPhase = "split";
   enemy.splitterTimer = SPLITTER_CONFIG.splitFrames;
   enemy.splitterHasSplit = false;
+  playSfx("enemySplit");
 }
 
 function createSplitling(parent: EnemyState, offset: number): EnemyState {
@@ -130,6 +132,7 @@ function createSplitling(parent: EnemyState, offset: number): EnemyState {
 function spawnSplitlings(parent: EnemyState) {
   state.enemies.push(createSplitling(parent, -SPLITTER_CONFIG.childSpawnOffset));
   state.enemies.push(createSplitling(parent, SPLITTER_CONFIG.childSpawnOffset));
+  playSfx("enemyBirth");
 }
 
 function updateSplitterParentMove(enemy: EnemyState) {

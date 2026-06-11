@@ -1,4 +1,5 @@
 import { state } from "../../state";
+import { playSfx } from "../../audio";
 import { DUELIST_SHEET_INDEX, DUELIST_SHEETS, ENEMY_SHEETS } from "../../constants";
 import { drawSheetFrame } from "../../graphics";
 import type { DuelistPhase, EnemyState } from "../../types/game-state";
@@ -104,8 +105,10 @@ function enterDuelistPhase(enemy: EnemyState, phase: DuelistPhase) {
   enemy.duelistSlashHit = false;
   if (phase === "windup") {
     enemy.duelistTimer = DUELIST_CONFIG.windupFrames;
+    playSfx("enemyWarning", 1.16);
   } else if (phase === "slash") {
     enemy.duelistTimer = DUELIST_CONFIG.slashFrames;
+    playSfx("enemySlash", 1.08);
   } else if (phase === "recover") {
     enemy.duelistTimer = randomFrameCount(
       DUELIST_CONFIG.recoverMinFrames,

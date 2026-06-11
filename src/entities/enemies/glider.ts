@@ -1,4 +1,5 @@
 import { state } from "../../state";
+import { playSfx } from "../../audio";
 import { ENEMY_SHEETS, GLIDER_SHEET_INDEX, GLIDER_SHEETS, GROUND_Y } from "../../constants";
 import { drawSheetFrame } from "../../graphics";
 import type { EnemyState, GliderPhase } from "../../types/game-state";
@@ -163,6 +164,7 @@ function enterGliderPhase(enemy: EnemyState, phase: GliderPhase) {
   if (phase === "windup") {
     enemy.gliderTimer = GLIDER_CONFIG.windupFrames;
     enemy.gliderDiveVy = 0;
+    playSfx("enemyWarning", 1.28);
   } else if (phase === "dive") {
     enemy.gliderTimer = GLIDER_CONFIG.diveFrames;
     const targetY = clamp(
@@ -175,6 +177,7 @@ function enterGliderPhase(enemy: EnemyState, phase: GliderPhase) {
       -GLIDER_CONFIG.diveMaxAbsVy,
       GLIDER_CONFIG.diveMaxAbsVy,
     );
+    playSfx("enemyDive");
   } else if (phase === "pass") {
     enemy.gliderTimer = GLIDER_CONFIG.passFrames;
   } else if (phase === "recover") {

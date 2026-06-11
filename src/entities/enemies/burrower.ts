@@ -1,4 +1,5 @@
 import { state } from "../../state";
+import { playSfx } from "../../audio";
 import {
   BURROWER_SHEET_INDEX,
   BURROWER_SHEETS,
@@ -105,6 +106,7 @@ function enterBurrowerPhase(enemy: EnemyState, phase: BurrowerPhase) {
     );
     enemy.burrowerPhaseDuration = enemy.burrowerTimer;
     enemy.burrowerTargetX = burrowerTargetLeft(enemy);
+    playSfx("enemyBurrow");
     return;
   }
 
@@ -124,6 +126,7 @@ function enterBurrowerPhase(enemy: EnemyState, phase: BurrowerPhase) {
     enemy.burrowerPhaseDuration = BURROWER_CONFIG.emergeFrames;
     enemy.x = enemy.burrowerTargetX ?? enemy.x;
     enemy.y = burrowerGroundTop(enemy);
+    playSfx("enemyEmerge");
     return;
   }
 

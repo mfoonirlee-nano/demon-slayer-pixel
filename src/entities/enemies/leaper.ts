@@ -1,5 +1,6 @@
 import { ctx } from "../../context";
 import { state } from "../../state";
+import { playSfx } from "../../audio";
 import {
   ENEMY_SHEETS,
   GROUND_Y,
@@ -136,16 +137,19 @@ function enterLeaperPhase(enemy: EnemyState, phase: LeaperPhase) {
     );
     enemy.leaperPhaseDuration = enemy.leaperTimer;
     enemy.leaperLandingX = leaperLandingLeft(enemy);
+    playSfx("enemyWarning", 0.78);
   } else if (phase === "leap") {
     enemy.leaperTimer = LEAPER_CONFIG.leapFrames;
     enemy.leaperPhaseDuration = LEAPER_CONFIG.leapFrames;
     enemy.leaperLeapStartX = enemy.x;
     enemy.leaperLeapStartY = enemy.y;
+    playSfx("enemyLeap", 0.92);
   } else if (phase === "impact") {
     enemy.leaperTimer = LEAPER_CONFIG.impactFrames;
     enemy.leaperPhaseDuration = LEAPER_CONFIG.impactFrames;
     enemy.x = enemy.leaperLandingX ?? enemy.x;
     enemy.y = leaperGroundTop(enemy);
+    playSfx("enemyImpact");
   } else if (phase === "recover") {
     enemy.leaperTimer = randomFrameCount(
       LEAPER_CONFIG.recoverMinFrames,

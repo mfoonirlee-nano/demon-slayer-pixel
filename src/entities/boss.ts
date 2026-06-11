@@ -53,7 +53,7 @@ import type {
 import { clamp, hitbox, frameIndex } from "../utils";
 import { drawSheetFrame } from "../graphics";
 import { ctx } from "../context";
-import { playTone } from "../audio";
+import { playSfx } from "../audio";
 import { hurtPlayer } from "./player";
 import { spawnEnemy } from "./enemy";
 import { damageEnemy } from "./enemies/common";
@@ -99,18 +99,7 @@ export function spawnBoss(id?: BossArchetypeId) {
     recoveryTimer: 0,
     awakened,
   };
-  playTone(
-    BOSS_CONFIG.tones.spawnPrimary.frequency,
-    BOSS_CONFIG.tones.spawnPrimary.duration,
-    "sawtooth",
-    BOSS_CONFIG.tones.spawnPrimary.volume,
-  );
-  playTone(
-    BOSS_CONFIG.tones.spawnSecondary.frequency,
-    BOSS_CONFIG.tones.spawnSecondary.duration,
-    "sawtooth",
-    BOSS_CONFIG.tones.spawnSecondary.volume,
-  );
+  playSfx("bossSpawn");
 }
 
 export function updateBoss() {
@@ -165,8 +154,7 @@ function updateBossPhase(boss: LiveBoss) {
     boss.actionState = "windup";
     boss.actionTimer = 0;
     boss.vx = 0;
-    playTone(150 + boss.phase * 20, 0.13, "sawtooth", 0.05);
-    playTone(420 + boss.phase * 30, 0.08, "triangle", 0.04);
+    playSfx("bossPhaseShift", 1 + boss.phase * 0.04);
   }
 }
 
@@ -201,8 +189,7 @@ function updateSpiderStringBoss(boss: LiveBoss) {
     boss.actionTimer = 0;
     boss.skillCd = BOSS_SKILL1_CONFIG.cooldown;
     boss.vx = 0;
-    playTone(220, 0.14, "sawtooth", 0.06);
-    playTone(320, 0.1, "triangle", 0.05);
+    playSfx("bossCast", 0.92);
     return;
   }
 
@@ -224,21 +211,11 @@ function updateSpiderStringBoss(boss: LiveBoss) {
           damage: BOSS_CONFIG.projectileBaseDamage + boss.phase,
         });
       }
-      playTone(
-        BOSS_CONFIG.tones.projectile.frequency,
-        BOSS_CONFIG.tones.projectile.duration,
-        "sawtooth",
-        BOSS_CONFIG.tones.projectile.volume,
-      );
+      playSfx("bossProjectile", 1 + boss.phase * 0.04);
     } else if (canAutoSpawnEntities()) {
       spawnEnemy();
       if (boss.phase >= BOSS_CONFIG.summonExtraEnemyPhase) spawnEnemy();
-      playTone(
-        BOSS_CONFIG.tones.summon.frequency,
-        BOSS_CONFIG.tones.summon.duration,
-        "square",
-        BOSS_CONFIG.tones.summon.volume,
-      );
+      playSfx("bossSummon", 0.92);
     }
     boss.aiTimer = BOSS_CONFIG.aiBaseCooldown - boss.phase * BOSS_CONFIG.aiPhaseReduction;
   }
@@ -455,8 +432,7 @@ function startBloodMoonCast(boss: LiveBoss) {
   boss.skillCd = bloodMoonSkillCooldown(boss);
   boss.vx = 0;
 
-  playTone(160, 0.14, "sawtooth", 0.055);
-  playTone(460, 0.09, "triangle", 0.045);
+  playSfx("bossCast", boss.skillMode === "bloodMoonManyFaces" ? 0.78 : 0.88);
 }
 
 function nextBloodMoonSkill(boss: LiveBoss) {
@@ -555,7 +531,7 @@ function spawnBloodMoonSpiderMist(boss: LiveBoss, delay = 0, damageScale = 1) {
       hitDone: false,
     });
   });
-  playTone(125, 0.12, "sawtooth", 0.05);
+  playSfx("bossFire", 0.8);
 }
 
 function spawnBloodMoonMirrorFang(boss: LiveBoss, delay = 0, damageScale = 1) {
@@ -580,7 +556,7 @@ function spawnBloodMoonMirrorFang(boss: LiveBoss, delay = 0, damageScale = 1) {
     hitPlayerCd: 0,
     hitDone: false,
   });
-  playTone(520, 0.08, "triangle", 0.045);
+  playSfx("bossBlade", 1.1);
 }
 
 function spawnBloodMoonLanternBell(boss: LiveBoss) {
@@ -611,7 +587,7 @@ function spawnBloodMoonLanternBell(boss: LiveBoss) {
   }
   spawnLanternFireline(boss);
   spawnDeadBellBlade(boss, playerBladeLane(), DEAD_BELL_CONFIG.bladeWarningFrames);
-  playTone(180, 0.16, "square", 0.05);
+  playSfx("bossSummon", 0.82);
 }
 
 function spawnBloodMoonSixfold(boss: LiveBoss) {
@@ -643,7 +619,7 @@ function spawnBloodMoonSixfold(boss: LiveBoss) {
   } else {
     spawnDeadBellWave(boss, 16, Math.floor(DEAD_BELL_CONFIG.waveMaxRadius * 0.82));
   }
-  playTone(230, 0.12, "sawtooth", 0.05);
+  playSfx("bossUltimate", 0.92);
 }
 
 function spawnBloodMoonManyFaces(boss: LiveBoss) {
@@ -651,7 +627,7 @@ function spawnBloodMoonManyFaces(boss: LiveBoss) {
   spawnBloodMoonMirrorFang(boss, 18, 0.72);
   spawnDeadBellWave(boss, 36, Math.floor(DEAD_BELL_CONFIG.waveMaxRadius * 0.82));
   spawnBloodMoonManyFacesBurst(boss, BLOOD_MOON_CONFIG.manyFacesDelayFrames);
-  playTone(90, 0.24, "sawtooth", 0.06);
+  playSfx("bossUltimate", 0.76);
 }
 
 function spawnBloodMoonManyFacesBurst(boss: LiveBoss, delay: number) {
@@ -696,8 +672,7 @@ function startLanternEmberCast(boss: LiveBoss) {
   boss.skillCd = lanternSkillCooldown(boss);
   boss.vx = 0;
 
-  playTone(190, 0.13, "sawtooth", 0.055);
-  playTone(360, 0.09, "triangle", 0.045);
+  playSfx("bossCast", 0.96);
 }
 
 function nextLanternEmberSkill(boss: LiveBoss) {
@@ -761,7 +736,7 @@ function spawnLanternSummon(boss: LiveBoss) {
     frame: 0,
     life: LANTERN_EMBER_CONFIG.lureLife,
   });
-  playTone(150, 0.14, "square", 0.05);
+  playSfx("bossSummon", 0.95);
 }
 
 function spawnLanternFireline(boss: LiveBoss) {
@@ -781,7 +756,7 @@ function spawnLanternFireline(boss: LiveBoss) {
     damage: LANTERN_EMBER_CONFIG.firelineDamageBase + boss.phase * LANTERN_EMBER_CONFIG.firelineDamagePhase,
     hitPlayer: false,
   });
-  playTone(120, 0.16, "sawtooth", 0.055);
+  playSfx("bossFire");
 }
 
 function spawnLanternBuff(boss: LiveBoss) {
@@ -800,7 +775,7 @@ function spawnLanternBuff(boss: LiveBoss) {
     });
   }
   if (targets.length === 0) spawnLanternSummon(boss);
-  playTone(260, 0.11, "sawtooth", 0.045);
+  playSfx("bossBuff");
 }
 
 function nearestLanternBuffTargets(boss: LiveBoss) {
@@ -833,7 +808,7 @@ function spawnLanternAwakenedGrid(boss: LiveBoss) {
     hitPlayerCd: 0,
   });
   spawnLanternAshZone(boss);
-  playTone(100, 0.2, "sawtooth", 0.06);
+  playSfx("bossUltimate", 0.84);
 }
 
 function spawnLanternAshZone(boss: LiveBoss) {
@@ -926,8 +901,7 @@ function startDeadBellCast(boss: LiveBoss) {
     : Math.max(160, DEAD_BELL_CONFIG.skillCooldown - boss.phase * 18);
   boss.vx = 0;
 
-  playTone(170, 0.16, "sawtooth", 0.055);
-  playTone(410, 0.12, "triangle", 0.05);
+  playSfx("bossCast", 0.9);
 }
 
 function spawnDeadBellPattern(boss: LiveBoss) {
@@ -964,7 +938,7 @@ function spawnDeadBellWave(boss: LiveBoss, delay: number, maxRadius: number) {
     damage: DEAD_BELL_CONFIG.damageBase + boss.phase * DEAD_BELL_CONFIG.damagePhase,
     hitPlayer: false,
   });
-  playTone(130, 0.18, "sine", 0.06);
+  playSfx("bossWave");
 }
 
 function playerBladeLane() {
@@ -991,6 +965,7 @@ function spawnDeadBellBlade(boss: LiveBoss, centerY: number, delay: number) {
     life: DEAD_BELL_CONFIG.bladeLife,
     damage: DEAD_BELL_CONFIG.damageBase + boss.phase * DEAD_BELL_CONFIG.damagePhase + 2,
   });
+  playSfx("bossBlade", delay > 0 ? 0.92 : 1);
 }
 
 function startMirrorDreamCast(boss: LiveBoss) {
@@ -1005,8 +980,7 @@ function startMirrorDreamCast(boss: LiveBoss) {
   boss.skillCd = Math.max(150, MIRROR_DREAM_CONFIG.skillCooldown - boss.phase * 18);
   boss.vx = 0;
 
-  playTone(260, 0.12, "triangle", 0.055);
-  playTone(520, 0.08, "sine", 0.045);
+  playSfx("bossCast", 1.12);
 }
 
 function nextMirrorDreamSkill(boss: LiveBoss) {
@@ -1020,14 +994,13 @@ function spawnMirrorDreamPattern(boss: LiveBoss) {
   if (boss.skillMode === "mirrorAfterimage") {
     spawnMirrorAfterimage(boss, undefined);
     teleportMirrorDreamBoss(boss);
-    playTone(620, 0.08, "sine", 0.05);
+    playSfx("bossMirror", 1.12);
     return;
   }
 
   if (boss.skillMode === "mirrorNightmare") {
     spawnMirrorNightmareImages(boss);
-    playTone(140, 0.18, "triangle", 0.055);
-    playTone(740, 0.09, "sine", 0.04);
+    playSfx("bossMirror", 0.82);
     return;
   }
 
@@ -1108,7 +1081,7 @@ function spawnMirrorShardFromBoss(boss: LiveBoss) {
     damage: MIRROR_DREAM_CONFIG.damageBase + boss.phase * MIRROR_DREAM_CONFIG.damagePhase,
     bouncesRemaining: 1,
   });
-  playTone(480, 0.08, "sawtooth", 0.045);
+  playSfx("bossMirror", 1.04);
 }
 
 function spawnMirrorNightmareShard(afterimage: MirrorAfterimageState) {
@@ -1129,7 +1102,7 @@ function spawnMirrorNightmareShard(afterimage: MirrorAfterimageState) {
     damage: afterimage.damage,
     bouncesRemaining: 0,
   });
-  playTone(660, 0.06, "triangle", 0.035);
+  playSfx("bossMirror", 1.22);
 }
 
 function spawnMirrorShard(params: {
@@ -1349,7 +1322,7 @@ function spawnBossSkill1Effect(boss: LiveBoss) {
     damage,
     hitPlayerCd: 0,
   });
-  playTone(180, 0.1, "sawtooth", 0.06);
+  playSfx("bossProjectile", 0.86);
 }
 
 export function updateBossSkill1Effects() {
@@ -1762,7 +1735,7 @@ function updateMirrorShards() {
       shard.facing = shard.vx >= 0 ? 1 : -1;
       shard.bouncesRemaining -= 1;
       shard.frame = Math.min(MIRROR_SHARD_SHEET.count - 1, 4);
-      playTone(720, 0.05, "triangle", 0.035);
+      playSfx("bossMirror", 1.28);
     }
 
     if (hitbox(state.player, shard)) {

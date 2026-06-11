@@ -10,6 +10,7 @@ import type { SpriteSheet } from "../../types/assets";
 import type { EnemyState } from "../../types/game-state";
 import { frameIndex } from "../../utils";
 import { drawSheetFrame } from "../../graphics";
+import { playSfx } from "../../audio";
 
 const HALF_DIVISOR = 2;
 
@@ -48,6 +49,7 @@ export type EnemyDefeatContext = {
 
 function breakBruteShield(enemy: EnemyState) {
   if (enemy.bruteShieldBroken) return;
+  playSfx("enemyShieldBreak");
   enemy.bruteShieldHp = 0;
   enemy.bruteShieldBroken = true;
   enemy.brutePhase = "shieldBreak";

@@ -1,4 +1,5 @@
 import { state } from "../../state";
+import { playSfx } from "../../audio";
 import { ENEMY_SHEETS, RUNNER_SHEET_INDEX, RUNNER_SHEETS } from "../../constants";
 import type { EnemyState, RunnerPhase } from "../../types/game-state";
 import { ctx } from "../../context";
@@ -104,6 +105,7 @@ function updateRunner(enemy: EnemyState) {
       enemy.runnerPhase = "windup";
       enemy.runnerTimer = randomFrameCount(RUNNER_CONFIG.windupMinFrames, RUNNER_CONFIG.windupFrameJitter);
       enemy.vx = 0;
+      playSfx("enemyWarning", 1.08);
     }
   } else if (enemy.runnerPhase === "windup") {
     enemy.runnerFacing = facing;
@@ -117,6 +119,7 @@ function updateRunner(enemy: EnemyState) {
         enemy.runnerTimer = randomFrameCount(RUNNER_CONFIG.dashMinFrames, RUNNER_CONFIG.dashFrameJitter);
         enemy.runnerFacing = facing;
         enemy.vx = facing * runnerDashSpeed();
+        playSfx("enemyDash", 1.08);
       }
     }
   } else if (enemy.runnerPhase === "dash") {

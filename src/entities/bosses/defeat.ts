@@ -1,4 +1,4 @@
-import { playTone } from "../../audio";
+import { playSfx } from "../../audio";
 import { PLAYER_COMBAT, RUNTIME_CONFIG } from "../../constants";
 import { recordBossCoverKill } from "../../coverProgress";
 import { state } from "../../state";
@@ -21,12 +21,7 @@ export function defeatBoss() {
   state.player.score += PLAYER_COMBAT.bossKillScore;
   recordBossCoverKill();
   gainBossKillEnergy();
-  playTone(
-    PLAYER_COMBAT.tones.bossKill.frequency,
-    PLAYER_COMBAT.tones.bossKill.duration,
-    "triangle",
-    PLAYER_COMBAT.tones.bossKill.volume,
-  );
+  playSfx("bossKill");
   state.bossKills += 1;
   state.boss = null;
   state.bossSpawnTimer = defeatedBossId === BOSS_ARCHETYPE_IDS.bloodMoon
