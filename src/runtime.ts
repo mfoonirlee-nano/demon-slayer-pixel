@@ -19,7 +19,7 @@ import { updatePlayer, drawPlayer, triggerAttack, castSelectedSkill, castUltimat
 import { spawnEnemy, spawnEnemyBySheetIndex, updateEnemies, drawEnemy } from "./entities/enemy";
 import { updateBindingZones, drawBindingZonesBack, drawBindingZonesFront } from "./entities/enemies/binder";
 import { drawWardenAuraIndicators } from "./entities/enemies/warden";
-import { spawnBoss, updateBoss, drawBoss, updateBossSkill1Effects, drawBossSkill1Effects, updateDeadBellEffects, drawDeadBellEffects, updateMirrorDreamEffects, drawMirrorDreamEffects, updateLanternEmberEffects, drawLanternEmberEffects } from "./entities/boss";
+import { spawnBoss, updateBoss, drawBoss, updateBossSkill1Effects, drawBossSkill1Effects, updateDeadBellEffects, drawDeadBellEffects, updateMirrorDreamEffects, drawMirrorDreamEffects, updateLanternEmberEffects, drawLanternEmberEffects, updateBloodMoonEffects, drawBloodMoonEffects } from "./entities/boss";
 import {
   spawnMapSegmentOfKind,
   spawnNextMapSegment,
@@ -141,6 +141,7 @@ function loop(ts: number) {
     updateDeadBellEffects();
     updateMirrorDreamEffects();
     updateLanternEmberEffects();
+    updateBloodMoonEffects();
     updateProjectiles();
     updateParticles();
     updateSkillBursts();
@@ -194,6 +195,7 @@ function loop(ts: number) {
   drawDeadBellEffects();
   drawMirrorDreamEffects();
   drawLanternEmberEffects();
+  drawBloodMoonEffects();
   drawSkill1Effects();
   drawGroundTileFront();
   drawSkill2Effects();

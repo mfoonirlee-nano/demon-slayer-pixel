@@ -1,7 +1,8 @@
 import { playTone } from "../../audio";
-import { PLAYER_COMBAT } from "../../constants";
+import { PLAYER_COMBAT, RUNTIME_CONFIG } from "../../constants";
 import { recordBossCoverKill } from "../../coverProgress";
 import { state } from "../../state";
+import { BOSS_ARCHETYPE_IDS } from "./registry";
 
 function gainBossKillEnergy() {
   const p = state.player;
@@ -16,6 +17,7 @@ function gainBossKillEnergy() {
 export function defeatBoss() {
   if (!state.boss || state.boss.hp > 0) return false;
 
+  const defeatedBossId = state.boss.id;
   state.player.score += PLAYER_COMBAT.bossKillScore;
   recordBossCoverKill();
   gainBossKillEnergy();
@@ -27,6 +29,8 @@ export function defeatBoss() {
   );
   state.bossKills += 1;
   state.boss = null;
-  state.bossSpawnTimer = PLAYER_COMBAT.skillChargeResetDelay;
+  state.bossSpawnTimer = defeatedBossId === BOSS_ARCHETYPE_IDS.bloodMoon
+    ? RUNTIME_CONFIG.disableBossSpawnTimer
+    : PLAYER_COMBAT.skillChargeResetDelay;
   return true;
 }

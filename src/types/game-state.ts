@@ -33,6 +33,12 @@ export type BossArchetypeId =
   | "blood-moon-many-faces";
 export type BossActionState = "move" | "cast" | "windup" | "dash" | "recover";
 export type BossSkillEffectKind = "spiderString";
+export type BloodMoonEffectKind =
+  | "spiderMist"
+  | "mirrorFang"
+  | "lanternBell"
+  | "sixfold"
+  | "manyFaces";
 export type BossSkillMode =
   | "spiderString"
   | "deadBellSingle"
@@ -44,7 +50,12 @@ export type BossSkillMode =
   | "lanternLure"
   | "lanternFireline"
   | "lanternBuff"
-  | "lanternAwakenedGrid";
+  | "lanternAwakenedGrid"
+  | "bloodMoonSpiderMist"
+  | "bloodMoonMirrorFang"
+  | "bloodMoonLanternBell"
+  | "bloodMoonSixfold"
+  | "bloodMoonManyFaces";
 export type ProjectileKind = "boss" | "bossBone" | "casterWisp";
 export type MirrorShardKind = "shard" | "nightmare";
 
@@ -212,6 +223,7 @@ export type BossState = {
   skillMode: BossSkillMode;
   recoveryTimer: number;
   awakened: boolean;
+  phaseShiftTimer?: number;
 } | null;
 
 export type BossSkill1EffectState = {
@@ -347,6 +359,24 @@ export type LanternEmberAshZoneState = {
   elapsed: number;
   frame: number;
   damage: number;
+};
+
+export type BloodMoonEffectState = {
+  kind: BloodMoonEffectKind;
+  x: number;
+  y: number;
+  w: number;
+  h: number;
+  vx: number;
+  facing: number;
+  delay: number;
+  warningFrames: number;
+  elapsed: number;
+  frame: number;
+  life: number;
+  damage: number;
+  hitPlayerCd: number;
+  hitDone: boolean;
 };
 
 export type BindingZoneState = {
@@ -496,5 +526,6 @@ export type GameState = {
   lanternEmberBuffTethers: LanternEmberBuffTetherState[];
   lanternEmberAwakenedGrids: LanternEmberAwakenedGridState[];
   lanternEmberAshZones: LanternEmberAshZoneState[];
+  bloodMoonEffects: BloodMoonEffectState[];
   crystals: CrystalState[];
 };

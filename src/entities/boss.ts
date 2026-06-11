@@ -5,6 +5,19 @@ import {
   GROUND_Y,
   BOSS_CONFIG,
   BOSS_SKILL1_CONFIG,
+  BLOOD_MOON_CONFIG,
+  BLOOD_MOON_LANTERN_BELL_CAST_SHEET,
+  BLOOD_MOON_LANTERN_BELL_EFFECT_SHEET,
+  BLOOD_MOON_MANY_FACES_CAST_SHEET,
+  BLOOD_MOON_MANY_FACES_EFFECT_SHEET,
+  BLOOD_MOON_MIRROR_FANG_CAST_SHEET,
+  BLOOD_MOON_MIRROR_FANG_EFFECT_SHEET,
+  BLOOD_MOON_PHASE_SHIFT_SHEET,
+  BLOOD_MOON_RECOVER_SHEET,
+  BLOOD_MOON_SIXFOLD_CAST_SHEET,
+  BLOOD_MOON_SIXFOLD_EFFECT_SHEET,
+  BLOOD_MOON_SPIDER_MIST_CAST_SHEET,
+  BLOOD_MOON_SPIDER_MIST_EFFECT_SHEET,
   DEAD_BELL_BLADE_SHEET,
   DEAD_BELL_CONFIG,
   DEAD_BELL_WAVE_SHEET,
@@ -23,8 +36,10 @@ import {
   MIRROR_SHARD_SHEET,
 } from "../constants";
 import type {
+  BossArchetypeId,
   BossSkill1EffectState,
   BossState,
+  BloodMoonEffectState,
   DeadBellBladeState,
   DeadBellWaveState,
   LanternEmberAshZoneState,
@@ -47,8 +62,8 @@ import { BOSS_ARCHETYPE_IDS, bossArchetypeForId, bossArchetypeForKillCount } fro
 
 type LiveBoss = NonNullable<BossState>;
 
-export function spawnBoss() {
-  const archetype = bossArchetypeForKillCount(state.bossKills);
+export function spawnBoss(id?: BossArchetypeId) {
+  const archetype = id ? bossArchetypeForId(id) : bossArchetypeForKillCount(state.bossKills);
   const act = state.bossKills + 1;
   const awakened = archetype.id === BOSS_ARCHETYPE_IDS.lanternEmber
     && act >= archetype.awakenedUnlockAct;
@@ -127,6 +142,8 @@ export function updateBoss() {
     updateLanternEmberBoss(boss);
   } else if (boss.id === BOSS_ARCHETYPE_IDS.mirrorDream) {
     updateMirrorDreamBoss(boss);
+  } else if (boss.id === BOSS_ARCHETYPE_IDS.bloodMoon) {
+    updateBloodMoonBoss(boss);
   } else {
     updateSpiderStringBoss(boss);
   }
@@ -138,9 +155,18 @@ function updateBossPhase(boss: LiveBoss) {
     ? [0.75, 0.5, 0.25]
     : archetype.phaseThresholds;
   const hpRatio = boss.hp / boss.hpMax;
+  const previousPhase = boss.phase;
   boss.phase = 1;
   for (const threshold of phaseThresholds) {
     if (hpRatio < threshold) boss.phase += 1;
+  }
+  if (boss.id === BOSS_ARCHETYPE_IDS.bloodMoon && boss.phase > previousPhase) {
+    boss.phaseShiftTimer = BLOOD_MOON_CONFIG.phaseShiftFrames;
+    boss.actionState = "windup";
+    boss.actionTimer = 0;
+    boss.vx = 0;
+    playTone(150 + boss.phase * 20, 0.13, "sawtooth", 0.05);
+    playTone(420 + boss.phase * 30, 0.08, "triangle", 0.04);
   }
 }
 
@@ -353,6 +379,303 @@ function updateLanternEmberBoss(boss: LiveBoss) {
 
   moveLanternEmberBoss(boss);
   damagePlayerOnContact(boss);
+}
+
+function updateBloodMoonBoss(boss: LiveBoss) {
+  if ((boss.phaseShiftTimer ?? 0) > 0) {
+    boss.phaseShiftTimer = Math.max(0, (boss.phaseShiftTimer ?? 0) - 1);
+    boss.vx *= BLOOD_MOON_CONFIG.drag;
+    if (boss.phaseShiftTimer <= 0) {
+      boss.actionState = "move";
+      boss.actionTimer = 0;
+    }
+    damagePlayerOnContact(boss);
+    return;
+  }
+
+  if (boss.recoveryTimer > 0) {
+    boss.recoveryTimer -= 1;
+    boss.vx *= BLOOD_MOON_CONFIG.drag;
+    if (boss.recoveryTimer <= 0) {
+      boss.actionState = "move";
+      boss.actionTimer = 0;
+    }
+    damagePlayerOnContact(boss);
+    return;
+  }
+
+  if (boss.castTimer > 0) {
+    boss.vx = 0;
+    const castDuration = bloodMoonCastDuration(boss);
+    const spawnAtFrame = boss.skillMode === "bloodMoonManyFaces"
+      ? BLOOD_MOON_CONFIG.finalSpawnAtFrame
+      : BLOOD_MOON_CONFIG.spawnAtFrame;
+    const framesSinceCastStart = castDuration - boss.castTimer;
+
+    boss.castTimer -= 1;
+    if (!boss.skillEffectSpawned && framesSinceCastStart >= spawnAtFrame) {
+      boss.skillEffectSpawned = true;
+      spawnBloodMoonPattern(boss);
+    }
+    if (boss.castTimer <= 0) {
+      boss.actionState = "recover";
+      boss.actionTimer = 0;
+      boss.recoveryTimer = boss.skillMode === "bloodMoonManyFaces"
+        ? BLOOD_MOON_CONFIG.finalRecoveryFrames
+        : BLOOD_MOON_CONFIG.recoveryFrames;
+    }
+    damagePlayerOnContact(boss);
+    return;
+  }
+
+  if (boss.skillCd <= 0) {
+    startBloodMoonCast(boss);
+    return;
+  }
+
+  moveBloodMoonBoss(boss);
+  damagePlayerOnContact(boss);
+}
+
+function bloodMoonCastDuration(boss: LiveBoss) {
+  return boss.skillMode === "bloodMoonManyFaces"
+    ? BLOOD_MOON_CONFIG.finalCastDuration
+    : BLOOD_MOON_CONFIG.castDuration;
+}
+
+function startBloodMoonCast(boss: LiveBoss) {
+  const toPlayer = state.player.x + state.player.w / 2 - (boss.x + boss.w / 2);
+  boss.castFacing = toPlayer >= 0 ? 1 : -1;
+  boss.facing = boss.castFacing;
+  boss.skillMode = nextBloodMoonSkill(boss);
+  boss.castTimer = bloodMoonCastDuration(boss);
+  boss.skillEffectSpawned = false;
+  boss.actionState = "cast";
+  boss.actionTimer = 0;
+  boss.skillCd = bloodMoonSkillCooldown(boss);
+  boss.vx = 0;
+
+  playTone(160, 0.14, "sawtooth", 0.055);
+  playTone(460, 0.09, "triangle", 0.045);
+}
+
+function nextBloodMoonSkill(boss: LiveBoss) {
+  if (boss.phase >= 5) return "bloodMoonManyFaces";
+  if (boss.phase === 4) return "bloodMoonSixfold";
+  if (boss.phase === 3) return "bloodMoonLanternBell";
+  if (boss.phase === 2) return "bloodMoonMirrorFang";
+  return "bloodMoonSpiderMist";
+}
+
+function bloodMoonSkillCooldown(boss: LiveBoss) {
+  if (boss.skillMode === "bloodMoonManyFaces") return BLOOD_MOON_CONFIG.finalSkillCooldown;
+  return Math.max(142, BLOOD_MOON_CONFIG.skillCooldown - boss.phase * 12);
+}
+
+function moveBloodMoonBoss(boss: LiveBoss) {
+  const playerCenter = state.player.x + state.player.w / 2;
+  const bossCenter = boss.x + boss.w / 2;
+  const toPlayer = playerCenter - bossCenter;
+  const distance = Math.abs(toPlayer);
+  boss.facing = toPlayer >= 0 ? 1 : -1;
+  boss.actionState = "move";
+
+  if (distance < BLOOD_MOON_CONFIG.closeDistance) {
+    boss.vx -= Math.sign(toPlayer) * BLOOD_MOON_CONFIG.retreatForce;
+  } else if (distance > BLOOD_MOON_CONFIG.preferredDistance) {
+    boss.vx += Math.sign(toPlayer) * (
+      BLOOD_MOON_CONFIG.moveSteeringForce
+      + boss.phase * BLOOD_MOON_CONFIG.phaseSteeringForce
+    );
+  } else {
+    boss.vx *= 0.84;
+  }
+
+  boss.vx *= BLOOD_MOON_CONFIG.drag;
+  boss.vx = clamp(
+    boss.vx,
+    -(BLOOD_MOON_CONFIG.maxVelocityBase + boss.phase * BLOOD_MOON_CONFIG.maxVelocityPhase),
+    BLOOD_MOON_CONFIG.maxVelocityBase + boss.phase * BLOOD_MOON_CONFIG.maxVelocityPhase,
+  );
+  boss.x += boss.vx;
+  boss.x = clamp(boss.x, 0, WIDTH - boss.w);
+}
+
+function spawnBloodMoonPattern(boss: LiveBoss) {
+  if (boss.skillMode === "bloodMoonMirrorFang") {
+    spawnBloodMoonMirrorFang(boss);
+  } else if (boss.skillMode === "bloodMoonLanternBell") {
+    spawnBloodMoonLanternBell(boss);
+  } else if (boss.skillMode === "bloodMoonSixfold") {
+    spawnBloodMoonSixfold(boss);
+  } else if (boss.skillMode === "bloodMoonManyFaces") {
+    spawnBloodMoonManyFaces(boss);
+  } else {
+    spawnBloodMoonSpiderMist(boss);
+  }
+}
+
+function bloodMoonDamage(base: number, boss: LiveBoss, scale = 1) {
+  return (base + boss.phase * BLOOD_MOON_CONFIG.damagePhase) * scale;
+}
+
+function playerFootSurfaceY() {
+  return state.player.onPlatform?.y ?? GROUND_Y;
+}
+
+function spawnBloodMoonEffect(effect: BloodMoonEffectState) {
+  state.bloodMoonEffects.push(effect);
+}
+
+function spawnBloodMoonSpiderMist(boss: LiveBoss, delay = 0, damageScale = 1) {
+  const hitW = BLOOD_MOON_CONFIG.spiderMistHitW;
+  const hitH = BLOOD_MOON_CONFIG.spiderMistHitH;
+  const playerCenter = state.player.x + state.player.w / 2;
+  const count = boss.phase >= 4 ? 2 : 1;
+  const offsets = count === 1 ? [0] : [-70, 70];
+
+  offsets.forEach((offset, index) => {
+    const x = clamp(playerCenter - hitW / 2 + offset, 0, WIDTH - hitW);
+    const surfaceY = playerFootSurfaceY();
+    spawnBloodMoonEffect({
+      kind: "spiderMist",
+      x,
+      y: surfaceY - hitH,
+      w: hitW,
+      h: hitH,
+      vx: 0,
+      facing: boss.castFacing,
+      delay: delay + index * 10,
+      warningFrames: BLOOD_MOON_CONFIG.spiderMistWarningFrames,
+      elapsed: 0,
+      frame: 0,
+      life: BLOOD_MOON_CONFIG.spiderMistLife,
+      damage: bloodMoonDamage(BLOOD_MOON_CONFIG.spiderMistDamageBase, boss, damageScale),
+      hitPlayerCd: 0,
+      hitDone: false,
+    });
+  });
+  playTone(125, 0.12, "sawtooth", 0.05);
+}
+
+function spawnBloodMoonMirrorFang(boss: LiveBoss, delay = 0, damageScale = 1) {
+  const hitW = BLOOD_MOON_CONFIG.mirrorFangHitW;
+  const hitH = BLOOD_MOON_CONFIG.mirrorFangHitH;
+  const startX = boss.castFacing === 1 ? boss.x + boss.w : boss.x - hitW;
+  const playerCenterY = state.player.y + state.player.h / 2;
+  spawnBloodMoonEffect({
+    kind: "mirrorFang",
+    x: clamp(startX, -hitW, WIDTH),
+    y: clamp(playerCenterY - hitH / 2, 140, GROUND_Y - hitH),
+    w: hitW,
+    h: hitH,
+    vx: boss.castFacing * (BLOOD_MOON_CONFIG.mirrorFangSpeed + boss.phase * 0.18),
+    facing: boss.castFacing,
+    delay,
+    warningFrames: BLOOD_MOON_CONFIG.mirrorFangWarningFrames,
+    elapsed: 0,
+    frame: 0,
+    life: BLOOD_MOON_CONFIG.mirrorFangLife,
+    damage: bloodMoonDamage(BLOOD_MOON_CONFIG.mirrorFangDamageBase, boss, damageScale),
+    hitPlayerCd: 0,
+    hitDone: false,
+  });
+  playTone(520, 0.08, "triangle", 0.045);
+}
+
+function spawnBloodMoonLanternBell(boss: LiveBoss) {
+  spawnBloodMoonEffect({
+    kind: "lanternBell",
+    x: boss.x + boss.w / 2 - 92,
+    y: boss.y + boss.h * 0.18,
+    w: 184,
+    h: 150,
+    vx: 0,
+    facing: boss.castFacing,
+    delay: 0,
+    warningFrames: 0,
+    elapsed: 0,
+    frame: 0,
+    life: BLOOD_MOON_CONFIG.lanternBellLife,
+    damage: 0,
+    hitPlayerCd: 0,
+    hitDone: true,
+  });
+
+  if (canAutoSpawnEntities()) {
+    const spawnCount = Math.min(2, Math.max(0, BLOOD_MOON_CONFIG.summonMaxEnemies - state.enemies.length));
+    for (let i = 0; i < spawnCount; i += 1) spawnEnemy();
+  }
+  for (const enemy of state.enemies.slice(0, BLOOD_MOON_CONFIG.summonMaxEnemies)) {
+    enemy.lanternBuffTimer = Math.max(enemy.lanternBuffTimer ?? 0, Math.floor(LANTERN_EMBER_CONFIG.buffFrames * 0.45));
+  }
+  spawnLanternFireline(boss);
+  spawnDeadBellBlade(boss, playerBladeLane(), DEAD_BELL_CONFIG.bladeWarningFrames);
+  playTone(180, 0.16, "square", 0.05);
+}
+
+function spawnBloodMoonSixfold(boss: LiveBoss) {
+  spawnBloodMoonEffect({
+    kind: "sixfold",
+    x: boss.x + boss.w / 2 - 100,
+    y: boss.y + boss.h * 0.08,
+    w: 200,
+    h: 170,
+    vx: 0,
+    facing: boss.castFacing,
+    delay: 0,
+    warningFrames: 0,
+    elapsed: 0,
+    frame: 0,
+    life: BLOOD_MOON_CONFIG.sixfoldLife,
+    damage: 0,
+    hitPlayerCd: 0,
+    hitDone: true,
+  });
+
+  const roll = Math.floor(Math.random() * 4);
+  if (roll === 0) {
+    spawnBloodMoonSpiderMist(boss, 18, 0.86);
+  } else if (roll === 1) {
+    spawnBloodMoonMirrorFang(boss, 16, 0.86);
+  } else if (roll === 2) {
+    spawnLanternFireline(boss);
+  } else {
+    spawnDeadBellWave(boss, 16, Math.floor(DEAD_BELL_CONFIG.waveMaxRadius * 0.82));
+  }
+  playTone(230, 0.12, "sawtooth", 0.05);
+}
+
+function spawnBloodMoonManyFaces(boss: LiveBoss) {
+  spawnBloodMoonSpiderMist(boss, 0, 0.72);
+  spawnBloodMoonMirrorFang(boss, 18, 0.72);
+  spawnDeadBellWave(boss, 36, Math.floor(DEAD_BELL_CONFIG.waveMaxRadius * 0.82));
+  spawnBloodMoonManyFacesBurst(boss, BLOOD_MOON_CONFIG.manyFacesDelayFrames);
+  playTone(90, 0.24, "sawtooth", 0.06);
+}
+
+function spawnBloodMoonManyFacesBurst(boss: LiveBoss, delay: number) {
+  const hitW = BLOOD_MOON_CONFIG.manyFacesHitW;
+  const hitH = BLOOD_MOON_CONFIG.manyFacesHitH;
+  const playerCenter = state.player.x + state.player.w / 2;
+  const playerMid = state.player.y + state.player.h / 2;
+  spawnBloodMoonEffect({
+    kind: "manyFaces",
+    x: clamp(playerCenter - hitW / 2, 0, WIDTH - hitW),
+    y: clamp(playerMid - hitH / 2, 96, GROUND_Y - hitH),
+    w: hitW,
+    h: hitH,
+    vx: 0,
+    facing: boss.castFacing,
+    delay,
+    warningFrames: BLOOD_MOON_CONFIG.manyFacesWarningFrames,
+    elapsed: 0,
+    frame: 0,
+    life: BLOOD_MOON_CONFIG.manyFacesLife,
+    damage: bloodMoonDamage(BLOOD_MOON_CONFIG.manyFacesDamageBase, boss),
+    hitPlayerCd: 0,
+    hitDone: false,
+  });
 }
 
 function lanternCastDuration(boss: LiveBoss) {
@@ -851,6 +1174,24 @@ export function drawBoss() {
   const centerX = boss.x + boss.w / 2;
   const feetY = boss.y + boss.h;
 
+  if (boss.id === BOSS_ARCHETYPE_IDS.bloodMoon && (boss.phaseShiftTimer ?? 0) > 0) {
+    const elapsed = BLOOD_MOON_CONFIG.phaseShiftFrames - (boss.phaseShiftTimer ?? 0);
+    const frame = Math.min(
+      BLOOD_MOON_PHASE_SHIFT_SHEET.count - 1,
+      Math.floor(elapsed / BLOOD_MOON_CONFIG.phaseShiftFrameDuration),
+    );
+    drawSheetFrame(
+      BLOOD_MOON_PHASE_SHIFT_SHEET,
+      frame,
+      centerX - archetype.castDrawW / 2,
+      feetY - archetype.castDrawH + archetype.castBottomPadding,
+      archetype.castDrawW,
+      archetype.castDrawH,
+      boss.facing,
+    );
+    return;
+  }
+
   if (boss.castTimer > 0) {
     const castSheet = bossCastSheet(boss);
     const castDuration = bossCastDuration(boss);
@@ -870,6 +1211,27 @@ export function drawBoss() {
       boss.castFacing,
     );
     drawDeadBellBeatCue(boss);
+    return;
+  }
+
+  if (boss.id === BOSS_ARCHETYPE_IDS.bloodMoon && boss.recoveryTimer > 0) {
+    const recoveryDuration = boss.skillMode === "bloodMoonManyFaces"
+      ? BLOOD_MOON_CONFIG.finalRecoveryFrames
+      : BLOOD_MOON_CONFIG.recoveryFrames;
+    const elapsed = recoveryDuration - boss.recoveryTimer;
+    const frame = Math.min(
+      BLOOD_MOON_RECOVER_SHEET.count - 1,
+      Math.floor(elapsed / BLOOD_MOON_CONFIG.recoverFrameDuration),
+    );
+    drawSheetFrame(
+      BLOOD_MOON_RECOVER_SHEET,
+      frame,
+      centerX - archetype.castDrawW / 2,
+      feetY - archetype.castDrawH + archetype.castBottomPadding,
+      archetype.castDrawW,
+      archetype.castDrawH,
+      boss.facing,
+    );
     return;
   }
 
@@ -893,10 +1255,19 @@ export function drawBoss() {
 
 function bossCastSheet(boss: LiveBoss) {
   const archetype = bossArchetypeForId(boss.id);
+  if (boss.id === BOSS_ARCHETYPE_IDS.bloodMoon) return bloodMoonCastSheet(boss);
   if (boss.id !== BOSS_ARCHETYPE_IDS.lanternEmber) return archetype.sheets.cast;
   if (boss.skillMode === "lanternFireline") return LANTERN_EMBER_FIRELINE_CAST_SHEET;
   if (boss.skillMode === "lanternBuff") return LANTERN_EMBER_BUFF_CAST_SHEET;
   return LANTERN_EMBER_SUMMON_SHEET;
+}
+
+function bloodMoonCastSheet(boss: LiveBoss) {
+  if (boss.skillMode === "bloodMoonMirrorFang") return BLOOD_MOON_MIRROR_FANG_CAST_SHEET;
+  if (boss.skillMode === "bloodMoonLanternBell") return BLOOD_MOON_LANTERN_BELL_CAST_SHEET;
+  if (boss.skillMode === "bloodMoonSixfold") return BLOOD_MOON_SIXFOLD_CAST_SHEET;
+  if (boss.skillMode === "bloodMoonManyFaces") return BLOOD_MOON_MANY_FACES_CAST_SHEET;
+  return BLOOD_MOON_SPIDER_MIST_CAST_SHEET;
 }
 
 function bossCastDuration(boss: LiveBoss) {
@@ -907,6 +1278,7 @@ function bossCastDuration(boss: LiveBoss) {
   }
   if (boss.id === BOSS_ARCHETYPE_IDS.lanternEmber) return lanternCastDuration(boss);
   if (boss.id === BOSS_ARCHETYPE_IDS.mirrorDream) return MIRROR_DREAM_CONFIG.castDuration;
+  if (boss.id === BOSS_ARCHETYPE_IDS.bloodMoon) return bloodMoonCastDuration(boss);
   return BOSS_SKILL1_CONFIG.castDuration;
 }
 
@@ -914,6 +1286,7 @@ function bossCastFrameDuration(boss: LiveBoss) {
   if (boss.id === BOSS_ARCHETYPE_IDS.deadBell) return DEAD_BELL_CONFIG.castFrameDuration;
   if (boss.id === BOSS_ARCHETYPE_IDS.lanternEmber) return LANTERN_EMBER_CONFIG.castFrameDuration;
   if (boss.id === BOSS_ARCHETYPE_IDS.mirrorDream) return MIRROR_DREAM_CONFIG.castFrameDuration;
+  if (boss.id === BOSS_ARCHETYPE_IDS.bloodMoon) return BLOOD_MOON_CONFIG.castFrameDuration;
   return BOSS_SKILL1_CONFIG.castFrameDuration;
 }
 
@@ -1114,6 +1487,98 @@ export function updateLanternEmberEffects() {
   updateLanternFirelines();
   updateLanternAwakenedGrids();
   updateLanternAshZones();
+}
+
+function bloodMoonEffectSpec(kind: BloodMoonEffectState["kind"]) {
+  if (kind === "mirrorFang") {
+    return {
+      sheet: BLOOD_MOON_MIRROR_FANG_EFFECT_SHEET,
+      frameDuration: BLOOD_MOON_CONFIG.mirrorFangFrameDuration,
+      drawW: BLOOD_MOON_CONFIG.mirrorFangDrawW,
+      drawH: BLOOD_MOON_CONFIG.mirrorFangDrawH,
+      groundAligned: false,
+      bottomPadding: 0,
+    };
+  }
+  if (kind === "lanternBell") {
+    return {
+      sheet: BLOOD_MOON_LANTERN_BELL_EFFECT_SHEET,
+      frameDuration: BLOOD_MOON_CONFIG.lanternBellFrameDuration,
+      drawW: BLOOD_MOON_CONFIG.lanternBellDrawW,
+      drawH: BLOOD_MOON_CONFIG.lanternBellDrawH,
+      groundAligned: false,
+      bottomPadding: 0,
+    };
+  }
+  if (kind === "sixfold") {
+    return {
+      sheet: BLOOD_MOON_SIXFOLD_EFFECT_SHEET,
+      frameDuration: BLOOD_MOON_CONFIG.sixfoldFrameDuration,
+      drawW: BLOOD_MOON_CONFIG.sixfoldDrawW,
+      drawH: BLOOD_MOON_CONFIG.sixfoldDrawH,
+      groundAligned: false,
+      bottomPadding: 0,
+    };
+  }
+  if (kind === "manyFaces") {
+    return {
+      sheet: BLOOD_MOON_MANY_FACES_EFFECT_SHEET,
+      frameDuration: BLOOD_MOON_CONFIG.manyFacesFrameDuration,
+      drawW: BLOOD_MOON_CONFIG.manyFacesDrawW,
+      drawH: BLOOD_MOON_CONFIG.manyFacesDrawH,
+      groundAligned: false,
+      bottomPadding: 0,
+    };
+  }
+  return {
+    sheet: BLOOD_MOON_SPIDER_MIST_EFFECT_SHEET,
+    frameDuration: BLOOD_MOON_CONFIG.spiderMistFrameDuration,
+    drawW: BLOOD_MOON_CONFIG.spiderMistDrawW,
+    drawH: BLOOD_MOON_CONFIG.spiderMistDrawH,
+    groundAligned: true,
+    bottomPadding: 14,
+  };
+}
+
+export function updateBloodMoonEffects() {
+  for (let i = state.bloodMoonEffects.length - 1; i >= 0; i -= 1) {
+    const effect = state.bloodMoonEffects[i] as BloodMoonEffectState;
+    if (effect.delay > 0) {
+      effect.delay -= 1;
+      continue;
+    }
+
+    const spec = bloodMoonEffectSpec(effect.kind);
+    effect.elapsed += 1;
+    effect.life -= 1;
+    if (effect.hitPlayerCd > 0) effect.hitPlayerCd -= 1;
+
+    const activeElapsed = Math.max(0, effect.elapsed - effect.warningFrames);
+    effect.frame = Math.min(
+      spec.sheet.count - 1,
+      Math.floor(activeElapsed / spec.frameDuration),
+    );
+
+    if (effect.kind === "mirrorFang" && effect.elapsed > effect.warningFrames) {
+      effect.x += effect.vx;
+    }
+
+    if (
+      effect.damage > 0
+      && effect.elapsed > effect.warningFrames
+      && !effect.hitDone
+      && effect.hitPlayerCd <= 0
+      && hitbox(state.player, effect)
+    ) {
+      hurtPlayer(effect.damage, effect.vx || effect.x - (state.player.x + state.player.w / 2));
+      effect.hitDone = true;
+      effect.hitPlayerCd = BLOOD_MOON_CONFIG.hitPlayerCooldown;
+    }
+
+    const offLeft = effect.kind === "mirrorFang" && effect.x + effect.w < -spec.drawW;
+    const offRight = effect.kind === "mirrorFang" && effect.x > WIDTH + spec.drawW;
+    if (effect.life <= 0 || offLeft || offRight) state.bloodMoonEffects.splice(i, 1);
+  }
 }
 
 function updateLanternLures() {
@@ -1345,6 +1810,63 @@ export function drawLanternEmberEffects() {
   drawLanternAwakenedGrids();
   drawLanternLures();
   drawLanternBuffTethers();
+}
+
+export function drawBloodMoonEffects() {
+  if (!ctx) return;
+  for (const effect of state.bloodMoonEffects) {
+    if (effect.delay > 0) continue;
+    drawBloodMoonEffectWarning(effect);
+
+    const spec = bloodMoonEffectSpec(effect.kind);
+    if (!spec.sheet.image) continue;
+    const centerX = effect.x + effect.w / 2;
+    const drawX = centerX - spec.drawW / 2;
+    const drawY = spec.groundAligned
+      ? effect.y + effect.h - spec.drawH + spec.bottomPadding
+      : effect.y + effect.h / 2 - spec.drawH / 2;
+    const fade = clamp(effect.life / Math.max(1, effect.life + effect.elapsed), 0.24, 1);
+
+    ctx.save();
+    ctx.globalAlpha = effect.elapsed <= effect.warningFrames ? 0.42 : fade;
+    drawSheetFrame(
+      spec.sheet,
+      effect.frame,
+      drawX,
+      drawY,
+      spec.drawW,
+      spec.drawH,
+      effect.facing,
+    );
+    ctx.restore();
+  }
+}
+
+function drawBloodMoonEffectWarning(effect: BloodMoonEffectState) {
+  if (!ctx || effect.warningFrames <= 0 || effect.elapsed > effect.warningFrames) return;
+  const progress = clamp(effect.elapsed / effect.warningFrames, 0, 1);
+  ctx.save();
+  ctx.globalAlpha = 0.26 + progress * 0.36;
+  ctx.strokeStyle = effect.kind === "mirrorFang" ? "#f0d08a" : "#e04038";
+  ctx.fillStyle = effect.kind === "manyFaces"
+    ? "rgba(150, 16, 28, 0.18)"
+    : "rgba(210, 42, 42, 0.14)";
+  ctx.lineWidth = effect.kind === "manyFaces" ? 3 : 2;
+  ctx.setLineDash(effect.kind === "mirrorFang" ? [18, 10] : [8, 7]);
+
+  if (effect.kind === "mirrorFang") {
+    const y = effect.y + effect.h / 2;
+    ctx.beginPath();
+    ctx.moveTo(0, y);
+    ctx.lineTo(WIDTH, y);
+    ctx.stroke();
+  } else {
+    ctx.fillRect(effect.x, effect.y, effect.w, effect.h);
+    ctx.strokeRect(effect.x, effect.y, effect.w, effect.h);
+  }
+
+  ctx.setLineDash([]);
+  ctx.restore();
 }
 
 function drawLanternLures() {
