@@ -77,12 +77,12 @@
 
 ### P0：发布与项目口径
 
-* [ ] 去除鬼灭之刃、炭治郎、下弦之鬼等直接 IP 指向，统一替换成完全原创命名和表现。
+* [ ] 去除外部 IP 指向、角色名和阵营名等直接指向，统一替换成完全原创命名和表现。
   * 来源：旧 `docs/TODO.md`；`docs/music-direction.md` 已要求音乐保持原创，不直接模仿现成动漫/游戏配乐。
   * 验收：README、页面标题、Canvas aria-label、HUD/暂停面板、文档、素材目录和文件名都不再出现需要避开的第三方 IP 表述。
 * [ ] 统一“当前已实现”和“目标设计未实现”的描述口径。
   * 来源：`docs/game-design/README.md`、`docs/game-design/system-status.md`。
-  * 验收：README 和对外介绍只写当前可玩内容；XP、装备、13 幕、觉醒 Boss、终幕等未接入内容只能作为后续计划。
+  * 验收：README 和对外介绍只写当前可玩内容；XP、装备、13 幕、蚀醒 Boss、终幕等未接入内容只能作为后续计划。
 * [ ] 建立发布前质量门禁。
   * 来源：项目已有 `typecheck`、`lint`、`build` 脚本，但缺少统一发布验收记录。
   * 验收：每次发布前跑通 `npm run typecheck`、`npm run lint`、`npm run build`，并记录浏览器试玩结果。
@@ -119,9 +119,9 @@
 * [ ] 新增 `BOSS_ARCHETYPES` 和 Boss 注册表。
   * 来源：`docs/game-design/system-status.md`、`docs/numeric-system/implementation-order.md`。
   * 验收：`spawnBoss()` 按当前幕和配置选择 Boss；当前 Boss 首轮体验不回退；未完成 Boss 不进入池。
-* [ ] 完成基础 Boss、觉醒 Boss 与终幕 Boss 的内容骨架。
+* [ ] 完成基础 Boss、蚀醒 Boss 与终幕 Boss 的内容骨架。
   * 来源：`docs/game-design/content-roadmap.md`、`docs/game-design/act-structure.md`。
-  * 验收：6 个基础 Boss、6 个觉醒形态、终幕万相血月都有注册表占位、状态说明、素材接入计划和不进入池的保护规则。
+  * 验收：6 个基础 Boss、6 个蚀醒形态、终幕万相血月都有注册表占位、状态说明、素材接入计划和不进入池的保护规则。
 * [ ] 平台生成接入 `act` / `threatScalar`，继续调整“逐渐变多但不重叠”。
   * 来源：旧 `docs/TODO.md`、`docs/game-design/content-roadmap.md`、`docs/game-design/balance-acceptance.md`。
   * 验收：连续 5 个片段内不出现明显不可达主路线；高压片段后有喘息片段；Boss 战期间平台压力降低。
@@ -188,7 +188,7 @@
 
 ### P6：完整内容与长期目标
 
-* [ ] 完成 13 幕主线：1-6 基础 Boss、7-12 觉醒形态、13 终幕万相血月。
+* [ ] 完成 13 幕主线：1-6 基础 Boss、7-12 蚀醒形态、13 终幕万相血月。
   * 来源：`docs/game-design/system-status.md`、`docs/game-design/content-roadmap.md`、`docs/game-design/balance-acceptance.md`。
   * 验收：每幕新机制可识别，一次完整 1→13 清版目标时长约 18-22 分钟。
 * [ ] 完成通关胜利结算。

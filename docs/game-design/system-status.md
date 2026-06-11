@@ -23,11 +23,11 @@
 | 普攻与下落攻击 | 普攻、下落攻击、命中、击退、粒子和音效已实现 | 补更明确的命中/击杀反馈规范 | 已实现 | P4 | `src/entities/player.ts`、`docs/numeric-system/player.md` |
 | 技能与大招 | 三个技能、大招、技能能量、大招能量已实现 | 建立 `SKILL_DEFS` 注册表、`skillLevels`、`ultimateLevel` 和解锁/升级读取方式 | 部分实现 | P3 | `src/constants/assets.ts`、`src/entities/player.ts` |
 | 普通敌人 | `chaser`、`crawler`、`runner`、`caster`、`duelist`、`brute`、`glider`、`binder` 已有运行时 archetype/state machine；生成仍主要按时间和随机 sheet | 显式 `ENEMY_ARCHETYPES`、`ACT_ENEMY_POOLS`、预算、同屏 cap、按幕轮换 | 部分实现 | P1 | `src/entities/enemies/`、`src/entities/enemy.ts` |
-| Boss | 当前单例 Boss 已实现入场、阶段、追踪、弹幕、召唤和 Boss 技能 1；原案定位为 `下弦之鬼 · 蛛弦` | `BOSS_ARCHETYPES`、Boss 池、Boss 轮换、统一死亡入口 `defeatBoss()` | 部分实现 | P1 | `src/entities/boss.ts`、`docs/art/bosses/spider-string.md` |
+| Boss | 当前单例 Boss 已实现入场、阶段、追踪、弹幕、召唤和 Boss 技能 1；原案定位为 `血月眷属 · 蛛弦` | `BOSS_ARCHETYPES`、Boss 池、Boss 轮换、统一死亡入口 `defeatBoss()` | 部分实现 | P1 | `src/entities/boss.ts`、`docs/art/bosses/spider-string.md` |
 | Boss 击杀推进 | Boss 死亡奖励分散在玩家多个伤害分支；无 `bossKills` | 所有 Boss 死亡路径统一调用 `defeatBoss()`，推进 `bossKills`、装备掉落和重生节奏 | 目标设计，未实现 | P1 | `src/entities/player.ts`、`docs/numeric-system/boss-archetypes.md` |
 | 幕数与威胁值 | 当前难度主要读取 `elapsed`，没有幕数和统一威胁值 | `act = bossKills + 1`（上限 13），分段 `threatScalar` 协调敌人、Boss、平台和奖励 | 目标设计，未实现 | P1 | `docs/numeric-system/act-and-threat.md` |
-| 13 幕闯关阶梯 | 当前是单例 Boss 按时间重复出场，无幕结构 | 固定 13 幕：1-6 基础 Boss、7-12 觉醒形态、13 终幕，击败即通关 | 目标设计，未实现 | P4 | [act-structure.md](act-structure.md) |
-| 觉醒形态 Boss | 未实现 | 第 7-12 幕同序觉醒：基础 Boss + 一招觉醒血鬼术 + 多一阶段 + 强化召唤，复用基础精灵 | 目标设计，未实现 | P4 | `docs/numeric-system/boss-archetypes.md` |
+| 13 幕闯关阶梯 | 当前是单例 Boss 按时间重复出场，无幕结构 | 固定 13 幕：1-6 基础 Boss、7-12 蚀醒形态、13 终幕，击败即通关 | 目标设计，未实现 | P4 | [act-structure.md](act-structure.md) |
+| 蚀醒形态 Boss | 未实现 | 第 7-12 幕同序蚀醒：基础 Boss + 一招蚀醒妖术 + 多一阶段 + 强化召唤，复用基础精灵 | 目标设计，未实现 | P4 | `docs/numeric-system/boss-archetypes.md` |
 | 终幕万相血月 | `bossKills >= 12` 后出场；5 阶段换相借招、专属施法/特效和击败后停止 Boss 重生已接入 | 第 13 幕击败出胜利结算，不进任何轮换池；死亡动画状态机和通关后进阶待接 | 部分实现 | P4 | `docs/art/bosses/blood-moon-many-faces.md` |
 | 通关后进阶难度 | 未实现 | 血月试炼可叠加难度层（横向解锁，不给局外永久战力） | 目标设计，未实现 | P5 | `docs/numeric-system/endgame-ascension.md` |
 | 地图生成 | 片段式平台生成、张力、奖励预算、低层恢复和防重叠已实现 | 按幕数调整片段权重和平台速度，保留喘息片段 | 部分实现 | P2 | `src/entities/platform.ts`、`docs/map-generation.md` |
@@ -49,7 +49,7 @@
 3. 地图生成已经比较完整，但还没有读取幕数/威胁值。
 4. XP 和装备都还只是目标设计，缺少运行时状态、选择队列和 overlay。
 5. UI overlay 之间缺少统一队列规则；升级三选一和装备三选一不能同时覆盖。
-6. 13 幕骨架（6 基础 + 6 觉醒 + 终幕）只有设计文档，没有 Boss 注册表、觉醒叠加逻辑或终幕换相；通关后进阶难度尚未设计落地点。
+6. 13 幕骨架（6 基础 + 6 蚀醒 + 终幕）只有设计文档，没有 Boss 注册表、蚀醒叠加逻辑或终幕换相；通关后进阶难度尚未设计落地点。
 
 ## Status Source Rule
 

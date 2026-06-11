@@ -35,7 +35,7 @@
 | `player_attack.png` | `5120x480` | 8 | `640x480` | `attack` | 普攻按 `BASIC_ATTACK.frames` 线性播放完整 8 帧 |
 | `player_fall_attack.png` | `5120x560` | 8 | `640x560` | `fallAttack` | 前 5 帧为空中下刺，后 3 帧为落地恢复 |
 
-玩家运行时图集以 `assets/art/player-concept.png` 为角色身份基准：深蓝羽织、水纹衣摆、金属护具、月形腰饰和蓝白水流刀光。所有玩家运行时图集源方向统一朝右；朝左由 `drawSheetFrame()` 根据玩家 `facing` 镜像绘制。普攻帧由 `attackTimer` 映射到完整 `attack` 图集，不使用全局 elapsed 循环；下落攻击由 `fallAttackTimer` 映射到 0-4 帧，由 `fallAttackRecoveryTimer` 映射到 5-7 帧。
+玩家运行时图集以 `assets/art/player-concept.png` 为角色身份基准：深蓝短披风、潮纹衣摆、金属护具、月形腰饰和蓝白潮流刀光。所有玩家运行时图集源方向统一朝右；朝左由 `drawSheetFrame()` 根据玩家 `facing` 镜像绘制。普攻帧由 `attackTimer` 映射到完整 `attack` 图集，不使用全局 elapsed 循环；下落攻击由 `fallAttackTimer` 映射到 0-4 帧，由 `fallAttackRecoveryTimer` 映射到 5-7 帧。
 
 ### 技能和技能特效
 
@@ -50,7 +50,7 @@
 | `ultimate_skill.png` | `2400x496` | 6 | `400x496` | `ULTIMATE_SKILL_SHEET` |
 | `ultimate_skill_effect.png` | `3840x360` | 8 | `480x360` | `ULTIMATE_SKILL_EFFECT_SHEET` |
 
-玩家技能特效以 `assets/art/player-concept.png`、`assets/art/player-skills-concept.png` 和 `assets/art/player-ultimate-concept.png` 为视觉基准：深蓝水之呼吸、银白浪尖、泡沫碎点和月形水纹。`skill1_effect.png` 是 5 帧右向水龙投射物，和 `SKILLS.skill1` 的 5 帧动作对应，水龙不会进入消失帧，`loopFromFrame` 从第 2 帧开始循环并直接冲出屏幕；`skill2_effect.png` 是 6 帧贴身半月潮刃，和 `SKILLS.skill2` 的 6 帧动作对应；`skill3_effect.png` 是 6 帧环身防反水幕；`ultimate_skill_effect.png` 是 8 帧月蓝半月潮环，按 `PLAYER_COMBAT.ultimateEffectFrameDuration` 播放。以上透明 PNG 均由运行时根据玩家 `facing` 或中心点绘制，不改变技能伤害、命中冷却或玩法。
+玩家技能特效以 `assets/art/player-concept.png`、`assets/art/player-skills-concept.png` 和 `assets/art/player-ultimate-concept.png` 为视觉基准：深蓝月潮流、银白浪尖、泡沫碎点和月形水纹。`skill1_effect.png` 是 5 帧右向水龙投射物，和 `SKILLS.skill1` 的 5 帧动作对应，水龙不会进入消失帧，`loopFromFrame` 从第 2 帧开始循环并直接冲出屏幕；`skill2_effect.png` 是 6 帧贴身半月潮刃，和 `SKILLS.skill2` 的 6 帧动作对应；`skill3_effect.png` 是 6 帧环身防反水幕；`ultimate_skill_effect.png` 是 8 帧月蓝半月潮环，按 `PLAYER_COMBAT.ultimateEffectFrameDuration` 播放。以上透明 PNG 均由运行时根据玩家 `facing` 或中心点绘制，不改变技能伤害、命中冷却或玩法。
 
 ### 敌人和 Boss
 
@@ -108,7 +108,7 @@
 | `boss/blood-moon-many-faces/blood_moon_sixfold_effect.png` | `3360x350` | 8 | `420x350` | `BLOOD_MOON_SIXFOLD_EFFECT_SHEET` |
 | `boss/blood-moon-many-faces/blood_moon_many_faces_effect.png` | `5760x420` | 12 | `480x420` | `BLOOD_MOON_MANY_FACES_EFFECT_SHEET` |
 
-Boss 当前普通运行时轮换为 `蛛弦 -> 镜魇 -> 灯烬 -> 枯铃`，`bossKills >= 12` 后进入终幕 `万相血月`。`蛛弦` 使用 `spider-string/` 下的 `boss*` 三张图；`镜魇` 使用 `mirror-dream/` 下的本体、共用施法、月镜碎片、假身留影和镜中噩梦图集；`灯烬` 使用 `lantern-ember/` 下的本体、三张施法、召唤牵引、贴地火线、强化连线、觉醒火线网格、灰烬减速区和死亡预留图集；`枯铃` 使用 `dead_bell/` 下的本体、摇铃施法、声波环和横向音刃图集。`mirror_shard.png` 用于可左右边界折返一次的反射弹；`mirror_afterimage.png` 用于不造成接触伤害的假身；`mirror_nightmare.png` 用于镜影破碎后朝玩家方向发射的碎光。`灯烬` 的觉醒形态复用基础本体，运行时增加移动火线网格和灰烬减速区；当前击败流程仍沿用全局 Boss 即时结算，`lantern_ember_death.png` 和 `blood_moon_death.png` 作为后续死亡状态机素材预留。`万相血月` 使用 `blood-moon-many-faces/` 下的换相、恢复、五招施法和五招特效图集；击败后停止 Boss 重生，胜利结算 UI 尚未接入。以上 Boss 素材不提交 `*_source.png` 绿幕制作源图；运行时只加载透明 PNG。
+Boss 当前普通运行时轮换为 `蛛弦 -> 镜魇 -> 灯烬 -> 枯铃`，`bossKills >= 12` 后进入终幕 `万相血月`。`蛛弦` 使用 `spider-string/` 下的 `boss*` 三张图；`镜魇` 使用 `mirror-dream/` 下的本体、共用施法、月镜碎片、假身留影和镜中噩梦图集；`灯烬` 使用 `lantern-ember/` 下的本体、三张施法、召唤牵引、贴地火线、强化连线、蚀醒火线网格、灰烬减速区和死亡预留图集；`枯铃` 使用 `dead_bell/` 下的本体、摇铃施法、声波环和横向音刃图集。`mirror_shard.png` 用于可左右边界折返一次的反射弹；`mirror_afterimage.png` 用于不造成接触伤害的假身；`mirror_nightmare.png` 用于镜影破碎后朝玩家方向发射的碎光。`灯烬` 的蚀醒形态复用基础本体，运行时增加移动火线网格和灰烬减速区；当前击败流程仍沿用全局 Boss 即时结算，`lantern_ember_death.png` 和 `blood_moon_death.png` 作为后续死亡状态机素材预留。`万相血月` 使用 `blood-moon-many-faces/` 下的换相、恢复、五招施法和五招特效图集；击败后停止 Boss 重生，胜利结算 UI 尚未接入。以上 Boss 素材不提交 `*_source.png` 绿幕制作源图；运行时只加载透明 PNG。
 
 Crawler 专属动作素材：
 
