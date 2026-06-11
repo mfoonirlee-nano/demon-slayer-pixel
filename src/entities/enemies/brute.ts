@@ -47,6 +47,7 @@ const BRUTE_CONFIG = {
   collisionScaleY: 0.94,
   advanceAnimSpeed: 9,
   brokenAdvanceAnimSpeed: 9,
+  shieldBashDrawScaleY: 1.24,
 } as const;
 
 const HALF_DIVISOR = 2;
@@ -308,7 +309,8 @@ function drawBrute(enemy: EnemyState) {
 
   const frame = brutePhaseFrame(enemy, phase);
   const drawW = Math.round(sheet.frameW * drawScale);
-  const drawH = Math.round(sheet.frameH * drawScale);
+  const drawHScale = phase === "shieldBash" ? BRUTE_CONFIG.shieldBashDrawScaleY : 1;
+  const drawH = Math.round(sheet.frameH * drawScale * drawHScale);
   const centerX = enemyCenterX(enemy);
   const feetY = enemyFeetY(enemy);
   drawSheetFrame(sheet, frame, centerX - drawW / HALF_DIVISOR, feetY - drawH, drawW, drawH, facing);
