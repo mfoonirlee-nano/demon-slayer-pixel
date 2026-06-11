@@ -16,6 +16,7 @@ import { DebugPanel } from "./debug";
 import { startGame } from "./runtime";
 import { gameSnapshotAtom, gameStore, setGameSnapshot, type GameSnapshot } from "./gameStore";
 import { StartScreen } from "./startScreen";
+import { ensureAudio } from "./audio";
 
 type AppPhase = "menu" | "playing";
 
@@ -502,6 +503,7 @@ function AppShell() {
 
   const requestStart = useCallback(() => {
     if (phase !== "menu") return;
+    ensureAudio();
     setStartQueued(true);
     if (assetsReady) {
       setPhase("playing");

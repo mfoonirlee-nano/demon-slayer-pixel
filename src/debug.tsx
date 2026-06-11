@@ -7,19 +7,36 @@ import {
   DUELIST_SHEET_INDEX,
   ENEMY_SHEETS,
   GLIDER_SHEET_INDEX,
+  LEAPER_SHEET_INDEX,
   RUNNER_SHEET_INDEX,
   SPLITTER_SHEET_INDEX,
+  WARDEN_SHEET_INDEX,
+  BURROWER_SHEET_INDEX,
 } from "./constants";
+import { BOSS_ARCHETYPES } from "./entities/bosses/registry";
 import type { SegmentKind } from "./entities/platform";
+import type { BossArchetypeId } from "./types/game-state";
 
-export type DebugEnemyKind = "chaser" | "crawler" | "runner" | "caster" | "duelist" | "brute" | "binder" | "glider" | "splitter";
+export type DebugEnemyKind =
+  | "chaser"
+  | "crawler"
+  | "runner"
+  | "caster"
+  | "duelist"
+  | "brute"
+  | "binder"
+  | "glider"
+  | "leaper"
+  | "splitter"
+  | "warden"
+  | "burrower";
 
 type DebugRuntimeActions = {
   canSpawn: () => boolean;
   publish: () => void;
   spawnEnemySheet: (sheetIndex: number, side: number) => void;
   spawnPlatformSegment: (kind: SegmentKind) => void;
-  spawnBoss: () => void;
+  spawnBoss: (id?: BossArchetypeId) => void;
 };
 
 const CHASER_SHEET_INDEX = 0;
@@ -33,7 +50,10 @@ const DEBUG_ENEMY_SHEET_INDEX: Record<DebugEnemyKind, number> = {
   brute: BRUTE_SHEET_INDEX,
   binder: BINDER_SHEET_INDEX,
   glider: GLIDER_SHEET_INDEX,
+  leaper: LEAPER_SHEET_INDEX,
   splitter: SPLITTER_SHEET_INDEX,
+  warden: WARDEN_SHEET_INDEX,
+  burrower: BURROWER_SHEET_INDEX,
 };
 
 const DEBUG_ENEMY_OPTIONS: Array<{ kind: DebugEnemyKind; label: string }> = [
@@ -45,8 +65,16 @@ const DEBUG_ENEMY_OPTIONS: Array<{ kind: DebugEnemyKind; label: string }> = [
   { kind: "brute", label: "brute" },
   { kind: "binder", label: "binder" },
   { kind: "glider", label: "glider" },
+  { kind: "leaper", label: "leaper" },
   { kind: "splitter", label: "splitter" },
+  { kind: "warden", label: "warden" },
+  { kind: "burrower", label: "burrower" },
 ];
+
+const DEBUG_BOSS_OPTIONS = Object.values(BOSS_ARCHETYPES).map((boss) => ({
+  id: boss.id,
+  label: boss.displayName,
+}));
 
 const DEBUG_PLATFORM_OPTIONS: Array<{ kind: SegmentKind; label: string }> = [
   { kind: "safeBridge", label: "safeBridge" },
@@ -94,12 +122,13 @@ function spawnDebugPlatformSegment(kind: SegmentKind) {
   runDebugAction(() => runtimeActions.spawnPlatformSegment(kind));
 }
 
-function spawnDebugBoss() {
-  runDebugAction(runtimeActions.spawnBoss);
+function spawnDebugBoss(bossId: BossArchetypeId) {
+  runDebugAction(() => runtimeActions.spawnBoss(bossId));
 }
 
 export function DebugPanel() {
   const [enemyKind, setEnemyKind] = useState<DebugEnemyKind>("chaser");
+  const [bossId, setBossId] = useState<BossArchetypeId>(DEBUG_BOSS_OPTIONS[0]?.id ?? "spider-string");
   const [platformKind, setPlatformKind] = useState<SegmentKind>("safeBridge");
 
   if (!isDebugMode) return null;
@@ -150,13 +179,26 @@ export function DebugPanel() {
           Spawn
         </button>
       </div>
-      <button
-        type="button"
-        className="mt-2 w-full rounded-[4px] border border-[#ffcf7a99] bg-[#4a2b12] px-2 py-1.5 text-[9px] font-bold text-[#fff2c7] active:translate-y-px"
-        onClick={spawnDebugBoss}
-      >
-        Spawn Boss
-      </button>
+      <label className="mt-2 block text-[8px] text-[#ffd899]" htmlFor="debug-boss-kind">Boss</label>
+      <div className="mt-1 flex gap-1">
+        <select
+          id="debug-boss-kind"
+          className="min-w-0 flex-1 rounded-[4px] border border-[#ffcf7a66] bg-[#2c1d12] px-1 py-1 text-[9px] text-[#fff7dd]"
+          value={bossId}
+          onChange={(event) => setBossId(event.target.value as BossArchetypeId)}
+        >
+          {DEBUG_BOSS_OPTIONS.map((option) => (
+            <option key={option.id} value={option.id}>{option.label}</option>
+          ))}
+        </select>
+        <button
+          type="button"
+          className="rounded-[4px] border border-[#ffcf7a99] bg-[#4a2b12] px-2 py-1 text-[9px] font-bold text-[#fff2c7] active:translate-y-px"
+          onClick={() => spawnDebugBoss(bossId)}
+        >
+          Spawn
+        </button>
+      </div>
     </div>
   );
 }

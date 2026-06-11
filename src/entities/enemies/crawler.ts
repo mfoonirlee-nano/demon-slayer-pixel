@@ -1,4 +1,5 @@
 import { state } from "../../state";
+import { playSfx } from "../../audio";
 import { CRAWLER_SHEET_INDEX, CRAWLER_SHEETS, ENEMY_SHEETS } from "../../constants";
 import { drawSheetFrame } from "../../graphics";
 import type { CrawlerPhase, EnemyState } from "../../types/game-state";
@@ -93,8 +94,10 @@ function enterCrawlerPhase(enemy: EnemyState, phase: CrawlerPhase) {
   enemy.crawlerLungeHit = false;
   if (phase === "windup") {
     enemy.crawlerTimer = CRAWLER_CONFIG.windupFrames;
+    playSfx("enemyWarning", 0.92);
   } else if (phase === "lunge") {
     enemy.crawlerTimer = CRAWLER_CONFIG.lungeFrames;
+    playSfx("enemyLunge", 0.88);
   } else if (phase === "recover") {
     enemy.crawlerTimer = CRAWLER_CONFIG.recoverFrames;
   } else {

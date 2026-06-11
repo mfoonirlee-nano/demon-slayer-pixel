@@ -1,5 +1,6 @@
 import { ctx } from "../../context";
 import { state } from "../../state";
+import { playSfx } from "../../audio";
 import {
   BINDER_SHEET_INDEX,
   BINDER_SHEETS,
@@ -119,7 +120,13 @@ function applyBindingZoneDamage() {
 
   player.hp = Math.max(0, player.hp - bindingZoneDamage());
   player.invincible = BINDER_CONFIG.zoneDamageInvincibleFrames;
-  if (player.hp <= 0) state.gameOver = true;
+  playSfx("enemyImpact", 0.82);
+  if (player.hp <= 0) {
+    playSfx("playerDeath");
+    state.gameOver = true;
+  } else {
+    playSfx("playerHurt", 0.9);
+  }
 }
 
 function enterBinderPhase(enemy: EnemyState, phase: BinderAiPhase) {
@@ -127,6 +134,7 @@ function enterBinderPhase(enemy: EnemyState, phase: BinderAiPhase) {
   enemy.binderCastSpawned = false;
   if (phase === "windup") {
     enemy.binderTimer = BINDER_CONFIG.windupFrames;
+    playSfx("enemyCastStart", 0.86);
   } else if (phase === "cast") {
     enemy.binderTimer = BINDER_CONFIG.castFrames;
   } else if (phase === "recover") {
@@ -161,6 +169,7 @@ function spawnBindingZone() {
     elapsed: 0,
     frame: 0,
   });
+  playSfx("enemyCastRelease", 0.82);
 }
 
 function updateBinderSeek(enemy: EnemyState, facing: number, distance: number) {

@@ -677,7 +677,7 @@ export const ULTIMATE_SKILL_EFFECT_SHEET: SpriteSheet = {
 };
 
 export const BOSS_SHEET: SpriteSheet = {
-  src: "assets/sprites/enemies/boss/spider-string/boss.png",
+  src: "assets/sprites/boss/spider-string/boss.png",
   frameW: 350,
   frameH: 419,
   count: 4,
@@ -685,7 +685,7 @@ export const BOSS_SHEET: SpriteSheet = {
 };
 
 export const BOSS_SKILL1_SHEET: SpriteSheet = {
-  src: "assets/sprites/enemies/boss/spider-string/boss_skill1.png",
+  src: "assets/sprites/boss/spider-string/boss_skill1.png",
   frameW: 400,
   frameH: 400,
   count: 6,
@@ -693,7 +693,7 @@ export const BOSS_SKILL1_SHEET: SpriteSheet = {
 };
 
 export const BOSS_SKILL1_EFFECT_SHEET: SpriteSheet = {
-  src: "assets/sprites/enemies/boss/spider-string/boss_skill1_effect.png",
+  src: "assets/sprites/boss/spider-string/boss_skill1_effect.png",
   frameW: 400,
   frameH: 350,
   count: 6,
@@ -701,7 +701,7 @@ export const BOSS_SKILL1_EFFECT_SHEET: SpriteSheet = {
 };
 
 export const DEAD_BELL_SHEET: SpriteSheet = {
-  src: "assets/sprites/enemies/boss/dead_bell/dead_bell.png",
+  src: "assets/sprites/boss/dead_bell/dead_bell.png",
   frameW: 350,
   frameH: 419,
   count: 4,
@@ -709,7 +709,7 @@ export const DEAD_BELL_SHEET: SpriteSheet = {
 };
 
 export const DEAD_BELL_CAST_SHEET: SpriteSheet = {
-  src: "assets/sprites/enemies/boss/dead_bell/dead_bell_cast.png",
+  src: "assets/sprites/boss/dead_bell/dead_bell_cast.png",
   frameW: 400,
   frameH: 400,
   count: 6,
@@ -717,7 +717,7 @@ export const DEAD_BELL_CAST_SHEET: SpriteSheet = {
 };
 
 export const DEAD_BELL_WAVE_SHEET: SpriteSheet = {
-  src: "assets/sprites/enemies/boss/dead_bell/dead_bell_wave.png",
+  src: "assets/sprites/boss/dead_bell/dead_bell_wave.png",
   frameW: 400,
   frameH: 350,
   count: 6,
@@ -725,7 +725,7 @@ export const DEAD_BELL_WAVE_SHEET: SpriteSheet = {
 };
 
 export const DEAD_BELL_BLADE_SHEET: SpriteSheet = {
-  src: "assets/sprites/enemies/boss/dead_bell/dead_bell_blade.png",
+  src: "assets/sprites/boss/dead_bell/dead_bell_blade.png",
   frameW: 420,
   frameH: 180,
   count: 6,
@@ -733,7 +733,7 @@ export const DEAD_BELL_BLADE_SHEET: SpriteSheet = {
 };
 
 export const LANTERN_EMBER_SHEET: SpriteSheet = {
-  src: "assets/sprites/enemies/boss/lantern-ember/lantern_ember_move.png",
+  src: "assets/sprites/boss/lantern-ember/lantern_ember_move.png",
   frameW: 350,
   frameH: 419,
   count: 4,
@@ -741,7 +741,7 @@ export const LANTERN_EMBER_SHEET: SpriteSheet = {
 };
 
 export const LANTERN_EMBER_SUMMON_SHEET: SpriteSheet = {
-  src: "assets/sprites/enemies/boss/lantern-ember/lantern_ember_summon.png",
+  src: "assets/sprites/boss/lantern-ember/lantern_ember_summon.png",
   frameW: 400,
   frameH: 400,
   count: 6,
@@ -749,7 +749,7 @@ export const LANTERN_EMBER_SUMMON_SHEET: SpriteSheet = {
 };
 
 export const LANTERN_EMBER_FIRELINE_CAST_SHEET: SpriteSheet = {
-  src: "assets/sprites/enemies/boss/lantern-ember/lantern_ember_fireline_cast.png",
+  src: "assets/sprites/boss/lantern-ember/lantern_ember_fireline_cast.png",
   frameW: 400,
   frameH: 400,
   count: 6,
@@ -757,7 +757,7 @@ export const LANTERN_EMBER_FIRELINE_CAST_SHEET: SpriteSheet = {
 };
 
 export const LANTERN_EMBER_BUFF_CAST_SHEET: SpriteSheet = {
-  src: "assets/sprites/enemies/boss/lantern-ember/lantern_ember_buff_cast.png",
+  src: "assets/sprites/boss/lantern-ember/lantern_ember_buff_cast.png",
   frameW: 400,
   frameH: 400,
   count: 6,
@@ -765,7 +765,7 @@ export const LANTERN_EMBER_BUFF_CAST_SHEET: SpriteSheet = {
 };
 
 export const LANTERN_EMBER_DEATH_SHEET: SpriteSheet = {
-  src: "assets/sprites/enemies/boss/lantern-ember/lantern_ember_death.png",
+  src: "assets/sprites/boss/lantern-ember/lantern_ember_death.png",
   frameW: 400,
   frameH: 400,
   count: 6,
@@ -773,7 +773,7 @@ export const LANTERN_EMBER_DEATH_SHEET: SpriteSheet = {
 };
 
 export const LANTERN_EMBER_LURE_EFFECT_SHEET: SpriteSheet = {
-  src: "assets/sprites/enemies/boss/lantern-ember/lantern_ember_lure_effect.png",
+  src: "assets/sprites/boss/lantern-ember/lantern_ember_lure_effect.png",
   frameW: 400,
   frameH: 350,
   count: 6,
@@ -781,7 +781,7 @@ export const LANTERN_EMBER_LURE_EFFECT_SHEET: SpriteSheet = {
 };
 
 export const LANTERN_EMBER_FIRELINE_SHEET: SpriteSheet = {
-  src: "assets/sprites/enemies/boss/lantern-ember/lantern_ember_fireline.png",
+  src: "assets/sprites/boss/lantern-ember/lantern_ember_fireline.png",
   frameW: 480,
   frameH: 120,
   count: 8,
@@ -789,7 +789,7 @@ export const LANTERN_EMBER_FIRELINE_SHEET: SpriteSheet = {
 };
 
 export const LANTERN_EMBER_BUFF_TETHER_SHEET: SpriteSheet = {
-  src: "assets/sprites/enemies/boss/lantern-ember/lantern_ember_buff_tether.png",
+  src: "assets/sprites/boss/lantern-ember/lantern_ember_buff_tether.png",
   frameW: 400,
   frameH: 350,
   count: 6,
@@ -797,7 +797,7 @@ export const LANTERN_EMBER_BUFF_TETHER_SHEET: SpriteSheet = {
 };
 
 export const LANTERN_EMBER_AWAKENED_GRID_SHEET: SpriteSheet = {
-  src: "assets/sprites/enemies/boss/lantern-ember/lantern_ember_awakened_grid.png",
+  src: "assets/sprites/boss/lantern-ember/lantern_ember_awakened_grid.png",
   frameW: 480,
   frameH: 180,
   count: 8,
@@ -805,7 +805,7 @@ export const LANTERN_EMBER_AWAKENED_GRID_SHEET: SpriteSheet = {
 };
 
 export const LANTERN_EMBER_ASH_ZONE_SHEET: SpriteSheet = {
-  src: "assets/sprites/enemies/boss/lantern-ember/lantern_ember_ash_zone.png",
+  src: "assets/sprites/boss/lantern-ember/lantern_ember_ash_zone.png",
   frameW: 360,
   frameH: 140,
   count: 8,
@@ -813,7 +813,7 @@ export const LANTERN_EMBER_ASH_ZONE_SHEET: SpriteSheet = {
 };
 
 export const MIRROR_DREAM_SHEET: SpriteSheet = {
-  src: "assets/sprites/enemies/boss/mirror-dream/mirror_dream.png",
+  src: "assets/sprites/boss/mirror-dream/mirror_dream.png",
   frameW: 350,
   frameH: 419,
   count: 4,
@@ -821,7 +821,7 @@ export const MIRROR_DREAM_SHEET: SpriteSheet = {
 };
 
 export const MIRROR_DREAM_CAST_SHEET: SpriteSheet = {
-  src: "assets/sprites/enemies/boss/mirror-dream/mirror_dream_cast.png",
+  src: "assets/sprites/boss/mirror-dream/mirror_dream_cast.png",
   frameW: 400,
   frameH: 400,
   count: 6,
@@ -829,7 +829,7 @@ export const MIRROR_DREAM_CAST_SHEET: SpriteSheet = {
 };
 
 export const MIRROR_SHARD_SHEET: SpriteSheet = {
-  src: "assets/sprites/enemies/boss/mirror-dream/mirror_shard.png",
+  src: "assets/sprites/boss/mirror-dream/mirror_shard.png",
   frameW: 400,
   frameH: 350,
   count: 6,
@@ -837,7 +837,7 @@ export const MIRROR_SHARD_SHEET: SpriteSheet = {
 };
 
 export const MIRROR_AFTERIMAGE_SHEET: SpriteSheet = {
-  src: "assets/sprites/enemies/boss/mirror-dream/mirror_afterimage.png",
+  src: "assets/sprites/boss/mirror-dream/mirror_afterimage.png",
   frameW: 400,
   frameH: 400,
   count: 6,
@@ -845,7 +845,7 @@ export const MIRROR_AFTERIMAGE_SHEET: SpriteSheet = {
 };
 
 export const MIRROR_NIGHTMARE_SHEET: SpriteSheet = {
-  src: "assets/sprites/enemies/boss/mirror-dream/mirror_nightmare.png",
+  src: "assets/sprites/boss/mirror-dream/mirror_nightmare.png",
   frameW: 400,
   frameH: 350,
   count: 6,
@@ -853,7 +853,7 @@ export const MIRROR_NIGHTMARE_SHEET: SpriteSheet = {
 };
 
 export const BLOOD_MOON_SHEET: SpriteSheet = {
-  src: "assets/sprites/enemies/boss/blood-moon-many-faces/blood_moon.png",
+  src: "assets/sprites/boss/blood-moon-many-faces/blood_moon.png",
   frameW: 350,
   frameH: 419,
   count: 4,
@@ -861,7 +861,7 @@ export const BLOOD_MOON_SHEET: SpriteSheet = {
 };
 
 export const BLOOD_MOON_PHASE_SHIFT_SHEET: SpriteSheet = {
-  src: "assets/sprites/enemies/boss/blood-moon-many-faces/blood_moon_phase_shift.png",
+  src: "assets/sprites/boss/blood-moon-many-faces/blood_moon_phase_shift.png",
   frameW: 400,
   frameH: 400,
   count: 6,
@@ -869,7 +869,7 @@ export const BLOOD_MOON_PHASE_SHIFT_SHEET: SpriteSheet = {
 };
 
 export const BLOOD_MOON_RECOVER_SHEET: SpriteSheet = {
-  src: "assets/sprites/enemies/boss/blood-moon-many-faces/blood_moon_recover.png",
+  src: "assets/sprites/boss/blood-moon-many-faces/blood_moon_recover.png",
   frameW: 400,
   frameH: 400,
   count: 3,
@@ -877,7 +877,7 @@ export const BLOOD_MOON_RECOVER_SHEET: SpriteSheet = {
 };
 
 export const BLOOD_MOON_DEATH_SHEET: SpriteSheet = {
-  src: "assets/sprites/enemies/boss/blood-moon-many-faces/blood_moon_death.png",
+  src: "assets/sprites/boss/blood-moon-many-faces/blood_moon_death.png",
   frameW: 400,
   frameH: 419,
   count: 6,
@@ -885,7 +885,7 @@ export const BLOOD_MOON_DEATH_SHEET: SpriteSheet = {
 };
 
 export const BLOOD_MOON_SPIDER_MIST_CAST_SHEET: SpriteSheet = {
-  src: "assets/sprites/enemies/boss/blood-moon-many-faces/blood_moon_spider_mist_cast.png",
+  src: "assets/sprites/boss/blood-moon-many-faces/blood_moon_spider_mist_cast.png",
   frameW: 400,
   frameH: 400,
   count: 6,
@@ -893,7 +893,7 @@ export const BLOOD_MOON_SPIDER_MIST_CAST_SHEET: SpriteSheet = {
 };
 
 export const BLOOD_MOON_MIRROR_FANG_CAST_SHEET: SpriteSheet = {
-  src: "assets/sprites/enemies/boss/blood-moon-many-faces/blood_moon_mirror_fang_cast.png",
+  src: "assets/sprites/boss/blood-moon-many-faces/blood_moon_mirror_fang_cast.png",
   frameW: 400,
   frameH: 400,
   count: 6,
@@ -901,7 +901,7 @@ export const BLOOD_MOON_MIRROR_FANG_CAST_SHEET: SpriteSheet = {
 };
 
 export const BLOOD_MOON_LANTERN_BELL_CAST_SHEET: SpriteSheet = {
-  src: "assets/sprites/enemies/boss/blood-moon-many-faces/blood_moon_lantern_bell_cast.png",
+  src: "assets/sprites/boss/blood-moon-many-faces/blood_moon_lantern_bell_cast.png",
   frameW: 400,
   frameH: 400,
   count: 6,
@@ -909,7 +909,7 @@ export const BLOOD_MOON_LANTERN_BELL_CAST_SHEET: SpriteSheet = {
 };
 
 export const BLOOD_MOON_SIXFOLD_CAST_SHEET: SpriteSheet = {
-  src: "assets/sprites/enemies/boss/blood-moon-many-faces/blood_moon_sixfold_cast.png",
+  src: "assets/sprites/boss/blood-moon-many-faces/blood_moon_sixfold_cast.png",
   frameW: 400,
   frameH: 400,
   count: 6,
@@ -917,7 +917,7 @@ export const BLOOD_MOON_SIXFOLD_CAST_SHEET: SpriteSheet = {
 };
 
 export const BLOOD_MOON_MANY_FACES_CAST_SHEET: SpriteSheet = {
-  src: "assets/sprites/enemies/boss/blood-moon-many-faces/blood_moon_many_faces_cast.png",
+  src: "assets/sprites/boss/blood-moon-many-faces/blood_moon_many_faces_cast.png",
   frameW: 400,
   frameH: 400,
   count: 6,
@@ -925,7 +925,7 @@ export const BLOOD_MOON_MANY_FACES_CAST_SHEET: SpriteSheet = {
 };
 
 export const BLOOD_MOON_SPIDER_MIST_EFFECT_SHEET: SpriteSheet = {
-  src: "assets/sprites/enemies/boss/blood-moon-many-faces/blood_moon_spider_mist_effect.png",
+  src: "assets/sprites/boss/blood-moon-many-faces/blood_moon_spider_mist_effect.png",
   frameW: 420,
   frameH: 220,
   count: 8,
@@ -933,7 +933,7 @@ export const BLOOD_MOON_SPIDER_MIST_EFFECT_SHEET: SpriteSheet = {
 };
 
 export const BLOOD_MOON_MIRROR_FANG_EFFECT_SHEET: SpriteSheet = {
-  src: "assets/sprites/enemies/boss/blood-moon-many-faces/blood_moon_mirror_fang_effect.png",
+  src: "assets/sprites/boss/blood-moon-many-faces/blood_moon_mirror_fang_effect.png",
   frameW: 480,
   frameH: 260,
   count: 6,
@@ -941,7 +941,7 @@ export const BLOOD_MOON_MIRROR_FANG_EFFECT_SHEET: SpriteSheet = {
 };
 
 export const BLOOD_MOON_LANTERN_BELL_EFFECT_SHEET: SpriteSheet = {
-  src: "assets/sprites/enemies/boss/blood-moon-many-faces/blood_moon_lantern_bell_effect.png",
+  src: "assets/sprites/boss/blood-moon-many-faces/blood_moon_lantern_bell_effect.png",
   frameW: 420,
   frameH: 350,
   count: 8,
@@ -949,7 +949,7 @@ export const BLOOD_MOON_LANTERN_BELL_EFFECT_SHEET: SpriteSheet = {
 };
 
 export const BLOOD_MOON_SIXFOLD_EFFECT_SHEET: SpriteSheet = {
-  src: "assets/sprites/enemies/boss/blood-moon-many-faces/blood_moon_sixfold_effect.png",
+  src: "assets/sprites/boss/blood-moon-many-faces/blood_moon_sixfold_effect.png",
   frameW: 420,
   frameH: 350,
   count: 8,
@@ -957,12 +957,78 @@ export const BLOOD_MOON_SIXFOLD_EFFECT_SHEET: SpriteSheet = {
 };
 
 export const BLOOD_MOON_MANY_FACES_EFFECT_SHEET: SpriteSheet = {
-  src: "assets/sprites/enemies/boss/blood-moon-many-faces/blood_moon_many_faces_effect.png",
+  src: "assets/sprites/boss/blood-moon-many-faces/blood_moon_many_faces_effect.png",
   frameW: 480,
   frameH: 420,
   count: 12,
   image: null,
 };
+
+export const BLOOD_MOON_CONFIG = {
+  castDuration: 72,
+  finalCastDuration: 92,
+  spawnAtFrame: 34,
+  finalSpawnAtFrame: 42,
+  castFrameDuration: 9,
+  phaseShiftFrames: 42,
+  phaseShiftFrameDuration: 7,
+  recoveryFrames: 48,
+  finalRecoveryFrames: 104,
+  recoverFrameDuration: 8,
+  initialCooldown: 124,
+  skillCooldown: 204,
+  finalSkillCooldown: 286,
+  drawW: 188,
+  drawH: 224,
+  castDrawW: 236,
+  castDrawH: 236,
+  castBottomPadding: 26,
+  moveSteeringForce: 0.046,
+  phaseSteeringForce: 0.01,
+  retreatForce: 0.058,
+  drag: 0.91,
+  maxVelocityBase: 2.45,
+  maxVelocityPhase: 0.24,
+  preferredDistance: 190,
+  closeDistance: 130,
+  summonMaxEnemies: 4,
+  spiderMistWarningFrames: 30,
+  spiderMistLife: 92,
+  spiderMistFrameDuration: 7,
+  spiderMistDrawW: 260,
+  spiderMistDrawH: 136,
+  spiderMistHitW: 190,
+  spiderMistHitH: 44,
+  spiderMistDamageBase: 9,
+  mirrorFangWarningFrames: 22,
+  mirrorFangLife: 86,
+  mirrorFangFrameDuration: 6,
+  mirrorFangDrawW: 250,
+  mirrorFangDrawH: 136,
+  mirrorFangHitW: 210,
+  mirrorFangHitH: 38,
+  mirrorFangSpeed: 8.6,
+  mirrorFangDamageBase: 10,
+  lanternBellLife: 72,
+  lanternBellFrameDuration: 7,
+  lanternBellDrawW: 240,
+  lanternBellDrawH: 200,
+  sixfoldLife: 88,
+  sixfoldFrameDuration: 7,
+  sixfoldDrawW: 250,
+  sixfoldDrawH: 208,
+  manyFacesDelayFrames: 42,
+  manyFacesWarningFrames: 44,
+  manyFacesLife: 142,
+  manyFacesFrameDuration: 5,
+  manyFacesDrawW: 300,
+  manyFacesDrawH: 260,
+  manyFacesHitW: 220,
+  manyFacesHitH: 140,
+  manyFacesDamageBase: 13,
+  damagePhase: 2,
+  hitPlayerCooldown: 24,
+} as const;
 
 export const DEAD_BELL_CONFIG = {
   castDuration: 64,

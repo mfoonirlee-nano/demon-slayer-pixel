@@ -2,7 +2,7 @@
 
 ## Implementation Status
 
-- 素材状态：基础形态已实现，位于 `assets/sprites/enemies/boss/mirror-dream/`；不提交 `*_source.png` 制作源图。
+- 素材状态：基础形态已实现，位于 `assets/sprites/boss/mirror-dream/`；不提交 `*_source.png` 制作源图。
 - 玩法状态：基础三招已接入；`真影错位` 蚀醒技未实现。
 
 ## Role

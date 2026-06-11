@@ -1,5 +1,6 @@
 import { ctx } from "../../context";
 import { state } from "../../state";
+import { playSfx } from "../../audio";
 import { ENEMY_SHEETS, WARDEN_AURA_EFFECT_SHEET, WARDEN_SHEET_INDEX, WARDEN_SHEETS } from "../../constants";
 import { drawSheetFrame } from "../../graphics";
 import type { EnemyState, WardenPhase } from "../../types/game-state";
@@ -90,8 +91,10 @@ function enterWardenPhase(enemy: EnemyState, phase: WardenPhase) {
   enemy.wardenPhase = phase;
   if (phase === "aura") {
     enemy.wardenTimer = randomFrameCount(WARDEN_CONFIG.auraMinFrames, WARDEN_CONFIG.auraFrameJitter);
+    playSfx("enemyAura");
   } else if (phase === "hit") {
     enemy.wardenTimer = WARDEN_CONFIG.hitFrames;
+    playSfx("enemyHitReact", 0.84);
   } else {
     enemy.wardenTimer = randomFrameCount(
       WARDEN_CONFIG.moveCooldownMinFrames,

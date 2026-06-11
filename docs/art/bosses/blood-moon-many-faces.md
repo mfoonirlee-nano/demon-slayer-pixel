@@ -2,12 +2,12 @@
 
 ## Implementation Status
 
-- 素材状态：基础待机、换相、恢复、死亡、五招施法和五招特效透明 PNG 已实现并预加载，位于 `assets/sprites/enemies/boss/blood-moon-many-faces/`；不提交 `*_source.png` 制作源图。
-- 玩法状态：未实现；定位为**第 13 幕终极 Boss**、单局通关终点，不作为普通轮换 Boss。幕表见 [../../game-design/act-structure.md](../../game-design/act-structure.md)，数值见 [../../numeric-system/boss-archetypes.md](../../numeric-system/boss-archetypes.md)。
+- 素材状态：基础待机、换相、恢复、死亡、五招施法和五招特效透明 PNG 已实现并预加载，位于 `assets/sprites/boss/blood-moon-many-faces/`；不提交 `*_source.png` 制作源图。
+- 玩法状态：基础运行时已接入；`bossKills >= 12` 时作为**第 13 幕终极 Boss** 出场，包含 5 相换相借招、专属施法/特效和击败后停止 Boss 重生。胜利结算 UI、死亡动画状态机和通关后进阶仍未接入。幕表见 [../../game-design/act-structure.md](../../game-design/act-structure.md)，数值见 [../../numeric-system/boss-archetypes.md](../../numeric-system/boss-archetypes.md)。
 
 ## Runtime Assets
 
-本轮只完成素材和加载接入，不改变伤害、碰撞、阶段阈值、胜利结算或 Boss 生成逻辑。
+当前运行时使用基础待机、换相、恢复、五招施法和五招特效图集；`blood_moon_death.png` 仍作为后续死亡状态机素材预留。
 
 | 图集 | 总尺寸 | 帧数 | 单帧 | 用途 |
 | --- | ---: | ---: | ---: | --- |

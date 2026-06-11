@@ -29,7 +29,7 @@ Boss 需要保持比普通敌人更强的轮廓识别和阶段变化。设计重
 | `moonbound_fang_gale` | 血月眷属 · 牙岚 | 4 | 10 | 未实现 | [fang-gale.md](fang-gale.md) |
 | `moonbound_lantern_ember` | 血月眷属 · 灯烬 | 5 | 11 | 未实现 | [lantern-ember.md](lantern-ember.md) |
 | `moonbound_dead_bell` | 血月眷属 · 枯铃 | 6 | 12 | v1 运行时已接入；暂与蛛弦双 Boss 轮换 | [dead-bell.md](dead-bell.md) |
-| `grand_boss_blood_moon_many_faces` | 终幕之妖 · 万相血月 | 13 | — | 未实现；第 13 幕终极 Boss，击败即通关 | [blood-moon-many-faces.md](blood-moon-many-faces.md) |
+| `grand_boss_blood_moon_many_faces` | 终幕之妖 · 万相血月 | 13 | — | v1 运行时已接入；`bossKills >= 12` 触发，胜利 UI 未接 | [blood-moon-many-faces.md](blood-moon-many-faces.md) |
 
 蚀醒形态优先复用基础 Boss 精灵 + 蚀醒视觉态（变色 / 特效密度提升 / 关键物件状态变化），只有蚀醒招新特效需要少量新素材。
 

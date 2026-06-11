@@ -2,6 +2,7 @@ import { PLAYER_COMBAT } from "../../constants";
 import { recordEnemyCoverKill } from "../../coverProgress";
 import { state } from "../../state";
 import type { EnemyState } from "../../types/game-state";
+import { playSfx } from "../../audio";
 import type { EnemyDefeatRewardKind } from "./common";
 import { enemyArchetypeForSheet } from "./registry";
 
@@ -62,6 +63,7 @@ export function resolveEnemyDefeat(
     return true;
   }
 
+  playSfx("enemyDefeat", enemy.splitterVariant === "child" ? 1.25 : 1);
   applyReward();
   remove();
   return true;

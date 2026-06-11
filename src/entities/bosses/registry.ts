@@ -4,6 +4,10 @@ import {
   BOSS_SHEET,
   BOSS_SKILL1_EFFECT_SHEET,
   BOSS_SKILL1_SHEET,
+  BLOOD_MOON_CONFIG,
+  BLOOD_MOON_SHEET,
+  BLOOD_MOON_SPIDER_MIST_CAST_SHEET,
+  BLOOD_MOON_SPIDER_MIST_EFFECT_SHEET,
   DEAD_BELL_CAST_SHEET,
   DEAD_BELL_CONFIG,
   DEAD_BELL_SHEET,
@@ -57,6 +61,7 @@ export const BOSS_ARCHETYPE_IDS = {
   mirrorDream: "mirror-dream",
   lanternEmber: "lantern-ember",
   deadBell: "dead-bell",
+  bloodMoon: "blood-moon-many-faces",
 } as const satisfies Record<string, BossArchetypeId>;
 
 type RegisteredBossArchetypeId = (typeof BOSS_ARCHETYPE_IDS)[keyof typeof BOSS_ARCHETYPE_IDS];
@@ -183,6 +188,36 @@ export const BOSS_ARCHETYPES: Record<RegisteredBossArchetypeId, BossArchetype> =
       effect: DEAD_BELL_WAVE_SHEET,
     },
   },
+  "blood-moon-many-faces": {
+    id: BOSS_ARCHETYPE_IDS.bloodMoon,
+    displayName: "万相血月",
+    phaseTitle: (phase) => `终幕之鬼 · 万相血月 · 第 ${phase} 相`,
+    unlockAct: 13,
+    awakenedUnlockAct: 13,
+    hpBase: 1050,
+    hpPerKill: 95,
+    hpScaleByElapsed: 1.9,
+    collisionW: BOSS_CONFIG.w,
+    collisionH: BOSS_CONFIG.h,
+    yOffsetFromGround: BOSS_CONFIG.yOffsetFromGround,
+    phaseThresholds: [0.8, 0.6, 0.4, 0.2],
+    contactDamageBase: 11,
+    contactDamagePhase: 2,
+    aiBaseCooldown: 104,
+    aiPhaseReduction: 8,
+    skillInitialCooldown: BLOOD_MOON_CONFIG.initialCooldown,
+    skillMode: "bloodMoonSpiderMist",
+    drawW: BLOOD_MOON_CONFIG.drawW,
+    drawH: BLOOD_MOON_CONFIG.drawH,
+    castDrawW: BLOOD_MOON_CONFIG.castDrawW,
+    castDrawH: BLOOD_MOON_CONFIG.castDrawH,
+    castBottomPadding: BLOOD_MOON_CONFIG.castBottomPadding,
+    sheets: {
+      move: BLOOD_MOON_SHEET,
+      cast: BLOOD_MOON_SPIDER_MIST_CAST_SHEET,
+      effect: BLOOD_MOON_SPIDER_MIST_EFFECT_SHEET,
+    },
+  },
 };
 
 export const BOSS_V1_SEQUENCE: BossArchetypeId[] = [
@@ -192,10 +227,13 @@ export const BOSS_V1_SEQUENCE: BossArchetypeId[] = [
   BOSS_ARCHETYPE_IDS.deadBell,
 ];
 
+export const FINAL_BOSS_KILL_COUNT = 12;
+
 export function bossArchetypeForId(id: BossArchetypeId) {
   return BOSS_ARCHETYPES[id as RegisteredBossArchetypeId] ?? BOSS_ARCHETYPES[BOSS_ARCHETYPE_IDS.spiderString];
 }
 
 export function bossArchetypeForKillCount(bossKills: number) {
+  if (bossKills >= FINAL_BOSS_KILL_COUNT) return bossArchetypeForId(BOSS_ARCHETYPE_IDS.bloodMoon);
   return bossArchetypeForId(BOSS_V1_SEQUENCE[bossKills % BOSS_V1_SEQUENCE.length]);
 }

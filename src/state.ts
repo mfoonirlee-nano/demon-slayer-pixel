@@ -78,6 +78,7 @@ export function createInitialState(): GameState {
     lanternEmberBuffTethers: [],
     lanternEmberAwakenedGrids: [],
     lanternEmberAshZones: [],
+    bloodMoonEffects: [],
     crystals: [],
   };
 }
@@ -112,6 +113,7 @@ export function resetState() {
   resetCollection(state.lanternEmberBuffTethers, next.lanternEmberBuffTethers);
   resetCollection(state.lanternEmberAwakenedGrids, next.lanternEmberAwakenedGrids);
   resetCollection(state.lanternEmberAshZones, next.lanternEmberAshZones);
+  resetCollection(state.bloodMoonEffects, next.bloodMoonEffects);
   state.skill3Effect = next.skill3Effect;
   resetCollection(state.projectiles, next.projectiles);
   resetCollection(state.bindingZones, next.bindingZones);

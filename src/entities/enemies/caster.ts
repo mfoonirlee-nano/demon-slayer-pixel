@@ -1,4 +1,5 @@
 import { state } from "../../state";
+import { playSfx } from "../../audio";
 import { CASTER_SHEET_INDEX, CASTER_SHEETS, ENEMY_SHEETS } from "../../constants";
 import { drawSheetFrame } from "../../graphics";
 import type { CasterAiPhase, CasterPhase, EnemyState } from "../../types/game-state";
@@ -105,6 +106,7 @@ function enterCasterPhase(enemy: EnemyState, phase: CasterAiPhase) {
   enemy.casterCastSpawned = false;
   if (phase === "windup") {
     enemy.casterTimer = CASTER_CONFIG.windupFrames;
+    playSfx("enemyCastStart", 1.05);
   } else if (phase === "cast") {
     enemy.casterTimer = CASTER_CONFIG.castFrames;
   } else if (phase === "recover") {
@@ -169,6 +171,7 @@ function spawnCasterWisps(enemy: EnemyState) {
       turnRate: casterWispTurnRate(),
     });
   }
+  playSfx("enemyCastRelease", shotCount > 1 ? 1.12 : 1);
 }
 
 function updateCasterSeek(enemy: EnemyState, facing: number, distance: number) {

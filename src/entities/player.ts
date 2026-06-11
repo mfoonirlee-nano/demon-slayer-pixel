@@ -22,7 +22,7 @@ import {
 } from "../constants";
 import { onGround, hitbox, frameIndex, nearestRectHitPoint, overlapHitPoint } from "../utils";
 import { drawSheetFrame, drawSkillFrame } from "../graphics";
-import { playTone } from "../audio";
+import { playSfx } from "../audio";
 import { ctx } from "../context";
 import { emitSlash, emitHitBurst } from "./particle";
 import { damageEnemy } from "./enemies/common";
@@ -83,17 +83,12 @@ export function triggerAttack() {
     p.fallAttackTimer = 1;
     p.vy = Math.max(p.vy, FALL_ATTACK.startVelocity);
     p.onPlatform = null;
-    playTone(220, 0.08, "triangle", 0.055);
+    playSfx("playerFallAttackStart");
     return;
   }
 
   state.player.attackTimer = BASIC_ATTACK.frames;
-  playTone(
-    PLAYER_COMBAT.tones.attackStart.frequency,
-    PLAYER_COMBAT.tones.attackStart.duration,
-    "triangle",
-    PLAYER_COMBAT.tones.attackStart.volume,
-  );
+  playSfx("playerAttackStart");
 }
 
 export function getPlayerAttackDamage() {
@@ -201,18 +196,7 @@ export function castSelectedSkill() {
     }
   }
 
-  playTone(
-    PLAYER_COMBAT.tones.skillCastPrimary.frequency,
-    PLAYER_COMBAT.tones.skillCastPrimary.duration,
-    "triangle",
-    PLAYER_COMBAT.tones.skillCastPrimary.volume,
-  );
-  playTone(
-    PLAYER_COMBAT.tones.skillCastSecondary.frequency,
-    PLAYER_COMBAT.tones.skillCastSecondary.duration,
-    "sawtooth",
-    PLAYER_COMBAT.tones.skillCastSecondary.volume,
-  );
+  playSfx("playerSkillCast");
 }
 
 export function castUltimateSkill() {
@@ -231,8 +215,7 @@ export function castUltimateSkill() {
   p.ultimateTimer = ULTIMATE_SKILL_SHEET.count * PLAYER_COMBAT.ultimateCastFrameDuration;
   p.skillFlash = SKILL_FLASH.maxFrames;
 
-  playTone(220, 0.16, "sawtooth", 0.07);
-  playTone(880, 0.14, "triangle", 0.06);
+  playSfx("playerUltimateCast");
 }
 
 function triggerUltimateImpact() {
@@ -240,6 +223,8 @@ function triggerUltimateImpact() {
   const cx = p.x + p.w / 2;
   const cy = p.y + p.h - PLAYER_COMBAT.ultimateEffectYOffset;
   const radius = PLAYER_COMBAT.ultimateRadius;
+
+  playSfx("playerUltimateImpact");
 
   state.ultimateEffects.push({
     x: cx,
@@ -335,8 +320,7 @@ function triggerFallAttackImpact() {
   emitSlash(cx, impactY - 8, box.color, FALL_ATTACK.radius * 0.8);
   emitHitBurst(cx, impactY - 6, box.color, FALL_ATTACK.impactBurstPower + 0.4);
   p.invincible = Math.max(p.invincible, FALL_ATTACK.landingInvincibleFrames);
-  playTone(150, 0.08, "sawtooth", 0.06);
-  playTone(520, 0.06, "triangle", 0.045);
+  playSfx("playerFallAttackImpact");
 }
 
 export function hurtPlayer(damage: number, sourceVx: number) {
@@ -364,7 +348,7 @@ export function hurtPlayer(damage: number, sourceVx: number) {
       defeatBoss();
     }
 
-    playTone(440, 0.08, "triangle", 0.15);
+    playSfx("playerCounter");
     if (state.skill3Effect.hitsRemaining <= 0) {
       state.skill3Effect = null;
     }
@@ -376,14 +360,11 @@ export function hurtPlayer(damage: number, sourceVx: number) {
   p.vx = -Math.sign(sourceVx || 1) * PLAYER_COMBAT.hurtKnockbackX;
   p.vy = PLAYER_COMBAT.hurtKnockbackY;
   emitSlash(p.x + p.w / 2, p.y + PLAYER_COMBAT.attackKillY, PLAYER_COMBAT.effects.hurtSlashColor);
-  playTone(
-    PLAYER_COMBAT.tones.hurt.frequency,
-    PLAYER_COMBAT.tones.hurt.duration,
-    "square",
-    PLAYER_COMBAT.tones.hurt.volume,
-  );
   if (p.hp <= 0) {
+    playSfx("playerDeath");
     state.gameOver = true;
+  } else {
+    playSfx("playerHurt");
   }
 }
 
@@ -391,12 +372,7 @@ export function tryJump() {
   const p = state.player;
   if (onGround(p, p.onPlatform)) {
     p.vy = -p.jump;
-    playTone(
-      PLAYER_COMBAT.tones.jump.frequency,
-      PLAYER_COMBAT.tones.jump.duration,
-      "triangle",
-      PLAYER_COMBAT.tones.jump.volume,
-    );
+    playSfx("playerJump");
   }
 }
 
@@ -483,6 +459,7 @@ export function updatePlayer() {
             frame: 0,
             elapsed: 0,
           });
+          playSfx("playerSkillRelease", 0.96);
         } else if (skill.id === SKILL_IDS.skill2) {
           const effectH = SKILL2_EFFECT_SHEET.frameH * SKILL2_EFFECT_CONFIG.drawScale;
           const skillDrawH = skill.frameH * skill.drawScale;
@@ -495,6 +472,7 @@ export function updatePlayer() {
             elapsed: 0,
             traveled: 0,
           });
+          playSfx("playerSkillRelease", 1.08);
         }
       }
     }
@@ -521,12 +499,7 @@ export function updatePlayer() {
         damageEnemy(e, box.damage, PLAYER_COMBAT.attackEnemyHitCooldown);
         emitSlash(atkHitX, atkHitY, box.color, e.w);
         emitHitBurst(atkHitX, atkHitY, PLAYER_COMBAT.effects.attackEnemyBurstColor, PLAYER_COMBAT.attackEnemyBurstPower);
-        playTone(
-          PLAYER_COMBAT.tones.attackHit.baseFrequency + Math.random() * PLAYER_COMBAT.tones.attackHit.randomVariance,
-          PLAYER_COMBAT.tones.attackHit.duration,
-          "triangle",
-          PLAYER_COMBAT.tones.attackHit.volume,
-        );
+        playSfx("playerAttackHit");
         if (resolveEnemyDefeat(e, i, "attack")) {
           emitSlash(e.x + Math.random() * e.w, e.y + Math.random() * e.h, PLAYER_COMBAT.effects.attackKillSlashColor, e.w);
         }
@@ -545,12 +518,7 @@ export function updatePlayer() {
         PLAYER_COMBAT.effects.attackBossBurstColor,
         PLAYER_COMBAT.attackBossBurstPower,
       );
-      playTone(
-        PLAYER_COMBAT.tones.bossHit.frequency,
-        PLAYER_COMBAT.tones.bossHit.duration,
-        "sawtooth",
-        PLAYER_COMBAT.tones.bossHit.volume,
-      );
+      playSfx("playerBossHit");
       if (boss.hp <= 0) {
         emitSlash(boss.x + boss.w / 2, boss.y + PLAYER_COMBAT.bossHitY, PLAYER_COMBAT.effects.bossKillSlashColor);
         defeatBoss();
