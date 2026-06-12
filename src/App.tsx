@@ -5,7 +5,6 @@ import {
   HEIGHT,
   SKILLS,
   HUD_UI,
-  UI_SPRITE_SHEET,
   UI_SPRITES,
   type UiSpriteId,
 } from "./constants";
@@ -34,19 +33,25 @@ function clampMeterPercent(value: number, maxValue: number) {
 
 function uiSpriteStyle(spriteId: UiSpriteId, width?: number, height?: number): CSSProperties {
   const sprite = UI_SPRITES[spriteId];
-  const displayW = width ?? sprite.w;
-  const displayH = height ?? sprite.h;
-  const scaleX = displayW / sprite.w;
-  const scaleY = displayH / sprite.h;
+  const displaySize = uiSpriteDisplaySize(spriteId);
+  const displayW = width ?? displaySize.w;
+  const displayH = height ?? displaySize.h;
 
   return {
     width: displayW,
     height: displayH,
-    backgroundImage: `url("${UI_SPRITE_SHEET.src}")`,
+    backgroundImage: `url("${sprite.src}")`,
     backgroundRepeat: "no-repeat",
-    backgroundSize: `${UI_SPRITE_SHEET.w * scaleX}px ${UI_SPRITE_SHEET.h * scaleY}px`,
-    backgroundPosition: `-${sprite.x * scaleX}px -${sprite.y * scaleY}px`,
+    backgroundSize: `${displayW}px ${displayH}px`,
     imageRendering: "pixelated",
+  };
+}
+
+function uiSpriteDisplaySize(spriteId: UiSpriteId) {
+  const sprite = UI_SPRITES[spriteId];
+  return {
+    w: "displayW" in sprite ? sprite.displayW : sprite.w,
+    h: "displayH" in sprite ? sprite.displayH : sprite.h,
   };
 }
 
@@ -116,6 +121,24 @@ function GameCanvas({ active }: { active: boolean }) {
 }
 
 const GHOST_LERP_SPEED = 0.04;
+const HUD_HP_METER_FRAME: HudMeterFrame = {
+  left: "hudHpBarLeft",
+  mid: "hudHpBarMid",
+  right: "hudHpBarRight",
+  height: 20,
+  fillTop: 5,
+  fillBottom: 5,
+  fillInsetX: 18,
+};
+const HUD_SKILL_METER_FRAME: HudMeterFrame = {
+  left: "hudSkillBarLeft",
+  mid: "hudSkillBarMid",
+  right: "hudSkillBarRight",
+  height: 18,
+  fillTop: 5,
+  fillBottom: 5,
+  fillInsetX: 18,
+};
 const DEATH_SPRITE_COLUMNS = 6;
 const DEATH_SPRITE_ROWS = 4;
 const DEATH_SPRITE_FRAMES = DEATH_SPRITE_COLUMNS * DEATH_SPRITE_ROWS;
@@ -167,7 +190,17 @@ function GhostBar({ value, max, ghostValue, color, ghostColor }: {
   );
 }
 
-function HudMeter({ value, max, ghostValue, color, ghostColor, text, width }: {
+type HudMeterFrame = {
+  left: UiSpriteId;
+  mid: UiSpriteId;
+  right: UiSpriteId;
+  height: number;
+  fillTop: number;
+  fillBottom: number;
+  fillInsetX: number;
+};
+
+function HudMeter({ value, max, ghostValue, color, ghostColor, text, width, frame }: {
   value: number;
   max: number;
   ghostValue: number;
@@ -175,10 +208,30 @@ function HudMeter({ value, max, ghostValue, color, ghostColor, text, width }: {
   ghostColor: string;
   text: string;
   width: number;
+  frame: HudMeterFrame;
 }) {
+  const leftW = uiSpriteDisplaySize(frame.left).w;
+  const rightW = uiSpriteDisplaySize(frame.right).w;
+  const midWidth = Math.max(uiSpriteDisplaySize(frame.mid).w, width - leftW - rightW);
+
   return (
-    <div className="player-hud-meter" style={{ width }}>
-      <GhostBar value={value} max={max} ghostValue={ghostValue} color={color} ghostColor={ghostColor} />
+    <div className="player-hud-meter" style={{ width, height: frame.height }}>
+      <div className="player-hud-meter-frame">
+        <UiSprite id={frame.left} width={leftW} height={frame.height} />
+        <UiSprite id={frame.mid} width={midWidth} height={frame.height} />
+        <UiSprite id={frame.right} width={rightW} height={frame.height} />
+      </div>
+      <div
+        className="player-hud-meter-fill"
+        style={{
+          left: frame.fillInsetX,
+          right: frame.fillInsetX,
+          top: frame.fillTop,
+          bottom: frame.fillBottom,
+        }}
+      >
+        <GhostBar value={value} max={max} ghostValue={ghostValue} color={color} ghostColor={ghostColor} />
+      </div>
       <span className="player-hud-meter-text">{text}</span>
     </div>
   );
@@ -575,15 +628,27 @@ function Hud() {
 
       <div className="pointer-events-none absolute left-2 top-2 z-10 hidden text-white md:block">
         <div className="player-hud">
-          <UiSprite id="ultimateFrame" width={58} height={58} className="flex shrink-0 items-center justify-center">
-            <UltimateOrb
-              value={player.ultimateEnergy}
-              max={player.ultimateEnergyMax}
-              ready={player.ultimateReady}
-              size={38}
-              activePercent={ultimateActivePercent}
-            />
-          </UiSprite>
+          <div className="player-hud-abilities">
+            <UiSprite id="ultimateFrame" width={72} height={72} className="player-hud-ultimate-frame flex items-center justify-center">
+              <UltimateOrb
+                value={player.ultimateEnergy}
+                max={player.ultimateEnergyMax}
+                ready={player.ultimateReady}
+                size={44}
+                activePercent={ultimateActivePercent}
+              />
+            </UiSprite>
+            <UiSprite id="currentSkillFrame" width={36} height={36} className="player-hud-current-skill">
+              {activeSkillId && activeSkill ? (
+                <>
+                  <img src={skillIconSrc(activeSkillId)} alt="" draggable={false} />
+                  <span>{romanLevel(activeSkillLevel)}</span>
+                </>
+              ) : (
+                <span>--</span>
+              )}
+            </UiSprite>
+          </div>
           <div className="player-hud-bars">
             <HudMeter
               value={player.hp}
@@ -593,6 +658,7 @@ function Hud() {
               ghostColor="#254f27"
               text={`${Math.max(0, Math.floor(player.hp))} / ${player.maxHp}`}
               width={playerBarWidth}
+              frame={HUD_HP_METER_FRAME}
             />
             <HudMeter
               value={skillValue}
@@ -602,17 +668,8 @@ function Hud() {
               ghostColor="#1c475c"
               text={`${Math.floor(skillValue)} / ${skillMax}`}
               width={playerBarWidth}
+              frame={HUD_SKILL_METER_FRAME}
             />
-          </div>
-          <div className="player-hud-skill">
-            {activeSkillId && activeSkill ? (
-              <>
-                <img src={skillIconSrc(activeSkillId)} alt="" draggable={false} />
-                <span>{romanLevel(activeSkillLevel)}</span>
-              </>
-            ) : (
-              <span>--</span>
-            )}
           </div>
         </div>
       </div>

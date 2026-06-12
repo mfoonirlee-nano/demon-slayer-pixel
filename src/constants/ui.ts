@@ -1,23 +1,6 @@
 export const HUD_UI = {
   meterPercentMax: 100,
 
-  // status_bar.png (875×231) rendered at 400px wide
-  statusBarContainerW: 400,
-  statusBarContainerH: 106,
-  statusBarImgW: 400,
-
-  // upper track — HP fill zone (frame masks tapered right tip)
-  hpFillLeft: 124,
-  hpFillTop: 46,
-  hpFillW: 210,
-  hpFillH: 6,
-
-  // lower track — skill charge fill zone (frame masks tapered right tip)
-  skillFillLeft: 124,
-  skillFillTop: 69,
-  skillFillW: 210,
-  skillFillH: 5,
-
   playerBarBaseW: 190,
   playerBarMaxW: 310,
   playerBarGrowthPerLevel: 8,

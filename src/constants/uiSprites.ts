@@ -1,34 +1,35 @@
-export const UI_SPRITE_SHEET = {
-  src: "assets/sprites/ui/ui_system_v1.png",
-  w: 2048,
-  h: 2048,
-} as const;
-
 export const UI_SPRITES = {
-  hudStatusFrame: { x: 28, y: 47, w: 1066, h: 316 },
-  ultimateFrame: { x: 1205, y: 78, w: 268, h: 278 },
+  hudStatusFrame: { src: "assets/sprites/ui/system/hud/hud-status-frame.png", w: 876, h: 216, displayW: 292, displayH: 72 },
+  ultimateFrame: { src: "assets/sprites/ui/system/hud/ultimate-frame.png", w: 216, h: 216, displayW: 72, displayH: 72 },
+  currentSkillFrame: { src: "assets/sprites/ui/system/hud/current-skill-frame.png", w: 108, h: 108, displayW: 36, displayH: 36 },
+  hudHpBarLeft: { src: "assets/sprites/ui/system/hud/hud-hp-bar-left.png", w: 78, h: 60, displayW: 26, displayH: 20 },
+  hudHpBarMid: { src: "assets/sprites/ui/system/hud/hud-hp-bar-mid.png", w: 72, h: 60, displayW: 24, displayH: 20 },
+  hudHpBarRight: { src: "assets/sprites/ui/system/hud/hud-hp-bar-right.png", w: 78, h: 60, displayW: 26, displayH: 20 },
+  hudSkillBarLeft: { src: "assets/sprites/ui/system/hud/hud-skill-bar-left.png", w: 78, h: 54, displayW: 26, displayH: 18 },
+  hudSkillBarMid: { src: "assets/sprites/ui/system/hud/hud-skill-bar-mid.png", w: 72, h: 54, displayW: 24, displayH: 18 },
+  hudSkillBarRight: { src: "assets/sprites/ui/system/hud/hud-skill-bar-right.png", w: 78, h: 54, displayW: 26, displayH: 18 },
 
-  skillSlotNormal: { x: 54, y: 382, w: 286, h: 286 },
-  skillSlotActive: { x: 395, y: 382, w: 286, h: 286 },
-  skillSlotEmpty: { x: 735, y: 382, w: 263, h: 283 },
-  skillSlotDisabled: { x: 1060, y: 389, w: 284, h: 276 },
+  skillSlotNormal: { src: "assets/sprites/ui/system/slots/skill-slot-normal.png", w: 286, h: 286 },
+  skillSlotActive: { src: "assets/sprites/ui/system/slots/skill-slot-active.png", w: 286, h: 286 },
+  skillSlotEmpty: { src: "assets/sprites/ui/system/slots/skill-slot-empty.png", w: 263, h: 283 },
+  skillSlotDisabled: { src: "assets/sprites/ui/system/slots/skill-slot-disabled.png", w: 284, h: 276 },
 
-  pausePanel: { x: 41, y: 681, w: 1184, h: 514 },
-  pauseColumnFrame: { x: 1295, y: 692, w: 484, h: 779 },
+  pausePanel: { src: "assets/sprites/ui/system/pause/pause-panel.png", w: 1184, h: 514 },
+  pauseColumnFrame: { src: "assets/sprites/ui/system/pause/pause-column-frame.png", w: 484, h: 779 },
 
-  slotFrameNormal: { x: 39, y: 1231, w: 376, h: 120 },
-  slotFrameActive: { x: 451, y: 1233, w: 374, h: 113 },
-  slotFrameDisabled: { x: 861, y: 1233, w: 367, h: 118 },
-  buttonNormal: { x: 196, y: 1370, w: 433, h: 146 },
-  buttonActive: { x: 647, y: 1369, w: 405, h: 147 },
+  slotFrameNormal: { src: "assets/sprites/ui/system/slots/slot-frame-normal.png", w: 376, h: 120 },
+  slotFrameActive: { src: "assets/sprites/ui/system/slots/slot-frame-active.png", w: 374, h: 113 },
+  slotFrameDisabled: { src: "assets/sprites/ui/system/slots/slot-frame-disabled.png", w: 367, h: 118 },
+  buttonNormal: { src: "assets/sprites/ui/system/controls/button-normal.png", w: 433, h: 146 },
+  buttonActive: { src: "assets/sprites/ui/system/controls/button-active.png", w: 405, h: 147 },
 
-  upgradeRewardPanel: { x: 28, y: 1558, w: 516, h: 415 },
-  upgradeChoiceCard: { x: 567, y: 1579, w: 196, h: 389 },
-  upgradeChoiceCardActive: { x: 777, y: 1579, w: 198, h: 389 },
+  upgradeRewardPanel: { src: "assets/sprites/ui/system/rewards/upgrade-reward-panel.png", w: 516, h: 415 },
+  upgradeChoiceCard: { src: "assets/sprites/ui/system/rewards/upgrade-choice-card.png", w: 196, h: 389 },
+  upgradeChoiceCardActive: { src: "assets/sprites/ui/system/rewards/upgrade-choice-card-active.png", w: 198, h: 389 },
 
-  bossRewardPanel: { x: 1004, y: 1558, w: 544, h: 423 },
-  bossChoiceCard: { x: 1566, y: 1573, w: 213, h: 398 },
-  bossChoiceCardActive: { x: 1798, y: 1573, w: 217, h: 398 },
+  bossRewardPanel: { src: "assets/sprites/ui/system/rewards/boss-reward-panel.png", w: 544, h: 423 },
+  bossChoiceCard: { src: "assets/sprites/ui/system/rewards/boss-choice-card.png", w: 213, h: 398 },
+  bossChoiceCardActive: { src: "assets/sprites/ui/system/rewards/boss-choice-card-active.png", w: 217, h: 398 },
 } as const;
 
 export type UiSpriteId = keyof typeof UI_SPRITES;
