@@ -1,12 +1,23 @@
-import { GROUND_Y, PLAYER_DEFAULTS, RUNTIME_CONFIG } from "./constants";
+import { BASIC_ATTACK, GROUND_Y, PLAYER_COMBAT, PLAYER_DEFAULTS, RUNTIME_CONFIG } from "./constants";
 import { bossArchetypeForId } from "./entities/bosses/registry";
 import type { GameSnapshot } from "./gameStore";
 import { createInitialMoonState } from "./moon";
 import type { GameState, PlayerState } from "./types/game-state";
+import { equipmentItem } from "./systems/equipment";
+import {
+  INITIAL_EQUIPPED_SKILL_IDS,
+  INITIAL_SKILL_LEVELS,
+  maxSkillChargesForEnergy,
+  maxSkillEnergyForLevel,
+  moonTideUltimateConfig,
+  xpToNextLevel,
+} from "./systems/progression";
 
 export type * from "./types/game-state";
 
 export function createInitialPlayerState(): PlayerState {
+  const skillEnergyMax = maxSkillEnergyForLevel(1);
+
   return {
     x: PLAYER_DEFAULTS.x,
     y: GROUND_Y - PLAYER_DEFAULTS.yOffsetFromGround,
@@ -21,22 +32,33 @@ export function createInitialPlayerState(): PlayerState {
     maxHp: PLAYER_DEFAULTS.maxHp,
     invincible: 0,
     attackTimer: 0,
+    attackDuration: BASIC_ATTACK.frames,
     fallAttackTimer: 0,
     fallAttackRecoveryTimer: 0,
     score: 0,
+    runLevel: 1,
+    runXp: 0,
     baseAttack: PLAYER_DEFAULTS.baseAttack,
     attackBonus: 0,
     skillEnergy: 0,
-    skillEnergyMax: PLAYER_DEFAULTS.maxSkillEnergy,
+    skillEnergyMax,
     skillCharges: 0,
-    maxSkillCharges: PLAYER_DEFAULTS.maxSkillCharges,
+    maxSkillCharges: maxSkillChargesForEnergy(skillEnergyMax),
     skillIndex: 0,
+    equippedSkillIds: [...INITIAL_EQUIPPED_SKILL_IDS],
+    skillLevels: { ...INITIAL_SKILL_LEVELS },
     skillTimer: 0,
     skillEffectSpawned: false,
+    skillCastDamageMultiplier: 1,
     ultimateEnergy: 0,
     ultimateEnergyMax: PLAYER_DEFAULTS.maxUltimateEnergy,
+    ultimateLevel: 0,
     ultimateTimer: 0,
+    ultimateCastTimer: 0,
     ultimateEffectSpawned: false,
+    flowBladeHits: 0,
+    flowBladeSurgeReady: false,
+    flowGarbTimer: 0,
     onPlatform: null,
     skillFlash: 0,
     isPlayer: true,
@@ -50,6 +72,14 @@ export function createInitialState(): GameState {
     spawnTimer: 0,
     bossSpawnTimer: RUNTIME_CONFIG.initialBossSpawnTimer,
     bossKills: 0,
+    pendingUpgradeChoices: [],
+    pendingEquipmentChoices: [],
+    equipmentInventory: [],
+    equippedEquipment: {
+      blade: null,
+      garb: null,
+      talisman: null,
+    },
     platformSpawnTimer: 0,
     gameOver: false,
     boss: null,
@@ -68,6 +98,8 @@ export function createInitialState(): GameState {
     skill2Effects: [],
     skill3Effect: null,
     ultimateEffects: [],
+    ultimateTrails: [],
+    ultimateAfterimageSlashes: [],
     bossSkill1Effects: [],
     deadBellWaves: [],
     deadBellBlades: [],
@@ -103,6 +135,8 @@ export function resetState() {
   resetCollection(state.skill1Effects, next.skill1Effects);
   resetCollection(state.skill2Effects, next.skill2Effects);
   resetCollection(state.ultimateEffects, next.ultimateEffects);
+  resetCollection(state.ultimateTrails, next.ultimateTrails);
+  resetCollection(state.ultimateAfterimageSlashes, next.ultimateAfterimageSlashes);
   resetCollection(state.bossSkill1Effects, next.bossSkill1Effects);
   resetCollection(state.deadBellWaves, next.deadBellWaves);
   resetCollection(state.deadBellBlades, next.deadBellBlades);
@@ -121,6 +155,10 @@ export function resetState() {
   state.spawnTimer = next.spawnTimer;
   state.bossSpawnTimer = next.bossSpawnTimer;
   state.bossKills = next.bossKills;
+  resetCollection(state.pendingUpgradeChoices, next.pendingUpgradeChoices);
+  resetCollection(state.pendingEquipmentChoices, next.pendingEquipmentChoices);
+  resetCollection(state.equipmentInventory, next.equipmentInventory);
+  state.equippedEquipment = next.equippedEquipment;
   state.platformSpawnTimer = next.platformSpawnTimer;
   state.boss = next.boss;
   state.gameOver = next.gameOver;
@@ -129,12 +167,24 @@ export function resetState() {
   // spritesReady is not reset — loaded assets persist across game resets
 }
 
-export function getStateSnapshot(paused = false): GameSnapshot {
+export function getStateSnapshot(manualPaused = false, paused = manualPaused): GameSnapshot {
   const bossArchetype = state.boss ? bossArchetypeForId(state.boss.id) : null;
+  const ultimateConfig = moonTideUltimateConfig(state.player.ultimateLevel);
+  const activeOverlay = state.gameOver
+    ? "death"
+    : state.pendingEquipmentChoices.length > 0
+      ? "bossEquipment"
+      : state.pendingUpgradeChoices.length > 0
+        ? "upgrade"
+        : manualPaused
+          ? "pause"
+          : "none";
   return {
     elapsed: state.elapsed,
     gameOver: state.gameOver,
     paused,
+    manualPaused,
+    activeOverlay,
     spritesReady: state.spritesReady,
     enemiesCount: state.enemies.length,
     boss: state.boss && bossArchetype
@@ -153,6 +203,9 @@ export function getStateSnapshot(paused = false): GameSnapshot {
       hp: state.player.hp,
       maxHp: state.player.maxHp,
       score: state.player.score,
+      runLevel: state.player.runLevel,
+      runXp: state.player.runXp,
+      xpToNext: xpToNextLevel(state.player.runLevel),
       baseAttack: state.player.baseAttack,
       attackBonus: state.player.attackBonus,
       totalAttack: state.player.baseAttack + state.player.attackBonus,
@@ -161,9 +214,28 @@ export function getStateSnapshot(paused = false): GameSnapshot {
       skillCharges: state.player.skillCharges,
       maxSkillCharges: state.player.maxSkillCharges,
       skillIndex: state.player.skillIndex,
+      equippedSkillIds: [...state.player.equippedSkillIds],
+      skillLevels: { ...state.player.skillLevels },
       ultimateEnergy: state.player.ultimateEnergy,
       ultimateEnergyMax: state.player.ultimateEnergyMax,
-      ultimateReady: state.player.ultimateEnergy >= state.player.ultimateEnergyMax,
+      ultimateLevel: state.player.ultimateLevel,
+      ultimateTimer: state.player.ultimateTimer,
+      ultimateDuration: ultimateConfig.durationFrames,
+      ultimateCastTimer: state.player.ultimateCastTimer,
+      ultimateCastDuration: PLAYER_COMBAT.ultimateCastFrames,
+      ultimateReady: state.player.ultimateEnergy >= state.player.ultimateEnergyMax
+        && state.player.ultimateTimer <= 0
+        && state.player.ultimateCastTimer <= 0,
     },
+    equipment: {
+      inventory: state.equipmentInventory.map((itemId) => equipmentItem(itemId)).filter((item) => item !== null),
+      equipped: {
+        blade: equipmentItem(state.equippedEquipment.blade),
+        garb: equipmentItem(state.equippedEquipment.garb),
+        talisman: equipmentItem(state.equippedEquipment.talisman),
+      },
+    },
+    pendingUpgradeChoices: [...state.pendingUpgradeChoices],
+    pendingEquipmentChoices: [...state.pendingEquipmentChoices],
   };
 }

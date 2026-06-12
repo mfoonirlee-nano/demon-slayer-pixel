@@ -1,28 +1,84 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState, type CSSProperties, type ReactNode } from "react";
 import { Provider, useAtomValue } from "jotai";
 import {
   WIDTH,
   HEIGHT,
   SKILLS,
   HUD_UI,
-  PLAYER_COMBAT,
-  SKILL1_EFFECT_CONFIG,
-  SKILL2_EFFECT_CONFIG,
-  SKILL3_EFFECT_CONFIG,
+  UI_SPRITE_SHEET,
+  UI_SPRITES,
+  type UiSpriteId,
 } from "./constants";
 import { loadSprites } from "./assets";
 import { setCanvas } from "./context";
 import { DebugPanel } from "./debug";
-import { startGame } from "./runtime";
+import {
+  chooseBossEquipment,
+  chooseUpgradeReward,
+  equipEquipment,
+  equipSkillSlot,
+  startGame,
+} from "./runtime";
 import { gameSnapshotAtom, gameStore, setGameSnapshot, type GameSnapshot } from "./gameStore";
 import { StartScreen } from "./startScreen";
 import { ensureAudio } from "./audio";
+import type { EquipmentItemState, EquipmentSlot, SkillLevel, UltimateLevel } from "./types/game-state";
+import type { SkillId } from "./types/assets";
 
 type AppPhase = "menu" | "playing";
 
 function clampMeterPercent(value: number, maxValue: number) {
   if (maxValue <= 0) return 0;
   return Math.max(0, Math.min(HUD_UI.meterPercentMax, (value / maxValue) * HUD_UI.meterPercentMax));
+}
+
+function uiSpriteStyle(spriteId: UiSpriteId, width?: number, height?: number): CSSProperties {
+  const sprite = UI_SPRITES[spriteId];
+  const displayW = width ?? sprite.w;
+  const displayH = height ?? sprite.h;
+  const scaleX = displayW / sprite.w;
+  const scaleY = displayH / sprite.h;
+
+  return {
+    width: displayW,
+    height: displayH,
+    backgroundImage: `url("${UI_SPRITE_SHEET.src}")`,
+    backgroundRepeat: "no-repeat",
+    backgroundSize: `${UI_SPRITE_SHEET.w * scaleX}px ${UI_SPRITE_SHEET.h * scaleY}px`,
+    backgroundPosition: `-${sprite.x * scaleX}px -${sprite.y * scaleY}px`,
+    imageRendering: "pixelated",
+  };
+}
+
+function UiSprite({ id, width, height, className = "", style, children }: {
+  id: UiSpriteId;
+  width?: number;
+  height?: number;
+  className?: string;
+  style?: CSSProperties;
+  children?: ReactNode;
+}) {
+  return (
+    <div className={`ui-sprite ${className}`} style={{ ...uiSpriteStyle(id, width, height), ...style }}>
+      {children}
+    </div>
+  );
+}
+
+function getSkill(skillId: SkillId | null | undefined) {
+  if (!skillId) return null;
+  return SKILLS.find((skill) => skill.id === skillId) ?? null;
+}
+
+function skillIconSrc(skillId: SkillId) {
+  return `assets/sprites/ui/${skillId}_icon.png`;
+}
+
+function romanLevel(level: SkillLevel | UltimateLevel | 0 | undefined) {
+  if (!level) return "0";
+  if (level === 1) return "I";
+  if (level === 2) return "II";
+  return "III";
 }
 
 function GameCanvas({ active }: { active: boolean }) {
@@ -111,34 +167,49 @@ function GhostBar({ value, max, ghostValue, color, ghostColor }: {
   );
 }
 
-function formatSkillDamageFormula(skill: (typeof SKILLS)[number]) {
-  if (skill.id === "skill1") return `伤害公式：角色攻击力 x ${SKILL1_EFFECT_CONFIG.damageMultiplier}`;
-  if (skill.id === "skill2") return `伤害公式：角色攻击力 x ${SKILL2_EFFECT_CONFIG.damageMultiplier}`;
-  return `伤害公式：角色攻击力 x ${SKILL3_EFFECT_CONFIG.damageMultiplier}，最多 ${SKILL3_EFFECT_CONFIG.maxHits} 次`;
+function HudMeter({ value, max, ghostValue, color, ghostColor, text, width }: {
+  value: number;
+  max: number;
+  ghostValue: number;
+  color: string;
+  ghostColor: string;
+  text: string;
+  width: number;
+}) {
+  return (
+    <div className="player-hud-meter" style={{ width }}>
+      <GhostBar value={value} max={max} ghostValue={ghostValue} color={color} ghostColor={ghostColor} />
+      <span className="player-hud-meter-text">{text}</span>
+    </div>
+  );
 }
 
-function UltimateOrb({ value, max, ready, size = 44 }: {
+function UltimateOrb({ value, max, ready, size = 44, activePercent = 0 }: {
   value: number;
   max: number;
   ready: boolean;
   size?: number;
+  activePercent?: number;
 }) {
   const percent = clampMeterPercent(value, max) / HUD_UI.meterPercentMax;
+  const active = activePercent > 0;
   const flameOpacity = percent <= 0 ? 0 : Math.min(1, 0.28 + percent * 0.92);
   const chargeFrame = Math.min(7, Math.floor(percent * 8));
   const chargeFramePosition = chargeFrame / 7 * 100;
 
   return (
     <div
-      className={`ultimate-orb ${ready ? "ultimate-orb-ready" : ""}`}
+      className={`ultimate-orb ${ready ? "ultimate-orb-ready" : active ? "ultimate-orb-active" : ""}`}
       aria-hidden="true"
       style={{
         width: size,
         height: size,
-        borderColor: ready ? "#ffdf73" : percent > 0 ? "#a7271d" : "#35100f",
+        borderColor: ready ? "#ffdf73" : active ? "#82f3ff" : percent > 0 ? "#a7271d" : "#35100f",
         boxShadow: ready
           ? "0 0 12px rgba(255,122,47,0.95), inset 0 0 12px rgba(255,58,28,0.8)"
-          : percent > 0
+          : active
+            ? "0 0 10px rgba(100,220,255,0.8), inset 0 0 10px rgba(52,170,255,0.55)"
+            : percent > 0
             ? "0 0 7px rgba(180,34,24,0.65), inset 0 0 9px rgba(129,20,18,0.72)"
             : "inset 0 0 8px rgba(0,0,0,0.9)",
       }}
@@ -152,6 +223,9 @@ function UltimateOrb({ value, max, ready, size = 44 }: {
         />
       </div>
       <div className="ultimate-orb-heat" style={{ opacity: flameOpacity }} />
+      {active ? (
+        <div className="ultimate-orb-tide" style={{ transform: `scaleY(${Math.max(0.02, Math.min(1, activePercent))})` }} />
+      ) : null}
       <div className="ultimate-orb-glass" />
     </div>
   );
@@ -218,119 +292,253 @@ function DeathScreen({ elapsed }: { elapsed: number }) {
   );
 }
 
+const EQUIPMENT_SLOT_LABELS: Record<EquipmentSlot, string> = {
+  blade: "刃器",
+  garb: "衣装",
+  talisman: "饰符",
+};
+
+function StatRow({ label, value, accent = false }: { label: string; value: string | number; accent?: boolean }) {
+  return (
+    <div className="flex items-center justify-between gap-3 text-[10px] leading-[1.5]">
+      <span className="text-[#7fc8e0]">{label}</span>
+      <span className={accent ? "font-bold text-[#ffd46e]" : "font-bold text-[#26d5ff]"}>{value}</span>
+    </div>
+  );
+}
+
 function PauseScreen({ snapshot }: { snapshot: GameSnapshot }) {
-  const { player } = snapshot;
-  const activeSkill = SKILLS[player.skillIndex] || SKILLS[0];
-  const damageFormula = formatSkillDamageFormula(activeSkill);
+  const { player, equipment } = snapshot;
+  const [selectedSkillSlot, setSelectedSkillSlot] = useState<number | null>(null);
+  const [selectedEquipmentSlot, setSelectedEquipmentSlot] = useState<EquipmentSlot | null>(null);
+  const activeSkill = getSkill(player.equippedSkillIds[player.skillIndex]);
   const totalAttack = player.baseAttack + player.attackBonus;
-  const skillChargeProgress = Math.min(100, Math.floor(player.skillEnergy / PLAYER_COMBAT.skillCastEnergyCost * 100));
-  const skillEnergyText = `${skillChargeProgress} / 100`;
-  const ultimateEnergyText = `${Math.floor(player.ultimateEnergy)} / ${player.ultimateEnergyMax}`;
   const attackText = player.attackBonus > 0
     ? `${totalAttack} (${player.baseAttack}+${player.attackBonus})`
     : `${totalAttack}`;
+  const skillEnergyText = `${Math.floor(player.skillEnergy)} / ${player.skillEnergyMax}`;
+  const ultimateEnergyText = `${Math.floor(player.ultimateEnergy)} / ${player.ultimateEnergyMax}`;
+  const learnedSkills = SKILLS.filter((skill) => player.skillLevels[skill.id]);
+
+  useEffect(() => {
+    const closeOpenList = (event: KeyboardEvent) => {
+      const key = event.key.toLowerCase();
+      if ((key === "escape" || key === "p") && (selectedSkillSlot !== null || selectedEquipmentSlot !== null)) {
+        event.preventDefault();
+        event.stopPropagation();
+        setSelectedSkillSlot(null);
+        setSelectedEquipmentSlot(null);
+      }
+    };
+    window.addEventListener("keydown", closeOpenList, { capture: true });
+    return () => window.removeEventListener("keydown", closeOpenList, { capture: true });
+  }, [selectedEquipmentSlot, selectedSkillSlot]);
 
   return (
-    <div className="absolute inset-0 z-30 flex items-center justify-center" style={{ background: "rgba(5,10,22,0.65)" }}>
-      <div className="relative flex items-center justify-center" style={{ width: "96%", maxWidth: 960 }}>
-        <img
-          src="assets/sprites/ui/pause_bg_v3.png"
-          alt=""
-          draggable={false}
-          className="w-full"
-          style={{ imageRendering: "pixelated", display: "block" }}
-        />
-        {/* Content overlay aligned to sprite center panel */}
-        <div
-          className="absolute flex flex-col pt-3"
-          style={{ inset: "20% 17% 6% 17%", overflow: "hidden" }}
-        >
-          {/* title row */}
-          <div className="flex items-baseline justify-between pt-0.5">
-            <span className="text-[12px] font-bold tracking-[0.12em]" style={{ color: "#26d5ff" }}>潮刃者</span>
-            <span className="text-[10px]" style={{ color: "#7fc8e0" }}>当前技能：<span style={{ color: "#26d5ff" }}>{activeSkill.name}</span></span>
+    <div className="absolute inset-0 z-30 flex items-center justify-center bg-[rgba(5,10,22,0.72)] px-3">
+      <UiSprite id="pausePanel" width={940} height={529} className="relative">
+        <div className="absolute inset-[42px] flex flex-col text-left text-white">
+          <div className="flex items-baseline justify-between">
+            <span className="text-[13px] font-bold text-[#26d5ff]">潮刃者</span>
+            <span className="text-[10px] text-[#7fc8e0]">当前技能：<span className="text-[#26d5ff]">{activeSkill?.name ?? "未装备"}</span></span>
           </div>
 
-          {/* divider */}
-          <div className="my-1" style={{ height: 1, background: "linear-gradient(90deg, rgba(38,213,255,0.5) 0%, transparent 100%)" }} />
-
-          <div className="grid flex-1 grid-cols-[0.9fr_1.3fr] gap-3 py-2 text-left">
-            <div
-              className="p-2"
-              style={{
-                background: "rgba(5,17,30,0.34)",
-              }}
-            >
-              <div className="mb-1 text-[9px] tracking-[1px]" style={{ color: "#7fc8e0" }}>基础数值</div>
-              <div className="grid gap-1 text-[10px]">
-                <div className="flex justify-between">
-                  <span style={{ color: "#7fc8e0" }}>生命值</span>
-                  <span style={{ color: "#26d5ff", fontWeight: 700 }}>{Math.max(0, Math.floor(player.hp))} / {player.maxHp}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span style={{ color: "#7fc8e0" }}>攻击力</span>
-                  <span style={{ color: "#26d5ff", fontWeight: 700 }}>{attackText}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span style={{ color: "#7fc8e0" }}>技能充能</span>
-                  <span style={{ color: "#26d5ff", fontWeight: 700 }}>{skillEnergyText}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span style={{ color: "#7fc8e0" }}>大招充能</span>
-                  <span style={{ color: player.ultimateReady ? "#ffd46e" : "#26d5ff", fontWeight: 700 }}>{ultimateEnergyText}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span style={{ color: "#7fc8e0" }}>分数</span>
-                  <span style={{ color: "#26d5ff", fontWeight: 700 }}>{player.score}</span>
-                </div>
+          <div className="mt-3 grid flex-1 grid-cols-3 gap-4">
+            <UiSprite id="pauseColumnFrame" width={270} height={450} className="relative p-5">
+              <div className="mb-3 text-[10px] font-bold text-[#7fc8e0]">角色状态</div>
+              <div className="grid gap-2">
+                <StatRow label="等级" value={`Lv.${player.runLevel}`} />
+                <StatRow label="经验" value={`${player.runXp} / ${player.xpToNext}`} />
+                <StatRow label="生命值" value={`${Math.max(0, Math.floor(player.hp))} / ${player.maxHp}`} />
+                <StatRow label="攻击力" value={attackText} />
+                <StatRow label="技能充能" value={skillEnergyText} />
+                <StatRow label="大招充能" value={ultimateEnergyText} accent={player.ultimateReady} />
+                <StatRow label="终式等级" value={romanLevel(player.ultimateLevel)} />
+                <StatRow label="分数" value={player.score} />
               </div>
-            </div>
+            </UiSprite>
 
-            <div
-              className="p-2"
-              style={{
-                background: "linear-gradient(180deg, rgba(9,32,52,0.64), rgba(5,17,30,0.32))",
-              }}
-            >
-              <div className="mb-1 flex items-center justify-between text-[9px] tracking-[1px]">
-                <span style={{ color: "#7fc8e0" }}>当前技能</span>
-                <span style={{ color: "#26d5ff" }}>{activeSkill.name}</span>
-              </div>
-              <div className="mb-2 grid grid-cols-3 gap-1">
-                {SKILLS.map((skill, i) => {
-                  const active = i === player.skillIndex;
+            <UiSprite id="pauseColumnFrame" width={270} height={450} className="relative p-5">
+              <div className="mb-3 text-[10px] font-bold text-[#7fc8e0]">装备栏</div>
+              <div className="grid gap-2">
+                {(["blade", "garb", "talisman"] as EquipmentSlot[]).map((slot) => {
+                  const item = equipment.equipped[slot];
+                  const active = selectedEquipmentSlot === slot;
                   return (
-                    <div
-                      key={skill.id}
-                      className="flex-1 text-center text-[10px]"
-                      style={{
-                        padding: "2px 4px",
-                        background: active ? "rgba(38,213,255,0.18)" : "transparent",
-                        border: `1px solid ${active ? "rgba(38,213,255,0.55)" : "rgba(38,213,255,0.12)"}`,
-                        color: active ? "#26d5ff" : "#4a7a9a",
-                        fontWeight: active ? 700 : 400,
+                    <button
+                      key={slot}
+                      className="relative text-left"
+                      onClick={() => {
+                        setSelectedEquipmentSlot(active ? null : slot);
+                        setSelectedSkillSlot(null);
                       }}
                     >
-                      {i + 1}. {skill.name}
-                    </div>
+                      <UiSprite id={active ? "slotFrameActive" : "slotFrameNormal"} width={230} height={61} className="px-4 py-2">
+                        <div className="text-[9px] text-[#7fc8e0]">{EQUIPMENT_SLOT_LABELS[slot]}</div>
+                        <div className="truncate text-[10px] font-bold text-[#d9f6ff]">{item?.name ?? "未装备"}</div>
+                      </UiSprite>
+                    </button>
                   );
                 })}
               </div>
-              <div className="text-[9px] leading-[1.45]" style={{ color: "#c8efff" }}>
-                {activeSkill.description}
+
+              {selectedEquipmentSlot ? (
+                <div className="mt-3 grid gap-1">
+                  {equipment.equipped[selectedEquipmentSlot] ? (
+                    <button
+                      className="text-left text-[9px] text-[#ffd46e]"
+                      onClick={() => equipEquipment(selectedEquipmentSlot, null)}
+                    >
+                      卸下当前{EQUIPMENT_SLOT_LABELS[selectedEquipmentSlot]}
+                    </button>
+                  ) : null}
+                  {equipment.inventory.filter((item) => item.slot === selectedEquipmentSlot).map((item) => (
+                    <button
+                      key={item.id}
+                      className="text-left text-[9px] leading-[1.45] text-[#c8efff]"
+                      onClick={() => {
+                        equipEquipment(selectedEquipmentSlot, item.id);
+                        setSelectedEquipmentSlot(null);
+                      }}
+                    >
+                      {item.name} · {item.summary}
+                    </button>
+                  ))}
+                </div>
+              ) : null}
+            </UiSprite>
+
+            <UiSprite id="pauseColumnFrame" width={270} height={450} className="relative p-5">
+              <div className="mb-3 text-[10px] font-bold text-[#7fc8e0]">技能栏</div>
+              <div className="grid gap-2">
+                {player.equippedSkillIds.map((skillId, index) => {
+                  const skill = getSkill(skillId);
+                  const active = selectedSkillSlot === index;
+                  const level = skillId ? player.skillLevels[skillId] : undefined;
+                  return (
+                    <button
+                      key={index}
+                      className="relative text-left"
+                      onClick={() => {
+                        setSelectedSkillSlot(active ? null : index);
+                        setSelectedEquipmentSlot(null);
+                      }}
+                    >
+                      <UiSprite id={active ? "slotFrameActive" : skill ? "slotFrameNormal" : "slotFrameDisabled"} width={230} height={61} className="px-4 py-2">
+                        <div className="text-[9px] text-[#7fc8e0]">槽位 {index + 1}</div>
+                        <div className="truncate text-[10px] font-bold text-[#d9f6ff]">{skill ? `${skill.name} ${romanLevel(level)}` : "空槽"}</div>
+                      </UiSprite>
+                    </button>
+                  );
+                })}
               </div>
-              <div className="mt-2 text-[8px] leading-[1.35]" style={{ color: "#7fc8e0" }}>
-                {damageFormula}
-              </div>
-            </div>
+
+              {selectedSkillSlot !== null ? (
+                <div className="mt-3 grid gap-1">
+                  {learnedSkills.map((skill) => {
+                    const equippedElsewhere = player.equippedSkillIds.some((skillId, index) => (
+                      index !== selectedSkillSlot && skillId === skill.id
+                    ));
+                    return (
+                      <button
+                        key={skill.id}
+                        disabled={equippedElsewhere}
+                        className={`text-left text-[9px] leading-[1.45] ${equippedElsewhere ? "text-[#4a7a9a]" : "text-[#c8efff]"}`}
+                        onClick={() => {
+                          equipSkillSlot(selectedSkillSlot, skill.id);
+                          setSelectedSkillSlot(null);
+                        }}
+                      >
+                        {skill.name} {romanLevel(player.skillLevels[skill.id])}{equippedElsewhere ? " · 已装备" : ""}
+                      </button>
+                    );
+                  })}
+                </div>
+              ) : (
+                <div className="mt-3 text-[9px] leading-[1.45] text-[#c8efff]">
+                  {activeSkill?.description ?? "选择一个空槽装备已习得技能。"}
+                </div>
+              )}
+            </UiSprite>
           </div>
 
-          {/* footer */}
-          <div className="mt-auto pt-3 text-center text-[11px] opacity-55 text-white" style={{ transform: "translateY(10px)" }}>
-            按 ESC 或 P 继续游戏
+          <div className="pt-2 text-center text-[10px] text-white/55">按 ESC 或 P 继续游戏</div>
+        </div>
+      </UiSprite>
+    </div>
+  );
+}
+
+function RewardOverlay({ snapshot }: { snapshot: GameSnapshot }) {
+  const isBossReward = snapshot.activeOverlay === "bossEquipment";
+  const choices = isBossReward ? snapshot.pendingEquipmentChoices : snapshot.pendingUpgradeChoices;
+  const panelSprite = isBossReward ? "bossRewardPanel" : "upgradeRewardPanel";
+  const cardSprite = isBossReward ? "bossChoiceCard" : "upgradeChoiceCard";
+  const activeCardSprite = isBossReward ? "bossChoiceCardActive" : "upgradeChoiceCardActive";
+  const title = isBossReward ? "血鬼遗物" : "等级提升";
+  const subtitle = isBossReward
+    ? "选择一件装备"
+    : `Lv.${snapshot.player.runLevel - 1} -> Lv.${snapshot.player.runLevel}  选择一项强化`;
+
+  useEffect(() => {
+    const handleRewardKey = (event: KeyboardEvent) => {
+      const key = event.key;
+      if (key !== "1" && key !== "2" && key !== "3") return;
+      const index = Number(key) - 1;
+      if (!choices[index]) return;
+      event.preventDefault();
+      event.stopPropagation();
+      if (isBossReward) {
+        chooseBossEquipment(index);
+      } else {
+        chooseUpgradeReward(index);
+      }
+    };
+
+    window.addEventListener("keydown", handleRewardKey, { capture: true });
+    return () => window.removeEventListener("keydown", handleRewardKey, { capture: true });
+  }, [choices, isBossReward]);
+
+  return (
+    <div className="absolute inset-0 z-40 flex items-center justify-center bg-[rgba(4,7,16,0.78)] px-4 text-white">
+      <UiSprite id={panelSprite} width={860} height={356} className="relative">
+        <div className="absolute inset-[34px] flex flex-col">
+          <div className="text-center">
+            <div className={`text-[15px] font-bold ${isBossReward ? "text-[#ffd46e]" : "text-[#26d5ff]"}`}>{title}</div>
+            <div className="mt-2 text-[10px] text-[#c8efff]">{subtitle}</div>
+          </div>
+
+          <div className="mt-6 grid flex-1 grid-cols-3 gap-4">
+            {choices.map((choice, index) => {
+              const item = isBossReward ? choice as EquipmentItemState : null;
+              const upgrade = isBossReward ? null : choice as typeof snapshot.pendingUpgradeChoices[number];
+              return (
+                <button
+                  key={choice.id}
+                  className="relative text-left"
+                  onClick={() => {
+                    if (isBossReward) chooseBossEquipment(index);
+                    else chooseUpgradeReward(index);
+                  }}
+                >
+                  <UiSprite id={index === 0 ? activeCardSprite : cardSprite} width={246} height={295} className="p-5">
+                    <div className={`mb-3 text-[9px] ${isBossReward ? "text-[#ffd46e]" : "text-[#7fc8e0]"}`}>[{index + 1}] {isBossReward ? item?.uiTags.join(" · ") : upgrade?.title}</div>
+                    <div className="mb-3 min-h-[34px] text-[13px] font-bold text-[#f7f3e9]">{choice.name}</div>
+                    <div className="text-[9px] leading-[1.6] text-[#c8efff]">
+                      {isBossReward ? item?.summary : upgrade?.description}
+                    </div>
+                    {isBossReward && item ? (
+                      <div className="mt-4 text-[8px] leading-[1.5] text-[#ffd9a0]">
+                        当前{EQUIPMENT_SLOT_LABELS[item.slot]}：{snapshot.equipment.equipped[item.slot]?.name ?? "无"}
+                      </div>
+                    ) : null}
+                  </UiSprite>
+                </button>
+              );
+            })}
           </div>
         </div>
-      </div>
+      </UiSprite>
     </div>
   );
 }
@@ -338,50 +546,73 @@ function PauseScreen({ snapshot }: { snapshot: GameSnapshot }) {
 function Hud() {
   const snapshot = useAtomValue(gameSnapshotAtom);
   const { player, boss, elapsed, spritesReady, gameOver } = snapshot;
+  const activeSkillId = player.equippedSkillIds[player.skillIndex];
+  const activeSkill = getSkill(activeSkillId);
+  const activeSkillLevel = activeSkillId ? player.skillLevels[activeSkillId] : undefined;
 
   const skillValue = player.skillEnergy;
   const skillMax = player.skillEnergyMax;
   const bossHp = boss?.hp ?? 0;
   const bossHpMax = boss?.hpMax ?? 1;
+  const xpPercent = clampMeterPercent(player.runXp, player.xpToNext);
+  const ultimateActivePercent = player.ultimateTimer > 0
+    ? player.ultimateTimer / Math.max(1, player.ultimateDuration)
+    : player.ultimateCastTimer > 0
+      ? player.ultimateCastTimer / Math.max(1, player.ultimateCastDuration)
+      : 0;
 
   const ghostHp = useGhostValue(player.hp);
   const ghostSkill = useGhostValue(skillValue);
   const ghostBossHp = useGhostValue(bossHp);
+  const playerBarWidth = Math.min(
+    HUD_UI.playerBarMaxW,
+    HUD_UI.playerBarBaseW + Math.max(0, player.runLevel - 1) * HUD_UI.playerBarGrowthPerLevel,
+  );
 
   return (
     <>
       <DebugPanel />
 
-      <div className="pointer-events-none absolute left-2 top-2 z-10 hidden text-[12px] text-white md:block">
-        <div style={{ position: "relative", width: HUD_UI.statusBarContainerW, height: HUD_UI.statusBarContainerH }}>
-          {/* HP fill — upper track */}
-          <div style={{ position: "absolute", zIndex: 0, left: HUD_UI.hpFillLeft, top: HUD_UI.hpFillTop, width: HUD_UI.hpFillW, height: HUD_UI.hpFillH, overflow: "hidden", borderRadius: 1 }}>
-            <GhostBar value={player.hp} max={player.maxHp} ghostValue={ghostHp} color="linear-gradient(90deg,#2a8a3a,#5aff6a)" ghostColor="#2d6b2d" />
+      <div className="pointer-events-none absolute left-2 top-2 z-10 hidden text-white md:block">
+        <div className="player-hud">
+          <UiSprite id="ultimateFrame" width={58} height={58} className="flex shrink-0 items-center justify-center">
+            <UltimateOrb
+              value={player.ultimateEnergy}
+              max={player.ultimateEnergyMax}
+              ready={player.ultimateReady}
+              size={38}
+              activePercent={ultimateActivePercent}
+            />
+          </UiSprite>
+          <div className="player-hud-bars">
+            <HudMeter
+              value={player.hp}
+              max={player.maxHp}
+              ghostValue={ghostHp}
+              color="linear-gradient(90deg,#246f35,#5aff6a)"
+              ghostColor="#254f27"
+              text={`${Math.max(0, Math.floor(player.hp))} / ${player.maxHp}`}
+              width={playerBarWidth}
+            />
+            <HudMeter
+              value={skillValue}
+              max={skillMax}
+              ghostValue={ghostSkill}
+              color="linear-gradient(90deg,#145f82,#7fe8ff)"
+              ghostColor="#1c475c"
+              text={`${Math.floor(skillValue)} / ${skillMax}`}
+              width={playerBarWidth}
+            />
           </div>
-          {/* Skill energy fill — lower track */}
-          <div style={{ position: "absolute", zIndex: 0, left: HUD_UI.skillFillLeft, top: HUD_UI.skillFillTop, width: HUD_UI.skillFillW, height: HUD_UI.skillFillH, overflow: "hidden", borderRadius: 1 }}>
-            <GhostBar value={skillValue} max={skillMax} ghostValue={ghostSkill} color="linear-gradient(90deg,#1a6b8a,#7fe8ff)" ghostColor="#245a6d" />
-          </div>
-          {/* frame image — transparent tracks reveal fills behind */}
-          <img
-            src="assets/sprites/ui/status_bar.png"
-            alt=""
-            draggable={false}
-            style={{ position: "absolute", zIndex: 1, width: HUD_UI.statusBarImgW, left: 0, top: 0, imageRendering: "pixelated" }}
-          />
-          {/* HP text — centered on upper track */}
-          <span style={{ position: "absolute", zIndex: 2, left: HUD_UI.hpFillLeft, top: HUD_UI.hpFillTop, width: HUD_UI.hpFillW, height: HUD_UI.hpFillH, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 9, fontWeight: 700, color: "#e0ffe0", textShadow: "0 1px 3px rgba(0,0,0,0.9)", letterSpacing: "0.04em", lineHeight: 1 }}>
-            {Math.max(0, Math.floor(player.hp))} / {player.maxHp}
-          </span>
-          {/* Skill icon — circular area left of bars */}
-          <img
-            src={`assets/sprites/ui/skill${player.skillIndex + 1}_icon.png`}
-            alt=""
-            draggable={false}
-            style={{ position: "absolute", zIndex: 2, left: 48, top: 25, width: 60, height: 60, borderRadius: "50%", objectFit: "cover" }}
-          />
-          <div style={{ position: "absolute", zIndex: 3, left: 352, top: 54 }}>
-            <UltimateOrb value={player.ultimateEnergy} max={player.ultimateEnergyMax} ready={player.ultimateReady} size={28} />
+          <div className="player-hud-skill">
+            {activeSkillId && activeSkill ? (
+              <>
+                <img src={skillIconSrc(activeSkillId)} alt="" draggable={false} />
+                <span>{romanLevel(activeSkillLevel)}</span>
+              </>
+            ) : (
+              <span>--</span>
+            )}
           </div>
         </div>
       </div>
@@ -453,9 +684,19 @@ function Hud() {
         </div>
       ) : null}
 
+      <div className="pointer-events-none absolute bottom-0 left-0 right-0 z-10 hidden px-8 pb-3 md:block">
+        <div className="hud-xp-bar">
+          <div className="hud-xp-fill" style={{ width: `${xpPercent}%` }} />
+          <div className="hud-xp-text">Lv.{player.runLevel} XP {player.runXp} / {player.xpToNext}</div>
+        </div>
+      </div>
+
       {gameOver ? <DeathScreen elapsed={elapsed} /> : null}
 
-      {snapshot.paused && !gameOver ? <PauseScreen snapshot={snapshot} /> : null}
+      {snapshot.activeOverlay === "pause" ? <PauseScreen snapshot={snapshot} /> : null}
+      {snapshot.activeOverlay === "upgrade" || snapshot.activeOverlay === "bossEquipment" ? (
+        <RewardOverlay snapshot={snapshot} />
+      ) : null}
     </>
   );
 }

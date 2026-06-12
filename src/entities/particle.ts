@@ -1,7 +1,6 @@
 import { state } from "../state";
 import { ctx } from "../context";
 import {
-  SKILLS,
   PARTICLE_CONFIG,
   HIT_BURST_CONFIG,
   SKILL_BURST_VISUAL,
@@ -16,11 +15,21 @@ import {
   PLAYER_COMBAT,
   WIDTH,
 } from "../constants";
-import type { HitBurstState, ParticleState, Skill1EffectState, Skill2EffectState, SkillBurstState } from "../types/game-state";
+import type {
+  HitBurstState,
+  ParticleState,
+  Skill1EffectState,
+  Skill2EffectState,
+  SkillBurstState,
+  UltimateAfterimageSlashState,
+  UltimateTrailState,
+} from "../types/game-state";
 import { overlapHitPoint } from "../utils";
 import { damageEnemy } from "./enemies/common";
 import { resolveEnemyDefeat } from "./enemies/defeat";
 import { defeatBoss } from "./bosses/defeat";
+import { applySkillHitEquipmentRefund } from "../systems/equipment";
+import { skillById } from "../systems/loadout";
 
 const FULL_CIRCLE_RADIANS = Math.PI * 2;
 const DEFAULT_HIT_BURST_COLOR = "#9feaff";
@@ -90,10 +99,13 @@ export function updateSkill1Effects() {
   const drawW = sheet.frameW * SKILL1_EFFECT_CONFIG.drawScale;
   const drawH = sheet.frameH * SKILL1_EFFECT_CONFIG.drawScale;
   const p = state.player;
-  const damage = (p.baseAttack + p.attackBonus) * SKILL1_EFFECT_CONFIG.damageMultiplier;
+  const baseDamage = (p.baseAttack + p.attackBonus) * SKILL1_EFFECT_CONFIG.damageMultiplier;
 
   for (let i = state.skill1Effects.length - 1; i >= 0; i -= 1) {
     const eff = state.skill1Effects[i] as Skill1EffectState;
+    const damage = baseDamage * eff.damageMultiplier;
+    let hitTargets = 0;
+    let bossHit = false;
     eff.x += eff.vx;
     eff.elapsed += 1;
 
@@ -124,6 +136,7 @@ export function updateSkill1Effects() {
         enemy,
       );
       damageEnemy(enemy, damage, SKILL1_EFFECT_CONFIG.hitCooldown);
+      hitTargets += 1;
       emitSlash(hitX, hitY, PLAYER_COMBAT.effects.skillEnemyBurstColor, enemy.w);
       emitHitBurst(hitX, hitY, PLAYER_COMBAT.effects.skillEnemyBurstColor, PLAYER_COMBAT.skillEnemyBurstPower);
       resolveEnemyDefeat(enemy, j, "enemyNoCover");
@@ -137,6 +150,7 @@ export function updateSkill1Effects() {
       if (overlapX && overlapY) {
         boss.hp -= damage;
         boss.hitCd = SKILL1_EFFECT_CONFIG.hitCooldown;
+        bossHit = true;
         const { x: bossHitX, y: bossHitY } = overlapHitPoint(
           { x: effLeft, y: effTop, w: drawW, h: drawH },
           boss,
@@ -145,6 +159,10 @@ export function updateSkill1Effects() {
         emitHitBurst(bossHitX, bossHitY, PLAYER_COMBAT.effects.skillBossBurstColor, PLAYER_COMBAT.skillBossBurstPower);
         defeatBoss();
       }
+    }
+
+    if (!eff.refundedSkillEnergy && applySkillHitEquipmentRefund(state, hitTargets, bossHit)) {
+      eff.refundedSkillEnergy = true;
     }
 
     // despawn when fully offscreen
@@ -159,10 +177,13 @@ export function updateSkill2Effects() {
   const drawW = sheet.frameW * SKILL2_EFFECT_CONFIG.drawScale;
   const drawH = sheet.frameH * SKILL2_EFFECT_CONFIG.drawScale;
   const p = state.player;
-  const damage = (p.baseAttack + p.attackBonus) * SKILL2_EFFECT_CONFIG.damageMultiplier;
+  const baseDamage = (p.baseAttack + p.attackBonus) * SKILL2_EFFECT_CONFIG.damageMultiplier;
 
   for (let i = state.skill2Effects.length - 1; i >= 0; i -= 1) {
     const eff = state.skill2Effects[i] as Skill2EffectState;
+    const damage = baseDamage * eff.damageMultiplier;
+    let hitTargets = 0;
+    let bossHit = false;
     eff.x += eff.vx;
     eff.traveled += Math.abs(eff.vx);
     eff.elapsed += 1;
@@ -186,6 +207,7 @@ export function updateSkill2Effects() {
         enemy,
       );
       damageEnemy(enemy, damage, SKILL2_EFFECT_CONFIG.hitCooldown);
+      hitTargets += 1;
       emitSlash(hitX, hitY, PLAYER_COMBAT.effects.skillEnemyBurstColor, enemy.w);
       emitHitBurst(hitX, hitY, PLAYER_COMBAT.effects.skillEnemyBurstColor, PLAYER_COMBAT.skillEnemyBurstPower);
       resolveEnemyDefeat(enemy, j, "enemyNoCover");
@@ -198,6 +220,7 @@ export function updateSkill2Effects() {
       if (overlapX && overlapY) {
         boss.hp -= damage;
         boss.hitCd = SKILL2_EFFECT_CONFIG.hitCooldown;
+        bossHit = true;
         const { x: bossHitX, y: bossHitY } = overlapHitPoint(
           { x: effLeft, y: effTop, w: drawW, h: drawH },
           boss,
@@ -206,6 +229,10 @@ export function updateSkill2Effects() {
         emitHitBurst(bossHitX, bossHitY, PLAYER_COMBAT.effects.skillBossBurstColor, PLAYER_COMBAT.skillBossBurstPower);
         defeatBoss();
       }
+    }
+
+    if (!eff.refundedSkillEnergy && applySkillHitEquipmentRefund(state, hitTargets, bossHit)) {
+      eff.refundedSkillEnergy = true;
     }
 
     if (eff.traveled >= SKILL2_EFFECT_CONFIG.maxTravel) state.skill2Effects.splice(i, 1);
@@ -225,16 +252,29 @@ export function updateHitBursts() {
   }
 }
 
+export function updateUltimateTrails() {
+  for (let i = state.ultimateTrails.length - 1; i >= 0; i -= 1) {
+    const trail = state.ultimateTrails[i] as UltimateTrailState;
+    trail.life -= 1;
+    if (trail.life <= 0) state.ultimateTrails.splice(i, 1);
+  }
+}
+
+export function updateUltimateAfterimageSlashes() {
+  for (let i = state.ultimateAfterimageSlashes.length - 1; i >= 0; i -= 1) {
+    const slash = state.ultimateAfterimageSlashes[i] as UltimateAfterimageSlashState;
+    slash.life -= 1;
+    if (slash.life <= 0) state.ultimateAfterimageSlashes.splice(i, 1);
+  }
+}
+
 export function updateUltimateEffects() {
   const sheet = ULTIMATE_SKILL_EFFECT_SHEET;
   for (let i = state.ultimateEffects.length - 1; i >= 0; i -= 1) {
     const eff = state.ultimateEffects[i];
     eff.elapsed += 1;
     eff.life -= 1;
-    eff.frame = Math.min(
-      sheet.count - 1,
-      Math.floor(eff.elapsed / PLAYER_COMBAT.ultimateEffectFrameDuration),
-    );
+    eff.frame = Math.floor(eff.elapsed / PLAYER_COMBAT.ultimateEffectFrameDuration) % sheet.count;
     if (eff.life <= 0) state.ultimateEffects.splice(i, 1);
   }
 }
@@ -243,7 +283,8 @@ export function drawSkillBursts() {
   if (!ctx) return;
   for (const b of state.skillBursts) {
     const t = 1 - b.life / b.maxLife;
-    const skill = SKILLS[b.skillIndex] || SKILLS[0];
+    const skill = skillById(b.skillId);
+    if (!skill) continue;
     const scale = b.scaleIn + (b.scaleOut - b.scaleIn) * t;
     const baseW = skill.frameW * skill.drawScale;
     const baseH = skill.frameH * skill.drawScale;
@@ -361,6 +402,36 @@ export function drawSkill3Effect() {
   ctx.restore();
 }
 
+export function drawUltimateTrails() {
+  if (!ctx) return;
+  for (const trail of state.ultimateTrails) {
+    const t = trail.life / trail.maxLife;
+    const ripple = Math.sin(trail.phase + trail.life * 0.5) * 2;
+    ctx.save();
+    ctx.globalCompositeOperation = "lighter";
+    ctx.globalAlpha = 0.08 + t * 0.2;
+    ctx.strokeStyle = "rgba(126, 226, 255, 0.72)";
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.ellipse(
+      trail.x,
+      trail.y + ripple,
+      trail.width * (0.65 + (1 - t) * 0.35),
+      trail.height * (0.8 + (1 - t) * 0.5),
+      0,
+      0,
+      FULL_CIRCLE_RADIANS,
+    );
+    ctx.stroke();
+    ctx.globalAlpha = 0.06 + t * 0.12;
+    ctx.fillStyle = "rgba(156, 242, 255, 0.5)";
+    ctx.translate(trail.x, trail.y);
+    ctx.scale(trail.facing, 1);
+    ctx.fillRect(-trail.width * 0.45, -1, trail.width * 0.5, 2);
+    ctx.restore();
+  }
+}
+
 export function drawUltimateEffects() {
   if (!ctx) return;
   const sheet = ULTIMATE_SKILL_EFFECT_SHEET;
@@ -372,13 +443,43 @@ export function drawUltimateEffects() {
   const cy = p.y + p.h - PLAYER_COMBAT.ultimateEffectYOffset;
   for (const eff of state.ultimateEffects) {
     const sx = eff.frame * sheet.frameW;
-    const alpha = Math.min(1, eff.life / Math.max(1, eff.maxLife - sheet.count * PLAYER_COMBAT.ultimateEffectFrameDuration) + 0.35);
+    const openingFrames = sheet.count * PLAYER_COMBAT.ultimateEffectFrameDuration;
+    const lifeRatio = eff.life / eff.maxLife;
+    const alpha = eff.elapsed <= openingFrames
+      ? 0.42
+      : Math.max(0.12, Math.min(0.28, lifeRatio * 0.32));
     ctx.save();
     ctx.globalAlpha = alpha;
     ctx.globalCompositeOperation = "lighter";
     ctx.translate(cx, cy);
     ctx.scale(eff.facing, 1);
     ctx.drawImage(sheet.image, sx, 0, sheet.frameW, sheet.frameH, -drawW / 2, -drawH / 2, drawW, drawH);
+    ctx.restore();
+  }
+}
+
+export function drawUltimateAfterimageSlashes() {
+  if (!ctx) return;
+  for (const slash of state.ultimateAfterimageSlashes) {
+    const t = slash.life / slash.maxLife;
+    const alpha = Math.min(0.52, (0.16 + t * 0.42) * slash.power);
+    ctx.save();
+    ctx.globalCompositeOperation = "lighter";
+    ctx.globalAlpha = alpha;
+    ctx.translate(slash.x, slash.y);
+    ctx.scale(slash.facing, 1);
+    ctx.strokeStyle = "rgba(186, 246, 255, 0.9)";
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.moveTo(-slash.w / 2, slash.h * 0.25);
+    ctx.quadraticCurveTo(-slash.w * 0.08, -slash.h * 0.68, slash.w / 2, -slash.h * 0.2);
+    ctx.stroke();
+    ctx.strokeStyle = "rgba(93, 196, 255, 0.62)";
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.moveTo(-slash.w * 0.36, slash.h * 0.46);
+    ctx.quadraticCurveTo(0, -slash.h * 0.08, slash.w * 0.42, slash.h * 0.1);
+    ctx.stroke();
     ctx.restore();
   }
 }

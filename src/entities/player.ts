@@ -30,6 +30,16 @@ import { resolveEnemyDefeat } from "./enemies/defeat";
 import { bindingZonePlayerMoveScale } from "./enemies/binder";
 import { defeatBoss } from "./bosses/defeat";
 import { keys } from "../input";
+import {
+  applySkillCastEquipmentEffects,
+  applySkillHitEquipmentRefund,
+  consumeSkillCastEquipmentDamageMultiplier,
+  equipmentMoveSpeedMultiplier,
+  recordBasicAttackHit,
+  tickEquipmentEffects,
+} from "../systems/equipment";
+import { selectedSkill, selectSkillSlot } from "../systems/loadout";
+import { moonTideUltimateConfig, skillDamageMultiplier } from "../systems/progression";
 
 const HALF_RATIO = 0.5;
 const FULL_CIRCLE = Math.PI * 2;
@@ -69,6 +79,85 @@ function lanternAshZonePlayerMoveScale() {
   return 1;
 }
 
+function moonTideActive() {
+  return state.player.ultimateTimer > 0;
+}
+
+function currentMoonTideConfig() {
+  return moonTideUltimateConfig(state.player.ultimateLevel);
+}
+
+function moonTideMoveSpeedMultiplier() {
+  return moonTideActive() ? currentMoonTideConfig().moveSpeedMultiplier : 1;
+}
+
+function moonTideJumpMultiplier() {
+  return moonTideActive() ? currentMoonTideConfig().jumpMultiplier : 1;
+}
+
+function moonTideAttackFrames() {
+  if (!moonTideActive()) return BASIC_ATTACK.frames;
+  return Math.max(1, Math.round(BASIC_ATTACK.frames * currentMoonTideConfig().attackFrameMultiplier));
+}
+
+function moonTideBasicDamageMultiplier() {
+  return moonTideActive() ? currentMoonTideConfig().damageMultiplier : 1;
+}
+
+function spawnMoonTideTrail() {
+  const p = state.player;
+  if (!moonTideActive()) return;
+  if (Math.abs(p.vx) <= PLAYER_COMBAT.movementIdleThreshold) return;
+  if (p.ultimateTimer % PLAYER_COMBAT.ultimateTrailSpawnInterval !== 0) return;
+
+  const life = PLAYER_COMBAT.ultimateTrailLife;
+  state.ultimateTrails.push({
+    x: p.x + p.w / 2 - Math.sign(p.vx || p.facing) * 16,
+    y: p.y + p.h - 14,
+    facing: Math.sign(p.vx || p.facing),
+    life,
+    maxLife: life,
+    width: 34 + Math.min(26, Math.abs(p.vx) * 5),
+    height: 7,
+    phase: Math.random() * FULL_CIRCLE,
+  });
+}
+
+function triggerMoonTideAfterimageHit(
+  hitX: number,
+  hitY: number,
+  targetSpread: number,
+  applyDamage: (damage: number) => void,
+) {
+  if (!moonTideActive()) return false;
+
+  const config = currentMoonTideConfig();
+  if (Math.random() > config.afterimageChance) return false;
+
+  const p = state.player;
+  const damage = getPlayerAttackDamage() * config.afterimageDamageMultiplier;
+  applyDamage(damage);
+
+  const life = PLAYER_COMBAT.ultimateAfterimageLife;
+  const slashW = Math.max(48, Math.min(92, targetSpread * 0.95));
+  const slashH = Math.max(18, Math.min(34, targetSpread * 0.35));
+  for (let i = 0; i < config.afterimageCount; i += 1) {
+    state.ultimateAfterimageSlashes.push({
+      x: hitX + p.facing * (10 + i * 12),
+      y: hitY - 8 + (Math.random() - 0.5) * 10,
+      w: slashW,
+      h: slashH,
+      facing: p.facing,
+      life,
+      maxLife: life,
+      power: config.afterimageBurstPower,
+    });
+  }
+
+  emitHitBurst(hitX, hitY, PLAYER_COMBAT.effects.attackEnemyBurstColor, config.afterimageBurstPower);
+  return true;
+}
+
 export function triggerAttack() {
   const p = state.player;
   if (
@@ -76,7 +165,7 @@ export function triggerAttack() {
     || p.fallAttackTimer > 0
     || p.fallAttackRecoveryTimer > 0
     || p.skillTimer > 0
-    || p.ultimateTimer > 0
+    || p.ultimateCastTimer > 0
   ) return;
 
   if (!onGround(p, p.onPlatform)) {
@@ -87,7 +176,9 @@ export function triggerAttack() {
     return;
   }
 
-  state.player.attackTimer = BASIC_ATTACK.frames;
+  const frames = moonTideAttackFrames();
+  state.player.attackDuration = frames;
+  state.player.attackTimer = frames;
   playSfx("playerAttackStart");
 }
 
@@ -103,6 +194,7 @@ export function gainSkillEnergy(amount: number) {
 
 export function gainUltimateEnergy(amount: number) {
   const p = state.player;
+  if (p.ultimateTimer > 0 || p.ultimateCastTimer > 0) return;
   p.ultimateEnergy = Math.min(p.ultimateEnergyMax, p.ultimateEnergy + amount);
 }
 
@@ -120,20 +212,25 @@ export function healPlayer(amount: number) {
 }
 
 export function selectSkill(index: number) {
-  state.player.skillIndex = Math.max(0, Math.min(SKILLS.length - 1, index));
+  selectSkillSlot(state, index);
 }
 
 export function castSelectedSkill() {
   const p = state.player;
-  if (p.ultimateTimer > 0) return;
+  if (p.ultimateCastTimer > 0) return;
   if (p.fallAttackTimer > 0 || p.fallAttackRecoveryTimer > 0) return;
   if (p.skillEnergy < PLAYER_COMBAT.skillCastEnergyCost) return;
-  const skill = SKILLS[p.skillIndex] || SKILLS[0];
+  const skill = selectedSkill(state);
+  if (!skill) return;
+  const castDamageMultiplier = skillDamageMultiplier(state, skill.id)
+    * consumeSkillCastEquipmentDamageMultiplier(state);
   p.skillEnergy = Math.max(0, p.skillEnergy - PLAYER_COMBAT.skillCastEnergyCost);
   syncSkillCharges();
   p.skillFlash = 0;
   p.skillTimer = Math.ceil(skill.frameCount * 60 / PLAYER_DRAW.skillAnimFps);
   p.skillEffectSpawned = skill.id !== SKILL_IDS.skill1 && skill.id !== SKILL_IDS.skill2;
+  p.skillCastDamageMultiplier = castDamageMultiplier;
+  applySkillCastEquipmentEffects(state);
 
   if (skill.id === SKILL_IDS.skill3) {
     state.skill3Effect = {
@@ -141,6 +238,7 @@ export function castSelectedSkill() {
       frame: 0,
       hitsRemaining: SKILL3_EFFECT_CONFIG.maxHits,
       alpha: 1,
+      damageMultiplier: castDamageMultiplier,
     };
   }
 
@@ -157,11 +255,14 @@ export function castSelectedSkill() {
     frame: 0,
     frameCount,
     skillIndex: p.skillIndex,
+    skillId: skill.id,
     scaleIn: PLAYER_COMBAT.skillScaleIn,
     scaleOut: PLAYER_COMBAT.skillScaleOut,
     color: skill.color,
   });
 
+  let hitTargets = 0;
+  let bossHit = false;
   for (let i = state.enemies.length - 1; i >= 0; i -= 1) {
     const e = state.enemies[i];
     const ex = e.x + e.w / 2;
@@ -170,8 +271,11 @@ export function castSelectedSkill() {
     const dist = Math.hypot(ex - cx, ey - cy);
     if (dist > radius) continue;
     const ratio = 1 - dist / radius;
-    const damage = (skill.enemyBase + ratio * skill.enemyScale) * (1 + p.attackBonus * PLAYER_COMBAT.attackBonusScale);
+    const damage = (skill.enemyBase + ratio * skill.enemyScale)
+      * (1 + p.attackBonus * PLAYER_COMBAT.attackBonusScale)
+      * castDamageMultiplier;
     damageEnemy(e, damage, PLAYER_COMBAT.enemyHitCooldown);
+    hitTargets += 1;
     const { x: skillHitX, y: skillHitY } = nearestRectHitPoint(e, cx, cy);
     emitSlash(skillHitX, skillHitY, skill.color, e.w);
     emitHitBurst(skillHitX, skillHitY, PLAYER_COMBAT.effects.skillEnemyBurstColor, PLAYER_COMBAT.skillEnemyBurstPower);
@@ -186,8 +290,9 @@ export function castSelectedSkill() {
       const dist = Math.hypot(bx - cx, by - cy);
       if (dist <= radius + PLAYER_COMBAT.bossRadiusPadding) {
         const ratio = Math.max(PLAYER_COMBAT.bossMinDamageRatio, 1 - dist / (radius + PLAYER_COMBAT.bossRadiusPadding));
-        boss.hp -= skill.bossBase * ratio;
+        boss.hp -= skill.bossBase * ratio * castDamageMultiplier;
         boss.hitCd = PLAYER_COMBAT.bossHitCooldown;
+        bossHit = true;
         const { x: bossHitX, y: bossHitY } = nearestRectHitPoint(boss, cx, cy);
         emitSlash(bossHitX, bossHitY, PLAYER_COMBAT.effects.skillBossSlashColor);
         emitHitBurst(bossHitX, bossHitY, PLAYER_COMBAT.effects.skillBossBurstColor, PLAYER_COMBAT.skillBossBurstPower);
@@ -196,33 +301,38 @@ export function castSelectedSkill() {
     }
   }
 
+  applySkillHitEquipmentRefund(state, hitTargets, bossHit);
+
   playSfx("playerSkillCast");
 }
 
 export function castUltimateSkill() {
   const p = state.player;
   if (
-    p.ultimateTimer > 0
+    state.gameOver
+    || p.ultimateCastTimer > 0
+    || p.ultimateTimer > 0
     || p.skillTimer > 0
-    || p.attackTimer > 0
     || p.fallAttackTimer > 0
     || p.fallAttackRecoveryTimer > 0
   ) return;
   if (p.ultimateEnergy < p.ultimateEnergyMax) return;
 
   p.ultimateEnergy = 0;
+  p.attackTimer = 0;
   p.ultimateEffectSpawned = false;
-  p.ultimateTimer = ULTIMATE_SKILL_SHEET.count * PLAYER_COMBAT.ultimateCastFrameDuration;
+  p.ultimateCastTimer = PLAYER_COMBAT.ultimateCastFrames;
   p.skillFlash = SKILL_FLASH.maxFrames;
+  p.invincible = Math.max(p.invincible, PLAYER_COMBAT.ultimateStartupInvincibleFrames);
 
   playSfx("playerUltimateCast");
 }
 
-function triggerUltimateImpact() {
+function triggerUltimateOpeningEffect() {
   const p = state.player;
   const cx = p.x + p.w / 2;
   const cy = p.y + p.h - PLAYER_COMBAT.ultimateEffectYOffset;
-  const radius = PLAYER_COMBAT.ultimateRadius;
+  const life = Math.max(PLAYER_COMBAT.ultimateEffectLife, currentMoonTideConfig().durationFrames);
 
   playSfx("playerUltimateImpact");
 
@@ -232,35 +342,9 @@ function triggerUltimateImpact() {
     facing: p.facing,
     elapsed: 0,
     frame: 0,
-    life: PLAYER_COMBAT.ultimateEffectLife,
-    maxLife: PLAYER_COMBAT.ultimateEffectLife,
+    life,
+    maxLife: life,
   });
-
-  const damage = (p.baseAttack + p.attackBonus) * PLAYER_COMBAT.ultimateDamageMultiplier;
-
-  for (let i = state.enemies.length - 1; i >= 0; i -= 1) {
-    const e = state.enemies[i];
-    const ex = e.x + e.w / 2;
-    const ey = e.y + e.h / 2;
-    if (Math.hypot(ex - cx, ey - cy) > radius) continue;
-    damageEnemy(e, damage, PLAYER_COMBAT.enemyHitCooldown, "ultimate");
-    emitSlash(ex, ey, PLAYER_COMBAT.effects.skillEnemyBurstColor, e.w * 1.5);
-    emitHitBurst(ex, ey, PLAYER_COMBAT.effects.skillEnemyBurstColor, PLAYER_COMBAT.skillEnemyBurstPower + 1.2);
-    resolveEnemyDefeat(e, i, "enemy");
-  }
-
-  if (state.boss) {
-    const boss = state.boss;
-    const bx = boss.x + boss.w / 2;
-    const by = boss.y + boss.h / 2;
-    if (Math.hypot(bx - cx, by - cy) <= radius + PLAYER_COMBAT.bossRadiusPadding) {
-      boss.hp -= damage;
-      boss.hitCd = PLAYER_COMBAT.bossHitCooldown;
-      emitSlash(bx, by, PLAYER_COMBAT.effects.bossKillSlashColor, boss.w);
-      emitHitBurst(bx, by, PLAYER_COMBAT.effects.skillBossBurstColor, PLAYER_COMBAT.skillBossBurstPower + 1.4);
-      defeatBoss();
-    }
-  }
 }
 
 export function attackBox() {
@@ -271,7 +355,7 @@ export function attackBox() {
     y: p.y + BASIC_ATTACK.yOffset,
     w: reach,
     h: BASIC_ATTACK.height,
-    damage: getPlayerAttackDamage(),
+    damage: getPlayerAttackDamage() * moonTideBasicDamageMultiplier(),
     color: BASIC_ATTACK.color,
   };
 }
@@ -332,7 +416,9 @@ export function hurtPlayer(damage: number, sourceVx: number) {
     state.skill3Effect.alpha = state.skill3Effect.hitsRemaining / SKILL3_EFFECT_CONFIG.maxHits;
     p.invincible = PLAYER_COMBAT.hurtInvincibleFrames;
 
-    const counterDamage = (p.baseAttack + p.attackBonus) * SKILL3_EFFECT_CONFIG.damageMultiplier;
+    const counterDamage = (p.baseAttack + p.attackBonus)
+      * SKILL3_EFFECT_CONFIG.damageMultiplier
+      * state.skill3Effect.damageMultiplier;
     for (let i = state.enemies.length - 1; i >= 0; i -= 1) {
       const e = state.enemies[i];
       if (!hitbox(p, e)) continue;
@@ -363,6 +449,8 @@ export function hurtPlayer(damage: number, sourceVx: number) {
   if (p.hp <= 0) {
     playSfx("playerDeath");
     state.gameOver = true;
+    state.pendingEquipmentChoices = [];
+    state.pendingUpgradeChoices = [];
   } else {
     playSfx("playerHurt");
   }
@@ -371,24 +459,27 @@ export function hurtPlayer(damage: number, sourceVx: number) {
 export function tryJump() {
   const p = state.player;
   if (onGround(p, p.onPlatform)) {
-    p.vy = -p.jump;
+    p.vy = -p.jump * moonTideJumpMultiplier();
     playSfx("playerJump");
   }
 }
 
 export function updatePlayer() {
   const p = state.player;
+  tickEquipmentEffects(p);
 
   if (p.onPlatform && state.platforms.includes(p.onPlatform)) {
     p.x += p.onPlatform.vx;
   }
-  const moveScale = Math.min(bindingZonePlayerMoveScale(), lanternAshZonePlayerMoveScale());
+  const moveScale = Math.min(bindingZonePlayerMoveScale(), lanternAshZonePlayerMoveScale())
+    * equipmentMoveSpeedMultiplier(state)
+    * moonTideMoveSpeedMultiplier();
   if (keys.has("a")) {
     p.vx = -p.speed * moveScale;
-    if (p.skillTimer <= 0 && p.ultimateTimer <= 0) p.facing = -1;
+    if (p.skillTimer <= 0 && p.ultimateCastTimer <= 0) p.facing = -1;
   } else if (keys.has("d")) {
     p.vx = p.speed * moveScale;
-    if (p.skillTimer <= 0 && p.ultimateTimer <= 0) p.facing = 1;
+    if (p.skillTimer <= 0 && p.ultimateCastTimer <= 0) p.facing = 1;
   } else {
     p.vx *= PLAYER_COMBAT.groundDrag;
   }
@@ -440,7 +531,12 @@ export function updatePlayer() {
 
   if (p.skillTimer > 0) {
     p.skillTimer -= 1;
-    const skill = SKILLS[p.skillIndex] || SKILLS[0];
+    const skill = selectedSkill(state);
+    if (!skill) {
+      p.skillTimer = 0;
+      p.skillEffectSpawned = false;
+      return;
+    }
     if (!p.skillEffectSpawned) {
       const total = Math.ceil(skill.frameCount * 60 / PLAYER_DRAW.skillAnimFps);
       const halfway = Math.floor(total / 2);
@@ -458,6 +554,7 @@ export function updatePlayer() {
             facing: p.facing,
             frame: 0,
             elapsed: 0,
+            damageMultiplier: p.skillCastDamageMultiplier,
           });
           playSfx("playerSkillRelease", 0.96);
         } else if (skill.id === SKILL_IDS.skill2) {
@@ -471,6 +568,7 @@ export function updatePlayer() {
             frame: 0,
             elapsed: 0,
             traveled: 0,
+            damageMultiplier: p.skillCastDamageMultiplier,
           });
           playSfx("playerSkillRelease", 1.08);
         }
@@ -478,15 +576,27 @@ export function updatePlayer() {
     }
   }
 
-  if (p.ultimateTimer > 0) {
-    p.ultimateTimer -= 1;
-    const total = ULTIMATE_SKILL_SHEET.count * PLAYER_COMBAT.ultimateCastFrameDuration;
+  if (p.ultimateCastTimer > 0) {
+    p.ultimateCastTimer -= 1;
+    const total = PLAYER_COMBAT.ultimateCastFrames;
     const impactFrame = Math.floor(total * PLAYER_COMBAT.ultimateEffectSpawnRatio);
-    if (!p.ultimateEffectSpawned && total - p.ultimateTimer >= impactFrame) {
+    if (!p.ultimateEffectSpawned && total - p.ultimateCastTimer >= impactFrame) {
       p.ultimateEffectSpawned = true;
-      triggerUltimateImpact();
+      triggerUltimateOpeningEffect();
     }
+    if (p.ultimateCastTimer <= 0) {
+      if (!p.ultimateEffectSpawned) {
+        p.ultimateEffectSpawned = true;
+        triggerUltimateOpeningEffect();
+      }
+      p.ultimateTimer = currentMoonTideConfig().durationFrames;
+    }
+  } else if (p.ultimateTimer > 0) {
+    p.ultimateTimer -= 1;
+    if (p.ultimateTimer <= 0) p.ultimateEffectSpawned = false;
   }
+
+  spawnMoonTideTrail();
 
   if (p.attackTimer > 0) {
     p.attackTimer -= 1;
@@ -497,6 +607,10 @@ export function updatePlayer() {
       if (hitbox(box, e) && e.hitCd <= 0) {
         const { x: atkHitX, y: atkHitY } = overlapHitPoint(box, e);
         damageEnemy(e, box.damage, PLAYER_COMBAT.attackEnemyHitCooldown);
+        recordBasicAttackHit(state);
+        triggerMoonTideAfterimageHit(atkHitX, atkHitY, e.w, (damage) => {
+          damageEnemy(e, damage, PLAYER_COMBAT.attackEnemyHitCooldown);
+        });
         emitSlash(atkHitX, atkHitY, box.color, e.w);
         emitHitBurst(atkHitX, atkHitY, PLAYER_COMBAT.effects.attackEnemyBurstColor, PLAYER_COMBAT.attackEnemyBurstPower);
         playSfx("playerAttackHit");
@@ -509,8 +623,13 @@ export function updatePlayer() {
     if (state.boss && hitbox(box, state.boss) && state.boss.hitCd <= 0) {
       const boss = state.boss;
       boss.hp -= box.damage;
+      recordBasicAttackHit(state);
       boss.hitCd = PLAYER_COMBAT.attackBossHitCooldown;
       const { x: bossHitX, y: bossHitY } = overlapHitPoint(box, boss);
+      triggerMoonTideAfterimageHit(bossHitX, bossHitY, boss.w, (damage) => {
+        boss.hp -= damage;
+        boss.hitCd = PLAYER_COMBAT.attackBossHitCooldown;
+      });
       emitSlash(bossHitX, bossHitY, box.color);
       emitHitBurst(
         bossHitX,
@@ -616,9 +735,9 @@ export function drawPlayer() {
   const refX = p.x + p.w / 2;
   const refY = p.y + p.h - PLAYER_DRAW.yOffset;
 
-  if (p.ultimateTimer > 0 && ULTIMATE_SKILL_SHEET.image) {
-    const total = ULTIMATE_SKILL_SHEET.count * PLAYER_COMBAT.ultimateCastFrameDuration;
-    const elapsedGameFrames = total - p.ultimateTimer;
+  if (p.ultimateCastTimer > 0 && ULTIMATE_SKILL_SHEET.image) {
+    const total = PLAYER_COMBAT.ultimateCastFrames;
+    const elapsedGameFrames = total - p.ultimateCastTimer;
     const frame = Math.min(
       ULTIMATE_SKILL_SHEET.count - 1,
       Math.floor(elapsedGameFrames / PLAYER_COMBAT.ultimateCastFrameDuration),
@@ -641,7 +760,8 @@ export function drawPlayer() {
   }
 
   if (p.skillTimer > 0) {
-    const skill = SKILLS[p.skillIndex] || SKILLS[0];
+    const skill = selectedSkill(state);
+    if (!skill) return;
     if (skill.image) {
       const total = Math.ceil(skill.frameCount * 60 / PLAYER_DRAW.skillAnimFps);
       const elapsedGameFrames = total - p.skillTimer;
@@ -690,10 +810,11 @@ export function drawPlayer() {
       );
     }
   } else if (stateName === PLAYER_ANIMATION_STATES.attack && p.attackTimer > 0) {
-    const elapsedAttack = BASIC_ATTACK.frames - p.attackTimer;
+    const attackDuration = Math.max(1, p.attackDuration);
+    const elapsedAttack = attackDuration - p.attackTimer;
     frame = Math.min(
       sheet.count - 1,
-      Math.floor(Math.max(0, elapsedAttack) * sheet.count / BASIC_ATTACK.frames),
+      Math.floor(Math.max(0, elapsedAttack) * sheet.count / attackDuration),
     );
   }
   drawWithBindingSlowFilter(isBindingSlowed, () => {

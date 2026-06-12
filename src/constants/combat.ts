@@ -1,4 +1,5 @@
 const SECONDS_PER_MINUTE = 60;
+const FRAMES_PER_SECOND = 60;
 
 export const BASIC_ATTACK = {
   damage: 16,
@@ -69,15 +70,19 @@ export const PLAYER_COMBAT = {
   bossEnergyGain: 60,
   enemyUltimateEnergyGain: 8 / 3,
   bossUltimateEnergyGain: 40,
-  ultimateDamageMultiplier: 3,
   ultimateRadius: 360,
-  ultimateCastFrameDuration: 12,
+  ultimateCastFrames: 24,
+  ultimateCastFrameDuration: 4,
+  ultimateStartupInvincibleFrames: 8,
   ultimateEffectFrameDuration: 8,
   ultimateEffectLife: 96,
   ultimateEffectSpawnRatio: 0.45,
   ultimateDrawScale: 0.42,
   ultimateEffectDrawScale: 0.68,
   ultimateEffectYOffset: 78,
+  ultimateTrailLife: 18,
+  ultimateTrailSpawnInterval: 3,
+  ultimateAfterimageLife: 12,
   skillCastEnergyCost: 30,
   skillChargeResetDelay: 45,
   hurtInvincibleFrames: 28,
@@ -114,6 +119,42 @@ export const PLAYER_COMBAT = {
     attackHit: { baseFrequency: 430, randomVariance: 60, duration: 0.04, volume: 0.025 },
     bossHit: { frequency: 180, duration: 0.06, volume: 0.05 },
     bossKill: { frequency: 700, duration: 0.12, volume: 0.06 },
+  },
+} as const;
+
+export const MOON_TIDE_ULTIMATE = {
+  1: {
+    durationFrames: 6 * FRAMES_PER_SECOND,
+    moveSpeedMultiplier: 1.12,
+    jumpMultiplier: 1.08,
+    attackFrameMultiplier: 0.9,
+    damageMultiplier: 1.15,
+    afterimageChance: 0.35,
+    afterimageDamageMultiplier: 0.22,
+    afterimageCount: 1,
+    afterimageBurstPower: 0.7,
+  },
+  2: {
+    durationFrames: 7.5 * FRAMES_PER_SECOND,
+    moveSpeedMultiplier: 1.18,
+    jumpMultiplier: 1.12,
+    attackFrameMultiplier: 0.82,
+    damageMultiplier: 1.25,
+    afterimageChance: 0.6,
+    afterimageDamageMultiplier: 0.28,
+    afterimageCount: 1,
+    afterimageBurstPower: 0.9,
+  },
+  3: {
+    durationFrames: 9 * FRAMES_PER_SECOND,
+    moveSpeedMultiplier: 1.25,
+    jumpMultiplier: 1.16,
+    attackFrameMultiplier: 0.76,
+    damageMultiplier: 1.35,
+    afterimageChance: 1,
+    afterimageDamageMultiplier: 0.35,
+    afterimageCount: 2,
+    afterimageBurstPower: 1.15,
   },
 } as const;
 

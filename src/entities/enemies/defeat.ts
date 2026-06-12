@@ -5,6 +5,7 @@ import type { EnemyState } from "../../types/game-state";
 import { playSfx } from "../../audio";
 import type { EnemyDefeatRewardKind } from "./common";
 import { enemyArchetypeForSheet } from "./registry";
+import { addRunXp, enemyXp } from "../../systems/progression";
 
 const SPLITLING_SKILL_ENERGY_GAIN = 2;
 const SPLITLING_ULTIMATE_ENERGY_GAIN = 0.5;
@@ -20,7 +21,9 @@ function syncSkillCharges() {
 function gainEnergy(skillAmount: number, ultimateAmount: number) {
   const player = state.player;
   player.skillEnergy = Math.min(player.skillEnergyMax, player.skillEnergy + skillAmount);
-  player.ultimateEnergy = Math.min(player.ultimateEnergyMax, player.ultimateEnergy + ultimateAmount);
+  if (player.ultimateTimer <= 0 && player.ultimateCastTimer <= 0) {
+    player.ultimateEnergy = Math.min(player.ultimateEnergyMax, player.ultimateEnergy + ultimateAmount);
+  }
   syncSkillCharges();
 }
 
@@ -29,6 +32,7 @@ function applyEnemyDefeatReward(enemy: EnemyState, reward: EnemyDefeatRewardKind
 
   if (enemy.splitterVariant === "child") {
     gainEnergy(SPLITLING_SKILL_ENERGY_GAIN, SPLITLING_ULTIMATE_ENERGY_GAIN);
+    addRunXp(state, enemyXp(enemy));
     return;
   }
 
@@ -39,6 +43,7 @@ function applyEnemyDefeatReward(enemy: EnemyState, reward: EnemyDefeatRewardKind
     recordEnemyCoverKill();
   }
   gainEnergy(PLAYER_COMBAT.enemyEnergyGain, PLAYER_COMBAT.enemyUltimateEnergyGain);
+  addRunXp(state, enemyXp(enemy));
 }
 
 export function resolveEnemyDefeat(

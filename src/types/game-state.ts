@@ -1,4 +1,5 @@
 import type { MoonState } from "../moon/types";
+import type { SkillId } from "./assets";
 
 export type PlatformStyle = "stone" | "moss" | "shrine" | "ruin";
 export type CrystalType = "atk" | "hp";
@@ -59,6 +60,33 @@ export type BossSkillMode =
   | "bloodMoonManyFaces";
 export type ProjectileKind = "boss" | "bossBone" | "casterWisp";
 export type MirrorShardKind = "shard" | "nightmare";
+export type SkillLevel = 1 | 2 | 3;
+export type UltimateLevel = 0 | 1 | 2 | 3;
+export type EquipmentSlot = "blade" | "garb" | "talisman";
+export type EquipmentFamily = "flow";
+export type EquipmentTier = "common" | "fine" | "awakened";
+export type EquipmentItemId = "flow_blade" | "flow_garb" | "flow_talisman";
+export type UpgradeChoiceType = "unlockSkill" | "upgradeSkill" | "upgradeUltimate";
+
+export type EquipmentItemState = {
+  id: EquipmentItemId;
+  name: string;
+  slot: EquipmentSlot;
+  family: EquipmentFamily;
+  tier: EquipmentTier;
+  summary: string;
+  uiTags: string[];
+};
+
+export type UpgradeChoiceState = {
+  id: string;
+  type: UpgradeChoiceType;
+  title: string;
+  name: string;
+  description: string;
+  skillId?: SkillId;
+  nextLevel?: SkillLevel | UltimateLevel;
+};
 
 export type PlatformState = {
   x: number;
@@ -97,9 +125,12 @@ export type PlayerState = {
   maxHp: number;
   invincible: number;
   attackTimer: number;
+  attackDuration: number;
   fallAttackTimer: number;
   fallAttackRecoveryTimer: number;
   score: number;
+  runLevel: number;
+  runXp: number;
   baseAttack: number;
   attackBonus: number;
   skillEnergy: number;
@@ -107,12 +138,20 @@ export type PlayerState = {
   skillCharges: number;
   maxSkillCharges: number;
   skillIndex: number;
+  equippedSkillIds: [SkillId | null, SkillId | null, SkillId | null];
+  skillLevels: Partial<Record<SkillId, SkillLevel>>;
   skillTimer: number;
   skillEffectSpawned: boolean;
+  skillCastDamageMultiplier: number;
   ultimateEnergy: number;
   ultimateEnergyMax: number;
+  ultimateLevel: UltimateLevel;
   ultimateTimer: number;
+  ultimateCastTimer: number;
   ultimateEffectSpawned: boolean;
+  flowBladeHits: number;
+  flowBladeSurgeReady: boolean;
+  flowGarbTimer: number;
   onPlatform: PlatformState | null;
   skillFlash: number;
   isPlayer: boolean;
@@ -449,6 +488,7 @@ export type SkillBurstState = {
   frame: number;
   frameCount: number;
   skillIndex: number;
+  skillId: SkillId;
   scaleIn: number;
   scaleOut: number;
   color: string;
@@ -461,6 +501,8 @@ export type Skill1EffectState = {
   facing: number;
   frame: number;
   elapsed: number;
+  damageMultiplier: number;
+  refundedSkillEnergy?: boolean;
 };
 
 export type Skill2EffectState = {
@@ -471,6 +513,8 @@ export type Skill2EffectState = {
   frame: number;
   elapsed: number;
   traveled: number;
+  damageMultiplier: number;
+  refundedSkillEnergy?: boolean;
 };
 
 export type Skill3EffectState = {
@@ -478,6 +522,7 @@ export type Skill3EffectState = {
   frame: number;
   hitsRemaining: number;
   alpha: number;
+  damageMultiplier: number;
 };
 
 export type UltimateEffectState = {
@@ -488,6 +533,28 @@ export type UltimateEffectState = {
   frame: number;
   life: number;
   maxLife: number;
+};
+
+export type UltimateTrailState = {
+  x: number;
+  y: number;
+  facing: number;
+  life: number;
+  maxLife: number;
+  width: number;
+  height: number;
+  phase: number;
+};
+
+export type UltimateAfterimageSlashState = {
+  x: number;
+  y: number;
+  w: number;
+  h: number;
+  facing: number;
+  life: number;
+  maxLife: number;
+  power: number;
 };
 
 export type CrystalState = {
@@ -504,6 +571,10 @@ export type GameState = {
   spawnTimer: number;
   bossSpawnTimer: number;
   bossKills: number;
+  pendingUpgradeChoices: UpgradeChoiceState[];
+  pendingEquipmentChoices: EquipmentItemState[];
+  equipmentInventory: EquipmentItemId[];
+  equippedEquipment: Record<EquipmentSlot, EquipmentItemId | null>;
   platformSpawnTimer: number;
   gameOver: boolean;
   boss: BossState;
@@ -522,6 +593,8 @@ export type GameState = {
   skill2Effects: Skill2EffectState[];
   skill3Effect: Skill3EffectState | null;
   ultimateEffects: UltimateEffectState[];
+  ultimateTrails: UltimateTrailState[];
+  ultimateAfterimageSlashes: UltimateAfterimageSlashState[];
   bossSkill1Effects: BossSkill1EffectState[];
   deadBellWaves: DeadBellWaveState[];
   deadBellBlades: DeadBellBladeState[];

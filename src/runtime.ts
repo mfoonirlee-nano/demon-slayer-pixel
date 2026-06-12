@@ -33,21 +33,54 @@ import {
   drawChests,
 } from "./entities/platform";
 import { updateProjectiles, drawProjectiles } from "./entities/projectile";
-import { updateParticles, updateSkillBursts, updateHitBursts, updateSkill1Effects, updateSkill2Effects, updateSkill3Effect, updateUltimateEffects, drawParticles, drawSkillBursts, drawHitBursts, drawSkill1Effects, drawSkill2Effects, drawSkill3Effect, drawUltimateEffects } from "./entities/particle";
+import {
+  updateParticles,
+  updateSkillBursts,
+  updateHitBursts,
+  updateSkill1Effects,
+  updateSkill2Effects,
+  updateSkill3Effect,
+  updateUltimateEffects,
+  updateUltimateTrails,
+  updateUltimateAfterimageSlashes,
+  drawParticles,
+  drawSkillBursts,
+  drawHitBursts,
+  drawSkill1Effects,
+  drawSkill2Effects,
+  drawSkill3Effect,
+  drawUltimateEffects,
+  drawUltimateTrails,
+  drawUltimateAfterimageSlashes,
+} from "./entities/particle";
 import type { GameSnapshot } from "./gameStore";
+import type { SkillId } from "./types/assets";
+import type { EquipmentItemId, EquipmentSlot } from "./types/game-state";
+import { applyUpgradeChoice } from "./systems/progression";
+import { chooseBossEquipment as chooseBossEquipmentReward, equipEquipment as equipEquipmentInState } from "./systems/equipment";
+import { equipSkillSlot as equipSkillSlotInState } from "./systems/loadout";
 
 let frameId = 0;
 let running = false;
-let paused = false;
+let manualPaused = false;
 let publishState: (snapshot: GameSnapshot) => void = () => {};
 
+function hasBlockingOverlay() {
+  return state.pendingEquipmentChoices.length > 0 || state.pendingUpgradeChoices.length > 0;
+}
+
+function isPaused() {
+  return manualPaused || hasBlockingOverlay();
+}
+
 function publishCurrentState() {
-  publishState(getStateSnapshot(paused));
+  publishState(getStateSnapshot(manualPaused, isPaused()));
 }
 
 function togglePause() {
   if (state.gameOver || !state.spritesReady) return;
-  paused = !paused;
+  if (hasBlockingOverlay()) return;
+  manualPaused = !manualPaused;
   publishCurrentState();
 }
 
@@ -56,10 +89,31 @@ function queueNextFrame() {
 }
 
 function restart() {
-  paused = false;
+  manualPaused = false;
   resetState();
   resetMapGenerator();
   publishCurrentState();
+}
+
+function runCombatAction(action: () => void) {
+  if (isPaused() || state.gameOver || !state.spritesReady) return;
+  action();
+}
+
+export function chooseUpgradeReward(index: number) {
+  if (applyUpgradeChoice(state, index)) publishCurrentState();
+}
+
+export function chooseBossEquipment(index: number) {
+  if (chooseBossEquipmentReward(state, index)) publishCurrentState();
+}
+
+export function equipSkillSlot(slotIndex: number, skillId: SkillId) {
+  if (equipSkillSlotInState(state, slotIndex, skillId)) publishCurrentState();
+}
+
+export function equipEquipment(slot: EquipmentSlot, itemId: EquipmentItemId | null) {
+  if (equipEquipmentInState(state, slot, itemId)) publishCurrentState();
 }
 
 setDebugRuntimeActions({
@@ -83,7 +137,7 @@ function drawLoadingState() {
 
 function loop(ts: number) {
   if (!running || !ctx) return;
-  if (paused) {
+  if (isPaused()) {
     state.last = ts;
     queueNextFrame();
     return;
@@ -150,6 +204,8 @@ function loop(ts: number) {
     updateSkill2Effects();
     updateSkill3Effect();
     updateUltimateEffects();
+    updateUltimateTrails();
+    updateUltimateAfterimageSlashes();
   }
 
   drawBackground();
@@ -159,6 +215,8 @@ function loop(ts: number) {
   drawCrystals();
   drawChests();
   drawBindingZonesBack();
+  drawUltimateTrails();
+  drawUltimateEffects();
 
   if (state.player.skillFlash > 0) {
     const flashT = state.player.skillFlash / SKILL_FLASH.maxFrames;
@@ -186,8 +244,8 @@ function loop(ts: number) {
 
   drawPlayer();
   drawSkill3Effect();
-  drawUltimateEffects();
   drawSkillBursts();
+  drawUltimateAfterimageSlashes();
   drawWardenAuraIndicators();
   for (const e of state.enemies) drawEnemy(e);
   drawBoss();
@@ -238,11 +296,11 @@ export function startGame(options: { onStateChange?: (snapshot: GameSnapshot) =>
   publishCurrentState();
 
   setupInput({
-    onJump: tryJump,
-    onAttack: triggerAttack,
-    onSkill: castSelectedSkill,
-    onUltimate: castUltimateSkill,
-    onSwitchSkill: selectSkill,
+    onJump: () => runCombatAction(tryJump),
+    onAttack: () => runCombatAction(triggerAttack),
+    onSkill: () => runCombatAction(castSelectedSkill),
+    onUltimate: () => runCombatAction(castUltimateSkill),
+    onSwitchSkill: (index) => runCombatAction(() => selectSkill(index)),
     onRestart: restart,
     onPause: togglePause,
   });

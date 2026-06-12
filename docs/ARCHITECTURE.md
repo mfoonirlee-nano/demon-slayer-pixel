@@ -85,4 +85,4 @@ Canvas 每帧大致按以下顺序绘制：
 6. 地面瓦片覆盖层。
 7. 可选碰撞盒调试层。
 
-React HUD 不直接绘制到 Canvas，而是订阅 `gameSnapshotAtom` 显示生命、技能资源、大招能量、Boss 血条、暂停和死亡状态。
+React HUD 不直接绘制到 Canvas，而是订阅 `gameSnapshotAtom` 显示生命、技能资源、大招能量、Boss 血条、暂停和死亡状态。角色状态 HUD 由左侧大招圆框、两条随等级增长的生命/技能资源条和当前技能小图标组成。

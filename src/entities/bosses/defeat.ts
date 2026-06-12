@@ -3,6 +3,8 @@ import { PLAYER_COMBAT, RUNTIME_CONFIG } from "../../constants";
 import { recordBossCoverKill } from "../../coverProgress";
 import { state } from "../../state";
 import { BOSS_ARCHETYPE_IDS } from "./registry";
+import { createBossEquipmentChoices } from "../../systems/equipment";
+import { addRunXp, bossXp } from "../../systems/progression";
 
 function gainBossKillEnergy() {
   const p = state.player;
@@ -11,7 +13,9 @@ function gainBossKillEnergy() {
     p.maxSkillCharges,
     Math.floor(p.skillEnergy / PLAYER_COMBAT.skillCastEnergyCost),
   );
-  p.ultimateEnergy = Math.min(p.ultimateEnergyMax, p.ultimateEnergy + PLAYER_COMBAT.bossUltimateEnergyGain);
+  if (p.ultimateTimer <= 0 && p.ultimateCastTimer <= 0) {
+    p.ultimateEnergy = Math.min(p.ultimateEnergyMax, p.ultimateEnergy + PLAYER_COMBAT.bossUltimateEnergyGain);
+  }
 }
 
 export function defeatBoss() {
@@ -21,6 +25,8 @@ export function defeatBoss() {
   state.player.score += PLAYER_COMBAT.bossKillScore;
   recordBossCoverKill();
   gainBossKillEnergy();
+  addRunXp(state, bossXp(state.bossKills));
+  state.pendingEquipmentChoices = createBossEquipmentChoices();
   playSfx("bossKill");
   state.bossKills += 1;
   state.boss = null;

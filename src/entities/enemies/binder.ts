@@ -124,6 +124,8 @@ function applyBindingZoneDamage() {
   if (player.hp <= 0) {
     playSfx("playerDeath");
     state.gameOver = true;
+    state.pendingEquipmentChoices = [];
+    state.pendingUpgradeChoices = [];
   } else {
     playSfx("playerHurt", 0.9);
   }
