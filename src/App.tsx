@@ -126,18 +126,20 @@ const HUD_HP_METER_FRAME: HudMeterFrame = {
   mid: "hudHpBarMid",
   right: "hudHpBarRight",
   height: 20,
-  fillTop: 5,
-  fillBottom: 5,
-  fillInsetX: 18,
+  fillTop: 7,
+  fillBottom: 1,
+  fillInsetLeft: 15,
+  fillInsetRight: 7,
 };
 const HUD_SKILL_METER_FRAME: HudMeterFrame = {
   left: "hudSkillBarLeft",
   mid: "hudSkillBarMid",
   right: "hudSkillBarRight",
   height: 18,
-  fillTop: 5,
-  fillBottom: 5,
-  fillInsetX: 18,
+  fillTop: 7,
+  fillBottom: 3,
+  fillInsetLeft: 15,
+  fillInsetRight: 7,
 };
 const DEATH_SPRITE_COLUMNS = 6;
 const DEATH_SPRITE_ROWS = 4;
@@ -197,7 +199,8 @@ type HudMeterFrame = {
   height: number;
   fillTop: number;
   fillBottom: number;
-  fillInsetX: number;
+  fillInsetLeft: number;
+  fillInsetRight: number;
 };
 
 function HudMeter({ value, max, ghostValue, color, ghostColor, text, width, frame }: {
@@ -224,15 +227,15 @@ function HudMeter({ value, max, ghostValue, color, ghostColor, text, width, fram
       <div
         className="player-hud-meter-fill"
         style={{
-          left: frame.fillInsetX,
-          right: frame.fillInsetX,
+          left: frame.fillInsetLeft,
+          right: frame.fillInsetRight,
           top: frame.fillTop,
           bottom: frame.fillBottom,
         }}
       >
         <GhostBar value={value} max={max} ghostValue={ghostValue} color={color} ghostColor={ghostColor} />
       </div>
-      <span className="player-hud-meter-text">{text}</span>
+      <span className="player-hud-meter-text" style={{ left: leftW, right: rightW }}>{text}</span>
     </div>
   );
 }

@@ -38,8 +38,9 @@ body {
 
 .player-hud {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   gap: 0;
+  height: 72px;
 }
 
 .player-hud-abilities {
@@ -53,45 +54,55 @@ body {
   position: absolute;
   left: 0;
   top: 0;
+  z-index: 2;
 }
 
 .player-hud-current-skill {
   position: absolute;
   left: 66px;
   top: 36px;
+  z-index: 4;
   display: grid;
   place-items: center;
 }
 
 .player-hud-bars {
   display: grid;
+  margin-top: 7px;
   gap: 4px;
+  position: relative;
+  z-index: 1;
 }
 
 .player-hud-meter {
   position: relative;
+  isolation: isolate;
 }
 
 .player-hud-meter-frame {
   position: absolute;
   inset: 0;
-  z-index: 0;
+  z-index: 2;
   display: flex;
+  pointer-events: none;
 }
 
 .player-hud-meter-fill {
   position: absolute;
   z-index: 1;
   overflow: hidden;
+  background: #031033;
 }
 
 .player-hud-meter-text {
   position: absolute;
-  inset: 0;
-  z-index: 2;
+  top: 0;
+  bottom: 0;
+  z-index: 3;
   display: flex;
   align-items: center;
   justify-content: center;
+  transform: translateY(2px);
   color: #e9fff5;
   font-size: 8px;
   font-weight: 700;
