@@ -4,10 +4,17 @@ const AUDIO_CONFIG = {
   fadeOutVolume: 0.0001,
   minFrequency: 24,
 };
+const AUDIO_VOLUME_STORAGE_KEY = "moonlit-tide-audio-volume";
+const DEFAULT_AUDIO_VOLUME_SETTINGS = {
+  master: 1,
+  sfx: 1,
+};
 
 type AudioWindow = Window & typeof globalThis & {
   AudioContext?: typeof AudioContext;
 };
+
+export type AudioVolumeSettings = typeof DEFAULT_AUDIO_VOLUME_SETTINGS;
 
 type ToneStep = {
   frequency: number;
@@ -67,6 +74,7 @@ export type GameSfx =
 
 let audioCtx: AudioContext | null = null;
 const lastSfxAt = new Map<GameSfx, number>();
+let audioVolumeSettings: AudioVolumeSettings = loadAudioVolumeSettings();
 
 function getAudioContextConstructor() {
   return (window as AudioWindow).AudioContext;
@@ -83,6 +91,19 @@ export function ensureAudio() {
   }
 }
 
+export function getAudioVolumeSettings(): AudioVolumeSettings {
+  return audioVolumeSettings;
+}
+
+export function setAudioVolumeSettings(nextSettings: Partial<AudioVolumeSettings>) {
+  audioVolumeSettings = normalizeAudioVolumeSettings({
+    ...audioVolumeSettings,
+    ...nextSettings,
+  });
+  saveAudioVolumeSettings(audioVolumeSettings);
+  return audioVolumeSettings;
+}
+
 export function playTone(
   freq: number,
   duration = AUDIO_CONFIG.defaultToneDuration,
@@ -92,6 +113,8 @@ export function playTone(
   slideTo?: number,
 ) {
   if (!audioCtx) return;
+  const effectiveVolume = volume * audioVolumeSettings.master * audioVolumeSettings.sfx;
+  if (effectiveVolume <= 0) return;
   const now = audioCtx.currentTime + delay;
   const osc = audioCtx.createOscillator();
   const gain = audioCtx.createGain();
@@ -103,7 +126,7 @@ export function playTone(
     );
   }
   osc.type = type;
-  gain.gain.setValueAtTime(volume, now);
+  gain.gain.setValueAtTime(effectiveVolume, now);
   gain.gain.exponentialRampToValueAtTime(AUDIO_CONFIG.fadeOutVolume, now + duration);
   osc.connect(gain);
   gain.connect(audioCtx.destination);
@@ -128,6 +151,38 @@ function playPattern(sfx: GameSfx, steps: ToneStep[], minGap = 0.03, pitch = 1) 
       step.slideTo === undefined ? undefined : step.slideTo * pitch,
     );
   }
+}
+
+function loadAudioVolumeSettings(): AudioVolumeSettings {
+  if (typeof window === "undefined") return DEFAULT_AUDIO_VOLUME_SETTINGS;
+
+  try {
+    const storedSettings = window.localStorage.getItem(AUDIO_VOLUME_STORAGE_KEY);
+    if (!storedSettings) return DEFAULT_AUDIO_VOLUME_SETTINGS;
+    return normalizeAudioVolumeSettings(JSON.parse(storedSettings) as Partial<AudioVolumeSettings>);
+  } catch {
+    return DEFAULT_AUDIO_VOLUME_SETTINGS;
+  }
+}
+
+function saveAudioVolumeSettings(settings: AudioVolumeSettings) {
+  try {
+    window.localStorage.setItem(AUDIO_VOLUME_STORAGE_KEY, JSON.stringify(settings));
+  } catch {
+    // Audio settings are still applied for the current session.
+  }
+}
+
+function normalizeAudioVolumeSettings(settings: Partial<AudioVolumeSettings>): AudioVolumeSettings {
+  return {
+    master: clampAudioVolume(settings.master ?? DEFAULT_AUDIO_VOLUME_SETTINGS.master),
+    sfx: clampAudioVolume(settings.sfx ?? DEFAULT_AUDIO_VOLUME_SETTINGS.sfx),
+  };
+}
+
+function clampAudioVolume(value: number) {
+  if (!Number.isFinite(value)) return 1;
+  return Math.max(0, Math.min(1, value));
 }
 
 export function playSfx(sfx: GameSfx, pitch = 1) {

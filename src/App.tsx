@@ -20,11 +20,17 @@ import {
 } from "./runtime";
 import { gameSnapshotAtom, gameStore, setGameSnapshot, type GameSnapshot } from "./gameStore";
 import { StartScreen } from "./startScreen";
-import { ensureAudio } from "./audio";
+import {
+  ensureAudio,
+  getAudioVolumeSettings,
+  setAudioVolumeSettings,
+  type AudioVolumeSettings,
+} from "./audio";
 import type { EquipmentItemState, EquipmentSlot, SkillLevel, UltimateLevel } from "./types/game-state";
 import type { SkillId } from "./types/assets";
 
 type AppPhase = "menu" | "playing";
+type PauseTab = "info" | "equipment" | "skills" | "settings";
 
 function clampMeterPercent(value: number, maxValue: number) {
   if (maxValue <= 0) return 0;
@@ -354,6 +360,17 @@ const EQUIPMENT_SLOT_LABELS: Record<EquipmentSlot, string> = {
   garb: "衣装",
   talisman: "饰符",
 };
+const EQUIPMENT_SLOTS: EquipmentSlot[] = ["blade", "garb", "talisman"];
+const PAUSE_TABS: Array<{ id: PauseTab; label: string }> = [
+  { id: "info", label: "基础信息" },
+  { id: "equipment", label: "装备" },
+  { id: "skills", label: "技能" },
+  { id: "settings", label: "设置" },
+];
+const AUDIO_PERCENT_SCALE = 100;
+const PAUSE_SLIDER_TRACK_H = 18;
+const PAUSE_SLIDER_THUMB_W = 22;
+const PAUSE_SLIDER_THUMB_H = 24;
 
 function StatRow({ label, value, accent = false }: { label: string; value: string | number; accent?: boolean }) {
   return (
@@ -364,10 +381,62 @@ function StatRow({ label, value, accent = false }: { label: string; value: strin
   );
 }
 
+function AudioVolumeControl({ label, value, onChange }: {
+  label: string;
+  value: number;
+  onChange: (value: number) => void;
+}) {
+  const percent = Math.round(value * AUDIO_PERCENT_SCALE);
+
+  return (
+    <label className="grid gap-2 text-[10px] text-[#c8efff]">
+      <span className="flex items-center justify-between gap-3">
+        <span>{label}</span>
+        <span className="font-bold text-[#26d5ff]">{percent}%</span>
+      </span>
+      <span className="relative block h-7">
+        <UiSprite
+          id="pauseSliderTrack"
+          width={420}
+          height={PAUSE_SLIDER_TRACK_H}
+          className="absolute left-0 top-1"
+          style={{ width: "100%", backgroundSize: `100% ${PAUSE_SLIDER_TRACK_H}px` }}
+        />
+        <span className="absolute left-0 top-1 block overflow-hidden" style={{ width: `${percent}%`, height: PAUSE_SLIDER_TRACK_H }}>
+          <UiSprite
+            id="pauseSliderFill"
+            width={420}
+            height={PAUSE_SLIDER_TRACK_H}
+            style={{ width: "100%", backgroundSize: `100% ${PAUSE_SLIDER_TRACK_H}px` }}
+          />
+        </span>
+        <UiSprite
+          id="pauseSliderThumb"
+          width={PAUSE_SLIDER_THUMB_W}
+          height={PAUSE_SLIDER_THUMB_H}
+          className="absolute top-0"
+          style={{ left: `${percent}%`, transform: "translateX(-50%)" }}
+        />
+        <input
+          type="range"
+          min={0}
+          max={AUDIO_PERCENT_SCALE}
+          step={5}
+          value={percent}
+          className="absolute inset-0 h-7 w-full cursor-pointer opacity-0"
+          onChange={(event) => onChange(Number(event.currentTarget.value) / AUDIO_PERCENT_SCALE)}
+        />
+      </span>
+    </label>
+  );
+}
+
 function PauseScreen({ snapshot }: { snapshot: GameSnapshot }) {
   const { player, equipment } = snapshot;
-  const [selectedSkillSlot, setSelectedSkillSlot] = useState<number | null>(null);
-  const [selectedEquipmentSlot, setSelectedEquipmentSlot] = useState<EquipmentSlot | null>(null);
+  const [activeTab, setActiveTab] = useState<PauseTab>("info");
+  const [selectedSkillSlot, setSelectedSkillSlot] = useState(0);
+  const [selectedEquipmentSlot, setSelectedEquipmentSlot] = useState<EquipmentSlot>("blade");
+  const [volumeSettings, setVolumeSettings] = useState<AudioVolumeSettings>(() => getAudioVolumeSettings());
   const activeSkill = getSkill(player.equippedSkillIds[player.skillIndex]);
   const totalAttack = player.baseAttack + player.attackBonus;
   const attackText = player.attackBonus > 0
@@ -376,34 +445,59 @@ function PauseScreen({ snapshot }: { snapshot: GameSnapshot }) {
   const skillEnergyText = `${Math.floor(player.skillEnergy)} / ${player.skillEnergyMax}`;
   const ultimateEnergyText = `${Math.floor(player.ultimateEnergy)} / ${player.ultimateEnergyMax}`;
   const learnedSkills = SKILLS.filter((skill) => player.skillLevels[skill.id]);
+  const selectedEquipmentItem = equipment.equipped[selectedEquipmentSlot];
+  const equipmentCandidates = equipment.inventory.filter((item) => item.slot === selectedEquipmentSlot);
+  const selectedSkill = getSkill(player.equippedSkillIds[selectedSkillSlot]);
 
-  useEffect(() => {
-    const closeOpenList = (event: KeyboardEvent) => {
-      const key = event.key.toLowerCase();
-      if ((key === "escape" || key === "p") && (selectedSkillSlot !== null || selectedEquipmentSlot !== null)) {
-        event.preventDefault();
-        event.stopPropagation();
-        setSelectedSkillSlot(null);
-        setSelectedEquipmentSlot(null);
-      }
-    };
-    window.addEventListener("keydown", closeOpenList, { capture: true });
-    return () => window.removeEventListener("keydown", closeOpenList, { capture: true });
-  }, [selectedEquipmentSlot, selectedSkillSlot]);
+  const updateVolume = (setting: keyof AudioVolumeSettings, value: number) => {
+    setVolumeSettings(setAudioVolumeSettings({ [setting]: value }));
+  };
 
   return (
-    <div className="absolute inset-0 z-30 flex items-center justify-center bg-[rgba(5,10,22,0.72)] px-3">
-      <UiSprite id="pausePanel" width={940} height={529} className="relative">
-        <div className="absolute inset-[42px] flex flex-col text-left text-white">
-          <div className="flex items-baseline justify-between">
+    <div className="absolute inset-0 z-30 flex items-center justify-center bg-[rgba(5,10,22,0.72)] px-3 py-4">
+      <UiSprite
+        id="pausePanelCompact"
+        width={600}
+        height={260}
+        className="relative"
+        style={{
+          width: "min(600px, calc(100vw - 24px))",
+          height: "auto",
+          aspectRatio: "600 / 260",
+          backgroundSize: "100% 100%",
+        }}
+      >
+        <div className="absolute inset-x-4 bottom-2 top-2 flex min-h-0 flex-col text-left text-white">
+          <div className="flex shrink-0 items-baseline justify-between gap-3">
             <span className="text-[13px] font-bold text-[#26d5ff]">潮刃者</span>
-            <span className="text-[10px] text-[#7fc8e0]">当前技能：<span className="text-[#26d5ff]">{activeSkill?.name ?? "未装备"}</span></span>
+            <span className="truncate text-[10px] text-[#7fc8e0]">当前技能：<span className="text-[#26d5ff]">{activeSkill?.name ?? "未装备"}</span></span>
           </div>
 
-          <div className="mt-3 grid flex-1 grid-cols-3 gap-4">
-            <UiSprite id="pauseColumnFrame" width={270} height={450} className="relative p-5">
-              <div className="mb-3 text-[10px] font-bold text-[#7fc8e0]">角色状态</div>
-              <div className="grid gap-2">
+          <div className="mt-1 grid shrink-0 grid-flow-col auto-cols-[126px] gap-1 overflow-x-auto" role="tablist" aria-label="暂停菜单">
+            {PAUSE_TABS.map((tab) => (
+              <button
+                key={tab.id}
+                type="button"
+                role="tab"
+                aria-selected={activeTab === tab.id}
+                className="border-0 bg-transparent p-0 text-[9px] font-bold"
+                onClick={() => setActiveTab(tab.id)}
+              >
+                <UiSprite
+                  id={activeTab === tab.id ? "pauseTabActive" : "pauseTabNormal"}
+                  width={126}
+                  height={42}
+                  className={`flex items-center justify-center ${activeTab === tab.id ? "text-[#e8fbff]" : "text-[#7fc8e0]"}`}
+                >
+                  {tab.label}
+                </UiSprite>
+              </button>
+            ))}
+          </div>
+
+          <div className="mt-2 min-h-0 flex-1 overflow-hidden">
+            {activeTab === "info" ? (
+              <div className="grid h-full grid-cols-2 gap-x-7 gap-y-2 overflow-y-auto pr-1">
                 <StatRow label="等级" value={`Lv.${player.runLevel}`} />
                 <StatRow label="经验" value={`${player.runXp} / ${player.xpToNext}`} />
                 <StatRow label="生命值" value={`${Math.max(0, Math.floor(player.hp))} / ${player.maxHp}`} />
@@ -413,113 +507,158 @@ function PauseScreen({ snapshot }: { snapshot: GameSnapshot }) {
                 <StatRow label="终式等级" value={romanLevel(player.ultimateLevel)} />
                 <StatRow label="分数" value={player.score} />
               </div>
-            </UiSprite>
+            ) : null}
 
-            <UiSprite id="pauseColumnFrame" width={270} height={450} className="relative p-5">
-              <div className="mb-3 text-[10px] font-bold text-[#7fc8e0]">装备栏</div>
-              <div className="grid gap-2">
-                {(["blade", "garb", "talisman"] as EquipmentSlot[]).map((slot) => {
-                  const item = equipment.equipped[slot];
-                  const active = selectedEquipmentSlot === slot;
-                  return (
-                    <button
-                      key={slot}
-                      className="relative text-left"
-                      onClick={() => {
-                        setSelectedEquipmentSlot(active ? null : slot);
-                        setSelectedSkillSlot(null);
-                      }}
-                    >
-                      <UiSprite id={active ? "slotFrameActive" : "slotFrameNormal"} width={230} height={61} className="px-4 py-2">
-                        <div className="text-[9px] text-[#7fc8e0]">{EQUIPMENT_SLOT_LABELS[slot]}</div>
-                        <div className="truncate text-[10px] font-bold text-[#d9f6ff]">{item?.name ?? "未装备"}</div>
-                      </UiSprite>
-                    </button>
-                  );
-                })}
-              </div>
-
-              {selectedEquipmentSlot ? (
-                <div className="mt-3 grid gap-1">
-                  {equipment.equipped[selectedEquipmentSlot] ? (
-                    <button
-                      className="text-left text-[9px] text-[#ffd46e]"
-                      onClick={() => equipEquipment(selectedEquipmentSlot, null)}
-                    >
-                      卸下当前{EQUIPMENT_SLOT_LABELS[selectedEquipmentSlot]}
-                    </button>
-                  ) : null}
-                  {equipment.inventory.filter((item) => item.slot === selectedEquipmentSlot).map((item) => (
-                    <button
-                      key={item.id}
-                      className="text-left text-[9px] leading-[1.45] text-[#c8efff]"
-                      onClick={() => {
-                        equipEquipment(selectedEquipmentSlot, item.id);
-                        setSelectedEquipmentSlot(null);
-                      }}
-                    >
-                      {item.name} · {item.summary}
-                    </button>
-                  ))}
-                </div>
-              ) : null}
-            </UiSprite>
-
-            <UiSprite id="pauseColumnFrame" width={270} height={450} className="relative p-5">
-              <div className="mb-3 text-[10px] font-bold text-[#7fc8e0]">技能栏</div>
-              <div className="grid gap-2">
-                {player.equippedSkillIds.map((skillId, index) => {
-                  const skill = getSkill(skillId);
-                  const active = selectedSkillSlot === index;
-                  const level = skillId ? player.skillLevels[skillId] : undefined;
-                  return (
-                    <button
-                      key={index}
-                      className="relative text-left"
-                      onClick={() => {
-                        setSelectedSkillSlot(active ? null : index);
-                        setSelectedEquipmentSlot(null);
-                      }}
-                    >
-                      <UiSprite id={active ? "slotFrameActive" : skill ? "slotFrameNormal" : "slotFrameDisabled"} width={230} height={61} className="px-4 py-2">
-                        <div className="text-[9px] text-[#7fc8e0]">槽位 {index + 1}</div>
-                        <div className="truncate text-[10px] font-bold text-[#d9f6ff]">{skill ? `${skill.name} ${romanLevel(level)}` : "空槽"}</div>
-                      </UiSprite>
-                    </button>
-                  );
-                })}
-              </div>
-
-              {selectedSkillSlot !== null ? (
-                <div className="mt-3 grid gap-1">
-                  {learnedSkills.map((skill) => {
-                    const equippedElsewhere = player.equippedSkillIds.some((skillId, index) => (
-                      index !== selectedSkillSlot && skillId === skill.id
-                    ));
+            {activeTab === "equipment" ? (
+              <div className="grid h-full grid-cols-[176px_1fr] gap-3 max-md:grid-cols-1 max-md:grid-rows-[auto_1fr]">
+                <div className="grid content-start gap-2">
+                  {EQUIPMENT_SLOTS.map((slot) => {
+                    const item = equipment.equipped[slot];
+                    const active = selectedEquipmentSlot === slot;
                     return (
                       <button
-                        key={skill.id}
-                        disabled={equippedElsewhere}
-                        className={`text-left text-[9px] leading-[1.45] ${equippedElsewhere ? "text-[#4a7a9a]" : "text-[#c8efff]"}`}
-                        onClick={() => {
-                          equipSkillSlot(selectedSkillSlot, skill.id);
-                          setSelectedSkillSlot(null);
-                        }}
+                        key={slot}
+                        type="button"
+                        className="relative text-left"
+                        onClick={() => setSelectedEquipmentSlot(slot)}
                       >
-                        {skill.name} {romanLevel(player.skillLevels[skill.id])}{equippedElsewhere ? " · 已装备" : ""}
+                        <UiSprite id={active ? "pauseSlotActive" : "pauseSlotNormal"} width={176} height={42} className="px-3 py-1">
+                          <div className="text-[8px] text-[#7fc8e0]">{EQUIPMENT_SLOT_LABELS[slot]}</div>
+                          <div className="truncate text-[9px] font-bold text-[#d9f6ff]">{item?.name ?? "未装备"}</div>
+                        </UiSprite>
                       </button>
                     );
                   })}
                 </div>
-              ) : (
-                <div className="mt-3 text-[9px] leading-[1.45] text-[#c8efff]">
-                  {activeSkill?.description ?? "选择一个空槽装备已习得技能。"}
+
+                <div className="min-h-0 overflow-y-auto pr-1 text-[9px] leading-[1.5]">
+                  <div className="mb-2 flex items-center justify-between gap-3 text-[#7fc8e0]">
+                    <span>可选{EQUIPMENT_SLOT_LABELS[selectedEquipmentSlot]}</span>
+                    <span className="truncate text-[#26d5ff]">{selectedEquipmentItem?.name ?? "未装备"}</span>
+                  </div>
+                  {selectedEquipmentItem ? (
+                    <button
+                      type="button"
+                      className="mb-1 block w-full border-0 bg-transparent p-0 text-left text-[#ffd46e]"
+                      onClick={() => equipEquipment(selectedEquipmentSlot, null)}
+                    >
+                      <UiSprite id="pauseOptionActive" width={360} height={54} className="px-3 py-2" style={{ width: "100%", backgroundSize: "100% 54px" }}>
+                        卸下当前{EQUIPMENT_SLOT_LABELS[selectedEquipmentSlot]}
+                      </UiSprite>
+                    </button>
+                  ) : null}
+                  {equipmentCandidates.length > 0 ? equipmentCandidates.map((item) => (
+                    <button
+                      key={item.id}
+                      type="button"
+                      className={`mb-1 block w-full border-0 bg-transparent p-0 text-left ${selectedEquipmentItem?.id === item.id ? "text-[#e8fbff]" : "text-[#c8efff]"}`}
+                      onClick={() => equipEquipment(selectedEquipmentSlot, item.id)}
+                    >
+                      <UiSprite
+                        id={selectedEquipmentItem?.id === item.id ? "pauseOptionActive" : "pauseOptionNormal"}
+                        width={360}
+                        height={54}
+                        className="px-3 py-2"
+                        style={{ width: "100%", backgroundSize: "100% 54px" }}
+                      >
+                        <span className="block font-bold">{item.name}</span>
+                        <span className="block truncate text-[8px] text-[#7fc8e0]">{item.summary}</span>
+                      </UiSprite>
+                    </button>
+                  )) : (
+                    <UiSprite id="pauseOptionDisabled" width={360} height={54} className="px-3 py-3 text-[#7fc8e0]" style={{ width: "100%", backgroundSize: "100% 54px" }}>
+                      暂无可选装备
+                    </UiSprite>
+                  )}
                 </div>
-              )}
-            </UiSprite>
+              </div>
+            ) : null}
+
+            {activeTab === "skills" ? (
+              <div className="grid h-full grid-cols-[176px_1fr] gap-3 max-md:grid-cols-1 max-md:grid-rows-[auto_1fr]">
+                <div className="grid content-start gap-2">
+                  {player.equippedSkillIds.map((skillId, index) => {
+                    const skill = getSkill(skillId);
+                    const active = selectedSkillSlot === index;
+                    const level = skillId ? player.skillLevels[skillId] : undefined;
+                    return (
+                      <button
+                        key={index}
+                        type="button"
+                        className="relative text-left"
+                        onClick={() => setSelectedSkillSlot(index)}
+                      >
+                        <UiSprite id={active ? "pauseSlotActive" : skill ? "pauseSlotNormal" : "pauseSlotDisabled"} width={176} height={42} className="px-3 py-1">
+                          <div className="text-[8px] text-[#7fc8e0]">槽位 {index + 1}</div>
+                          <div className="truncate text-[9px] font-bold text-[#d9f6ff]">{skill ? `${skill.name} ${romanLevel(level)}` : "空槽"}</div>
+                        </UiSprite>
+                      </button>
+                    );
+                  })}
+                </div>
+
+                <div className="min-h-0 overflow-y-auto pr-1 text-[9px] leading-[1.5]">
+                  <div className="mb-2 flex items-center justify-between gap-3 text-[#7fc8e0]">
+                    <span>已习得技能</span>
+                    <span className="truncate text-[#26d5ff]">{selectedSkill?.name ?? "空槽"}</span>
+                  </div>
+                  {learnedSkills.length > 0 ? learnedSkills.map((skill) => {
+                    const equippedElsewhere = player.equippedSkillIds.some((skillId, index) => (
+                      index !== selectedSkillSlot && skillId === skill.id
+                    ));
+                    const current = player.equippedSkillIds[selectedSkillSlot] === skill.id;
+                    return (
+                      <button
+                        key={skill.id}
+                        type="button"
+                        disabled={equippedElsewhere}
+                        className={`mb-1 block w-full border-0 bg-transparent p-0 text-left ${
+                          equippedElsewhere
+                            ? "text-[#4a7a9a]"
+                            : current
+                              ? "text-[#e8fbff]"
+                              : "text-[#c8efff]"
+                        }`}
+                        onClick={() => equipSkillSlot(selectedSkillSlot, skill.id)}
+                      >
+                        <UiSprite
+                          id={equippedElsewhere ? "pauseOptionDisabled" : current ? "pauseOptionActive" : "pauseOptionNormal"}
+                          width={360}
+                          height={54}
+                          className="px-3 py-2"
+                          style={{ width: "100%", backgroundSize: "100% 54px" }}
+                        >
+                          <span className="block font-bold">{skill.name} {romanLevel(player.skillLevels[skill.id])}{equippedElsewhere ? " · 已装备" : ""}</span>
+                          <span className="block truncate text-[8px] text-[#7fc8e0]">{skill.description}</span>
+                        </UiSprite>
+                      </button>
+                    );
+                  }) : (
+                    <UiSprite id="pauseOptionDisabled" width={360} height={54} className="px-3 py-3 text-[#7fc8e0]" style={{ width: "100%", backgroundSize: "100% 54px" }}>
+                      暂无已习得技能
+                    </UiSprite>
+                  )}
+                </div>
+              </div>
+            ) : null}
+
+            {activeTab === "settings" ? (
+              <div className="grid h-full content-start gap-5 overflow-y-auto pr-1 pt-1">
+                <AudioVolumeControl
+                  label="主音量"
+                  value={volumeSettings.master}
+                  onChange={(value) => updateVolume("master", value)}
+                />
+                <AudioVolumeControl
+                  label="音效音量"
+                  value={volumeSettings.sfx}
+                  onChange={(value) => updateVolume("sfx", value)}
+                />
+              </div>
+            ) : null}
           </div>
 
-          <div className="pt-2 text-center text-[10px] text-white/55">按 ESC 或 P 继续游戏</div>
+          <div className="shrink-0 pt-1 text-center text-[9px] text-white/55">按 ESC 或 P 继续游戏</div>
         </div>
       </UiSprite>
     </div>
