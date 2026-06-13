@@ -368,9 +368,36 @@ const PAUSE_TABS: Array<{ id: PauseTab; label: string }> = [
   { id: "settings", label: "设置" },
 ];
 const AUDIO_PERCENT_SCALE = 100;
+const PAUSE_PANEL_W = 600;
+const PAUSE_PANEL_H = 260;
+const PAUSE_PANEL_INSET_X = 24;
+const PAUSE_PANEL_CONTENT_TOP = 42;
+const PAUSE_PANEL_CONTENT_BOTTOM = 24;
+const PAUSE_TAB_W = 126;
+const PAUSE_TAB_H = 42;
+const PAUSE_TAB_GAP = 4;
+const PAUSE_SLOT_W = 176;
+const PAUSE_SLOT_H = 42;
+const PAUSE_SLOT_GAP = 4;
+const PAUSE_OPTION_W = 360;
+const PAUSE_OPTION_H = 54;
+const PAUSE_COLUMN_GAP = 16;
+const PAUSE_INFO_INSET_X = 32;
+const PAUSE_INFO_ROW_GAP = 6;
+const PAUSE_INFO_COLUMN_GAP = 40;
+const PAUSE_SETTINGS_GAP = 12;
+const PAUSE_SLIDER_TRACK_W = 420;
 const PAUSE_SLIDER_TRACK_H = 18;
 const PAUSE_SLIDER_THUMB_W = 22;
 const PAUSE_SLIDER_THUMB_H = 24;
+const PAUSE_SLIDER_TRACK_TOP = 8;
+const PAUSE_SLIDER_THUMB_TOP = 5;
+const PAUSE_SLIDER_WRAP_H = 30;
+const PAUSE_SETTINGS_INSET_X = (PAUSE_PANEL_W - PAUSE_PANEL_INSET_X * 2 - PAUSE_SLIDER_TRACK_W) / 2;
+const PAUSE_OPTION_CONTENT_CLASS = "px-[46px] pb-[8px] pt-[10px]";
+const PAUSE_OPTION_SINGLE_LINE_CLASS = `${PAUSE_OPTION_CONTENT_CLASS} flex items-center text-[9px] leading-none`;
+const PAUSE_SLOT_CONTENT_CLASS = "px-[24px] pb-[6px] pt-[8px]";
+const PAUSE_TAB_CONTENT_CLASS = "flex items-center justify-center px-[18px] pb-[5px] pt-[8px] text-center leading-none";
 
 function StatRow({ label, value, accent = false }: { label: string; value: string | number; accent?: boolean }) {
   return (
@@ -387,35 +414,42 @@ function AudioVolumeControl({ label, value, onChange }: {
   onChange: (value: number) => void;
 }) {
   const percent = Math.round(value * AUDIO_PERCENT_SCALE);
+  const thumbTransform = percent <= 0
+    ? "translateX(0)"
+    : percent >= AUDIO_PERCENT_SCALE
+      ? "translateX(-100%)"
+      : "translateX(-50%)";
 
   return (
-    <label className="grid gap-2 text-[10px] text-[#c8efff]">
+    <label className="grid gap-1 text-[10px] leading-none text-[#c8efff]">
       <span className="flex items-center justify-between gap-3">
         <span>{label}</span>
         <span className="font-bold text-[#26d5ff]">{percent}%</span>
       </span>
-      <span className="relative block h-7">
+      <span className="relative block" style={{ height: PAUSE_SLIDER_WRAP_H }}>
         <UiSprite
           id="pauseSliderTrack"
-          width={420}
+          width={PAUSE_SLIDER_TRACK_W}
           height={PAUSE_SLIDER_TRACK_H}
-          className="absolute left-0 top-1"
-          style={{ width: "100%", backgroundSize: `100% ${PAUSE_SLIDER_TRACK_H}px` }}
+          className="absolute left-0"
+          style={{ top: PAUSE_SLIDER_TRACK_TOP }}
         />
-        <span className="absolute left-0 top-1 block overflow-hidden" style={{ width: `${percent}%`, height: PAUSE_SLIDER_TRACK_H }}>
+        <span
+          className="absolute left-0 block overflow-hidden"
+          style={{ width: `${percent}%`, height: PAUSE_SLIDER_TRACK_H, top: PAUSE_SLIDER_TRACK_TOP }}
+        >
           <UiSprite
             id="pauseSliderFill"
-            width={420}
+            width={PAUSE_SLIDER_TRACK_W}
             height={PAUSE_SLIDER_TRACK_H}
-            style={{ width: "100%", backgroundSize: `100% ${PAUSE_SLIDER_TRACK_H}px` }}
           />
         </span>
         <UiSprite
           id="pauseSliderThumb"
           width={PAUSE_SLIDER_THUMB_W}
           height={PAUSE_SLIDER_THUMB_H}
-          className="absolute top-0"
-          style={{ left: `${percent}%`, transform: "translateX(-50%)" }}
+          className="absolute"
+          style={{ left: `${percent}%`, top: PAUSE_SLIDER_THUMB_TOP, transform: thumbTransform }}
         />
         <input
           type="range"
@@ -423,7 +457,7 @@ function AudioVolumeControl({ label, value, onChange }: {
           max={AUDIO_PERCENT_SCALE}
           step={5}
           value={percent}
-          className="absolute inset-0 h-7 w-full cursor-pointer opacity-0"
+          className="absolute inset-0 w-full cursor-pointer opacity-0"
           onChange={(event) => onChange(Number(event.currentTarget.value) / AUDIO_PERCENT_SCALE)}
         />
       </span>
@@ -457,23 +491,34 @@ function PauseScreen({ snapshot }: { snapshot: GameSnapshot }) {
     <div className="absolute inset-0 z-30 flex items-center justify-center bg-[rgba(5,10,22,0.72)] px-3 py-4">
       <UiSprite
         id="pausePanelCompact"
-        width={600}
-        height={260}
+        width={PAUSE_PANEL_W}
+        height={PAUSE_PANEL_H}
         className="relative"
         style={{
-          width: "min(600px, calc(100vw - 24px))",
+          width: `min(${PAUSE_PANEL_W}px, calc(100vw - 24px))`,
           height: "auto",
-          aspectRatio: "600 / 260",
+          aspectRatio: `${PAUSE_PANEL_W} / ${PAUSE_PANEL_H}`,
           backgroundSize: "100% 100%",
         }}
       >
-        <div className="absolute inset-x-4 bottom-2 top-2 flex min-h-0 flex-col text-left text-white">
-          <div className="flex shrink-0 items-baseline justify-between gap-3">
-            <span className="text-[13px] font-bold text-[#26d5ff]">潮刃者</span>
-            <span className="truncate text-[10px] text-[#7fc8e0]">当前技能：<span className="text-[#26d5ff]">{activeSkill?.name ?? "未装备"}</span></span>
-          </div>
-
-          <div className="mt-1 grid shrink-0 grid-flow-col auto-cols-[126px] gap-1 overflow-x-auto" role="tablist" aria-label="暂停菜单">
+        <div
+          className="absolute flex min-h-0 flex-col text-left text-white"
+          style={{
+            left: PAUSE_PANEL_INSET_X,
+            right: PAUSE_PANEL_INSET_X,
+            top: PAUSE_PANEL_CONTENT_TOP,
+            bottom: PAUSE_PANEL_CONTENT_BOTTOM,
+          }}
+        >
+          <div
+            className="grid shrink-0 justify-center overflow-hidden"
+            style={{
+              gridTemplateColumns: `repeat(${PAUSE_TABS.length}, ${PAUSE_TAB_W}px)`,
+              columnGap: PAUSE_TAB_GAP,
+            }}
+            role="tablist"
+            aria-label="暂停菜单"
+          >
             {PAUSE_TABS.map((tab) => (
               <button
                 key={tab.id}
@@ -485,9 +530,9 @@ function PauseScreen({ snapshot }: { snapshot: GameSnapshot }) {
               >
                 <UiSprite
                   id={activeTab === tab.id ? "pauseTabActive" : "pauseTabNormal"}
-                  width={126}
-                  height={42}
-                  className={`flex items-center justify-center ${activeTab === tab.id ? "text-[#e8fbff]" : "text-[#7fc8e0]"}`}
+                  width={PAUSE_TAB_W}
+                  height={PAUSE_TAB_H}
+                  className={`${PAUSE_TAB_CONTENT_CLASS} ${activeTab === tab.id ? "text-[#e8fbff]" : "text-[#7fc8e0]"}`}
                 >
                   {tab.label}
                 </UiSprite>
@@ -497,7 +542,14 @@ function PauseScreen({ snapshot }: { snapshot: GameSnapshot }) {
 
           <div className="mt-2 min-h-0 flex-1 overflow-hidden">
             {activeTab === "info" ? (
-              <div className="grid h-full grid-cols-2 gap-x-7 gap-y-2 overflow-y-auto pr-1">
+              <div
+                className="grid h-full grid-cols-2 overflow-y-auto pt-2"
+                style={{
+                  paddingInline: PAUSE_INFO_INSET_X,
+                  columnGap: PAUSE_INFO_COLUMN_GAP,
+                  rowGap: PAUSE_INFO_ROW_GAP,
+                }}
+              >
                 <StatRow label="等级" value={`Lv.${player.runLevel}`} />
                 <StatRow label="经验" value={`${player.runXp} / ${player.xpToNext}`} />
                 <StatRow label="生命值" value={`${Math.max(0, Math.floor(player.hp))} / ${player.maxHp}`} />
@@ -505,13 +557,20 @@ function PauseScreen({ snapshot }: { snapshot: GameSnapshot }) {
                 <StatRow label="技能充能" value={skillEnergyText} />
                 <StatRow label="大招充能" value={ultimateEnergyText} accent={player.ultimateReady} />
                 <StatRow label="终式等级" value={romanLevel(player.ultimateLevel)} />
+                <StatRow label="当前技能" value={activeSkill?.name ?? "未装备"} />
                 <StatRow label="分数" value={player.score} />
               </div>
             ) : null}
 
             {activeTab === "equipment" ? (
-              <div className="grid h-full grid-cols-[176px_1fr] gap-3 max-md:grid-cols-1 max-md:grid-rows-[auto_1fr]">
-                <div className="grid content-start gap-2">
+              <div
+                className="grid h-full"
+                style={{
+                  gridTemplateColumns: `${PAUSE_SLOT_W}px ${PAUSE_OPTION_W}px`,
+                  columnGap: PAUSE_COLUMN_GAP,
+                }}
+              >
+                <div className="grid content-start" style={{ rowGap: PAUSE_SLOT_GAP }}>
                   {EQUIPMENT_SLOTS.map((slot) => {
                     const item = equipment.equipped[slot];
                     const active = selectedEquipmentSlot === slot;
@@ -522,17 +581,22 @@ function PauseScreen({ snapshot }: { snapshot: GameSnapshot }) {
                         className="relative text-left"
                         onClick={() => setSelectedEquipmentSlot(slot)}
                       >
-                        <UiSprite id={active ? "pauseSlotActive" : "pauseSlotNormal"} width={176} height={42} className="px-3 py-1">
-                          <div className="text-[8px] text-[#7fc8e0]">{EQUIPMENT_SLOT_LABELS[slot]}</div>
-                          <div className="truncate text-[9px] font-bold text-[#d9f6ff]">{item?.name ?? "未装备"}</div>
+                        <UiSprite
+                          id={active ? "pauseSlotActive" : "pauseSlotNormal"}
+                          width={PAUSE_SLOT_W}
+                          height={PAUSE_SLOT_H}
+                          className={PAUSE_SLOT_CONTENT_CLASS}
+                        >
+                          <div className="text-[7px] leading-none text-[#7fc8e0]">{EQUIPMENT_SLOT_LABELS[slot]}</div>
+                          <div className="mt-1 truncate text-[8px] font-bold leading-none text-[#d9f6ff]">{item?.name ?? "未装备"}</div>
                         </UiSprite>
                       </button>
                     );
                   })}
                 </div>
 
-                <div className="min-h-0 overflow-y-auto pr-1 text-[9px] leading-[1.5]">
-                  <div className="mb-2 flex items-center justify-between gap-3 text-[#7fc8e0]">
+                <div className="min-h-0 overflow-x-hidden overflow-y-auto text-[9px] leading-none">
+                  <div className="mb-1 flex items-center justify-between gap-3 px-[46px] text-[8px] leading-none text-[#7fc8e0]">
                     <span>可选{EQUIPMENT_SLOT_LABELS[selectedEquipmentSlot]}</span>
                     <span className="truncate text-[#26d5ff]">{selectedEquipmentItem?.name ?? "未装备"}</span>
                   </div>
@@ -542,7 +606,12 @@ function PauseScreen({ snapshot }: { snapshot: GameSnapshot }) {
                       className="mb-1 block w-full border-0 bg-transparent p-0 text-left text-[#ffd46e]"
                       onClick={() => equipEquipment(selectedEquipmentSlot, null)}
                     >
-                      <UiSprite id="pauseOptionActive" width={360} height={54} className="px-3 py-2" style={{ width: "100%", backgroundSize: "100% 54px" }}>
+                      <UiSprite
+                        id="pauseOptionActive"
+                        width={PAUSE_OPTION_W}
+                        height={PAUSE_OPTION_H}
+                        className={PAUSE_OPTION_SINGLE_LINE_CLASS}
+                      >
                         卸下当前{EQUIPMENT_SLOT_LABELS[selectedEquipmentSlot]}
                       </UiSprite>
                     </button>
@@ -556,17 +625,21 @@ function PauseScreen({ snapshot }: { snapshot: GameSnapshot }) {
                     >
                       <UiSprite
                         id={selectedEquipmentItem?.id === item.id ? "pauseOptionActive" : "pauseOptionNormal"}
-                        width={360}
-                        height={54}
-                        className="px-3 py-2"
-                        style={{ width: "100%", backgroundSize: "100% 54px" }}
+                        width={PAUSE_OPTION_W}
+                        height={PAUSE_OPTION_H}
+                        className={PAUSE_OPTION_CONTENT_CLASS}
                       >
-                        <span className="block font-bold">{item.name}</span>
-                        <span className="block truncate text-[8px] text-[#7fc8e0]">{item.summary}</span>
+                        <span className="block truncate text-[9px] font-bold leading-none">{item.name}</span>
+                        <span className="mt-1 block truncate text-[7px] leading-none text-[#7fc8e0]">{item.summary}</span>
                       </UiSprite>
                     </button>
                   )) : (
-                    <UiSprite id="pauseOptionDisabled" width={360} height={54} className="px-3 py-3 text-[#7fc8e0]" style={{ width: "100%", backgroundSize: "100% 54px" }}>
+                    <UiSprite
+                      id="pauseOptionDisabled"
+                      width={PAUSE_OPTION_W}
+                      height={PAUSE_OPTION_H}
+                      className={`${PAUSE_OPTION_SINGLE_LINE_CLASS} text-[#7fc8e0]`}
+                    >
                       暂无可选装备
                     </UiSprite>
                   )}
@@ -575,8 +648,14 @@ function PauseScreen({ snapshot }: { snapshot: GameSnapshot }) {
             ) : null}
 
             {activeTab === "skills" ? (
-              <div className="grid h-full grid-cols-[176px_1fr] gap-3 max-md:grid-cols-1 max-md:grid-rows-[auto_1fr]">
-                <div className="grid content-start gap-2">
+              <div
+                className="grid h-full"
+                style={{
+                  gridTemplateColumns: `${PAUSE_SLOT_W}px ${PAUSE_OPTION_W}px`,
+                  columnGap: PAUSE_COLUMN_GAP,
+                }}
+              >
+                <div className="grid content-start" style={{ rowGap: PAUSE_SLOT_GAP }}>
                   {player.equippedSkillIds.map((skillId, index) => {
                     const skill = getSkill(skillId);
                     const active = selectedSkillSlot === index;
@@ -588,17 +667,22 @@ function PauseScreen({ snapshot }: { snapshot: GameSnapshot }) {
                         className="relative text-left"
                         onClick={() => setSelectedSkillSlot(index)}
                       >
-                        <UiSprite id={active ? "pauseSlotActive" : skill ? "pauseSlotNormal" : "pauseSlotDisabled"} width={176} height={42} className="px-3 py-1">
-                          <div className="text-[8px] text-[#7fc8e0]">槽位 {index + 1}</div>
-                          <div className="truncate text-[9px] font-bold text-[#d9f6ff]">{skill ? `${skill.name} ${romanLevel(level)}` : "空槽"}</div>
+                        <UiSprite
+                          id={active ? "pauseSlotActive" : skill ? "pauseSlotNormal" : "pauseSlotDisabled"}
+                          width={PAUSE_SLOT_W}
+                          height={PAUSE_SLOT_H}
+                          className={PAUSE_SLOT_CONTENT_CLASS}
+                        >
+                          <div className="text-[7px] leading-none text-[#7fc8e0]">槽位 {index + 1}</div>
+                          <div className="mt-1 truncate text-[8px] font-bold leading-none text-[#d9f6ff]">{skill ? `${skill.name} ${romanLevel(level)}` : "空槽"}</div>
                         </UiSprite>
                       </button>
                     );
                   })}
                 </div>
 
-                <div className="min-h-0 overflow-y-auto pr-1 text-[9px] leading-[1.5]">
-                  <div className="mb-2 flex items-center justify-between gap-3 text-[#7fc8e0]">
+                <div className="min-h-0 overflow-x-hidden overflow-y-auto text-[9px] leading-none">
+                  <div className="mb-1 flex items-center justify-between gap-3 px-[46px] text-[8px] leading-none text-[#7fc8e0]">
                     <span>已习得技能</span>
                     <span className="truncate text-[#26d5ff]">{selectedSkill?.name ?? "空槽"}</span>
                   </div>
@@ -623,18 +707,22 @@ function PauseScreen({ snapshot }: { snapshot: GameSnapshot }) {
                       >
                         <UiSprite
                           id={equippedElsewhere ? "pauseOptionDisabled" : current ? "pauseOptionActive" : "pauseOptionNormal"}
-                          width={360}
-                          height={54}
-                          className="px-3 py-2"
-                          style={{ width: "100%", backgroundSize: "100% 54px" }}
+                          width={PAUSE_OPTION_W}
+                          height={PAUSE_OPTION_H}
+                          className={PAUSE_OPTION_CONTENT_CLASS}
                         >
-                          <span className="block font-bold">{skill.name} {romanLevel(player.skillLevels[skill.id])}{equippedElsewhere ? " · 已装备" : ""}</span>
-                          <span className="block truncate text-[8px] text-[#7fc8e0]">{skill.description}</span>
+                          <span className="block truncate text-[9px] font-bold leading-none">{skill.name} {romanLevel(player.skillLevels[skill.id])}{equippedElsewhere ? " · 已装备" : ""}</span>
+                          <span className="mt-1 block truncate text-[7px] leading-none text-[#7fc8e0]">{skill.description}</span>
                         </UiSprite>
                       </button>
                     );
                   }) : (
-                    <UiSprite id="pauseOptionDisabled" width={360} height={54} className="px-3 py-3 text-[#7fc8e0]" style={{ width: "100%", backgroundSize: "100% 54px" }}>
+                    <UiSprite
+                      id="pauseOptionDisabled"
+                      width={PAUSE_OPTION_W}
+                      height={PAUSE_OPTION_H}
+                      className={`${PAUSE_OPTION_SINGLE_LINE_CLASS} text-[#7fc8e0]`}
+                    >
                       暂无已习得技能
                     </UiSprite>
                   )}
@@ -643,7 +731,10 @@ function PauseScreen({ snapshot }: { snapshot: GameSnapshot }) {
             ) : null}
 
             {activeTab === "settings" ? (
-              <div className="grid h-full content-start gap-5 overflow-y-auto pr-1 pt-1">
+              <div
+                className="grid h-full content-start overflow-y-auto pt-2"
+                style={{ gap: PAUSE_SETTINGS_GAP, paddingInline: PAUSE_SETTINGS_INSET_X }}
+              >
                 <AudioVolumeControl
                   label="主音量"
                   value={volumeSettings.master}
@@ -657,8 +748,6 @@ function PauseScreen({ snapshot }: { snapshot: GameSnapshot }) {
               </div>
             ) : null}
           </div>
-
-          <div className="shrink-0 pt-1 text-center text-[9px] text-white/55">按 ESC 或 P 继续游戏</div>
         </div>
       </UiSprite>
     </div>
