@@ -203,7 +203,7 @@ type HudMeterFrame = {
   fillInsetRight: number;
 };
 
-function HudMeter({ value, max, ghostValue, color, ghostColor, text, width, frame }: {
+function HudMeter({ value, max, ghostValue, color, ghostColor, text, width, frame, className = "" }: {
   value: number;
   max: number;
   ghostValue: number;
@@ -212,13 +212,14 @@ function HudMeter({ value, max, ghostValue, color, ghostColor, text, width, fram
   text: string;
   width: number;
   frame: HudMeterFrame;
+  className?: string;
 }) {
   const leftW = uiSpriteDisplaySize(frame.left).w;
   const rightW = uiSpriteDisplaySize(frame.right).w;
   const midWidth = Math.max(uiSpriteDisplaySize(frame.mid).w, width - leftW - rightW);
 
   return (
-    <div className="player-hud-meter" style={{ width, height: frame.height }}>
+    <div className={`player-hud-meter ${className}`} style={{ width, height: frame.height }}>
       <div className="player-hud-meter-frame">
         <UiSprite id={frame.left} width={leftW} height={frame.height} />
         <UiSprite id={frame.mid} width={midWidth} height={frame.height} />
@@ -654,6 +655,7 @@ function Hud() {
           </div>
           <div className="player-hud-bars">
             <HudMeter
+              className="player-hud-meter-hp"
               value={player.hp}
               max={player.maxHp}
               ghostValue={ghostHp}
@@ -664,6 +666,7 @@ function Hud() {
               frame={HUD_HP_METER_FRAME}
             />
             <HudMeter
+              className="player-hud-meter-skill"
               value={skillValue}
               max={skillMax}
               ghostValue={ghostSkill}
