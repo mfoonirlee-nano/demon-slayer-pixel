@@ -26,7 +26,7 @@ import {
   setAudioVolumeSettings,
   type AudioVolumeSettings,
 } from "./audio";
-import type { EquipmentItemState, EquipmentSlot, SkillLevel, UltimateLevel } from "./types/game-state";
+import type { EquipmentItemId, EquipmentItemState, EquipmentSlot, SkillLevel, UltimateLevel } from "./types/game-state";
 import type { SkillId } from "./types/assets";
 
 type AppPhase = "menu" | "playing";
@@ -83,6 +83,14 @@ function getSkill(skillId: SkillId | null | undefined) {
 
 function skillIconSrc(skillId: SkillId) {
   return `assets/sprites/ui/${skillId}_icon.png`;
+}
+
+function equipmentIconSrc(itemId: EquipmentItemId) {
+  return `assets/sprites/ui/equipment/${itemId}_icon.png`;
+}
+
+function equipmentSlotBadgeSrc(slot: EquipmentSlot) {
+  return `assets/sprites/ui/equipment/slot_${slot}_badge.png`;
 }
 
 function romanLevel(level: SkillLevel | UltimateLevel | 0 | undefined) {
@@ -369,18 +377,24 @@ const PAUSE_TABS: Array<{ id: PauseTab; label: string }> = [
 ];
 const AUDIO_PERCENT_SCALE = 100;
 const PAUSE_PANEL_W = 600;
-const PAUSE_PANEL_H = 260;
+const PAUSE_PANEL_H = 340;
 const PAUSE_PANEL_INSET_X = 24;
 const PAUSE_PANEL_CONTENT_TOP = 42;
-const PAUSE_PANEL_CONTENT_BOTTOM = 24;
+const PAUSE_PANEL_CONTENT_BOTTOM = 28;
 const PAUSE_TAB_W = 126;
 const PAUSE_TAB_H = 42;
 const PAUSE_TAB_GAP = 4;
-const PAUSE_SLOT_W = 176;
-const PAUSE_SLOT_H = 42;
-const PAUSE_SLOT_GAP = 4;
-const PAUSE_OPTION_W = 360;
-const PAUSE_OPTION_H = 54;
+const PAUSE_CURRENT_COLUMN_W = 176;
+const PAUSE_CHOICES_COLUMN_W = 360;
+const PAUSE_CURRENT_FRAME_SIZE = 44;
+const PAUSE_CHOICE_FRAME_SIZE = 58;
+const PAUSE_CURRENT_ICON_SIZE = 28;
+const PAUSE_CHOICE_ICON_SIZE = 36;
+const PAUSE_CURRENT_BADGE_SIZE = 14;
+const PAUSE_CHOICE_BADGE_SIZE = 16;
+const PAUSE_ICON_OFFSET_Y = 2;
+const PAUSE_CURRENT_ROW_GAP = 6;
+const PAUSE_CHOICE_GRID_GAP = 8;
 const PAUSE_COLUMN_GAP = 16;
 const PAUSE_INFO_INSET_X = 32;
 const PAUSE_INFO_ROW_GAP = 6;
@@ -394,9 +408,6 @@ const PAUSE_SLIDER_TRACK_TOP = 8;
 const PAUSE_SLIDER_THUMB_TOP = 5;
 const PAUSE_SLIDER_WRAP_H = 30;
 const PAUSE_SETTINGS_INSET_X = (PAUSE_PANEL_W - PAUSE_PANEL_INSET_X * 2 - PAUSE_SLIDER_TRACK_W) / 2;
-const PAUSE_OPTION_CONTENT_CLASS = "px-[46px] pb-[8px] pt-[10px]";
-const PAUSE_OPTION_SINGLE_LINE_CLASS = `${PAUSE_OPTION_CONTENT_CLASS} flex items-center text-[9px] leading-none`;
-const PAUSE_SLOT_CONTENT_CLASS = "px-[24px] pb-[6px] pt-[8px]";
 const PAUSE_TAB_CONTENT_CLASS = "flex items-center justify-center px-[18px] pb-[5px] pt-[8px] text-center leading-none";
 
 function StatRow({ label, value, accent = false }: { label: string; value: string | number; accent?: boolean }) {
@@ -405,6 +416,75 @@ function StatRow({ label, value, accent = false }: { label: string; value: strin
       <span className="text-[#7fc8e0]">{label}</span>
       <span className={accent ? "font-bold text-[#ffd46e]" : "font-bold text-[#26d5ff]"}>{value}</span>
     </div>
+  );
+}
+
+function pauseSquareSprite(active: boolean, disabled = false, empty = false): UiSpriteId {
+  if (disabled) return "skillSlotDisabled";
+  if (active) return "skillSlotActive";
+  if (empty) return "skillSlotEmpty";
+  return "skillSlotNormal";
+}
+
+function PauseSquareIcon({
+  active = false,
+  disabled = false,
+  empty = false,
+  iconSrc,
+  badgeSrc,
+  size,
+  iconSize,
+  badgeSize,
+}: {
+  active?: boolean;
+  disabled?: boolean;
+  empty?: boolean;
+  iconSrc?: string;
+  badgeSrc?: string;
+  size: number;
+  iconSize: number;
+  badgeSize?: number;
+}) {
+  return (
+    <UiSprite
+      id={pauseSquareSprite(active, disabled, empty)}
+      width={size}
+      height={size}
+      className="relative"
+    >
+      {iconSrc ? (
+        <img
+          src={iconSrc}
+          alt=""
+          draggable={false}
+          className="absolute object-contain"
+          style={{
+            width: iconSize,
+            height: iconSize,
+            left: (size - iconSize) / 2,
+            top: (size - iconSize) / 2 + PAUSE_ICON_OFFSET_Y,
+            imageRendering: "pixelated",
+          }}
+        />
+      ) : (
+        <span className="absolute inset-0 flex items-center justify-center pb-1 text-[8px] font-bold text-[#4a7a9a]">--</span>
+      )}
+      {badgeSrc && badgeSize ? (
+        <img
+          src={badgeSrc}
+          alt=""
+          draggable={false}
+          className="absolute"
+          style={{
+            width: badgeSize,
+            height: badgeSize,
+            right: 2,
+            top: 2,
+            imageRendering: "pixelated",
+          }}
+        />
+      ) : null}
+    </UiSprite>
   );
 }
 
@@ -480,7 +560,7 @@ function PauseScreen({ snapshot }: { snapshot: GameSnapshot }) {
   const ultimateEnergyText = `${Math.floor(player.ultimateEnergy)} / ${player.ultimateEnergyMax}`;
   const learnedSkills = SKILLS.filter((skill) => player.skillLevels[skill.id]);
   const selectedEquipmentItem = equipment.equipped[selectedEquipmentSlot];
-  const equipmentCandidates = equipment.inventory.filter((item) => item.slot === selectedEquipmentSlot);
+  const equipmentChoices = equipment.inventory;
   const selectedSkill = getSkill(player.equippedSkillIds[selectedSkillSlot]);
 
   const updateVolume = (setting: keyof AudioVolumeSettings, value: number) => {
@@ -566,11 +646,11 @@ function PauseScreen({ snapshot }: { snapshot: GameSnapshot }) {
               <div
                 className="grid h-full"
                 style={{
-                  gridTemplateColumns: `${PAUSE_SLOT_W}px ${PAUSE_OPTION_W}px`,
+                  gridTemplateColumns: `${PAUSE_CURRENT_COLUMN_W}px ${PAUSE_CHOICES_COLUMN_W}px`,
                   columnGap: PAUSE_COLUMN_GAP,
                 }}
               >
-                <div className="grid content-start" style={{ rowGap: PAUSE_SLOT_GAP }}>
+                <div className="grid content-start" style={{ rowGap: PAUSE_CURRENT_ROW_GAP }}>
                   {EQUIPMENT_SLOTS.map((slot) => {
                     const item = equipment.equipped[slot];
                     const active = selectedEquipmentSlot === slot;
@@ -578,71 +658,91 @@ function PauseScreen({ snapshot }: { snapshot: GameSnapshot }) {
                       <button
                         key={slot}
                         type="button"
-                        className="relative text-left"
+                        className="grid items-center border-0 bg-transparent p-0 text-left"
+                        style={{ gridTemplateColumns: `${PAUSE_CURRENT_FRAME_SIZE}px 1fr`, columnGap: PAUSE_CHOICE_GRID_GAP }}
                         onClick={() => setSelectedEquipmentSlot(slot)}
                       >
-                        <UiSprite
-                          id={active ? "pauseSlotActive" : "pauseSlotNormal"}
-                          width={PAUSE_SLOT_W}
-                          height={PAUSE_SLOT_H}
-                          className={PAUSE_SLOT_CONTENT_CLASS}
-                        >
-                          <div className="text-[7px] leading-none text-[#7fc8e0]">{EQUIPMENT_SLOT_LABELS[slot]}</div>
-                          <div className="mt-1 truncate text-[8px] font-bold leading-none text-[#d9f6ff]">{item?.name ?? "未装备"}</div>
-                        </UiSprite>
+                        <PauseSquareIcon
+                          active={active}
+                          empty={!item}
+                          iconSrc={item ? equipmentIconSrc(item.id) : undefined}
+                          badgeSrc={equipmentSlotBadgeSrc(slot)}
+                          size={PAUSE_CURRENT_FRAME_SIZE}
+                          iconSize={PAUSE_CURRENT_ICON_SIZE}
+                          badgeSize={PAUSE_CURRENT_BADGE_SIZE}
+                        />
+                        <span className="min-w-0 pt-1">
+                          <span className={`block text-[7px] leading-none ${active ? "text-[#26d5ff]" : "text-[#7fc8e0]"}`}>{EQUIPMENT_SLOT_LABELS[slot]}</span>
+                          <span className="mt-1 block truncate text-[8px] font-bold leading-none text-[#d9f6ff]">{item?.name ?? "未装备"}</span>
+                        </span>
                       </button>
                     );
                   })}
                 </div>
 
-                <div className="min-h-0 overflow-x-hidden overflow-y-auto text-[9px] leading-none">
-                  <div className="mb-1 flex items-center justify-between gap-3 px-[46px] text-[8px] leading-none text-[#7fc8e0]">
-                    <span>可选{EQUIPMENT_SLOT_LABELS[selectedEquipmentSlot]}</span>
-                    <span className="truncate text-[#26d5ff]">{selectedEquipmentItem?.name ?? "未装备"}</span>
+                <div
+                  className="grid h-full min-h-0 overflow-hidden text-[9px] leading-none"
+                  style={{ gridTemplateRows: "auto 1fr auto", rowGap: PAUSE_CURRENT_ROW_GAP }}
+                >
+                  <div className="flex items-center justify-between gap-3 text-[8px] leading-none text-[#7fc8e0]">
+                    <span>已解锁装备</span>
+                    <span className="truncate text-[#26d5ff]">
+                      {EQUIPMENT_SLOT_LABELS[selectedEquipmentSlot]} · {selectedEquipmentItem?.name ?? "未装备"}
+                    </span>
                   </div>
-                  {selectedEquipmentItem ? (
-                    <button
-                      type="button"
-                      className="mb-1 block w-full border-0 bg-transparent p-0 text-left text-[#ffd46e]"
-                      onClick={() => equipEquipment(selectedEquipmentSlot, null)}
-                    >
-                      <UiSprite
-                        id="pauseOptionActive"
-                        width={PAUSE_OPTION_W}
-                        height={PAUSE_OPTION_H}
-                        className={PAUSE_OPTION_SINGLE_LINE_CLASS}
+                  <div className="min-h-0 overflow-y-auto overflow-x-hidden">
+                    {equipmentChoices.length > 0 ? (
+                      <div
+                        className="grid content-start"
+                        style={{ gridTemplateColumns: "repeat(4, 78px)", gap: PAUSE_CHOICE_GRID_GAP }}
                       >
-                        卸下当前{EQUIPMENT_SLOT_LABELS[selectedEquipmentSlot]}
-                      </UiSprite>
-                    </button>
-                  ) : null}
-                  {equipmentCandidates.length > 0 ? equipmentCandidates.map((item) => (
-                    <button
-                      key={item.id}
-                      type="button"
-                      className={`mb-1 block w-full border-0 bg-transparent p-0 text-left ${selectedEquipmentItem?.id === item.id ? "text-[#e8fbff]" : "text-[#c8efff]"}`}
-                      onClick={() => equipEquipment(selectedEquipmentSlot, item.id)}
-                    >
-                      <UiSprite
-                        id={selectedEquipmentItem?.id === item.id ? "pauseOptionActive" : "pauseOptionNormal"}
-                        width={PAUSE_OPTION_W}
-                        height={PAUSE_OPTION_H}
-                        className={PAUSE_OPTION_CONTENT_CLASS}
-                      >
-                        <span className="block truncate text-[9px] font-bold leading-none">{item.name}</span>
-                        <span className="mt-1 block truncate text-[7px] leading-none text-[#7fc8e0]">{item.summary}</span>
-                      </UiSprite>
-                    </button>
-                  )) : (
-                    <UiSprite
-                      id="pauseOptionDisabled"
-                      width={PAUSE_OPTION_W}
-                      height={PAUSE_OPTION_H}
-                      className={`${PAUSE_OPTION_SINGLE_LINE_CLASS} text-[#7fc8e0]`}
-                    >
-                      暂无可选装备
-                    </UiSprite>
-                  )}
+                        {equipmentChoices.map((item) => {
+                          const equipped = equipment.equipped[item.slot]?.id === item.id;
+                          return (
+                            <button
+                              key={item.id}
+                              type="button"
+                              className={`grid justify-items-center gap-1 border-0 bg-transparent p-0 text-center ${
+                                equipped ? "text-[#e8fbff]" : "text-[#c8efff]"
+                              }`}
+                              onClick={() => {
+                                setSelectedEquipmentSlot(item.slot);
+                                equipEquipment(item.slot, item.id);
+                              }}
+                            >
+                              <PauseSquareIcon
+                                active={equipped}
+                                iconSrc={equipmentIconSrc(item.id)}
+                                badgeSrc={equipmentSlotBadgeSrc(item.slot)}
+                                size={PAUSE_CHOICE_FRAME_SIZE}
+                                iconSize={PAUSE_CHOICE_ICON_SIZE}
+                                badgeSize={PAUSE_CHOICE_BADGE_SIZE}
+                              />
+                              <span className="block w-full truncate text-[7px] font-bold leading-none">{item.name}</span>
+                            </button>
+                          );
+                        })}
+                      </div>
+                    ) : (
+                      <div className="grid justify-items-center gap-1 pt-3 text-center text-[8px] text-[#7fc8e0]">
+                        <PauseSquareIcon
+                          disabled
+                          empty
+                          size={PAUSE_CHOICE_FRAME_SIZE}
+                          iconSize={PAUSE_CHOICE_ICON_SIZE}
+                        />
+                        <span>暂无已解锁装备</span>
+                      </div>
+                    )}
+                  </div>
+                  <div className="h-[34px] overflow-hidden text-[7px] leading-[1.45] text-[#7fc8e0]">
+                    <div className="truncate font-bold text-[#ffd46e]">
+                      {selectedEquipmentItem?.uiTags.join(" · ") ?? `${EQUIPMENT_SLOT_LABELS[selectedEquipmentSlot]} · 空槽`}
+                    </div>
+                    <div className="mt-1 line-clamp-2">
+                      {selectedEquipmentItem?.summary ?? "从右侧选择已解锁装备。"}
+                    </div>
+                  </div>
                 </div>
               </div>
             ) : null}
@@ -651,11 +751,11 @@ function PauseScreen({ snapshot }: { snapshot: GameSnapshot }) {
               <div
                 className="grid h-full"
                 style={{
-                  gridTemplateColumns: `${PAUSE_SLOT_W}px ${PAUSE_OPTION_W}px`,
+                  gridTemplateColumns: `${PAUSE_CURRENT_COLUMN_W}px ${PAUSE_CHOICES_COLUMN_W}px`,
                   columnGap: PAUSE_COLUMN_GAP,
                 }}
               >
-                <div className="grid content-start" style={{ rowGap: PAUSE_SLOT_GAP }}>
+                <div className="grid content-start" style={{ rowGap: PAUSE_CURRENT_ROW_GAP }}>
                   {player.equippedSkillIds.map((skillId, index) => {
                     const skill = getSkill(skillId);
                     const active = selectedSkillSlot === index;
@@ -664,68 +764,91 @@ function PauseScreen({ snapshot }: { snapshot: GameSnapshot }) {
                       <button
                         key={index}
                         type="button"
-                        className="relative text-left"
+                        className="grid items-center border-0 bg-transparent p-0 text-left"
+                        style={{ gridTemplateColumns: `${PAUSE_CURRENT_FRAME_SIZE}px 1fr`, columnGap: PAUSE_CHOICE_GRID_GAP }}
                         onClick={() => setSelectedSkillSlot(index)}
                       >
-                        <UiSprite
-                          id={active ? "pauseSlotActive" : skill ? "pauseSlotNormal" : "pauseSlotDisabled"}
-                          width={PAUSE_SLOT_W}
-                          height={PAUSE_SLOT_H}
-                          className={PAUSE_SLOT_CONTENT_CLASS}
-                        >
-                          <div className="text-[7px] leading-none text-[#7fc8e0]">槽位 {index + 1}</div>
-                          <div className="mt-1 truncate text-[8px] font-bold leading-none text-[#d9f6ff]">{skill ? `${skill.name} ${romanLevel(level)}` : "空槽"}</div>
-                        </UiSprite>
+                        <PauseSquareIcon
+                          active={active}
+                          empty={!skill}
+                          iconSrc={skillId ? skillIconSrc(skillId) : undefined}
+                          size={PAUSE_CURRENT_FRAME_SIZE}
+                          iconSize={PAUSE_CURRENT_ICON_SIZE}
+                        />
+                        <span className="min-w-0 pt-1">
+                          <span className={`block text-[7px] leading-none ${active ? "text-[#26d5ff]" : "text-[#7fc8e0]"}`}>槽位 {index + 1}</span>
+                          <span className="mt-1 block truncate text-[8px] font-bold leading-none text-[#d9f6ff]">{skill ? `${skill.name} ${romanLevel(level)}` : "空槽"}</span>
+                        </span>
                       </button>
                     );
                   })}
                 </div>
 
-                <div className="min-h-0 overflow-x-hidden overflow-y-auto text-[9px] leading-none">
-                  <div className="mb-1 flex items-center justify-between gap-3 px-[46px] text-[8px] leading-none text-[#7fc8e0]">
-                    <span>已习得技能</span>
-                    <span className="truncate text-[#26d5ff]">{selectedSkill?.name ?? "空槽"}</span>
+                <div
+                  className="grid h-full min-h-0 overflow-hidden text-[9px] leading-none"
+                  style={{ gridTemplateRows: "auto 1fr auto", rowGap: PAUSE_CURRENT_ROW_GAP }}
+                >
+                  <div className="flex items-center justify-between gap-3 text-[8px] leading-none text-[#7fc8e0]">
+                    <span>已解锁技能</span>
+                    <span className="truncate text-[#26d5ff]">槽位 {selectedSkillSlot + 1} · {selectedSkill?.name ?? "空槽"}</span>
                   </div>
-                  {learnedSkills.length > 0 ? learnedSkills.map((skill) => {
-                    const equippedElsewhere = player.equippedSkillIds.some((skillId, index) => (
-                      index !== selectedSkillSlot && skillId === skill.id
-                    ));
-                    const current = player.equippedSkillIds[selectedSkillSlot] === skill.id;
-                    return (
-                      <button
-                        key={skill.id}
-                        type="button"
-                        disabled={equippedElsewhere}
-                        className={`mb-1 block w-full border-0 bg-transparent p-0 text-left ${
-                          equippedElsewhere
-                            ? "text-[#4a7a9a]"
-                            : current
-                              ? "text-[#e8fbff]"
-                              : "text-[#c8efff]"
-                        }`}
-                        onClick={() => equipSkillSlot(selectedSkillSlot, skill.id)}
+                  <div className="min-h-0 overflow-y-auto overflow-x-hidden">
+                    {learnedSkills.length > 0 ? (
+                      <div
+                        className="grid content-start"
+                        style={{ gridTemplateColumns: "repeat(4, 78px)", gap: PAUSE_CHOICE_GRID_GAP }}
                       >
-                        <UiSprite
-                          id={equippedElsewhere ? "pauseOptionDisabled" : current ? "pauseOptionActive" : "pauseOptionNormal"}
-                          width={PAUSE_OPTION_W}
-                          height={PAUSE_OPTION_H}
-                          className={PAUSE_OPTION_CONTENT_CLASS}
-                        >
-                          <span className="block truncate text-[9px] font-bold leading-none">{skill.name} {romanLevel(player.skillLevels[skill.id])}{equippedElsewhere ? " · 已装备" : ""}</span>
-                          <span className="mt-1 block truncate text-[7px] leading-none text-[#7fc8e0]">{skill.description}</span>
-                        </UiSprite>
-                      </button>
-                    );
-                  }) : (
-                    <UiSprite
-                      id="pauseOptionDisabled"
-                      width={PAUSE_OPTION_W}
-                      height={PAUSE_OPTION_H}
-                      className={`${PAUSE_OPTION_SINGLE_LINE_CLASS} text-[#7fc8e0]`}
-                    >
-                      暂无已习得技能
-                    </UiSprite>
-                  )}
+                        {learnedSkills.map((skill) => {
+                          const equippedElsewhere = player.equippedSkillIds.some((skillId, index) => (
+                            index !== selectedSkillSlot && skillId === skill.id
+                          ));
+                          const current = player.equippedSkillIds[selectedSkillSlot] === skill.id;
+                          return (
+                            <button
+                              key={skill.id}
+                              type="button"
+                              disabled={equippedElsewhere}
+                              className={`grid justify-items-center gap-1 border-0 bg-transparent p-0 text-center ${
+                                equippedElsewhere
+                                  ? "text-[#4a7a9a]"
+                                  : current
+                                    ? "text-[#e8fbff]"
+                                    : "text-[#c8efff]"
+                              }`}
+                              onClick={() => equipSkillSlot(selectedSkillSlot, skill.id)}
+                            >
+                              <PauseSquareIcon
+                                active={current}
+                                disabled={equippedElsewhere}
+                                iconSrc={skillIconSrc(skill.id)}
+                                size={PAUSE_CHOICE_FRAME_SIZE}
+                                iconSize={PAUSE_CHOICE_ICON_SIZE}
+                              />
+                              <span className="block w-full truncate text-[7px] font-bold leading-none">{skill.name} {romanLevel(player.skillLevels[skill.id])}</span>
+                            </button>
+                          );
+                        })}
+                      </div>
+                    ) : (
+                      <div className="grid justify-items-center gap-1 pt-3 text-center text-[8px] text-[#7fc8e0]">
+                        <PauseSquareIcon
+                          disabled
+                          empty
+                          size={PAUSE_CHOICE_FRAME_SIZE}
+                          iconSize={PAUSE_CHOICE_ICON_SIZE}
+                        />
+                        <span>暂无已解锁技能</span>
+                      </div>
+                    )}
+                  </div>
+                  <div className="h-[34px] overflow-hidden text-[7px] leading-[1.45] text-[#7fc8e0]">
+                    <div className="truncate font-bold text-[#ffd46e]">
+                      {selectedSkill ? `${selectedSkill.name} ${romanLevel(player.skillLevels[selectedSkill.id])}` : `槽位 ${selectedSkillSlot + 1} · 空槽`}
+                    </div>
+                    <div className="mt-1 line-clamp-2">
+                      {selectedSkill?.description ?? "从右侧选择已解锁技能。"}
+                    </div>
+                  </div>
                 </div>
               </div>
             ) : null}

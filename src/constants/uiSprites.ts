@@ -15,7 +15,7 @@ export const UI_SPRITES = {
   skillSlotDisabled: { src: "assets/sprites/ui/system/slots/skill-slot-disabled.png", w: 284, h: 276 },
 
   pausePanel: { src: "assets/sprites/ui/system/pause/pause-panel.png", w: 1184, h: 514 },
-  pausePanelCompact: { src: "assets/sprites/ui/system/pause/pause-panel-compact.png", w: 600, h: 260 },
+  pausePanelCompact: { src: "assets/sprites/ui/system/pause/pause-panel-compact.png", w: 600, h: 340 },
   pauseColumnFrame: { src: "assets/sprites/ui/system/pause/pause-column-frame.png", w: 484, h: 779 },
   pauseTabNormal: { src: "assets/sprites/ui/system/pause/pause-tab-normal.png", w: 126, h: 42 },
   pauseTabActive: { src: "assets/sprites/ui/system/pause/pause-tab-active.png", w: 126, h: 42 },
