@@ -747,11 +747,13 @@ function Hud() {
         </div>
       ) : null}
 
-      <div className="pointer-events-none absolute bottom-0 left-0 right-0 z-10 hidden px-8 pb-3 md:block">
+      <div className="pointer-events-none absolute bottom-0 left-0 right-0 z-10">
         <div className="hud-xp-bar">
           <div className="hud-xp-fill" style={{ width: `${xpPercent}%` }} />
-          <div className="hud-xp-text">Lv.{player.runLevel} XP {player.runXp} / {player.xpToNext}</div>
         </div>
+      </div>
+      <div className="hud-level-label pointer-events-none absolute bottom-1 left-2 z-10 hidden md:block">
+        Lv.{player.runLevel}
       </div>
 
       {gameOver ? <DeathScreen elapsed={elapsed} /> : null}
