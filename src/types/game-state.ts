@@ -239,6 +239,8 @@ export type EnemyState = {
   burrowerBurrowStartX?: number;
   burrowerEmergeHit?: boolean;
   lanternBuffTimer?: number;
+  armorBreakTimer?: number;
+  armorBreakMultiplier?: number;
 };
 
 export type BossState = {
@@ -269,6 +271,8 @@ export type BossState = {
   recoveryTimer: number;
   awakened: boolean;
   phaseShiftTimer?: number;
+  armorBreakTimer?: number;
+  armorBreakMultiplier?: number;
 } | null;
 
 export type BossSkill1EffectState = {
@@ -525,6 +529,45 @@ export type Skill3EffectState = {
   damageMultiplier: number;
 };
 
+export type PlayerSkillEffectPhase = "out" | "return";
+
+export type PlayerSkillEffectState = {
+  skillId: SkillId;
+  kind: "dashSlash" | "vortex" | "armorBreak" | "rainLine" | "returningBlade" | "verticalWave";
+  x: number;
+  y: number;
+  w: number;
+  h: number;
+  vx: number;
+  vy: number;
+  facing: number;
+  elapsed: number;
+  frame: number;
+  life: number;
+  maxLife: number;
+  damage: number;
+  bossDamage: number;
+  hitCooldown: number;
+  bossHitCooldown: number;
+  damageMultiplier: number;
+  phase?: PlayerSkillEffectPhase;
+  originX?: number;
+  originY?: number;
+  maxDistance?: number;
+  traveled?: number;
+  maxHits?: number;
+  hitEnemies: EnemyState[];
+  returnHitEnemies?: EnemyState[];
+  enemyCooldowns?: Array<{ enemy: EnemyState; frames: number }>;
+  bossCooldown?: number;
+  refundedSkillEnergy?: boolean;
+  refundGroupId?: number;
+  armorBreakDuration?: number;
+  armorBreakMultiplier?: number;
+  armorBreakBossMultiplier?: number;
+  lift?: number;
+};
+
 export type UltimateEffectState = {
   x: number;
   y: number;
@@ -592,6 +635,7 @@ export type GameState = {
   skill1Effects: Skill1EffectState[];
   skill2Effects: Skill2EffectState[];
   skill3Effect: Skill3EffectState | null;
+  playerSkillEffects: PlayerSkillEffectState[];
   ultimateEffects: UltimateEffectState[];
   ultimateTrails: UltimateTrailState[];
   ultimateAfterimageSlashes: UltimateAfterimageSlashState[];

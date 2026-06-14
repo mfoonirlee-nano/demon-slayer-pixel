@@ -25,8 +25,10 @@ import { drawSheetFrame, drawSkillFrame } from "../graphics";
 import { playSfx } from "../audio";
 import { ctx } from "../context";
 import { emitSlash, emitHitBurst } from "./particle";
+import { spawnPlayerSkillEffect } from "./particle";
 import { damageEnemy } from "./enemies/common";
 import { resolveEnemyDefeat } from "./enemies/defeat";
+import { damageBoss } from "./bosses/common";
 import { bindingZonePlayerMoveScale } from "./enemies/binder";
 import { defeatBoss } from "./bosses/defeat";
 import { keys } from "../input";
@@ -40,6 +42,7 @@ import {
 } from "../systems/equipment";
 import { selectedSkill, selectSkillSlot } from "../systems/loadout";
 import { moonTideUltimateConfig, skillDamageMultiplier } from "../systems/progression";
+import { isGenericPlayerSkillId } from "../systems/playerSkills";
 
 const HALF_RATIO = 0.5;
 const FULL_CIRCLE = Math.PI * 2;
@@ -219,16 +222,21 @@ export function castSelectedSkill() {
   const p = state.player;
   if (p.ultimateCastTimer > 0) return;
   if (p.fallAttackTimer > 0 || p.fallAttackRecoveryTimer > 0) return;
-  if (p.skillEnergy < PLAYER_COMBAT.skillCastEnergyCost) return;
   const skill = selectedSkill(state);
   if (!skill) return;
+  const energyCost = skill.energyCost ?? PLAYER_COMBAT.skillCastEnergyCost;
+  if (p.skillEnergy < energyCost) return;
   const castDamageMultiplier = skillDamageMultiplier(state, skill.id)
     * consumeSkillCastEquipmentDamageMultiplier(state);
-  p.skillEnergy = Math.max(0, p.skillEnergy - PLAYER_COMBAT.skillCastEnergyCost);
+  p.skillEnergy = Math.max(0, p.skillEnergy - energyCost);
   syncSkillCharges();
   p.skillFlash = 0;
   p.skillTimer = Math.ceil(skill.frameCount * 60 / PLAYER_DRAW.skillAnimFps);
-  p.skillEffectSpawned = skill.id !== SKILL_IDS.skill1 && skill.id !== SKILL_IDS.skill2;
+  p.skillEffectSpawned = !(
+    skill.id === SKILL_IDS.skill1
+    || skill.id === SKILL_IDS.skill2
+    || isGenericPlayerSkillId(skill.id)
+  );
   p.skillCastDamageMultiplier = castDamageMultiplier;
   applySkillCastEquipmentEffects(state);
 
@@ -261,47 +269,48 @@ export function castSelectedSkill() {
     color: skill.color,
   });
 
-  let hitTargets = 0;
-  let bossHit = false;
-  for (let i = state.enemies.length - 1; i >= 0; i -= 1) {
-    const e = state.enemies[i];
-    const ex = e.x + e.w / 2;
-    const ey = e.y + e.h / 2;
-    if ((ex - cx) * p.facing < 0) continue;
-    const dist = Math.hypot(ex - cx, ey - cy);
-    if (dist > radius) continue;
-    const ratio = 1 - dist / radius;
-    const damage = (skill.enemyBase + ratio * skill.enemyScale)
-      * (1 + p.attackBonus * PLAYER_COMBAT.attackBonusScale)
-      * castDamageMultiplier;
-    damageEnemy(e, damage, PLAYER_COMBAT.enemyHitCooldown);
-    hitTargets += 1;
-    const { x: skillHitX, y: skillHitY } = nearestRectHitPoint(e, cx, cy);
-    emitSlash(skillHitX, skillHitY, skill.color, e.w);
-    emitHitBurst(skillHitX, skillHitY, PLAYER_COMBAT.effects.skillEnemyBurstColor, PLAYER_COMBAT.skillEnemyBurstPower);
-    resolveEnemyDefeat(e, i, "enemy");
-  }
+  if (!isGenericPlayerSkillId(skill.id)) {
+    let hitTargets = 0;
+    let bossHit = false;
+    for (let i = state.enemies.length - 1; i >= 0; i -= 1) {
+      const e = state.enemies[i];
+      const ex = e.x + e.w / 2;
+      const ey = e.y + e.h / 2;
+      if ((ex - cx) * p.facing < 0) continue;
+      const dist = Math.hypot(ex - cx, ey - cy);
+      if (dist > radius) continue;
+      const ratio = 1 - dist / radius;
+      const damage = (skill.enemyBase + ratio * skill.enemyScale)
+        * (1 + p.attackBonus * PLAYER_COMBAT.attackBonusScale)
+        * castDamageMultiplier;
+      damageEnemy(e, damage, PLAYER_COMBAT.enemyHitCooldown);
+      hitTargets += 1;
+      const { x: skillHitX, y: skillHitY } = nearestRectHitPoint(e, cx, cy);
+      emitSlash(skillHitX, skillHitY, skill.color, e.w);
+      emitHitBurst(skillHitX, skillHitY, PLAYER_COMBAT.effects.skillEnemyBurstColor, PLAYER_COMBAT.skillEnemyBurstPower);
+      resolveEnemyDefeat(e, i, "enemy");
+    }
 
-  if (state.boss) {
-    const boss = state.boss;
-    const bx = boss.x + boss.w / 2;
-    const by = boss.y + boss.h / 2;
-    if ((bx - cx) * p.facing >= 0) {
-      const dist = Math.hypot(bx - cx, by - cy);
-      if (dist <= radius + PLAYER_COMBAT.bossRadiusPadding) {
-        const ratio = Math.max(PLAYER_COMBAT.bossMinDamageRatio, 1 - dist / (radius + PLAYER_COMBAT.bossRadiusPadding));
-        boss.hp -= skill.bossBase * ratio * castDamageMultiplier;
-        boss.hitCd = PLAYER_COMBAT.bossHitCooldown;
-        bossHit = true;
-        const { x: bossHitX, y: bossHitY } = nearestRectHitPoint(boss, cx, cy);
-        emitSlash(bossHitX, bossHitY, PLAYER_COMBAT.effects.skillBossSlashColor);
-        emitHitBurst(bossHitX, bossHitY, PLAYER_COMBAT.effects.skillBossBurstColor, PLAYER_COMBAT.skillBossBurstPower);
-        defeatBoss();
+    if (state.boss) {
+      const boss = state.boss;
+      const bx = boss.x + boss.w / 2;
+      const by = boss.y + boss.h / 2;
+      if ((bx - cx) * p.facing >= 0) {
+        const dist = Math.hypot(bx - cx, by - cy);
+        if (dist <= radius + PLAYER_COMBAT.bossRadiusPadding) {
+          const ratio = Math.max(PLAYER_COMBAT.bossMinDamageRatio, 1 - dist / (radius + PLAYER_COMBAT.bossRadiusPadding));
+          damageBoss(boss, skill.bossBase * ratio * castDamageMultiplier, PLAYER_COMBAT.bossHitCooldown);
+          bossHit = true;
+          const { x: bossHitX, y: bossHitY } = nearestRectHitPoint(boss, cx, cy);
+          emitSlash(bossHitX, bossHitY, PLAYER_COMBAT.effects.skillBossSlashColor);
+          emitHitBurst(bossHitX, bossHitY, PLAYER_COMBAT.effects.skillBossBurstColor, PLAYER_COMBAT.skillBossBurstPower);
+          defeatBoss();
+        }
       }
     }
-  }
 
-  applySkillHitEquipmentRefund(state, hitTargets, bossHit);
+    applySkillHitEquipmentRefund(state, hitTargets, bossHit);
+  }
 
   playSfx("playerSkillCast");
 }
@@ -391,8 +400,7 @@ function triggerFallAttackImpact() {
   if (state.boss && hitbox(box, state.boss) && state.boss.hitCd <= 0) {
     const boss = state.boss;
     const { x: bossHitX, y: bossHitY } = overlapHitPoint(box, boss);
-    boss.hp -= getPlayerAttackDamage() * FALL_ATTACK.bossDamageMultiplier;
-    boss.hitCd = FALL_ATTACK.bossHitCooldown;
+    damageBoss(boss, getPlayerAttackDamage() * FALL_ATTACK.bossDamageMultiplier, FALL_ATTACK.bossHitCooldown);
     emitSlash(bossHitX, bossHitY, box.color, boss.w * 0.9);
     emitHitBurst(bossHitX, bossHitY, PLAYER_COMBAT.effects.skillBossBurstColor, FALL_ATTACK.impactBurstPower + 0.6);
     if (boss.hp <= 0) {
@@ -428,7 +436,7 @@ export function hurtPlayer(damage: number, sourceVx: number) {
       resolveEnemyDefeat(e, i, "enemy");
     }
     if (state.boss && hitbox(p, state.boss)) {
-      state.boss.hp -= counterDamage;
+      damageBoss(state.boss, counterDamage);
       emitSlash(state.boss.x + state.boss.w / 2, state.boss.y + state.boss.h * 0.4, SKILLS[2].color);
       emitHitBurst(state.boss.x + state.boss.w / 2, state.boss.y + state.boss.h * 0.4, SKILLS[2].color, 2);
       defeatBoss();
@@ -571,6 +579,9 @@ export function updatePlayer() {
             damageMultiplier: p.skillCastDamageMultiplier,
           });
           playSfx("playerSkillRelease", 1.08);
+        } else if (isGenericPlayerSkillId(skill.id)) {
+          spawnPlayerSkillEffect(skill.id, p.skillCastDamageMultiplier);
+          playSfx("playerSkillRelease", 1.02);
         }
       }
     }
@@ -622,13 +633,11 @@ export function updatePlayer() {
 
     if (state.boss && hitbox(box, state.boss) && state.boss.hitCd <= 0) {
       const boss = state.boss;
-      boss.hp -= box.damage;
+      damageBoss(boss, box.damage, PLAYER_COMBAT.attackBossHitCooldown);
       recordBasicAttackHit(state);
-      boss.hitCd = PLAYER_COMBAT.attackBossHitCooldown;
       const { x: bossHitX, y: bossHitY } = overlapHitPoint(box, boss);
       triggerMoonTideAfterimageHit(bossHitX, bossHitY, boss.w, (damage) => {
-        boss.hp -= damage;
-        boss.hitCd = PLAYER_COMBAT.attackBossHitCooldown;
+        damageBoss(boss, damage, PLAYER_COMBAT.attackBossHitCooldown);
       });
       emitSlash(bossHitX, bossHitY, box.color);
       emitHitBurst(

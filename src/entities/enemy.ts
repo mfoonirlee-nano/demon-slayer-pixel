@@ -89,6 +89,9 @@ export function updateEnemies() {
     const enemy = state.enemies[i];
     const lanternBuffed = (enemy.lanternBuffTimer ?? 0) > 0;
     enemy.hitCd -= 1;
+    if ((enemy.armorBreakTimer ?? 0) > 0) {
+      enemy.armorBreakTimer = Math.max(0, (enemy.armorBreakTimer ?? 0) - 1);
+    }
 
     const archetype = enemyArchetypeForSheet(enemy.sheetIndex);
     archetype.update(enemy);

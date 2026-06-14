@@ -85,9 +85,12 @@ export function damageEnemy(
   hitCooldown?: number,
   kind: EnemyDamageKind = "normal",
 ) {
-  const appliedDamage = enemy.sheetIndex === BRUTE_SHEET_INDEX
-    ? damageBrute(enemy, damage, kind)
+  const scaledDamage = (enemy.armorBreakTimer ?? 0) > 0
+    ? damage * (enemy.armorBreakMultiplier ?? 1)
     : damage;
+  const appliedDamage = enemy.sheetIndex === BRUTE_SHEET_INDEX
+    ? damageBrute(enemy, scaledDamage, kind)
+    : scaledDamage;
   if (enemy.sheetIndex !== BRUTE_SHEET_INDEX) enemy.hp -= appliedDamage;
   if (hitCooldown !== undefined) enemy.hitCd = hitCooldown;
   return appliedDamage;

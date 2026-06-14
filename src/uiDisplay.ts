@@ -14,7 +14,7 @@ export function getSkill(skillId: SkillId | null | undefined) {
 }
 
 export function skillIconSrc(skillId: SkillId) {
-  return `assets/sprites/ui/${skillId}_icon.png`;
+  return getSkill(skillId)?.iconSrc ?? `assets/sprites/ui/${skillId}_icon.png`;
 }
 
 export function equipmentIconSrc(itemId: EquipmentItemId) {

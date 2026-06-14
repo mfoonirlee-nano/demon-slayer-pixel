@@ -97,6 +97,7 @@ export function createInitialState(): GameState {
     skill1Effects: [],
     skill2Effects: [],
     skill3Effect: null,
+    playerSkillEffects: [],
     ultimateEffects: [],
     ultimateTrails: [],
     ultimateAfterimageSlashes: [],
@@ -134,6 +135,7 @@ export function resetState() {
   resetCollection(state.hitBursts, next.hitBursts);
   resetCollection(state.skill1Effects, next.skill1Effects);
   resetCollection(state.skill2Effects, next.skill2Effects);
+  resetCollection(state.playerSkillEffects, next.playerSkillEffects);
   resetCollection(state.ultimateEffects, next.ultimateEffects);
   resetCollection(state.ultimateTrails, next.ultimateTrails);
   resetCollection(state.ultimateAfterimageSlashes, next.ultimateAfterimageSlashes);

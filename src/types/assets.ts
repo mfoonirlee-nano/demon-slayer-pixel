@@ -1,4 +1,24 @@
-export type SkillId = "skill1" | "skill2" | "skill3";
+export type SkillId =
+  | "skill1"
+  | "skill2"
+  | "skill3"
+  | "dash_reposition"
+  | "vortex_control"
+  | "armor_break"
+  | "anti_air_multi"
+  | "returning_blade"
+  | "vertical_wave";
+
+export type SkillTypeTag =
+  | "line_projectile"
+  | "close_arc"
+  | "guard_counter"
+  | "dash_reposition"
+  | "vortex_control"
+  | "armor_break"
+  | "anti_air_multi"
+  | "returning_blade"
+  | "vertical_wave";
 
 export type PlayerAnimationState = "idle" | "run" | "jump" | "attack" | "fallAttack";
 
@@ -9,6 +29,20 @@ export type Skill = {
   name: string;
   // 技能说明，用于暂停面板展示
   description: string;
+  // 技能玩法类型，用于升级候选和后续注册式技能逻辑
+  typeTag: SkillTypeTag;
+  // 是否已经完成逻辑和素材接入。未接入技能不得进入升级候选。
+  implemented: boolean;
+  // UI 图标相对路径
+  iconSrc: string;
+  // 技能升级说明，按 Lv1/Lv2/Lv3 展示
+  levelDescriptions: {
+    1: string;
+    2: string;
+    3: string;
+  };
+  // 单次施放能量消耗。缺省由全局技能消耗兼容旧技能。
+  energyCost?: number;
   // 技能序列图（SpriteSheet）的相对路径
   src: string;
   // 动画的帧数

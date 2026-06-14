@@ -40,6 +40,7 @@ import {
   updateSkill1Effects,
   updateSkill2Effects,
   updateSkill3Effect,
+  updatePlayerSkillEffects,
   updateUltimateEffects,
   updateUltimateTrails,
   updateUltimateAfterimageSlashes,
@@ -49,6 +50,7 @@ import {
   drawSkill1Effects,
   drawSkill2Effects,
   drawSkill3Effect,
+  drawPlayerSkillEffects,
   drawUltimateEffects,
   drawUltimateTrails,
   drawUltimateAfterimageSlashes,
@@ -203,6 +205,7 @@ function loop(ts: number) {
     updateSkill1Effects();
     updateSkill2Effects();
     updateSkill3Effect();
+    updatePlayerSkillEffects();
     updateUltimateEffects();
     updateUltimateTrails();
     updateUltimateAfterimageSlashes();
@@ -257,6 +260,7 @@ function loop(ts: number) {
   drawSkill1Effects();
   drawGroundTileFront();
   drawSkill2Effects();
+  drawPlayerSkillEffects();
   drawBindingZonesFront();
   drawHitBursts();
   drawProjectiles();

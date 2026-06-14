@@ -11,6 +11,7 @@ import {
   PLAYER_COMBAT,
   PLAYER_DEFAULTS,
   RUNNER_SHEET_INDEX,
+  SKILLS,
   SKILL_IDS,
   SPLITTER_SHEET_INDEX,
   WARDEN_SHEET_INDEX,
@@ -43,12 +44,6 @@ const SKILL_LEVEL_DAMAGE_MULTIPLIER: Record<SkillLevel, number> = {
 };
 
 type ActiveUltimateLevel = Exclude<UltimateLevel, 0>;
-
-const IMPLEMENTED_SKILL_IDS: SkillId[] = [
-  SKILL_IDS.skill1,
-  SKILL_IDS.skill2,
-  SKILL_IDS.skill3,
-];
 
 export const INITIAL_SKILL_LEVELS: Partial<Record<SkillId, SkillLevel>> = {
   [SKILL_IDS.skill1]: 1,
@@ -207,7 +202,7 @@ function createUpgradeChoices(state: GameState): UpgradeChoiceState[] {
   const choices: UpgradeChoiceState[] = [];
   const nextUltimateLevel = Math.min(3, state.player.ultimateLevel + 1) as UltimateLevel;
 
-  for (const skillId of IMPLEMENTED_SKILL_IDS) {
+  for (const skillId of implementedSkillIds()) {
     const currentLevel = state.player.skillLevels[skillId] ?? 0;
     if (!currentLevel) {
       choices.push({
@@ -251,22 +246,19 @@ function createUpgradeChoices(state: GameState): UpgradeChoiceState[] {
 }
 
 function skillName(skillId: SkillId, level: SkillLevel) {
-  const baseName = skillId === SKILL_IDS.skill1
-    ? "水龙破"
-    : skillId === SKILL_IDS.skill2
-      ? "打潮刃"
-      : "静水返";
+  const baseName = SKILLS.find((skill) => skill.id === skillId)?.name ?? skillId;
   return `${baseName} ${romanLevel(level)}`;
 }
 
 function skillDescription(skillId: SkillId, level: SkillLevel) {
-  if (skillId === SKILL_IDS.skill1) {
-    return level === 1 ? "向前释放水龙，造成窄长路径伤害。" : "水龙伤害提升，命中反馈更稳定。";
-  }
-  if (skillId === SKILL_IDS.skill2) {
-    return level === 1 ? "前方月牙水刃，短距离宽判定。" : "潮刃伤害提升，近身解围更稳定。";
-  }
-  return level === 1 ? "展开防护水幕，受击时抵挡并反击近处目标。" : "反击伤害提升，防守收益更高。";
+  const skill = SKILLS.find((candidate) => candidate.id === skillId);
+  return skill?.levelDescriptions[level] ?? skill?.description ?? "技能效果提升。";
+}
+
+function implementedSkillIds(): SkillId[] {
+  return SKILLS
+    .filter((skill) => skill.implemented && Boolean(skill.src) && Boolean(skill.iconSrc))
+    .map((skill) => skill.id);
 }
 
 function romanLevel(level: SkillLevel | UltimateLevel) {

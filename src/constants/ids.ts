@@ -13,7 +13,13 @@ export const SKILL_IDS = {
   skill1: "skill1",
   skill2: "skill2",
   skill3: "skill3",
-} as const satisfies Record<SkillId, SkillId>;
+  dashReposition: "dash_reposition",
+  vortexControl: "vortex_control",
+  armorBreak: "armor_break",
+  antiAirMulti: "anti_air_multi",
+  returningBlade: "returning_blade",
+  verticalWave: "vertical_wave",
+} as const satisfies Record<string, SkillId>;
 
 export const PLATFORM_STYLES = {
   stone: "stone",

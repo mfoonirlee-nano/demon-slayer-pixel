@@ -111,6 +111,9 @@ export function updateBoss() {
   boss.jumpCd -= 1;
   boss.skillCd -= 1;
   boss.actionTimer += 1;
+  if ((boss.armorBreakTimer ?? 0) > 0) {
+    boss.armorBreakTimer = Math.max(0, (boss.armorBreakTimer ?? 0) - 1);
+  }
 
   if (boss.entering) {
     boss.x += boss.vx;

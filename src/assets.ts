@@ -57,6 +57,7 @@ import {
   SKILL1_EFFECT_SHEET,
   SKILL2_EFFECT_SHEET,
   SKILL3_EFFECT_SHEET,
+  PLAYER_SKILL_EFFECT_SHEETS,
   ULTIMATE_SKILL_SHEET,
   ULTIMATE_SKILL_EFFECT_SHEET,
   SKY_SPRITES,
@@ -195,6 +196,10 @@ export function loadSprites(): Promise<void> {
   jobs.push(loadImage(SKILL1_EFFECT_SHEET.src).then((img) => { SKILL1_EFFECT_SHEET.image = img; }));
   jobs.push(loadImage(SKILL2_EFFECT_SHEET.src).then((img) => { SKILL2_EFFECT_SHEET.image = img; }));
   jobs.push(loadImage(SKILL3_EFFECT_SHEET.src).then((img) => { SKILL3_EFFECT_SHEET.image = img; }));
+  for (const sheet of Object.values(PLAYER_SKILL_EFFECT_SHEETS)) {
+    if (!sheet) continue;
+    jobs.push(loadImage(sheet.src).then((img) => { sheet.image = img; }));
+  }
   jobs.push(loadImage(ULTIMATE_SKILL_SHEET.src).then((img) => { ULTIMATE_SKILL_SHEET.image = img; }));
   jobs.push(loadImage(ULTIMATE_SKILL_EFFECT_SHEET.src).then((img) => { ULTIMATE_SKILL_EFFECT_SHEET.image = img; }));
   for (const skill of SKILLS) {

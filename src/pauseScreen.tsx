@@ -4,7 +4,8 @@ import { getAudioVolumeSettings, setAudioVolumeSettings, type AudioVolumeSetting
 import { equipEquipment, equipSkillSlot } from "./runtime";
 import { EQUIPMENT_CHOICE_IDS, EQUIPMENT_ITEMS } from "./systems/equipment";
 import type { GameSnapshot } from "./gameStore";
-import type { EquipmentSlot } from "./types/game-state";
+import type { SkillId } from "./types/assets";
+import type { EquipmentItemId, EquipmentSlot } from "./types/game-state";
 import {
   EQUIPMENT_SLOT_LABELS,
   equipmentIconSrc,
@@ -60,6 +61,20 @@ const PAUSE_SLIDER_WRAP_H = 30;
 const PAUSE_SETTINGS_INSET_X = (PAUSE_PANEL_W - PAUSE_PANEL_INSET_X * 2 - PAUSE_SLIDER_TRACK_W) / 2;
 const PAUSE_TAB_CONTENT_CLASS = "flex items-center justify-center px-[18px] pb-[5px] pt-[8px] text-center leading-none";
 
+type EquipmentDetailTarget =
+  | { type: "slot"; slot: EquipmentSlot }
+  | { type: "item"; itemId: EquipmentItemId };
+
+type SkillDetailTarget =
+  | { type: "slot"; slotIndex: number }
+  | { type: "item"; skillId: SkillId };
+
+type PauseDetailCopy = {
+  kicker: string;
+  title: string;
+  body: string;
+};
+
 function StatRow({ label, value, accent = false }: { label: string; value: string | number; accent?: boolean }) {
   return (
     <div className="flex items-center justify-between gap-3 text-[10px] leading-[1.5]">
@@ -82,6 +97,8 @@ function PauseSquareIcon({
   empty = false,
   iconSrc,
   badgeSrc,
+  leftBadgeText,
+  rightBadgeText,
   size,
   iconSize,
   badgeSize,
@@ -91,6 +108,8 @@ function PauseSquareIcon({
   empty?: boolean;
   iconSrc?: string;
   badgeSrc?: string;
+  leftBadgeText?: string;
+  rightBadgeText?: string;
   size: number;
   iconSize: number;
   badgeSize?: number;
@@ -116,9 +135,10 @@ function PauseSquareIcon({
             imageRendering: "pixelated",
           }}
         />
-      ) : (
-        <span className="absolute inset-0 flex items-center justify-center pb-1 text-[8px] font-bold text-[#4a7a9a]">--</span>
-      )}
+      ) : null}
+      {leftBadgeText ? (
+        <span className="pause-square-badge pause-square-badge-left">{leftBadgeText}</span>
+      ) : null}
       {badgeSrc && badgeSize ? (
         <img
           src={badgeSrc}
@@ -134,7 +154,69 @@ function PauseSquareIcon({
           }}
         />
       ) : null}
+      {rightBadgeText ? (
+        <span className="pause-square-badge pause-square-badge-right">{rightBadgeText}</span>
+      ) : null}
     </UiSprite>
+  );
+}
+
+function equipmentDetailCopy(
+  target: EquipmentDetailTarget,
+  equipment: GameSnapshot["equipment"],
+  unlockedEquipmentIds: ReadonlySet<EquipmentItemId>,
+): PauseDetailCopy {
+  if (target.type === "item") {
+    const item = EQUIPMENT_ITEMS[target.itemId];
+    const equipped = equipment.equipped[item.slot]?.id === item.id;
+    const unlocked = unlockedEquipmentIds.has(item.id);
+
+    return {
+      kicker: `${EQUIPMENT_SLOT_LABELS[item.slot]} · ${item.uiTags.join(" · ")} · ${equipped ? "已装备" : unlocked ? "可装备" : "未解锁"}`,
+      title: item.name,
+      body: item.summary,
+    };
+  }
+
+  const item = equipment.equipped[target.slot];
+  return {
+    kicker: `${EQUIPMENT_SLOT_LABELS[target.slot]} · ${item?.uiTags.join(" · ") ?? "未装备"}`,
+    title: item?.name ?? "空槽",
+    body: item?.summary ?? "当前槽位未装备。",
+  };
+}
+
+function skillDetailCopy(target: SkillDetailTarget, player: GameSnapshot["player"]): PauseDetailCopy {
+  if (target.type === "item") {
+    const skill = getSkill(target.skillId);
+    const level = player.skillLevels[target.skillId];
+    const equippedSlot = player.equippedSkillIds.findIndex((skillId) => skillId === target.skillId);
+
+    return {
+      kicker: `技能 · 等级 ${level ? romanLevel(level) : "未解锁"}${equippedSlot >= 0 ? ` · 已装备 ${equippedSlot + 1}` : ""}`,
+      title: skill?.name ?? "未知技能",
+      body: skill?.description ?? "暂无技能说明。",
+    };
+  }
+
+  const skillId = player.equippedSkillIds[target.slotIndex];
+  const skill = getSkill(skillId);
+  const level = skillId ? player.skillLevels[skillId] : undefined;
+
+  return {
+    kicker: `槽位 ${target.slotIndex + 1} · 快捷键 ${target.slotIndex + 1} · ${skill ? `等级 ${romanLevel(level)}` : "空槽"}`,
+    title: skill?.name ?? "空槽",
+    body: skill?.description ?? "当前槽位未装备技能。",
+  };
+}
+
+function PauseDetailPanel({ detail }: { detail: PauseDetailCopy }) {
+  return (
+    <div className="pause-detail-panel">
+      <div className="truncate text-[7px] leading-none text-[#7fc8e0]">{detail.kicker}</div>
+      <div className="mt-1 truncate text-[9px] font-bold leading-none text-[#ffd46e]">{detail.title}</div>
+      <div className="mt-1 line-clamp-2 text-[7px] leading-[1.45] text-[#c8efff]">{detail.body}</div>
+    </div>
   );
 }
 
@@ -197,9 +279,14 @@ function AudioVolumeControl({ label, value, onChange }: {
 
 export function PauseScreen({ snapshot }: { snapshot: GameSnapshot }) {
   const { player, equipment } = snapshot;
+  const initialSkillSlot = Math.max(0, Math.min(player.equippedSkillIds.length - 1, player.skillIndex));
   const [activeTab, setActiveTab] = useState<PauseTab>("info");
-  const [selectedSkillSlot, setSelectedSkillSlot] = useState(0);
+  const [selectedSkillSlot, setSelectedSkillSlot] = useState(initialSkillSlot);
   const [selectedEquipmentSlot, setSelectedEquipmentSlot] = useState<EquipmentSlot>("blade");
+  const [selectedEquipmentDetail, setSelectedEquipmentDetail] = useState<EquipmentDetailTarget>({ type: "slot", slot: "blade" });
+  const [hoveredEquipmentDetail, setHoveredEquipmentDetail] = useState<EquipmentDetailTarget | null>(null);
+  const [selectedSkillDetail, setSelectedSkillDetail] = useState<SkillDetailTarget>({ type: "slot", slotIndex: initialSkillSlot });
+  const [hoveredSkillDetail, setHoveredSkillDetail] = useState<SkillDetailTarget | null>(null);
   const [volumeSettings, setVolumeSettings] = useState<AudioVolumeSettings>(() => getAudioVolumeSettings());
   const activeSkill = getSkill(player.equippedSkillIds[player.skillIndex]);
   const totalAttack = player.baseAttack + player.attackBonus;
@@ -211,6 +298,8 @@ export function PauseScreen({ snapshot }: { snapshot: GameSnapshot }) {
   const selectedEquipmentItem = equipment.equipped[selectedEquipmentSlot];
   const unlockedEquipmentIds = new Set(equipment.inventory.map((item) => item.id));
   const selectedSkill = getSkill(player.equippedSkillIds[selectedSkillSlot]);
+  const equipmentDetail = equipmentDetailCopy(hoveredEquipmentDetail ?? selectedEquipmentDetail, equipment, unlockedEquipmentIds);
+  const skillDetail = skillDetailCopy(hoveredSkillDetail ?? selectedSkillDetail, player);
 
   const updateVolume = (setting: keyof AudioVolumeSettings, value: number) => {
     setVolumeSettings(setAudioVolumeSettings({ [setting]: value }));
@@ -295,112 +384,138 @@ export function PauseScreen({ snapshot }: { snapshot: GameSnapshot }) {
               <div
                 className="grid h-full"
                 style={{
-                  gridTemplateColumns: `${PAUSE_CURRENT_COLUMN_W}px ${PAUSE_CHOICES_COLUMN_W}px`,
-                  columnGap: PAUSE_COLUMN_GAP,
+                  gridTemplateRows: "1fr auto",
+                  rowGap: PAUSE_CURRENT_ROW_GAP,
                 }}
               >
-                <div className="grid content-start" style={{ rowGap: PAUSE_CURRENT_ROW_GAP }}>
-                  {EQUIPMENT_SLOTS.map((slot) => {
-                    const item = equipment.equipped[slot];
-                    const active = selectedEquipmentSlot === slot;
-                    return (
-                      <button
-                        key={slot}
-                        type="button"
-                        className="grid items-center border-0 bg-transparent p-0 text-left"
-                        style={{ gridTemplateColumns: `${PAUSE_CURRENT_FRAME_SIZE}px 1fr`, columnGap: PAUSE_CHOICE_GRID_GAP }}
-                        onClick={() => setSelectedEquipmentSlot(slot)}
-                      >
-                        <PauseSquareIcon
-                          active={active}
-                          empty={!item}
-                          iconSrc={item ? equipmentIconSrc(item.id) : undefined}
-                          badgeSrc={equipmentSlotBadgeSrc(slot)}
-                          size={PAUSE_CURRENT_FRAME_SIZE}
-                          iconSize={PAUSE_CURRENT_ICON_SIZE}
-                          badgeSize={PAUSE_CURRENT_BADGE_SIZE}
-                        />
-                        <span className="min-w-0 pt-1">
-                          <span className={`block text-[7px] leading-none ${active ? "text-[#26d5ff]" : "text-[#7fc8e0]"}`}>{EQUIPMENT_SLOT_LABELS[slot]}</span>
-                          <span className="mt-1 block truncate text-[8px] font-bold leading-none text-[#d9f6ff]">{item?.name ?? "未装备"}</span>
-                        </span>
-                      </button>
-                    );
-                  })}
+                <div
+                  className="grid min-h-0"
+                  style={{
+                    gridTemplateColumns: `${PAUSE_CURRENT_COLUMN_W}px ${PAUSE_CHOICES_COLUMN_W}px`,
+                    columnGap: PAUSE_COLUMN_GAP,
+                  }}
+                >
+                  <div
+                    className="grid content-start"
+                    style={{
+                      gridTemplateRows: "auto 1fr",
+                      rowGap: PAUSE_CURRENT_ROW_GAP,
+                    }}
+                  >
+                    <div className="text-[8px] leading-none text-[#7fc8e0]">当前装备</div>
+                    <div
+                      className="grid content-start"
+                      style={{
+                        gridTemplateColumns: `repeat(${EQUIPMENT_SLOTS.length}, ${PAUSE_CURRENT_FRAME_SIZE}px)`,
+                        gap: PAUSE_CURRENT_ROW_GAP,
+                      }}
+                    >
+                      {EQUIPMENT_SLOTS.map((slot) => {
+                        const item = equipment.equipped[slot];
+                        const detailTarget: EquipmentDetailTarget = { type: "slot", slot };
+                        const active = selectedEquipmentSlot === slot;
+                        return (
+                          <button
+                            key={slot}
+                            type="button"
+                            aria-label={`${EQUIPMENT_SLOT_LABELS[slot]}：${item?.name ?? "空槽"}`}
+                            className="pause-square-button border-0 bg-transparent p-0"
+                            onMouseEnter={() => setHoveredEquipmentDetail(detailTarget)}
+                            onMouseLeave={() => setHoveredEquipmentDetail(null)}
+                            onFocus={() => setHoveredEquipmentDetail(detailTarget)}
+                            onBlur={() => setHoveredEquipmentDetail(null)}
+                            onClick={() => {
+                              setSelectedEquipmentSlot(slot);
+                              setSelectedEquipmentDetail(detailTarget);
+                            }}
+                          >
+                            <PauseSquareIcon
+                              active={active}
+                              empty={!item}
+                              iconSrc={item ? equipmentIconSrc(item.id) : undefined}
+                              badgeSrc={equipmentSlotBadgeSrc(slot)}
+                              size={PAUSE_CURRENT_FRAME_SIZE}
+                              iconSize={PAUSE_CURRENT_ICON_SIZE}
+                              badgeSize={PAUSE_CURRENT_BADGE_SIZE}
+                            />
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+
+                  <div
+                    className="grid h-full min-h-0 overflow-hidden text-[9px] leading-none"
+                    style={{ gridTemplateRows: "auto 1fr", rowGap: PAUSE_CURRENT_ROW_GAP }}
+                  >
+                    <div className="flex items-center justify-between gap-3 text-[8px] leading-none text-[#7fc8e0]">
+                      <span>全部装备</span>
+                      <span className="truncate text-[#26d5ff]">
+                        {EQUIPMENT_SLOT_LABELS[selectedEquipmentSlot]} · {selectedEquipmentItem?.name ?? "未装备"}
+                      </span>
+                    </div>
+                    <div className="min-h-0 overflow-y-auto overflow-x-hidden">
+                      {ALL_EQUIPMENT_ITEMS.length > 0 ? (
+                        <div
+                          className="grid content-start"
+                          style={{ gridTemplateColumns: "repeat(4, 78px)", gap: PAUSE_CHOICE_GRID_GAP }}
+                        >
+                          {ALL_EQUIPMENT_ITEMS.map((item) => {
+                            const unlocked = unlockedEquipmentIds.has(item.id);
+                            const equipped = equipment.equipped[item.slot]?.id === item.id;
+                            const detailTarget: EquipmentDetailTarget = { type: "item", itemId: item.id };
+                            return (
+                              <button
+                                key={item.id}
+                                type="button"
+                                aria-disabled={!unlocked}
+                                aria-label={`${item.name}：${unlocked ? "可装备" : "未解锁"}`}
+                                className={`pause-choice-button border-0 bg-transparent p-0 ${
+                                  !unlocked
+                                    ? "text-[#4a7a9a]"
+                                    : equipped
+                                      ? "text-[#e8fbff]"
+                                      : "text-[#c8efff]"
+                                }`}
+                                onMouseEnter={() => setHoveredEquipmentDetail(detailTarget)}
+                                onMouseLeave={() => setHoveredEquipmentDetail(null)}
+                                onFocus={() => setHoveredEquipmentDetail(detailTarget)}
+                                onBlur={() => setHoveredEquipmentDetail(null)}
+                                onClick={() => {
+                                  setSelectedEquipmentDetail(detailTarget);
+                                  setSelectedEquipmentSlot(item.slot);
+                                  if (unlocked) equipEquipment(item.slot, item.id);
+                                }}
+                              >
+                                <PauseSquareIcon
+                                  active={equipped}
+                                  disabled={!unlocked}
+                                  iconSrc={equipmentIconSrc(item.id)}
+                                  badgeSrc={equipmentSlotBadgeSrc(item.slot)}
+                                  size={PAUSE_CHOICE_FRAME_SIZE}
+                                  iconSize={PAUSE_CHOICE_ICON_SIZE}
+                                  badgeSize={PAUSE_CHOICE_BADGE_SIZE}
+                                />
+                              </button>
+                            );
+                          })}
+                        </div>
+                      ) : (
+                        <div className="grid justify-items-center gap-1 pt-3 text-center text-[8px] text-[#7fc8e0]">
+                          <PauseSquareIcon
+                            disabled
+                            empty
+                            size={PAUSE_CHOICE_FRAME_SIZE}
+                            iconSize={PAUSE_CHOICE_ICON_SIZE}
+                          />
+                          <span>暂无装备设定</span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
                 </div>
 
-                <div
-                  className="grid h-full min-h-0 overflow-hidden text-[9px] leading-none"
-                  style={{ gridTemplateRows: "auto 1fr auto", rowGap: PAUSE_CURRENT_ROW_GAP }}
-                >
-                  <div className="flex items-center justify-between gap-3 text-[8px] leading-none text-[#7fc8e0]">
-                    <span>全部装备</span>
-                    <span className="truncate text-[#26d5ff]">
-                      {EQUIPMENT_SLOT_LABELS[selectedEquipmentSlot]} · {selectedEquipmentItem?.name ?? "未装备"}
-                    </span>
-                  </div>
-                  <div className="min-h-0 overflow-y-auto overflow-x-hidden">
-                    {ALL_EQUIPMENT_ITEMS.length > 0 ? (
-                      <div
-                        className="grid content-start"
-                        style={{ gridTemplateColumns: "repeat(4, 78px)", gap: PAUSE_CHOICE_GRID_GAP }}
-                      >
-                        {ALL_EQUIPMENT_ITEMS.map((item) => {
-                          const unlocked = unlockedEquipmentIds.has(item.id);
-                          const equipped = equipment.equipped[item.slot]?.id === item.id;
-                          return (
-                            <button
-                              key={item.id}
-                              type="button"
-                              disabled={!unlocked}
-                              className={`grid justify-items-center gap-1 border-0 bg-transparent p-0 text-center ${
-                                !unlocked
-                                  ? "text-[#4a7a9a]"
-                                  : equipped
-                                    ? "text-[#e8fbff]"
-                                    : "text-[#c8efff]"
-                              }`}
-                              onClick={() => {
-                                setSelectedEquipmentSlot(item.slot);
-                                equipEquipment(item.slot, item.id);
-                              }}
-                            >
-                              <PauseSquareIcon
-                                active={equipped}
-                                disabled={!unlocked}
-                                iconSrc={equipmentIconSrc(item.id)}
-                                badgeSrc={equipmentSlotBadgeSrc(item.slot)}
-                                size={PAUSE_CHOICE_FRAME_SIZE}
-                                iconSize={PAUSE_CHOICE_ICON_SIZE}
-                                badgeSize={PAUSE_CHOICE_BADGE_SIZE}
-                              />
-                              <span className="block w-full truncate text-[7px] font-bold leading-none">{item.name}</span>
-                              <span className="block w-full truncate text-[6px] leading-none">{unlocked ? EQUIPMENT_SLOT_LABELS[item.slot] : "未解锁"}</span>
-                            </button>
-                          );
-                        })}
-                      </div>
-                    ) : (
-                      <div className="grid justify-items-center gap-1 pt-3 text-center text-[8px] text-[#7fc8e0]">
-                        <PauseSquareIcon
-                          disabled
-                          empty
-                          size={PAUSE_CHOICE_FRAME_SIZE}
-                          iconSize={PAUSE_CHOICE_ICON_SIZE}
-                        />
-                        <span>暂无装备设定</span>
-                      </div>
-                    )}
-                  </div>
-                  <div className="h-[34px] overflow-hidden text-[7px] leading-[1.45] text-[#7fc8e0]">
-                    <div className="truncate font-bold text-[#ffd46e]">
-                      {selectedEquipmentItem?.uiTags.join(" · ") ?? `${EQUIPMENT_SLOT_LABELS[selectedEquipmentSlot]} · 空槽`}
-                    </div>
-                    <div className="mt-1 line-clamp-2">
-                      {selectedEquipmentItem?.summary ?? "尚未装备。"}
-                    </div>
-                  </div>
-                </div>
+                <PauseDetailPanel detail={equipmentDetail} />
               </div>
             ) : null}
 
@@ -408,107 +523,139 @@ export function PauseScreen({ snapshot }: { snapshot: GameSnapshot }) {
               <div
                 className="grid h-full"
                 style={{
-                  gridTemplateColumns: `${PAUSE_CURRENT_COLUMN_W}px ${PAUSE_CHOICES_COLUMN_W}px`,
-                  columnGap: PAUSE_COLUMN_GAP,
+                  gridTemplateRows: "1fr auto",
+                  rowGap: PAUSE_CURRENT_ROW_GAP,
                 }}
               >
-                <div className="grid content-start" style={{ rowGap: PAUSE_CURRENT_ROW_GAP }}>
-                  {player.equippedSkillIds.map((skillId, index) => {
-                    const skill = getSkill(skillId);
-                    const active = selectedSkillSlot === index;
-                    const level = skillId ? player.skillLevels[skillId] : undefined;
-                    return (
-                      <button
-                        key={index}
-                        type="button"
-                        className="grid items-center border-0 bg-transparent p-0 text-left"
-                        style={{ gridTemplateColumns: `${PAUSE_CURRENT_FRAME_SIZE}px 1fr`, columnGap: PAUSE_CHOICE_GRID_GAP }}
-                        onClick={() => setSelectedSkillSlot(index)}
-                      >
-                        <PauseSquareIcon
-                          active={active}
-                          empty={!skill}
-                          iconSrc={skillId ? skillIconSrc(skillId) : undefined}
-                          size={PAUSE_CURRENT_FRAME_SIZE}
-                          iconSize={PAUSE_CURRENT_ICON_SIZE}
-                        />
-                        <span className="min-w-0 pt-1">
-                          <span className={`block text-[7px] leading-none ${active ? "text-[#26d5ff]" : "text-[#7fc8e0]"}`}>槽位 {index + 1}</span>
-                          <span className="mt-1 block truncate text-[8px] font-bold leading-none text-[#d9f6ff]">{skill ? `${skill.name} ${romanLevel(level)}` : "空槽"}</span>
-                        </span>
-                      </button>
-                    );
-                  })}
+                <div
+                  className="grid min-h-0"
+                  style={{
+                    gridTemplateColumns: `${PAUSE_CURRENT_COLUMN_W}px ${PAUSE_CHOICES_COLUMN_W}px`,
+                    columnGap: PAUSE_COLUMN_GAP,
+                  }}
+                >
+                  <div
+                    className="grid content-start"
+                    style={{
+                      gridTemplateRows: "auto 1fr",
+                      rowGap: PAUSE_CURRENT_ROW_GAP,
+                    }}
+                  >
+                    <div className="text-[8px] leading-none text-[#7fc8e0]">当前技能</div>
+                    <div
+                      className="grid content-start"
+                      style={{
+                        gridTemplateColumns: `repeat(${player.equippedSkillIds.length}, ${PAUSE_CURRENT_FRAME_SIZE}px)`,
+                        gap: PAUSE_CURRENT_ROW_GAP,
+                      }}
+                    >
+                      {player.equippedSkillIds.map((skillId, index) => {
+                        const skill = getSkill(skillId);
+                        const detailTarget: SkillDetailTarget = { type: "slot", slotIndex: index };
+                        const active = selectedSkillSlot === index;
+                        const level = skillId ? player.skillLevels[skillId] : undefined;
+                        return (
+                          <button
+                            key={index}
+                            type="button"
+                            aria-label={`技能槽 ${index + 1}：${skill?.name ?? "空槽"}`}
+                            className="pause-square-button border-0 bg-transparent p-0"
+                            onMouseEnter={() => setHoveredSkillDetail(detailTarget)}
+                            onMouseLeave={() => setHoveredSkillDetail(null)}
+                            onFocus={() => setHoveredSkillDetail(detailTarget)}
+                            onBlur={() => setHoveredSkillDetail(null)}
+                            onClick={() => {
+                              setSelectedSkillSlot(index);
+                              setSelectedSkillDetail(detailTarget);
+                            }}
+                          >
+                            <PauseSquareIcon
+                              active={active}
+                              empty={!skill}
+                              iconSrc={skillId ? skillIconSrc(skillId) : undefined}
+                              leftBadgeText={`${index + 1}`}
+                              rightBadgeText={skill ? romanLevel(level) : undefined}
+                              size={PAUSE_CURRENT_FRAME_SIZE}
+                              iconSize={PAUSE_CURRENT_ICON_SIZE}
+                            />
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+
+                  <div
+                    className="grid h-full min-h-0 overflow-hidden text-[9px] leading-none"
+                    style={{ gridTemplateRows: "auto 1fr", rowGap: PAUSE_CURRENT_ROW_GAP }}
+                  >
+                    <div className="flex items-center justify-between gap-3 text-[8px] leading-none text-[#7fc8e0]">
+                      <span>全部技能</span>
+                      <span className="truncate text-[#26d5ff]">槽位 {selectedSkillSlot + 1} · {selectedSkill?.name ?? "空槽"}</span>
+                    </div>
+                    <div className="min-h-0 overflow-y-auto overflow-x-hidden">
+                      {SKILLS.length > 0 ? (
+                        <div
+                          className="grid content-start"
+                          style={{ gridTemplateColumns: "repeat(4, 78px)", gap: PAUSE_CHOICE_GRID_GAP }}
+                        >
+                          {SKILLS.map((skill) => {
+                            const learned = Boolean(player.skillLevels[skill.id]);
+                            const equippedElsewhere = player.equippedSkillIds.some((skillId, index) => (
+                              index !== selectedSkillSlot && skillId === skill.id
+                            ));
+                            const current = player.equippedSkillIds[selectedSkillSlot] === skill.id;
+                            const canEquip = learned && !equippedElsewhere;
+                            const detailTarget: SkillDetailTarget = { type: "item", skillId: skill.id };
+                            return (
+                              <button
+                                key={skill.id}
+                                type="button"
+                                aria-disabled={!canEquip}
+                                aria-label={`${skill.name}：${learned ? `等级 ${romanLevel(player.skillLevels[skill.id])}` : "未解锁"}${equippedElsewhere ? "，已在其他槽位装备" : ""}`}
+                                className={`pause-choice-button border-0 bg-transparent p-0 ${
+                                  !learned
+                                    ? "text-[#4a7a9a]"
+                                    : current
+                                      ? "text-[#e8fbff]"
+                                      : "text-[#c8efff]"
+                                }`}
+                                onMouseEnter={() => setHoveredSkillDetail(detailTarget)}
+                                onMouseLeave={() => setHoveredSkillDetail(null)}
+                                onFocus={() => setHoveredSkillDetail(detailTarget)}
+                                onBlur={() => setHoveredSkillDetail(null)}
+                                onClick={() => {
+                                  setSelectedSkillDetail(detailTarget);
+                                  if (canEquip) equipSkillSlot(selectedSkillSlot, skill.id);
+                                }}
+                              >
+                                <PauseSquareIcon
+                                  active={current}
+                                  disabled={!learned}
+                                  iconSrc={skillIconSrc(skill.id)}
+                                  rightBadgeText={learned ? romanLevel(player.skillLevels[skill.id]) : undefined}
+                                  size={PAUSE_CHOICE_FRAME_SIZE}
+                                  iconSize={PAUSE_CHOICE_ICON_SIZE}
+                                />
+                              </button>
+                            );
+                          })}
+                        </div>
+                      ) : (
+                        <div className="grid justify-items-center gap-1 pt-3 text-center text-[8px] text-[#7fc8e0]">
+                          <PauseSquareIcon
+                            disabled
+                            empty
+                            size={PAUSE_CHOICE_FRAME_SIZE}
+                            iconSize={PAUSE_CHOICE_ICON_SIZE}
+                          />
+                          <span>暂无技能设定</span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
                 </div>
 
-                <div
-                  className="grid h-full min-h-0 overflow-hidden text-[9px] leading-none"
-                  style={{ gridTemplateRows: "auto 1fr auto", rowGap: PAUSE_CURRENT_ROW_GAP }}
-                >
-                  <div className="flex items-center justify-between gap-3 text-[8px] leading-none text-[#7fc8e0]">
-                    <span>全部技能</span>
-                    <span className="truncate text-[#26d5ff]">槽位 {selectedSkillSlot + 1} · {selectedSkill?.name ?? "空槽"}</span>
-                  </div>
-                  <div className="min-h-0 overflow-y-auto overflow-x-hidden">
-                    {SKILLS.length > 0 ? (
-                      <div
-                        className="grid content-start"
-                        style={{ gridTemplateColumns: "repeat(4, 78px)", gap: PAUSE_CHOICE_GRID_GAP }}
-                      >
-                        {SKILLS.map((skill) => {
-                          const learned = Boolean(player.skillLevels[skill.id]);
-                          const equippedElsewhere = player.equippedSkillIds.some((skillId, index) => (
-                            index !== selectedSkillSlot && skillId === skill.id
-                          ));
-                          const current = player.equippedSkillIds[selectedSkillSlot] === skill.id;
-                          return (
-                            <button
-                              key={skill.id}
-                              type="button"
-                              disabled={!learned || equippedElsewhere}
-                              className={`grid justify-items-center gap-1 border-0 bg-transparent p-0 text-center ${
-                                !learned || equippedElsewhere
-                                  ? "text-[#4a7a9a]"
-                                  : current
-                                    ? "text-[#e8fbff]"
-                                    : "text-[#c8efff]"
-                              }`}
-                              onClick={() => equipSkillSlot(selectedSkillSlot, skill.id)}
-                            >
-                              <PauseSquareIcon
-                                active={current}
-                                disabled={!learned || equippedElsewhere}
-                                iconSrc={skillIconSrc(skill.id)}
-                                size={PAUSE_CHOICE_FRAME_SIZE}
-                                iconSize={PAUSE_CHOICE_ICON_SIZE}
-                              />
-                              <span className="block w-full truncate text-[7px] font-bold leading-none">{skill.name}</span>
-                              <span className="block w-full truncate text-[6px] leading-none">{learned ? romanLevel(player.skillLevels[skill.id]) : "未解锁"}</span>
-                            </button>
-                          );
-                        })}
-                      </div>
-                    ) : (
-                      <div className="grid justify-items-center gap-1 pt-3 text-center text-[8px] text-[#7fc8e0]">
-                        <PauseSquareIcon
-                          disabled
-                          empty
-                          size={PAUSE_CHOICE_FRAME_SIZE}
-                          iconSize={PAUSE_CHOICE_ICON_SIZE}
-                        />
-                        <span>暂无技能设定</span>
-                      </div>
-                    )}
-                  </div>
-                  <div className="h-[34px] overflow-hidden text-[7px] leading-[1.45] text-[#7fc8e0]">
-                    <div className="truncate font-bold text-[#ffd46e]">
-                      {selectedSkill ? `${selectedSkill.name} ${romanLevel(player.skillLevels[selectedSkill.id])}` : `槽位 ${selectedSkillSlot + 1} · 空槽`}
-                    </div>
-                    <div className="mt-1 line-clamp-2">
-                      {selectedSkill?.description ?? "尚未装备。"}
-                    </div>
-                  </div>
-                </div>
+                <PauseDetailPanel detail={skillDetail} />
               </div>
             ) : null}
 
