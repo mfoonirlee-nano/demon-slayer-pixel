@@ -40,19 +40,25 @@ SPRITE_SHEET_SPECS = {
     "boss/boss.png": dict(frame_w=350, frame_h=419, count=4, padding=12, anchor_y="bottom"),
     "boss/boss_skill1.png": dict(frame_w=400, frame_h=400, count=6, padding=12, anchor_y="center"),
     "boss/boss_skill1_effect.png": dict(frame_w=400, frame_h=350, count=6, padding=10, anchor_y="center"),
-    "skills/skill1.png": dict(frame_w=800, frame_h=420, count=5, padding=12, anchor_y="center"),
-    "skills/skill1_effect.png": dict(frame_w=250, frame_h=150, count=7, padding=6, anchor_y="center"),
-    "skills/skill2.png": dict(frame_w=500, frame_h=500, count=6, padding=12, anchor_y="center"),
-    "skills/skill2_effect.png": dict(frame_w=380, frame_h=450, count=6, padding=10, anchor_y="center"),
-    "skills/skill3.png": dict(frame_w=540, frame_h=470, count=5, padding=12, anchor_y="center"),
-    "skills/skill3_effect.png": dict(frame_w=400, frame_h=300, count=6, padding=10, anchor_y="center"),
-    "skills/ultimate_skill.png": dict(frame_w=400, frame_h=496, count=6, padding=12, anchor_y="center"),
-    "skills/ultimate_skill_effect.png": dict(frame_w=432, frame_h=496, count=5, padding=12, anchor_y="center"),
+    "skills/skill1/skill.png": dict(frame_w=800, frame_h=420, count=5, padding=12, anchor_y="center"),
+    "skills/skill1/effect.png": dict(frame_w=250, frame_h=150, count=7, padding=6, anchor_y="center"),
+    "skills/skill2/skill.png": dict(frame_w=500, frame_h=500, count=6, padding=12, anchor_y="center"),
+    "skills/skill2/effect.png": dict(frame_w=380, frame_h=450, count=6, padding=10, anchor_y="center"),
+    "skills/skill3/skill.png": dict(frame_w=540, frame_h=470, count=5, padding=12, anchor_y="center"),
+    "skills/skill3/effect.png": dict(frame_w=400, frame_h=300, count=6, padding=10, anchor_y="center"),
+    "skills/ultimate_skill/skill.png": dict(frame_w=400, frame_h=496, count=6, padding=12, anchor_y="center"),
+    "skills/ultimate_skill/effect.png": dict(frame_w=432, frame_h=496, count=5, padding=12, anchor_y="center"),
 }
+
+SPRITE_BASENAME_COUNTS = {}
+for rel in SPRITE_SHEET_SPECS:
+    basename = os.path.basename(rel)
+    SPRITE_BASENAME_COUNTS[basename] = SPRITE_BASENAME_COUNTS.get(basename, 0) + 1
 
 SPRITE_REL_BY_BASENAME = {
     os.path.basename(rel): rel
     for rel in SPRITE_SHEET_SPECS
+    if SPRITE_BASENAME_COUNTS[os.path.basename(rel)] == 1
 }
 
 

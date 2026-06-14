@@ -9,12 +9,14 @@ import {
   GLIDER_SHEET_INDEX,
   LEAPER_SHEET_INDEX,
   RUNNER_SHEET_INDEX,
+  SKILLS,
   SPLITTER_SHEET_INDEX,
   WARDEN_SHEET_INDEX,
   BURROWER_SHEET_INDEX,
 } from "./constants";
 import { BOSS_ARCHETYPES } from "./entities/bosses/registry";
 import type { SegmentKind } from "./entities/platform";
+import type { SkillId } from "./types/assets";
 import type { BossArchetypeId } from "./types/game-state";
 
 export type DebugEnemyKind =
@@ -37,6 +39,7 @@ type DebugRuntimeActions = {
   spawnEnemySheet: (sheetIndex: number, side: number) => void;
   spawnPlatformSegment: (kind: SegmentKind) => void;
   spawnBoss: (id?: BossArchetypeId) => void;
+  equipSkillSlot: (slotIndex: number, skillId: SkillId) => void;
 };
 
 const CHASER_SHEET_INDEX = 0;
@@ -76,6 +79,15 @@ const DEBUG_BOSS_OPTIONS = Object.values(BOSS_ARCHETYPES).map((boss) => ({
   label: boss.displayName,
 }));
 
+const DEBUG_SKILL_OPTIONS = SKILLS
+  .filter((skill) => skill.implemented)
+  .map((skill) => ({
+    id: skill.id,
+    label: skill.name,
+  }));
+
+const DEBUG_SKILL_SLOT_OPTIONS = [0, 1, 2] as const;
+
 const DEBUG_PLATFORM_OPTIONS: Array<{ kind: SegmentKind; label: string }> = [
   { kind: "safeBridge", label: "safeBridge" },
   { kind: "breather", label: "breather" },
@@ -93,6 +105,7 @@ let runtimeActions: DebugRuntimeActions = {
   spawnEnemySheet: () => {},
   spawnPlatformSegment: () => {},
   spawnBoss: () => {},
+  equipSkillSlot: () => {},
 };
 
 export const isDebugMode = typeof window !== "undefined"
@@ -126,10 +139,16 @@ function spawnDebugBoss(bossId: BossArchetypeId) {
   runDebugAction(() => runtimeActions.spawnBoss(bossId));
 }
 
+function equipDebugSkill(slotIndex: number, skillId: SkillId) {
+  runDebugAction(() => runtimeActions.equipSkillSlot(slotIndex, skillId));
+}
+
 export function DebugPanel() {
   const [enemyKind, setEnemyKind] = useState<DebugEnemyKind>("chaser");
   const [bossId, setBossId] = useState<BossArchetypeId>(DEBUG_BOSS_OPTIONS[0]?.id ?? "spider-string");
   const [platformKind, setPlatformKind] = useState<SegmentKind>("safeBridge");
+  const [skillSlotIndex, setSkillSlotIndex] = useState<number>(0);
+  const [skillId, setSkillId] = useState<SkillId>(DEBUG_SKILL_OPTIONS[0]?.id ?? "skill1");
 
   if (!isDebugMode) return null;
 
@@ -139,7 +158,38 @@ export function DebugPanel() {
         <span className="text-[9px] font-bold text-[#7fe8ff]">DEBUG</span>
         <span className="text-[8px] text-[#9fbfd0]">Auto off</span>
       </div>
-      <label className="block text-[8px] text-[#9ed8ff]" htmlFor="debug-enemy-kind">Enemy</label>
+      <label className="block text-[8px] text-[#9ed8ff]" htmlFor="debug-skill-kind">Skill</label>
+      <div className="mt-1 flex gap-1">
+        <select
+          id="debug-skill-slot"
+          aria-label="Skill slot"
+          className="w-[44px] rounded-[4px] border border-[#70d7ff44] bg-[#102033] px-1 py-1 text-[9px] text-[#f2fbff]"
+          value={skillSlotIndex}
+          onChange={(event) => setSkillSlotIndex(Number(event.target.value))}
+        >
+          {DEBUG_SKILL_SLOT_OPTIONS.map((slotIndex) => (
+            <option key={slotIndex} value={slotIndex}>{slotIndex + 1}</option>
+          ))}
+        </select>
+        <select
+          id="debug-skill-kind"
+          className="min-w-0 flex-1 rounded-[4px] border border-[#70d7ff44] bg-[#102033] px-1 py-1 text-[9px] text-[#f2fbff]"
+          value={skillId}
+          onChange={(event) => setSkillId(event.target.value as SkillId)}
+        >
+          {DEBUG_SKILL_OPTIONS.map((option) => (
+            <option key={option.id} value={option.id}>{option.label}</option>
+          ))}
+        </select>
+        <button
+          type="button"
+          className="rounded-[4px] border border-[#88f3ff77] bg-[#12394a] px-2 py-1 text-[9px] font-bold text-[#e7fbff] active:translate-y-px"
+          onClick={() => equipDebugSkill(skillSlotIndex, skillId)}
+        >
+          Equip
+        </button>
+      </div>
+      <label className="mt-2 block text-[8px] text-[#9ed8ff]" htmlFor="debug-enemy-kind">Enemy</label>
       <div className="mt-1 flex gap-1">
         <select
           id="debug-enemy-kind"

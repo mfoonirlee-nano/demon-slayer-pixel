@@ -9,13 +9,13 @@ export const SKILLS: Skill[] = [
     description: "向前释放一条水龙冲击，给路径上的敌人造成伤害。",
     typeTag: "line_projectile",
     implemented: true,
-    iconSrc: "assets/sprites/ui/skill1_icon.png",
+    iconSrc: "assets/sprites/skills/skill1/icon.png",
     levelDescriptions: {
       1: "向前释放水龙，造成窄长路径伤害。",
       2: "水龙伤害提升，命中反馈更稳定。",
       3: "水龙伤害进一步提升，直线压制更可靠。",
     },
-    src: "assets/sprites/skills/skill1.png",
+    src: "assets/sprites/skills/skill1/skill.png",
     frameCount: 5,
     frameW: 800,
     image: null,
@@ -34,13 +34,13 @@ export const SKILLS: Skill[] = [
     description: "向前挥出大范围水之呼吸剑气，席卷路径上的敌人。",
     typeTag: "close_arc",
     implemented: true,
-    iconSrc: "assets/sprites/ui/skill2_icon.png",
+    iconSrc: "assets/sprites/skills/skill2/icon.png",
     levelDescriptions: {
       1: "前方月牙水刃，短距离宽判定。",
       2: "潮刃伤害提升，近身解围更稳定。",
       3: "潮刃伤害进一步提升，贴身爆发更强。",
     },
-    src: "assets/sprites/skills/skill2.png",
+    src: "assets/sprites/skills/skill2/skill.png",
     frameCount: 6,
     frameW: 500,
     image: null,
@@ -58,13 +58,13 @@ export const SKILLS: Skill[] = [
     description: "展开防护水幕，受到攻击时反击身边的敌人。",
     typeTag: "guard_counter",
     implemented: true,
-    iconSrc: "assets/sprites/ui/skill3_icon.png",
+    iconSrc: "assets/sprites/skills/skill3/icon.png",
     levelDescriptions: {
       1: "展开防护水幕，受击时抵挡并反击近处目标。",
       2: "反击伤害提升，防守收益更高。",
       3: "反击伤害进一步提升，容错收益更高。",
     },
-    src: "assets/sprites/skills/skill3.png",
+    src: "assets/sprites/skills/skill3/skill.png",
     frameCount: 5,
     frameW: 540,
     image: null,
@@ -82,13 +82,13 @@ export const SKILLS: Skill[] = [
     description: "短距离踏浪前冲，结束时向前收刀斩击。",
     typeTag: "dash_reposition",
     implemented: true,
-    iconSrc: "assets/sprites/ui/dash_reposition_icon.png",
+    iconSrc: "assets/sprites/skills/dash_reposition/icon.png",
     levelDescriptions: {
       1: "前冲 92px，结束时生成短收刀斩。",
       2: "前冲距离提升至 108px，收刀斩伤害提高。",
       3: "前冲距离提升至 124px，追击和脱困更稳定。",
     },
-    src: "assets/sprites/skills/dash_reposition.png",
+    src: "assets/sprites/skills/dash_reposition/skill.png",
     frameCount: 5,
     frameW: 360,
     image: null,
@@ -107,13 +107,13 @@ export const SKILLS: Skill[] = [
     description: "在地面生成短时潮涡，轻微牵引并减速小怪。",
     typeTag: "vortex_control",
     implemented: true,
-    iconSrc: "assets/sprites/ui/vortex_control_icon.png",
+    iconSrc: "assets/sprites/skills/vortex_control/icon.png",
     levelDescriptions: {
       1: "潮涡持续 54 帧，范围内敌人每 14 帧受一次伤害。",
       2: "潮涡持续 66 帧，牵引和持续伤害提高。",
       3: "潮涡持续 78 帧，制造输出窗口更稳定。",
     },
-    src: "assets/sprites/skills/vortex_control.png",
+    src: "assets/sprites/skills/vortex_control/skill.png",
     frameCount: 5,
     frameW: 360,
     image: null,
@@ -132,13 +132,13 @@ export const SKILLS: Skill[] = [
     description: "向前压缩斩击最近目标，并施加短时裂甲标记。",
     typeTag: "armor_break",
     implemented: true,
-    iconSrc: "assets/sprites/ui/armor_break_icon.png",
+    iconSrc: "assets/sprites/skills/armor_break/icon.png",
     levelDescriptions: {
       1: "命中最近目标并施加短时裂甲。",
       2: "斩击伤害和裂甲持续提高。",
       3: "裂甲前置爆发收益更高，但 Boss 效果仍降低。",
     },
-    src: "assets/sprites/skills/armor_break.png",
+    src: "assets/sprites/skills/armor_break/skill.png",
     frameCount: 5,
     frameW: 360,
     image: null,
@@ -157,13 +157,13 @@ export const SKILLS: Skill[] = [
     description: "召来多条细潮线斜落，优先覆盖空中和低血目标。",
     typeTag: "anti_air_multi",
     implemented: true,
-    iconSrc: "assets/sprites/ui/anti_air_multi_icon.png",
+    iconSrc: "assets/sprites/skills/anti_air_multi/icon.png",
     levelDescriptions: {
       1: "生成 4 条窄潮线，处理空中和远程骚扰。",
       2: "潮线增加至 5 条，覆盖更稳定。",
       3: "潮线增加至 6 条，对空处理更可靠。",
     },
-    src: "assets/sprites/skills/anti_air_multi.png",
+    src: "assets/sprites/skills/anti_air_multi/skill.png",
     frameCount: 5,
     frameW: 360,
     image: null,
@@ -182,13 +182,13 @@ export const SKILLS: Skill[] = [
     description: "发出潮刃后沿路线回收，去程和返程分别可命中。",
     typeTag: "returning_blade",
     implemented: true,
-    iconSrc: "assets/sprites/ui/returning_blade_icon.png",
+    iconSrc: "assets/sprites/skills/returning_blade/icon.png",
     levelDescriptions: {
       1: "潮刃飞出后返回，站位正确可获得两段命中。",
       2: "飞行距离和命中上限提高。",
       3: "往返路线收益更高，但不自动追踪全场。",
     },
-    src: "assets/sprites/skills/returning_blade.png",
+    src: "assets/sprites/skills/returning_blade/skill.png",
     frameCount: 5,
     frameW: 360,
     image: null,
@@ -207,13 +207,13 @@ export const SKILLS: Skill[] = [
     description: "自前方或脚下升起短浪柱，打断贴身和纵向目标。",
     typeTag: "vertical_wave",
     implemented: true,
-    iconSrc: "assets/sprites/ui/vertical_wave_icon.png",
+    iconSrc: "assets/sprites/skills/vertical_wave/icon.png",
     levelDescriptions: {
       1: "升起短浪柱，轻微上抛或打断小怪。",
       2: "浪柱高度和伤害提高。",
       3: "纵向覆盖更稳定，但不长期浮空控场。",
     },
-    src: "assets/sprites/skills/vertical_wave.png",
+    src: "assets/sprites/skills/vertical_wave/skill.png",
     frameCount: 5,
     frameW: 360,
     image: null,
@@ -778,7 +778,7 @@ export const ENEMY_REF_DRAW_W = 120;
 export const ENEMY_DRAW_SCALE = ENEMY_REF_DRAW_W / ENEMY_SHEETS[1].frameW;
 
 export const SKILL1_EFFECT_SHEET: SpriteSheet = {
-  src: "assets/sprites/skills/skill1_effect.png",
+  src: "assets/sprites/skills/skill1/effect.png",
   frameW: 480,
   frameH: 160,
   count: 5,
@@ -801,7 +801,7 @@ export const SKILL1_EFFECT_CONFIG = {
 } as const;
 
 export const SKILL2_EFFECT_SHEET: SpriteSheet = {
-  src: "assets/sprites/skills/skill2_effect.png",
+  src: "assets/sprites/skills/skill2/effect.png",
   frameW: 420,
   frameH: 420,
   count: 6,
@@ -819,7 +819,7 @@ export const SKILL2_EFFECT_CONFIG = {
 } as const;
 
 export const SKILL3_EFFECT_SHEET: SpriteSheet = {
-  src: "assets/sprites/skills/skill3_effect.png",
+  src: "assets/sprites/skills/skill3/effect.png",
   frameW: 420,
   frameH: 320,
   count: 6,
@@ -836,42 +836,42 @@ export const SKILL3_EFFECT_CONFIG = {
 
 export const PLAYER_SKILL_EFFECT_SHEETS: Partial<Record<SkillId, SpriteSheet>> = {
   [SKILL_IDS.dashReposition]: {
-    src: "assets/sprites/skills/dash_reposition_effect.png",
+    src: "assets/sprites/skills/dash_reposition/effect.png",
     frameW: 240,
     frameH: 120,
     count: 4,
     image: null,
   },
   [SKILL_IDS.vortexControl]: {
-    src: "assets/sprites/skills/vortex_control_effect.png",
+    src: "assets/sprites/skills/vortex_control/effect.png",
     frameW: 256,
     frameH: 160,
     count: 6,
     image: null,
   },
   [SKILL_IDS.armorBreak]: {
-    src: "assets/sprites/skills/armor_break_effect.png",
+    src: "assets/sprites/skills/armor_break/effect.png",
     frameW: 220,
     frameH: 160,
     count: 4,
     image: null,
   },
   [SKILL_IDS.antiAirMulti]: {
-    src: "assets/sprites/skills/anti_air_multi_effect.png",
+    src: "assets/sprites/skills/anti_air_multi/effect.png",
     frameW: 240,
     frameH: 180,
     count: 4,
     image: null,
   },
   [SKILL_IDS.returningBlade]: {
-    src: "assets/sprites/skills/returning_blade_effect.png",
+    src: "assets/sprites/skills/returning_blade/effect.png",
     frameW: 240,
     frameH: 120,
     count: 4,
     image: null,
   },
   [SKILL_IDS.verticalWave]: {
-    src: "assets/sprites/skills/vertical_wave_effect.png",
+    src: "assets/sprites/skills/vertical_wave/effect.png",
     frameW: 220,
     frameH: 220,
     count: 5,
@@ -880,7 +880,7 @@ export const PLAYER_SKILL_EFFECT_SHEETS: Partial<Record<SkillId, SpriteSheet>> =
 };
 
 export const ULTIMATE_SKILL_SHEET: SpriteSheet = {
-  src: "assets/sprites/skills/ultimate_skill.png",
+  src: "assets/sprites/skills/ultimate_skill/skill.png",
   frameW: 400,
   frameH: 496,
   count: 6,
@@ -888,7 +888,7 @@ export const ULTIMATE_SKILL_SHEET: SpriteSheet = {
 };
 
 export const ULTIMATE_SKILL_EFFECT_SHEET: SpriteSheet = {
-  src: "assets/sprites/skills/ultimate_skill_effect.png",
+  src: "assets/sprites/skills/ultimate_skill/effect.png",
   frameW: 480,
   frameH: 360,
   count: 8,
