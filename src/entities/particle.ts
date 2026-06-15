@@ -55,6 +55,11 @@ const VORTEX_VERTICAL_RADIUS_SCALE = 0.58;
 const VORTEX_ENEMY_SLOW = 0.82;
 const ARMOR_BREAK_FALLBACK_Y_RATIO = 0.54;
 const GENERIC_SKILL_DAMAGE_ATTACK_BONUS_SCALE = 0.025;
+const DASH_REPOSITION_DURATION_FRAMES = 8;
+const DASH_REPOSITION_TRAIL_EXTRA_LIFE = 6;
+const DASH_REPOSITION_SLASH_Y_RATIO = 0.56;
+const DASH_REPOSITION_SLASH_EDGE_INSET = 10;
+const DASH_REPOSITION_BACK_HIT_TOLERANCE = 8;
 
 let nextPlayerSkillRefundGroupId = 1;
 
@@ -131,19 +136,23 @@ function playerSkillSheetFrame(skillId: SkillId, elapsed: number) {
   return Math.min(sheet.count - 1, Math.floor(elapsed / tuning.frameDuration));
 }
 
-function refundSkillGroup(effect: PlayerSkillEffectState, hitTargets: number, bossHit: boolean) {
-  if (!effect.refundGroupId) return;
+function refundSkillGroupById(refundGroupId: number | undefined, hitTargets: number, bossHit: boolean) {
+  if (!refundGroupId) return;
   const groupAlreadyRefunded = state.playerSkillEffects.some((candidate) => (
-    candidate.refundGroupId === effect.refundGroupId && candidate.refundedSkillEnergy
+    candidate.refundGroupId === refundGroupId && candidate.refundedSkillEnergy
   ));
   if (groupAlreadyRefunded) return;
   if (!applySkillHitEquipmentRefund(state, hitTargets, bossHit)) return;
 
   for (const candidate of state.playerSkillEffects) {
-    if (candidate.refundGroupId === effect.refundGroupId) {
+    if (candidate.refundGroupId === refundGroupId) {
       candidate.refundedSkillEnergy = true;
     }
   }
+}
+
+function refundSkillGroup(effect: PlayerSkillEffectState, hitTargets: number, bossHit: boolean) {
+  refundSkillGroupById(effect.refundGroupId, hitTargets, bossHit);
 }
 
 function applyArmorBreakToEnemy(enemy: EnemyState, duration: number, multiplier: number) {
@@ -200,6 +209,91 @@ function dashDestination(distance: number) {
     maxX = player.onPlatform.x + player.onPlatform.w - player.w - PLAYER_COMBAT.platformEdgePadding;
   }
   return clamp(player.x + player.facing * distance, minX, maxX);
+}
+
+export function finishDashRepositionSkill(
+  level: SkillLevel,
+  castDamageMultiplier: number,
+  refundGroupId: number,
+  facing: number,
+  hitEnemies: EnemyState[] = [],
+  bossHit = false,
+) {
+  const player = state.player;
+  const tuning = GENERIC_PLAYER_SKILL_TUNING[SKILL_IDS.dashReposition];
+  const slashW = valueForSkillLevel(tuning.width, level);
+  const slashH = valueForSkillLevel(tuning.height, level);
+  const slashX = facing === 1
+    ? player.x + player.w + slashW / 2 - DASH_REPOSITION_SLASH_EDGE_INSET
+    : player.x - slashW / 2 + DASH_REPOSITION_SLASH_EDGE_INSET;
+
+  state.playerSkillEffects.push(makeGenericEffect(
+    SKILL_IDS.dashReposition,
+    level,
+    castDamageMultiplier,
+    slashX,
+    player.y + player.h * DASH_REPOSITION_SLASH_Y_RATIO,
+    {
+      w: slashW,
+      h: slashH,
+      facing,
+      refundGroupId,
+      hitEnemies: [...hitEnemies],
+      bossCooldown: bossHit ? tuning.bossHitCooldown : undefined,
+    },
+  ));
+}
+
+export function damageDashRepositionTravel(previousX: number, previousY: number, nextX: number, nextY: number) {
+  const player = state.player;
+  const dash = player.dashReposition;
+  if (!dash) return;
+
+  const box = {
+    x: Math.min(previousX, nextX),
+    y: Math.min(previousY, nextY),
+    w: Math.abs(nextX - previousX) + player.w,
+    h: Math.abs(nextY - previousY) + player.h,
+  };
+  const startCenterX = dash.startX + player.w / 2;
+  const damage = genericSkillDamage(SKILL_IDS.dashReposition, dash.level, dash.damageMultiplier);
+  const bossDamage = genericSkillDamage(SKILL_IDS.dashReposition, dash.level, dash.damageMultiplier, true);
+  const tuning = GENERIC_PLAYER_SKILL_TUNING[SKILL_IDS.dashReposition];
+  let hitTargets = 0;
+  let bossHit = false;
+
+  for (let i = state.enemies.length - 1; i >= 0; i -= 1) {
+    const enemy = state.enemies[i];
+    if (dash.hitEnemies.includes(enemy)) continue;
+    const center = enemyCenter(enemy);
+    if ((center.x - startCenterX) * dash.facing < -DASH_REPOSITION_BACK_HIT_TOLERANCE) continue;
+    if (!hitbox(box, enemy)) continue;
+
+    dash.hitEnemies.push(enemy);
+    const { x: hitX, y: hitY } = overlapHitPoint(box, enemy);
+    damageEnemy(enemy, damage, tuning.hitCooldown);
+    hitTargets += 1;
+    emitSlash(hitX, hitY, PLAYER_COMBAT.effects.skillEnemyBurstColor, enemy.w);
+    emitHitBurst(hitX, hitY, PLAYER_COMBAT.effects.skillEnemyBurstColor, PLAYER_COMBAT.skillEnemyBurstPower);
+    resolveEnemyDefeat(enemy, i, "enemyNoCover");
+  }
+
+  if (state.boss && !dash.bossHit) {
+    const bossCenterX = state.boss.x + state.boss.w / 2;
+    if ((bossCenterX - startCenterX) * dash.facing >= -DASH_REPOSITION_BACK_HIT_TOLERANCE && hitbox(box, state.boss)) {
+      dash.bossHit = true;
+      bossHit = true;
+      const { x: hitX, y: hitY } = overlapHitPoint(box, state.boss);
+      damageBoss(state.boss, bossDamage, tuning.bossHitCooldown);
+      emitSlash(hitX, hitY, PLAYER_COMBAT.effects.skillBossSlashColor);
+      emitHitBurst(hitX, hitY, PLAYER_COMBAT.effects.skillBossBurstColor, PLAYER_COMBAT.skillBossBurstPower);
+      defeatBoss();
+    }
+  }
+
+  if (hitTargets > 0 || bossHit) {
+    refundSkillGroupById(dash.refundGroupId, dash.hitEnemies.length, dash.bossHit);
+  }
 }
 
 function findArmorBreakTarget(range: number) {
@@ -272,18 +366,39 @@ export function spawnPlayerSkillEffect(skillId: SkillId, castDamageMultiplier = 
 
   if (skillId === SKILL_IDS.dashReposition) {
     const distance = valueForSkillLevel(tuning.distance ?? tuning.width, level);
-    player.x = dashDestination(distance);
+    const targetX = dashDestination(distance);
     player.vx = 0;
-    const slashW = valueForSkillLevel(tuning.width, level);
-    const slashH = valueForSkillLevel(tuning.height, level);
-    const slashX = player.facing === 1
-      ? player.x + player.w + slashW / 2 - 10
-      : player.x - slashW / 2 + 10;
-    state.playerSkillEffects.push(makeGenericEffect(skillId, level, castDamageMultiplier, slashX, player.y + player.h * 0.56, {
-      w: slashW,
-      h: slashH,
+    player.dashReposition = {
+      startX: player.x,
+      targetX,
+      elapsed: 0,
+      duration: DASH_REPOSITION_DURATION_FRAMES,
+      level,
+      damageMultiplier: castDamageMultiplier,
       refundGroupId,
-    }));
+      facing: player.facing,
+      hitEnemies: [],
+      bossHit: false,
+    };
+
+    const trailLife = DASH_REPOSITION_DURATION_FRAMES + DASH_REPOSITION_TRAIL_EXTRA_LIFE;
+    state.playerSkillEffects.push(makeGenericEffect(
+      skillId,
+      level,
+      castDamageMultiplier,
+      (player.x + targetX + player.w) / 2,
+      player.y + player.h * DASH_REPOSITION_SLASH_Y_RATIO,
+      {
+        w: Math.abs(targetX - player.x) + player.w,
+        h: valueForSkillLevel(tuning.height, level),
+        life: trailLife,
+        maxLife: trailLife,
+        damage: 0,
+        bossDamage: 0,
+        refundGroupId,
+        visualOnly: true,
+      },
+    ));
     return true;
   }
 
@@ -720,7 +835,10 @@ export function updatePlayerSkillEffects() {
     effect.frame = playerSkillSheetFrame(effect.skillId, effect.elapsed);
     tickEffectCooldowns(effect);
 
-    if (effect.kind === "vortex") {
+    if (effect.visualOnly) {
+      effect.x += effect.vx;
+      effect.y += effect.vy;
+    } else if (effect.kind === "vortex") {
       updateVortexEffect(effect);
     } else if (effect.kind === "returningBlade") {
       updateReturningBladeEffect(effect);
@@ -916,8 +1034,25 @@ export function updateSkill3Effect() {
   const eff = state.skill3Effect;
   if (!eff) return;
   eff.elapsed += 1;
+  if (eff.barrierFlash > 0) eff.barrierFlash -= 1;
+  if (eff.hitsRemaining <= 0 && eff.barrierFlash <= 0) {
+    state.skill3Effect = null;
+    return;
+  }
+
+  if (eff.barrierFlash > 0) {
+    const flashElapsed = SKILL3_EFFECT_CONFIG.barrierFlashFrames - eff.barrierFlash;
+    eff.frame = Math.min(
+      SKILL3_EFFECT_SHEET.count - 1,
+      Math.floor(flashElapsed / SKILL3_EFFECT_CONFIG.barrierFrameDuration),
+    );
+    return;
+  }
+
   const rawFrame = Math.floor(eff.elapsed / SKILL3_EFFECT_CONFIG.frameDuration);
-  eff.frame = rawFrame % SKILL3_EFFECT_SHEET.count;
+  eff.frame = eff.elapsed < SKILL3_EFFECT_CONFIG.startupFrames
+    ? Math.min(SKILL3_EFFECT_SHEET.count - 1, rawFrame)
+    : rawFrame % SKILL3_EFFECT_SHEET.count;
 }
 
 export function drawSkill3Effect() {
@@ -925,16 +1060,58 @@ export function drawSkill3Effect() {
   const eff = state.skill3Effect;
   if (!eff) return;
   const sheet = SKILL3_EFFECT_SHEET;
-  if (!sheet.image) return;
   const p = state.player;
-  const drawW = sheet.frameW * SKILL3_EFFECT_CONFIG.drawScale;
-  const drawH = sheet.frameH * SKILL3_EFFECT_CONFIG.drawScale;
   const cx = p.x + p.w / 2;
-  const cy = p.y + p.h - SKILL3_EFFECT_CONFIG.centerYOffset;
-  const sx = eff.frame * sheet.frameW;
+  const feetY = p.y + p.h;
+  const remainingRatio = Math.max(0, eff.hitsRemaining / SKILL3_EFFECT_CONFIG.maxHits);
+  const showStartupBarrier = eff.elapsed < SKILL3_EFFECT_CONFIG.startupFrames;
+  const showHitBarrier = eff.barrierFlash > 0;
+
+  if (sheet.image && (showStartupBarrier || showHitBarrier)) {
+    const scale = showHitBarrier ? SKILL3_EFFECT_CONFIG.barrierDrawScale : SKILL3_EFFECT_CONFIG.drawScale;
+    const centerYOffset = showHitBarrier ? SKILL3_EFFECT_CONFIG.barrierCenterYOffset : SKILL3_EFFECT_CONFIG.centerYOffset;
+    const drawW = sheet.frameW * scale;
+    const drawH = sheet.frameH * scale;
+    const cy = feetY - centerYOffset;
+    const sx = eff.frame * sheet.frameW;
+    const barrierRatio = showHitBarrier
+      ? eff.barrierFlash / SKILL3_EFFECT_CONFIG.barrierFlashFrames
+      : 1 - eff.elapsed / SKILL3_EFFECT_CONFIG.startupFrames;
+    ctx.save();
+    ctx.globalAlpha = Math.min(
+      SKILL3_EFFECT_CONFIG.barrierAlphaMax,
+      SKILL3_EFFECT_CONFIG.barrierAlphaMin
+        + barrierRatio * (SKILL3_EFFECT_CONFIG.barrierAlphaMax - SKILL3_EFFECT_CONFIG.barrierAlphaMin),
+    );
+    ctx.globalCompositeOperation = "lighter";
+    ctx.drawImage(sheet.image, sx, 0, sheet.frameW, sheet.frameH, cx - drawW / 2, cy - drawH / 2, drawW, drawH);
+    ctx.restore();
+  }
+
+  const pulse = (Math.sin(eff.elapsed * SKILL3_EFFECT_CONFIG.ripplePulseSpeed) + 1) / 2;
+  const rippleAlpha = SKILL3_EFFECT_CONFIG.rippleAlphaMin + remainingRatio * SKILL3_EFFECT_CONFIG.rippleAlphaRange;
+  const rippleW = SKILL3_EFFECT_CONFIG.rippleWidth + pulse * SKILL3_EFFECT_CONFIG.ripplePulseWidth;
+  const rippleH = SKILL3_EFFECT_CONFIG.rippleHeight + pulse * SKILL3_EFFECT_CONFIG.ripplePulseHeight;
   ctx.save();
-  ctx.globalAlpha = eff.alpha;
-  ctx.drawImage(sheet.image, sx, 0, sheet.frameW, sheet.frameH, cx - drawW / 2, cy - drawH / 2, drawW, drawH);
+  ctx.globalCompositeOperation = "lighter";
+  ctx.strokeStyle = `rgba(155,230,255,${rippleAlpha})`;
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.ellipse(cx, feetY - SKILL3_EFFECT_CONFIG.rippleYOffset, rippleW / 2, rippleH / 2, 0, 0, FULL_CIRCLE_RADIANS);
+  ctx.stroke();
+  ctx.strokeStyle = `rgba(210,248,255,${rippleAlpha * SKILL3_EFFECT_CONFIG.rippleInnerAlphaScale})`;
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.ellipse(
+    cx,
+    feetY - SKILL3_EFFECT_CONFIG.rippleYOffset,
+    rippleW * SKILL3_EFFECT_CONFIG.rippleInnerWidthScale,
+    rippleH * SKILL3_EFFECT_CONFIG.rippleInnerHeightScale,
+    0,
+    0,
+    FULL_CIRCLE_RADIANS,
+  );
+  ctx.stroke();
   ctx.restore();
 }
 

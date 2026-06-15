@@ -50,6 +50,7 @@ export function createInitialPlayerState(): PlayerState {
     skillTimer: 0,
     skillEffectSpawned: false,
     skillCastDamageMultiplier: 1,
+    dashReposition: null,
     ultimateEnergy: 0,
     ultimateEnergyMax: PLAYER_DEFAULTS.maxUltimateEnergy,
     ultimateLevel: 0,

@@ -36,6 +36,7 @@ export type DebugEnemyKind =
 type DebugRuntimeActions = {
   canSpawn: () => boolean;
   publish: () => void;
+  setInfiniteSkillCharge: (enabled: boolean) => void;
   spawnEnemySheet: (sheetIndex: number, side: number) => void;
   spawnPlatformSegment: (kind: SegmentKind) => void;
   spawnBoss: (id?: BossArchetypeId) => void;
@@ -102,17 +103,24 @@ const DEBUG_PLATFORM_OPTIONS: Array<{ kind: SegmentKind; label: string }> = [
 let runtimeActions: DebugRuntimeActions = {
   canSpawn: () => false,
   publish: () => {},
+  setInfiniteSkillCharge: () => {},
   spawnEnemySheet: () => {},
   spawnPlatformSegment: () => {},
   spawnBoss: () => {},
   equipSkillSlot: () => {},
 };
 
+let debugInfiniteSkillCharge = false;
+
 export const isDebugMode = typeof window !== "undefined"
   && new URLSearchParams(window.location.search).get("debug") === "1";
 
 export function canAutoSpawnEntities() {
   return !isDebugMode;
+}
+
+export function hasDebugInfiniteSkillCharge() {
+  return isDebugMode && debugInfiniteSkillCharge;
 }
 
 export function setDebugRuntimeActions(actions: DebugRuntimeActions) {
@@ -143,12 +151,20 @@ function equipDebugSkill(slotIndex: number, skillId: SkillId) {
   runDebugAction(() => runtimeActions.equipSkillSlot(slotIndex, skillId));
 }
 
+function setDebugInfiniteSkillCharge(enabled: boolean) {
+  if (!isDebugMode) return;
+  debugInfiniteSkillCharge = enabled;
+  runtimeActions.setInfiniteSkillCharge(enabled);
+  runtimeActions.publish();
+}
+
 export function DebugPanel() {
   const [enemyKind, setEnemyKind] = useState<DebugEnemyKind>("chaser");
   const [bossId, setBossId] = useState<BossArchetypeId>(DEBUG_BOSS_OPTIONS[0]?.id ?? "spider-string");
   const [platformKind, setPlatformKind] = useState<SegmentKind>("safeBridge");
   const [skillSlotIndex, setSkillSlotIndex] = useState<number>(0);
   const [skillId, setSkillId] = useState<SkillId>(DEBUG_SKILL_OPTIONS[0]?.id ?? "skill1");
+  const [infiniteSkillCharge, setInfiniteSkillCharge] = useState(hasDebugInfiniteSkillCharge());
 
   if (!isDebugMode) return null;
 
@@ -158,6 +174,20 @@ export function DebugPanel() {
         <span className="text-[9px] font-bold text-[#7fe8ff]">DEBUG</span>
         <span className="text-[8px] text-[#9fbfd0]">Auto off</span>
       </div>
+      <label className="mb-2 flex items-center gap-2 text-[8px] text-[#c3efff]" htmlFor="debug-infinite-skill-charge">
+        <input
+          id="debug-infinite-skill-charge"
+          type="checkbox"
+          className="h-3 w-3 accent-[#63f4ff]"
+          checked={infiniteSkillCharge}
+          onChange={(event) => {
+            const enabled = event.target.checked;
+            setInfiniteSkillCharge(enabled);
+            setDebugInfiniteSkillCharge(enabled);
+          }}
+        />
+        Skill charge full
+      </label>
       <label className="block text-[8px] text-[#9ed8ff]" htmlFor="debug-skill-kind">Skill</label>
       <div className="mt-1 flex gap-1">
         <select

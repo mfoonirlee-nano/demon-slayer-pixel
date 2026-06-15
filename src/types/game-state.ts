@@ -143,6 +143,18 @@ export type PlayerState = {
   skillTimer: number;
   skillEffectSpawned: boolean;
   skillCastDamageMultiplier: number;
+  dashReposition: {
+    startX: number;
+    targetX: number;
+    elapsed: number;
+    duration: number;
+    level: SkillLevel;
+    damageMultiplier: number;
+    refundGroupId: number;
+    facing: number;
+    hitEnemies: EnemyState[];
+    bossHit: boolean;
+  } | null;
   ultimateEnergy: number;
   ultimateEnergyMax: number;
   ultimateLevel: UltimateLevel;
@@ -525,8 +537,8 @@ export type Skill3EffectState = {
   elapsed: number;
   frame: number;
   hitsRemaining: number;
-  alpha: number;
   damageMultiplier: number;
+  barrierFlash: number;
 };
 
 export type PlayerSkillEffectPhase = "out" | "return";
@@ -562,6 +574,7 @@ export type PlayerSkillEffectState = {
   bossCooldown?: number;
   refundedSkillEnergy?: boolean;
   refundGroupId?: number;
+  visualOnly?: boolean;
   armorBreakDuration?: number;
   armorBreakMultiplier?: number;
   armorBreakBossMultiplier?: number;

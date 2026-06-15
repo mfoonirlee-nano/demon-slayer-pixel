@@ -24,14 +24,20 @@ import { onGround, hitbox, frameIndex, nearestRectHitPoint, overlapHitPoint } fr
 import { drawSheetFrame, drawSkillFrame } from "../graphics";
 import { playSfx } from "../audio";
 import { ctx } from "../context";
-import { emitSlash, emitHitBurst } from "./particle";
-import { spawnPlayerSkillEffect } from "./particle";
+import {
+  emitSlash,
+  emitHitBurst,
+  damageDashRepositionTravel,
+  finishDashRepositionSkill,
+  spawnPlayerSkillEffect,
+} from "./particle";
 import { damageEnemy } from "./enemies/common";
 import { resolveEnemyDefeat } from "./enemies/defeat";
 import { damageBoss } from "./bosses/common";
 import { bindingZonePlayerMoveScale } from "./enemies/binder";
 import { defeatBoss } from "./bosses/defeat";
 import { keys } from "../input";
+import { hasDebugInfiniteSkillCharge } from "../debug";
 import {
   applySkillCastEquipmentEffects,
   applySkillHitEquipmentRefund,
@@ -46,6 +52,7 @@ import { isGenericPlayerSkillId } from "../systems/playerSkills";
 
 const HALF_RATIO = 0.5;
 const FULL_CIRCLE = Math.PI * 2;
+const DASH_REPOSITION_INVINCIBLE_REFRESH_FRAMES = 2;
 
 const PLAYER_BINDING_SLOW_EFFECT = {
   filter: "sepia(0.38) saturate(1.55) hue-rotate(282deg) brightness(0.86)",
@@ -221,15 +228,24 @@ export function selectSkill(index: number) {
 export function castSelectedSkill() {
   const p = state.player;
   if (p.ultimateCastTimer > 0) return;
+  if (p.skillTimer > 0) return;
   if (p.fallAttackTimer > 0 || p.fallAttackRecoveryTimer > 0) return;
   const skill = selectedSkill(state);
   if (!skill) return;
   const energyCost = skill.energyCost ?? PLAYER_COMBAT.skillCastEnergyCost;
-  if (p.skillEnergy < energyCost) return;
+  const infiniteSkillCharge = hasDebugInfiniteSkillCharge();
+  if (infiniteSkillCharge) {
+    p.skillEnergy = p.skillEnergyMax;
+    syncSkillCharges();
+  } else if (p.skillEnergy < energyCost) {
+    return;
+  }
   const castDamageMultiplier = skillDamageMultiplier(state, skill.id)
     * consumeSkillCastEquipmentDamageMultiplier(state);
-  p.skillEnergy = Math.max(0, p.skillEnergy - energyCost);
-  syncSkillCharges();
+  if (!infiniteSkillCharge) {
+    p.skillEnergy = Math.max(0, p.skillEnergy - energyCost);
+    syncSkillCharges();
+  }
   p.skillFlash = 0;
   p.skillTimer = Math.ceil(skill.frameCount * 60 / PLAYER_DRAW.skillAnimFps);
   p.skillEffectSpawned = !(
@@ -245,8 +261,8 @@ export function castSelectedSkill() {
       elapsed: 0,
       frame: 0,
       hitsRemaining: SKILL3_EFFECT_CONFIG.maxHits,
-      alpha: 1,
       damageMultiplier: castDamageMultiplier,
+      barrierFlash: 0,
     };
   }
 
@@ -419,9 +435,9 @@ export function hurtPlayer(damage: number, sourceVx: number) {
   const p = state.player;
   if (p.invincible > 0) return;
 
-  if (state.skill3Effect) {
+  if (state.skill3Effect && state.skill3Effect.hitsRemaining > 0) {
     state.skill3Effect.hitsRemaining -= 1;
-    state.skill3Effect.alpha = state.skill3Effect.hitsRemaining / SKILL3_EFFECT_CONFIG.maxHits;
+    state.skill3Effect.barrierFlash = SKILL3_EFFECT_CONFIG.barrierFlashFrames;
     p.invincible = PLAYER_COMBAT.hurtInvincibleFrames;
 
     const counterDamage = (p.baseAttack + p.attackBonus)
@@ -443,9 +459,6 @@ export function hurtPlayer(damage: number, sourceVx: number) {
     }
 
     playSfx("playerCounter");
-    if (state.skill3Effect.hitsRemaining <= 0) {
-      state.skill3Effect = null;
-    }
     return;
   }
 
@@ -475,14 +488,20 @@ export function tryJump() {
 export function updatePlayer() {
   const p = state.player;
   tickEquipmentEffects(p);
+  const dashReposition = p.dashReposition;
 
-  if (p.onPlatform && state.platforms.includes(p.onPlatform)) {
+  if (!dashReposition && p.onPlatform && state.platforms.includes(p.onPlatform)) {
     p.x += p.onPlatform.vx;
   }
   const moveScale = Math.min(bindingZonePlayerMoveScale(), lanternAshZonePlayerMoveScale())
     * equipmentMoveSpeedMultiplier(state)
     * moonTideMoveSpeedMultiplier();
-  if (keys.has("a")) {
+  let previousDashX = p.x;
+  let previousDashY = p.y;
+  if (dashReposition) {
+    p.vx = 0;
+    p.facing = dashReposition.facing;
+  } else if (keys.has("a")) {
     p.vx = -p.speed * moveScale;
     if (p.skillTimer <= 0 && p.ultimateCastTimer <= 0) p.facing = -1;
   } else if (keys.has("d")) {
@@ -499,7 +518,16 @@ export function updatePlayer() {
     p.vy = Math.min(Math.max(p.vy, FALL_ATTACK.diveVelocity), FALL_ATTACK.maxVelocity);
   }
   const prevBottom = p.y + p.h;
-  p.x += p.vx;
+  if (dashReposition) {
+    previousDashX = p.x;
+    previousDashY = p.y;
+    p.invincible = Math.max(p.invincible, DASH_REPOSITION_INVINCIBLE_REFRESH_FRAMES);
+    dashReposition.elapsed = Math.min(dashReposition.duration, dashReposition.elapsed + 1);
+    p.x = dashReposition.startX
+      + (dashReposition.targetX - dashReposition.startX) * (dashReposition.elapsed / dashReposition.duration);
+  } else {
+    p.x += p.vx;
+  }
   p.y += p.vy;
   p.x = Math.max(0, Math.min(WIDTH - p.w, p.x));
   p.onPlatform = null;
@@ -537,6 +565,23 @@ export function updatePlayer() {
     p.fallAttackRecoveryTimer -= 1;
   }
 
+  if (dashReposition) {
+    damageDashRepositionTravel(previousDashX, previousDashY, p.x, p.y);
+  }
+
+  if (dashReposition && dashReposition.elapsed >= dashReposition.duration) {
+    p.x = dashReposition.targetX;
+    p.dashReposition = null;
+    finishDashRepositionSkill(
+      dashReposition.level,
+      dashReposition.damageMultiplier,
+      dashReposition.refundGroupId,
+      dashReposition.facing,
+      dashReposition.hitEnemies,
+      dashReposition.bossHit,
+    );
+  }
+
   if (p.skillTimer > 0) {
     p.skillTimer -= 1;
     const skill = selectedSkill(state);
@@ -553,10 +598,12 @@ export function updatePlayer() {
         const cx = p.x + p.w / 2;
         const feetY = p.y + p.h;
         if (skill.id === SKILL_IDS.skill1) {
+          const effectW = SKILL1_EFFECT_SHEET.frameW * SKILL1_EFFECT_CONFIG.drawScale;
           const effectH = SKILL1_EFFECT_SHEET.frameH * SKILL1_EFFECT_CONFIG.drawScale;
           const skillDrawH = skill.frameH * skill.drawScale;
+          const frontX = cx + p.facing * p.w / 2;
           state.skill1Effects.push({
-            x: cx,
+            x: frontX + p.facing * effectW / 2,
             y: feetY - skillDrawH / 2 - effectH / 2,
             vx: p.facing * SKILL1_EFFECT_CONFIG.speed,
             facing: p.facing,
@@ -566,11 +613,12 @@ export function updatePlayer() {
           });
           playSfx("playerSkillRelease", 0.96);
         } else if (skill.id === SKILL_IDS.skill2) {
-          const effectH = SKILL2_EFFECT_SHEET.frameH * SKILL2_EFFECT_CONFIG.drawScale;
-          const skillDrawH = skill.frameH * skill.drawScale;
+          const effectW = SKILL2_EFFECT_SHEET.frameW * SKILL2_EFFECT_CONFIG.drawScale;
+          const effectBaselineY = SKILL2_EFFECT_CONFIG.groundBaselineY * SKILL2_EFFECT_CONFIG.drawScale;
+          const frontX = cx + p.facing * p.w / 2;
           state.skill2Effects.push({
-            x: cx,
-            y: feetY - skillDrawH / 2 - effectH / 2,
+            x: frontX + p.facing * effectW / 2,
+            y: feetY - effectBaselineY,
             vx: p.facing * SKILL2_EFFECT_CONFIG.speed,
             facing: p.facing,
             frame: 0,
@@ -736,7 +784,12 @@ function drawBindingSlowEffect() {
 
 export function drawPlayer() {
   const p = state.player;
-  if (p.invincible > 0 && Math.floor(p.invincible / PLAYER_COMBAT.blinkInterval) % 2 === 0) return;
+  const isDashRepositionSkillAnimation = p.skillTimer > 0 && selectedSkill(state)?.id === SKILL_IDS.dashReposition;
+  if (
+    p.invincible > 0
+    && !isDashRepositionSkillAnimation
+    && Math.floor(p.invincible / PLAYER_COMBAT.blinkInterval) % 2 === 0
+  ) return;
   const isBindingSlowed = Math.min(bindingZonePlayerMoveScale(), lanternAshZonePlayerMoveScale()) < 1;
 
   // Unified reference point: player center X, feet Y minus global sprite padding.

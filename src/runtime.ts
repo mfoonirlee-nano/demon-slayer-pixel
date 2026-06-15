@@ -1,7 +1,7 @@
 import { state, resetState, getStateSnapshot } from "./state";
 import { ctx } from "./context";
 import { updateMoon } from "./moon";
-import { canAutoSpawnEntities, setDebugRuntimeActions } from "./debug";
+import { canAutoSpawnEntities, hasDebugInfiniteSkillCharge, setDebugRuntimeActions } from "./debug";
 import {
   WIDTH,
   HEIGHT,
@@ -76,7 +76,14 @@ function isPaused() {
 }
 
 function publishCurrentState() {
+  syncDebugInfiniteSkillCharge();
   publishState(getStateSnapshot(manualPaused, isPaused()));
+}
+
+function syncDebugInfiniteSkillCharge() {
+  if (!hasDebugInfiniteSkillCharge()) return;
+  state.player.skillEnergy = state.player.skillEnergyMax;
+  state.player.skillCharges = state.player.maxSkillCharges;
 }
 
 function togglePause() {
@@ -140,6 +147,9 @@ export function equipEquipment(slot: EquipmentSlot, itemId: EquipmentItemId | nu
 setDebugRuntimeActions({
   canSpawn: () => !state.gameOver,
   publish: publishCurrentState,
+  setInfiniteSkillCharge: (enabled) => {
+    if (enabled) syncDebugInfiniteSkillCharge();
+  },
   spawnEnemySheet: spawnEnemyBySheetIndex,
   spawnPlatformSegment: spawnMapSegmentOfKind,
   spawnBoss,
