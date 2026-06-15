@@ -110,9 +110,9 @@ export const SKILLS: Skill[] = [
     implemented: true,
     iconSrc: "assets/sprites/skills/vortex_control/icon.png",
     levelDescriptions: {
-      1: "潮涡持续 54 帧，范围内敌人每 14 帧受一次伤害。",
-      2: "潮涡持续 66 帧，牵引和持续伤害提高。",
-      3: "潮涡持续 78 帧，制造输出窗口更稳定。",
+      1: "潮涡持续 54 帧，脚底进入涡圈的小怪被轻微牵引和减速。",
+      2: "潮涡持续 66 帧，牵引、减速和持续伤害提高。",
+      3: "潮涡持续 78 帧，涡圈范围和控场稳定性进一步提高。",
     },
     src: "assets/sprites/skills/vortex_control/skill.png",
     frameCount: 5,

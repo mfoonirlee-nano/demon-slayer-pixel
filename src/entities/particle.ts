@@ -31,7 +31,7 @@ import type {
   UltimateTrailState,
 } from "../types/game-state";
 import type { SkillId } from "../types/assets";
-import { clamp, hitbox, nearestRectHitPoint, overlapHitPoint } from "../utils";
+import { clamp, hitbox, overlapHitPoint, type RectLike } from "../utils";
 import { damageEnemy } from "./enemies/common";
 import { resolveEnemyDefeat } from "./enemies/defeat";
 import { defeatBoss } from "./bosses/defeat";
@@ -51,8 +51,12 @@ const DEFAULT_HIT_BURST_COLOR = "#9feaff";
 const RETURNING_BLADE_SPEED = 8;
 const RAIN_LINE_FALL_SPEED = 4.8;
 const RAIN_LINE_DRIFT_X = -2.1;
+const VORTEX_CAST_FORWARD_OFFSET = 86;
+const VORTEX_GROUND_Y_OFFSET = 16;
 const VORTEX_VERTICAL_RADIUS_SCALE = 0.58;
-const VORTEX_ENEMY_SLOW = 0.82;
+const VORTEX_MIN_PULL_SCALE = 0.72;
+const VORTEX_CORE_PULL_SCALE = 0.38;
+const VORTEX_MIN_PULL_DELTA = 0.1;
 const ARMOR_BREAK_FALLBACK_Y_RATIO = 0.54;
 const GENERIC_SKILL_DAMAGE_ATTACK_BONUS_SCALE = 0.025;
 const DASH_REPOSITION_DURATION_FRAMES = 8;
@@ -60,6 +64,7 @@ const DASH_REPOSITION_TRAIL_EXTRA_LIFE = 6;
 const DASH_REPOSITION_SLASH_Y_RATIO = 0.56;
 const DASH_REPOSITION_SLASH_EDGE_INSET = 10;
 const DASH_REPOSITION_BACK_HIT_TOLERANCE = 8;
+const ARMOR_BREAK_FALLBACK_RANGE_RATIO = 0.72;
 
 let nextPlayerSkillRefundGroupId = 1;
 
@@ -129,10 +134,37 @@ function enemyCenter(enemy: EnemyState) {
   };
 }
 
+function rectFeetPoint(rect: { x: number; y: number; w: number; h: number }) {
+  return {
+    x: rect.x + rect.w / 2,
+    y: rect.y + rect.h,
+  };
+}
+
+function vortexContainment(effect: PlayerSkillEffectState, pointX: number, pointY: number) {
+  const radiusX = effect.w / 2;
+  const radiusY = Math.max(1, effect.h / 2);
+  const dx = (pointX - effect.x) / radiusX;
+  const dy = (pointY - effect.y) / radiusY;
+  const distanceSq = dx * dx + dy * dy;
+  return distanceSq <= 1 ? Math.sqrt(distanceSq) : null;
+}
+
+function drawEnemyIntoVortex(effect: PlayerSkillEffectState, enemy: EnemyState, pull: number, slow: number, distanceRatio: number) {
+  const center = enemyCenter(enemy);
+  const dx = effect.x - center.x;
+  if (Math.abs(dx) > VORTEX_MIN_PULL_DELTA) {
+    const pullScale = VORTEX_MIN_PULL_SCALE + (1 - distanceRatio) * VORTEX_CORE_PULL_SCALE;
+    enemy.x += Math.sign(dx) * Math.min(Math.abs(dx), pull * pullScale);
+  }
+  enemy.vx *= slow;
+}
+
 function playerSkillSheetFrame(skillId: SkillId, elapsed: number) {
   const sheet = PLAYER_SKILL_EFFECT_SHEETS[skillId];
   const tuning = isGenericPlayerSkillId(skillId) ? GENERIC_PLAYER_SKILL_TUNING[skillId] : null;
   if (!sheet || !tuning) return 0;
+  if (tuning.kind === "vortex") return Math.floor(elapsed / tuning.frameDuration) % sheet.count;
   return Math.min(sheet.count - 1, Math.floor(elapsed / tuning.frameDuration));
 }
 
@@ -156,14 +188,14 @@ function refundSkillGroup(effect: PlayerSkillEffectState, hitTargets: number, bo
 }
 
 function applyArmorBreakToEnemy(enemy: EnemyState, duration: number, multiplier: number) {
-  enemy.armorBreakTimer = duration;
-  enemy.armorBreakMultiplier = multiplier;
+  enemy.armorBreakTimer = Math.max(enemy.armorBreakTimer ?? 0, duration);
+  enemy.armorBreakMultiplier = Math.max(enemy.armorBreakMultiplier ?? 1, multiplier);
 }
 
 function applyArmorBreakToBoss(duration: number, multiplier: number) {
   if (!state.boss) return;
-  state.boss.armorBreakTimer = duration;
-  state.boss.armorBreakMultiplier = multiplier;
+  state.boss.armorBreakTimer = Math.max(state.boss.armorBreakTimer ?? 0, duration);
+  state.boss.armorBreakMultiplier = Math.max(state.boss.armorBreakMultiplier ?? 1, multiplier);
 }
 
 function makeGenericEffect(
@@ -296,34 +328,56 @@ export function damageDashRepositionTravel(previousX: number, previousY: number,
   }
 }
 
-function findArmorBreakTarget(range: number) {
+function armorBreakStrikeBox(sourceX: number, sourceY: number, facing: number, range: number, height: number): RectLike {
+  return {
+    x: facing === 1 ? sourceX : sourceX - range,
+    y: sourceY - height / 2,
+    w: range,
+    h: height,
+  };
+}
+
+function forwardTargetDistance(target: RectLike, sourceX: number, facing: number) {
+  return facing === 1
+    ? Math.max(0, target.x - sourceX)
+    : Math.max(0, sourceX - (target.x + target.w));
+}
+
+function armorBreakHitPoint(target: RectLike, sourceX: number, sourceY: number) {
+  return {
+    x: clamp(sourceX, target.x, target.x + target.w),
+    y: clamp(sourceY, target.y, target.y + target.h),
+  };
+}
+
+function findArmorBreakTarget(range: number, height: number) {
   const player = state.player;
   const cx = player.x + player.w / 2;
   const cy = player.y + player.h * ARMOR_BREAK_FALLBACK_Y_RATIO;
+  const strikeBox = armorBreakStrikeBox(cx, cy, player.facing, range, height);
   let bestEnemy: EnemyState | null = null;
   let bestDistance = Number.POSITIVE_INFINITY;
+  let bestPoint = { x: cx, y: cy };
 
   for (const enemy of state.enemies) {
-    const center = enemyCenter(enemy);
-    if ((center.x - cx) * player.facing < 0) continue;
-    const dist = Math.hypot(center.x - cx, center.y - cy);
+    if (!hitbox(strikeBox, enemy)) continue;
+    const dist = forwardTargetDistance(enemy, cx, player.facing);
     if (dist > range || dist >= bestDistance) continue;
     bestEnemy = enemy;
     bestDistance = dist;
+    bestPoint = armorBreakHitPoint(enemy, cx, cy);
   }
 
   if (state.boss) {
-    const bossCenterX = state.boss.x + state.boss.w / 2;
-    const bossCenterY = state.boss.y + state.boss.h / 2;
-    const bossDistance = Math.hypot(bossCenterX - cx, bossCenterY - cy);
-    if ((bossCenterX - cx) * player.facing >= 0 && bossDistance <= range && bossDistance < bestDistance) {
-      return { enemy: null, boss: state.boss, x: bossCenterX, y: bossCenterY };
+    const bossDistance = forwardTargetDistance(state.boss, cx, player.facing);
+    if (hitbox(strikeBox, state.boss) && bossDistance <= range && bossDistance < bestDistance) {
+      const point = armorBreakHitPoint(state.boss, cx, cy);
+      return { enemy: null, boss: state.boss, x: point.x, y: point.y };
     }
   }
 
   if (!bestEnemy) return null;
-  const center = enemyCenter(bestEnemy);
-  return { enemy: bestEnemy, boss: null, x: center.x, y: center.y };
+  return { enemy: bestEnemy, boss: null, x: bestPoint.x, y: bestPoint.y };
 }
 
 function rainLineTargets(count: number) {
@@ -404,7 +458,8 @@ export function spawnPlayerSkillEffect(skillId: SkillId, castDamageMultiplier = 
 
   if (skillId === SKILL_IDS.vortexControl) {
     const radius = valueForSkillLevel(tuning.radius ?? tuning.width, level);
-    state.playerSkillEffects.push(makeGenericEffect(skillId, level, castDamageMultiplier, clamp(playerCenterX + player.facing * 86, radius, WIDTH - radius), feetY - 16, {
+    const vortexX = clamp(playerCenterX + player.facing * VORTEX_CAST_FORWARD_OFFSET, radius, WIDTH - radius);
+    state.playerSkillEffects.push(makeGenericEffect(skillId, level, castDamageMultiplier, vortexX, feetY - VORTEX_GROUND_Y_OFFSET, {
       w: radius * 2,
       h: radius * 2 * VORTEX_VERTICAL_RADIUS_SCALE,
       refundGroupId,
@@ -414,11 +469,17 @@ export function spawnPlayerSkillEffect(skillId: SkillId, castDamageMultiplier = 
 
   if (skillId === SKILL_IDS.armorBreak) {
     const range = valueForSkillLevel(tuning.distance ?? tuning.width, level);
-    const target = findArmorBreakTarget(range);
-    const effectX = target?.x ?? playerCenterX + player.facing * Math.min(range, 96);
-    const effectY = target?.y ?? playerCenterY;
+    const strikeH = valueForSkillLevel(tuning.height, level);
+    const target = findArmorBreakTarget(range, strikeH);
+    const effectX = target?.x ?? clamp(
+      playerCenterX + player.facing * range * ARMOR_BREAK_FALLBACK_RANGE_RATIO,
+      0,
+      WIDTH,
+    );
+    const effectY = target?.y ?? player.y + player.h * ARMOR_BREAK_FALLBACK_Y_RATIO;
     const effect = makeGenericEffect(skillId, level, castDamageMultiplier, effectX, effectY, {
       refundGroupId,
+      visualOnly: true,
       armorBreakDuration: valueForSkillLevel(tuning.armorBreakDuration ?? tuning.life, level),
       armorBreakMultiplier: valueForSkillLevel(tuning.armorBreakMultiplier ?? tuning.damageMultiplier, level),
       armorBreakBossMultiplier: valueForSkillLevel(tuning.armorBreakBossMultiplier ?? tuning.bossDamageMultiplier, level),
@@ -730,25 +791,22 @@ function updateOneShotBoxEffect(effect: PlayerSkillEffectState) {
 }
 
 function updateVortexEffect(effect: PlayerSkillEffectState) {
-  const radiusX = effect.w / 2;
-  const radiusY = effect.h / 2;
   const tuning = isGenericPlayerSkillId(effect.skillId)
     ? GENERIC_PLAYER_SKILL_TUNING[effect.skillId]
     : null;
   const level = isGenericPlayerSkillId(effect.skillId) ? genericSkillLevel(effect.skillId) : 1;
   const pull = tuning ? valueForSkillLevel(tuning.pull ?? tuning.width, level) : 0;
+  const slow = tuning ? valueForSkillLevel(tuning.slow ?? tuning.life, level) : 1;
   let hitTargets = 0;
   let bossHit = false;
 
   for (let j = state.enemies.length - 1; j >= 0; j -= 1) {
     const enemy = state.enemies[j];
-    const center = enemyCenter(enemy);
-    const dx = (center.x - effect.x) / radiusX;
-    const dy = (center.y - effect.y) / Math.max(1, radiusY);
-    if (dx * dx + dy * dy > 1) continue;
+    const foot = rectFeetPoint(enemy);
+    const distanceRatio = vortexContainment(effect, foot.x, foot.y);
+    if (distanceRatio === null) continue;
 
-    enemy.x += clamp(effect.x - center.x, -pull, pull);
-    enemy.vx *= VORTEX_ENEMY_SLOW;
+    drawEnemyIntoVortex(effect, enemy, pull, slow, distanceRatio);
     if (hasLocalEnemyCooldown(effect, enemy)) continue;
 
     setLocalEnemyCooldown(effect, enemy);
@@ -757,11 +815,8 @@ function updateVortexEffect(effect: PlayerSkillEffectState) {
   }
 
   if (state.boss) {
-    const bossCenterX = state.boss.x + state.boss.w / 2;
-    const bossCenterY = state.boss.y + state.boss.h / 2;
-    const dx = (bossCenterX - effect.x) / radiusX;
-    const dy = (bossCenterY - effect.y) / Math.max(1, radiusY);
-    if (dx * dx + dy * dy <= 1 && !effect.bossCooldown) {
+    const foot = rectFeetPoint(state.boss);
+    if (vortexContainment(effect, foot.x, foot.y) !== null && !effect.bossCooldown) {
       bossHit = applyEffectDamageToBoss(effect);
       effect.bossCooldown = effect.bossHitCooldown;
     }

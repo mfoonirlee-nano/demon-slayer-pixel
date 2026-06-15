@@ -36,6 +36,7 @@ export type GenericSkillTuning = {
   radius?: LevelTable;
   count?: LevelTable;
   pull?: LevelTable;
+  slow?: LevelTable;
   armorBreakDuration?: LevelTable;
   armorBreakMultiplier?: LevelTable;
   armorBreakBossMultiplier?: LevelTable;
@@ -75,6 +76,7 @@ export const GENERIC_PLAYER_SKILL_TUNING: Record<GenericPlayerSkillId, GenericSk
     height: { 1: 82, 2: 92, 3: 102 },
     radius: { 1: 82, 2: 92, 3: 102 },
     pull: { 1: 0.85, 2: 1.05, 3: 1.25 },
+    slow: { 1: 0.86, 2: 0.8, 3: 0.74 },
     damageMultiplier: { 1: 0.36, 2: 0.42, 3: 0.48 },
     bossDamageMultiplier: { 1: 0.18, 2: 0.22, 3: 0.26 },
     hitCooldown: 14,
