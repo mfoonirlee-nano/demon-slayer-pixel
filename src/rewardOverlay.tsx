@@ -36,7 +36,7 @@ export function RewardOverlay({ snapshot }: { snapshot: GameSnapshot }) {
   }, [choices, isBossReward]);
 
   return (
-    <div className="absolute inset-0 z-40 flex items-center justify-center bg-[rgba(4,7,16,0.78)] px-4 text-white">
+    <div className="absolute inset-0 z-40 flex itemsp-center justify-center bg-[rgba(4,7,16,0.78)] px-4 text-white">
       <UiSprite id={panelSprite} width={860} height={356} className="relative">
         <div className="absolute inset-[34px] flex flex-col">
           <div className="text-center">
