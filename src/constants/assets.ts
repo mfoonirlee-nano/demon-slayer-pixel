@@ -194,7 +194,7 @@ export const SKILLS: Skill[] = [
     frameW: 360,
     image: null,
     frameH: 360,
-    drawScale: 0.34,
+    drawScale: 0.58,
     anchorX: 0.48,
     radius: 150,
     enemyBase: 25,
