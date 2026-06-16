@@ -57,7 +57,7 @@ UI 框体素材按用途放在 `ui/system/` 的子目录中，便于逐个微调
 | `dash_reposition/skill.png` | `2400x360` | 5 | `480x360` | `SKILLS.dash_reposition` |
 | `vortex_control/skill.png` | `1800x360` | 5 | `360x360` | `SKILLS.vortex_control` |
 | `armor_break/skill.png` | `1800x360` | 5 | `360x360` | `SKILLS.armor_break` |
-| `anti_air_multi/skill.png` | `1800x360` | 5 | `360x360` | `SKILLS.anti_air_multi` |
+| `anti_air_multi/skill.png` | `3200x420` | 5 | `640x420` | `SKILLS.anti_air_multi` |
 | `returning_blade/skill.png` | `1800x360` | 5 | `360x360` | `SKILLS.returning_blade` |
 | `vertical_wave/skill.png` | `1800x360` | 5 | `360x360` | `SKILLS.vertical_wave` |
 | `skill1/effect.png` | `2400x160` | 5 | `480x160` | `SKILL1_EFFECT_SHEET` |
@@ -66,13 +66,13 @@ UI 框体素材按用途放在 `ui/system/` 的子目录中，便于逐个微调
 | `dash_reposition/effect.png` | `1440x120` | 4 | `360x120` | `PLAYER_SKILL_EFFECT_SHEETS.dash_reposition` |
 | `vortex_control/effect.png` | `1536x160` | 6 | `256x160` | `PLAYER_SKILL_EFFECT_SHEETS.vortex_control` |
 | `armor_break/effect.png` | `880x160` | 4 | `220x160` | `PLAYER_SKILL_EFFECT_SHEETS.armor_break` |
-| `anti_air_multi/effect.png` | `960x180` | 4 | `240x180` | `PLAYER_SKILL_EFFECT_SHEETS.anti_air_multi` |
+| `anti_air_multi/effect.png` | `1440x320` | 4 | `360x320` | `PLAYER_SKILL_EFFECT_SHEETS.anti_air_multi` |
 | `returning_blade/effect.png` | `960x120` | 4 | `240x120` | `PLAYER_SKILL_EFFECT_SHEETS.returning_blade` |
 | `vertical_wave/effect.png` | `1100x220` | 5 | `220x220` | `PLAYER_SKILL_EFFECT_SHEETS.vertical_wave` |
 | `ultimate_skill/skill.png` | `2400x496` | 6 | `400x496` | `ULTIMATE_SKILL_SHEET` |
 | `ultimate_skill/effect.png` | `3840x360` | 8 | `480x360` | `ULTIMATE_SKILL_EFFECT_SHEET` |
 
-玩家技能特效以 `assets/art/player-concept.png`、`assets/art/player-skills-concept.png`、`assets/art/player-skills-implementation-source.png` 和 `assets/art/player-ultimate-concept.png` 为视觉基准：深蓝月潮流、银白浪尖、泡沫碎点和月形水纹。`skill1/effect.png` 是 5 帧右向水龙投射物，和 `SKILLS.skill1` 的 5 帧动作对应，水龙不会进入消失帧，`loopFromFrame` 从第 2 帧开始循环并直接冲出屏幕；`skill2/effect.png` 是 6 帧贴身半月潮刃，和 `SKILLS.skill2` 的 6 帧动作对应；`skill3/effect.png` 是 6 帧环身防反水幕。六个新增技能的图标、施法图和特效图从 `player-skills-implementation-source.png` 的绿幕源图裁切、抠像并重排为运行时透明 PNG：`流步·潮闪` 为短潮线收刀斩，`回涡·引潮` 为地面潮涡，`断浪·裂甲` 为裂纹压缩斩，`雨线·穿针` 为低透明细斜雨线，`镜潮·返刃` 为往返月牙潮刃，`升浪·托月` 为纵向浪柱。`ultimate_skill/effect.png` 是 8 帧月蓝半月潮环，按 `PLAYER_COMBAT.ultimateEffectFrameDuration` 播放。以上透明 PNG 均由运行时根据玩家 `facing` 或中心点绘制，不改变技能伤害、命中冷却或玩法。
+玩家技能特效以 `assets/art/player-concept.png`、`assets/art/player-skills-concept.png`、`assets/art/player-skills-implementation-source.png` 和 `assets/art/player-ultimate-concept.png` 为视觉基准：深蓝月潮流、银白浪尖、泡沫碎点和月形水纹。`skill1/effect.png` 是 5 帧右向水龙投射物，和 `SKILLS.skill1` 的 5 帧动作对应，水龙不会进入消失帧，`loopFromFrame` 从第 2 帧开始循环并直接冲出屏幕；`skill2/effect.png` 是 6 帧贴身半月潮刃，和 `SKILLS.skill2` 的 6 帧动作对应；`skill3/effect.png` 是 6 帧环身防反水幕。六个新增技能的图标、施法图和特效图以 `player-skills-implementation-source.png` 的绿幕源图为初版基础；其中 `雨线·穿针` 已按原画设定重新生成更大的施放动作和单束斜落针雨运行时序列帧，其他新增技能仍从源图裁切、抠像并重排为运行时透明 PNG：`流步·潮闪` 为短潮线收刀斩，`回涡·引潮` 为地面潮涡，`断浪·裂甲` 为裂纹压缩斩，`镜潮·返刃` 为往返月牙潮刃，`升浪·托月` 为纵向浪柱。`ultimate_skill/effect.png` 是 8 帧月蓝半月潮环，按 `PLAYER_COMBAT.ultimateEffectFrameDuration` 播放。以上透明 PNG 均由运行时根据玩家 `facing` 或中心点绘制，不改变技能伤害、命中冷却或玩法。
 
 ### 敌人和 Boss
 
