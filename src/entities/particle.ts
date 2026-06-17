@@ -20,6 +20,7 @@ import {
 } from "../constants";
 import type {
   EnemyState,
+  BossState,
   HitBurstState,
   ParticleState,
   PlayerSkillEffectState,
@@ -51,6 +52,8 @@ const DEFAULT_HIT_BURST_COLOR = "#9feaff";
 const RETURNING_BLADE_SPEED = 8;
 const RAIN_LINE_FALL_SPEED = 4.8;
 const RAIN_LINE_DRIFT_X = -2.1;
+const RAIN_LINE_PLAYER_CLEARANCE = 16;
+const RAIN_LINE_FORWARD_SPACING = 42;
 const VORTEX_CAST_FORWARD_OFFSET = 86;
 const VORTEX_GROUND_Y_OFFSET = 16;
 const VORTEX_VERTICAL_RADIUS_SCALE = 0.58;
@@ -59,12 +62,14 @@ const VORTEX_CORE_PULL_SCALE = 0.38;
 const VORTEX_MIN_PULL_DELTA = 0.1;
 const ARMOR_BREAK_FALLBACK_Y_RATIO = 0.54;
 const GENERIC_SKILL_DAMAGE_ATTACK_BONUS_SCALE = 0.025;
+const ARMOR_BREAK_PROJECTILE_SPEED = 8.5;
+const ARMOR_BREAK_SPAWN_FORWARD_OFFSET = 28;
+const ARMOR_BREAK_IMPACT_FRAME_START = 1;
 const DASH_REPOSITION_DURATION_FRAMES = 8;
 const DASH_REPOSITION_TRAIL_EXTRA_LIFE = 6;
 const DASH_REPOSITION_SLASH_Y_RATIO = 0.56;
 const DASH_REPOSITION_SLASH_EDGE_INSET = 10;
 const DASH_REPOSITION_BACK_HIT_TOLERANCE = 8;
-const ARMOR_BREAK_FALLBACK_RANGE_RATIO = 0.72;
 
 let nextPlayerSkillRefundGroupId = 1;
 
@@ -160,12 +165,21 @@ function drawEnemyIntoVortex(effect: PlayerSkillEffectState, enemy: EnemyState, 
   enemy.vx *= slow;
 }
 
-function playerSkillSheetFrame(skillId: SkillId, elapsed: number) {
-  const sheet = PLAYER_SKILL_EFFECT_SHEETS[skillId];
-  const tuning = isGenericPlayerSkillId(skillId) ? GENERIC_PLAYER_SKILL_TUNING[skillId] : null;
+function playerSkillSheetFrame(effect: PlayerSkillEffectState) {
+  const sheet = PLAYER_SKILL_EFFECT_SHEETS[effect.skillId];
+  const tuning = isGenericPlayerSkillId(effect.skillId) ? GENERIC_PLAYER_SKILL_TUNING[effect.skillId] : null;
   if (!sheet || !tuning) return 0;
-  if (tuning.kind === "vortex") return Math.floor(elapsed / tuning.frameDuration) % sheet.count;
-  return Math.min(sheet.count - 1, Math.floor(elapsed / tuning.frameDuration));
+  if (tuning.kind === "vortex") return Math.floor(effect.elapsed / tuning.frameDuration) % sheet.count;
+  if (tuning.kind === "armorBreak") {
+    if (effect.phase === "impact") {
+      return Math.min(
+        sheet.count - 1,
+        ARMOR_BREAK_IMPACT_FRAME_START + Math.floor(effect.elapsed / tuning.frameDuration),
+      );
+    }
+    return 0;
+  }
+  return Math.min(sheet.count - 1, Math.floor(effect.elapsed / tuning.frameDuration));
 }
 
 function refundSkillGroupById(refundGroupId: number | undefined, hitTargets: number, bossHit: boolean) {
@@ -328,78 +342,88 @@ export function damageDashRepositionTravel(previousX: number, previousY: number,
   }
 }
 
-function armorBreakStrikeBox(sourceX: number, sourceY: number, facing: number, range: number, height: number): RectLike {
-  return {
-    x: facing === 1 ? sourceX : sourceX - range,
-    y: sourceY - height / 2,
-    w: range,
-    h: height,
-  };
-}
-
 function forwardTargetDistance(target: RectLike, sourceX: number, facing: number) {
   return facing === 1
     ? Math.max(0, target.x - sourceX)
     : Math.max(0, sourceX - (target.x + target.w));
 }
 
-function armorBreakHitPoint(target: RectLike, sourceX: number, sourceY: number) {
+function armorBreakHitPoint(target: RectLike, effect: PlayerSkillEffectState) {
   return {
-    x: clamp(sourceX, target.x, target.x + target.w),
-    y: clamp(sourceY, target.y, target.y + target.h),
+    x: clamp(effect.x, target.x, target.x + target.w),
+    y: clamp(effect.y, target.y, target.y + target.h),
   };
 }
 
-function findArmorBreakTarget(range: number, height: number) {
-  const player = state.player;
-  const cx = player.x + player.w / 2;
-  const cy = player.y + player.h * ARMOR_BREAK_FALLBACK_Y_RATIO;
-  const strikeBox = armorBreakStrikeBox(cx, cy, player.facing, range, height);
-  let bestEnemy: EnemyState | null = null;
-  let bestDistance = Number.POSITIVE_INFINITY;
-  let bestPoint = { x: cx, y: cy };
+type ArmorBreakCollision =
+  | { type: "enemy"; enemy: EnemyState; enemyIndex: number; distance: number }
+  | { type: "boss"; boss: NonNullable<BossState>; distance: number };
 
-  for (const enemy of state.enemies) {
-    if (!hitbox(strikeBox, enemy)) continue;
-    const dist = forwardTargetDistance(enemy, cx, player.facing);
-    if (dist > range || dist >= bestDistance) continue;
-    bestEnemy = enemy;
+function armorBreakTravelBox(effect: PlayerSkillEffectState, previousX: number, previousY: number): RectLike {
+  const previous = rectFromCenter(previousX, previousY, effect.w, effect.h);
+  const current = effectBox(effect);
+  const left = Math.min(previous.x, current.x);
+  const top = Math.min(previous.y, current.y);
+  const right = Math.max(previous.x + previous.w, current.x + current.w);
+  const bottom = Math.max(previous.y + previous.h, current.y + current.h);
+  return {
+    x: left,
+    y: top,
+    w: right - left,
+    h: bottom - top,
+  };
+}
+
+function findArmorBreakCollision(effect: PlayerSkillEffectState, travelBox: RectLike): ArmorBreakCollision | null {
+  const originX = effect.originX ?? effect.x;
+  const maxDistance = effect.maxDistance ?? Number.POSITIVE_INFINITY;
+  let best: ArmorBreakCollision | null = null;
+  let bestDistance = Number.POSITIVE_INFINITY;
+
+  for (let i = state.enemies.length - 1; i >= 0; i -= 1) {
+    const enemy = state.enemies[i];
+    if (!hitbox(travelBox, enemy)) continue;
+    const dist = forwardTargetDistance(enemy, originX, effect.facing);
+    if (dist > maxDistance || dist >= bestDistance) continue;
     bestDistance = dist;
-    bestPoint = armorBreakHitPoint(enemy, cx, cy);
+    best = { type: "enemy", enemy, enemyIndex: i, distance: dist };
   }
 
   if (state.boss) {
-    const bossDistance = forwardTargetDistance(state.boss, cx, player.facing);
-    if (hitbox(strikeBox, state.boss) && bossDistance <= range && bossDistance < bestDistance) {
-      const point = armorBreakHitPoint(state.boss, cx, cy);
-      return { enemy: null, boss: state.boss, x: point.x, y: point.y };
+    const dist = forwardTargetDistance(state.boss, originX, effect.facing);
+    if (hitbox(travelBox, state.boss) && dist <= maxDistance && dist < bestDistance) {
+      best = { type: "boss", boss: state.boss, distance: dist };
     }
   }
 
-  if (!bestEnemy) return null;
-  return { enemy: bestEnemy, boss: null, x: bestPoint.x, y: bestPoint.y };
+  return best;
 }
 
 function rainLineTargets(count: number) {
   const player = state.player;
   const playerCenterX = player.x + player.w / 2;
+  const sheet = PLAYER_SKILL_EFFECT_SHEETS[SKILL_IDS.antiAirMulti]!;
+  const tuning = GENERIC_PLAYER_SKILL_TUNING[SKILL_IDS.antiAirMulti];
+  const firstForwardOffset = player.w / 2 + sheet.frameW * tuning.drawScale / 2 + RAIN_LINE_PLAYER_CLEARANCE;
+  const lastForwardOffset = firstForwardOffset + RAIN_LINE_FORWARD_SPACING * Math.max(0, count - 1);
   const candidates = state.enemies
     .map((enemy) => {
       const center = enemyCenter(enemy);
+      const forwardDistance = (center.x - playerCenterX) * player.facing;
       const airborne = enemy.y + enemy.h < GROUND_Y - 24 ? 90 : 0;
       const caster = enemy.casterPhase === "windup" || enemy.casterPhase === "cast" ? 55 : 0;
       const lowHp = enemy.hp <= (state.player.baseAttack + state.player.attackBonus) * 1.4 ? 35 : 0;
-      const forward = (center.x - playerCenterX) * player.facing >= -40 ? 15 : 0;
       const distancePenalty = Math.abs(center.x - playerCenterX) * 0.05;
-      return { x: center.x, y: center.y, score: airborne + caster + lowHp + forward - distancePenalty };
+      return { x: center.x, y: center.y, score: airborne + caster + lowHp - distancePenalty, forwardDistance };
     })
+    .filter((target) => target.forwardDistance >= firstForwardOffset && target.forwardDistance <= lastForwardOffset)
     .sort((a, b) => b.score - a.score);
 
   const targets = candidates.slice(0, count).map((target) => ({ x: target.x, y: target.y }));
   while (targets.length < count) {
-    const offset = (targets.length - (count - 1) / 2) * 42;
+    const forwardOffset = firstForwardOffset + targets.length * RAIN_LINE_FORWARD_SPACING;
     targets.push({
-      x: clamp(playerCenterX + player.facing * (90 + Math.abs(offset)) + offset, 30, WIDTH - 30),
+      x: clamp(playerCenterX + player.facing * forwardOffset, 30, WIDTH - 30),
       y: state.player.y + 28,
     });
   }
@@ -469,50 +493,31 @@ export function spawnPlayerSkillEffect(skillId: SkillId, castDamageMultiplier = 
 
   if (skillId === SKILL_IDS.armorBreak) {
     const range = valueForSkillLevel(tuning.distance ?? tuning.width, level);
-    const strikeH = valueForSkillLevel(tuning.height, level);
-    const target = findArmorBreakTarget(range, strikeH);
-    const effectX = target?.x ?? clamp(
-      playerCenterX + player.facing * range * ARMOR_BREAK_FALLBACK_RANGE_RATIO,
+    const startX = clamp(
+      playerCenterX + player.facing * ARMOR_BREAK_SPAWN_FORWARD_OFFSET,
       0,
       WIDTH,
     );
-    const effectY = target?.y ?? player.y + player.h * ARMOR_BREAK_FALLBACK_Y_RATIO;
-    const effect = makeGenericEffect(skillId, level, castDamageMultiplier, effectX, effectY, {
+    const startY = player.y + player.h * ARMOR_BREAK_FALLBACK_Y_RATIO;
+    state.playerSkillEffects.push(makeGenericEffect(skillId, level, castDamageMultiplier, startX, startY, {
       refundGroupId,
-      visualOnly: true,
+      phase: "out",
+      vx: player.facing * ARMOR_BREAK_PROJECTILE_SPEED,
+      originX: playerCenterX,
+      originY: startY,
+      maxDistance: range,
+      traveled: 0,
       armorBreakDuration: valueForSkillLevel(tuning.armorBreakDuration ?? tuning.life, level),
       armorBreakMultiplier: valueForSkillLevel(tuning.armorBreakMultiplier ?? tuning.damageMultiplier, level),
       armorBreakBossMultiplier: valueForSkillLevel(tuning.armorBreakBossMultiplier ?? tuning.bossDamageMultiplier, level),
-    });
-
-    let hitTargets = 0;
-    let bossHit = false;
-    if (target?.enemy) {
-      damageEnemy(target.enemy, effect.damage, effect.hitCooldown);
-      applyArmorBreakToEnemy(target.enemy, effect.armorBreakDuration ?? 0, effect.armorBreakMultiplier ?? 1);
-      effect.hitEnemies.push(target.enemy);
-      hitTargets = 1;
-      emitSlash(effectX, effectY, DEFAULT_HIT_BURST_COLOR, target.enemy.w);
-      emitHitBurst(effectX, effectY, PLAYER_COMBAT.effects.skillEnemyBurstColor, PLAYER_COMBAT.skillEnemyBurstPower);
-      const enemyIndex = state.enemies.indexOf(target.enemy);
-      if (enemyIndex >= 0) resolveEnemyDefeat(target.enemy, enemyIndex, "enemyNoCover");
-    } else if (target?.boss) {
-      damageBoss(target.boss, effect.bossDamage, effect.bossHitCooldown);
-      applyArmorBreakToBoss(effect.armorBreakDuration ?? 0, effect.armorBreakBossMultiplier ?? 1);
-      bossHit = true;
-      emitSlash(effectX, effectY, PLAYER_COMBAT.effects.skillBossSlashColor);
-      emitHitBurst(effectX, effectY, PLAYER_COMBAT.effects.skillBossBurstColor, PLAYER_COMBAT.skillBossBurstPower);
-      defeatBoss();
-    }
-    state.playerSkillEffects.push(effect);
-    refundSkillGroup(effect, hitTargets, bossHit);
+    }));
     return true;
   }
 
   if (skillId === SKILL_IDS.antiAirMulti) {
     const count = valueForSkillLevel(tuning.count ?? tuning.life, level);
-    for (const [index, target] of rainLineTargets(count).entries()) {
-      state.playerSkillEffects.push(makeGenericEffect(skillId, level, castDamageMultiplier, target.x - 32 + index * 6, target.y - 44, {
+    for (const target of rainLineTargets(count)) {
+      state.playerSkillEffects.push(makeGenericEffect(skillId, level, castDamageMultiplier, target.x, target.y - 44, {
         vx: player.facing * RAIN_LINE_DRIFT_X,
         vy: RAIN_LINE_FALL_SPEED,
         refundGroupId,
@@ -763,6 +768,45 @@ function applyEffectDamageToBoss(effect: PlayerSkillEffectState) {
   return true;
 }
 
+function armorBreakImpactLife(effect: PlayerSkillEffectState) {
+  const sheet = PLAYER_SKILL_EFFECT_SHEETS[effect.skillId];
+  const tuning = isGenericPlayerSkillId(effect.skillId) ? GENERIC_PLAYER_SKILL_TUNING[effect.skillId] : null;
+  const impactFrames = Math.max(1, (sheet?.count ?? 1) - ARMOR_BREAK_IMPACT_FRAME_START);
+  return impactFrames * (tuning?.frameDuration ?? 1);
+}
+
+function triggerArmorBreakImpact(effect: PlayerSkillEffectState, collision: ArmorBreakCollision) {
+  const target = collision.type === "enemy" ? collision.enemy : collision.boss;
+  const { x, y } = armorBreakHitPoint(target, effect);
+  effect.x = x;
+  effect.y = y;
+  effect.vx = 0;
+  effect.vy = 0;
+  effect.phase = "impact";
+  effect.elapsed = 0;
+  effect.frame = ARMOR_BREAK_IMPACT_FRAME_START;
+  effect.life = armorBreakImpactLife(effect);
+  effect.maxLife = effect.life;
+
+  if (collision.type === "enemy") {
+    effect.hitEnemies.push(collision.enemy);
+    damageEnemy(collision.enemy, effect.damage, effect.hitCooldown);
+    applyArmorBreakToEnemy(collision.enemy, effect.armorBreakDuration ?? 0, effect.armorBreakMultiplier ?? 1);
+    emitSlash(x, y, DEFAULT_HIT_BURST_COLOR, collision.enemy.w);
+    emitHitBurst(x, y, PLAYER_COMBAT.effects.skillEnemyBurstColor, PLAYER_COMBAT.skillEnemyBurstPower);
+    resolveEnemyDefeat(collision.enemy, collision.enemyIndex, "enemyNoCover");
+    refundSkillGroup(effect, 1, false);
+    return;
+  }
+
+  damageBoss(collision.boss, effect.bossDamage, effect.bossHitCooldown);
+  applyArmorBreakToBoss(effect.armorBreakDuration ?? 0, effect.armorBreakBossMultiplier ?? 1);
+  emitSlash(x, y, PLAYER_COMBAT.effects.skillBossSlashColor);
+  emitHitBurst(x, y, PLAYER_COMBAT.effects.skillBossBurstColor, PLAYER_COMBAT.skillBossBurstPower);
+  defeatBoss();
+  refundSkillGroup(effect, 0, true);
+}
+
 function updateOneShotBoxEffect(effect: PlayerSkillEffectState) {
   const box = effectBox(effect);
   let hitTargets = 0;
@@ -823,6 +867,26 @@ function updateVortexEffect(effect: PlayerSkillEffectState) {
   }
 
   refundSkillGroup(effect, hitTargets, bossHit);
+}
+
+function updateArmorBreakEffect(effect: PlayerSkillEffectState) {
+  if (effect.phase === "impact") return;
+
+  const previousX = effect.x;
+  const previousY = effect.y;
+  effect.x += effect.vx;
+  effect.y += effect.vy;
+  effect.traveled = (effect.traveled ?? 0) + Math.hypot(effect.x - previousX, effect.y - previousY);
+
+  const collision = findArmorBreakCollision(effect, armorBreakTravelBox(effect, previousX, previousY));
+  if (collision) {
+    triggerArmorBreakImpact(effect, collision);
+    return;
+  }
+
+  if ((effect.traveled ?? 0) >= (effect.maxDistance ?? 0)) {
+    effect.life = 0;
+  }
 }
 
 function updateReturningBladeEffect(effect: PlayerSkillEffectState) {
@@ -887,7 +951,7 @@ export function updatePlayerSkillEffects() {
     const effect = state.playerSkillEffects[i] as PlayerSkillEffectState;
     effect.elapsed += 1;
     effect.life -= 1;
-    effect.frame = playerSkillSheetFrame(effect.skillId, effect.elapsed);
+    effect.frame = playerSkillSheetFrame(effect);
     tickEffectCooldowns(effect);
 
     if (effect.visualOnly) {
@@ -895,14 +959,14 @@ export function updatePlayerSkillEffects() {
       effect.y += effect.vy;
     } else if (effect.kind === "vortex") {
       updateVortexEffect(effect);
+    } else if (effect.kind === "armorBreak") {
+      updateArmorBreakEffect(effect);
     } else if (effect.kind === "returningBlade") {
       updateReturningBladeEffect(effect);
     } else {
       effect.x += effect.vx;
       effect.y += effect.vy;
-      if (effect.kind !== "armorBreak") {
-        updateOneShotBoxEffect(effect);
-      }
+      updateOneShotBoxEffect(effect);
     }
 
     if (effect.life <= 0) {

@@ -37,7 +37,7 @@ import { damageBoss } from "./bosses/common";
 import { bindingZonePlayerMoveScale } from "./enemies/binder";
 import { defeatBoss } from "./bosses/defeat";
 import { keys } from "../input";
-import { hasDebugInfiniteSkillCharge } from "../debug";
+import { hasDebugInfiniteHealth, hasDebugInfiniteSkillCharge } from "../debug";
 import {
   applySkillCastEquipmentEffects,
   applySkillHitEquipmentRefund,
@@ -433,6 +433,7 @@ function triggerFallAttackImpact() {
 
 export function hurtPlayer(damage: number, sourceVx: number) {
   const p = state.player;
+  if (hasDebugInfiniteHealth()) return;
   if (p.invincible > 0) return;
 
   if (state.skill3Effect && state.skill3Effect.hitsRemaining > 0) {

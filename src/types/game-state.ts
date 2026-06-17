@@ -541,7 +541,7 @@ export type Skill3EffectState = {
   barrierFlash: number;
 };
 
-export type PlayerSkillEffectPhase = "out" | "return";
+export type PlayerSkillEffectPhase = "out" | "return" | "impact";
 
 export type PlayerSkillEffectState = {
   skillId: SkillId;

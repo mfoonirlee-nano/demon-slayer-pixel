@@ -1,6 +1,7 @@
 import { ctx } from "../../context";
 import { state } from "../../state";
 import { playSfx } from "../../audio";
+import { hasDebugInfiniteHealth } from "../../debug";
 import {
   BINDER_SHEET_INDEX,
   BINDER_SHEETS,
@@ -115,6 +116,8 @@ function isPlayerInBindingZone(zone: { x: number; y: number; radius: number }) {
 }
 
 function applyBindingZoneDamage() {
+  if (hasDebugInfiniteHealth()) return;
+
   const player = state.player;
   if (player.invincible > 0) return;
 

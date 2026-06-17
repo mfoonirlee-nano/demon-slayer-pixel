@@ -130,12 +130,12 @@ export const SKILLS: Skill[] = [
   {
     id: SKILL_IDS.armorBreak,
     name: "断浪·裂甲",
-    description: "向前压缩斩击最近目标，并施加短时裂甲标记。",
+    description: "向前飞出压缩潮线，命中后爆裂并施加短时裂甲标记。",
     typeTag: "armor_break",
     implemented: true,
     iconSrc: "assets/sprites/skills/armor_break/icon.png",
     levelDescriptions: {
-      1: "命中最近目标并施加短时裂甲。",
+      1: "潮线命中目标后爆裂并施加短时裂甲。",
       2: "斩击伤害和裂甲持续提高。",
       3: "裂甲前置爆发收益更高，但 Boss 效果仍降低。",
     },

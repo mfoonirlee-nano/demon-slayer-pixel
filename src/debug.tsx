@@ -36,6 +36,7 @@ export type DebugEnemyKind =
 type DebugRuntimeActions = {
   canSpawn: () => boolean;
   publish: () => void;
+  setInfiniteHealth: (enabled: boolean) => void;
   setInfiniteSkillCharge: (enabled: boolean) => void;
   spawnEnemySheet: (sheetIndex: number, side: number) => void;
   spawnPlatformSegment: (kind: SegmentKind) => void;
@@ -103,6 +104,7 @@ const DEBUG_PLATFORM_OPTIONS: Array<{ kind: SegmentKind; label: string }> = [
 let runtimeActions: DebugRuntimeActions = {
   canSpawn: () => false,
   publish: () => {},
+  setInfiniteHealth: () => {},
   setInfiniteSkillCharge: () => {},
   spawnEnemySheet: () => {},
   spawnPlatformSegment: () => {},
@@ -110,7 +112,8 @@ let runtimeActions: DebugRuntimeActions = {
   equipSkillSlot: () => {},
 };
 
-let debugInfiniteSkillCharge = false;
+let debugInfiniteHealth = true;
+let debugInfiniteSkillCharge = true;
 
 export const isDebugMode = typeof window !== "undefined"
   && new URLSearchParams(window.location.search).get("debug") === "1";
@@ -121,6 +124,10 @@ export function canAutoSpawnEntities() {
 
 export function hasDebugInfiniteSkillCharge() {
   return isDebugMode && debugInfiniteSkillCharge;
+}
+
+export function hasDebugInfiniteHealth() {
+  return isDebugMode && debugInfiniteHealth;
 }
 
 export function setDebugRuntimeActions(actions: DebugRuntimeActions) {
@@ -158,12 +165,20 @@ function setDebugInfiniteSkillCharge(enabled: boolean) {
   runtimeActions.publish();
 }
 
+function setDebugInfiniteHealth(enabled: boolean) {
+  if (!isDebugMode) return;
+  debugInfiniteHealth = enabled;
+  runtimeActions.setInfiniteHealth(enabled);
+  runtimeActions.publish();
+}
+
 export function DebugPanel() {
   const [enemyKind, setEnemyKind] = useState<DebugEnemyKind>("chaser");
   const [bossId, setBossId] = useState<BossArchetypeId>(DEBUG_BOSS_OPTIONS[0]?.id ?? "spider-string");
   const [platformKind, setPlatformKind] = useState<SegmentKind>("safeBridge");
   const [skillSlotIndex, setSkillSlotIndex] = useState<number>(0);
   const [skillId, setSkillId] = useState<SkillId>(DEBUG_SKILL_OPTIONS[0]?.id ?? "skill1");
+  const [infiniteHealth, setInfiniteHealth] = useState(hasDebugInfiniteHealth());
   const [infiniteSkillCharge, setInfiniteSkillCharge] = useState(hasDebugInfiniteSkillCharge());
 
   if (!isDebugMode) return null;
@@ -174,6 +189,20 @@ export function DebugPanel() {
         <span className="text-[9px] font-bold text-[#7fe8ff]">DEBUG</span>
         <span className="text-[8px] text-[#9fbfd0]">Auto off</span>
       </div>
+      <label className="mb-2 flex items-center gap-2 text-[8px] text-[#c3efff]" htmlFor="debug-infinite-health">
+        <input
+          id="debug-infinite-health"
+          type="checkbox"
+          className="h-3 w-3 accent-[#63f4ff]"
+          checked={infiniteHealth}
+          onChange={(event) => {
+            const enabled = event.target.checked;
+            setInfiniteHealth(enabled);
+            setDebugInfiniteHealth(enabled);
+          }}
+        />
+        Infinite health
+      </label>
       <label className="mb-2 flex items-center gap-2 text-[8px] text-[#c3efff]" htmlFor="debug-infinite-skill-charge">
         <input
           id="debug-infinite-skill-charge"
@@ -205,19 +234,16 @@ export function DebugPanel() {
           id="debug-skill-kind"
           className="min-w-0 flex-1 rounded-[4px] border border-[#70d7ff44] bg-[#102033] px-1 py-1 text-[9px] text-[#f2fbff]"
           value={skillId}
-          onChange={(event) => setSkillId(event.target.value as SkillId)}
+          onChange={(event) => {
+            const nextSkillId = event.target.value as SkillId;
+            setSkillId(nextSkillId);
+            equipDebugSkill(skillSlotIndex, nextSkillId);
+          }}
         >
           {DEBUG_SKILL_OPTIONS.map((option) => (
             <option key={option.id} value={option.id}>{option.label}</option>
           ))}
         </select>
-        <button
-          type="button"
-          className="rounded-[4px] border border-[#88f3ff77] bg-[#12394a] px-2 py-1 text-[9px] font-bold text-[#e7fbff] active:translate-y-px"
-          onClick={() => equipDebugSkill(skillSlotIndex, skillId)}
-        >
-          Equip
-        </button>
       </div>
       <label className="mt-2 block text-[8px] text-[#9ed8ff]" htmlFor="debug-enemy-kind">Enemy</label>
       <div className="mt-1 flex gap-1">
