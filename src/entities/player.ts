@@ -11,11 +11,11 @@ import {
   PLAYER_ANIMATION_STATES,
   PLAYER_COMBAT,
   PLAYER_DRAW,
-  SKILL1_EFFECT_SHEET,
-  SKILL1_EFFECT_CONFIG,
-  SKILL2_EFFECT_SHEET,
-  SKILL2_EFFECT_CONFIG,
-  SKILL3_EFFECT_CONFIG,
+  LINE_PROJECTILE_EFFECT_SHEET,
+  LINE_PROJECTILE_EFFECT_CONFIG,
+  CLOSE_ARC_EFFECT_SHEET,
+  CLOSE_ARC_EFFECT_CONFIG,
+  GUARD_COUNTER_EFFECT_CONFIG,
   ULTIMATE_SKILL_SHEET,
   SKILL_FLASH,
   LANTERN_EMBER_CONFIG,
@@ -268,18 +268,18 @@ export function castSelectedSkill() {
   p.skillFlash = 0;
   p.skillTimer = playerSkillCastFrames(skill);
   p.skillEffectSpawned = !(
-    skill.id === SKILL_IDS.skill1
-    || skill.id === SKILL_IDS.skill2
+    skill.id === SKILL_IDS.lineProjectile
+    || skill.id === SKILL_IDS.closeArc
     || isGenericPlayerSkillId(skill.id)
   );
   p.skillCastDamageMultiplier = castDamageMultiplier;
   applySkillCastEquipmentEffects(state);
 
-  if (skill.id === SKILL_IDS.skill3) {
-    state.skill3Effect = {
+  if (skill.id === SKILL_IDS.guardCounter) {
+    state.guardCounterEffect = {
       elapsed: 0,
       frame: 0,
-      hitsRemaining: SKILL3_EFFECT_CONFIG.maxHits,
+      hitsRemaining: GUARD_COUNTER_EFFECT_CONFIG.maxHits,
       damageMultiplier: castDamageMultiplier,
       barrierFlash: 0,
     };
@@ -455,14 +455,14 @@ export function hurtPlayer(damage: number, sourceVx: number) {
   if (hasDebugInfiniteHealth()) return;
   if (p.invincible > 0) return;
 
-  if (state.skill3Effect && state.skill3Effect.hitsRemaining > 0) {
-    state.skill3Effect.hitsRemaining -= 1;
-    state.skill3Effect.barrierFlash = SKILL3_EFFECT_CONFIG.barrierFlashFrames;
+  if (state.guardCounterEffect && state.guardCounterEffect.hitsRemaining > 0) {
+    state.guardCounterEffect.hitsRemaining -= 1;
+    state.guardCounterEffect.barrierFlash = GUARD_COUNTER_EFFECT_CONFIG.barrierFlashFrames;
     p.invincible = PLAYER_COMBAT.hurtInvincibleFrames;
 
     const counterDamage = (p.baseAttack + p.attackBonus)
-      * SKILL3_EFFECT_CONFIG.damageMultiplier
-      * state.skill3Effect.damageMultiplier;
+      * GUARD_COUNTER_EFFECT_CONFIG.damageMultiplier
+      * state.guardCounterEffect.damageMultiplier;
     for (let i = state.enemies.length - 1; i >= 0; i -= 1) {
       const e = state.enemies[i];
       if (!hitbox(p, e)) continue;
@@ -617,29 +617,29 @@ export function updatePlayer() {
         p.skillEffectSpawned = true;
         const cx = p.x + p.w / 2;
         const feetY = p.y + p.h;
-        if (skill.id === SKILL_IDS.skill1) {
-          const effectW = SKILL1_EFFECT_SHEET.frameW * SKILL1_EFFECT_CONFIG.drawScale;
-          const effectH = SKILL1_EFFECT_SHEET.frameH * SKILL1_EFFECT_CONFIG.drawScale;
+        if (skill.id === SKILL_IDS.lineProjectile) {
+          const effectW = LINE_PROJECTILE_EFFECT_SHEET.frameW * LINE_PROJECTILE_EFFECT_CONFIG.drawScale;
+          const effectH = LINE_PROJECTILE_EFFECT_SHEET.frameH * LINE_PROJECTILE_EFFECT_CONFIG.drawScale;
           const skillDrawH = skill.frameH * skill.drawScale;
           const frontX = cx + p.facing * p.w / 2;
-          state.skill1Effects.push({
-            x: frontX + p.facing * (effectW / 2 - SKILL1_EFFECT_CONFIG.spawnOverlap),
+          state.lineProjectileEffects.push({
+            x: frontX + p.facing * (effectW / 2 - LINE_PROJECTILE_EFFECT_CONFIG.spawnOverlap),
             y: feetY - skillDrawH / 2 - effectH / 2,
-            vx: p.facing * SKILL1_EFFECT_CONFIG.speed,
+            vx: p.facing * LINE_PROJECTILE_EFFECT_CONFIG.speed,
             facing: p.facing,
             frame: 0,
             elapsed: 0,
             damageMultiplier: p.skillCastDamageMultiplier,
           });
           playSfx("playerSkillRelease", 0.96);
-        } else if (skill.id === SKILL_IDS.skill2) {
-          const effectW = SKILL2_EFFECT_SHEET.frameW * SKILL2_EFFECT_CONFIG.drawScale;
-          const effectBaselineY = SKILL2_EFFECT_CONFIG.groundBaselineY * SKILL2_EFFECT_CONFIG.drawScale;
+        } else if (skill.id === SKILL_IDS.closeArc) {
+          const effectW = CLOSE_ARC_EFFECT_SHEET.frameW * CLOSE_ARC_EFFECT_CONFIG.drawScale;
+          const effectBaselineY = CLOSE_ARC_EFFECT_CONFIG.groundBaselineY * CLOSE_ARC_EFFECT_CONFIG.drawScale;
           const frontX = cx + p.facing * p.w / 2;
-          state.skill2Effects.push({
+          state.closeArcEffects.push({
             x: frontX + p.facing * effectW / 2,
             y: feetY - effectBaselineY,
-            vx: p.facing * SKILL2_EFFECT_CONFIG.speed,
+            vx: p.facing * CLOSE_ARC_EFFECT_CONFIG.speed,
             facing: p.facing,
             frame: 0,
             elapsed: 0,

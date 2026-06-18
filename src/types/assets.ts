@@ -1,7 +1,7 @@
 export type SkillId =
-  | "skill1"
-  | "skill2"
-  | "skill3"
+  | "line_projectile"
+  | "close_arc"
+  | "guard_counter"
   | "dash_reposition"
   | "vortex_control"
   | "armor_break"

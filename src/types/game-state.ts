@@ -510,7 +510,7 @@ export type SkillBurstState = {
   color: string;
 };
 
-export type Skill1EffectState = {
+export type LineProjectileEffectState = {
   x: number;
   y: number;
   vx: number;
@@ -521,7 +521,7 @@ export type Skill1EffectState = {
   refundedSkillEnergy?: boolean;
 };
 
-export type Skill2EffectState = {
+export type CloseArcEffectState = {
   x: number;
   y: number;
   vx: number;
@@ -533,7 +533,7 @@ export type Skill2EffectState = {
   refundedSkillEnergy?: boolean;
 };
 
-export type Skill3EffectState = {
+export type GuardCounterEffectState = {
   elapsed: number;
   frame: number;
   hitsRemaining: number;
@@ -646,9 +646,9 @@ export type GameState = {
   chests: ChestState[];
   skillBursts: SkillBurstState[];
   hitBursts: HitBurstState[];
-  skill1Effects: Skill1EffectState[];
-  skill2Effects: Skill2EffectState[];
-  skill3Effect: Skill3EffectState | null;
+  lineProjectileEffects: LineProjectileEffectState[];
+  closeArcEffects: CloseArcEffectState[];
+  guardCounterEffect: GuardCounterEffectState | null;
   playerSkillEffects: PlayerSkillEffectState[];
   ultimateEffects: UltimateEffectState[];
   ultimateTrails: UltimateTrailState[];

@@ -46,13 +46,13 @@ const SKILL_LEVEL_DAMAGE_MULTIPLIER: Record<SkillLevel, number> = {
 type ActiveUltimateLevel = Exclude<UltimateLevel, 0>;
 
 export const INITIAL_SKILL_LEVELS: Partial<Record<SkillId, SkillLevel>> = {
-  [SKILL_IDS.skill1]: 1,
-  [SKILL_IDS.skill2]: 1,
+  [SKILL_IDS.lineProjectile]: 1,
+  [SKILL_IDS.closeArc]: 1,
 };
 
 export const INITIAL_EQUIPPED_SKILL_IDS: [SkillId | null, SkillId | null, SkillId | null] = [
-  SKILL_IDS.skill1,
-  SKILL_IDS.skill2,
+  SKILL_IDS.lineProjectile,
+  SKILL_IDS.closeArc,
   null,
 ];
 

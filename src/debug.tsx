@@ -177,7 +177,7 @@ export function DebugPanel() {
   const [bossId, setBossId] = useState<BossArchetypeId>(DEBUG_BOSS_OPTIONS[0]?.id ?? "spider-string");
   const [platformKind, setPlatformKind] = useState<SegmentKind>("safeBridge");
   const [skillSlotIndex, setSkillSlotIndex] = useState<number>(0);
-  const [skillId, setSkillId] = useState<SkillId>(DEBUG_SKILL_OPTIONS[0]?.id ?? "skill1");
+  const [skillId, setSkillId] = useState<SkillId>(DEBUG_SKILL_OPTIONS[0]?.id ?? "line_projectile");
   const [infiniteHealth, setInfiniteHealth] = useState(hasDebugInfiniteHealth());
   const [infiniteSkillCharge, setInfiniteSkillCharge] = useState(hasDebugInfiniteSkillCharge());
 

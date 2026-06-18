@@ -51,18 +51,18 @@ UI 框体素材按用途放在 `ui/system/` 的子目录中，便于逐个微调
 
 | 文件 | 总尺寸 | 帧数 | 单帧 | 常量 |
 | --- | ---: | ---: | ---: | --- |
-| `skill1/skill.png` | `4000x420` | 5 | `800x420` | `SKILLS.skill1` |
-| `skill2/skill.png` | `3000x500` | 6 | `500x500` | `SKILLS.skill2` |
-| `skill3/skill.png` | `2700x470` | 5 | `540x470` | `SKILLS.skill3` |
+| `line_projectile/skill.png` | `4000x420` | 5 | `800x420` | `SKILLS.line_projectile` |
+| `close_arc/skill.png` | `3000x500` | 6 | `500x500` | `SKILLS.close_arc` |
+| `guard_counter/skill.png` | `2700x470` | 5 | `540x470` | `SKILLS.guard_counter` |
 | `dash_reposition/skill.png` | `2400x360` | 5 | `480x360` | `SKILLS.dash_reposition` |
 | `vortex_control/skill.png` | `1800x360` | 5 | `360x360` | `SKILLS.vortex_control` |
 | `armor_break/skill.png` | `1800x360` | 5 | `360x360` | `SKILLS.armor_break` |
 | `anti_air_multi/skill.png` | `3200x420` | 5 | `640x420` | `SKILLS.anti_air_multi` |
 | `returning_blade/skill.png` | `1800x360` | 5 | `360x360` | `SKILLS.returning_blade` |
 | `vertical_wave/skill.png` | `2880x420` | 6 | `480x420` | `SKILLS.vertical_wave` |
-| `skill1/effect.png` | `2400x160` | 5 | `480x160` | `SKILL1_EFFECT_SHEET` |
-| `skill2/effect.png` | `3240x420` | 6 | `540x420` | `SKILL2_EFFECT_SHEET` |
-| `skill3/effect.png` | `2520x320` | 6 | `420x320` | `SKILL3_EFFECT_SHEET` |
+| `line_projectile/effect.png` | `2400x160` | 5 | `480x160` | `LINE_PROJECTILE_EFFECT_SHEET` |
+| `close_arc/effect.png` | `3240x420` | 6 | `540x420` | `CLOSE_ARC_EFFECT_SHEET` |
+| `guard_counter/effect.png` | `2520x320` | 6 | `420x320` | `GUARD_COUNTER_EFFECT_SHEET` |
 | `dash_reposition/effect.png` | `1440x120` | 4 | `360x120` | `PLAYER_SKILL_EFFECT_SHEETS.dash_reposition` |
 | `vortex_control/effect.png` | `1536x160` | 6 | `256x160` | `PLAYER_SKILL_EFFECT_SHEETS.vortex_control` |
 | `armor_break/effect.png` | `880x160` | 4 | `220x160` | `PLAYER_SKILL_EFFECT_SHEETS.armor_break` |
@@ -72,7 +72,7 @@ UI 框体素材按用途放在 `ui/system/` 的子目录中，便于逐个微调
 | `ultimate_skill/skill.png` | `2400x496` | 6 | `400x496` | `ULTIMATE_SKILL_SHEET` |
 | `ultimate_skill/effect.png` | `3840x360` | 8 | `480x360` | `ULTIMATE_SKILL_EFFECT_SHEET` |
 
-玩家技能特效以 `assets/art/player-concept.png`、`assets/art/player-skills-concept.png`、`assets/art/player-skills-implementation-source.png` 和 `assets/art/player-ultimate-concept.png` 为视觉基准：深蓝月潮流、银白浪尖、泡沫碎点和月形水纹。`skill1/effect.png` 是 5 帧右向水龙投射物，和 `SKILLS.skill1` 的 5 帧动作对应，水龙不会进入消失帧，`loopFromFrame` 从第 2 帧开始循环并直接冲出屏幕；`skill2/effect.png` 是 6 帧贴身半月潮刃，和 `SKILLS.skill2` 的 6 帧动作对应；`skill3/effect.png` 是 6 帧环身防反水幕。六个新增技能的图标、施法图和特效图以 `player-skills-implementation-source.png` 的绿幕源图为初版基础；其中 `雨线·穿针` 已按原画设定重新生成更大的施放动作和单束斜落针雨运行时序列帧，`回涡·引潮` 已重新生成 5 帧贴地引潮施法动作和 6 帧低位地面潮涡特效，`升浪·托月` 已重新生成 6 帧施法动作、7 帧前向弧形上挑浪柱特效和无角色图标；其他新增技能仍从源图裁切、抠像并重排为运行时透明 PNG：`流步·潮闪` 为短潮线收刀斩，`断浪·裂甲` 为裂纹压缩斩，`镜潮·返刃` 为往返月牙潮刃。`ultimate_skill/effect.png` 是 8 帧月蓝半月潮环，按 `PLAYER_COMBAT.ultimateEffectFrameDuration` 播放。以上透明 PNG 均由运行时根据玩家 `facing` 或中心点绘制，不改变技能伤害、命中冷却或玩法。
+玩家技能特效以 `assets/art/player-concept.png`、`assets/art/player-skills-concept.png`、`assets/art/player-skills-implementation-source.png` 和 `assets/art/player-ultimate-concept.png` 为视觉基准：深蓝月潮流、银白浪尖、泡沫碎点和月形水纹。`line_projectile/effect.png` 是 5 帧右向水龙投射物，和 `SKILLS.line_projectile` 的 5 帧动作对应，水龙不会进入消失帧，`loopFromFrame` 从第 2 帧开始循环并直接冲出屏幕；`close_arc/effect.png` 是 6 帧贴身半月潮刃，和 `SKILLS.close_arc` 的 6 帧动作对应；`guard_counter/effect.png` 是 6 帧环身防反水幕。六个新增技能的图标、施法图和特效图以 `player-skills-implementation-source.png` 的绿幕源图为初版基础；其中 `雨线·穿针` 已按原画设定重新生成更大的施放动作和单束斜落针雨运行时序列帧，`回涡·引潮` 已重新生成 5 帧贴地引潮施法动作和 6 帧低位地面潮涡特效，`升浪·托月` 已重新生成 6 帧施法动作、7 帧前向弧形上挑浪柱特效和无角色图标；其他新增技能仍从源图裁切、抠像并重排为运行时透明 PNG：`流步·潮闪` 为短潮线收刀斩，`断浪·裂甲` 为裂纹压缩斩，`镜潮·返刃` 为往返月牙潮刃。`ultimate_skill/effect.png` 是 8 帧月蓝半月潮环，按 `PLAYER_COMBAT.ultimateEffectFrameDuration` 播放。以上透明 PNG 均由运行时根据玩家 `facing` 或中心点绘制，不改变技能伤害、命中冷却或玩法。
 
 ### 敌人和 Boss
 
@@ -298,7 +298,7 @@ Burrower 运行时由 `BURROWER_SHEETS` 暴露并预加载。普通刷怪在 `el
 ## 常用命令
 
 ```bash
-node scripts/compress-assets.js assets/sprites/skills/skill2/effect.png
+node scripts/compress-assets.js assets/sprites/skills/close_arc/effect.png
 ```
 
 ## 约定

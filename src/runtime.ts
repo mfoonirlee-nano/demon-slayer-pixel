@@ -37,9 +37,9 @@ import {
   updateParticles,
   updateSkillBursts,
   updateHitBursts,
-  updateSkill1Effects,
-  updateSkill2Effects,
-  updateSkill3Effect,
+  updateLineProjectileEffects,
+  updateCloseArcEffects,
+  updateGuardCounterEffect,
   updatePlayerSkillEffects,
   updateUltimateEffects,
   updateUltimateTrails,
@@ -47,9 +47,9 @@ import {
   drawParticles,
   drawSkillBursts,
   drawHitBursts,
-  drawSkill1Effects,
-  drawSkill2Effects,
-  drawSkill3Effect,
+  drawLineProjectileEffects,
+  drawCloseArcEffects,
+  drawGuardCounterEffect,
   drawPlayerSkillEffects,
   drawUltimateEffects,
   drawUltimateTrails,
@@ -241,9 +241,9 @@ function loop(ts: number) {
     updateParticles();
     updateSkillBursts();
     updateHitBursts();
-    updateSkill1Effects();
-    updateSkill2Effects();
-    updateSkill3Effect();
+    updateLineProjectileEffects();
+    updateCloseArcEffects();
+    updateGuardCounterEffect();
     updatePlayerSkillEffects();
     updateUltimateEffects();
     updateUltimateTrails();
@@ -285,7 +285,7 @@ function loop(ts: number) {
   }
 
   drawPlayer();
-  drawSkill3Effect();
+  drawGuardCounterEffect();
   drawSkillBursts();
   drawUltimateAfterimageSlashes();
   drawWardenAuraIndicators();
@@ -296,9 +296,9 @@ function loop(ts: number) {
   drawMirrorDreamEffects();
   drawLanternEmberEffects();
   drawBloodMoonEffects();
-  drawSkill1Effects();
+  drawLineProjectileEffects();
   drawGroundTileFront();
-  drawSkill2Effects();
+  drawCloseArcEffects();
   drawPlayerSkillEffects();
   drawBindingZonesFront();
   drawHitBursts();

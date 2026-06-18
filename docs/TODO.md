@@ -143,7 +143,7 @@
 * [ ] 将当前 `SKILLS` 和技能特效配置逐步整理到 `SKILL_DEFS`。
   * 来源：`docs/game-design/content-roadmap.md`、`docs/numeric-system/implementation-order.md`。
   * 验收：当前三招默认 Lv1，可通过局内奖励提升到 Lv3；未解锁技能不出现在 HUD 或升级候选里。
-* [ ] 修复 `skill1`、`skill2` 在游戏里的帧数 / 播放节奏问题。
+* [ ] 修复 `line_projectile`、`close_arc` 在游戏里的帧数 / 播放节奏问题。
   * 来源：旧 `docs/TODO.md`。
   * 验收：技能释放、命中、消散和图集帧切片一致，不出现错帧、跳帧或持续时间与伤害窗口不一致。
 * [ ] 把大招从瞬时范围爆发改为有限持续时间强化状态，并接入 `ultimateLevel`。

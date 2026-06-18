@@ -95,9 +95,9 @@ export function createInitialState(): GameState {
     chests: [],
     skillBursts: [],
     hitBursts: [],
-    skill1Effects: [],
-    skill2Effects: [],
-    skill3Effect: null,
+    lineProjectileEffects: [],
+    closeArcEffects: [],
+    guardCounterEffect: null,
     playerSkillEffects: [],
     ultimateEffects: [],
     ultimateTrails: [],
@@ -134,8 +134,8 @@ export function resetState() {
   resetCollection(state.particles, next.particles);
   resetCollection(state.skillBursts, next.skillBursts);
   resetCollection(state.hitBursts, next.hitBursts);
-  resetCollection(state.skill1Effects, next.skill1Effects);
-  resetCollection(state.skill2Effects, next.skill2Effects);
+  resetCollection(state.lineProjectileEffects, next.lineProjectileEffects);
+  resetCollection(state.closeArcEffects, next.closeArcEffects);
   resetCollection(state.playerSkillEffects, next.playerSkillEffects);
   resetCollection(state.ultimateEffects, next.ultimateEffects);
   resetCollection(state.ultimateTrails, next.ultimateTrails);
@@ -151,7 +151,7 @@ export function resetState() {
   resetCollection(state.lanternEmberAwakenedGrids, next.lanternEmberAwakenedGrids);
   resetCollection(state.lanternEmberAshZones, next.lanternEmberAshZones);
   resetCollection(state.bloodMoonEffects, next.bloodMoonEffects);
-  state.skill3Effect = next.skill3Effect;
+  state.guardCounterEffect = next.guardCounterEffect;
   resetCollection(state.projectiles, next.projectiles);
   resetCollection(state.bindingZones, next.bindingZones);
   state.elapsed = next.elapsed;

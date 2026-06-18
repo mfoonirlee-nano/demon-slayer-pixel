@@ -54,9 +54,9 @@ import {
   BLOOD_MOON_SIXFOLD_EFFECT_SHEET,
   BLOOD_MOON_MANY_FACES_EFFECT_SHEET,
   SKILLS,
-  SKILL1_EFFECT_SHEET,
-  SKILL2_EFFECT_SHEET,
-  SKILL3_EFFECT_SHEET,
+  LINE_PROJECTILE_EFFECT_SHEET,
+  CLOSE_ARC_EFFECT_SHEET,
+  GUARD_COUNTER_EFFECT_SHEET,
   PLAYER_SKILL_EFFECT_SHEETS,
   ULTIMATE_SKILL_SHEET,
   ULTIMATE_SKILL_EFFECT_SHEET,
@@ -193,9 +193,9 @@ export function loadSprites(): Promise<void> {
   jobs.push(loadImage(GROUND_TILE_SPRITES.stone.src).then((img) => { GROUND_TILE_SPRITES.stone.image = img; }));
   jobs.push(loadImage(GROUND_TILE_SPRITES.stone.frontSrc).then((img) => { GROUND_TILE_SPRITES.stone.frontImage = img; }));
   jobs.push(loadImage(PLATFORM_SPRITES.src).then((img) => { PLATFORM_SPRITES.image = img; }));
-  jobs.push(loadImage(SKILL1_EFFECT_SHEET.src).then((img) => { SKILL1_EFFECT_SHEET.image = img; }));
-  jobs.push(loadImage(SKILL2_EFFECT_SHEET.src).then((img) => { SKILL2_EFFECT_SHEET.image = img; }));
-  jobs.push(loadImage(SKILL3_EFFECT_SHEET.src).then((img) => { SKILL3_EFFECT_SHEET.image = img; }));
+  jobs.push(loadImage(LINE_PROJECTILE_EFFECT_SHEET.src).then((img) => { LINE_PROJECTILE_EFFECT_SHEET.image = img; }));
+  jobs.push(loadImage(CLOSE_ARC_EFFECT_SHEET.src).then((img) => { CLOSE_ARC_EFFECT_SHEET.image = img; }));
+  jobs.push(loadImage(GUARD_COUNTER_EFFECT_SHEET.src).then((img) => { GUARD_COUNTER_EFFECT_SHEET.image = img; }));
   for (const sheet of Object.values(PLAYER_SKILL_EFFECT_SHEETS)) {
     if (!sheet) continue;
     jobs.push(loadImage(sheet.src).then((img) => { sheet.image = img; }));

@@ -4,18 +4,18 @@ import type { BinderPhase, BrutePhase, BurrowerPhase, CasterPhase, CrawlerPhase,
 
 export const SKILLS: Skill[] = [
   {
-    id: SKILL_IDS.skill1,
-    name: "水龙破",
+    id: SKILL_IDS.lineProjectile,
+    name: "潮龙破",
     description: "向前释放一条水龙冲击，给路径上的敌人造成伤害。",
     typeTag: "line_projectile",
     implemented: true,
-    iconSrc: "assets/sprites/skills/skill1/icon.png",
+    iconSrc: "assets/sprites/skills/line_projectile/icon.png",
     levelDescriptions: {
       1: "向前释放水龙，造成窄长路径伤害。",
       2: "水龙伤害提升，命中反馈更稳定。",
       3: "水龙伤害进一步提升，直线压制更可靠。",
     },
-    src: "assets/sprites/skills/skill1/skill.png",
+    src: "assets/sprites/skills/line_projectile/skill.png",
     frameCount: 5,
     frameW: 800,
     image: null,
@@ -29,18 +29,18 @@ export const SKILLS: Skill[] = [
     color: "#7fdfff",
   },
   {
-    id: SKILL_IDS.skill2,
+    id: SKILL_IDS.closeArc,
     name: "打潮刃",
     description: "向前挥出大范围水之呼吸剑气，席卷路径上的敌人。",
     typeTag: "close_arc",
     implemented: true,
-    iconSrc: "assets/sprites/skills/skill2/icon.png",
+    iconSrc: "assets/sprites/skills/close_arc/icon.png",
     levelDescriptions: {
       1: "前方月牙水刃，短距离宽判定。",
       2: "潮刃伤害提升，近身解围更稳定。",
       3: "潮刃伤害进一步提升，贴身爆发更强。",
     },
-    src: "assets/sprites/skills/skill2/skill.png",
+    src: "assets/sprites/skills/close_arc/skill.png",
     frameCount: 6,
     frameW: 500,
     image: null,
@@ -53,18 +53,18 @@ export const SKILLS: Skill[] = [
     color: "#8edbff",
   },
   {
-    id: SKILL_IDS.skill3,
-    name: "静水返",
+    id: SKILL_IDS.guardCounter,
+    name: "镜潮返",
     description: "展开防护水幕，受到攻击时反击身边的敌人。",
     typeTag: "guard_counter",
     implemented: true,
-    iconSrc: "assets/sprites/skills/skill3/icon.png",
+    iconSrc: "assets/sprites/skills/guard_counter/icon.png",
     levelDescriptions: {
       1: "展开防护水幕，受击时抵挡并反击近处目标。",
       2: "反击伤害提升，防守收益更高。",
       3: "反击伤害进一步提升，容错收益更高。",
     },
-    src: "assets/sprites/skills/skill3/skill.png",
+    src: "assets/sprites/skills/guard_counter/skill.png",
     frameCount: 5,
     frameW: 540,
     image: null,
@@ -780,15 +780,15 @@ export const BURROWER_SHEETS: Record<BurrowerPhase, SpriteSheet> = {
 export const ENEMY_REF_DRAW_W = 120;
 export const ENEMY_DRAW_SCALE = ENEMY_REF_DRAW_W / ENEMY_SHEETS[1].frameW;
 
-export const SKILL1_EFFECT_SHEET: SpriteSheet = {
-  src: "assets/sprites/skills/skill1/effect.png",
+export const LINE_PROJECTILE_EFFECT_SHEET: SpriteSheet = {
+  src: "assets/sprites/skills/line_projectile/effect.png",
   frameW: 480,
   frameH: 160,
   count: 5,
   image: null,
 };
 
-export const SKILL1_EFFECT_CONFIG = {
+export const LINE_PROJECTILE_EFFECT_CONFIG = {
   // draw scale relative to frame height
   drawScale: 0.625,
   // pull the projectile start back toward the cast sprite so the visible dragon
@@ -806,15 +806,15 @@ export const SKILL1_EFFECT_CONFIG = {
   hitCooldown: 20,
 } as const;
 
-export const SKILL2_EFFECT_SHEET: SpriteSheet = {
-  src: "assets/sprites/skills/skill2/effect.png",
+export const CLOSE_ARC_EFFECT_SHEET: SpriteSheet = {
+  src: "assets/sprites/skills/close_arc/effect.png",
   frameW: 540,
   frameH: 420,
   count: 6,
   image: null,
 };
 
-export const SKILL2_EFFECT_CONFIG = {
+export const CLOSE_ARC_EFFECT_CONFIG = {
   drawScale: 0.667,
   groundBaselineY: 365,
   visualBackOffset: 56,
@@ -826,15 +826,15 @@ export const SKILL2_EFFECT_CONFIG = {
   hitCooldown: 20,
 } as const;
 
-export const SKILL3_EFFECT_SHEET: SpriteSheet = {
-  src: "assets/sprites/skills/skill3/effect.png",
+export const GUARD_COUNTER_EFFECT_SHEET: SpriteSheet = {
+  src: "assets/sprites/skills/guard_counter/effect.png",
   frameW: 420,
   frameH: 320,
   count: 6,
   image: null,
 };
 
-export const SKILL3_EFFECT_CONFIG = {
+export const GUARD_COUNTER_EFFECT_CONFIG = {
   drawScale: 0.72,
   centerYOffset: 72,
   frameDuration: 6,

@@ -10,9 +10,9 @@ export const PLAYER_ANIMATION_STATES = {
 } as const satisfies Record<PlayerAnimationState, PlayerAnimationState>;
 
 export const SKILL_IDS = {
-  skill1: "skill1",
-  skill2: "skill2",
-  skill3: "skill3",
+  lineProjectile: "line_projectile",
+  closeArc: "close_arc",
+  guardCounter: "guard_counter",
   dashReposition: "dash_reposition",
   vortexControl: "vortex_control",
   armorBreak: "armor_break",

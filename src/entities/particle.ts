@@ -5,12 +5,12 @@ import {
   HIT_BURST_CONFIG,
   SKILL_BURST_VISUAL,
   HIT_BURST_VISUAL,
-  SKILL1_EFFECT_SHEET,
-  SKILL1_EFFECT_CONFIG,
-  SKILL2_EFFECT_SHEET,
-  SKILL2_EFFECT_CONFIG,
-  SKILL3_EFFECT_SHEET,
-  SKILL3_EFFECT_CONFIG,
+  LINE_PROJECTILE_EFFECT_SHEET,
+  LINE_PROJECTILE_EFFECT_CONFIG,
+  CLOSE_ARC_EFFECT_SHEET,
+  CLOSE_ARC_EFFECT_CONFIG,
+  GUARD_COUNTER_EFFECT_SHEET,
+  GUARD_COUNTER_EFFECT_CONFIG,
   PLAYER_SKILL_EFFECT_SHEETS,
   ULTIMATE_SKILL_EFFECT_SHEET,
   PLAYER_COMBAT,
@@ -24,8 +24,8 @@ import type {
   HitBurstState,
   ParticleState,
   PlayerSkillEffectState,
-  Skill1EffectState,
-  Skill2EffectState,
+  LineProjectileEffectState,
+  CloseArcEffectState,
   SkillBurstState,
   SkillLevel,
   UltimateAfterimageSlashState,
@@ -669,15 +669,15 @@ export function updateSkillBursts() {
   }
 }
 
-export function updateSkill1Effects() {
-  const sheet = SKILL1_EFFECT_SHEET;
-  const drawW = sheet.frameW * SKILL1_EFFECT_CONFIG.drawScale;
-  const drawH = sheet.frameH * SKILL1_EFFECT_CONFIG.drawScale;
+export function updateLineProjectileEffects() {
+  const sheet = LINE_PROJECTILE_EFFECT_SHEET;
+  const drawW = sheet.frameW * LINE_PROJECTILE_EFFECT_CONFIG.drawScale;
+  const drawH = sheet.frameH * LINE_PROJECTILE_EFFECT_CONFIG.drawScale;
   const p = state.player;
-  const baseDamage = (p.baseAttack + p.attackBonus) * SKILL1_EFFECT_CONFIG.damageMultiplier;
+  const baseDamage = (p.baseAttack + p.attackBonus) * LINE_PROJECTILE_EFFECT_CONFIG.damageMultiplier;
 
-  for (let i = state.skill1Effects.length - 1; i >= 0; i -= 1) {
-    const eff = state.skill1Effects[i] as Skill1EffectState;
+  for (let i = state.lineProjectileEffects.length - 1; i >= 0; i -= 1) {
+    const eff = state.lineProjectileEffects[i] as LineProjectileEffectState;
     const damage = baseDamage * eff.damageMultiplier;
     let hitTargets = 0;
     let bossHit = false;
@@ -685,12 +685,12 @@ export function updateSkill1Effects() {
     eff.elapsed += 1;
 
     // advance frame
-    const rawFrame = Math.floor(eff.elapsed / SKILL1_EFFECT_CONFIG.frameDuration);
+    const rawFrame = Math.floor(eff.elapsed / LINE_PROJECTILE_EFFECT_CONFIG.frameDuration);
     if (rawFrame < sheet.count) {
       eff.frame = rawFrame;
     } else {
-      const loopLen = sheet.count - SKILL1_EFFECT_CONFIG.loopFromFrame;
-      eff.frame = SKILL1_EFFECT_CONFIG.loopFromFrame + ((rawFrame - sheet.count) % loopLen);
+      const loopLen = sheet.count - LINE_PROJECTILE_EFFECT_CONFIG.loopFromFrame;
+      eff.frame = LINE_PROJECTILE_EFFECT_CONFIG.loopFromFrame + ((rawFrame - sheet.count) % loopLen);
     }
 
     // hitbox of the effect
@@ -710,7 +710,7 @@ export function updateSkill1Effects() {
         { x: effLeft, y: effTop, w: drawW, h: drawH },
         enemy,
       );
-      damageEnemy(enemy, damage, SKILL1_EFFECT_CONFIG.hitCooldown);
+      damageEnemy(enemy, damage, LINE_PROJECTILE_EFFECT_CONFIG.hitCooldown);
       hitTargets += 1;
       emitSlash(hitX, hitY, PLAYER_COMBAT.effects.skillEnemyBurstColor, enemy.w);
       emitHitBurst(hitX, hitY, PLAYER_COMBAT.effects.skillEnemyBurstColor, PLAYER_COMBAT.skillEnemyBurstPower);
@@ -723,7 +723,7 @@ export function updateSkill1Effects() {
       const overlapX = effRight > boss.x && effLeft < boss.x + boss.w;
       const overlapY = effBottom > boss.y && effTop < boss.y + boss.h;
       if (overlapX && overlapY) {
-        damageBoss(boss, damage, SKILL1_EFFECT_CONFIG.hitCooldown);
+        damageBoss(boss, damage, LINE_PROJECTILE_EFFECT_CONFIG.hitCooldown);
         bossHit = true;
         const { x: bossHitX, y: bossHitY } = overlapHitPoint(
           { x: effLeft, y: effTop, w: drawW, h: drawH },
@@ -742,19 +742,19 @@ export function updateSkill1Effects() {
     // despawn when fully offscreen
     const offLeft = eff.facing === -1 && effRight < 0;
     const offRight2 = eff.facing === 1 && effLeft > WIDTH;
-    if (offLeft || offRight2) state.skill1Effects.splice(i, 1);
+    if (offLeft || offRight2) state.lineProjectileEffects.splice(i, 1);
   }
 }
 
-export function updateSkill2Effects() {
-  const sheet = SKILL2_EFFECT_SHEET;
-  const drawW = sheet.frameW * SKILL2_EFFECT_CONFIG.drawScale;
-  const drawH = sheet.frameH * SKILL2_EFFECT_CONFIG.drawScale;
+export function updateCloseArcEffects() {
+  const sheet = CLOSE_ARC_EFFECT_SHEET;
+  const drawW = sheet.frameW * CLOSE_ARC_EFFECT_CONFIG.drawScale;
+  const drawH = sheet.frameH * CLOSE_ARC_EFFECT_CONFIG.drawScale;
   const p = state.player;
-  const baseDamage = (p.baseAttack + p.attackBonus) * SKILL2_EFFECT_CONFIG.damageMultiplier;
+  const baseDamage = (p.baseAttack + p.attackBonus) * CLOSE_ARC_EFFECT_CONFIG.damageMultiplier;
 
-  for (let i = state.skill2Effects.length - 1; i >= 0; i -= 1) {
-    const eff = state.skill2Effects[i] as Skill2EffectState;
+  for (let i = state.closeArcEffects.length - 1; i >= 0; i -= 1) {
+    const eff = state.closeArcEffects[i] as CloseArcEffectState;
     const damage = baseDamage * eff.damageMultiplier;
     let hitTargets = 0;
     let bossHit = false;
@@ -762,7 +762,7 @@ export function updateSkill2Effects() {
     eff.traveled += Math.abs(eff.vx);
     eff.elapsed += 1;
 
-    const rawFrame = Math.floor(eff.elapsed / SKILL2_EFFECT_CONFIG.frameDuration);
+    const rawFrame = Math.floor(eff.elapsed / CLOSE_ARC_EFFECT_CONFIG.frameDuration);
     eff.frame = Math.min(sheet.count - 1, rawFrame);
 
     const effLeft = eff.x - drawW / 2;
@@ -780,7 +780,7 @@ export function updateSkill2Effects() {
         { x: effLeft, y: effTop, w: drawW, h: drawH },
         enemy,
       );
-      damageEnemy(enemy, damage, SKILL2_EFFECT_CONFIG.hitCooldown);
+      damageEnemy(enemy, damage, CLOSE_ARC_EFFECT_CONFIG.hitCooldown);
       hitTargets += 1;
       emitSlash(hitX, hitY, PLAYER_COMBAT.effects.skillEnemyBurstColor, enemy.w);
       emitHitBurst(hitX, hitY, PLAYER_COMBAT.effects.skillEnemyBurstColor, PLAYER_COMBAT.skillEnemyBurstPower);
@@ -792,7 +792,7 @@ export function updateSkill2Effects() {
       const overlapX = effRight > boss.x && effLeft < boss.x + boss.w;
       const overlapY = effBottom > boss.y && effTop < boss.y + boss.h;
       if (overlapX && overlapY) {
-        damageBoss(boss, damage, SKILL2_EFFECT_CONFIG.hitCooldown);
+        damageBoss(boss, damage, CLOSE_ARC_EFFECT_CONFIG.hitCooldown);
         bossHit = true;
         const { x: bossHitX, y: bossHitY } = overlapHitPoint(
           { x: effLeft, y: effTop, w: drawW, h: drawH },
@@ -808,7 +808,7 @@ export function updateSkill2Effects() {
       eff.refundedSkillEnergy = true;
     }
 
-    if (eff.traveled >= SKILL2_EFFECT_CONFIG.maxTravel) state.skill2Effects.splice(i, 1);
+    if (eff.traveled >= CLOSE_ARC_EFFECT_CONFIG.maxTravel) state.closeArcEffects.splice(i, 1);
   }
 }
 
@@ -1169,13 +1169,13 @@ export function drawParticles() {
   }
 }
 
-export function drawSkill1Effects() {
+export function drawLineProjectileEffects() {
   if (!ctx) return;
-  const sheet = SKILL1_EFFECT_SHEET;
+  const sheet = LINE_PROJECTILE_EFFECT_SHEET;
   if (!sheet.image) return;
-  const drawH = sheet.frameH * SKILL1_EFFECT_CONFIG.drawScale;
-  const drawW = sheet.frameW * SKILL1_EFFECT_CONFIG.drawScale;
-  for (const e of state.skill1Effects) {
+  const drawH = sheet.frameH * LINE_PROJECTILE_EFFECT_CONFIG.drawScale;
+  const drawW = sheet.frameW * LINE_PROJECTILE_EFFECT_CONFIG.drawScale;
+  for (const e of state.lineProjectileEffects) {
     const sx = e.frame * sheet.frameW;
     ctx.save();
     ctx.translate(e.x, e.y + drawH / 2);
@@ -1185,19 +1185,19 @@ export function drawSkill1Effects() {
   }
 }
 
-export function drawSkill2Effects() {
+export function drawCloseArcEffects() {
   if (!ctx) return;
-  const sheet = SKILL2_EFFECT_SHEET;
+  const sheet = CLOSE_ARC_EFFECT_SHEET;
   if (!sheet.image) return;
-  const drawH = sheet.frameH * SKILL2_EFFECT_CONFIG.drawScale;
-  const drawW = sheet.frameW * SKILL2_EFFECT_CONFIG.drawScale;
-  for (const e of state.skill2Effects) {
+  const drawH = sheet.frameH * CLOSE_ARC_EFFECT_CONFIG.drawScale;
+  const drawW = sheet.frameW * CLOSE_ARC_EFFECT_CONFIG.drawScale;
+  for (const e of state.closeArcEffects) {
     const sx = e.frame * sheet.frameW;
-    const fadeT = Math.max(0, e.traveled / SKILL2_EFFECT_CONFIG.maxTravel * 2 - 1);
+    const fadeT = Math.max(0, e.traveled / CLOSE_ARC_EFFECT_CONFIG.maxTravel * 2 - 1);
     const alpha = 1 - fadeT * 0.7;
     ctx.save();
     ctx.globalAlpha = alpha;
-    ctx.translate(e.x - e.facing * SKILL2_EFFECT_CONFIG.visualBackOffset, e.y + drawH / 2);
+    ctx.translate(e.x - e.facing * CLOSE_ARC_EFFECT_CONFIG.visualBackOffset, e.y + drawH / 2);
     ctx.scale(e.facing, 1);
     ctx.drawImage(sheet.image, sx, 0, sheet.frameW, sheet.frameH, -drawW / 2, -drawH / 2, drawW, drawH);
     ctx.restore();
@@ -1241,83 +1241,83 @@ export function drawPlayerSkillEffects() {
   }
 }
 
-export function updateSkill3Effect() {
-  const eff = state.skill3Effect;
+export function updateGuardCounterEffect() {
+  const eff = state.guardCounterEffect;
   if (!eff) return;
   eff.elapsed += 1;
   if (eff.barrierFlash > 0) eff.barrierFlash -= 1;
   if (eff.hitsRemaining <= 0 && eff.barrierFlash <= 0) {
-    state.skill3Effect = null;
+    state.guardCounterEffect = null;
     return;
   }
 
   if (eff.barrierFlash > 0) {
-    const flashElapsed = SKILL3_EFFECT_CONFIG.barrierFlashFrames - eff.barrierFlash;
+    const flashElapsed = GUARD_COUNTER_EFFECT_CONFIG.barrierFlashFrames - eff.barrierFlash;
     eff.frame = Math.min(
-      SKILL3_EFFECT_SHEET.count - 1,
-      Math.floor(flashElapsed / SKILL3_EFFECT_CONFIG.barrierFrameDuration),
+      GUARD_COUNTER_EFFECT_SHEET.count - 1,
+      Math.floor(flashElapsed / GUARD_COUNTER_EFFECT_CONFIG.barrierFrameDuration),
     );
     return;
   }
 
-  const rawFrame = Math.floor(eff.elapsed / SKILL3_EFFECT_CONFIG.frameDuration);
-  eff.frame = eff.elapsed < SKILL3_EFFECT_CONFIG.startupFrames
-    ? Math.min(SKILL3_EFFECT_SHEET.count - 1, rawFrame)
-    : rawFrame % SKILL3_EFFECT_SHEET.count;
+  const rawFrame = Math.floor(eff.elapsed / GUARD_COUNTER_EFFECT_CONFIG.frameDuration);
+  eff.frame = eff.elapsed < GUARD_COUNTER_EFFECT_CONFIG.startupFrames
+    ? Math.min(GUARD_COUNTER_EFFECT_SHEET.count - 1, rawFrame)
+    : rawFrame % GUARD_COUNTER_EFFECT_SHEET.count;
 }
 
-export function drawSkill3Effect() {
+export function drawGuardCounterEffect() {
   if (!ctx) return;
-  const eff = state.skill3Effect;
+  const eff = state.guardCounterEffect;
   if (!eff) return;
-  const sheet = SKILL3_EFFECT_SHEET;
+  const sheet = GUARD_COUNTER_EFFECT_SHEET;
   const p = state.player;
   const cx = p.x + p.w / 2;
   const feetY = p.y + p.h;
-  const remainingRatio = Math.max(0, eff.hitsRemaining / SKILL3_EFFECT_CONFIG.maxHits);
-  const showStartupBarrier = eff.elapsed < SKILL3_EFFECT_CONFIG.startupFrames;
+  const remainingRatio = Math.max(0, eff.hitsRemaining / GUARD_COUNTER_EFFECT_CONFIG.maxHits);
+  const showStartupBarrier = eff.elapsed < GUARD_COUNTER_EFFECT_CONFIG.startupFrames;
   const showHitBarrier = eff.barrierFlash > 0;
 
   if (sheet.image && (showStartupBarrier || showHitBarrier)) {
-    const scale = showHitBarrier ? SKILL3_EFFECT_CONFIG.barrierDrawScale : SKILL3_EFFECT_CONFIG.drawScale;
-    const centerYOffset = showHitBarrier ? SKILL3_EFFECT_CONFIG.barrierCenterYOffset : SKILL3_EFFECT_CONFIG.centerYOffset;
+    const scale = showHitBarrier ? GUARD_COUNTER_EFFECT_CONFIG.barrierDrawScale : GUARD_COUNTER_EFFECT_CONFIG.drawScale;
+    const centerYOffset = showHitBarrier ? GUARD_COUNTER_EFFECT_CONFIG.barrierCenterYOffset : GUARD_COUNTER_EFFECT_CONFIG.centerYOffset;
     const drawW = sheet.frameW * scale;
     const drawH = sheet.frameH * scale;
     const cy = feetY - centerYOffset;
     const sx = eff.frame * sheet.frameW;
     const barrierRatio = showHitBarrier
-      ? eff.barrierFlash / SKILL3_EFFECT_CONFIG.barrierFlashFrames
-      : 1 - eff.elapsed / SKILL3_EFFECT_CONFIG.startupFrames;
+      ? eff.barrierFlash / GUARD_COUNTER_EFFECT_CONFIG.barrierFlashFrames
+      : 1 - eff.elapsed / GUARD_COUNTER_EFFECT_CONFIG.startupFrames;
     ctx.save();
     ctx.globalAlpha = Math.min(
-      SKILL3_EFFECT_CONFIG.barrierAlphaMax,
-      SKILL3_EFFECT_CONFIG.barrierAlphaMin
-        + barrierRatio * (SKILL3_EFFECT_CONFIG.barrierAlphaMax - SKILL3_EFFECT_CONFIG.barrierAlphaMin),
+      GUARD_COUNTER_EFFECT_CONFIG.barrierAlphaMax,
+      GUARD_COUNTER_EFFECT_CONFIG.barrierAlphaMin
+        + barrierRatio * (GUARD_COUNTER_EFFECT_CONFIG.barrierAlphaMax - GUARD_COUNTER_EFFECT_CONFIG.barrierAlphaMin),
     );
     ctx.globalCompositeOperation = "lighter";
     ctx.drawImage(sheet.image, sx, 0, sheet.frameW, sheet.frameH, cx - drawW / 2, cy - drawH / 2, drawW, drawH);
     ctx.restore();
   }
 
-  const pulse = (Math.sin(eff.elapsed * SKILL3_EFFECT_CONFIG.ripplePulseSpeed) + 1) / 2;
-  const rippleAlpha = SKILL3_EFFECT_CONFIG.rippleAlphaMin + remainingRatio * SKILL3_EFFECT_CONFIG.rippleAlphaRange;
-  const rippleW = SKILL3_EFFECT_CONFIG.rippleWidth + pulse * SKILL3_EFFECT_CONFIG.ripplePulseWidth;
-  const rippleH = SKILL3_EFFECT_CONFIG.rippleHeight + pulse * SKILL3_EFFECT_CONFIG.ripplePulseHeight;
+  const pulse = (Math.sin(eff.elapsed * GUARD_COUNTER_EFFECT_CONFIG.ripplePulseSpeed) + 1) / 2;
+  const rippleAlpha = GUARD_COUNTER_EFFECT_CONFIG.rippleAlphaMin + remainingRatio * GUARD_COUNTER_EFFECT_CONFIG.rippleAlphaRange;
+  const rippleW = GUARD_COUNTER_EFFECT_CONFIG.rippleWidth + pulse * GUARD_COUNTER_EFFECT_CONFIG.ripplePulseWidth;
+  const rippleH = GUARD_COUNTER_EFFECT_CONFIG.rippleHeight + pulse * GUARD_COUNTER_EFFECT_CONFIG.ripplePulseHeight;
   ctx.save();
   ctx.globalCompositeOperation = "lighter";
   ctx.strokeStyle = `rgba(155,230,255,${rippleAlpha})`;
   ctx.lineWidth = 2;
   ctx.beginPath();
-  ctx.ellipse(cx, feetY - SKILL3_EFFECT_CONFIG.rippleYOffset, rippleW / 2, rippleH / 2, 0, 0, FULL_CIRCLE_RADIANS);
+  ctx.ellipse(cx, feetY - GUARD_COUNTER_EFFECT_CONFIG.rippleYOffset, rippleW / 2, rippleH / 2, 0, 0, FULL_CIRCLE_RADIANS);
   ctx.stroke();
-  ctx.strokeStyle = `rgba(210,248,255,${rippleAlpha * SKILL3_EFFECT_CONFIG.rippleInnerAlphaScale})`;
+  ctx.strokeStyle = `rgba(210,248,255,${rippleAlpha * GUARD_COUNTER_EFFECT_CONFIG.rippleInnerAlphaScale})`;
   ctx.lineWidth = 1;
   ctx.beginPath();
   ctx.ellipse(
     cx,
-    feetY - SKILL3_EFFECT_CONFIG.rippleYOffset,
-    rippleW * SKILL3_EFFECT_CONFIG.rippleInnerWidthScale,
-    rippleH * SKILL3_EFFECT_CONFIG.rippleInnerHeightScale,
+    feetY - GUARD_COUNTER_EFFECT_CONFIG.rippleYOffset,
+    rippleW * GUARD_COUNTER_EFFECT_CONFIG.rippleInnerWidthScale,
+    rippleH * GUARD_COUNTER_EFFECT_CONFIG.rippleInnerHeightScale,
     0,
     0,
     FULL_CIRCLE_RADIANS,
