@@ -38,6 +38,7 @@ import { bindingZonePlayerMoveScale } from "./enemies/binder";
 import { defeatBoss } from "./bosses/defeat";
 import { keys } from "../input";
 import { hasDebugInfiniteHealth, hasDebugInfiniteSkillCharge } from "../debug";
+import type { Skill } from "../types/assets";
 import {
   applySkillCastEquipmentEffects,
   applySkillHitEquipmentRefund,
@@ -53,6 +54,8 @@ import { isGenericPlayerSkillId } from "../systems/playerSkills";
 const HALF_RATIO = 0.5;
 const FULL_CIRCLE = Math.PI * 2;
 const DASH_REPOSITION_INVINCIBLE_REFRESH_FRAMES = 2;
+const SKILL_ANIMATION_BASE_FPS = 60;
+const ANTI_AIR_MULTI_SKILL_ANIM_FPS = 8;
 
 const PLAYER_BINDING_SLOW_EFFECT = {
   filter: "sepia(0.38) saturate(1.55) hue-rotate(282deg) brightness(0.86)",
@@ -75,6 +78,22 @@ const PLAYER_BINDING_SLOW_EFFECT = {
   lineWidth: 2,
   accentLineWidth: 1,
 } as const;
+
+function playerSkillCastAnimFps(skill: Skill) {
+  return skill.id === SKILL_IDS.antiAirMulti ? ANTI_AIR_MULTI_SKILL_ANIM_FPS : PLAYER_DRAW.skillAnimFps;
+}
+
+function playerSkillCastFrames(skill: Skill) {
+  return Math.ceil(skill.frameCount * SKILL_ANIMATION_BASE_FPS / playerSkillCastAnimFps(skill));
+}
+
+function playerSkillCastFrame(skill: Skill, remainingFrames: number) {
+  const elapsedGameFrames = playerSkillCastFrames(skill) - remainingFrames;
+  return Math.min(
+    skill.frameCount - 1,
+    Math.floor(elapsedGameFrames * playerSkillCastAnimFps(skill) / SKILL_ANIMATION_BASE_FPS),
+  );
+}
 
 function lanternAshZonePlayerMoveScale() {
   for (const zone of state.lanternEmberAshZones) {
@@ -247,7 +266,7 @@ export function castSelectedSkill() {
     syncSkillCharges();
   }
   p.skillFlash = 0;
-  p.skillTimer = Math.ceil(skill.frameCount * 60 / PLAYER_DRAW.skillAnimFps);
+  p.skillTimer = playerSkillCastFrames(skill);
   p.skillEffectSpawned = !(
     skill.id === SKILL_IDS.skill1
     || skill.id === SKILL_IDS.skill2
@@ -592,7 +611,7 @@ export function updatePlayer() {
       return;
     }
     if (!p.skillEffectSpawned) {
-      const total = Math.ceil(skill.frameCount * 60 / PLAYER_DRAW.skillAnimFps);
+      const total = playerSkillCastFrames(skill);
       const halfway = Math.floor(total / 2);
       if (p.skillTimer <= halfway) {
         p.skillEffectSpawned = true;
@@ -826,9 +845,7 @@ export function drawPlayer() {
     const skill = selectedSkill(state);
     if (!skill) return;
     if (skill.image) {
-      const total = Math.ceil(skill.frameCount * 60 / PLAYER_DRAW.skillAnimFps);
-      const elapsedGameFrames = total - p.skillTimer;
-      const frame = Math.min(skill.frameCount - 1, Math.floor(elapsedGameFrames * PLAYER_DRAW.skillAnimFps / 60));
+      const frame = playerSkillCastFrame(skill, p.skillTimer);
 
       const srcH = skill.frameH || skill.image.height;
       const drawH = skill.drawScale ? srcH * skill.drawScale : PLAYER_DRAW.fallbackSkillDrawH;
