@@ -50,10 +50,20 @@ import {
 const FULL_CIRCLE_RADIANS = Math.PI * 2;
 const DEFAULT_HIT_BURST_COLOR = "#9feaff";
 const RETURNING_BLADE_SPEED = 8;
-const RAIN_LINE_FALL_SPEED = 4.8;
-const RAIN_LINE_DRIFT_X = -2.1;
-const RAIN_LINE_PLAYER_CLEARANCE = 16;
-const RAIN_LINE_FORWARD_SPACING = 42;
+const RAIN_LINE_EFFECT_Y_OFFSET = 44;
+const RAIN_LINE_TARGET_LEAD_FRAMES = 6;
+const RAIN_LINE_TARGET_MAX_FORWARD_DISTANCE = 380;
+const RAIN_LINE_FALLBACK_FORWARD_DISTANCE = 300;
+const RAIN_LINE_FALLBACK_SPREAD = 70;
+const RAIN_LINE_FALLBACK_SPACING = 28;
+const RAIN_LINE_TARGET_SIDE_OFFSET = 28;
+const RAIN_LINE_TARGET_X_SCATTER = 8;
+const RAIN_LINE_TARGET_Y_SCATTER = 7;
+const RAIN_LINE_ANIM_STAGGER_FRAMES = 2;
+const RAIN_LINE_ANIM_STAGGER_CYCLE = 8;
+const RAIN_LINE_MAX_PREDICT_X = 36;
+const RAIN_LINE_TARGET_Y_BIAS = 0.15;
+const RAIN_LINE_EFFECT_BOTTOM_TRANSPARENT_PX = 18;
 const VORTEX_CAST_FORWARD_OFFSET = 86;
 const VORTEX_GROUND_Y_OFFSET = 16;
 const VORTEX_VERTICAL_RADIUS_SCALE = 0.58;
@@ -359,6 +369,20 @@ type ArmorBreakCollision =
   | { type: "enemy"; enemy: EnemyState; enemyIndex: number; distance: number }
   | { type: "boss"; boss: NonNullable<BossState>; distance: number };
 
+type RainLineCandidate = {
+  x: number;
+  y: number;
+  vx: number;
+  score: number;
+  forwardDistance: number;
+};
+
+type RainLineTarget = {
+  x: number;
+  y: number;
+  elapsed: number;
+};
+
 function armorBreakTravelBox(effect: PlayerSkillEffectState, previousX: number, previousY: number): RectLike {
   const previous = rectFromCenter(previousX, previousY, effect.w, effect.h);
   const current = effectBox(effect);
@@ -402,30 +426,89 @@ function findArmorBreakCollision(effect: PlayerSkillEffectState, travelBox: Rect
 function rainLineTargets(count: number) {
   const player = state.player;
   const playerCenterX = player.x + player.w / 2;
-  const sheet = PLAYER_SKILL_EFFECT_SHEETS[SKILL_IDS.antiAirMulti]!;
-  const tuning = GENERIC_PLAYER_SKILL_TUNING[SKILL_IDS.antiAirMulti];
-  const firstForwardOffset = player.w / 2 + sheet.frameW * tuning.drawScale / 2 + RAIN_LINE_PLAYER_CLEARANCE;
-  const lastForwardOffset = firstForwardOffset + RAIN_LINE_FORWARD_SPACING * Math.max(0, count - 1);
-  const candidates = state.enemies
+  const predictX = (vx: number) => clamp(vx * RAIN_LINE_TARGET_LEAD_FRAMES, -RAIN_LINE_MAX_PREDICT_X, RAIN_LINE_MAX_PREDICT_X);
+  const lineScatter = (index: number) => ({
+    x: player.facing * (index % 2 === 0 ? -RAIN_LINE_TARGET_X_SCATTER : RAIN_LINE_TARGET_X_SCATTER),
+    y: (index % 3 - 1) * RAIN_LINE_TARGET_Y_SCATTER,
+    elapsed: index * RAIN_LINE_ANIM_STAGGER_FRAMES % RAIN_LINE_ANIM_STAGGER_CYCLE,
+  });
+  const targetFromCandidate = (candidate: RainLineCandidate, index: number, sideOffset = 0): RainLineTarget => {
+    const scatter = lineScatter(index);
+    return {
+      x: clamp(candidate.x + predictX(candidate.vx) + sideOffset + scatter.x, 30, WIDTH - 30),
+      y: candidate.y + scatter.y,
+      elapsed: scatter.elapsed,
+    };
+  };
+  const fallbackTarget = (index: number, total: number, lineIndex: number): RainLineTarget => {
+    const scatter = lineScatter(lineIndex);
+    const spreadX = clamp(
+      (index - (total - 1) / 2) * RAIN_LINE_FALLBACK_SPACING,
+      -RAIN_LINE_FALLBACK_SPREAD,
+      RAIN_LINE_FALLBACK_SPREAD,
+    );
+    return {
+      x: clamp(
+        playerCenterX + player.facing * (RAIN_LINE_FALLBACK_FORWARD_DISTANCE + spreadX) + scatter.x,
+        30,
+        WIDTH - 30,
+      ),
+      y: state.player.y + 28 + scatter.y,
+      elapsed: scatter.elapsed,
+    };
+  };
+  const candidates: RainLineCandidate[] = state.enemies
     .map((enemy) => {
       const center = enemyCenter(enemy);
       const forwardDistance = (center.x - playerCenterX) * player.facing;
       const airborne = enemy.y + enemy.h < GROUND_Y - 24 ? 90 : 0;
       const caster = enemy.casterPhase === "windup" || enemy.casterPhase === "cast" ? 55 : 0;
       const lowHp = enemy.hp <= (state.player.baseAttack + state.player.attackBonus) * 1.4 ? 35 : 0;
-      const distancePenalty = Math.abs(center.x - playerCenterX) * 0.05;
-      return { x: center.x, y: center.y, score: airborne + caster + lowHp - distancePenalty, forwardDistance };
+      const distancePenalty = forwardDistance * 0.04;
+      return {
+        x: center.x,
+        y: center.y - enemy.h * RAIN_LINE_TARGET_Y_BIAS,
+        vx: enemy.vx,
+        score: 20 + airborne + caster + lowHp - distancePenalty,
+        forwardDistance,
+      };
     })
-    .filter((target) => target.forwardDistance >= firstForwardOffset && target.forwardDistance <= lastForwardOffset)
-    .sort((a, b) => b.score - a.score);
+    .filter((target) => target.forwardDistance >= 0 && target.forwardDistance <= RAIN_LINE_TARGET_MAX_FORWARD_DISTANCE);
 
-  const targets = candidates.slice(0, count).map((target) => ({ x: target.x, y: target.y }));
+  if (state.boss) {
+    const center = {
+      x: state.boss.x + state.boss.w / 2,
+      y: state.boss.y + state.boss.h / 2,
+    };
+    const forwardDistance = (center.x - playerCenterX) * player.facing;
+    if (forwardDistance >= 0 && forwardDistance <= RAIN_LINE_TARGET_MAX_FORWARD_DISTANCE) {
+      candidates.push({
+        x: center.x,
+        y: center.y - state.boss.h * RAIN_LINE_TARGET_Y_BIAS,
+        vx: state.boss.vx,
+        score: 10 - forwardDistance * 0.04,
+        forwardDistance,
+      });
+    }
+  }
+
+  candidates.sort((a, b) => b.score - a.score);
+
+  const targets = candidates.slice(0, count).map((target, index) => targetFromCandidate(target, index));
+
+  for (let index = 0; targets.length < count && index < candidates.length; index += 1) {
+    const sideSign = index % 2 === 0 ? 1 : -1;
+    targets.push(targetFromCandidate(
+      candidates[index],
+      targets.length,
+      player.facing * sideSign * RAIN_LINE_TARGET_SIDE_OFFSET,
+    ));
+  }
+
+  const targetedCount = targets.length;
+  const fallbackCount = count - targetedCount;
   while (targets.length < count) {
-    const forwardOffset = firstForwardOffset + targets.length * RAIN_LINE_FORWARD_SPACING;
-    targets.push({
-      x: clamp(playerCenterX + player.facing * forwardOffset, 30, WIDTH - 30),
-      y: state.player.y + 28,
-    });
+    targets.push(fallbackTarget(targets.length - targetedCount, fallbackCount, targets.length));
   }
   return targets;
 }
@@ -516,10 +599,19 @@ export function spawnPlayerSkillEffect(skillId: SkillId, castDamageMultiplier = 
 
   if (skillId === SKILL_IDS.antiAirMulti) {
     const count = valueForSkillLevel(tuning.count ?? tuning.life, level);
+    const effectLife = valueForSkillLevel(tuning.life, level);
+    const sheet = PLAYER_SKILL_EFFECT_SHEETS[skillId];
+    const visualY = sheet
+      ? GROUND_Y - sheet.frameH * tuning.drawScale / 2 + RAIN_LINE_EFFECT_BOTTOM_TRANSPARENT_PX * tuning.drawScale
+      : undefined;
     for (const target of rainLineTargets(count)) {
-      state.playerSkillEffects.push(makeGenericEffect(skillId, level, castDamageMultiplier, target.x, target.y - 44, {
-        vx: player.facing * RAIN_LINE_DRIFT_X,
-        vy: RAIN_LINE_FALL_SPEED,
+      const frame = Math.min((sheet?.count ?? 1) - 1, Math.floor(target.elapsed / tuning.frameDuration));
+      state.playerSkillEffects.push(makeGenericEffect(skillId, level, castDamageMultiplier, target.x, target.y - RAIN_LINE_EFFECT_Y_OFFSET, {
+        visualY,
+        elapsed: target.elapsed,
+        frame,
+        life: effectLife - target.elapsed,
+        maxLife: effectLife,
         refundGroupId,
       }));
     }
@@ -1135,7 +1227,7 @@ export function drawPlayerSkillEffects() {
       const sx = effect.frame * sheet.frameW;
       const drawW = sheet.frameW * tuning.drawScale;
       const drawH = sheet.frameH * tuning.drawScale;
-      ctx.translate(effect.x, effect.y);
+      ctx.translate(effect.x, effect.visualY ?? effect.y);
       ctx.scale(effect.facing, 1);
       ctx.drawImage(sheet.image, sx, 0, sheet.frameW, sheet.frameH, -drawW / 2, -drawH / 2, drawW, drawH);
     } else {

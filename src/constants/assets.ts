@@ -155,14 +155,14 @@ export const SKILLS: Skill[] = [
   {
     id: SKILL_IDS.antiAirMulti,
     name: "雨线·穿针",
-    description: "召来多条细潮线斜落，优先覆盖空中和低血目标。",
+    description: "召来多条细潮线斜落，前方有敌时优先落向目标。",
     typeTag: "anti_air_multi",
     implemented: true,
     iconSrc: "assets/sprites/skills/anti_air_multi/icon.png",
     levelDescriptions: {
-      1: "生成 4 条窄潮线，处理空中和远程骚扰。",
-      2: "潮线增加至 5 条，覆盖更稳定。",
-      3: "潮线增加至 6 条，对空处理更可靠。",
+      1: "生成 4 条窄潮线，优先落向前方威胁目标。",
+      2: "潮线增加至 5 条，目标覆盖更稳定。",
+      3: "潮线增加至 6 条，对空和补刀更可靠。",
     },
     src: "assets/sprites/skills/anti_air_multi/skill.png",
     frameCount: 5,

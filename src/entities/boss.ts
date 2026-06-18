@@ -1949,6 +1949,9 @@ function drawLanternBuffTethers() {
 
 function drawMirrorAfterimages() {
   if (!ctx) return;
+  const drawW = MIRROR_DREAM_CONFIG.afterimageDrawW * BOSS_CONFIG.bodyDrawScale;
+  const drawH = MIRROR_DREAM_CONFIG.afterimageDrawH * BOSS_CONFIG.bodyDrawScale;
+  const bottomPadding = MIRROR_DREAM_CONFIG.afterimageBottomPadding * BOSS_CONFIG.bodyDrawScale;
   for (const afterimage of state.mirrorAfterimages) {
     const centerX = afterimage.x + afterimage.w / 2;
     const feetY = afterimage.y + afterimage.h;
@@ -1958,10 +1961,10 @@ function drawMirrorAfterimages() {
     drawSheetFrame(
       MIRROR_AFTERIMAGE_SHEET,
       afterimage.frame,
-      centerX - MIRROR_DREAM_CONFIG.afterimageDrawW / 2,
-      feetY - MIRROR_DREAM_CONFIG.afterimageDrawH + MIRROR_DREAM_CONFIG.afterimageBottomPadding,
-      MIRROR_DREAM_CONFIG.afterimageDrawW,
-      MIRROR_DREAM_CONFIG.afterimageDrawH,
+      centerX - drawW / 2,
+      feetY - drawH + bottomPadding,
+      drawW,
+      drawH,
       afterimage.facing,
     );
     ctx.restore();

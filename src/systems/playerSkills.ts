@@ -100,10 +100,10 @@ export const GENERIC_PLAYER_SKILL_TUNING: Record<GenericPlayerSkillId, GenericSk
   },
   [SKILL_IDS.antiAirMulti]: {
     kind: "rainLine",
-    frameDuration: 4,
+    frameDuration: 6,
     drawScale: 0.62,
     life: { 1: 26, 2: 28, 3: 30 },
-    width: { 1: 18, 2: 20, 3: 22 },
+    width: { 1: 24, 2: 28, 3: 32 },
     height: { 1: 142, 2: 150, 3: 158 },
     count: { 1: 4, 2: 5, 3: 6 },
     damageMultiplier: { 1: 0.56, 2: 0.62, 3: 0.68 },

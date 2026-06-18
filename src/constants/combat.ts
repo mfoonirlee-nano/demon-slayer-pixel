@@ -223,6 +223,7 @@ export const BOSS_CONFIG = {
   touchDamagePhase: 2,
   animSeedMax: 80,
   baseAnimSpeed: 9,
+  bodyDrawScale: 2,
   drawOffsetX: 0,
   drawOffsetY: 0,
   drawW: 176,

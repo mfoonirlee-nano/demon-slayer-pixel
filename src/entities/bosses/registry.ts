@@ -66,6 +66,10 @@ export const BOSS_ARCHETYPE_IDS = {
 
 type RegisteredBossArchetypeId = (typeof BOSS_ARCHETYPE_IDS)[keyof typeof BOSS_ARCHETYPE_IDS];
 
+function bossBodyDrawSize(value: number) {
+  return value * BOSS_CONFIG.bodyDrawScale;
+}
+
 export const BOSS_ARCHETYPES: Record<RegisteredBossArchetypeId, BossArchetype> = {
   "spider-string": {
     id: BOSS_ARCHETYPE_IDS.spiderString,
@@ -86,11 +90,11 @@ export const BOSS_ARCHETYPES: Record<RegisteredBossArchetypeId, BossArchetype> =
     aiPhaseReduction: BOSS_CONFIG.aiPhaseReduction,
     skillInitialCooldown: BOSS_SKILL1_CONFIG.initialCooldown,
     skillMode: "spiderString",
-    drawW: BOSS_CONFIG.drawW,
-    drawH: BOSS_CONFIG.drawH,
-    castDrawW: 280,
-    castDrawH: 280,
-    castBottomPadding: 34,
+    drawW: bossBodyDrawSize(BOSS_CONFIG.drawW),
+    drawH: bossBodyDrawSize(BOSS_CONFIG.drawH),
+    castDrawW: bossBodyDrawSize(BOSS_SKILL1_CONFIG.drawW),
+    castDrawH: bossBodyDrawSize(BOSS_SKILL1_CONFIG.drawH),
+    castBottomPadding: bossBodyDrawSize(BOSS_SKILL1_CONFIG.drawBottomPadding),
     sheets: {
       move: BOSS_SHEET,
       cast: BOSS_SKILL1_SHEET,
@@ -116,11 +120,11 @@ export const BOSS_ARCHETYPES: Record<RegisteredBossArchetypeId, BossArchetype> =
     aiPhaseReduction: 10,
     skillInitialCooldown: MIRROR_DREAM_CONFIG.initialCooldown,
     skillMode: "mirrorShard",
-    drawW: MIRROR_DREAM_CONFIG.drawW,
-    drawH: MIRROR_DREAM_CONFIG.drawH,
-    castDrawW: MIRROR_DREAM_CONFIG.castDrawW,
-    castDrawH: MIRROR_DREAM_CONFIG.castDrawH,
-    castBottomPadding: MIRROR_DREAM_CONFIG.castBottomPadding,
+    drawW: bossBodyDrawSize(MIRROR_DREAM_CONFIG.drawW),
+    drawH: bossBodyDrawSize(MIRROR_DREAM_CONFIG.drawH),
+    castDrawW: bossBodyDrawSize(MIRROR_DREAM_CONFIG.castDrawW),
+    castDrawH: bossBodyDrawSize(MIRROR_DREAM_CONFIG.castDrawH),
+    castBottomPadding: bossBodyDrawSize(MIRROR_DREAM_CONFIG.castBottomPadding),
     sheets: {
       move: MIRROR_DREAM_SHEET,
       cast: MIRROR_DREAM_CAST_SHEET,
@@ -147,11 +151,11 @@ export const BOSS_ARCHETYPES: Record<RegisteredBossArchetypeId, BossArchetype> =
     aiPhaseReduction: 10,
     skillInitialCooldown: LANTERN_EMBER_CONFIG.initialCooldown,
     skillMode: "lanternLure",
-    drawW: LANTERN_EMBER_CONFIG.drawW,
-    drawH: LANTERN_EMBER_CONFIG.drawH,
-    castDrawW: LANTERN_EMBER_CONFIG.castDrawW,
-    castDrawH: LANTERN_EMBER_CONFIG.castDrawH,
-    castBottomPadding: LANTERN_EMBER_CONFIG.castBottomPadding,
+    drawW: bossBodyDrawSize(LANTERN_EMBER_CONFIG.drawW),
+    drawH: bossBodyDrawSize(LANTERN_EMBER_CONFIG.drawH),
+    castDrawW: bossBodyDrawSize(LANTERN_EMBER_CONFIG.castDrawW),
+    castDrawH: bossBodyDrawSize(LANTERN_EMBER_CONFIG.castDrawH),
+    castBottomPadding: bossBodyDrawSize(LANTERN_EMBER_CONFIG.castBottomPadding),
     sheets: {
       move: LANTERN_EMBER_SHEET,
       cast: LANTERN_EMBER_SUMMON_SHEET,
@@ -177,11 +181,11 @@ export const BOSS_ARCHETYPES: Record<RegisteredBossArchetypeId, BossArchetype> =
     aiPhaseReduction: 12,
     skillInitialCooldown: DEAD_BELL_CONFIG.initialCooldown,
     skillMode: "deadBellSingle",
-    drawW: 176,
-    drawH: 208,
-    castDrawW: 228,
-    castDrawH: 228,
-    castBottomPadding: 26,
+    drawW: bossBodyDrawSize(BOSS_CONFIG.drawW),
+    drawH: bossBodyDrawSize(BOSS_CONFIG.drawH),
+    castDrawW: bossBodyDrawSize(DEAD_BELL_CONFIG.drawW),
+    castDrawH: bossBodyDrawSize(DEAD_BELL_CONFIG.drawH),
+    castBottomPadding: bossBodyDrawSize(DEAD_BELL_CONFIG.drawBottomPadding),
     sheets: {
       move: DEAD_BELL_SHEET,
       cast: DEAD_BELL_CAST_SHEET,
@@ -207,11 +211,11 @@ export const BOSS_ARCHETYPES: Record<RegisteredBossArchetypeId, BossArchetype> =
     aiPhaseReduction: 8,
     skillInitialCooldown: BLOOD_MOON_CONFIG.initialCooldown,
     skillMode: "bloodMoonSpiderMist",
-    drawW: BLOOD_MOON_CONFIG.drawW,
-    drawH: BLOOD_MOON_CONFIG.drawH,
-    castDrawW: BLOOD_MOON_CONFIG.castDrawW,
-    castDrawH: BLOOD_MOON_CONFIG.castDrawH,
-    castBottomPadding: BLOOD_MOON_CONFIG.castBottomPadding,
+    drawW: bossBodyDrawSize(BLOOD_MOON_CONFIG.drawW),
+    drawH: bossBodyDrawSize(BLOOD_MOON_CONFIG.drawH),
+    castDrawW: bossBodyDrawSize(BLOOD_MOON_CONFIG.castDrawW),
+    castDrawH: bossBodyDrawSize(BLOOD_MOON_CONFIG.castDrawH),
+    castBottomPadding: bossBodyDrawSize(BLOOD_MOON_CONFIG.castBottomPadding),
     sheets: {
       move: BLOOD_MOON_SHEET,
       cast: BLOOD_MOON_SPIDER_MIST_CAST_SHEET,

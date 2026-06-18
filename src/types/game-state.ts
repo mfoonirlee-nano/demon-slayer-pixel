@@ -548,6 +548,7 @@ export type PlayerSkillEffectState = {
   kind: "dashSlash" | "vortex" | "armorBreak" | "rainLine" | "returningBlade" | "verticalWave";
   x: number;
   y: number;
+  visualY?: number;
   w: number;
   h: number;
   vx: number;
