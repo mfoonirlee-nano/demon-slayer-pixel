@@ -604,7 +604,7 @@ export function updatePlayer() {
           const skillDrawH = skill.frameH * skill.drawScale;
           const frontX = cx + p.facing * p.w / 2;
           state.skill1Effects.push({
-            x: frontX + p.facing * effectW / 2,
+            x: frontX + p.facing * (effectW / 2 - SKILL1_EFFECT_CONFIG.spawnOverlap),
             y: feetY - skillDrawH / 2 - effectH / 2,
             vx: p.facing * SKILL1_EFFECT_CONFIG.speed,
             facing: p.facing,

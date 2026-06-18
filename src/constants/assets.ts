@@ -791,6 +791,9 @@ export const SKILL1_EFFECT_SHEET: SpriteSheet = {
 export const SKILL1_EFFECT_CONFIG = {
   // draw scale relative to frame height
   drawScale: 0.625,
+  // pull the projectile start back toward the cast sprite so the visible dragon
+  // overlaps the blade release instead of starting after its transparent margin.
+  spawnOverlap: 32,
   // horizontal speed in px/frame
   speed: 8,
   // frame animate speed in game-frames per anim-frame
@@ -814,6 +817,7 @@ export const SKILL2_EFFECT_SHEET: SpriteSheet = {
 export const SKILL2_EFFECT_CONFIG = {
   drawScale: 0.667,
   groundBaselineY: 365,
+  visualBackOffset: 56,
   speed: 6,
   frameDuration: 4,
   // 3-5 character widths (player w=34), using 4 widths ≈ 136px
