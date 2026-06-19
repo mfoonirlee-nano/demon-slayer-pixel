@@ -1,17 +1,18 @@
 ---
 name: git-add-commit-push
-description: Commit and push the current workspace changes with a short, intentional git workflow. Use when the user asks to run git add + git commit + git push, says "提交并推送", "整理工作区的改动，提交代码", or wants local changes saved to the current remote branch without opening a PR.
+description: Commit and push the current workspace changes to the remote branch with a short, intentional git workflow. Use when the user asks to run git add + git commit + git push, says "提交并推送", "整理工作区的改动，提交代码", "push code", or wants local changes committed and pushed without opening a PR.
 ---
 
 # Git Add Commit Push
 
-Use this when the user wants the simple local publish flow: inspect changes, stage them, commit, and push the current branch.
+Use this when the user wants the simple publish flow: inspect changes, stage them, commit, then push the current branch to its remote. The workflow is not complete after commit; it is complete only after push succeeds or a push blocker is reported.
 
 ## Assumptions
 
 - The target is the current repository and current branch unless the user says otherwise.
 - This skill does not open a PR and does not require `gh`.
 - `git add .` is allowed only after confirming the whole visible worktree belongs in the commit.
+- Treat "push code" as a request for the full git publish flow: stage, commit, then push.
 
 ## Workflow
 
@@ -33,11 +34,13 @@ Use this when the user wants the simple local publish flow: inspect changes, sta
 5. Commit:
    - Use a terse message that describes the full staged diff.
    - Match the repo's recent style when obvious.
+   - After a successful commit, continue immediately to push unless the user explicitly asked not to push.
 6. Push:
    - Run `git push` when the current branch already tracks a remote branch.
    - Run `git push -u origin <branch>` when there is no upstream.
+   - Confirm the push updated the remote or returned `Everything up-to-date`.
 7. Final report:
-   - Include commit SHA, commit message, pushed branch, validation result, and final `git status -sb`.
+   - Include commit SHA, commit message, pushed branch/remote, validation result, push result, and final `git status -sb`.
 
 ## Safety Rules
 
