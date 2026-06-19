@@ -1,35 +1,15 @@
 import { useEffect } from "react";
-import { type UiSpriteId } from "../constants";
 import { chooseBossEquipment, chooseUpgradeReward } from "../game/runtime";
 import type { GameSnapshot } from "../game/gameStore";
 import type { EquipmentItemState } from "../types/game-state";
 import { EQUIPMENT_SLOT_LABELS } from "./uiDisplay";
-import { UiSprite, uiSpriteDisplaySize } from "./uiSprite";
-
-const REWARD_TITLE_TOP = 90;
-const REWARD_CARD_ROW_TOP = 124;
-const REWARD_CARD_GAP = 8;
-const REWARD_CARD_CONTENT_INSET_X = 20;
-const REWARD_CARD_CONTENT_TOP = 104;
-const REWARD_CARD_CONTENT_BOTTOM = 42;
+import { getRewardOverlayLayout } from "./rewardOverlayLayout";
+import { UiSprite } from "./uiSprite";
 
 export function RewardOverlay({ snapshot }: { snapshot: GameSnapshot }) {
   const isBossReward = snapshot.activeOverlay === "bossEquipment";
   const choices = isBossReward ? snapshot.pendingEquipmentChoices : snapshot.pendingUpgradeChoices;
-  const panelSprite: UiSpriteId = isBossReward ? "bossRewardPanel" : "upgradeRewardPanel";
-  const cardSprite: UiSpriteId = isBossReward ? "bossChoiceCard" : "upgradeChoiceCard";
-  const activeCardSprite: UiSpriteId = isBossReward ? "bossChoiceCardActive" : "upgradeChoiceCardActive";
-  const panelSize = uiSpriteDisplaySize(panelSprite);
-  const cardSize = uiSpriteDisplaySize(cardSprite);
-  const activeCardSize = uiSpriteDisplaySize(activeCardSprite);
-  const cardBoxW = Math.max(
-    cardSize.w,
-    activeCardSize.w,
-  );
-  const cardBoxH = Math.max(cardSize.h, activeCardSize.h);
-  const cardRowW = choices.length * cardBoxW + Math.max(0, choices.length - 1) * REWARD_CARD_GAP;
-  const overlayW = Math.max(panelSize.w, cardRowW);
-  const overlayH = Math.max(panelSize.h, REWARD_CARD_ROW_TOP + cardBoxH);
+  const layout = getRewardOverlayLayout(isBossReward ? "bossEquipment" : "upgrade", choices.length);
   const title = isBossReward ? "血鬼遗物" : "等级提升";
   const subtitle = isBossReward
     ? "选择一件装备"
@@ -56,14 +36,16 @@ export function RewardOverlay({ snapshot }: { snapshot: GameSnapshot }) {
 
   return (
     <div className="absolute inset-0 z-40 flex items-center justify-center bg-[rgba(4,7,16,0.78)] px-4 text-white">
-      <div className="relative" style={{ width: overlayW, height: overlayH }}>
+      <div className="relative" style={{ width: layout.overlayW, height: layout.overlayH }}>
         <UiSprite
-          id={panelSprite}
+          id={layout.panelSprite}
+          width={layout.panelDisplaySize.w}
+          height={layout.panelDisplaySize.h}
           className="absolute top-0"
-          style={{ left: (overlayW - panelSize.w) / 2 }}
+          style={{ left: (layout.overlayW - layout.panelDisplaySize.w) / 2 }}
         />
 
-        <div className="absolute inset-x-0 text-center" style={{ top: REWARD_TITLE_TOP }}>
+        <div className="absolute inset-x-0 text-center" style={{ top: layout.titleTop }}>
           <div className={`text-[14px] font-bold leading-none ${isBossReward ? "text-[#ffd46e]" : "text-[#26d5ff]"}`}>{title}</div>
           <div className="mt-2 text-[9px] leading-none text-[#c8efff]">{subtitle}</div>
         </div>
@@ -71,33 +53,39 @@ export function RewardOverlay({ snapshot }: { snapshot: GameSnapshot }) {
         <div
           className="absolute inset-x-0 grid justify-center"
           style={{
-            top: REWARD_CARD_ROW_TOP,
-            gridTemplateColumns: `repeat(${choices.length}, ${cardBoxW}px)`,
-            columnGap: REWARD_CARD_GAP,
+            top: layout.cardRowTop,
+            gridTemplateColumns: `repeat(${choices.length}, ${layout.cardBoxW}px)`,
+            columnGap: layout.columnGap,
           }}
         >
           {choices.map((choice, index) => {
             const item = isBossReward ? choice as EquipmentItemState : null;
             const upgrade = isBossReward ? null : choice as typeof snapshot.pendingUpgradeChoices[number];
-            const choiceCardSprite = index === 0 ? activeCardSprite : cardSprite;
+            const choiceCardSprite = index === 0 ? layout.activeCardSprite : layout.cardSprite;
+            const choiceCardSize = index === 0 ? layout.activeCardDisplaySize : layout.cardDisplaySize;
             return (
               <button
                 key={choice.id}
                 className="relative border-0 bg-transparent p-0 text-left"
-                style={{ width: cardBoxW, height: cardBoxH }}
+                style={{ width: layout.cardBoxW, height: layout.cardBoxH }}
                 onClick={() => {
                   if (isBossReward) chooseBossEquipment(index);
                   else chooseUpgradeReward(index);
                 }}
               >
-                <UiSprite id={choiceCardSprite} className="mx-auto">
+                <UiSprite
+                  id={choiceCardSprite}
+                  width={choiceCardSize.w}
+                  height={choiceCardSize.h}
+                  className="relative mx-auto"
+                >
                   <div
                     className="absolute flex flex-col overflow-hidden"
                     style={{
-                      left: REWARD_CARD_CONTENT_INSET_X,
-                      right: REWARD_CARD_CONTENT_INSET_X,
-                      top: REWARD_CARD_CONTENT_TOP,
-                      bottom: REWARD_CARD_CONTENT_BOTTOM,
+                      left: layout.cardContent.insetX,
+                      right: layout.cardContent.insetX,
+                      top: layout.cardContent.top,
+                      bottom: layout.cardContent.bottom,
                     }}
                   >
                     <div className={`text-[7px] leading-[1.35] ${isBossReward ? "text-[#ffd46e]" : "text-[#7fc8e0]"}`}>[{index + 1}] {isBossReward ? item?.uiTags.join(" · ") : upgrade?.title}</div>
