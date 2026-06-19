@@ -12,10 +12,17 @@ type StartScreenProps = {
 const COVER_LAYERS = [
   { src: "assets/sprites/ui/cover/background.png", className: "cover-background" },
   { src: "assets/sprites/ui/cover/lantern_light.png", className: "cover-light" },
-  { src: "assets/sprites/ui/cover/moon.png", className: "cover-moon-emitter" },
   { src: "assets/sprites/ui/cover/emissive_objects.png", className: "cover-warm-emitters" },
 ];
 
+const MOON_PHASE_SHEET_SRC = "assets/sprites/ui/cover/moon.png";
+const MOON_PHASE_COUNT = 8;
+const MOON_PHASE_FRAME_W = 160;
+const MOON_PHASE_FRAME_H = 160;
+const COVER_CANVAS_W = 1672;
+const COVER_CANVAS_H = 941;
+const MOON_PHASE_X = 416;
+const MOON_PHASE_Y = 47;
 const CSS_VALUE_PRECISION = 3;
 const COVER_PROGRESS_SYNC_MS = 1000;
 const DARKNESS_OPACITY_START = 0.96;
@@ -127,6 +134,40 @@ function CoverKillCounter({ value }: { value: number }) {
   );
 }
 
+function getMoonPhaseIndex(progress: number) {
+  return Math.min(MOON_PHASE_COUNT - 1, Math.floor(progress * MOON_PHASE_COUNT));
+}
+
+function CoverMoonPhase({ progress }: { progress: number }) {
+  const phaseIndex = getMoonPhaseIndex(progress);
+
+  return (
+    <svg
+      className="cover-layer cover-moon-emitter"
+      viewBox={`0 0 ${COVER_CANVAS_W} ${COVER_CANVAS_H}`}
+      preserveAspectRatio="xMidYMid slice"
+      aria-hidden="true"
+      focusable="false"
+    >
+      <svg
+        x={MOON_PHASE_X}
+        y={MOON_PHASE_Y}
+        width={MOON_PHASE_FRAME_W}
+        height={MOON_PHASE_FRAME_H}
+        viewBox={`0 0 ${MOON_PHASE_FRAME_W} ${MOON_PHASE_FRAME_H}`}
+      >
+        <image
+          href={MOON_PHASE_SHEET_SRC}
+          x={-phaseIndex * MOON_PHASE_FRAME_W}
+          y={0}
+          width={MOON_PHASE_FRAME_W * MOON_PHASE_COUNT}
+          height={MOON_PHASE_FRAME_H}
+        />
+      </svg>
+    </svg>
+  );
+}
+
 export function StartScreen({ assetsReady, startQueued, onStart }: StartScreenProps) {
   const { kills, progress } = useCoverProgress();
   const promptText = assetsReady ? "按任意键开始" : "加载像素贴图中...";
@@ -156,6 +197,7 @@ export function StartScreen({ assetsReady, startQueued, onStart }: StartScreenPr
             className={`cover-layer ${layer.className}`}
           />
         ))}
+        <CoverMoonPhase progress={progress} />
         <div className="cover-darkness" />
       </div>
       <CoverKillCounter value={kills} />
