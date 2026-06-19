@@ -1,12 +1,11 @@
-import { SKILLS } from "../constants";
 import type { Skill, SkillId } from "../types/assets";
 import type { GameState, SkillLevel } from "../types/game-state";
+import { playerSkillById } from "./skillCatalog";
 
 export const SKILL_SLOT_COUNT = 3;
 
 export function skillById(skillId: SkillId | null): Skill | null {
-  if (!skillId) return null;
-  return SKILLS.find((skill) => skill.id === skillId) ?? null;
+  return playerSkillById(skillId);
 }
 
 export function selectedSkill(state: GameState): Skill | null {

@@ -5,14 +5,6 @@ import {
   HIT_BURST_CONFIG,
   SKILL_BURST_VISUAL,
   HIT_BURST_VISUAL,
-  LINE_PROJECTILE_EFFECT_SHEET,
-  LINE_PROJECTILE_EFFECT_CONFIG,
-  CLOSE_ARC_EFFECT_SHEET,
-  CLOSE_ARC_EFFECT_CONFIG,
-  GUARD_COUNTER_EFFECT_SHEET,
-  GUARD_COUNTER_EFFECT_CONFIG,
-  PLAYER_SKILL_EFFECT_SHEETS,
-  ULTIMATE_SKILL_EFFECT_SHEET,
   PLAYER_COMBAT,
   GROUND_Y,
   SKILL_IDS,
@@ -33,11 +25,8 @@ import type {
 } from "../types/game-state";
 import type { SkillId } from "../types/assets";
 import { clamp, hitbox, overlapHitPoint, type RectLike } from "../utils";
-import { damageEnemy } from "./enemies/common";
-import { resolveEnemyDefeat } from "./enemies/defeat";
-import { defeatBoss } from "./bosses/defeat";
-import { damageBoss } from "./bosses/common";
 import { applySkillHitEquipmentRefund } from "../systems/equipment";
+import { resolveBossHit, resolveEnemyHit } from "../systems/combatResolution";
 import { skillById } from "../systems/loadout";
 import {
   GENERIC_PLAYER_SKILL_TUNING,
@@ -46,9 +35,22 @@ import {
   valueForSkillLevel,
   type GenericPlayerSkillId,
 } from "../systems/playerSkills";
+import {
+  CORE_PLAYER_SKILL_EFFECT_CONFIGS,
+  CORE_PLAYER_SKILL_EFFECT_SHEETS,
+  ULTIMATE_SKILL_ASSETS,
+  playerSkillEffectSheet,
+} from "../systems/skillCatalog";
 
 const FULL_CIRCLE_RADIANS = Math.PI * 2;
 const DEFAULT_HIT_BURST_COLOR = "#9feaff";
+const LINE_PROJECTILE_EFFECT_SHEET = CORE_PLAYER_SKILL_EFFECT_SHEETS[SKILL_IDS.lineProjectile];
+const LINE_PROJECTILE_EFFECT_CONFIG = CORE_PLAYER_SKILL_EFFECT_CONFIGS[SKILL_IDS.lineProjectile];
+const CLOSE_ARC_EFFECT_SHEET = CORE_PLAYER_SKILL_EFFECT_SHEETS[SKILL_IDS.closeArc];
+const CLOSE_ARC_EFFECT_CONFIG = CORE_PLAYER_SKILL_EFFECT_CONFIGS[SKILL_IDS.closeArc];
+const GUARD_COUNTER_EFFECT_SHEET = CORE_PLAYER_SKILL_EFFECT_SHEETS[SKILL_IDS.guardCounter];
+const GUARD_COUNTER_EFFECT_CONFIG = CORE_PLAYER_SKILL_EFFECT_CONFIGS[SKILL_IDS.guardCounter];
+const ULTIMATE_SKILL_EFFECT_SHEET = ULTIMATE_SKILL_ASSETS.effect;
 const RETURNING_BLADE_SPEED = 8;
 const RAIN_LINE_EFFECT_Y_OFFSET = 44;
 const RAIN_LINE_TARGET_LEAD_FRAMES = 6;
@@ -176,7 +178,7 @@ function drawEnemyIntoVortex(effect: PlayerSkillEffectState, enemy: EnemyState, 
 }
 
 function playerSkillSheetFrame(effect: PlayerSkillEffectState) {
-  const sheet = PLAYER_SKILL_EFFECT_SHEETS[effect.skillId];
+  const sheet = playerSkillEffectSheet(effect.skillId);
   const tuning = isGenericPlayerSkillId(effect.skillId) ? GENERIC_PLAYER_SKILL_TUNING[effect.skillId] : null;
   if (!sheet || !tuning) return 0;
   if (tuning.kind === "vortex") return Math.floor(effect.elapsed / tuning.frameDuration) % sheet.count;
@@ -326,12 +328,17 @@ export function damageDashRepositionTravel(previousX: number, previousY: number,
     if (!hitbox(box, enemy)) continue;
 
     dash.hitEnemies.push(enemy);
-    const { x: hitX, y: hitY } = overlapHitPoint(box, enemy);
-    damageEnemy(enemy, damage, tuning.hitCooldown);
+    const hit = resolveEnemyHit({
+      enemy,
+      enemyIndex: i,
+      hitRect: box,
+      damage,
+      hitCooldown: tuning.hitCooldown,
+      reward: "enemyNoCover",
+    });
     hitTargets += 1;
-    emitSlash(hitX, hitY, PLAYER_COMBAT.effects.skillEnemyBurstColor, enemy.w);
-    emitHitBurst(hitX, hitY, PLAYER_COMBAT.effects.skillEnemyBurstColor, PLAYER_COMBAT.skillEnemyBurstPower);
-    resolveEnemyDefeat(enemy, i, "enemyNoCover");
+    emitSlash(hit.hitX, hit.hitY, PLAYER_COMBAT.effects.skillEnemyBurstColor, enemy.w);
+    emitHitBurst(hit.hitX, hit.hitY, PLAYER_COMBAT.effects.skillEnemyBurstColor, PLAYER_COMBAT.skillEnemyBurstPower);
   }
 
   if (state.boss && !dash.bossHit) {
@@ -339,11 +346,14 @@ export function damageDashRepositionTravel(previousX: number, previousY: number,
     if ((bossCenterX - startCenterX) * dash.facing >= -DASH_REPOSITION_BACK_HIT_TOLERANCE && hitbox(box, state.boss)) {
       dash.bossHit = true;
       bossHit = true;
-      const { x: hitX, y: hitY } = overlapHitPoint(box, state.boss);
-      damageBoss(state.boss, bossDamage, tuning.bossHitCooldown);
-      emitSlash(hitX, hitY, PLAYER_COMBAT.effects.skillBossSlashColor);
-      emitHitBurst(hitX, hitY, PLAYER_COMBAT.effects.skillBossBurstColor, PLAYER_COMBAT.skillBossBurstPower);
-      defeatBoss();
+      const hit = resolveBossHit({
+        boss: state.boss,
+        hitRect: box,
+        damage: bossDamage,
+        hitCooldown: tuning.bossHitCooldown,
+      });
+      emitSlash(hit.hitX, hit.hitY, PLAYER_COMBAT.effects.skillBossSlashColor);
+      emitHitBurst(hit.hitX, hit.hitY, PLAYER_COMBAT.effects.skillBossBurstColor, PLAYER_COMBAT.skillBossBurstPower);
     }
   }
 
@@ -600,7 +610,7 @@ export function spawnPlayerSkillEffect(skillId: SkillId, castDamageMultiplier = 
   if (skillId === SKILL_IDS.antiAirMulti) {
     const count = valueForSkillLevel(tuning.count ?? tuning.life, level);
     const effectLife = valueForSkillLevel(tuning.life, level);
-    const sheet = PLAYER_SKILL_EFFECT_SHEETS[skillId];
+    const sheet = playerSkillEffectSheet(skillId);
     const visualY = sheet
       ? GROUND_Y - sheet.frameH * tuning.drawScale / 2 + RAIN_LINE_EFFECT_BOTTOM_TRANSPARENT_PX * tuning.drawScale
       : undefined;
@@ -706,15 +716,17 @@ export function updateLineProjectileEffects() {
       const overlapX = effRight > enemy.x && effLeft < enemy.x + enemy.w;
       const overlapY = effBottom > enemy.y && effTop < enemy.y + enemy.h;
       if (!overlapX || !overlapY) continue;
-      const { x: hitX, y: hitY } = overlapHitPoint(
-        { x: effLeft, y: effTop, w: drawW, h: drawH },
+      const hit = resolveEnemyHit({
         enemy,
-      );
-      damageEnemy(enemy, damage, LINE_PROJECTILE_EFFECT_CONFIG.hitCooldown);
+        enemyIndex: j,
+        hitRect: { x: effLeft, y: effTop, w: drawW, h: drawH },
+        damage,
+        hitCooldown: LINE_PROJECTILE_EFFECT_CONFIG.hitCooldown,
+        reward: "enemyNoCover",
+      });
       hitTargets += 1;
-      emitSlash(hitX, hitY, PLAYER_COMBAT.effects.skillEnemyBurstColor, enemy.w);
-      emitHitBurst(hitX, hitY, PLAYER_COMBAT.effects.skillEnemyBurstColor, PLAYER_COMBAT.skillEnemyBurstPower);
-      resolveEnemyDefeat(enemy, j, "enemyNoCover");
+      emitSlash(hit.hitX, hit.hitY, PLAYER_COMBAT.effects.skillEnemyBurstColor, enemy.w);
+      emitHitBurst(hit.hitX, hit.hitY, PLAYER_COMBAT.effects.skillEnemyBurstColor, PLAYER_COMBAT.skillEnemyBurstPower);
     }
 
     // damage boss
@@ -723,15 +735,17 @@ export function updateLineProjectileEffects() {
       const overlapX = effRight > boss.x && effLeft < boss.x + boss.w;
       const overlapY = effBottom > boss.y && effTop < boss.y + boss.h;
       if (overlapX && overlapY) {
-        damageBoss(boss, damage, LINE_PROJECTILE_EFFECT_CONFIG.hitCooldown);
         bossHit = true;
-        const { x: bossHitX, y: bossHitY } = overlapHitPoint(
-          { x: effLeft, y: effTop, w: drawW, h: drawH },
-          boss,
+        const hit = resolveBossHit(
+          {
+            boss,
+            hitRect: { x: effLeft, y: effTop, w: drawW, h: drawH },
+            damage,
+            hitCooldown: LINE_PROJECTILE_EFFECT_CONFIG.hitCooldown,
+          },
         );
-        emitSlash(bossHitX, bossHitY, PLAYER_COMBAT.effects.skillBossSlashColor);
-        emitHitBurst(bossHitX, bossHitY, PLAYER_COMBAT.effects.skillBossBurstColor, PLAYER_COMBAT.skillBossBurstPower);
-        defeatBoss();
+        emitSlash(hit.hitX, hit.hitY, PLAYER_COMBAT.effects.skillBossSlashColor);
+        emitHitBurst(hit.hitX, hit.hitY, PLAYER_COMBAT.effects.skillBossBurstColor, PLAYER_COMBAT.skillBossBurstPower);
       }
     }
 
@@ -776,15 +790,17 @@ export function updateCloseArcEffects() {
       const overlapX = effRight > enemy.x && effLeft < enemy.x + enemy.w;
       const overlapY = effBottom > enemy.y && effTop < enemy.y + enemy.h;
       if (!overlapX || !overlapY) continue;
-      const { x: hitX, y: hitY } = overlapHitPoint(
-        { x: effLeft, y: effTop, w: drawW, h: drawH },
+      const hit = resolveEnemyHit({
         enemy,
-      );
-      damageEnemy(enemy, damage, CLOSE_ARC_EFFECT_CONFIG.hitCooldown);
+        enemyIndex: j,
+        hitRect: { x: effLeft, y: effTop, w: drawW, h: drawH },
+        damage,
+        hitCooldown: CLOSE_ARC_EFFECT_CONFIG.hitCooldown,
+        reward: "enemyNoCover",
+      });
       hitTargets += 1;
-      emitSlash(hitX, hitY, PLAYER_COMBAT.effects.skillEnemyBurstColor, enemy.w);
-      emitHitBurst(hitX, hitY, PLAYER_COMBAT.effects.skillEnemyBurstColor, PLAYER_COMBAT.skillEnemyBurstPower);
-      resolveEnemyDefeat(enemy, j, "enemyNoCover");
+      emitSlash(hit.hitX, hit.hitY, PLAYER_COMBAT.effects.skillEnemyBurstColor, enemy.w);
+      emitHitBurst(hit.hitX, hit.hitY, PLAYER_COMBAT.effects.skillEnemyBurstColor, PLAYER_COMBAT.skillEnemyBurstPower);
     }
 
     if (state.boss && state.boss.hitCd <= 0) {
@@ -792,15 +808,17 @@ export function updateCloseArcEffects() {
       const overlapX = effRight > boss.x && effLeft < boss.x + boss.w;
       const overlapY = effBottom > boss.y && effTop < boss.y + boss.h;
       if (overlapX && overlapY) {
-        damageBoss(boss, damage, CLOSE_ARC_EFFECT_CONFIG.hitCooldown);
         bossHit = true;
-        const { x: bossHitX, y: bossHitY } = overlapHitPoint(
-          { x: effLeft, y: effTop, w: drawW, h: drawH },
-          boss,
+        const hit = resolveBossHit(
+          {
+            boss,
+            hitRect: { x: effLeft, y: effTop, w: drawW, h: drawH },
+            damage,
+            hitCooldown: CLOSE_ARC_EFFECT_CONFIG.hitCooldown,
+          },
         );
-        emitSlash(bossHitX, bossHitY, PLAYER_COMBAT.effects.skillBossSlashColor);
-        emitHitBurst(bossHitX, bossHitY, PLAYER_COMBAT.effects.skillBossBurstColor, PLAYER_COMBAT.skillBossBurstPower);
-        defeatBoss();
+        emitSlash(hit.hitX, hit.hitY, PLAYER_COMBAT.effects.skillBossSlashColor);
+        emitHitBurst(hit.hitX, hit.hitY, PLAYER_COMBAT.effects.skillBossBurstColor, PLAYER_COMBAT.skillBossBurstPower);
       }
     }
 
@@ -842,26 +860,34 @@ function setLocalEnemyCooldown(effect: PlayerSkillEffectState, enemy: EnemyState
 
 function applyEffectDamageToEnemy(effect: PlayerSkillEffectState, enemy: EnemyState, enemyIndex: number) {
   const box = effectBox(effect);
-  const { x: hitX, y: hitY } = overlapHitPoint(box, enemy);
-  damageEnemy(enemy, effect.damage, effect.hitCooldown);
-  emitSlash(hitX, hitY, PLAYER_COMBAT.effects.skillEnemyBurstColor, enemy.w);
-  emitHitBurst(hitX, hitY, PLAYER_COMBAT.effects.skillEnemyBurstColor, PLAYER_COMBAT.skillEnemyBurstPower);
-  resolveEnemyDefeat(enemy, enemyIndex, "enemyNoCover");
+  const hit = resolveEnemyHit({
+    enemy,
+    enemyIndex,
+    hitRect: box,
+    damage: effect.damage,
+    hitCooldown: effect.hitCooldown,
+    reward: "enemyNoCover",
+  });
+  emitSlash(hit.hitX, hit.hitY, PLAYER_COMBAT.effects.skillEnemyBurstColor, enemy.w);
+  emitHitBurst(hit.hitX, hit.hitY, PLAYER_COMBAT.effects.skillEnemyBurstColor, PLAYER_COMBAT.skillEnemyBurstPower);
 }
 
 function applyEffectDamageToBoss(effect: PlayerSkillEffectState) {
   if (!state.boss) return false;
   const box = effectBox(effect);
-  const { x: hitX, y: hitY } = overlapHitPoint(box, state.boss);
-  damageBoss(state.boss, effect.bossDamage, effect.bossHitCooldown);
-  emitSlash(hitX, hitY, PLAYER_COMBAT.effects.skillBossSlashColor);
-  emitHitBurst(hitX, hitY, PLAYER_COMBAT.effects.skillBossBurstColor, PLAYER_COMBAT.skillBossBurstPower);
-  defeatBoss();
+  const hit = resolveBossHit({
+    boss: state.boss,
+    hitRect: box,
+    damage: effect.bossDamage,
+    hitCooldown: effect.bossHitCooldown,
+  });
+  emitSlash(hit.hitX, hit.hitY, PLAYER_COMBAT.effects.skillBossSlashColor);
+  emitHitBurst(hit.hitX, hit.hitY, PLAYER_COMBAT.effects.skillBossBurstColor, PLAYER_COMBAT.skillBossBurstPower);
   return true;
 }
 
 function armorBreakImpactLife(effect: PlayerSkillEffectState) {
-  const sheet = PLAYER_SKILL_EFFECT_SHEETS[effect.skillId];
+  const sheet = playerSkillEffectSheet(effect.skillId);
   const tuning = isGenericPlayerSkillId(effect.skillId) ? GENERIC_PLAYER_SKILL_TUNING[effect.skillId] : null;
   const impactFrames = Math.max(1, (sheet?.count ?? 1) - ARMOR_BREAK_IMPACT_FRAME_START);
   return impactFrames * (tuning?.frameDuration ?? 1);
@@ -882,20 +908,39 @@ function triggerArmorBreakImpact(effect: PlayerSkillEffectState, collision: Armo
 
   if (collision.type === "enemy") {
     effect.hitEnemies.push(collision.enemy);
-    damageEnemy(collision.enemy, effect.damage, effect.hitCooldown);
-    applyArmorBreakToEnemy(collision.enemy, effect.armorBreakDuration ?? 0, effect.armorBreakMultiplier ?? 1);
-    emitSlash(x, y, DEFAULT_HIT_BURST_COLOR, collision.enemy.w);
-    emitHitBurst(x, y, PLAYER_COMBAT.effects.skillEnemyBurstColor, PLAYER_COMBAT.skillEnemyBurstPower);
-    resolveEnemyDefeat(collision.enemy, collision.enemyIndex, "enemyNoCover");
+    const hit = resolveEnemyHit({
+      enemy: collision.enemy,
+      enemyIndex: collision.enemyIndex,
+      hitRect: effectBox(effect),
+      hitPoint: { x, y },
+      damage: effect.damage,
+      hitCooldown: effect.hitCooldown,
+      reward: "enemyNoCover",
+      afterDamage: () => applyArmorBreakToEnemy(
+        collision.enemy,
+        effect.armorBreakDuration ?? 0,
+        effect.armorBreakMultiplier ?? 1,
+      ),
+    });
+    emitSlash(hit.hitX, hit.hitY, DEFAULT_HIT_BURST_COLOR, collision.enemy.w);
+    emitHitBurst(hit.hitX, hit.hitY, PLAYER_COMBAT.effects.skillEnemyBurstColor, PLAYER_COMBAT.skillEnemyBurstPower);
     refundSkillGroup(effect, 1, false);
     return;
   }
 
-  damageBoss(collision.boss, effect.bossDamage, effect.bossHitCooldown);
-  applyArmorBreakToBoss(effect.armorBreakDuration ?? 0, effect.armorBreakBossMultiplier ?? 1);
-  emitSlash(x, y, PLAYER_COMBAT.effects.skillBossSlashColor);
-  emitHitBurst(x, y, PLAYER_COMBAT.effects.skillBossBurstColor, PLAYER_COMBAT.skillBossBurstPower);
-  defeatBoss();
+  const hit = resolveBossHit({
+    boss: collision.boss,
+    hitRect: effectBox(effect),
+    hitPoint: { x, y },
+    damage: effect.bossDamage,
+    hitCooldown: effect.bossHitCooldown,
+    afterDamage: () => applyArmorBreakToBoss(
+      effect.armorBreakDuration ?? 0,
+      effect.armorBreakBossMultiplier ?? 1,
+    ),
+  });
+  emitSlash(hit.hitX, hit.hitY, PLAYER_COMBAT.effects.skillBossSlashColor);
+  emitHitBurst(hit.hitX, hit.hitY, PLAYER_COMBAT.effects.skillBossBurstColor, PLAYER_COMBAT.skillBossBurstPower);
   refundSkillGroup(effect, 0, true);
 }
 
@@ -1208,7 +1253,7 @@ export function drawPlayerSkillEffects() {
   if (!ctx) return;
 
   for (const effect of state.playerSkillEffects) {
-    const sheet = PLAYER_SKILL_EFFECT_SHEETS[effect.skillId];
+    const sheet = playerSkillEffectSheet(effect.skillId);
     const tuning = isGenericPlayerSkillId(effect.skillId)
       ? GENERIC_PLAYER_SKILL_TUNING[effect.skillId]
       : null;

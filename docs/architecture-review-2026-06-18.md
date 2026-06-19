@@ -2,6 +2,17 @@
 
 > 目标：找出可以提高可维护性的 deepening opportunities，让后续技能池、13 幕闯关、Boss、装备、奖励和素材迭代有更好的 locality 与 leverage。
 
+## 已落地优化
+
+本轮已按报告候选完成一批保守重构，尽量只增加 seam、不改玩法数值：
+
+- **Player skill catalog**：新增 `src/systems/skillCatalog.ts`，HUD、暂停页、debug、progression、loadout、技能特效素材查询都改为经由 catalog。
+- **Combat resolution**：新增 `src/systems/combatResolution.ts`，玩家技能、普通攻击、下落攻击、格挡反击和粒子技能的扣血、击杀结算入口收束到 resolver。
+- **Run progression**：新增 `src/systems/runProgression.ts`，Act、敌人刷新间隔、Boss HP、Boss 觉醒和击杀后刷新计时改为纯规则函数。
+- **Boss encounter archetype**：新增 `src/entities/bosses/encounter.ts`，Boss 生成状态和相位计算从 `src/entities/boss.ts` 中分离。
+- **Asset manifest/loading**：新增 `src/assetManifest.ts`，`src/assets.ts` 只负责执行加载，不再手写所有资源加载分支。
+- **Central state leakage**：新增 `src/systems/runLifecycle.ts`，资源 ready 和 run 结束的横切状态写入统一入口。
+
 ## 词汇约定
 
 本文沿用架构审视中的固定词汇：

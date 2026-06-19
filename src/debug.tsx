@@ -9,12 +9,12 @@ import {
   GLIDER_SHEET_INDEX,
   LEAPER_SHEET_INDEX,
   RUNNER_SHEET_INDEX,
-  SKILLS,
   SPLITTER_SHEET_INDEX,
   WARDEN_SHEET_INDEX,
   BURROWER_SHEET_INDEX,
 } from "./constants";
 import { BOSS_ARCHETYPES } from "./entities/bosses/registry";
+import { implementedPlayerSkills } from "./systems/skillCatalog";
 import type { SegmentKind } from "./entities/platform";
 import type { SkillId } from "./types/assets";
 import type { BossArchetypeId } from "./types/game-state";
@@ -81,12 +81,10 @@ const DEBUG_BOSS_OPTIONS = Object.values(BOSS_ARCHETYPES).map((boss) => ({
   label: boss.displayName,
 }));
 
-const DEBUG_SKILL_OPTIONS = SKILLS
-  .filter((skill) => skill.implemented)
-  .map((skill) => ({
-    id: skill.id,
-    label: skill.name,
-  }));
+const DEBUG_SKILL_OPTIONS = implementedPlayerSkills().map((skill) => ({
+  id: skill.id,
+  label: skill.name,
+}));
 
 const DEBUG_SKILL_SLOT_OPTIONS = [0, 1, 2] as const;
 

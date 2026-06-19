@@ -61,6 +61,8 @@ import type { EquipmentItemId, EquipmentSlot } from "./types/game-state";
 import { applyUpgradeChoice } from "./systems/progression";
 import { chooseBossEquipment as chooseBossEquipmentReward, equipEquipment as equipEquipmentInState } from "./systems/equipment";
 import { equipSkillSlot as equipSkillSlotInState, SKILL_SLOT_COUNT } from "./systems/loadout";
+import { enemySpawnInterval } from "./systems/runProgression";
+import { markSpritesReady } from "./systems/runLifecycle";
 
 let frameId = 0;
 let running = false;
@@ -208,10 +210,7 @@ function loop(ts: number) {
 
     if (canAutoSpawnEntities() && !state.boss && state.spawnTimer <= 0) {
       spawnEnemy();
-      state.spawnTimer = Math.max(
-        RUNTIME_CONFIG.enemySpawnMinInterval,
-        RUNTIME_CONFIG.enemySpawnBaseInterval - state.elapsed * RUNTIME_CONFIG.enemySpawnDecay,
-      );
+      state.spawnTimer = enemySpawnInterval(state.elapsed);
     }
 
     if (canAutoSpawnEntities()) state.platformSpawnTimer -= dt;
@@ -355,7 +354,7 @@ export function startGame(options: { onStateChange?: (snapshot: GameSnapshot) =>
   if (!state.spritesReady) {
     loadSprites().catch((err) => {
       console.error('[runtime] loadSprites failed:', err);
-      state.spritesReady = true;
+      markSpritesReady(state);
     });
   }
 

@@ -1,6 +1,6 @@
-import { SKILLS } from "./constants";
 import type { SkillId } from "./types/assets";
 import type { EquipmentItemId, EquipmentSlot, SkillLevel, UltimateLevel } from "./types/game-state";
+import { playerSkillById, playerSkillIconSrc } from "./systems/skillCatalog";
 
 export const EQUIPMENT_SLOT_LABELS: Record<EquipmentSlot, string> = {
   blade: "刃器",
@@ -9,12 +9,11 @@ export const EQUIPMENT_SLOT_LABELS: Record<EquipmentSlot, string> = {
 };
 
 export function getSkill(skillId: SkillId | null | undefined) {
-  if (!skillId) return null;
-  return SKILLS.find((skill) => skill.id === skillId) ?? null;
+  return playerSkillById(skillId);
 }
 
 export function skillIconSrc(skillId: SkillId) {
-  return getSkill(skillId)?.iconSrc ?? `assets/sprites/skills/${skillId}/icon.png`;
+  return playerSkillIconSrc(skillId);
 }
 
 export function equipmentIconSrc(itemId: EquipmentItemId) {

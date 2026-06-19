@@ -1,10 +1,10 @@
 import { playSfx } from "../../audio";
-import { PLAYER_COMBAT, RUNTIME_CONFIG } from "../../constants";
+import { PLAYER_COMBAT } from "../../constants";
 import { recordBossCoverKill } from "../../coverProgress";
 import { state } from "../../state";
-import { BOSS_ARCHETYPE_IDS } from "./registry";
 import { createBossEquipmentChoices } from "../../systems/equipment";
 import { addRunXp, bossXp } from "../../systems/progression";
+import { bossRespawnTimerAfterDefeat } from "../../systems/runProgression";
 
 function gainBossKillEnergy() {
   const p = state.player;
@@ -30,8 +30,6 @@ export function defeatBoss() {
   playSfx("bossKill");
   state.bossKills += 1;
   state.boss = null;
-  state.bossSpawnTimer = defeatedBossId === BOSS_ARCHETYPE_IDS.bloodMoon
-    ? RUNTIME_CONFIG.disableBossSpawnTimer
-    : PLAYER_COMBAT.skillChargeResetDelay;
+  state.bossSpawnTimer = bossRespawnTimerAfterDefeat(defeatedBossId);
   return true;
 }

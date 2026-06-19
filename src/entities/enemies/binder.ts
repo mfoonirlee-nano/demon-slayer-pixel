@@ -16,6 +16,7 @@ import type { BinderAiPhase, BinderPhase, EnemyState } from "../../types/game-st
 import { frameIndex } from "../../utils";
 import type { EnemyArchetype, EnemySpawnContext } from "./common";
 import { drawEnemyFrame, enemyCenterX, enemyDrawScale, enemyFeetY } from "./common";
+import { endRun } from "../../systems/runLifecycle";
 
 export const BINDER_UNLOCK_SECONDS = 90;
 
@@ -126,9 +127,7 @@ function applyBindingZoneDamage() {
   playSfx("enemyImpact", 0.82);
   if (player.hp <= 0) {
     playSfx("playerDeath");
-    state.gameOver = true;
-    state.pendingEquipmentChoices = [];
-    state.pendingUpgradeChoices = [];
+    endRun(state);
   } else {
     playSfx("playerHurt", 0.9);
   }

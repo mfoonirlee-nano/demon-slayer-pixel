@@ -1,8 +1,9 @@
 import { useState } from "react";
-import { SKILLS, type UiSpriteId } from "./constants";
+import { type UiSpriteId } from "./constants";
 import { getAudioVolumeSettings, setAudioVolumeSettings, type AudioVolumeSettings } from "./audio";
 import { equipEquipment, equipSkillSlot } from "./runtime";
 import { EQUIPMENT_CHOICE_IDS, EQUIPMENT_ITEMS } from "./systems/equipment";
+import { allPlayerSkills } from "./systems/skillCatalog";
 import type { GameSnapshot } from "./gameStore";
 import type { SkillId } from "./types/assets";
 import type { EquipmentItemId, EquipmentSlot } from "./types/game-state";
@@ -20,6 +21,7 @@ type PauseTab = "info" | "equipment" | "skills" | "settings";
 
 const EQUIPMENT_SLOTS: EquipmentSlot[] = ["blade", "garb", "talisman"];
 const ALL_EQUIPMENT_ITEMS = EQUIPMENT_CHOICE_IDS.map((itemId) => EQUIPMENT_ITEMS[itemId]);
+const PAUSE_SKILLS = allPlayerSkills();
 const PAUSE_TABS: Array<{ id: PauseTab; label: string }> = [
   { id: "info", label: "基础信息" },
   { id: "equipment", label: "装备" },
@@ -593,12 +595,12 @@ export function PauseScreen({ snapshot }: { snapshot: GameSnapshot }) {
                       <span className="truncate text-[#26d5ff]">槽位 {selectedSkillSlot + 1} · {selectedSkill?.name ?? "空槽"}</span>
                     </div>
                     <div className="min-h-0 overflow-y-auto overflow-x-hidden">
-                      {SKILLS.length > 0 ? (
+                      {PAUSE_SKILLS.length > 0 ? (
                         <div
                           className="grid content-start"
                           style={{ gridTemplateColumns: "repeat(4, 78px)", gap: PAUSE_CHOICE_GRID_GAP }}
                         >
-                          {SKILLS.map((skill) => {
+                          {PAUSE_SKILLS.map((skill) => {
                             const learned = Boolean(player.skillLevels[skill.id]);
                             const equippedElsewhere = player.equippedSkillIds.some((skillId, index) => (
                               index !== selectedSkillSlot && skillId === skill.id

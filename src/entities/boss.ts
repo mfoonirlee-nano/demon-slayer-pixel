@@ -58,47 +58,17 @@ import { hurtPlayer } from "./player";
 import { spawnEnemy } from "./enemy";
 import { damageEnemy } from "./enemies/common";
 import { resolveEnemyDefeat } from "./enemies/defeat";
-import { BOSS_ARCHETYPE_IDS, bossArchetypeForId, bossArchetypeForKillCount } from "./bosses/registry";
+import { BOSS_ARCHETYPE_IDS, bossArchetypeForId } from "./bosses/registry";
+import { bossPhaseForHp, createBossEncounter } from "./bosses/encounter";
 
 type LiveBoss = NonNullable<BossState>;
 
 export function spawnBoss(id?: BossArchetypeId) {
-  const archetype = id ? bossArchetypeForId(id) : bossArchetypeForKillCount(state.bossKills);
-  const act = state.bossKills + 1;
-  const awakened = archetype.id === BOSS_ARCHETYPE_IDS.lanternEmber
-    && act >= archetype.awakenedUnlockAct;
-  const hp = archetype.hpBase
-    + state.bossKills * archetype.hpPerKill
-    + state.elapsed * archetype.hpScaleByElapsed;
-
-  state.boss = {
-    id: archetype.id,
-    x: WIDTH + BOSS_CONFIG.spawnOffsetX,
-    y: GROUND_Y - archetype.yOffsetFromGround,
-    w: archetype.collisionW,
-    h: archetype.collisionH,
-    vx: BOSS_CONFIG.entryVelocityX,
-    targetX: WIDTH - BOSS_CONFIG.targetXOffset,
-    entering: true,
-    hpMax: hp,
-    hp,
-    phase: 1,
-    hitCd: 0,
-    aiTimer: 0,
-    jumpCd: 0,
-    animSeed: Math.floor(Math.random() * BOSS_CONFIG.animSeedMax),
-    actionState: "move",
-    actionTimer: 0,
-    facing: -1,
-    skillCd: archetype.skillInitialCooldown,
-    castTimer: 0,
-    skillEffectSpawned: false,
-    castFacing: -1,
-    skillHitDone: false,
-    skillMode: archetype.skillMode,
-    recoveryTimer: 0,
-    awakened,
-  };
+  state.boss = createBossEncounter({
+    id,
+    bossKills: state.bossKills,
+    elapsedSeconds: state.elapsed,
+  });
   playSfx("bossSpawn");
 }
 
@@ -142,16 +112,8 @@ export function updateBoss() {
 }
 
 function updateBossPhase(boss: LiveBoss) {
-  const archetype = bossArchetypeForId(boss.id);
-  const phaseThresholds = boss.awakened
-    ? [0.75, 0.5, 0.25]
-    : archetype.phaseThresholds;
-  const hpRatio = boss.hp / boss.hpMax;
   const previousPhase = boss.phase;
-  boss.phase = 1;
-  for (const threshold of phaseThresholds) {
-    if (hpRatio < threshold) boss.phase += 1;
-  }
+  boss.phase = bossPhaseForHp(boss);
   if (boss.id === BOSS_ARCHETYPE_IDS.bloodMoon && boss.phase > previousPhase) {
     boss.phaseShiftTimer = BLOOD_MOON_CONFIG.phaseShiftFrames;
     boss.actionState = "windup";

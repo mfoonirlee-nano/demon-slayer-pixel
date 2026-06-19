@@ -5,18 +5,11 @@ import {
   WIDTH,
   BASIC_ATTACK,
   FALL_ATTACK,
-  SKILLS,
   SKILL_IDS,
   PLAYER_SHEETS,
   PLAYER_ANIMATION_STATES,
   PLAYER_COMBAT,
   PLAYER_DRAW,
-  LINE_PROJECTILE_EFFECT_SHEET,
-  LINE_PROJECTILE_EFFECT_CONFIG,
-  CLOSE_ARC_EFFECT_SHEET,
-  CLOSE_ARC_EFFECT_CONFIG,
-  GUARD_COUNTER_EFFECT_CONFIG,
-  ULTIMATE_SKILL_SHEET,
   SKILL_FLASH,
   LANTERN_EMBER_CONFIG,
 } from "../constants";
@@ -31,11 +24,7 @@ import {
   finishDashRepositionSkill,
   spawnPlayerSkillEffect,
 } from "./particle";
-import { damageEnemy } from "./enemies/common";
-import { resolveEnemyDefeat } from "./enemies/defeat";
-import { damageBoss } from "./bosses/common";
 import { bindingZonePlayerMoveScale } from "./enemies/binder";
-import { defeatBoss } from "./bosses/defeat";
 import { keys } from "../input";
 import { hasDebugInfiniteHealth, hasDebugInfiniteSkillCharge } from "../debug";
 import type { Skill } from "../types/assets";
@@ -47,15 +36,35 @@ import {
   recordBasicAttackHit,
   tickEquipmentEffects,
 } from "../systems/equipment";
+import {
+  applyBossDamage,
+  applyEnemyDamage,
+  resolveBossHit,
+  resolveEnemyHit,
+} from "../systems/combatResolution";
+import { endRun } from "../systems/runLifecycle";
 import { selectedSkill, selectSkillSlot } from "../systems/loadout";
 import { moonTideUltimateConfig, skillDamageMultiplier } from "../systems/progression";
 import { isGenericPlayerSkillId } from "../systems/playerSkills";
+import {
+  CORE_PLAYER_SKILL_EFFECT_CONFIGS,
+  CORE_PLAYER_SKILL_EFFECT_SHEETS,
+  ULTIMATE_SKILL_ASSETS,
+  playerSkillColor,
+} from "../systems/skillCatalog";
 
 const HALF_RATIO = 0.5;
 const FULL_CIRCLE = Math.PI * 2;
 const DASH_REPOSITION_INVINCIBLE_REFRESH_FRAMES = 2;
 const SKILL_ANIMATION_BASE_FPS = 60;
 const ANTI_AIR_MULTI_SKILL_ANIM_FPS = 8;
+const LINE_PROJECTILE_EFFECT_SHEET = CORE_PLAYER_SKILL_EFFECT_SHEETS[SKILL_IDS.lineProjectile];
+const LINE_PROJECTILE_EFFECT_CONFIG = CORE_PLAYER_SKILL_EFFECT_CONFIGS[SKILL_IDS.lineProjectile];
+const CLOSE_ARC_EFFECT_SHEET = CORE_PLAYER_SKILL_EFFECT_SHEETS[SKILL_IDS.closeArc];
+const CLOSE_ARC_EFFECT_CONFIG = CORE_PLAYER_SKILL_EFFECT_CONFIGS[SKILL_IDS.closeArc];
+const GUARD_COUNTER_EFFECT_CONFIG = CORE_PLAYER_SKILL_EFFECT_CONFIGS[SKILL_IDS.guardCounter];
+const ULTIMATE_SKILL_SHEET = ULTIMATE_SKILL_ASSETS.skill;
+const GUARD_COUNTER_HIT_COLOR = playerSkillColor(SKILL_IDS.guardCounter);
 
 const PLAYER_BINDING_SLOW_EFFECT = {
   filter: "sepia(0.38) saturate(1.55) hue-rotate(282deg) brightness(0.86)",
@@ -318,12 +327,19 @@ export function castSelectedSkill() {
       const damage = (skill.enemyBase + ratio * skill.enemyScale)
         * (1 + p.attackBonus * PLAYER_COMBAT.attackBonusScale)
         * castDamageMultiplier;
-      damageEnemy(e, damage, PLAYER_COMBAT.enemyHitCooldown);
+      const skillHit = nearestRectHitPoint(e, cx, cy);
+      const hit = resolveEnemyHit({
+        enemy: e,
+        enemyIndex: i,
+        hitRect: e,
+        hitPoint: skillHit,
+        damage,
+        hitCooldown: PLAYER_COMBAT.enemyHitCooldown,
+        reward: "enemy",
+      });
       hitTargets += 1;
-      const { x: skillHitX, y: skillHitY } = nearestRectHitPoint(e, cx, cy);
-      emitSlash(skillHitX, skillHitY, skill.color, e.w);
-      emitHitBurst(skillHitX, skillHitY, PLAYER_COMBAT.effects.skillEnemyBurstColor, PLAYER_COMBAT.skillEnemyBurstPower);
-      resolveEnemyDefeat(e, i, "enemy");
+      emitSlash(hit.hitX, hit.hitY, skill.color, e.w);
+      emitHitBurst(hit.hitX, hit.hitY, PLAYER_COMBAT.effects.skillEnemyBurstColor, PLAYER_COMBAT.skillEnemyBurstPower);
     }
 
     if (state.boss) {
@@ -334,12 +350,17 @@ export function castSelectedSkill() {
         const dist = Math.hypot(bx - cx, by - cy);
         if (dist <= radius + PLAYER_COMBAT.bossRadiusPadding) {
           const ratio = Math.max(PLAYER_COMBAT.bossMinDamageRatio, 1 - dist / (radius + PLAYER_COMBAT.bossRadiusPadding));
-          damageBoss(boss, skill.bossBase * ratio * castDamageMultiplier, PLAYER_COMBAT.bossHitCooldown);
+          const bossHitPoint = nearestRectHitPoint(boss, cx, cy);
+          const hit = resolveBossHit({
+            boss,
+            hitRect: boss,
+            hitPoint: bossHitPoint,
+            damage: skill.bossBase * ratio * castDamageMultiplier,
+            hitCooldown: PLAYER_COMBAT.bossHitCooldown,
+          });
           bossHit = true;
-          const { x: bossHitX, y: bossHitY } = nearestRectHitPoint(boss, cx, cy);
-          emitSlash(bossHitX, bossHitY, PLAYER_COMBAT.effects.skillBossSlashColor);
-          emitHitBurst(bossHitX, bossHitY, PLAYER_COMBAT.effects.skillBossBurstColor, PLAYER_COMBAT.skillBossBurstPower);
-          defeatBoss();
+          emitSlash(hit.hitX, hit.hitY, PLAYER_COMBAT.effects.skillBossSlashColor);
+          emitHitBurst(hit.hitX, hit.hitY, PLAYER_COMBAT.effects.skillBossBurstColor, PLAYER_COMBAT.skillBossBurstPower);
         }
       }
     }
@@ -425,22 +446,34 @@ function triggerFallAttackImpact() {
   for (let i = state.enemies.length - 1; i >= 0; i -= 1) {
     const e = state.enemies[i];
     if (!hitbox(box, e) || e.hitCd > 0) continue;
-    const { x: hitX, y: hitY } = overlapHitPoint(box, e);
-    damageEnemy(e, box.damage, FALL_ATTACK.enemyHitCooldown);
-    emitSlash(hitX, hitY, box.color, e.w * 1.25);
-    emitHitBurst(hitX, hitY, PLAYER_COMBAT.effects.skillEnemyBurstColor, FALL_ATTACK.impactBurstPower);
-    resolveEnemyDefeat(e, i, "attack");
+    const hitPoint = overlapHitPoint(box, e);
+    const hit = resolveEnemyHit({
+      enemy: e,
+      enemyIndex: i,
+      hitRect: box,
+      hitPoint,
+      damage: box.damage,
+      hitCooldown: FALL_ATTACK.enemyHitCooldown,
+      reward: "attack",
+    });
+    emitSlash(hit.hitX, hit.hitY, box.color, e.w * 1.25);
+    emitHitBurst(hit.hitX, hit.hitY, PLAYER_COMBAT.effects.skillEnemyBurstColor, FALL_ATTACK.impactBurstPower);
   }
 
   if (state.boss && hitbox(box, state.boss) && state.boss.hitCd <= 0) {
     const boss = state.boss;
-    const { x: bossHitX, y: bossHitY } = overlapHitPoint(box, boss);
-    damageBoss(boss, getPlayerAttackDamage() * FALL_ATTACK.bossDamageMultiplier, FALL_ATTACK.bossHitCooldown);
-    emitSlash(bossHitX, bossHitY, box.color, boss.w * 0.9);
-    emitHitBurst(bossHitX, bossHitY, PLAYER_COMBAT.effects.skillBossBurstColor, FALL_ATTACK.impactBurstPower + 0.6);
-    if (boss.hp <= 0) {
+    const bossHitPoint = overlapHitPoint(box, boss);
+    const hit = resolveBossHit({
+      boss,
+      hitRect: box,
+      hitPoint: bossHitPoint,
+      damage: getPlayerAttackDamage() * FALL_ATTACK.bossDamageMultiplier,
+      hitCooldown: FALL_ATTACK.bossHitCooldown,
+    });
+    emitSlash(hit.hitX, hit.hitY, box.color, boss.w * 0.9);
+    emitHitBurst(hit.hitX, hit.hitY, PLAYER_COMBAT.effects.skillBossBurstColor, FALL_ATTACK.impactBurstPower + 0.6);
+    if (hit.defeated) {
       emitSlash(boss.x + boss.w / 2, boss.y + PLAYER_COMBAT.bossHitY, PLAYER_COMBAT.effects.bossKillSlashColor);
-      defeatBoss();
     }
   }
 
@@ -466,16 +499,29 @@ export function hurtPlayer(damage: number, sourceVx: number) {
     for (let i = state.enemies.length - 1; i >= 0; i -= 1) {
       const e = state.enemies[i];
       if (!hitbox(p, e)) continue;
-      damageEnemy(e, counterDamage);
-      emitSlash(e.x + e.w / 2, e.y + e.h / 2, SKILLS[2].color, e.w);
-      emitHitBurst(e.x + e.w / 2, e.y + e.h / 2, SKILLS[2].color, 1.5);
-      resolveEnemyDefeat(e, i, "enemy");
+      const hitPoint = { x: e.x + e.w / 2, y: e.y + e.h / 2 };
+      const hit = resolveEnemyHit({
+        enemy: e,
+        enemyIndex: i,
+        hitRect: p,
+        hitPoint,
+        damage: counterDamage,
+        reward: "enemy",
+      });
+      emitSlash(hit.hitX, hit.hitY, GUARD_COUNTER_HIT_COLOR, e.w);
+      emitHitBurst(hit.hitX, hit.hitY, GUARD_COUNTER_HIT_COLOR, 1.5);
     }
     if (state.boss && hitbox(p, state.boss)) {
-      damageBoss(state.boss, counterDamage);
-      emitSlash(state.boss.x + state.boss.w / 2, state.boss.y + state.boss.h * 0.4, SKILLS[2].color);
-      emitHitBurst(state.boss.x + state.boss.w / 2, state.boss.y + state.boss.h * 0.4, SKILLS[2].color, 2);
-      defeatBoss();
+      const boss = state.boss;
+      const hitPoint = { x: boss.x + boss.w / 2, y: boss.y + boss.h * 0.4 };
+      const hit = resolveBossHit({
+        boss,
+        hitRect: p,
+        hitPoint,
+        damage: counterDamage,
+      });
+      emitSlash(hit.hitX, hit.hitY, GUARD_COUNTER_HIT_COLOR);
+      emitHitBurst(hit.hitX, hit.hitY, GUARD_COUNTER_HIT_COLOR, 2);
     }
 
     playSfx("playerCounter");
@@ -489,9 +535,7 @@ export function hurtPlayer(damage: number, sourceVx: number) {
   emitSlash(p.x + p.w / 2, p.y + PLAYER_COMBAT.attackKillY, PLAYER_COMBAT.effects.hurtSlashColor);
   if (p.hp <= 0) {
     playSfx("playerDeath");
-    state.gameOver = true;
-    state.pendingEquipmentChoices = [];
-    state.pendingUpgradeChoices = [];
+    endRun(state);
   } else {
     playSfx("playerHurt");
   }
@@ -684,16 +728,26 @@ export function updatePlayer() {
     for (let i = state.enemies.length - 1; i >= 0; i -= 1) {
       const e = state.enemies[i];
       if (hitbox(box, e) && e.hitCd <= 0) {
-        const { x: atkHitX, y: atkHitY } = overlapHitPoint(box, e);
-        damageEnemy(e, box.damage, PLAYER_COMBAT.attackEnemyHitCooldown);
-        recordBasicAttackHit(state);
-        triggerMoonTideAfterimageHit(atkHitX, atkHitY, e.w, (damage) => {
-          damageEnemy(e, damage, PLAYER_COMBAT.attackEnemyHitCooldown);
+        const hitPoint = overlapHitPoint(box, e);
+        const hit = resolveEnemyHit({
+          enemy: e,
+          enemyIndex: i,
+          hitRect: box,
+          hitPoint,
+          damage: box.damage,
+          hitCooldown: PLAYER_COMBAT.attackEnemyHitCooldown,
+          reward: "attack",
+          afterDamage: () => {
+            recordBasicAttackHit(state);
+            triggerMoonTideAfterimageHit(hitPoint.x, hitPoint.y, e.w, (damage) => {
+              applyEnemyDamage(e, damage, PLAYER_COMBAT.attackEnemyHitCooldown);
+            });
+          },
         });
-        emitSlash(atkHitX, atkHitY, box.color, e.w);
-        emitHitBurst(atkHitX, atkHitY, PLAYER_COMBAT.effects.attackEnemyBurstColor, PLAYER_COMBAT.attackEnemyBurstPower);
+        emitSlash(hit.hitX, hit.hitY, box.color, e.w);
+        emitHitBurst(hit.hitX, hit.hitY, PLAYER_COMBAT.effects.attackEnemyBurstColor, PLAYER_COMBAT.attackEnemyBurstPower);
         playSfx("playerAttackHit");
-        if (resolveEnemyDefeat(e, i, "attack")) {
+        if (hit.defeated) {
           emitSlash(e.x + Math.random() * e.w, e.y + Math.random() * e.h, PLAYER_COMBAT.effects.attackKillSlashColor, e.w);
         }
       }
@@ -701,23 +755,30 @@ export function updatePlayer() {
 
     if (state.boss && hitbox(box, state.boss) && state.boss.hitCd <= 0) {
       const boss = state.boss;
-      damageBoss(boss, box.damage, PLAYER_COMBAT.attackBossHitCooldown);
-      recordBasicAttackHit(state);
-      const { x: bossHitX, y: bossHitY } = overlapHitPoint(box, boss);
-      triggerMoonTideAfterimageHit(bossHitX, bossHitY, boss.w, (damage) => {
-        damageBoss(boss, damage, PLAYER_COMBAT.attackBossHitCooldown);
+      const hitPoint = overlapHitPoint(box, boss);
+      const hit = resolveBossHit({
+        boss,
+        hitRect: box,
+        hitPoint,
+        damage: box.damage,
+        hitCooldown: PLAYER_COMBAT.attackBossHitCooldown,
+        afterDamage: () => {
+          recordBasicAttackHit(state);
+          triggerMoonTideAfterimageHit(hitPoint.x, hitPoint.y, boss.w, (damage) => {
+            applyBossDamage(boss, damage, PLAYER_COMBAT.attackBossHitCooldown);
+          });
+        },
       });
-      emitSlash(bossHitX, bossHitY, box.color);
+      emitSlash(hit.hitX, hit.hitY, box.color);
       emitHitBurst(
-        bossHitX,
-        bossHitY,
+        hit.hitX,
+        hit.hitY,
         PLAYER_COMBAT.effects.attackBossBurstColor,
         PLAYER_COMBAT.attackBossBurstPower,
       );
       playSfx("playerBossHit");
-      if (boss.hp <= 0) {
+      if (hit.defeated) {
         emitSlash(boss.x + boss.w / 2, boss.y + PLAYER_COMBAT.bossHitY, PLAYER_COMBAT.effects.bossKillSlashColor);
-        defeatBoss();
       }
     }
   }

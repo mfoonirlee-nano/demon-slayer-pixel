@@ -11,7 +11,6 @@ import {
   PLAYER_COMBAT,
   PLAYER_DEFAULTS,
   RUNNER_SHEET_INDEX,
-  SKILLS,
   SKILL_IDS,
   SPLITTER_SHEET_INDEX,
   WARDEN_SHEET_INDEX,
@@ -25,6 +24,11 @@ import type {
   UpgradeChoiceState,
 } from "../types/game-state";
 import { autoEquipLearnedSkill, isSkillLearned, skillLevel } from "./loadout";
+import {
+  implementedPlayerSkillIds,
+  playerSkillDescription,
+  playerSkillName,
+} from "./skillCatalog";
 
 const BASE_XP = 50;
 const XP_LINEAR = 22;
@@ -209,8 +213,8 @@ function createUpgradeChoices(state: GameState): UpgradeChoiceState[] {
         id: `unlock-${skillId}-${state.player.runLevel}`,
         type: "unlockSkill",
         title: "习得新技能",
-        name: skillName(skillId, 1),
-        description: skillDescription(skillId, 1),
+        name: playerSkillName(skillId, 1),
+        description: playerSkillDescription(skillId, 1),
         skillId,
         nextLevel: 1,
       });
@@ -223,8 +227,8 @@ function createUpgradeChoices(state: GameState): UpgradeChoiceState[] {
         id: `upgrade-${skillId}-${state.player.runLevel}`,
         type: "upgradeSkill",
         title: "技能精进",
-        name: skillName(skillId, nextLevel),
-        description: skillDescription(skillId, nextLevel),
+        name: playerSkillName(skillId, nextLevel),
+        description: playerSkillDescription(skillId, nextLevel),
         skillId,
         nextLevel,
       });
@@ -245,20 +249,8 @@ function createUpgradeChoices(state: GameState): UpgradeChoiceState[] {
   return choices.slice(0, 3);
 }
 
-function skillName(skillId: SkillId, level: SkillLevel) {
-  const baseName = SKILLS.find((skill) => skill.id === skillId)?.name ?? skillId;
-  return `${baseName} ${romanLevel(level)}`;
-}
-
-function skillDescription(skillId: SkillId, level: SkillLevel) {
-  const skill = SKILLS.find((candidate) => candidate.id === skillId);
-  return skill?.levelDescriptions[level] ?? skill?.description ?? "技能效果提升。";
-}
-
 function implementedSkillIds(): SkillId[] {
-  return SKILLS
-    .filter((skill) => skill.implemented && Boolean(skill.src) && Boolean(skill.iconSrc))
-    .map((skill) => skill.id);
+  return implementedPlayerSkillIds();
 }
 
 function romanLevel(level: SkillLevel | UltimateLevel) {

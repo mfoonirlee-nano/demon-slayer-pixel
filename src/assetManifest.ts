@@ -1,0 +1,183 @@
+import {
+  BINDER_SHEETS,
+  BINDER_ZONE_BACK_SHEET,
+  BINDER_ZONE_FRONT_SHEET,
+  BINDER_ZONE_SHEET,
+  BLOOD_MOON_DEATH_SHEET,
+  BLOOD_MOON_LANTERN_BELL_CAST_SHEET,
+  BLOOD_MOON_LANTERN_BELL_EFFECT_SHEET,
+  BLOOD_MOON_MANY_FACES_CAST_SHEET,
+  BLOOD_MOON_MANY_FACES_EFFECT_SHEET,
+  BLOOD_MOON_MIRROR_FANG_CAST_SHEET,
+  BLOOD_MOON_MIRROR_FANG_EFFECT_SHEET,
+  BLOOD_MOON_PHASE_SHIFT_SHEET,
+  BLOOD_MOON_RECOVER_SHEET,
+  BLOOD_MOON_SHEET,
+  BLOOD_MOON_SIXFOLD_CAST_SHEET,
+  BLOOD_MOON_SIXFOLD_EFFECT_SHEET,
+  BLOOD_MOON_SPIDER_MIST_CAST_SHEET,
+  BLOOD_MOON_SPIDER_MIST_EFFECT_SHEET,
+  BOSS_SHEET,
+  BOSS_SKILL1_EFFECT_SHEET,
+  BOSS_SKILL1_SHEET,
+  BRUTE_SHEETS,
+  BURROWER_SHEETS,
+  CASTER_SHEETS,
+  CASTER_WISP_SHEET,
+  CLOUD_SPRITES,
+  CRAWLER_SHEETS,
+  DEAD_BELL_BLADE_SHEET,
+  DEAD_BELL_CAST_SHEET,
+  DEAD_BELL_SHEET,
+  DEAD_BELL_WAVE_SHEET,
+  DUELIST_SHEETS,
+  ENEMY_SHEETS,
+  GLIDER_SHEETS,
+  GROUND_TILE_SPRITES,
+  LANTERN_EMBER_ASH_ZONE_SHEET,
+  LANTERN_EMBER_AWAKENED_GRID_SHEET,
+  LANTERN_EMBER_BUFF_CAST_SHEET,
+  LANTERN_EMBER_BUFF_TETHER_SHEET,
+  LANTERN_EMBER_DEATH_SHEET,
+  LANTERN_EMBER_FIRELINE_CAST_SHEET,
+  LANTERN_EMBER_FIRELINE_SHEET,
+  LANTERN_EMBER_LURE_EFFECT_SHEET,
+  LANTERN_EMBER_SHEET,
+  LANTERN_EMBER_SUMMON_SHEET,
+  LEAPER_SHEETS,
+  MIRROR_AFTERIMAGE_SHEET,
+  MIRROR_DREAM_CAST_SHEET,
+  MIRROR_DREAM_SHEET,
+  MIRROR_NIGHTMARE_SHEET,
+  MIRROR_SHARD_SHEET,
+  MOUNTAIN_SPRITES,
+  PLATFORM_SPRITES,
+  PLAYER_SHEETS,
+  RUNNER_SHEETS,
+  SKY_SPRITES,
+  SPLITTER_SHEETS,
+  STONE_TOWER_SMALL_SPRITES,
+  STONE_TOWER_SPRITES,
+  TORII_SPRITES,
+  TREE_SPRITES,
+  WARDEN_AURA_EFFECT_SHEET,
+  WARDEN_SHEETS,
+} from "./constants";
+import {
+  allPlayerSkills,
+  playerSkillEffectSheets,
+  ultimateSkillSheets,
+} from "./systems/skillCatalog";
+
+export type ImageLoadTarget = {
+  src: string;
+  setImage: (image: HTMLImageElement) => void;
+};
+
+type LoadableImageAsset = {
+  src: string;
+  image: HTMLImageElement | null;
+};
+
+export function spriteImageLoadTargets(): ImageLoadTarget[] {
+  return [
+    ...spriteSheetTargets([
+      ...Object.values(PLAYER_SHEETS),
+      ...ENEMY_SHEETS,
+      ...Object.values(CRAWLER_SHEETS),
+      ...Object.values(CASTER_SHEETS),
+      CASTER_WISP_SHEET,
+      ...Object.values(DUELIST_SHEETS),
+      ...Object.values(RUNNER_SHEETS),
+      ...Object.values(BRUTE_SHEETS),
+      ...Object.values(BINDER_SHEETS),
+      ...Object.values(GLIDER_SHEETS),
+      ...Object.values(LEAPER_SHEETS),
+      ...Object.values(SPLITTER_SHEETS),
+      ...Object.values(WARDEN_SHEETS),
+      WARDEN_AURA_EFFECT_SHEET,
+      ...Object.values(BURROWER_SHEETS),
+      BINDER_ZONE_SHEET,
+      BINDER_ZONE_BACK_SHEET,
+      BINDER_ZONE_FRONT_SHEET,
+      BOSS_SHEET,
+      BOSS_SKILL1_SHEET,
+      BOSS_SKILL1_EFFECT_SHEET,
+      DEAD_BELL_SHEET,
+      DEAD_BELL_CAST_SHEET,
+      DEAD_BELL_WAVE_SHEET,
+      DEAD_BELL_BLADE_SHEET,
+      LANTERN_EMBER_SHEET,
+      LANTERN_EMBER_SUMMON_SHEET,
+      LANTERN_EMBER_FIRELINE_CAST_SHEET,
+      LANTERN_EMBER_BUFF_CAST_SHEET,
+      LANTERN_EMBER_DEATH_SHEET,
+      LANTERN_EMBER_LURE_EFFECT_SHEET,
+      LANTERN_EMBER_FIRELINE_SHEET,
+      LANTERN_EMBER_BUFF_TETHER_SHEET,
+      LANTERN_EMBER_AWAKENED_GRID_SHEET,
+      LANTERN_EMBER_ASH_ZONE_SHEET,
+      MIRROR_DREAM_SHEET,
+      MIRROR_DREAM_CAST_SHEET,
+      MIRROR_SHARD_SHEET,
+      MIRROR_AFTERIMAGE_SHEET,
+      MIRROR_NIGHTMARE_SHEET,
+      BLOOD_MOON_SHEET,
+      BLOOD_MOON_PHASE_SHIFT_SHEET,
+      BLOOD_MOON_RECOVER_SHEET,
+      BLOOD_MOON_DEATH_SHEET,
+      BLOOD_MOON_SPIDER_MIST_CAST_SHEET,
+      BLOOD_MOON_MIRROR_FANG_CAST_SHEET,
+      BLOOD_MOON_LANTERN_BELL_CAST_SHEET,
+      BLOOD_MOON_SIXFOLD_CAST_SHEET,
+      BLOOD_MOON_MANY_FACES_CAST_SHEET,
+      BLOOD_MOON_SPIDER_MIST_EFFECT_SHEET,
+      BLOOD_MOON_MIRROR_FANG_EFFECT_SHEET,
+      BLOOD_MOON_LANTERN_BELL_EFFECT_SHEET,
+      BLOOD_MOON_SIXFOLD_EFFECT_SHEET,
+      BLOOD_MOON_MANY_FACES_EFFECT_SHEET,
+      SKY_SPRITES,
+      CLOUD_SPRITES.big,
+      CLOUD_SPRITES.small,
+      ...TREE_SPRITES.sheets,
+      STONE_TOWER_SPRITES,
+      STONE_TOWER_SMALL_SPRITES,
+      TORII_SPRITES,
+      MOUNTAIN_SPRITES,
+      GROUND_TILE_SPRITES.grass,
+      GROUND_TILE_SPRITES.stone,
+      PLATFORM_SPRITES,
+      ...playerSkillEffectSheets(),
+      ...ultimateSkillSheets(),
+      ...allPlayerSkills(),
+    ]),
+    frontImageTarget(GROUND_TILE_SPRITES.grass),
+    frontImageTarget(GROUND_TILE_SPRITES.stone),
+  ];
+}
+
+function spriteSheetTargets(assets: LoadableImageAsset[]) {
+  return uniqueAssets(assets).map(imageTarget);
+}
+
+function uniqueAssets<T extends LoadableImageAsset>(assets: T[]): T[] {
+  return Array.from(new Set(assets));
+}
+
+function imageTarget(asset: LoadableImageAsset): ImageLoadTarget {
+  return {
+    src: asset.src,
+    setImage: (image) => {
+      asset.image = image;
+    },
+  };
+}
+
+function frontImageTarget(asset: { frontSrc: string; frontImage: HTMLImageElement | null }): ImageLoadTarget {
+  return {
+    src: asset.frontSrc,
+    setImage: (image) => {
+      asset.frontImage = image;
+    },
+  };
+}
