@@ -33,7 +33,7 @@
 | `ui/ultimate_orb_sheet.png` | `512x64` | 大招满能量动画 | `UltimateOrb` |
 | `ui/ultimate_orb_charge_sheet.png` | `512x64` | 大招充能帧 | `UltimateOrb` |
 
-UI 框体素材按用途放在 `ui/system/` 的子目录中，便于逐个微调。角色 HUD 使用 `ui/system/hud/` 下的模块化素材：`hud-status-frame.png` 是当前角色状态 HUD 的组合预览图，`ultimate-frame.png` 是大招圆框，`current-skill-frame.png` 是当前技能圆框，生命条和技能条各由 `left/mid/right` 三段式外框组成。角色状态 HUD 这组素材以 3x 源尺寸保存，例如大招圆框源图为 `216x216`、运行时显示为 `72x72`；`UI_SPRITES` 通过 `displayW/displayH` 记录显示尺寸。运行时只从单图绘制外框和暗轨道，当前值、滞后值和文字由 React/CSS 动态叠加，保证状态条可随角色等级横向增长。
+UI 框体素材按用途放在 `ui/system/` 的子目录中，便于逐个微调。角色 HUD 使用 `ui/system/hud/` 下的模块化素材：`ultimate-frame.png` 是大招圆框，`current-skill-frame.png` 是当前技能圆框，生命条和技能条各由 `left/mid/right` 三段式外框组成。角色状态 HUD 这组素材以 3x 源尺寸保存，例如大招圆框源图为 `216x216`、运行时显示为 `72x72`；`UI_SPRITES` 通过 `displayW/displayH` 记录显示尺寸。运行时只从单图绘制外框和暗轨道，当前值、滞后值和文字由 React/CSS 动态叠加，保证状态条可随角色等级横向增长。
 
 ### 玩家动画
 

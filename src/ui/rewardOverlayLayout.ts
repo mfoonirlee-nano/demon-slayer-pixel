@@ -22,16 +22,16 @@ const REWARD_LAYOUTS: Record<RewardOverlayKind, RewardLayoutConfig> = {
   upgrade: {
     activeCardSprite: "upgradeChoiceCardActive",
     cardContentSource: {
-      bottom: 90,
-      insetX: 28,
-      top: 86,
+      bottom: 44,
+      insetX: 22,
+      top: 62,
     },
-    cardRowTop: 112,
+    cardRowTop: 52,
     cardSprite: "upgradeChoiceCard",
-    columnGap: 8,
-    panelBottomPadding: 20,
+    columnGap: 10,
+    panelBottomPadding: 44,
     panelSprite: "upgradeRewardPanel",
-    titleTop: 70,
+    titleTop: 28,
   },
   bossEquipment: {
     activeCardSprite: "bossChoiceCardActive",

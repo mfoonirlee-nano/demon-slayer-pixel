@@ -64,6 +64,10 @@ Strong success criteria let you loop independently. Weak criteria ("make it work
 - Do not start game processes.
 - When deleting files under `dist/assets`, run `npm run clean:dist-assets` instead of direct `rm` commands.
 
+## 6. Asset Generation
+
+- All generated image assets must be created with the `imagegen` skill/tool. Do not hand-roll raster assets with scripts or code-native drawing as a substitute for image generation.
+
 ---
 
 **These guidelines are working if:** fewer unnecessary changes in diffs, fewer rewrites due to overcomplication, and clarifying questions come before implementation rather than after mistakes.

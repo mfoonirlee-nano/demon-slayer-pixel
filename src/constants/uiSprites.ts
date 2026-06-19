@@ -1,5 +1,4 @@
 export const UI_SPRITES = {
-  hudStatusFrame: { src: "assets/sprites/ui/system/hud/hud-status-frame.png", w: 876, h: 216, displayW: 292, displayH: 72 },
   ultimateFrame: { src: "assets/sprites/ui/system/hud/ultimate-frame.png", w: 216, h: 216, displayW: 72, displayH: 72 },
   currentSkillFrame: { src: "assets/sprites/ui/system/hud/current-skill-frame.png", w: 108, h: 108, displayW: 36, displayH: 36 },
   hudHpBarLeft: { src: "assets/sprites/ui/system/hud/hud-hp-bar-left.png", w: 78, h: 60, displayW: 26, displayH: 20 },
@@ -35,9 +34,9 @@ export const UI_SPRITES = {
   buttonNormal: { src: "assets/sprites/ui/system/controls/button-normal.png", w: 433, h: 146 },
   buttonActive: { src: "assets/sprites/ui/system/controls/button-active.png", w: 405, h: 147 },
 
-  upgradeRewardPanel: { src: "assets/sprites/ui/system/rewards/upgrade-reward-panel.png", w: 704, h: 415 },
-  upgradeChoiceCard: { src: "assets/sprites/ui/system/rewards/upgrade-choice-card.png", w: 196, h: 389 },
-  upgradeChoiceCardActive: { src: "assets/sprites/ui/system/rewards/upgrade-choice-card-active.png", w: 198, h: 389 },
+  upgradeRewardPanel: { src: "assets/sprites/ui/system/rewards/upgrade-reward-panel-v3.png", w: 704, h: 415 },
+  upgradeChoiceCard: { src: "assets/sprites/ui/system/rewards/upgrade-choice-card-v2.png", w: 196, h: 389 },
+  upgradeChoiceCardActive: { src: "assets/sprites/ui/system/rewards/upgrade-choice-card-active-v2.png", w: 198, h: 389 },
 
   bossRewardPanel: { src: "assets/sprites/ui/system/rewards/boss-reward-panel.png", w: 744, h: 423 },
   bossChoiceCard: { src: "assets/sprites/ui/system/rewards/boss-choice-card.png", w: 213, h: 398 },
