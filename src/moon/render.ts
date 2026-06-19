@@ -1,5 +1,6 @@
 import { ctx } from "../rendering/context";
-import { SKY_SPRITES } from "../constants";
+import { COVER_MOON_PHASE_SPRITES, SKY_SPRITES } from "../constants";
+import { getCoverMoonPhaseIndex } from "../game/coverProgress";
 import { colorLerp } from "../game/utils";
 import {
   MOON_GLOW_CONFIG,
@@ -63,21 +64,23 @@ export function drawMoon(options: { elapsed: number; moon: MoonState }) {
 
   const { elapsed, moon } = options;
   const bloodLerp = moon.bloodLerp;
+  const coverProgress = moon.coverProgress;
+  const moonlightScale = 0.78 + coverProgress * 0.42;
   const motion = getMoonMotion(elapsed, bloodLerp);
   const moonX = MOON_LAYOUT.x + motion.moonX;
   const moonY = MOON_LAYOUT.y + motion.moonY;
   const bloodRingRadius = MOON_GLOW_CONFIG.bloodRingRadius + motion.bloodWaveAmount * MOON_MOTION_CONFIG.bloodWave.radiusBoost;
   // 放大呼吸动画的振幅 (原本 1.5 -> 8, 2.5 -> 15)，让变化更明显
-  const outerGlowRadius = MOON_GLOW_CONFIG.outerGlowRadius + motion.basePulse * 8 + motion.bloodWaveAmount * MOON_MOTION_CONFIG.bloodWave.radiusBoost * 1.5;
-  const farGlowRadius = MOON_GLOW_CONFIG.farGlowRadius + motion.basePulse * 15 + motion.bloodWaveAmount * MOON_MOTION_CONFIG.bloodWave.radiusBoost * 2;
+  const outerGlowRadius = MOON_GLOW_CONFIG.outerGlowRadius * moonlightScale + motion.basePulse * 8 + motion.bloodWaveAmount * MOON_MOTION_CONFIG.bloodWave.radiusBoost * 1.5;
+  const farGlowRadius = MOON_GLOW_CONFIG.farGlowRadius * moonlightScale + motion.basePulse * 15 + motion.bloodWaveAmount * MOON_MOTION_CONFIG.bloodWave.radiusBoost * 2;
 
   const context = ctx;
 
   // 光晕颜色随 bloodLerp 从蓝白月光插值到血红，叠加呼吸波动
   const currentFarColor = lerpColor(MOON_GLOW_CONFIG.farGlowColor, MOON_GLOW_CONFIG.bloodFarColor, bloodLerp);
-  const farGlowAlpha = Math.max(0, MOON_GLOW_CONFIG.farGlowAlpha + (MOON_GLOW_CONFIG.bloodFarAlpha - MOON_GLOW_CONFIG.farGlowAlpha) * bloodLerp + motion.basePulse * 0.03);
+  const farGlowAlpha = Math.max(0, MOON_GLOW_CONFIG.farGlowAlpha * moonlightScale + (MOON_GLOW_CONFIG.bloodFarAlpha - MOON_GLOW_CONFIG.farGlowAlpha) * bloodLerp + motion.basePulse * 0.03);
   const currentOuterColor = lerpColor(MOON_GLOW_CONFIG.outerGlowColor, MOON_GLOW_CONFIG.bloodOuterColor, bloodLerp);
-  const outerGlowAlpha = Math.max(0, MOON_GLOW_CONFIG.outerGlowAlpha + (MOON_GLOW_CONFIG.bloodOuterAlpha - MOON_GLOW_CONFIG.outerGlowAlpha) * bloodLerp + motion.basePulse * 0.05);
+  const outerGlowAlpha = Math.max(0, MOON_GLOW_CONFIG.outerGlowAlpha * moonlightScale + (MOON_GLOW_CONFIG.bloodOuterAlpha - MOON_GLOW_CONFIG.outerGlowAlpha) * bloodLerp + motion.basePulse * 0.05);
 
   // 最外层散射（radialGradient 替代 shadowBlur）
   drawGlow(context, moonX, moonY, farGlowRadius, currentFarColor, farGlowAlpha * 2.2);
@@ -86,8 +89,8 @@ export function drawMoon(options: { elapsed: number; moon: MoonState }) {
   drawGlow(context, moonX, moonY, outerGlowRadius, currentOuterColor, outerGlowAlpha * 2.0);
 
   // 内层月光晕（血月时减弱）
-  const coolAlpha = (1 - bloodLerp * 0.8) * MOON_GLOW_CONFIG.coolGlowAlpha;
-  drawGlow(context, moonX, moonY, MOON_GLOW_CONFIG.coolGlowRadius + motion.pulseWave * 1.4, MOON_GLOW_CONFIG.coolGlowColor, coolAlpha * 2.0);
+  const coolAlpha = (1 - bloodLerp * 0.8) * MOON_GLOW_CONFIG.coolGlowAlpha * moonlightScale;
+  drawGlow(context, moonX, moonY, MOON_GLOW_CONFIG.coolGlowRadius * moonlightScale + motion.pulseWave * 1.4, MOON_GLOW_CONFIG.coolGlowColor, coolAlpha * 2.0);
 
   // 血月光环
   if (bloodLerp > 0) {
@@ -95,13 +98,40 @@ export function drawMoon(options: { elapsed: number; moon: MoonState }) {
     drawGlow(context, moonX, moonY, bloodRingRadius, MOON_GLOW_CONFIG.bloodRingColor, ringAlpha * 2.0);
   }
 
+  const phaseSpriteImg = COVER_MOON_PHASE_SPRITES.image;
   const spriteImg = SKY_SPRITES.image;
   const moonDrawSize = MOON_LAYOUT.coreRadius * 2;
   const moonDrawX = moonX - MOON_LAYOUT.coreRadius;
   const moonDrawY = moonY - MOON_LAYOUT.coreRadius;
   const { sx, sy, sw, sh } = SKY_SPRITES.moon;
 
-  if (spriteImg) {
+  if (phaseSpriteImg) {
+    const phaseIndex = getCoverMoonPhaseIndex(coverProgress, COVER_MOON_PHASE_SPRITES.frames);
+    context.drawImage(
+      phaseSpriteImg,
+      phaseIndex * COVER_MOON_PHASE_SPRITES.frameW,
+      0,
+      COVER_MOON_PHASE_SPRITES.frameW,
+      COVER_MOON_PHASE_SPRITES.frameH,
+      moonDrawX,
+      moonDrawY,
+      moonDrawSize,
+      moonDrawSize,
+    );
+    if (bloodLerp > 0) {
+      // 直接在主 canvas 叠色：用圆形裁剪区域限制到月亮范围
+      context.save();
+      context.beginPath();
+      context.arc(moonX, moonY, MOON_LAYOUT.coreRadius, 0, Math.PI * 2);
+      context.clip();
+      context.fillStyle = `rgba(60,0,0,${bloodLerp * 0.55})`;
+      context.fillRect(moonDrawX, moonDrawY, moonDrawSize, moonDrawSize);
+      const [tintR, tintG, tintB] = MOON_SURFACE_CONFIG.bloodCoreColor;
+      context.fillStyle = `rgba(${tintR},${tintG},${tintB},${bloodLerp * 0.5})`;
+      context.fillRect(moonDrawX, moonDrawY, moonDrawSize, moonDrawSize);
+      context.restore();
+    }
+  } else if (spriteImg) {
     context.drawImage(spriteImg, sx, sy, sw, sh, moonDrawX, moonDrawY, moonDrawSize, moonDrawSize);
     if (bloodLerp > 0) {
       // 直接在主 canvas 叠色：用圆形裁剪区域限制到月亮范围

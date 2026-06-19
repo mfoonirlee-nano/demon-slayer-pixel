@@ -117,7 +117,7 @@ export function drawBackground() {
   const spriteImg = SKY_SPRITES.image;
   const bloodLerp = state.moon.bloodLerp;
   if (spriteImg && bloodLerp < 1) {
-    const starVisibility = 1 - bloodLerp;
+    const starVisibility = (1 - bloodLerp) * (1 - state.moon.coverProgress * 0.22);
     for (const s of STARS) {
       const region = s.variant === 0 ? SKY_SPRITES.starSmall : SKY_SPRITES.starMedium;
       // Scale twinkling: 0 → full size, giving a "blink in and out" effect

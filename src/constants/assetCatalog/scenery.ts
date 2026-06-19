@@ -24,6 +24,20 @@ export const SKY_SPRITES: {
   starGroup: { sx: 790, sy: 544, sw: 309, sh: 286 },
 };
 
+export const COVER_MOON_PHASE_SPRITES: {
+  src: string;
+  image: HTMLImageElement | null;
+  frameW: number;
+  frameH: number;
+  frames: number;
+} = {
+  src: "assets/sprites/ui/cover/moon.png",
+  image: null,
+  frameW: 160,
+  frameH: 160,
+  frames: 8,
+};
+
 export const TREE_SPRITES: {
   sheets: Array<{
     src: string;

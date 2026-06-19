@@ -18,7 +18,7 @@
 | 系统 | 当前实现状态 | 目标设计状态 | 状态 | 优先级 | 依据 |
 | --- | --- | --- | --- | --- | --- |
 | 应用架构 | React 外壳 + Canvas runtime + Jotai 快照已接入 | 保持当前分层，新增系统继续通过 runtime 状态和 React overlay 协作 | 已实现 | P0 | `src/App.tsx`、`src/runtime.ts`、`src/state.ts` |
-| 开始界面 | 封面、加载状态、任意键/点击开始、本地击杀视觉进度已实现 | 补首次游玩提示和未来模式入口，不加入复杂菜单 | 已实现 | P4 | `src/startScreen.tsx`、`src/coverProgress.ts` |
+| 开始界面 | 封面、加载状态、任意键/点击开始、跨局累计加权击杀视觉进度已实现；`coverKills` 是权威累计值，`lastSeenCoverKills` 是已展示进度，开场只播放增长跃迁，满后停最终月相；运行时月亮复用同一进度和月相素材 | 补首次游玩提示和未来模式入口，不加入复杂菜单 | 已实现 | P4 | `src/ui/startScreen.tsx`、`src/game/coverProgress.ts`、`src/moon/` |
 | 玩家移动 | 左右移动、跳跃、平台承载、移动端触控已实现 | 保持当前手感，后续只围绕敌人与地图调参 | 已实现 | P0 | `src/entities/player.ts`、`src/input.ts` |
 | 普攻与下落攻击 | 普攻、下落攻击、命中、击退、粒子和音效已实现 | 补更明确的命中/击杀反馈规范 | 已实现 | P4 | `src/entities/player.ts`、`docs/numeric-system/player.md` |
 | 技能与大招 | 三个技能、大招、技能能量、大招能量已实现 | 建立 `SKILL_DEFS` 注册表、`skillLevels`、`ultimateLevel` 和解锁/升级读取方式 | 部分实现 | P3 | `src/constants/assets.ts`、`src/entities/player.ts` |

@@ -1,5 +1,12 @@
-import { useEffect, useState, type CSSProperties } from "react";
-import { getCoverProgress, readCoverKills } from "../game/coverProgress";
+import { useEffect, useRef, useState, type CSSProperties } from "react";
+import {
+  COVER_MOON_PHASE_COUNT,
+  getCoverMoonPhaseIndex,
+  getCoverProgress,
+  readCoverKills,
+  readLastSeenCoverKills,
+  writeLastSeenCoverKills,
+} from "../game/coverProgress";
 
 type CustomCssProperties = CSSProperties & Record<`--${string}`, string>;
 
@@ -9,6 +16,8 @@ type StartScreenProps = {
   onStart: () => void;
 };
 
+type CoverTransitionKind = "none" | "minor" | "phase";
+
 const COVER_LAYERS = [
   { src: "assets/sprites/ui/cover/background.png", className: "cover-background" },
   { src: "assets/sprites/ui/cover/lantern_light.png", className: "cover-light" },
@@ -16,7 +25,6 @@ const COVER_LAYERS = [
 ];
 
 const MOON_PHASE_SHEET_SRC = "assets/sprites/ui/cover/moon.png";
-const MOON_PHASE_COUNT = 8;
 const MOON_PHASE_FRAME_W = 160;
 const MOON_PHASE_FRAME_H = 160;
 const COVER_CANVAS_W = 1672;
@@ -38,6 +46,8 @@ const CLEAR_CORE_START_PERCENT = 16;
 const CLEAR_CORE_END_PERCENT = 28;
 const SOFT_EDGE_START_PERCENT = 58;
 const SOFT_EDGE_END_PERCENT = 76;
+const SAME_PHASE_TRANSITION_MS = 700;
+const PHASE_TRANSITION_MS = 1100;
 const SWEEP_CENTER_X_START = 49;
 const SWEEP_CENTER_X_END = 50;
 const SWEEP_SCALE_X_START = 1.0;
@@ -56,6 +66,32 @@ const KILL_DIGIT_FRAME_H = Math.floor(KILL_DIGIT_SHEET_H / KILL_DIGIT_ROWS);
 
 function lerp(from: number, to: number, progress: number) {
   return from + (to - from) * progress;
+}
+
+function easeOutCubic(progress: number) {
+  const clampedProgress = Math.max(0, Math.min(1, progress));
+  return 1 - (1 - clampedProgress) ** 3;
+}
+
+function readPrefersReducedMotion() {
+  if (typeof window === "undefined" || typeof window.matchMedia !== "function") return false;
+  return window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+}
+
+function usePrefersReducedMotion() {
+  const [prefersReducedMotion, setPrefersReducedMotion] = useState(readPrefersReducedMotion);
+
+  useEffect(() => {
+    if (typeof window === "undefined" || typeof window.matchMedia !== "function") return;
+
+    const query = window.matchMedia("(prefers-reduced-motion: reduce)");
+    const syncPreference = () => setPrefersReducedMotion(query.matches);
+    syncPreference();
+    query.addEventListener("change", syncPreference);
+    return () => query.removeEventListener("change", syncPreference);
+  }, []);
+
+  return prefersReducedMotion;
 }
 
 function coverStyleFromProgress(progress: number): CustomCssProperties {
@@ -79,8 +115,15 @@ function coverStyleFromProgress(progress: number): CustomCssProperties {
   };
 }
 
-function useCoverProgress() {
+function useCoverProgress(prefersReducedMotion: boolean) {
   const [kills, setKills] = useState(() => readCoverKills());
+  const [displayKills, setDisplayKills] = useState(() => {
+    const currentKills = readCoverKills();
+    const lastSeenKills = readLastSeenCoverKills();
+    return !prefersReducedMotion && currentKills > lastSeenKills ? lastSeenKills : currentKills;
+  });
+  const [transitionKind, setTransitionKind] = useState<CoverTransitionKind>("none");
+  const displayKillsRef = useRef(displayKills);
 
   useEffect(() => {
     const syncKills = () => setKills(readCoverKills());
@@ -95,9 +138,57 @@ function useCoverProgress() {
     };
   }, []);
 
+  useEffect(() => {
+    displayKillsRef.current = displayKills;
+  }, [displayKills]);
+
+  useEffect(() => {
+    const startKills = displayKillsRef.current;
+
+    if (prefersReducedMotion || kills <= startKills) {
+      displayKillsRef.current = kills;
+      setDisplayKills(kills);
+      setTransitionKind("none");
+      writeLastSeenCoverKills(kills);
+      return;
+    }
+
+    const startProgress = getCoverProgress(startKills);
+    const targetProgress = getCoverProgress(kills);
+    const startPhase = getCoverMoonPhaseIndex(startProgress);
+    const targetPhase = getCoverMoonPhaseIndex(targetProgress);
+    const nextTransitionKind: CoverTransitionKind = startPhase === targetPhase ? "minor" : "phase";
+    const duration = nextTransitionKind === "phase" ? PHASE_TRANSITION_MS : SAME_PHASE_TRANSITION_MS;
+    const startTime = window.performance.now();
+    let animationFrameId = 0;
+
+    writeLastSeenCoverKills(kills);
+    setTransitionKind(nextTransitionKind);
+
+    const step = (timestamp: number) => {
+      const progress = easeOutCubic((timestamp - startTime) / duration);
+      const nextKills = lerp(startKills, kills, progress);
+      displayKillsRef.current = nextKills;
+      setDisplayKills(nextKills);
+
+      if (progress < 1) {
+        animationFrameId = window.requestAnimationFrame(step);
+        return;
+      }
+
+      displayKillsRef.current = kills;
+      setDisplayKills(kills);
+      setTransitionKind("none");
+    };
+
+    animationFrameId = window.requestAnimationFrame(step);
+    return () => window.cancelAnimationFrame(animationFrameId);
+  }, [kills, prefersReducedMotion]);
+
   return {
     kills,
-    progress: getCoverProgress(kills),
+    progress: getCoverProgress(displayKills),
+    transitionKind,
   };
 }
 
@@ -134,12 +225,13 @@ function CoverKillCounter({ value }: { value: number }) {
   );
 }
 
-function getMoonPhaseIndex(progress: number) {
-  return Math.min(MOON_PHASE_COUNT - 1, Math.floor(progress * MOON_PHASE_COUNT));
-}
-
-function CoverMoonPhase({ progress }: { progress: number }) {
-  const phaseIndex = getMoonPhaseIndex(progress);
+function CoverMoonPhase({ progress, transitionKind }: {
+  progress: number;
+  transitionKind: CoverTransitionKind;
+}) {
+  const phaseIndex = getCoverMoonPhaseIndex(progress);
+  const moonCenterX = MOON_PHASE_X + MOON_PHASE_FRAME_W / 2;
+  const moonCenterY = MOON_PHASE_Y + MOON_PHASE_FRAME_H / 2;
 
   return (
     <svg
@@ -160,20 +252,32 @@ function CoverMoonPhase({ progress }: { progress: number }) {
           href={MOON_PHASE_SHEET_SRC}
           x={-phaseIndex * MOON_PHASE_FRAME_W}
           y={0}
-          width={MOON_PHASE_FRAME_W * MOON_PHASE_COUNT}
+          width={MOON_PHASE_FRAME_W * COVER_MOON_PHASE_COUNT}
           height={MOON_PHASE_FRAME_H}
         />
       </svg>
+      {transitionKind !== "none" ? (
+        <circle
+          className={`cover-moon-flare cover-moon-flare-${transitionKind}`}
+          cx={moonCenterX}
+          cy={moonCenterY}
+          r={92}
+        />
+      ) : null}
     </svg>
   );
 }
 
 export function StartScreen({ assetsReady, startQueued, onStart }: StartScreenProps) {
-  const { kills, progress } = useCoverProgress();
+  const prefersReducedMotion = usePrefersReducedMotion();
+  const { kills, progress, transitionKind } = useCoverProgress(prefersReducedMotion);
   const promptText = assetsReady ? "按任意键开始" : "加载像素贴图中...";
   const promptClassName = startQueued && !assetsReady
     ? "start-prompt start-prompt-loading"
     : "start-prompt";
+  const stageClassName = transitionKind === "none"
+    ? "cover-stage"
+    : `cover-stage cover-stage-transition-${transitionKind}`;
 
   return (
     <div
@@ -187,7 +291,7 @@ export function StartScreen({ assetsReady, startQueued, onStart }: StartScreenPr
       }}
       onClick={onStart}
     >
-      <div className="cover-stage" style={coverStyleFromProgress(progress)} aria-hidden="true">
+      <div className={stageClassName} style={coverStyleFromProgress(progress)} aria-hidden="true">
         {COVER_LAYERS.map((layer) => (
           <img
             key={layer.src}
@@ -197,7 +301,7 @@ export function StartScreen({ assetsReady, startQueued, onStart }: StartScreenPr
             className={`cover-layer ${layer.className}`}
           />
         ))}
-        <CoverMoonPhase progress={progress} />
+        <CoverMoonPhase progress={progress} transitionKind={transitionKind} />
         <div className="cover-darkness" />
       </div>
       <CoverKillCounter value={kills} />

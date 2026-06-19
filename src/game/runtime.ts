@@ -11,6 +11,7 @@ import {
   SKILL_FLASH,
 } from "../constants";
 import { loadSprites } from "../assets";
+import { getCoverProgress } from "./coverProgress";
 import { setupInput, teardownInput, debugCollisionBoxes } from "./input";
 import { drawBackground, drawGroundTileBase, drawGroundTileFront } from "../rendering/background";
 import { drawNearForeground } from "../rendering/nearForeground";
@@ -192,6 +193,8 @@ function loop(ts: number) {
   updateMoon(state.moon, dt, {
     bloodActive: state.boss !== null,
     bloodLerpSpeed: RUNTIME_CONFIG.moonBloodLerpSpeed,
+    coverProgressTarget: getCoverProgress(),
+    coverProgressLerpSpeed: RUNTIME_CONFIG.moonCoverProgressLerpSpeed,
   });
 
   if (!state.spritesReady) {

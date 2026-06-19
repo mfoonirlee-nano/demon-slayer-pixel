@@ -2,6 +2,7 @@ export const RUNTIME_CONFIG = {
   maxFrameDeltaMs: 32,
   msPerSecond: 1000,
   moonBloodLerpSpeed: 2.4,
+  moonCoverProgressLerpSpeed: 2.1,
   enemySpawnMinInterval: 0.38,
   enemySpawnBaseInterval: 1.2,
   enemySpawnDecay: 0.012,

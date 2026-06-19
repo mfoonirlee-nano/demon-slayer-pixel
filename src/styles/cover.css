@@ -44,6 +44,25 @@
   animation: cover-moon-emitter-breathe 7.2s ease-in-out infinite;
 }
 
+.cover-moon-flare {
+  pointer-events: none;
+  fill: none;
+  opacity: 0;
+  stroke: rgba(205, 226, 255, 0.82);
+  stroke-width: 5;
+  transform-box: fill-box;
+  transform-origin: center;
+  vector-effect: non-scaling-stroke;
+}
+
+.cover-moon-flare-minor {
+  animation: cover-moon-flare-minor 700ms ease-out both;
+}
+
+.cover-moon-flare-phase {
+  animation: cover-moon-flare-phase 1100ms ease-out both;
+}
+
 .cover-warm-emitters {
   z-index: 4;
   mix-blend-mode: screen;
@@ -173,6 +192,44 @@
   }
 }
 
+@keyframes cover-moon-flare-minor {
+  0% {
+    opacity: 0;
+    transform: scale(0.88);
+  }
+
+  30% {
+    opacity: 0.42;
+  }
+
+  100% {
+    opacity: 0;
+    transform: scale(1.22);
+  }
+}
+
+@keyframes cover-moon-flare-phase {
+  0% {
+    opacity: 0;
+    stroke-width: 7;
+    transform: scale(0.78);
+  }
+
+  18% {
+    opacity: 0.9;
+  }
+
+  54% {
+    opacity: 0.36;
+  }
+
+  100% {
+    opacity: 0;
+    stroke-width: 2;
+    transform: scale(1.55);
+  }
+}
+
 @keyframes cover-warm-emitters-breathe {
   0%,
   100% {
@@ -202,6 +259,20 @@
 @media (max-width: 767px) {
   .start-prompt {
     bottom: calc(30px + env(safe-area-inset-bottom));
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cover-light,
+  .cover-moon-emitter,
+  .cover-warm-emitters,
+  .cover-darkness,
+  .start-prompt {
+    animation: none;
+  }
+
+  .cover-moon-flare {
+    display: none;
   }
 }
 
