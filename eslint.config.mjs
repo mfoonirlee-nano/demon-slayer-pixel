@@ -18,6 +18,7 @@ export default tseslint.config(
       globals: globals.browser,
     },
     rules: {
+      "max-lines": ["error", { max: 600, skipBlankLines: true, skipComments: true }],
       "no-unused-vars": "off",
       "no-magic-numbers": "off",
       "@typescript-eslint/no-unused-vars": [

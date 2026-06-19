@@ -1,12 +1,8 @@
 import { useState } from "react";
-import { type UiSpriteId } from "../constants";
 import { getAudioVolumeSettings, setAudioVolumeSettings, type AudioVolumeSettings } from "../game/audio";
 import { equipEquipment, equipSkillSlot } from "../game/runtime";
-import { EQUIPMENT_CHOICE_IDS, EQUIPMENT_ITEMS } from "../systems/equipment";
-import { allPlayerSkills } from "../systems/skillCatalog";
 import type { GameSnapshot } from "../game/gameStore";
-import type { SkillId } from "../types/assets";
-import type { EquipmentItemId, EquipmentSlot } from "../types/game-state";
+import type { EquipmentSlot } from "../types/game-state";
 import {
   EQUIPMENT_SLOT_LABELS,
   equipmentIconSrc,
@@ -16,268 +12,40 @@ import {
   skillIconSrc,
 } from "./uiDisplay";
 import { UiSprite } from "./uiSprite";
-
-type PauseTab = "info" | "equipment" | "skills" | "settings";
-
-const EQUIPMENT_SLOTS: EquipmentSlot[] = ["blade", "garb", "talisman"];
-const ALL_EQUIPMENT_ITEMS = EQUIPMENT_CHOICE_IDS.map((itemId) => EQUIPMENT_ITEMS[itemId]);
-const PAUSE_SKILLS = allPlayerSkills();
-const PAUSE_TABS: Array<{ id: PauseTab; label: string }> = [
-  { id: "info", label: "基础信息" },
-  { id: "equipment", label: "装备" },
-  { id: "skills", label: "技能" },
-  { id: "settings", label: "设置" },
-];
-const AUDIO_PERCENT_SCALE = 100;
-const PAUSE_PANEL_W = 600;
-const PAUSE_PANEL_H = 340;
-const PAUSE_PANEL_INSET_X = 24;
-const PAUSE_PANEL_CONTENT_TOP = 42;
-const PAUSE_PANEL_CONTENT_BOTTOM = 28;
-const PAUSE_TAB_W = 126;
-const PAUSE_TAB_H = 42;
-const PAUSE_TAB_GAP = 4;
-const PAUSE_CURRENT_COLUMN_W = 176;
-const PAUSE_CHOICES_COLUMN_W = 360;
-const PAUSE_CURRENT_FRAME_SIZE = 44;
-const PAUSE_CHOICE_FRAME_SIZE = 58;
-const PAUSE_CURRENT_ICON_SIZE = 28;
-const PAUSE_CHOICE_ICON_SIZE = 36;
-const PAUSE_CURRENT_BADGE_SIZE = 14;
-const PAUSE_CHOICE_BADGE_SIZE = 16;
-const PAUSE_ICON_OFFSET_Y = 2;
-const PAUSE_CURRENT_ROW_GAP = 6;
-const PAUSE_CHOICE_GRID_GAP = 8;
-const PAUSE_COLUMN_GAP = 16;
-const PAUSE_INFO_INSET_X = 32;
-const PAUSE_INFO_ROW_GAP = 6;
-const PAUSE_INFO_COLUMN_GAP = 40;
-const PAUSE_SETTINGS_GAP = 12;
-const PAUSE_SLIDER_TRACK_W = 420;
-const PAUSE_SLIDER_TRACK_H = 18;
-const PAUSE_SLIDER_THUMB_W = 22;
-const PAUSE_SLIDER_THUMB_H = 24;
-const PAUSE_SLIDER_TRACK_TOP = 8;
-const PAUSE_SLIDER_THUMB_TOP = 5;
-const PAUSE_SLIDER_WRAP_H = 30;
-const PAUSE_SETTINGS_INSET_X = (PAUSE_PANEL_W - PAUSE_PANEL_INSET_X * 2 - PAUSE_SLIDER_TRACK_W) / 2;
-const PAUSE_TAB_CONTENT_CLASS = "flex items-center justify-center px-[18px] pb-[5px] pt-[8px] text-center leading-none";
-
-type EquipmentDetailTarget =
-  | { type: "slot"; slot: EquipmentSlot }
-  | { type: "item"; itemId: EquipmentItemId };
-
-type SkillDetailTarget =
-  | { type: "slot"; slotIndex: number }
-  | { type: "item"; skillId: SkillId };
-
-type PauseDetailCopy = {
-  kicker: string;
-  title: string;
-  body: string;
-};
-
-function StatRow({ label, value, accent = false }: { label: string; value: string | number; accent?: boolean }) {
-  return (
-    <div className="flex items-center justify-between gap-3 text-[10px] leading-[1.5]">
-      <span className="text-[#7fc8e0]">{label}</span>
-      <span className={accent ? "font-bold text-[#ffd46e]" : "font-bold text-[#26d5ff]"}>{value}</span>
-    </div>
-  );
-}
-
-function pauseSquareSprite(active: boolean, disabled = false, empty = false): UiSpriteId {
-  if (disabled) return "skillSlotDisabled";
-  if (active) return "skillSlotActive";
-  if (empty) return "skillSlotEmpty";
-  return "skillSlotNormal";
-}
-
-function PauseSquareIcon({
-  active = false,
-  disabled = false,
-  empty = false,
-  iconSrc,
-  badgeSrc,
-  leftBadgeText,
-  rightBadgeText,
-  size,
-  iconSize,
-  badgeSize,
-}: {
-  active?: boolean;
-  disabled?: boolean;
-  empty?: boolean;
-  iconSrc?: string;
-  badgeSrc?: string;
-  leftBadgeText?: string;
-  rightBadgeText?: string;
-  size: number;
-  iconSize: number;
-  badgeSize?: number;
-}) {
-  return (
-    <UiSprite
-      id={pauseSquareSprite(active, disabled, empty)}
-      width={size}
-      height={size}
-      className="relative"
-    >
-      {iconSrc ? (
-        <img
-          src={iconSrc}
-          alt=""
-          draggable={false}
-          className="absolute object-contain"
-          style={{
-            width: iconSize,
-            height: iconSize,
-            left: (size - iconSize) / 2,
-            top: (size - iconSize) / 2 + PAUSE_ICON_OFFSET_Y,
-            imageRendering: "pixelated",
-          }}
-        />
-      ) : null}
-      {leftBadgeText ? (
-        <span className="pause-square-badge pause-square-badge-left">{leftBadgeText}</span>
-      ) : null}
-      {badgeSrc && badgeSize ? (
-        <img
-          src={badgeSrc}
-          alt=""
-          draggable={false}
-          className="absolute"
-          style={{
-            width: badgeSize,
-            height: badgeSize,
-            right: 2,
-            top: 2,
-            imageRendering: "pixelated",
-          }}
-        />
-      ) : null}
-      {rightBadgeText ? (
-        <span className="pause-square-badge pause-square-badge-right">{rightBadgeText}</span>
-      ) : null}
-    </UiSprite>
-  );
-}
-
-function equipmentDetailCopy(
-  target: EquipmentDetailTarget,
-  equipment: GameSnapshot["equipment"],
-  unlockedEquipmentIds: ReadonlySet<EquipmentItemId>,
-): PauseDetailCopy {
-  if (target.type === "item") {
-    const item = EQUIPMENT_ITEMS[target.itemId];
-    const equipped = equipment.equipped[item.slot]?.id === item.id;
-    const unlocked = unlockedEquipmentIds.has(item.id);
-
-    return {
-      kicker: `${EQUIPMENT_SLOT_LABELS[item.slot]} · ${item.uiTags.join(" · ")} · ${equipped ? "已装备" : unlocked ? "可装备" : "未解锁"}`,
-      title: item.name,
-      body: item.summary,
-    };
-  }
-
-  const item = equipment.equipped[target.slot];
-  return {
-    kicker: `${EQUIPMENT_SLOT_LABELS[target.slot]} · ${item?.uiTags.join(" · ") ?? "未装备"}`,
-    title: item?.name ?? "空槽",
-    body: item?.summary ?? "当前槽位未装备。",
-  };
-}
-
-function skillDetailCopy(target: SkillDetailTarget, player: GameSnapshot["player"]): PauseDetailCopy {
-  if (target.type === "item") {
-    const skill = getSkill(target.skillId);
-    const level = player.skillLevels[target.skillId];
-    const equippedSlot = player.equippedSkillIds.findIndex((skillId) => skillId === target.skillId);
-
-    return {
-      kicker: `技能 · 等级 ${level ? romanLevel(level) : "未解锁"}${equippedSlot >= 0 ? ` · 已装备 ${equippedSlot + 1}` : ""}`,
-      title: skill?.name ?? "未知技能",
-      body: skill?.description ?? "暂无技能说明。",
-    };
-  }
-
-  const skillId = player.equippedSkillIds[target.slotIndex];
-  const skill = getSkill(skillId);
-  const level = skillId ? player.skillLevels[skillId] : undefined;
-
-  return {
-    kicker: `槽位 ${target.slotIndex + 1} · 快捷键 ${target.slotIndex + 1} · ${skill ? `等级 ${romanLevel(level)}` : "空槽"}`,
-    title: skill?.name ?? "空槽",
-    body: skill?.description ?? "当前槽位未装备技能。",
-  };
-}
-
-function PauseDetailPanel({ detail }: { detail: PauseDetailCopy }) {
-  return (
-    <div className="pause-detail-panel">
-      <div className="truncate text-[7px] leading-none text-[#7fc8e0]">{detail.kicker}</div>
-      <div className="mt-1 truncate text-[9px] font-bold leading-none text-[#ffd46e]">{detail.title}</div>
-      <div className="mt-1 line-clamp-2 text-[7px] leading-[1.45] text-[#c8efff]">{detail.body}</div>
-    </div>
-  );
-}
-
-function AudioVolumeControl({ label, value, onChange }: {
-  label: string;
-  value: number;
-  onChange: (value: number) => void;
-}) {
-  const percent = Math.round(value * AUDIO_PERCENT_SCALE);
-  const thumbTransform = percent <= 0
-    ? "translateX(0)"
-    : percent >= AUDIO_PERCENT_SCALE
-      ? "translateX(-100%)"
-      : "translateX(-50%)";
-
-  return (
-    <label className="grid gap-1 text-[10px] leading-none text-[#c8efff]">
-      <span className="flex items-center justify-between gap-3">
-        <span>{label}</span>
-        <span className="font-bold text-[#26d5ff]">{percent}%</span>
-      </span>
-      <span className="relative block" style={{ height: PAUSE_SLIDER_WRAP_H }}>
-        <UiSprite
-          id="pauseSliderTrack"
-          width={PAUSE_SLIDER_TRACK_W}
-          height={PAUSE_SLIDER_TRACK_H}
-          className="absolute left-0"
-          style={{ top: PAUSE_SLIDER_TRACK_TOP }}
-        />
-        <span
-          className="absolute left-0 block overflow-hidden"
-          style={{ width: `${percent}%`, height: PAUSE_SLIDER_TRACK_H, top: PAUSE_SLIDER_TRACK_TOP }}
-        >
-          <UiSprite
-            id="pauseSliderFill"
-            width={PAUSE_SLIDER_TRACK_W}
-            height={PAUSE_SLIDER_TRACK_H}
-          />
-        </span>
-        <UiSprite
-          id="pauseSliderThumb"
-          width={PAUSE_SLIDER_THUMB_W}
-          height={PAUSE_SLIDER_THUMB_H}
-          className="absolute"
-          style={{ left: `${percent}%`, top: PAUSE_SLIDER_THUMB_TOP, transform: thumbTransform }}
-        />
-        <input
-          type="range"
-          min={0}
-          max={AUDIO_PERCENT_SCALE}
-          step={5}
-          value={percent}
-          className="absolute inset-0 w-full cursor-pointer opacity-0"
-          onChange={(event) => onChange(Number(event.currentTarget.value) / AUDIO_PERCENT_SCALE)}
-        />
-      </span>
-    </label>
-  );
-}
+import {
+  ALL_EQUIPMENT_ITEMS,
+  EQUIPMENT_SLOTS,
+  PAUSE_CHOICE_FRAME_SIZE,
+  PAUSE_CHOICE_GRID_GAP,
+  PAUSE_CHOICE_ICON_SIZE,
+  PAUSE_CHOICE_BADGE_SIZE,
+  PAUSE_CHOICES_COLUMN_W,
+  PAUSE_COLUMN_GAP,
+  PAUSE_CURRENT_BADGE_SIZE,
+  PAUSE_CURRENT_COLUMN_W,
+  PAUSE_CURRENT_FRAME_SIZE,
+  PAUSE_CURRENT_ICON_SIZE,
+  PAUSE_CURRENT_ROW_GAP,
+  PAUSE_INFO_COLUMN_GAP,
+  PAUSE_INFO_INSET_X,
+  PAUSE_INFO_ROW_GAP,
+  PAUSE_PANEL_CONTENT_BOTTOM,
+  PAUSE_PANEL_CONTENT_TOP,
+  PAUSE_PANEL_H,
+  PAUSE_PANEL_INSET_X,
+  PAUSE_PANEL_W,
+  PAUSE_SETTINGS_GAP,
+  PAUSE_SETTINGS_INSET_X,
+  PAUSE_SKILLS,
+  PAUSE_TAB_CONTENT_CLASS,
+  PAUSE_TAB_GAP,
+  PAUSE_TAB_H,
+  PAUSE_TAB_W,
+  PAUSE_TABS,
+} from "./pause/constants";
+import { AudioVolumeControl, PauseDetailPanel, PauseSquareIcon, StatRow } from "./pause/components";
+import { equipmentDetailCopy, skillDetailCopy } from "./pause/detailCopy";
+import type { EquipmentDetailTarget, PauseTab, SkillDetailTarget } from "./pause/types";
 
 export function PauseScreen({ snapshot }: { snapshot: GameSnapshot }) {
   const { player, equipment } = snapshot;

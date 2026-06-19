@@ -1,0 +1,141 @@
+.player-hud {
+  display: flex;
+  position: relative;
+  align-items: flex-start;
+  gap: 0;
+  height: 72px;
+}
+
+.player-hud-abilities {
+  position: relative;
+  width: 102px;
+  height: 72px;
+  flex: 0 0 auto;
+}
+
+.player-hud-ultimate-frame {
+  position: absolute;
+  left: 0;
+  top: 0;
+  z-index: 2;
+}
+
+.player-hud-current-skill {
+  position: absolute;
+  left: 60px;
+  top: 36px;
+  z-index: 4;
+  display: grid;
+  place-items: center;
+}
+
+.player-hud-bars {
+  position: absolute;
+  inset: 0 auto auto 0;
+  z-index: 1;
+}
+
+.player-hud-meter {
+  position: relative;
+  isolation: isolate;
+}
+
+.player-hud-meter-hp {
+  position: absolute;
+  left: 68px;
+  top: 11px;
+}
+
+.player-hud-meter-skill {
+  position: absolute;
+  left: 92px;
+  top: 37px;
+}
+
+.player-hud-meter-frame {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  display: flex;
+  pointer-events: none;
+}
+
+.player-hud-meter-fill {
+  position: absolute;
+  z-index: 1;
+  overflow: hidden;
+  background: #031033;
+}
+
+.player-hud-meter-text {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  z-index: 3;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transform: translateY(2px);
+  color: #e9fff5;
+  font-size: 8px;
+  font-weight: 700;
+  line-height: 1;
+  text-shadow:
+    1px 0 #02070c,
+    -1px 0 #02070c,
+    0 1px #02070c,
+    0 -1px #02070c;
+}
+
+.player-hud-current-skill {
+  color: #c8f6ff;
+  font-size: 8px;
+  font-weight: 700;
+}
+
+.player-hud-current-skill img {
+  width: 23px;
+  height: 23px;
+  object-fit: cover;
+  border-radius: 50%;
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
+}
+
+.player-hud-current-skill span {
+  position: absolute;
+  right: 3px;
+  bottom: 3px;
+  color: #f6e7b4;
+  font-size: 7px;
+  line-height: 1;
+  text-shadow:
+    1px 0 #02070c,
+    -1px 0 #02070c,
+    0 1px #02070c,
+    0 -1px #02070c;
+}
+
+.hud-xp-bar {
+  position: relative;
+  height: 1px;
+  overflow: hidden;
+}
+
+.hud-xp-fill {
+  position: absolute;
+  inset: 0 auto 0 0;
+  background: #26d5ff;
+}
+
+.hud-level-label {
+  color: #d8f7ff;
+  font-size: 8px;
+  font-weight: 700;
+  line-height: 1;
+  text-shadow:
+    1px 0 #02070c,
+    -1px 0 #02070c,
+    0 1px #02070c,
+    0 -1px #02070c;
+}

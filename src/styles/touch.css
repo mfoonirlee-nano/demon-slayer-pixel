@@ -1,0 +1,11 @@
+.touch-btn {
+  user-select: none;
+  -webkit-user-select: none;
+  touch-action: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.touch-btn:active,
+.touch-btn.pressed {
+  transform: translateY(1px) scale(0.98);
+}

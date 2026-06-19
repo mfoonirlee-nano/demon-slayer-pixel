@@ -1,0 +1,332 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Architecture review - demon-slayer-pixel</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script type="module">
+      import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs";
+      mermaid.initialize({ startOnLoad: true, theme: "neutral", securityLevel: "loose" });
+    </script>
+    <style>
+      :root { color-scheme: light; }
+      .seam { border-style: dashed; }
+      .deep { background: linear-gradient(135deg, #0f172a, #1e293b); color: #f8fafc; }
+      .module-box { border: 1px solid #cbd5e1; border-radius: 0.75rem; background: white; padding: 0.75rem; box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04); }
+      .thin-interface { height: 2.75rem; border: 2px solid #f97316; border-radius: 0.5rem; background: #fff7ed; display: grid; place-items: center; }
+      .fat-interface { height: 8rem; border: 2px solid #dc2626; border-radius: 0.5rem; background: #fef2f2; display: grid; place-items: center; }
+      .implementation { border-radius: 0.5rem; background: #e0f2fe; border: 1px solid #7dd3fc; display: grid; place-items: center; }
+      .arrow { color: #64748b; font-size: 1.25rem; line-height: 1; }
+      .leak { color: #dc2626; font-weight: 700; }
+      .card-grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 1rem; }
+      @media (max-width: 900px) { .card-grid { grid-template-columns: 1fr; } }
+      .badge-strong { background: #d1fae5; color: #065f46; border-color: #10b981; }
+      .badge-worth { background: #fef3c7; color: #92400e; border-color: #f59e0b; }
+      .badge-spec { background: #e2e8f0; color: #334155; border-color: #94a3b8; }
+      .mini-label { font-size: 0.66rem; line-height: 1; text-transform: uppercase; letter-spacing: 0.08em; color: #64748b; }
+      .file-pill { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace; font-size: 0.78rem; color: #334155; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 999px; padding: 0.18rem 0.5rem; }
+      .mermaid { font-size: 0.78rem; }
+    </style>
+  </head>
+  <body class="bg-stone-50 text-slate-900 font-sans">
+    <main class="mx-auto max-w-6xl space-y-10 px-6 py-10">
+      <header class="space-y-5">
+        <div class="flex flex-wrap items-end justify-between gap-4 border-b border-slate-200 pb-5">
+          <div>
+            <p class="text-xs uppercase tracking-[0.16em] text-slate-500">Architecture review</p>
+            <h1 class="mt-2 text-4xl font-semibold tracking-normal text-slate-950">demon-slayer-pixel</h1>
+          </div>
+          <div class="text-right text-sm text-slate-600">
+            <div>2026-06-19</div>
+            <div>No CONTEXT.md or ADRs found</div>
+            <div>Source is treated as current truth where docs drift</div>
+          </div>
+        </div>
+        <div class="grid gap-3 rounded-xl border border-slate-200 bg-white p-4 text-sm text-slate-700 md:grid-cols-4">
+          <div><span class="inline-block h-3 w-3 rounded border border-slate-400 bg-white align-middle"></span> solid box = Module</div>
+          <div><span class="inline-block h-3 w-6 rounded border border-dashed border-slate-500 bg-white align-middle"></span> dashed line = seam</div>
+          <div><span class="leak">red arrow</span> = leakage across seam</div>
+          <div><span class="inline-block h-3 w-6 rounded bg-slate-900 align-middle"></span> dark box = deep Module</div>
+        </div>
+      </header>
+
+      <section id="candidates" class="space-y-8">
+        <article id="boss-archetypes" class="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+          <div class="mb-4 flex flex-wrap items-center gap-2">
+            <h2 class="mr-auto text-2xl font-semibold tracking-normal">Deepen Boss archetypes beyond static data</h2>
+            <span class="rounded-full border px-3 py-1 text-xs font-semibold badge-strong">Strong</span>
+            <span class="rounded-full border border-slate-300 bg-slate-50 px-3 py-1 text-xs text-slate-700">in-process</span>
+          </div>
+          <div class="mb-5 flex flex-wrap gap-2">
+            <span class="file-pill">src/entities/boss.ts</span><span class="file-pill">src/entities/bosses/registry.ts</span><span class="file-pill">src/entities/bosses/encounter.ts</span><span class="file-pill">src/types/game-state.ts</span>
+          </div>
+          <div class="card-grid">
+            <div class="rounded-xl border border-slate-200 bg-slate-50 p-4">
+              <div class="mini-label mb-2">Before</div>
+              <pre class="mermaid">
+flowchart TB
+  R[BOSS_ARCHETYPES data] --> M[boss.ts 2016 lines]
+  M --> S[spider movement / cast]
+  M --> D[dead bell waves / blades]
+  M --> L[lantern lures / firelines / grids]
+  M --> B[blood moon five patterns]
+  M -. leakage .-> T[BossState carries every effect fact]
+  classDef leak stroke:#dc2626,stroke-width:2px,color:#991b1b;
+  class M,T leak;
+              </pre>
+            </div>
+            <div class="rounded-xl border border-slate-200 bg-slate-50 p-4">
+              <div class="mini-label mb-2">After</div>
+              <pre class="mermaid">
+flowchart TB
+  E[Boss encounter Module] --> A[Boss archetype seam]
+  A --> S[Spider String Adapter]
+  A --> D[Dead Bell Adapter]
+  A --> L[Lantern Ember Adapter]
+  A --> B[Blood Moon Adapter]
+  E --> O[lifecycle / phase / contact]
+  classDef deep fill:#0f172a,stroke:#0f172a,color:#fff;
+  class E,A deep;
+              </pre>
+            </div>
+          </div>
+          <dl class="mt-5 grid gap-3 text-sm text-slate-700 md:grid-cols-3">
+            <div><dt class="font-semibold text-slate-950">Problem</dt><dd><code>BossArchetype</code> is shallow: stats sit at the seam, but the Implementation for movement, cast selection, spawned effects, update, and draw still lives in <code>boss.ts</code>.</dd></div>
+            <div><dt class="font-semibold text-slate-950">Solution</dt><dd>Move boss-specific behavior behind the Boss archetype seam as per-Boss Adapters; keep the encounter Module focused on lifecycle.</dd></div>
+            <div><dt class="font-semibold text-slate-950">Benefits</dt><dd>locality: one Boss change stays in one Module. leverage: encounter tests hit one Interface. tests: movement, cast timing, phase, effects.</dd></div>
+          </dl>
+          <ul class="mt-4 flex flex-wrap gap-2 text-xs text-slate-700"><li class="rounded bg-emerald-50 px-2 py-1">locality: Boss behavior concentrates</li><li class="rounded bg-emerald-50 px-2 py-1">leverage: lifecycle stays small</li><li class="rounded bg-emerald-50 px-2 py-1">interface shrinks; Implementation absorbs branches</li></ul>
+        </article>
+
+        <article id="skill-execution" class="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+          <div class="mb-4 flex flex-wrap items-center gap-2">
+            <h2 class="mr-auto text-2xl font-semibold tracking-normal">Deepen player skill execution</h2>
+            <span class="rounded-full border px-3 py-1 text-xs font-semibold badge-strong">Strong</span>
+            <span class="rounded-full border border-slate-300 bg-slate-50 px-3 py-1 text-xs text-slate-700">in-process</span>
+          </div>
+          <div class="mb-5 flex flex-wrap gap-2">
+            <span class="file-pill">src/entities/player.ts</span><span class="file-pill">src/entities/particle.ts</span><span class="file-pill">src/systems/skillCatalog.ts</span><span class="file-pill">src/systems/playerSkills.ts</span><span class="file-pill">src/constants/assets.ts</span>
+          </div>
+          <div class="card-grid">
+            <div class="rounded-xl border border-slate-200 bg-slate-50 p-4">
+              <div class="mini-label mb-3">Before</div>
+              <div class="space-y-3 text-sm">
+                <div class="module-box">player.ts: cast gating, cost, animation frame, spawn timing</div>
+                <div class="text-center arrow">↓</div>
+                <div class="module-box">particle.ts: effect construction, collision, refund, update, draw</div>
+                <div class="text-center arrow">↓</div>
+                <div class="module-box">skillCatalog.ts + constants/assets.ts: names, icons, sheets, tuning</div>
+                <div class="rounded-lg border border-red-200 bg-red-50 p-2 text-xs text-red-700">skill Interface is spread across three Modules</div>
+              </div>
+            </div>
+            <div class="rounded-xl border border-slate-200 bg-slate-50 p-4">
+              <div class="mini-label mb-3">After</div>
+              <div class="rounded-xl border-2 border-slate-900 bg-slate-900 p-4 text-white">
+                <div class="text-center text-sm font-semibold">Player Skill Execution Module</div>
+                <div class="mt-3 grid gap-2 text-xs text-slate-300">
+                  <div class="rounded border border-slate-600 p-2">internal: cast rule</div>
+                  <div class="rounded border border-slate-600 p-2">internal: effect lifecycle</div>
+                  <div class="rounded border border-slate-600 p-2">internal: hit / refund / draw</div>
+                </div>
+              </div>
+              <div class="mt-3 grid grid-cols-3 gap-2 text-center text-xs text-slate-700"><div class="module-box">player</div><div class="module-box">HUD</div><div class="module-box">progression</div></div>
+            </div>
+          </div>
+          <dl class="mt-5 grid gap-3 text-sm text-slate-700 md:grid-cols-3">
+            <div><dt class="font-semibold text-slate-950">Problem</dt><dd>Skill cast and skill effect Implementation are split; adding one skill means editing both player and particle code.</dd></div>
+            <div><dt class="font-semibold text-slate-950">Solution</dt><dd>Put skill execution behind a skill seam, with each implemented skill as an Adapter inside one deep Module.</dd></div>
+            <div><dt class="font-semibold text-slate-950">Benefits</dt><dd>locality: skill bugs stay near skill facts. leverage: tests exercise cast, hit, refund, and draw through one Interface.</dd></div>
+          </dl>
+          <ul class="mt-4 flex flex-wrap gap-2 text-xs text-slate-700"><li class="rounded bg-emerald-50 px-2 py-1">tests hit one Interface</li><li class="rounded bg-emerald-50 px-2 py-1">locality: one skill, one Module</li><li class="rounded bg-emerald-50 px-2 py-1">deletion test: current split moves complexity sideways</li></ul>
+        </article>
+
+        <article id="enemy-registry" class="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+          <div class="mb-4 flex flex-wrap items-center gap-2">
+            <h2 class="mr-auto text-2xl font-semibold tracking-normal">Finish the enemy archetype seam</h2>
+            <span class="rounded-full border px-3 py-1 text-xs font-semibold badge-strong">Strong</span>
+            <span class="rounded-full border border-slate-300 bg-slate-50 px-3 py-1 text-xs text-slate-700">in-process</span>
+          </div>
+          <div class="mb-5 flex flex-wrap gap-2">
+            <span class="file-pill">src/entities/enemy.ts</span><span class="file-pill">src/entities/enemies/registry.ts</span><span class="file-pill">src/entities/enemies/common.ts</span><span class="file-pill">src/constants/assets.ts</span><span class="file-pill">src/systems/progression.ts</span>
+          </div>
+          <div class="card-grid">
+            <div class="rounded-xl border border-slate-200 bg-slate-50 p-4">
+              <div class="mini-label mb-2">Before</div>
+              <pre class="mermaid">
+flowchart LR
+  S[sheetIndex] --> A[asset identity]
+  S --> D[debug spawn]
+  S --> X[XP lookup]
+  S --> E[enemy.ts spawn pool]
+  E --> R[registry update / draw Adapter]
+  classDef leak stroke:#dc2626,stroke-width:2px,color:#991b1b;
+  class S,E leak;
+              </pre>
+            </div>
+            <div class="rounded-xl border border-slate-200 bg-slate-50 p-4">
+              <div class="mini-label mb-2">After</div>
+              <pre class="mermaid">
+flowchart LR
+  A[ENEMY_ARCHETYPES Module] --> S[spawn rules]
+  A --> X[reward / XP facts]
+  A --> M[asset sheets]
+  A --> B[behavior Adapter]
+  A --> D[debug options]
+  classDef deep fill:#0f172a,stroke:#0f172a,color:#fff;
+  class A deep;
+              </pre>
+            </div>
+          </div>
+          <dl class="mt-5 grid gap-3 text-sm text-slate-700 md:grid-cols-3">
+            <div><dt class="font-semibold text-slate-950">Problem</dt><dd><code>sheetIndex</code> is a shallow identity for assets, spawn rules, debug options, runtime state, and rewards.</dd></div>
+            <div><dt class="font-semibold text-slate-950">Solution</dt><dd>Promote enemy domain identity into a deep <code>ENEMY_ARCHETYPES</code> Module; asset sheets and update/draw become Adapters.</dd></div>
+            <div><dt class="font-semibold text-slate-950">Benefits</dt><dd>locality: add an enemy without touching central spawn branches. leverage: act pools, debug, XP, manifest share one Interface.</dd></div>
+          </dl>
+          <ul class="mt-4 flex flex-wrap gap-2 text-xs text-slate-700"><li class="rounded bg-emerald-50 px-2 py-1">locality: spawn facts move with enemy</li><li class="rounded bg-emerald-50 px-2 py-1">leverage: registry supports act pools</li><li class="rounded bg-emerald-50 px-2 py-1">tests: pool, unlock, reward</li></ul>
+        </article>
+
+        <article id="runtime-effects" class="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+          <div class="mb-4 flex flex-wrap items-center gap-2">
+            <h2 class="mr-auto text-2xl font-semibold tracking-normal">Collapse runtime effect fan-out</h2>
+            <span class="rounded-full border px-3 py-1 text-xs font-semibold badge-strong">Strong</span>
+            <span class="rounded-full border border-slate-300 bg-slate-50 px-3 py-1 text-xs text-slate-700">in-process</span>
+          </div>
+          <div class="mb-5 flex flex-wrap gap-2">
+            <span class="file-pill">src/game/runtime.ts</span><span class="file-pill">src/entities/boss.ts</span><span class="file-pill">src/entities/particle.ts</span><span class="file-pill">src/entities/enemies/binder.ts</span><span class="file-pill">src/entities/enemies/warden.ts</span>
+          </div>
+          <div class="card-grid">
+            <div class="rounded-xl border border-slate-200 bg-slate-50 p-4">
+              <div class="mini-label mb-3">Before</div>
+              <div class="space-y-2 text-xs">
+                <div class="module-box">runtime loop</div>
+                <div class="grid grid-cols-2 gap-2">
+                  <div class="rounded border border-red-200 bg-red-50 p-2">updateBossSkill1Effects</div>
+                  <div class="rounded border border-red-200 bg-red-50 p-2">updateDeadBellEffects</div>
+                  <div class="rounded border border-red-200 bg-red-50 p-2">updateMirrorDreamEffects</div>
+                  <div class="rounded border border-red-200 bg-red-50 p-2">updateLanternEmberEffects</div>
+                  <div class="rounded border border-red-200 bg-red-50 p-2">updateBloodMoonEffects</div>
+                  <div class="rounded border border-red-200 bg-red-50 p-2">updatePlayerSkillEffects</div>
+                  <div class="rounded border border-red-200 bg-red-50 p-2">drawUltimateTrails</div>
+                  <div class="rounded border border-red-200 bg-red-50 p-2">drawBoss effect families</div>
+                </div>
+              </div>
+            </div>
+            <div class="rounded-xl border border-slate-200 bg-slate-50 p-4">
+              <div class="mini-label mb-3">After</div>
+              <div class="space-y-3 text-sm">
+                <div class="deep rounded-xl p-4 text-center font-semibold">Runtime frame Module</div>
+                <div class="grid gap-2 text-xs md:grid-cols-3">
+                  <div class="module-box seam">world effects seam</div>
+                  <div class="module-box seam">player effects seam</div>
+                  <div class="module-box seam">Boss effects seam</div>
+                </div>
+                <div class="rounded-lg border border-slate-300 bg-white p-2 text-xs text-slate-600">draw order remains explicit; effect family ordering becomes local</div>
+              </div>
+            </div>
+          </div>
+          <dl class="mt-5 grid gap-3 text-sm text-slate-700 md:grid-cols-3">
+            <div><dt class="font-semibold text-slate-950">Problem</dt><dd><code>runtime.ts</code> imports and orders many effect family calls directly, so the loop Interface is nearly the same size as the effect Implementation list.</dd></div>
+            <div><dt class="font-semibold text-slate-950">Solution</dt><dd>Group update/draw phases behind deeper effect Modules while preserving the visible frame order seam.</dd></div>
+            <div><dt class="font-semibold text-slate-950">Benefits</dt><dd>locality: effect lifecycle and ordering move together. leverage: runtime tests assert phase order, not every effect function.</dd></div>
+          </dl>
+          <ul class="mt-4 flex flex-wrap gap-2 text-xs text-slate-700"><li class="rounded bg-emerald-50 px-2 py-1">runtime becomes coordinator</li><li class="rounded bg-emerald-50 px-2 py-1">locality: effect order concentrates</li><li class="rounded bg-emerald-50 px-2 py-1">tests: frame order and pause behavior</li></ul>
+        </article>
+
+        <article id="ui-command" class="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+          <div class="mb-4 flex flex-wrap items-center gap-2">
+            <h2 class="mr-auto text-2xl font-semibold tracking-normal">Add a UI runtime command seam</h2>
+            <span class="rounded-full border px-3 py-1 text-xs font-semibold badge-strong">Strong</span>
+            <span class="rounded-full border border-slate-300 bg-slate-50 px-3 py-1 text-xs text-slate-700">local-substitutable</span>
+          </div>
+          <div class="mb-5 flex flex-wrap gap-2">
+            <span class="file-pill">src/ui/pauseScreen.tsx</span><span class="file-pill">src/ui/rewardOverlay.tsx</span><span class="file-pill">src/game/runtime.ts</span><span class="file-pill">src/game/audio.ts</span><span class="file-pill">src/app/App.tsx</span>
+          </div>
+          <div class="card-grid">
+            <div class="rounded-xl border border-slate-200 bg-slate-50 p-4">
+              <div class="mini-label mb-2">Before</div>
+              <pre class="mermaid">
+flowchart TB
+  P[pauseScreen.tsx] --> R[runtime mutation functions]
+  O[rewardOverlay.tsx] --> R
+  P --> A[audio settings]
+  UI[UI Modules] -. know concrete Implementation .-> R
+  classDef leak stroke:#dc2626,stroke-width:2px,color:#991b1b;
+  class UI,R leak;
+              </pre>
+            </div>
+            <div class="rounded-xl border border-slate-200 bg-slate-50 p-4">
+              <div class="mini-label mb-2">After</div>
+              <pre class="mermaid">
+flowchart TB
+  P[pause UI Module] --> C[UI Command seam]
+  O[reward UI Module] --> C
+  C --> R[runtime Adapter]
+  C --> A[audio Adapter]
+  T[test Adapter] --> C
+  classDef deep fill:#0f172a,stroke:#0f172a,color:#fff;
+  class C deep;
+              </pre>
+            </div>
+          </div>
+          <dl class="mt-5 grid gap-3 text-sm text-slate-700 md:grid-cols-3">
+            <div><dt class="font-semibold text-slate-950">Problem</dt><dd>UI Modules consume snapshots but also call runtime mutation functions directly, which makes the UI/runtime seam shallow.</dd></div>
+            <div><dt class="font-semibold text-slate-950">Solution</dt><dd>Route reward, equipment, skill, pause, and settings intents through one UI command seam.</dd></div>
+            <div><dt class="font-semibold text-slate-950">Benefits</dt><dd>locality: runtime mutation policy sits behind one Module. leverage: UI can be tested with a test Adapter.</dd></div>
+          </dl>
+          <ul class="mt-4 flex flex-wrap gap-2 text-xs text-slate-700"><li class="rounded bg-emerald-50 px-2 py-1">two Adapters justify seam</li><li class="rounded bg-emerald-50 px-2 py-1">UI emits intents</li><li class="rounded bg-emerald-50 px-2 py-1">tests avoid mutable runtime</li></ul>
+        </article>
+
+        <article id="snapshot-projection" class="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+          <div class="mb-4 flex flex-wrap items-center gap-2">
+            <h2 class="mr-auto text-2xl font-semibold tracking-normal">Deepen snapshot projection before moving feature state</h2>
+            <span class="rounded-full border px-3 py-1 text-xs font-semibold badge-worth">Worth exploring</span>
+            <span class="rounded-full border border-slate-300 bg-slate-50 px-3 py-1 text-xs text-slate-700">local-substitutable</span>
+          </div>
+          <div class="mb-5 flex flex-wrap gap-2">
+            <span class="file-pill">src/game/state.ts</span><span class="file-pill">src/game/gameStore.ts</span><span class="file-pill">src/types/game-state.ts</span><span class="file-pill">src/ui/gameHud.tsx</span><span class="file-pill">src/ui/pauseScreen.tsx</span>
+          </div>
+          <div class="card-grid">
+            <div class="rounded-xl border border-slate-200 bg-slate-50 p-4">
+              <div class="mini-label mb-3">Before: shallow projection surface</div>
+              <div class="grid grid-cols-2 gap-3 text-xs">
+                <div class="fat-interface text-center font-semibold text-red-700">GameState wide Interface<br/>enemy phases, Boss effects, skill runtime</div>
+                <div class="implementation min-h-32 p-3 text-center">getStateSnapshot plus Jotai defaults split between Modules</div>
+              </div>
+            </div>
+            <div class="rounded-xl border border-slate-200 bg-slate-50 p-4">
+              <div class="mini-label mb-3">After: projection earns the seam</div>
+              <div class="grid grid-cols-2 gap-3 text-xs">
+                <div class="thin-interface text-center font-semibold text-orange-700">snapshot Interface</div>
+                <div class="implementation min-h-32 p-3 text-center">projection Implementation absorbs overlay, display text, equipment expansion, readiness</div>
+              </div>
+              <div class="mt-3 rounded-lg border border-slate-300 bg-white p-2 text-xs text-slate-600">Move feature state inward only after owning Modules exist.</div>
+            </div>
+          </div>
+          <dl class="mt-5 grid gap-3 text-sm text-slate-700 md:grid-cols-3">
+            <div><dt class="font-semibold text-slate-950">Problem</dt><dd><code>types/game-state.ts</code> is very wide, but moving fields first would only relocate complexity; UI projection is the safer seam to deepen first.</dd></div>
+            <div><dt class="font-semibold text-slate-950">Solution</dt><dd>Make runtime-state to UI-snapshot projection a deep Module and keep Jotai as an Adapter.</dd></div>
+            <div><dt class="font-semibold text-slate-950">Benefits</dt><dd>locality: overlay, boss display, equipment expansion, ultimate readiness live together. leverage: UI tests use snapshots.</dd></div>
+          </dl>
+          <ul class="mt-4 flex flex-wrap gap-2 text-xs text-slate-700"><li class="rounded bg-amber-50 px-2 py-1">risk control: no pure type shuffle</li><li class="rounded bg-amber-50 px-2 py-1">tests: projection without React</li><li class="rounded bg-amber-50 px-2 py-1">locality: display facts concentrate</li></ul>
+        </article>
+      </section>
+
+      <section id="secondary-observations" class="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+        <h2 class="text-2xl font-semibold tracking-normal">Secondary observations</h2>
+        <div class="mt-4 grid gap-4 md:grid-cols-3">
+          <div class="rounded-xl border border-slate-200 bg-slate-50 p-4 text-sm"><div class="font-semibold">Platform generation vs collectibles</div><p class="mt-2 text-slate-700"><code>platform.ts</code> has a deep generator, but crystal/chest lifecycle is shallow inside it. Worth exploring after enemy and skill seams settle.</p></div>
+          <div class="rounded-xl border border-slate-200 bg-slate-50 p-4 text-sm"><div class="font-semibold">Equipment content and effects</div><p class="mt-2 text-slate-700"><code>equipment.ts</code> earns its seam. Deepen its Implementation around data-driven facts before adding the six-family target design.</p></div>
+          <div class="rounded-xl border border-slate-200 bg-slate-50 p-4 text-sm"><div class="font-semibold">Sprite manifest loading</div><p class="mt-2 text-slate-700"><code>spriteImageLoadTargets()</code> is shallow but lower leverage unless a validation Adapter is added beside browser loading.</p></div>
+        </div>
+      </section>
+
+      <section id="top-recommendation" class="rounded-2xl border-2 border-emerald-300 bg-emerald-50 p-6 shadow-sm">
+        <p class="text-xs uppercase tracking-[0.16em] text-emerald-700">Top recommendation</p>
+        <h2 class="mt-2 text-3xl font-semibold tracking-normal text-emerald-950">Start with Boss archetypes beyond static data</h2>
+        <p class="mt-3 max-w-3xl text-sm text-emerald-900">It attacks the largest file, matches the 13-act Boss roadmap, and creates immediate locality: each Boss gets its own Module while the encounter Module gains leverage through one seam.</p>
+        <a class="mt-4 inline-block rounded-lg bg-emerald-700 px-4 py-2 text-sm font-semibold text-white" href="#boss-archetypes">Jump to candidate</a>
+      </section>
+    </main>
+  </body>
+</html>

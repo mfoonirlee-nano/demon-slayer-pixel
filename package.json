@@ -6,8 +6,9 @@
   "scripts": {
     "dev": "vite",
     "typecheck": "tsc --noEmit",
-    "lint": "eslint .",
-    "lint:fix": "eslint . --fix",
+    "lint": "eslint . && npm run lint:lines",
+    "lint:fix": "eslint . --fix && npm run lint:lines",
+    "lint:lines": "node scripts/check-file-lines.mjs",
     "build": "tsc --noEmit && vite build",
     "preview": "vite preview",
     "compress": "node scripts/compress-assets.js",

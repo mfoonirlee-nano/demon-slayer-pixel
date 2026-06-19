@@ -90,3 +90,4 @@ React HUD 不直接绘制到 Canvas，而是订阅 `gameSnapshotAtom` 显示生�
 ## 相关审视
 
 - [架构可维护性审视（2026-06-18）](architecture-review-2026-06-18.md)
+- [架构可维护性审视（2026-06-19）](architecture-review-2026-06-19.html)
