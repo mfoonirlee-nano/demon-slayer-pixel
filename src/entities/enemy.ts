@@ -1,4 +1,4 @@
-import { state } from "../state";
+import { state } from "../game/state";
 import {
   WIDTH,
   ENEMY_SHEETS,
@@ -11,7 +11,7 @@ import {
   RUNTIME_CONFIG,
 } from "../constants";
 import type { EnemyState } from "../types/game-state";
-import { hitbox } from "../utils";
+import { hitbox } from "../game/utils";
 import { hurtPlayer } from "./player";
 import { createEnemyState, enemyBaseHp, enemyDamage } from "./enemies/common";
 import { canSpawnBrute, isBruteSheet } from "./enemies/brute";

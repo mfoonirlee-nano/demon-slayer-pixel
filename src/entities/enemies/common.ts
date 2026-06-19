@@ -8,9 +8,9 @@ import {
 } from "../../constants";
 import type { SpriteSheet } from "../../types/assets";
 import type { EnemyState } from "../../types/game-state";
-import { frameIndex } from "../../utils";
-import { drawSheetFrame } from "../../graphics";
-import { playSfx } from "../../audio";
+import { frameIndex } from "../../game/utils";
+import { drawSheetFrame } from "../../rendering/graphics";
+import { playSfx } from "../../game/audio";
 
 const HALF_DIVISOR = 2;
 

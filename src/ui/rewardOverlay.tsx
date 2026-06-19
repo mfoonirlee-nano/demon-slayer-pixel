@@ -1,7 +1,7 @@
 import { useEffect } from "react";
-import { chooseBossEquipment, chooseUpgradeReward } from "./runtime";
-import type { GameSnapshot } from "./gameStore";
-import type { EquipmentItemState } from "./types/game-state";
+import { chooseBossEquipment, chooseUpgradeReward } from "../game/runtime";
+import type { GameSnapshot } from "../game/gameStore";
+import type { EquipmentItemState } from "../types/game-state";
 import { EQUIPMENT_SLOT_LABELS } from "./uiDisplay";
 import { UiSprite } from "./uiSprite";
 

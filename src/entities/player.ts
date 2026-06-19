@@ -1,4 +1,4 @@
-import { state } from "../state";
+import { state } from "../game/state";
 import {
   GRAVITY,
   GROUND_Y,
@@ -13,10 +13,10 @@ import {
   SKILL_FLASH,
   LANTERN_EMBER_CONFIG,
 } from "../constants";
-import { onGround, hitbox, frameIndex, nearestRectHitPoint, overlapHitPoint } from "../utils";
-import { drawSheetFrame, drawSkillFrame } from "../graphics";
-import { playSfx } from "../audio";
-import { ctx } from "../context";
+import { onGround, hitbox, frameIndex, nearestRectHitPoint, overlapHitPoint } from "../game/utils";
+import { drawSheetFrame, drawSkillFrame } from "../rendering/graphics";
+import { playSfx } from "../game/audio";
+import { ctx } from "../rendering/context";
 import {
   emitSlash,
   emitHitBurst,
@@ -25,8 +25,8 @@ import {
   spawnPlayerSkillEffect,
 } from "./particle";
 import { bindingZonePlayerMoveScale } from "./enemies/binder";
-import { keys } from "../input";
-import { hasDebugInfiniteHealth, hasDebugInfiniteSkillCharge } from "../debug";
+import { keys } from "../game/input";
+import { hasDebugInfiniteHealth, hasDebugInfiniteSkillCharge } from "../game/debug";
 import type { Skill } from "../types/assets";
 import {
   applySkillCastEquipmentEffects,

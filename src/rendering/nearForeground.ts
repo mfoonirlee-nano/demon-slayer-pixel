@@ -1,4 +1,4 @@
-import { state } from "./state";
+import { state } from "../game/state";
 import { ctx } from "./context";
 import {
   GROUND_Y,
@@ -6,7 +6,7 @@ import {
   STONE_TOWER_SPRITES,
   STONE_TOWER_SMALL_SPRITES,
   TORII_SPRITES,
-} from "./constants";
+} from "../constants";
 
 const NEAR_FOREGROUND_SPEED = 18;
 const NEAR_FOREGROUND_PATTERN_WIDTH = 1128;

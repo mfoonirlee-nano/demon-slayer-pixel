@@ -1,9 +1,9 @@
-import { state } from "../state";
-import { ctx } from "../context";
+import { state } from "../game/state";
+import { ctx } from "../rendering/context";
 import { WIDTH, HEIGHT, PROJECTILE_CONFIG, CASTER_WISP_SHEET } from "../constants";
 import type { ProjectileState } from "../types/game-state";
-import { hitbox } from "../utils";
-import { drawSheetFrame } from "../graphics";
+import { hitbox } from "../game/utils";
+import { drawSheetFrame } from "../rendering/graphics";
 import { hurtPlayer } from "./player";
 
 const CASTER_WISP_DRAW = {

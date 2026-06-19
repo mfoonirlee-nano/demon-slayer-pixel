@@ -7,7 +7,7 @@ import {
 } from "../entities/enemies/common";
 import { resolveEnemyDefeat } from "../entities/enemies/defeat";
 import type { EnemyState } from "../types/game-state";
-import { overlapHitPoint, type RectLike } from "../utils";
+import { overlapHitPoint, type RectLike } from "../game/utils";
 
 export type EnemyHitResolution = {
   hitX: number;

@@ -1,9 +1,9 @@
-import { BASIC_ATTACK, GROUND_Y, PLAYER_COMBAT, PLAYER_DEFAULTS, RUNTIME_CONFIG } from "./constants";
-import { bossArchetypeForId } from "./entities/bosses/registry";
+import { BASIC_ATTACK, GROUND_Y, PLAYER_COMBAT, PLAYER_DEFAULTS, RUNTIME_CONFIG } from "../constants";
+import { bossArchetypeForId } from "../entities/bosses/registry";
 import type { GameSnapshot } from "./gameStore";
-import { createInitialMoonState } from "./moon";
-import type { GameState, PlayerState } from "./types/game-state";
-import { equipmentItem } from "./systems/equipment";
+import { createInitialMoonState } from "../moon";
+import type { GameState, PlayerState } from "../types/game-state";
+import { equipmentItem } from "../systems/equipment";
 import {
   INITIAL_EQUIPPED_SKILL_IDS,
   INITIAL_SKILL_LEVELS,
@@ -11,9 +11,9 @@ import {
   maxSkillEnergyForLevel,
   moonTideUltimateConfig,
   xpToNextLevel,
-} from "./systems/progression";
+} from "../systems/progression";
 
-export type * from "./types/game-state";
+export type * from "../types/game-state";
 
 export function createInitialPlayerState(): PlayerState {
   const skillEnergyMax = maxSkillEnergyForLevel(1);

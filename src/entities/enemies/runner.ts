@@ -1,8 +1,8 @@
-import { state } from "../../state";
-import { playSfx } from "../../audio";
+import { state } from "../../game/state";
+import { playSfx } from "../../game/audio";
 import { ENEMY_SHEETS, RUNNER_SHEET_INDEX, RUNNER_SHEETS } from "../../constants";
 import type { EnemyState, RunnerPhase } from "../../types/game-state";
-import { ctx } from "../../context";
+import { ctx } from "../../rendering/context";
 import type { EnemyArchetype, EnemySpawnContext } from "./common";
 import { drawEnemyFrame, enemyDrawScale, enemyCenterX, enemyFeetY } from "./common";
 

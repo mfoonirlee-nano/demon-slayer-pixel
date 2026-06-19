@@ -1,8 +1,8 @@
 import { useEffect, useRef, useState } from "react";
 import { useAtomValue } from "jotai";
-import { HUD_UI, type UiSpriteId } from "./constants";
-import { DebugPanel } from "./debug";
-import { gameSnapshotAtom } from "./gameStore";
+import { HUD_UI, type UiSpriteId } from "../constants";
+import { DebugPanel } from "../game/debug";
+import { gameSnapshotAtom } from "../game/gameStore";
 import { DeathScreen } from "./deathScreen";
 import { PauseScreen } from "./pauseScreen";
 import { RewardOverlay } from "./rewardOverlay";

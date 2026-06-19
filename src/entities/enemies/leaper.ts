@@ -1,6 +1,6 @@
-import { ctx } from "../../context";
-import { state } from "../../state";
-import { playSfx } from "../../audio";
+import { ctx } from "../../rendering/context";
+import { state } from "../../game/state";
+import { playSfx } from "../../game/audio";
 import {
   ENEMY_SHEETS,
   GROUND_Y,
@@ -8,9 +8,9 @@ import {
   LEAPER_SHEETS,
   WIDTH,
 } from "../../constants";
-import { drawSheetFrame } from "../../graphics";
+import { drawSheetFrame } from "../../rendering/graphics";
 import type { EnemyState, LeaperPhase } from "../../types/game-state";
-import { clamp, frameIndex, hitbox, lerp } from "../../utils";
+import { clamp, frameIndex, hitbox, lerp } from "../../game/utils";
 import { hurtPlayer } from "../player";
 import type { EnemyArchetype, EnemySpawnContext } from "./common";
 import { drawEnemyFrame, enemyCenterX, enemyDrawScale, enemyFeetY } from "./common";

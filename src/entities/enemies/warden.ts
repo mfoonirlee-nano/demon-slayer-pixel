@@ -1,10 +1,10 @@
-import { ctx } from "../../context";
-import { state } from "../../state";
-import { playSfx } from "../../audio";
+import { ctx } from "../../rendering/context";
+import { state } from "../../game/state";
+import { playSfx } from "../../game/audio";
 import { ENEMY_SHEETS, WARDEN_AURA_EFFECT_SHEET, WARDEN_SHEET_INDEX, WARDEN_SHEETS } from "../../constants";
-import { drawSheetFrame } from "../../graphics";
+import { drawSheetFrame } from "../../rendering/graphics";
 import type { EnemyState, WardenPhase } from "../../types/game-state";
-import { frameIndex } from "../../utils";
+import { frameIndex } from "../../game/utils";
 import type { EnemyArchetype, EnemySpawnContext } from "./common";
 import { drawEnemyFrame, enemyCenterX, enemyDrawScale, enemyFeetY } from "./common";
 

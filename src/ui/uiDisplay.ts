@@ -1,6 +1,6 @@
-import type { SkillId } from "./types/assets";
-import type { EquipmentItemId, EquipmentSlot, SkillLevel, UltimateLevel } from "./types/game-state";
-import { playerSkillById, playerSkillIconSrc } from "./systems/skillCatalog";
+import type { SkillId } from "../types/assets";
+import type { EquipmentItemId, EquipmentSlot, SkillLevel, UltimateLevel } from "../types/game-state";
+import { playerSkillById, playerSkillIconSrc } from "../systems/skillCatalog";
 
 export const EQUIPMENT_SLOT_LABELS: Record<EquipmentSlot, string> = {
   blade: "刃器",

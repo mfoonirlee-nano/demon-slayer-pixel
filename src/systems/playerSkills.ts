@@ -1,7 +1,7 @@
 import { SKILL_IDS } from "../constants";
 import type { SkillId } from "../types/assets";
 import type { SkillLevel } from "../types/game-state";
-import type { RectLike } from "../utils";
+import type { RectLike } from "../game/utils";
 
 export type GenericPlayerSkillId =
   | "dash_reposition"

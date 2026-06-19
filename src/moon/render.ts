@@ -1,6 +1,6 @@
-import { ctx } from "../context";
+import { ctx } from "../rendering/context";
 import { SKY_SPRITES } from "../constants";
-import { colorLerp } from "../utils";
+import { colorLerp } from "../game/utils";
 import {
   MOON_GLOW_CONFIG,
   MOON_LAYOUT,

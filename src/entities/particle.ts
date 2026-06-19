@@ -1,5 +1,5 @@
-import { state } from "../state";
-import { ctx } from "../context";
+import { state } from "../game/state";
+import { ctx } from "../rendering/context";
 import {
   PARTICLE_CONFIG,
   HIT_BURST_CONFIG,
@@ -24,7 +24,7 @@ import type {
   UltimateTrailState,
 } from "../types/game-state";
 import type { SkillId } from "../types/assets";
-import { clamp, hitbox, overlapHitPoint, type RectLike } from "../utils";
+import { clamp, hitbox, overlapHitPoint, type RectLike } from "../game/utils";
 import { applySkillHitEquipmentRefund } from "../systems/equipment";
 import { resolveBossHit, resolveEnemyHit } from "../systems/combatResolution";
 import { skillById } from "../systems/loadout";

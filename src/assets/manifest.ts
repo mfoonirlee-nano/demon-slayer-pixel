@@ -62,12 +62,12 @@ import {
   TREE_SPRITES,
   WARDEN_AURA_EFFECT_SHEET,
   WARDEN_SHEETS,
-} from "./constants";
+} from "../constants";
 import {
   allPlayerSkills,
   playerSkillEffectSheets,
   ultimateSkillSheets,
-} from "./systems/skillCatalog";
+} from "../systems/skillCatalog";
 
 export type ImageLoadTarget = {
   src: string;

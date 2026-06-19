@@ -1,9 +1,9 @@
-import { state } from "../../state";
-import { playSfx } from "../../audio";
+import { state } from "../../game/state";
+import { playSfx } from "../../game/audio";
 import { DUELIST_SHEET_INDEX, DUELIST_SHEETS, ENEMY_SHEETS } from "../../constants";
-import { drawSheetFrame } from "../../graphics";
+import { drawSheetFrame } from "../../rendering/graphics";
 import type { DuelistPhase, EnemyState } from "../../types/game-state";
-import { hitbox } from "../../utils";
+import { hitbox } from "../../game/utils";
 import { hurtPlayer } from "../player";
 import type { EnemyArchetype, EnemySpawnContext } from "./common";
 import { drawEnemyFrame, enemyCenterX, enemyDrawScale, enemyFeetY } from "./common";

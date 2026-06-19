@@ -1,12 +1,12 @@
 import { useState } from "react";
-import { type UiSpriteId } from "./constants";
-import { getAudioVolumeSettings, setAudioVolumeSettings, type AudioVolumeSettings } from "./audio";
-import { equipEquipment, equipSkillSlot } from "./runtime";
-import { EQUIPMENT_CHOICE_IDS, EQUIPMENT_ITEMS } from "./systems/equipment";
-import { allPlayerSkills } from "./systems/skillCatalog";
-import type { GameSnapshot } from "./gameStore";
-import type { SkillId } from "./types/assets";
-import type { EquipmentItemId, EquipmentSlot } from "./types/game-state";
+import { type UiSpriteId } from "../constants";
+import { getAudioVolumeSettings, setAudioVolumeSettings, type AudioVolumeSettings } from "../game/audio";
+import { equipEquipment, equipSkillSlot } from "../game/runtime";
+import { EQUIPMENT_CHOICE_IDS, EQUIPMENT_ITEMS } from "../systems/equipment";
+import { allPlayerSkills } from "../systems/skillCatalog";
+import type { GameSnapshot } from "../game/gameStore";
+import type { SkillId } from "../types/assets";
+import type { EquipmentItemId, EquipmentSlot } from "../types/game-state";
 import {
   EQUIPMENT_SLOT_LABELS,
   equipmentIconSrc,

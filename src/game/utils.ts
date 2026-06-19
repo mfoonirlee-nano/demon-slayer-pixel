@@ -1,5 +1,5 @@
-import { GROUND_Y } from "./constants";
-import type { PlatformState } from "./types/game-state";
+import { GROUND_Y } from "../constants";
+import type { PlatformState } from "../types/game-state";
 
 const GROUND_CONTACT_EPSILON = 0.1;
 const FRAMES_PER_SECOND = 60;

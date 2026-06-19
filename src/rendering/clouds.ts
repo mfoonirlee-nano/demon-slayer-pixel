@@ -1,6 +1,6 @@
 import { ctx } from "./context";
-import { CLOUD_SPRITES, WIDTH } from "./constants";
-import type { MoonState } from "./moon";
+import { CLOUD_SPRITES, WIDTH } from "../constants";
+import type { MoonState } from "../moon";
 
 type CloudKind = "big" | "small";
 

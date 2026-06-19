@@ -1,7 +1,7 @@
-import { playSfx } from "../../audio";
+import { playSfx } from "../../game/audio";
 import { PLAYER_COMBAT } from "../../constants";
-import { recordBossCoverKill } from "../../coverProgress";
-import { state } from "../../state";
+import { recordBossCoverKill } from "../../game/coverProgress";
+import { state } from "../../game/state";
 import { createBossEquipmentChoices } from "../../systems/equipment";
 import { addRunXp, bossXp } from "../../systems/progression";
 import { bossRespawnTimerAfterDefeat } from "../../systems/runProgression";

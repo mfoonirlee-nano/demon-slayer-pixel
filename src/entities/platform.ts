@@ -1,5 +1,5 @@
-import { state } from "../state";
-import { ctx } from "../context";
+import { state } from "../game/state";
+import { ctx } from "../rendering/context";
 import {
   WIDTH,
   PLATFORM_CONFIG,
@@ -24,8 +24,8 @@ import type {
   PlatformStyle,
   PlatformLayer,
 } from "../types/game-state";
-import { hitbox } from "../utils";
-import { playTone } from "../audio";
+import { hitbox } from "../game/utils";
+import { playTone } from "../game/audio";
 import { emitHitBurst } from "./particle";
 import { healPlayer } from "./player";
 

@@ -3,15 +3,15 @@ import { Provider } from "jotai";
 import {
   WIDTH,
   HEIGHT,
-} from "./constants";
-import { loadSprites } from "./assets";
-import { setCanvas } from "./context";
-import { startGame } from "./runtime";
-import { gameStore, setGameSnapshot } from "./gameStore";
-import { StartScreen } from "./startScreen";
-import { ensureAudio } from "./audio";
-import { GameHud } from "./gameHud";
-import { TouchControls } from "./touchControls";
+} from "../constants";
+import { loadSprites } from "../assets";
+import { setCanvas } from "../rendering/context";
+import { startGame } from "../game/runtime";
+import { gameStore, setGameSnapshot } from "../game/gameStore";
+import { StartScreen } from "../ui/startScreen";
+import { ensureAudio } from "../game/audio";
+import { GameHud } from "../ui/gameHud";
+import { TouchControls } from "../ui/touchControls";
 
 type AppPhase = "menu" | "playing";
 

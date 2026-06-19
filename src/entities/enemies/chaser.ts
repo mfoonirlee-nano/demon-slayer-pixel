@@ -1,7 +1,7 @@
-import { state } from "../../state";
-import { playSfx } from "../../audio";
+import { state } from "../../game/state";
+import { playSfx } from "../../game/audio";
 import { ENEMY_SHEETS, WIDTH } from "../../constants";
-import { ctx } from "../../context";
+import { ctx } from "../../rendering/context";
 import type { EnemyState } from "../../types/game-state";
 import type { EnemyArchetype, EnemySpawnContext } from "./common";
 import { drawEnemyFrame, enemyDrawScale, enemyFeetY } from "./common";

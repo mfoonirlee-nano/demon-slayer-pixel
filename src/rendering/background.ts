@@ -1,4 +1,4 @@
-import { state } from "./state";
+import { state } from "../game/state";
 import { ctx } from "./context";
 import {
   WIDTH,
@@ -7,8 +7,8 @@ import {
   SKY_SPRITES,
   MOUNTAIN_SPRITES,
   GROUND_TILE_SPRITES,
-} from "./constants";
-import { drawMoon, getMoonSkyColors } from "./moon";
+} from "../constants";
+import { drawMoon, getMoonSkyColors } from "../moon";
 import { drawClouds } from "./clouds";
 
 // Three-plane parallax speeds (pixels per second of elapsed time). Each plane

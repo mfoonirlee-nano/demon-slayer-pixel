@@ -1,8 +1,8 @@
 import { PLAYER_COMBAT } from "../../constants";
-import { recordEnemyCoverKill } from "../../coverProgress";
-import { state } from "../../state";
+import { recordEnemyCoverKill } from "../../game/coverProgress";
+import { state } from "../../game/state";
 import type { EnemyState } from "../../types/game-state";
-import { playSfx } from "../../audio";
+import { playSfx } from "../../game/audio";
 import type { EnemyDefeatRewardKind } from "./common";
 import { enemyArchetypeForSheet } from "./registry";
 import { addRunXp, enemyXp } from "../../systems/progression";

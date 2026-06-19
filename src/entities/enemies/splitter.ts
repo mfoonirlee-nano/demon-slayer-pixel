@@ -1,7 +1,7 @@
-import { ctx } from "../../context";
-import { drawSheetFrame } from "../../graphics";
-import { state } from "../../state";
-import { playSfx } from "../../audio";
+import { ctx } from "../../rendering/context";
+import { drawSheetFrame } from "../../rendering/graphics";
+import { state } from "../../game/state";
+import { playSfx } from "../../game/audio";
 import {
   ENEMY_CONFIG,
   ENEMY_DRAW_SCALE,
@@ -9,7 +9,7 @@ import {
   SPLITTER_SHEETS,
 } from "../../constants";
 import type { EnemyState, SplitterPhase } from "../../types/game-state";
-import { frameIndex } from "../../utils";
+import { frameIndex } from "../../game/utils";
 import type { EnemyArchetype, EnemyDefeatContext, EnemySpawnContext } from "./common";
 import { enemyBaseHp, enemyCenterX, enemyFeetY } from "./common";
 

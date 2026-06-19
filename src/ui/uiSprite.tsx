@@ -1,5 +1,5 @@
 import type { CSSProperties, ReactNode } from "react";
-import { UI_SPRITES, type UiSpriteId } from "./constants";
+import { UI_SPRITES, type UiSpriteId } from "../constants";
 
 export function uiSpriteDisplaySize(spriteId: UiSpriteId) {
   const sprite = UI_SPRITES[spriteId];

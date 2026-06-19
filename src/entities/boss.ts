@@ -1,5 +1,5 @@
-import { state } from "../state";
-import { canAutoSpawnEntities } from "../debug";
+import { state } from "../game/state";
+import { canAutoSpawnEntities } from "../game/debug";
 import {
   WIDTH,
   GROUND_Y,
@@ -50,10 +50,10 @@ import type {
   MirrorAfterimageState,
   MirrorShardState,
 } from "../types/game-state";
-import { clamp, hitbox, frameIndex } from "../utils";
-import { drawSheetFrame } from "../graphics";
-import { ctx } from "../context";
-import { playSfx } from "../audio";
+import { clamp, hitbox, frameIndex } from "../game/utils";
+import { drawSheetFrame } from "../rendering/graphics";
+import { ctx } from "../rendering/context";
+import { playSfx } from "../game/audio";
 import { hurtPlayer } from "./player";
 import { spawnEnemy } from "./enemy";
 import { damageEnemy } from "./enemies/common";

@@ -1,5 +1,5 @@
-import { state } from "../../state";
-import { playSfx } from "../../audio";
+import { state } from "../../game/state";
+import { playSfx } from "../../game/audio";
 import {
   BURROWER_SHEET_INDEX,
   BURROWER_SHEETS,
@@ -7,9 +7,9 @@ import {
   GROUND_Y,
   WIDTH,
 } from "../../constants";
-import { drawSheetFrame } from "../../graphics";
+import { drawSheetFrame } from "../../rendering/graphics";
 import type { BurrowerPhase, EnemyState } from "../../types/game-state";
-import { clamp, frameIndex, hitbox, lerp } from "../../utils";
+import { clamp, frameIndex, hitbox, lerp } from "../../game/utils";
 import { hurtPlayer } from "../player";
 import type { EnemyArchetype, EnemySpawnContext } from "./common";
 import { drawEnemyFrame, enemyCenterX, enemyDrawScale, enemyFeetY } from "./common";

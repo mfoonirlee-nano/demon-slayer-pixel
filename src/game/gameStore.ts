@@ -1,15 +1,15 @@
 import { atom } from "jotai";
 import { createStore } from "jotai/vanilla";
-import { PLAYER_DEFAULTS } from "./constants";
-import { maxSkillChargesForEnergy, maxSkillEnergyForLevel } from "./systems/progression";
-import type { SkillId } from "./types/assets";
+import { PLAYER_DEFAULTS } from "../constants";
+import { maxSkillChargesForEnergy, maxSkillEnergyForLevel } from "../systems/progression";
+import type { SkillId } from "../types/assets";
 import type {
   EquipmentItemState,
   EquipmentSlot,
   SkillLevel,
   UltimateLevel,
   UpgradeChoiceState,
-} from "./types/game-state";
+} from "../types/game-state";
 
 const initialSkillEnergyMax = maxSkillEnergyForLevel(1);
 

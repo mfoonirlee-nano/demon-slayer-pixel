@@ -1,5 +1,5 @@
 import { useEffect, useState, type CSSProperties } from "react";
-import { getCoverProgress, readCoverKills } from "./coverProgress";
+import { getCoverProgress, readCoverKills } from "../game/coverProgress";
 
 type CustomCssProperties = CSSProperties & Record<`--${string}`, string>;
 

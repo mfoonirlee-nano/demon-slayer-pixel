@@ -1,7 +1,7 @@
-import { ctx } from "../../context";
-import { state } from "../../state";
-import { playSfx } from "../../audio";
-import { hasDebugInfiniteHealth } from "../../debug";
+import { ctx } from "../../rendering/context";
+import { state } from "../../game/state";
+import { playSfx } from "../../game/audio";
+import { hasDebugInfiniteHealth } from "../../game/debug";
 import {
   BINDER_SHEET_INDEX,
   BINDER_SHEETS,
@@ -11,9 +11,9 @@ import {
   ENEMY_SHEETS,
   GROUND_Y,
 } from "../../constants";
-import { drawSheetFrame } from "../../graphics";
+import { drawSheetFrame } from "../../rendering/graphics";
 import type { BinderAiPhase, BinderPhase, EnemyState } from "../../types/game-state";
-import { frameIndex } from "../../utils";
+import { frameIndex } from "../../game/utils";
 import type { EnemyArchetype, EnemySpawnContext } from "./common";
 import { drawEnemyFrame, enemyCenterX, enemyDrawScale, enemyFeetY } from "./common";
 import { endRun } from "../../systems/runLifecycle";

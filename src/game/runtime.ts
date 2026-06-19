@@ -1,6 +1,6 @@
 import { state, resetState, getStateSnapshot } from "./state";
-import { ctx } from "./context";
-import { updateMoon } from "./moon";
+import { ctx } from "../rendering/context";
+import { updateMoon } from "../moon";
 import { canAutoSpawnEntities, hasDebugInfiniteHealth, hasDebugInfiniteSkillCharge, setDebugRuntimeActions } from "./debug";
 import {
   WIDTH,
@@ -9,17 +9,17 @@ import {
   UI_COPY,
   LOADING_SCREEN,
   SKILL_FLASH,
-} from "./constants";
-import { loadSprites } from "./assets";
+} from "../constants";
+import { loadSprites } from "../assets";
 import { setupInput, teardownInput, debugCollisionBoxes } from "./input";
-import { drawBackground, drawGroundTileBase, drawGroundTileFront } from "./background";
-import { drawNearForeground } from "./nearForeground";
+import { drawBackground, drawGroundTileBase, drawGroundTileFront } from "../rendering/background";
+import { drawNearForeground } from "../rendering/nearForeground";
 
-import { updatePlayer, drawPlayer, triggerAttack, castSelectedSkill, castUltimateSkill, selectSkill, tryJump } from "./entities/player";
-import { spawnEnemy, spawnEnemyBySheetIndex, updateEnemies, drawEnemy } from "./entities/enemy";
-import { updateBindingZones, drawBindingZonesBack, drawBindingZonesFront } from "./entities/enemies/binder";
-import { drawWardenAuraIndicators } from "./entities/enemies/warden";
-import { spawnBoss, updateBoss, drawBoss, updateBossSkill1Effects, drawBossSkill1Effects, updateDeadBellEffects, drawDeadBellEffects, updateMirrorDreamEffects, drawMirrorDreamEffects, updateLanternEmberEffects, drawLanternEmberEffects, updateBloodMoonEffects, drawBloodMoonEffects } from "./entities/boss";
+import { updatePlayer, drawPlayer, triggerAttack, castSelectedSkill, castUltimateSkill, selectSkill, tryJump } from "../entities/player";
+import { spawnEnemy, spawnEnemyBySheetIndex, updateEnemies, drawEnemy } from "../entities/enemy";
+import { updateBindingZones, drawBindingZonesBack, drawBindingZonesFront } from "../entities/enemies/binder";
+import { drawWardenAuraIndicators } from "../entities/enemies/warden";
+import { spawnBoss, updateBoss, drawBoss, updateBossSkill1Effects, drawBossSkill1Effects, updateDeadBellEffects, drawDeadBellEffects, updateMirrorDreamEffects, drawMirrorDreamEffects, updateLanternEmberEffects, drawLanternEmberEffects, updateBloodMoonEffects, drawBloodMoonEffects } from "../entities/boss";
 import {
   spawnMapSegmentOfKind,
   spawnNextMapSegment,
@@ -31,8 +31,8 @@ import {
   drawPlatforms,
   drawCrystals,
   drawChests,
-} from "./entities/platform";
-import { updateProjectiles, drawProjectiles } from "./entities/projectile";
+} from "../entities/platform";
+import { updateProjectiles, drawProjectiles } from "../entities/projectile";
 import {
   updateParticles,
   updateSkillBursts,
@@ -54,15 +54,15 @@ import {
   drawUltimateEffects,
   drawUltimateTrails,
   drawUltimateAfterimageSlashes,
-} from "./entities/particle";
+} from "../entities/particle";
 import type { GameSnapshot } from "./gameStore";
-import type { SkillId } from "./types/assets";
-import type { EquipmentItemId, EquipmentSlot } from "./types/game-state";
-import { applyUpgradeChoice } from "./systems/progression";
-import { chooseBossEquipment as chooseBossEquipmentReward, equipEquipment as equipEquipmentInState } from "./systems/equipment";
-import { equipSkillSlot as equipSkillSlotInState, SKILL_SLOT_COUNT } from "./systems/loadout";
-import { enemySpawnInterval } from "./systems/runProgression";
-import { markSpritesReady } from "./systems/runLifecycle";
+import type { SkillId } from "../types/assets";
+import type { EquipmentItemId, EquipmentSlot } from "../types/game-state";
+import { applyUpgradeChoice } from "../systems/progression";
+import { chooseBossEquipment as chooseBossEquipmentReward, equipEquipment as equipEquipmentInState } from "../systems/equipment";
+import { equipSkillSlot as equipSkillSlotInState, SKILL_SLOT_COUNT } from "../systems/loadout";
+import { enemySpawnInterval } from "../systems/runProgression";
+import { markSpritesReady } from "../systems/runLifecycle";
 
 let frameId = 0;
 let running = false;

@@ -1,9 +1,9 @@
-import { state } from "../../state";
-import { playSfx } from "../../audio";
+import { state } from "../../game/state";
+import { playSfx } from "../../game/audio";
 import { ENEMY_SHEETS, GLIDER_SHEET_INDEX, GLIDER_SHEETS, GROUND_Y } from "../../constants";
-import { drawSheetFrame } from "../../graphics";
+import { drawSheetFrame } from "../../rendering/graphics";
 import type { EnemyState, GliderPhase } from "../../types/game-state";
-import { clamp, frameIndex } from "../../utils";
+import { clamp, frameIndex } from "../../game/utils";
 import type { EnemyArchetype, EnemySpawnContext } from "./common";
 import { drawEnemyFrame, enemyCenterX, enemyDrawScale, enemyFeetY } from "./common";
 

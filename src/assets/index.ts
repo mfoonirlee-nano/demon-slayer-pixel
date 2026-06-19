@@ -1,7 +1,7 @@
-import { spriteImageLoadTargets } from "./assetManifest";
-import { loadImage } from "./utils";
-import { state } from "./state";
-import { markSpritesReady } from "./systems/runLifecycle";
+import { spriteImageLoadTargets } from "./manifest";
+import { loadImage } from "../game/utils";
+import { state } from "../game/state";
+import { markSpritesReady } from "../systems/runLifecycle";
 
 let loadTask: Promise<void> | null = null;
 

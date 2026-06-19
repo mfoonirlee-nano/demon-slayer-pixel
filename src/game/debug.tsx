@@ -12,12 +12,12 @@ import {
   SPLITTER_SHEET_INDEX,
   WARDEN_SHEET_INDEX,
   BURROWER_SHEET_INDEX,
-} from "./constants";
-import { BOSS_ARCHETYPES } from "./entities/bosses/registry";
-import { implementedPlayerSkills } from "./systems/skillCatalog";
-import type { SegmentKind } from "./entities/platform";
-import type { SkillId } from "./types/assets";
-import type { BossArchetypeId } from "./types/game-state";
+} from "../constants";
+import { BOSS_ARCHETYPES } from "../entities/bosses/registry";
+import { implementedPlayerSkills } from "../systems/skillCatalog";
+import type { SegmentKind } from "../entities/platform";
+import type { SkillId } from "../types/assets";
+import type { BossArchetypeId } from "../types/game-state";
 
 export type DebugEnemyKind =
   | "chaser"
