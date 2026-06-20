@@ -34,9 +34,9 @@ export const UI_SPRITES = {
   buttonNormal: { src: "assets/sprites/ui/system/controls/button-normal.png", w: 433, h: 146 },
   buttonActive: { src: "assets/sprites/ui/system/controls/button-active.png", w: 405, h: 147 },
 
-  upgradeRewardPanel: { src: "assets/sprites/ui/system/rewards/upgrade-reward-panel-v3.png", w: 704, h: 415 },
-  upgradeChoiceCard: { src: "assets/sprites/ui/system/rewards/upgrade-choice-card-v2.png", w: 196, h: 389 },
-  upgradeChoiceCardActive: { src: "assets/sprites/ui/system/rewards/upgrade-choice-card-active-v2.png", w: 198, h: 389 },
+  upgradeRewardPanel: { src: "assets/sprites/ui/system/rewards/upgrade-reward-panel.png", w: 704, h: 415 },
+  upgradeChoiceCard: { src: "assets/sprites/ui/system/rewards/upgrade-choice-card.png", w: 196, h: 389 },
+  upgradeChoiceCardActive: { src: "assets/sprites/ui/system/rewards/upgrade-choice-card-active.png", w: 198, h: 389 },
 
   bossRewardPanel: { src: "assets/sprites/ui/system/rewards/boss-reward-panel.png", w: 744, h: 423 },
   bossChoiceCard: { src: "assets/sprites/ui/system/rewards/boss-choice-card.png", w: 213, h: 398 },
