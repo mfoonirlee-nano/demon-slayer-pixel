@@ -69,6 +69,7 @@ UI 框体素材按用途放在 `ui/system/` 的子目录中，便于逐个微调
 | `anti_air_multi/effect.png` | `1440x320` | 4 | `360x320` | `PLAYER_SKILL_EFFECT_SHEETS.anti_air_multi` |
 | `returning_blade/effect.png` | `960x120` | 4 | `240x120` | `PLAYER_SKILL_EFFECT_SHEETS.returning_blade` |
 | `vertical_wave/effect.png` | `2940x320` | 7 | `420x320` | `PLAYER_SKILL_EFFECT_SHEETS.vertical_wave` |
+| `ultimate_skill/icon.png` | `256x256` | 1 | `256x256` | 大招图标 |
 | `ultimate_skill/skill.png` | `2880x480` | 6 | `480x480` | `ULTIMATE_SKILL_SHEET` |
 | `ultimate_skill/effect.png` | `3840x360` | 8 | `480x360` | `ULTIMATE_SKILL_EFFECT_SHEET` |
 
