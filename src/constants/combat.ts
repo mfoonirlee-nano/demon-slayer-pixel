@@ -77,7 +77,7 @@ export const PLAYER_COMBAT = {
   ultimateEffectFrameDuration: 8,
   ultimateEffectLife: 96,
   ultimateEffectSpawnRatio: 0.45,
-  ultimateDrawScale: 0.42,
+  ultimateDrawScale: 0.3,
   ultimateEffectDrawScale: 0.68,
   ultimateEffectYOffset: 78,
   ultimateTrailLife: 18,

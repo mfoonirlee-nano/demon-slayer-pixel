@@ -128,8 +128,8 @@ export const PLAYER_SKILL_EFFECT_SHEETS: Partial<Record<SkillId, SpriteSheet>> =
 
 export const ULTIMATE_SKILL_SHEET: SpriteSheet = {
   src: "assets/sprites/skills/ultimate_skill/skill.png",
-  frameW: 400,
-  frameH: 496,
+  frameW: 480,
+  frameH: 480,
   count: 6,
   image: null,
 };
