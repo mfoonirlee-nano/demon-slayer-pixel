@@ -38,6 +38,7 @@ type DebugRuntimeActions = {
   publish: () => void;
   setInfiniteHealth: (enabled: boolean) => void;
   setInfiniteSkillCharge: (enabled: boolean) => void;
+  setInfiniteUltimateCharge: (enabled: boolean) => void;
   spawnEnemySheet: (sheetIndex: number, side: number) => void;
   spawnPlatformSegment: (kind: SegmentKind) => void;
   spawnBoss: (id?: BossArchetypeId) => void;
@@ -104,6 +105,7 @@ let runtimeActions: DebugRuntimeActions = {
   publish: () => {},
   setInfiniteHealth: () => {},
   setInfiniteSkillCharge: () => {},
+  setInfiniteUltimateCharge: () => {},
   spawnEnemySheet: () => {},
   spawnPlatformSegment: () => {},
   spawnBoss: () => {},
@@ -112,6 +114,7 @@ let runtimeActions: DebugRuntimeActions = {
 
 let debugInfiniteHealth = true;
 let debugInfiniteSkillCharge = true;
+let debugInfiniteUltimateCharge = false;
 
 export const isDebugMode = typeof window !== "undefined"
   && new URLSearchParams(window.location.search).get("debug") === "1";
@@ -122,6 +125,10 @@ export function canAutoSpawnEntities() {
 
 export function hasDebugInfiniteSkillCharge() {
   return isDebugMode && debugInfiniteSkillCharge;
+}
+
+export function hasDebugInfiniteUltimateCharge() {
+  return isDebugMode && debugInfiniteUltimateCharge;
 }
 
 export function hasDebugInfiniteHealth() {
@@ -163,6 +170,13 @@ function setDebugInfiniteSkillCharge(enabled: boolean) {
   runtimeActions.publish();
 }
 
+function setDebugInfiniteUltimateCharge(enabled: boolean) {
+  if (!isDebugMode) return;
+  debugInfiniteUltimateCharge = enabled;
+  runtimeActions.setInfiniteUltimateCharge(enabled);
+  runtimeActions.publish();
+}
+
 function setDebugInfiniteHealth(enabled: boolean) {
   if (!isDebugMode) return;
   debugInfiniteHealth = enabled;
@@ -178,6 +192,7 @@ export function DebugPanel() {
   const [skillId, setSkillId] = useState<SkillId>(DEBUG_SKILL_OPTIONS[0]?.id ?? "line_projectile");
   const [infiniteHealth, setInfiniteHealth] = useState(hasDebugInfiniteHealth());
   const [infiniteSkillCharge, setInfiniteSkillCharge] = useState(hasDebugInfiniteSkillCharge());
+  const [infiniteUltimateCharge, setInfiniteUltimateCharge] = useState(hasDebugInfiniteUltimateCharge());
 
   if (!isDebugMode) return null;
 
@@ -214,6 +229,20 @@ export function DebugPanel() {
           }}
         />
         Skill charge full
+      </label>
+      <label className="mb-2 flex items-center gap-2 text-[8px] text-[#c3efff]" htmlFor="debug-infinite-ultimate-charge">
+        <input
+          id="debug-infinite-ultimate-charge"
+          type="checkbox"
+          className="h-3 w-3 accent-[#63f4ff]"
+          checked={infiniteUltimateCharge}
+          onChange={(event) => {
+            const enabled = event.target.checked;
+            setInfiniteUltimateCharge(enabled);
+            setDebugInfiniteUltimateCharge(enabled);
+          }}
+        />
+        Ultimate charge full
       </label>
       <label className="block text-[8px] text-[#9ed8ff]" htmlFor="debug-skill-kind">Skill</label>
       <div className="mt-1 flex gap-1">

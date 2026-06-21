@@ -1,7 +1,7 @@
 import { state, resetState, getStateSnapshot } from "./state";
 import { ctx } from "../rendering/context";
 import { updateMoon } from "../moon";
-import { canAutoSpawnEntities, hasDebugInfiniteHealth, hasDebugInfiniteSkillCharge, setDebugRuntimeActions } from "./debug";
+import { canAutoSpawnEntities, hasDebugInfiniteHealth, hasDebugInfiniteSkillCharge, hasDebugInfiniteUltimateCharge, setDebugRuntimeActions } from "./debug";
 import {
   WIDTH,
   HEIGHT,
@@ -81,6 +81,7 @@ function isPaused() {
 function publishCurrentState() {
   syncDebugInfiniteHealth();
   syncDebugInfiniteSkillCharge();
+  syncDebugInfiniteUltimateCharge();
   publishState(getStateSnapshot(manualPaused, isPaused()));
 }
 
@@ -93,6 +94,11 @@ function syncDebugInfiniteSkillCharge() {
   if (!hasDebugInfiniteSkillCharge()) return;
   state.player.skillEnergy = state.player.skillEnergyMax;
   state.player.skillCharges = state.player.maxSkillCharges;
+}
+
+function syncDebugInfiniteUltimateCharge() {
+  if (!hasDebugInfiniteUltimateCharge()) return;
+  state.player.ultimateEnergy = state.player.ultimateEnergyMax;
 }
 
 function togglePause() {
@@ -161,6 +167,9 @@ setDebugRuntimeActions({
   },
   setInfiniteSkillCharge: (enabled) => {
     if (enabled) syncDebugInfiniteSkillCharge();
+  },
+  setInfiniteUltimateCharge: (enabled) => {
+    if (enabled) syncDebugInfiniteUltimateCharge();
   },
   spawnEnemySheet: spawnEnemyBySheetIndex,
   spawnPlatformSegment: spawnMapSegmentOfKind,
