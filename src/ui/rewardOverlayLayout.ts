@@ -28,7 +28,7 @@ const REWARD_LAYOUTS: Record<RewardOverlayKind, RewardLayoutConfig> = {
     activeCardSprite: "upgradeChoiceCardActive",
     cardContentSource: {
       bottom: 84,
-      insetX: 22,
+      insetX: 28,
       top: 104,
     },
     cardIconSource: {

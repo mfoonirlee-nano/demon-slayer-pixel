@@ -11,6 +11,7 @@ const UPGRADE_ICON_SLOT_SOURCE_CENTER_Y = 50;
 const UPGRADE_ICON_CENTER_TOLERANCE = 1;
 const UPGRADE_MAX_TITLE_TOP = 30;
 const UPGRADE_MIN_CARD_ROW_TOP = 48;
+const UPGRADE_MIN_TEXT_INSET_X = 23;
 const UPGRADE_MIN_TEXT_GAP_BELOW_ICON = 12;
 const UPGRADE_MIN_CARD_SCALE = 0.82;
 const UPGRADE_MIN_PANEL_BOTTOM_PADDING = 44;
@@ -62,6 +63,7 @@ describe("reward overlay layout", () => {
     expect(layout.cardContent.top).toBeGreaterThan(
       layout.cardIcon!.top + layout.cardIcon!.size + UPGRADE_MIN_TEXT_GAP_BELOW_ICON,
     );
+    expect(layout.cardContent.insetX).toBeGreaterThanOrEqual(UPGRADE_MIN_TEXT_INSET_X);
     expect(layout.cardContent.top).toBeGreaterThan(layout.cardBoxH / CARD_BODY_QUARTER_DIVISOR);
     expect(layout.cardContent.bottom).toBeGreaterThanOrEqual(UPGRADE_MIN_TEXT_BOTTOM);
     expect(layout.cardContent.top + layout.cardContent.bottom).toBeLessThan(layout.cardBoxH);

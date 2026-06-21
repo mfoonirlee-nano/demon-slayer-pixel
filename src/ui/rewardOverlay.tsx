@@ -199,9 +199,7 @@ export function RewardOverlay({ snapshot }: { snapshot: GameSnapshot }) {
                       </>
                     ) : upgrade && upgradeStyle ? (
                       <>
-                        <div className="text-right text-[7px] font-bold leading-none text-[#86d9ee]">[{index + 1}]</div>
-                        <div className="mt-2 flex min-h-[31px] flex-wrap items-center justify-center gap-1 text-center text-[10px] font-bold leading-[1.25] text-[#fff8e6]">
-                          <span>{choice.name}</span>
+                        <div className="flex justify-center">
                           <span
                             className="rounded-sm border px-1.5 py-[3px] text-[7px] leading-none"
                             style={{
@@ -213,6 +211,7 @@ export function RewardOverlay({ snapshot }: { snapshot: GameSnapshot }) {
                             {upgradeStyle.label}
                           </span>
                         </div>
+                        <div className="mt-2 min-h-[31px] text-center text-[10px] font-bold leading-[1.25] text-[#fff8e6]">{choice.name}</div>
                         <div className="mt-1 text-center text-[8px] font-bold leading-none" style={{ color: upgradeAccent }}>
                           {levelTransition(upgrade)}
                         </div>
