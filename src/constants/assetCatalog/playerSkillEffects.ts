@@ -77,6 +77,7 @@ export const GUARD_COUNTER_EFFECT_CONFIG = {
   rippleInnerAlphaScale: 0.66,
   rippleInnerWidthScale: 0.31,
   rippleInnerHeightScale: 0.28,
+  activeFrames: 72,
   maxHits: 3,
   damageMultiplier: 2,
 } as const;

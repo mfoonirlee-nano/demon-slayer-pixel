@@ -52,12 +52,13 @@ type ActiveUltimateLevel = Exclude<UltimateLevel, 0>;
 export const INITIAL_SKILL_LEVELS: Partial<Record<SkillId, SkillLevel>> = {
   [SKILL_IDS.lineProjectile]: 1,
   [SKILL_IDS.closeArc]: 1,
+  [SKILL_IDS.guardCounter]: 1,
 };
 
 export const INITIAL_EQUIPPED_SKILL_IDS: [SkillId | null, SkillId | null, SkillId | null] = [
   SKILL_IDS.lineProjectile,
   SKILL_IDS.closeArc,
-  null,
+  SKILL_IDS.guardCounter,
 ];
 
 export function xpToNextLevel(level: number) {
@@ -203,13 +204,14 @@ function applyLevelStatGrowth(state: GameState) {
 }
 
 function createUpgradeChoices(state: GameState): UpgradeChoiceState[] {
-  const choices: UpgradeChoiceState[] = [];
   const nextUltimateLevel = Math.min(3, state.player.ultimateLevel + 1) as UltimateLevel;
+  const unlockChoices: UpgradeChoiceState[] = [];
+  const upgradeChoices: UpgradeChoiceState[] = [];
 
   for (const skillId of implementedSkillIds()) {
     const currentLevel = state.player.skillLevels[skillId] ?? 0;
     if (!currentLevel) {
-      choices.push({
+      unlockChoices.push({
         id: `unlock-${skillId}-${state.player.runLevel}`,
         type: "unlockSkill",
         title: "习得新技能",
@@ -223,7 +225,7 @@ function createUpgradeChoices(state: GameState): UpgradeChoiceState[] {
 
     if (currentLevel < 3 && isSkillLearned(state, skillId)) {
       const nextLevel = (currentLevel + 1) as SkillLevel;
-      choices.push({
+      upgradeChoices.push({
         id: `upgrade-${skillId}-${state.player.runLevel}`,
         type: "upgradeSkill",
         title: "技能精进",
@@ -235,18 +237,32 @@ function createUpgradeChoices(state: GameState): UpgradeChoiceState[] {
     }
   }
 
-  if (state.player.ultimateLevel < 3) {
-    choices.splice(1, 0, {
-      id: `ultimate-${state.player.runLevel}`,
-      type: "upgradeUltimate",
-      title: "终式精进",
-      name: `终式·月潮无间 ${romanLevel(nextUltimateLevel)}`,
-      description: "延长月潮强化时间，提高移动、跳跃、普攻节奏、伤害和残影触发。",
-      nextLevel: nextUltimateLevel,
-    });
+  const ultimateChoice = state.player.ultimateLevel < 3
+    ? {
+        id: `ultimate-${state.player.runLevel}`,
+        type: "upgradeUltimate" as const,
+        title: "终式精进",
+        name: `终式·月潮无间 ${romanLevel(nextUltimateLevel)}`,
+        description: "延长月潮强化时间，提高移动、跳跃、普攻节奏、伤害和残影触发。",
+        nextLevel: nextUltimateLevel,
+      }
+    : null;
+  const choices = compactUpgradeChoices([
+    unlockChoices.shift(),
+    ultimateChoice,
+    upgradeChoices.shift(),
+  ]);
+
+  for (const choice of [...unlockChoices, ...upgradeChoices]) {
+    if (choices.length >= 3) break;
+    choices.push(choice);
   }
 
-  return choices.slice(0, 3);
+  return choices;
+}
+
+function compactUpgradeChoices(choices: Array<UpgradeChoiceState | null | undefined>) {
+  return choices.filter((choice): choice is UpgradeChoiceState => Boolean(choice));
 }
 
 function implementedSkillIds(): SkillId[] {

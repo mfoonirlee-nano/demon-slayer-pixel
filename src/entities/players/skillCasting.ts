@@ -1,15 +1,12 @@
 import { state } from "../../game/state";
 import { PLAYER_COMBAT, PLAYER_DRAW, SKILL_FLASH, SKILL_IDS } from "../../constants";
-import type { Skill } from "../../types/assets";
-import { nearestRectHitPoint } from "../../game/utils";
+import type { Skill, SkillId } from "../../types/assets";
 import { playSfx } from "../../game/audio";
 import { hasDebugInfiniteSkillCharge } from "../../game/debug";
 import {
   applySkillCastEquipmentEffects,
-  applySkillHitEquipmentRefund,
   consumeSkillCastEquipmentDamageMultiplier,
 } from "../../systems/equipment";
-import { resolveBossHit, resolveEnemyHit } from "../../systems/combatResolution";
 import { selectedSkill } from "../../systems/loadout";
 import { skillDamageMultiplier } from "../../systems/progression";
 import { isGenericPlayerSkillId } from "../../systems/playerSkills";
@@ -17,11 +14,22 @@ import {
   CORE_PLAYER_SKILL_EFFECT_CONFIGS,
   CORE_PLAYER_SKILL_EFFECT_SHEETS,
 } from "../../systems/skillCatalog";
-import { emitHitBurst, emitSlash, spawnPlayerSkillEffect } from "../particle";
+import { spawnPlayerSkillEffect } from "../particle";
 import { currentMoonTideConfig } from "./moonTide";
 
 const SKILL_ANIMATION_BASE_FPS = 60;
 const ANTI_AIR_MULTI_SKILL_ANIM_FPS = 8;
+const PLAYER_SKILL_RELEASE_FRAMES: Record<SkillId, number> = {
+  [SKILL_IDS.closeArc]: 8,
+  [SKILL_IDS.dashReposition]: 6,
+  [SKILL_IDS.lineProjectile]: 12,
+  [SKILL_IDS.guardCounter]: 11,
+  [SKILL_IDS.verticalWave]: 12,
+  [SKILL_IDS.vortexControl]: 18,
+  [SKILL_IDS.armorBreak]: 18,
+  [SKILL_IDS.returningBlade]: 18,
+  [SKILL_IDS.antiAirMulti]: 24,
+};
 const LINE_PROJECTILE_EFFECT_SHEET = CORE_PLAYER_SKILL_EFFECT_SHEETS[SKILL_IDS.lineProjectile];
 const LINE_PROJECTILE_EFFECT_CONFIG = CORE_PLAYER_SKILL_EFFECT_CONFIGS[SKILL_IDS.lineProjectile];
 const CLOSE_ARC_EFFECT_SHEET = CORE_PLAYER_SKILL_EFFECT_SHEETS[SKILL_IDS.closeArc];
@@ -34,6 +42,10 @@ export function playerSkillCastAnimFps(skill: Skill) {
 
 export function playerSkillCastFrames(skill: Skill) {
   return Math.ceil(skill.frameCount * SKILL_ANIMATION_BASE_FPS / playerSkillCastAnimFps(skill));
+}
+
+export function playerSkillReleaseFrame(skill: Skill) {
+  return Math.min(playerSkillCastFrames(skill), PLAYER_SKILL_RELEASE_FRAMES[skill.id]);
 }
 
 export function playerSkillCastFrame(skill: Skill, remainingFrames: number) {
@@ -78,24 +90,14 @@ export function castSelectedSkill() {
   p.skillEffectSpawned = !(
     skill.id === SKILL_IDS.lineProjectile
     || skill.id === SKILL_IDS.closeArc
+    || skill.id === SKILL_IDS.guardCounter
     || isGenericPlayerSkillId(skill.id)
   );
   p.skillCastDamageMultiplier = castDamageMultiplier;
   applySkillCastEquipmentEffects(state);
 
-  if (skill.id === SKILL_IDS.guardCounter) {
-    state.guardCounterEffect = {
-      elapsed: 0,
-      frame: 0,
-      hitsRemaining: GUARD_COUNTER_EFFECT_CONFIG.maxHits,
-      damageMultiplier: castDamageMultiplier,
-      barrierFlash: 0,
-    };
-  }
-
   const cx = p.x + p.w / 2;
   const cy = p.y + p.h / 2;
-  const radius = skill.radius;
   const frameCount = Math.max(1, skill.frameCount);
 
   state.skillBursts.push({
@@ -111,61 +113,6 @@ export function castSelectedSkill() {
     scaleOut: PLAYER_COMBAT.skillScaleOut,
     color: skill.color,
   });
-
-  if (!isGenericPlayerSkillId(skill.id)) {
-    let hitTargets = 0;
-    let bossHit = false;
-    for (let i = state.enemies.length - 1; i >= 0; i -= 1) {
-      const e = state.enemies[i];
-      const ex = e.x + e.w / 2;
-      const ey = e.y + e.h / 2;
-      if ((ex - cx) * p.facing < 0) continue;
-      const dist = Math.hypot(ex - cx, ey - cy);
-      if (dist > radius) continue;
-      const ratio = 1 - dist / radius;
-      const damage = (skill.enemyBase + ratio * skill.enemyScale)
-        * (1 + p.attackBonus * PLAYER_COMBAT.attackBonusScale)
-        * castDamageMultiplier;
-      const skillHit = nearestRectHitPoint(e, cx, cy);
-      const hit = resolveEnemyHit({
-        enemy: e,
-        enemyIndex: i,
-        hitRect: e,
-        hitPoint: skillHit,
-        damage,
-        hitCooldown: PLAYER_COMBAT.enemyHitCooldown,
-        reward: "enemy",
-      });
-      hitTargets += 1;
-      emitSlash(hit.hitX, hit.hitY, skill.color, e.w);
-      emitHitBurst(hit.hitX, hit.hitY, PLAYER_COMBAT.effects.skillEnemyBurstColor, PLAYER_COMBAT.skillEnemyBurstPower);
-    }
-
-    if (state.boss) {
-      const boss = state.boss;
-      const bx = boss.x + boss.w / 2;
-      const by = boss.y + boss.h / 2;
-      if ((bx - cx) * p.facing >= 0) {
-        const dist = Math.hypot(bx - cx, by - cy);
-        if (dist <= radius + PLAYER_COMBAT.bossRadiusPadding) {
-          const ratio = Math.max(PLAYER_COMBAT.bossMinDamageRatio, 1 - dist / (radius + PLAYER_COMBAT.bossRadiusPadding));
-          const bossHitPoint = nearestRectHitPoint(boss, cx, cy);
-          const hit = resolveBossHit({
-            boss,
-            hitRect: boss,
-            hitPoint: bossHitPoint,
-            damage: skill.bossBase * ratio * castDamageMultiplier,
-            hitCooldown: PLAYER_COMBAT.bossHitCooldown,
-          });
-          bossHit = true;
-          emitSlash(hit.hitX, hit.hitY, PLAYER_COMBAT.effects.skillBossSlashColor);
-          emitHitBurst(hit.hitX, hit.hitY, PLAYER_COMBAT.effects.skillBossBurstColor, PLAYER_COMBAT.skillBossBurstPower);
-        }
-      }
-    }
-
-    applySkillHitEquipmentRefund(state, hitTargets, bossHit);
-  }
 
   playSfx("playerSkillCast");
 }
@@ -223,8 +170,8 @@ export function updateSkillCastRelease(): boolean {
     }
     if (!p.skillEffectSpawned) {
       const total = playerSkillCastFrames(skill);
-      const halfway = Math.floor(total / 2);
-      if (p.skillTimer <= halfway) {
+      const elapsed = total - p.skillTimer;
+      if (elapsed >= playerSkillReleaseFrame(skill)) {
         p.skillEffectSpawned = true;
         const cx = p.x + p.w / 2;
         const feetY = p.y + p.h;
@@ -258,6 +205,9 @@ export function updateSkillCastRelease(): boolean {
             damageMultiplier: p.skillCastDamageMultiplier,
           });
           playSfx("playerSkillRelease", 1.08);
+        } else if (skill.id === SKILL_IDS.guardCounter) {
+          spawnGuardCounterEffect(p.skillCastDamageMultiplier);
+          playSfx("playerSkillRelease", 0.98);
         } else if (isGenericPlayerSkillId(skill.id)) {
           spawnPlayerSkillEffect(skill.id, p.skillCastDamageMultiplier);
           playSfx("playerSkillRelease", 1.02);
@@ -266,6 +216,16 @@ export function updateSkillCastRelease(): boolean {
     }
   }
   return true;
+}
+
+function spawnGuardCounterEffect(damageMultiplier: number) {
+  state.guardCounterEffect = {
+    elapsed: 0,
+    frame: 0,
+    hitsRemaining: GUARD_COUNTER_EFFECT_CONFIG.maxHits,
+    damageMultiplier,
+    barrierFlash: 0,
+  };
 }
 
 export function updateUltimateCastAndTimer() {

@@ -12,7 +12,8 @@ export function updateGuardCounterEffect() {
   if (!eff) return;
   eff.elapsed += 1;
   if (eff.barrierFlash > 0) eff.barrierFlash -= 1;
-  if (eff.hitsRemaining <= 0 && eff.barrierFlash <= 0) {
+  const windowExpired = eff.elapsed >= GUARD_COUNTER_EFFECT_CONFIG.activeFrames;
+  if ((eff.hitsRemaining <= 0 || windowExpired) && eff.barrierFlash <= 0) {
     state.guardCounterEffect = null;
     return;
   }

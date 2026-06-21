@@ -1,7 +1,12 @@
 import { atom } from "jotai";
 import { createStore } from "jotai/vanilla";
 import { PLAYER_DEFAULTS } from "../constants";
-import { maxSkillChargesForEnergy, maxSkillEnergyForLevel } from "../systems/progression";
+import {
+  INITIAL_EQUIPPED_SKILL_IDS,
+  INITIAL_SKILL_LEVELS,
+  maxSkillChargesForEnergy,
+  maxSkillEnergyForLevel,
+} from "../systems/progression";
 import type { SkillId } from "../types/assets";
 import type {
   EquipmentItemState,
@@ -95,11 +100,8 @@ const initialSnapshot: GameSnapshot = {
     skillCharges: 0,
     maxSkillCharges: maxSkillChargesForEnergy(initialSkillEnergyMax),
     skillIndex: 0,
-    equippedSkillIds: ["line_projectile", "close_arc", null],
-    skillLevels: {
-      line_projectile: 1,
-      close_arc: 1,
-    },
+    equippedSkillIds: [...INITIAL_EQUIPPED_SKILL_IDS],
+    skillLevels: { ...INITIAL_SKILL_LEVELS },
     ultimateEnergy: 0,
     ultimateEnergyMax: PLAYER_DEFAULTS.maxUltimateEnergy,
     ultimateLevel: 0,
