@@ -6,7 +6,22 @@ import { emitSlash, emitHitBurst, damageDashRepositionTravel, finishDashRepositi
 import { bindingZonePlayerMoveScale } from "./enemies/binder";
 import { keys } from "../game/input";
 import { hasDebugInfiniteHealth } from "../game/debug";
-import { equipmentMoveSpeedMultiplier, recordBasicAttackHit, tickEquipmentEffects } from "../systems/equipment";
+import {
+  applyFatalDamageEquipmentProtection,
+  applyLowHealthEquipmentTriggers,
+  beginBasicAttackEquipmentEffects,
+  equipmentBasicAttackDamageMultiplier,
+  equipmentBasicAttackFrameMultiplier,
+  equipmentBasicAttackReachBonus,
+  equipmentIncomingDamageMultiplier,
+  equipmentKnockbackMultiplier,
+  equipmentMoveSpeedMultiplier,
+  grantSkillEnergy,
+  grantUltimateEnergy,
+  recordBasicAttackHit,
+  recordEquipmentMovement,
+  tickEquipmentEffects,
+} from "../systems/equipment";
 import { applyBossDamage, applyEnemyDamage, resolveBossHit, resolveEnemyHit } from "../systems/combatResolution";
 import { endRun } from "../systems/runLifecycle";
 import { selectSkillSlot } from "../systems/loadout";
@@ -20,7 +35,7 @@ import {
   triggerMoonTideAfterimageHit,
 } from "./players/moonTide";
 import { lanternAshZonePlayerMoveScale } from "./players/movementModifiers";
-import { syncSkillCharges, updateSkillCastRelease, updateUltimateCastAndTimer } from "./players/skillCasting";
+import { updateSkillCastRelease, updateUltimateCastAndTimer } from "./players/skillCasting";
 
 export { castSelectedSkill, castUltimateSkill } from "./players/skillCasting";
 export { drawPlayer } from "./players/render";
@@ -47,7 +62,8 @@ export function triggerAttack() {
     return;
   }
 
-  const frames = moonTideAttackFrames();
+  const frames = Math.max(1, Math.round(moonTideAttackFrames() * equipmentBasicAttackFrameMultiplier(state)));
+  beginBasicAttackEquipmentEffects(state);
   state.player.attackDuration = frames;
   state.player.attackTimer = frames;
   playSfx("playerAttackStart");
@@ -58,15 +74,11 @@ export function getPlayerAttackDamage() {
 }
 
 export function gainSkillEnergy(amount: number) {
-  const p = state.player;
-  p.skillEnergy = Math.min(p.skillEnergyMax, p.skillEnergy + amount);
-  syncSkillCharges();
+  grantSkillEnergy(state, amount);
 }
 
 export function gainUltimateEnergy(amount: number) {
-  const p = state.player;
-  if (p.ultimateTimer > 0 || p.ultimateCastTimer > 0) return;
-  p.ultimateEnergy = Math.min(p.ultimateEnergyMax, p.ultimateEnergy + amount);
+  grantUltimateEnergy(state, amount);
 }
 
 export function healPlayer(amount: number) {
@@ -80,13 +92,13 @@ export function selectSkill(index: number) {
 
 export function attackBox() {
   const p = state.player;
-  const reach = BASIC_ATTACK.reach;
+  const reach = BASIC_ATTACK.reach + equipmentBasicAttackReachBonus(state);
   return {
     x: p.facing === 1 ? p.x + p.w : p.x - reach,
     y: p.y + BASIC_ATTACK.yOffset,
     w: reach,
     h: BASIC_ATTACK.height,
-    damage: getPlayerAttackDamage() * moonTideBasicDamageMultiplier(),
+    damage: getPlayerAttackDamage() * moonTideBasicDamageMultiplier() * equipmentBasicAttackDamageMultiplier(state),
     color: BASIC_ATTACK.color,
   };
 }
@@ -202,11 +214,19 @@ export function hurtPlayer(damage: number, sourceVx: number) {
     return;
   }
 
-  p.hp = Math.max(0, p.hp - damage);
+  const incomingDamage = damage * equipmentIncomingDamageMultiplier(state);
+  if (p.hp - incomingDamage <= 0 && applyFatalDamageEquipmentProtection(state)) {
+    playSfx("playerHurt");
+    return;
+  }
+
+  p.hp = Math.max(0, p.hp - incomingDamage);
   p.invincible = PLAYER_COMBAT.hurtInvincibleFrames;
-  p.vx = -Math.sign(sourceVx || 1) * PLAYER_COMBAT.hurtKnockbackX;
-  p.vy = PLAYER_COMBAT.hurtKnockbackY;
+  const knockbackMultiplier = equipmentKnockbackMultiplier(state);
+  p.vx = -Math.sign(sourceVx || 1) * PLAYER_COMBAT.hurtKnockbackX * knockbackMultiplier;
+  p.vy = PLAYER_COMBAT.hurtKnockbackY * knockbackMultiplier;
   emitSlash(p.x + p.w / 2, p.y + PLAYER_COMBAT.attackKillY, PLAYER_COMBAT.effects.hurtSlashColor);
+  applyLowHealthEquipmentTriggers(state);
   if (p.hp <= 0) {
     playSfx("playerDeath");
     endRun(state);
@@ -225,7 +245,8 @@ export function tryJump() {
 
 export function updatePlayer() {
   const p = state.player;
-  tickEquipmentEffects(p);
+  tickEquipmentEffects(state);
+  const movementStartX = p.x;
   const dashReposition = p.dashReposition;
 
   if (!dashReposition && p.onPlatform && state.platforms.includes(p.onPlatform)) {
@@ -320,6 +341,8 @@ export function updatePlayer() {
     );
   }
 
+  recordEquipmentMovement(state, p.x - movementStartX);
+
   if (!updateSkillCastRelease()) return;
 
   updateUltimateCastAndTimer();
@@ -343,7 +366,7 @@ export function updatePlayer() {
           hitCooldown: PLAYER_COMBAT.attackEnemyHitCooldown,
           reward: "attack",
           afterDamage: () => {
-            recordBasicAttackHit(state);
+            recordBasicAttackHit(state, "enemy");
             triggerMoonTideAfterimageHit(hitPoint.x, hitPoint.y, e.w, (damage) => {
               applyEnemyDamage(e, damage, PLAYER_COMBAT.attackEnemyHitCooldown);
             });
@@ -368,7 +391,7 @@ export function updatePlayer() {
         damage: box.damage,
         hitCooldown: PLAYER_COMBAT.attackBossHitCooldown,
         afterDamage: () => {
-          recordBasicAttackHit(state);
+          recordBasicAttackHit(state, "boss");
           triggerMoonTideAfterimageHit(hitPoint.x, hitPoint.y, boss.w, (damage) => {
             applyBossDamage(boss, damage, PLAYER_COMBAT.attackBossHitCooldown);
           });

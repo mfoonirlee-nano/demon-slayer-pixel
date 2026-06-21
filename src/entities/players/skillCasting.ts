@@ -6,6 +6,8 @@ import { hasDebugInfiniteSkillCharge } from "../../game/debug";
 import {
   applySkillCastEquipmentEffects,
   consumeSkillCastEquipmentDamageMultiplier,
+  equipmentSkillEnergyCost,
+  syncSkillChargesForEquipment,
 } from "../../systems/equipment";
 import { selectedSkill } from "../../systems/loadout";
 import { skillDamageMultiplier } from "../../systems/progression";
@@ -57,11 +59,7 @@ export function playerSkillCastFrame(skill: Skill, remainingFrames: number) {
 }
 
 export function syncSkillCharges() {
-  const p = state.player;
-  p.skillCharges = Math.min(
-    p.maxSkillCharges,
-    Math.floor(p.skillEnergy / PLAYER_COMBAT.skillCastEnergyCost),
-  );
+  syncSkillChargesForEquipment(state);
 }
 
 export function castSelectedSkill() {
@@ -71,7 +69,7 @@ export function castSelectedSkill() {
   if (p.fallAttackTimer > 0 || p.fallAttackRecoveryTimer > 0) return;
   const skill = selectedSkill(state);
   if (!skill) return;
-  const energyCost = skill.energyCost ?? PLAYER_COMBAT.skillCastEnergyCost;
+  const energyCost = skill.energyCost ?? equipmentSkillEnergyCost(state);
   const infiniteSkillCharge = hasDebugInfiniteSkillCharge();
   if (infiniteSkillCharge) {
     p.skillEnergy = p.skillEnergyMax;

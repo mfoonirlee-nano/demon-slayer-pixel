@@ -8,6 +8,8 @@ import {
 import { resolveEnemyDefeat } from "../entities/enemies/defeat";
 import type { EnemyState } from "../types/game-state";
 import { overlapHitPoint, type RectLike } from "../game/utils";
+import { state } from "../game/state";
+import { equipmentBossDamageMultiplier, recordBossDamageEquipmentEffects } from "./equipment";
 
 export type EnemyHitResolution = {
   hitX: number;
@@ -42,7 +44,13 @@ export function applyBossDamage(
   damage: number,
   hitCooldown?: number,
 ) {
-  return damageBoss(boss, damage, hitCooldown);
+  const appliedDamage = damageBoss(
+    boss,
+    damage * equipmentBossDamageMultiplier(state, boss),
+    hitCooldown,
+  );
+  recordBossDamageEquipmentEffects(state, appliedDamage);
+  return appliedDamage;
 }
 
 export function resolveEnemyHit({

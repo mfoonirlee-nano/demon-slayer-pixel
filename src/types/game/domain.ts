@@ -62,9 +62,27 @@ export type MirrorShardKind = "shard" | "nightmare";
 export type SkillLevel = 1 | 2 | 3;
 export type UltimateLevel = 0 | 1 | 2 | 3;
 export type EquipmentSlot = "blade" | "garb" | "talisman";
-export type EquipmentFamily = "flow";
+export type EquipmentFamily = "flow" | "burst" | "shadowstep" | "hunt" | "risk" | "tempo";
 export type EquipmentTier = "common" | "fine" | "awakened";
-export type EquipmentItemId = "flow_blade" | "flow_garb" | "flow_talisman";
+export type EquipmentItemId =
+  | "flow_blade"
+  | "flow_garb"
+  | "flow_talisman"
+  | "burst_blade"
+  | "burst_garb"
+  | "burst_talisman"
+  | "shadowstep_blade"
+  | "shadowstep_garb"
+  | "shadowstep_talisman"
+  | "hunt_blade"
+  | "hunt_garb"
+  | "hunt_talisman"
+  | "risk_blade"
+  | "risk_garb"
+  | "risk_talisman"
+  | "tempo_blade"
+  | "tempo_garb"
+  | "tempo_talisman";
 export type UpgradeChoiceType = "unlockSkill" | "upgradeSkill" | "upgradeUltimate";
 
 export type EquipmentItemState = {

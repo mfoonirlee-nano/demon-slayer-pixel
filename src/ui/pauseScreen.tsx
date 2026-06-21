@@ -4,6 +4,7 @@ import { equipEquipment, equipSkillSlot } from "../game/runtime";
 import type { GameSnapshot } from "../game/gameStore";
 import type { EquipmentSlot } from "../types/game-state";
 import {
+  EQUIPMENT_FAMILY_GLYPHS,
   EQUIPMENT_SLOT_LABELS,
   equipmentIconSrc,
   equipmentSlotBadgeSrc,
@@ -67,6 +68,7 @@ export function PauseScreen({ snapshot }: { snapshot: GameSnapshot }) {
   const ultimateEnergyText = `${Math.floor(player.ultimateEnergy)} / ${player.ultimateEnergyMax}`;
   const selectedEquipmentItem = equipment.equipped[selectedEquipmentSlot];
   const unlockedEquipmentIds = new Set(equipment.inventory.map((item) => item.id));
+  const visibleEquipmentItems = ALL_EQUIPMENT_ITEMS.filter((item) => item.slot === selectedEquipmentSlot);
   const selectedSkill = getSkill(player.equippedSkillIds[selectedSkillSlot]);
   const equipmentDetail = equipmentDetailCopy(hoveredEquipmentDetail ?? selectedEquipmentDetail, equipment, unlockedEquipmentIds);
   const skillDetail = skillDetailCopy(hoveredSkillDetail ?? selectedSkillDetail, player);
@@ -182,6 +184,7 @@ export function PauseScreen({ snapshot }: { snapshot: GameSnapshot }) {
                     >
                       {EQUIPMENT_SLOTS.map((slot) => {
                         const item = equipment.equipped[slot];
+                        const iconSrc = item ? equipmentIconSrc(item.id) : undefined;
                         const detailTarget: EquipmentDetailTarget = { type: "slot", slot };
                         const active = selectedEquipmentSlot === slot;
                         return (
@@ -202,8 +205,9 @@ export function PauseScreen({ snapshot }: { snapshot: GameSnapshot }) {
                             <PauseSquareIcon
                               active={active}
                               empty={!item}
-                              iconSrc={item ? equipmentIconSrc(item.id) : undefined}
+                              iconSrc={iconSrc}
                               badgeSrc={equipmentSlotBadgeSrc(slot)}
+                              centerText={!iconSrc && item ? EQUIPMENT_FAMILY_GLYPHS[item.family] : undefined}
                               size={PAUSE_CURRENT_FRAME_SIZE}
                               iconSize={PAUSE_CURRENT_ICON_SIZE}
                               badgeSize={PAUSE_CURRENT_BADGE_SIZE}
@@ -219,21 +223,22 @@ export function PauseScreen({ snapshot }: { snapshot: GameSnapshot }) {
                     style={{ gridTemplateRows: "auto 1fr", rowGap: PAUSE_CURRENT_ROW_GAP }}
                   >
                     <div className="flex items-center justify-between gap-3 text-[8px] leading-none text-[#7fc8e0]">
-                      <span>全部装备</span>
+                      <span>{EQUIPMENT_SLOT_LABELS[selectedEquipmentSlot]}候选</span>
                       <span className="truncate text-[#26d5ff]">
                         {EQUIPMENT_SLOT_LABELS[selectedEquipmentSlot]} · {selectedEquipmentItem?.name ?? "未装备"}
                       </span>
                     </div>
                     <div className="min-h-0 overflow-y-auto overflow-x-hidden">
-                      {ALL_EQUIPMENT_ITEMS.length > 0 ? (
+                      {visibleEquipmentItems.length > 0 ? (
                         <div
                           className="grid content-start"
                           style={{ gridTemplateColumns: "repeat(4, 78px)", gap: PAUSE_CHOICE_GRID_GAP }}
                         >
-                          {ALL_EQUIPMENT_ITEMS.map((item) => {
+                          {visibleEquipmentItems.map((item) => {
                             const unlocked = unlockedEquipmentIds.has(item.id);
                             const equipped = equipment.equipped[item.slot]?.id === item.id;
                             const detailTarget: EquipmentDetailTarget = { type: "item", itemId: item.id };
+                            const iconSrc = equipmentIconSrc(item.id);
                             return (
                               <button
                                 key={item.id}
@@ -260,8 +265,9 @@ export function PauseScreen({ snapshot }: { snapshot: GameSnapshot }) {
                                 <PauseSquareIcon
                                   active={equipped}
                                   disabled={!unlocked}
-                                  iconSrc={equipmentIconSrc(item.id)}
+                                  iconSrc={iconSrc}
                                   badgeSrc={equipmentSlotBadgeSrc(item.slot)}
+                                  centerText={!iconSrc ? EQUIPMENT_FAMILY_GLYPHS[item.family] : undefined}
                                   size={PAUSE_CHOICE_FRAME_SIZE}
                                   iconSize={PAUSE_CHOICE_ICON_SIZE}
                                   badgeSize={PAUSE_CHOICE_BADGE_SIZE}

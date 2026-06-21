@@ -85,8 +85,8 @@ body {
 }
 
 .pause-detail-panel {
-  height: 54px;
-  min-height: 54px;
+  height: 66px;
+  min-height: 66px;
   overflow: hidden;
   padding: 6px 8px 5px;
   border: 1px solid rgba(74, 132, 160, 0.55);

@@ -33,7 +33,7 @@
 | 地图生成 | 片段式平台生成、张力、奖励预算、低层恢复和防重叠已实现 | 按幕数调整片段权重和平台速度，保留喘息片段 | 部分实现 | P2 | `src/entities/platform.ts`、`docs/map-generation.md` |
 | 奖励拾取 | 分数、技能能量、大招能量、攻击水晶、治疗水晶、宝箱已实现 | 加入 XP、升级三选一、Boss 装备三选一，奖励队列互斥 | 部分实现 | P2 | `src/entities/platform.ts`、`docs/numeric-system/rewards.md` |
 | 经验升级 | 当前无 XP、角色等级、普通技能等级、大招强化等级或升级选择 | 单局 XP、角色等级、普通技能等级、大招强化等级、升级三选一，overlay 暂停战斗 | 目标设计，未实现 | P2 | `docs/numeric-system/progression.md` |
-| 装备系统 | 当前无装备槽、装备掉落或装备属性派生 | Boss 击杀后三选一，`weapon/haori/charm` 三槽位，单局内构筑 | 目标设计，未实现 | P2 | `docs/numeric-system/equipment.md` |
+| 装备系统 | 18 件普通品质装备、Boss 三选一、`blade/garb/talisman` 三槽位、暂停页换装和集中属性派生已接入 | 按 `actBand` 接入精良/觉醒品质与更完整的掉落权重 | 部分实现 | P2 | `docs/numeric-system/equipment.md` |
 | HUD | 常驻生命、技能图标/能量、大招球、Boss 血条已实现 | 补角色等级、当前技能等级、XP、幕数、选择队列状态；移动端也要有等价信息密度 | 部分实现 | P2 | `src/App.tsx`、`src/gameStore.ts` |
 | Pause overlay | 暂停面板、技能说明、关键数值已实现 | 统一 overlay 规范、输入规则和移动端布局 | 部分实现 | P3 | `src/App.tsx` |
 | Death overlay | 死亡动画、生存时间、`R` 重开已实现 | 增加主要死亡原因和简短复盘提示 | 部分实现 | P3 | `src/App.tsx` |

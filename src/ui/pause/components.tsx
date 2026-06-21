@@ -35,6 +35,7 @@ export function PauseSquareIcon({
   empty = false,
   iconSrc,
   badgeSrc,
+  centerText,
   leftBadgeText,
   rightBadgeText,
   size,
@@ -46,6 +47,7 @@ export function PauseSquareIcon({
   empty?: boolean;
   iconSrc?: string;
   badgeSrc?: string;
+  centerText?: string;
   leftBadgeText?: string;
   rightBadgeText?: string;
   size: number;
@@ -73,6 +75,11 @@ export function PauseSquareIcon({
             imageRendering: "pixelated",
           }}
         />
+      ) : null}
+      {!iconSrc && centerText ? (
+        <span className="absolute inset-0 flex items-center justify-center pb-[2px] text-[14px] font-bold text-[#ffd46e]">
+          {centerText}
+        </span>
       ) : null}
       {leftBadgeText ? (
         <span className="pause-square-badge pause-square-badge-left">{leftBadgeText}</span>
@@ -104,7 +111,7 @@ export function PauseDetailPanel({ detail }: { detail: PauseDetailCopy }) {
     <div className="pause-detail-panel">
       <div className="truncate text-[7px] leading-none text-[#7fc8e0]">{detail.kicker}</div>
       <div className="mt-1 truncate text-[9px] font-bold leading-none text-[#ffd46e]">{detail.title}</div>
-      <div className="mt-1 line-clamp-2 text-[7px] leading-[1.45] text-[#c8efff]">{detail.body}</div>
+      <div className="mt-1 line-clamp-3 text-[7px] leading-[1.45] text-[#c8efff]">{detail.body}</div>
     </div>
   );
 }

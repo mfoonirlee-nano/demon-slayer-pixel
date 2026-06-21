@@ -33,6 +33,7 @@ import {
   corePlayerSkillGrowth,
   isGenericPlayerSkillId,
 } from "./playerSkills";
+import { syncSkillChargesForEquipment } from "./equipment";
 
 const BASE_XP = 50;
 const XP_LINEAR = 22;
@@ -197,10 +198,7 @@ function applyLevelStatGrowth(state: GameState) {
   player.skillEnergyMax = maxSkillEnergyForLevel(player.runLevel);
   player.maxSkillCharges = maxSkillChargesForEnergy(player.skillEnergyMax);
   player.skillEnergy = Math.min(player.skillEnergyMax, Math.round(skillEnergyRatio * player.skillEnergyMax));
-  player.skillCharges = Math.min(
-    player.maxSkillCharges,
-    Math.floor(player.skillEnergy / PLAYER_COMBAT.skillCastEnergyCost),
-  );
+  syncSkillChargesForEquipment(state);
   const heal = Math.max(MIN_LEVEL_HEAL, Math.floor((player.maxHp - oldMaxHp) * LEVEL_HEAL_RATIO));
   player.hp = Math.min(player.maxHp, player.hp + heal);
 }

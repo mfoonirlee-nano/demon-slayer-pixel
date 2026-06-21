@@ -6,25 +6,14 @@ import { playSfx } from "../../game/audio";
 import type { EnemyDefeatRewardKind } from "./common";
 import { enemyArchetypeForSheet } from "./registry";
 import { addRunXp, enemyXp } from "../../systems/progression";
+import { grantSkillEnergy, grantUltimateEnergy, recordEnemyDefeatEquipmentEffects } from "../../systems/equipment";
 
 const SPLITLING_SKILL_ENERGY_GAIN = 2;
 const SPLITLING_ULTIMATE_ENERGY_GAIN = 0.5;
 
-function syncSkillCharges() {
-  const player = state.player;
-  player.skillCharges = Math.min(
-    player.maxSkillCharges,
-    Math.floor(player.skillEnergy / PLAYER_COMBAT.skillCastEnergyCost),
-  );
-}
-
 function gainEnergy(skillAmount: number, ultimateAmount: number) {
-  const player = state.player;
-  player.skillEnergy = Math.min(player.skillEnergyMax, player.skillEnergy + skillAmount);
-  if (player.ultimateTimer <= 0 && player.ultimateCastTimer <= 0) {
-    player.ultimateEnergy = Math.min(player.ultimateEnergyMax, player.ultimateEnergy + ultimateAmount);
-  }
-  syncSkillCharges();
+  grantSkillEnergy(state, skillAmount);
+  grantUltimateEnergy(state, ultimateAmount);
 }
 
 function applyEnemyDefeatReward(enemy: EnemyState, reward: EnemyDefeatRewardKind) {
@@ -58,6 +47,7 @@ export function resolveEnemyDefeat(
     if (rewardApplied) return;
     rewardApplied = true;
     applyEnemyDefeatReward(enemy, reward);
+    if (reward !== "none") recordEnemyDefeatEquipmentEffects(state);
   };
   const remove = () => {
     state.enemies.splice(index, 1);
