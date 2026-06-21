@@ -14,6 +14,7 @@
 - 击败 Boss 后进入下一幕，难度和内容池继续扩展。
 - 时间只作为辅助压力来源，避免拖时间导致难度停滞。
 - 新敌人、新 Boss、新技能优先通过配置接入。
+- 敌人生成由 enemy director 管理：每局用 seed 生成稳定 `runEnemyOrder`，每幕控制解锁数量、常规池种类数、profile、波次和预算，不写死每幕具体敌人名单。
 
 核心状态：
 
@@ -49,9 +50,9 @@ threatScalar =
 
 | actBand | 幕 | 核心体验 | 敌人 | 平台 | Boss | 奖励 |
 | --- | --- | --- | --- | --- | --- | --- |
-| intro | 1-6 | 逐幕熟悉一种新压力，6 幕内见齐 12 敌人 | 每幕 +1~2 种，常规池 ≤ 8 | 从安全片段逐步加入阶梯/悬浮/风险奖励 | 6 个基础 Boss，各承担一种机制 | 水晶为主，攻击奖励随幕略升 |
-| awakened | 7-12 | 蚀醒难度墙，基础 Boss 蚀醒形态 1:1 重现 | 不引入新敌人，强化召唤池 + 轮换 profile 逐幕换组合 | 高风险片段权重更高，仍保喘息 | 6 个蚀醒 Boss：+ 新月蚀术招 + 多一阶段 | 装备品质带提升，动态上限继续放宽 |
-| final | 13 | 终盘换相借招总复习 | 终盘限定池，额外召唤 ≤ 4 | 高压片段不连续堆叠，Boss 战降低平台压力 | 万相血月，5 阶段，击败即通关 | 终盘装备/通关结算 |
+| intro | 1-6 | 逐幕熟悉一种新压力，6 幕内见齐 12 敌人 | 解锁数量 `3,5,7,9,11,12`；常规池 `3,4,5,6,7,8`；1-3 固定教学 profile，4-6 随机补缺失机制 | 从安全片段逐步加入阶梯/悬浮/风险奖励 | 6 个基础 Boss，各承担一种机制 | 水晶为主，攻击奖励随幕略升 |
+| awakened | 7-12 | 蚀醒难度墙，基础 Boss 蚀醒形态 1:1 重现 | 不引入新敌人；常规池 8；6 个 awakened profile 每局 shuffle 且不重复 | 高风险片段权重更高，仍保喘息 | 6 个蚀醒 Boss：+ 新月蚀术招 + 多一阶段 | 装备品质带提升，动态上限继续放宽 |
+| final | 13 | 终盘换相借招总复习 | 排除 `chaser/crawler/runner`，其余 9 种非基础敌人全进；Boss 额外召唤 ≤ 4 | 高压片段不连续堆叠，Boss 战降低平台压力 | 万相血月，5 阶段，击败即通关 | 终盘装备/通关结算 |
 
 平台速度建议：
 
@@ -86,10 +87,26 @@ platformSpeed = baseSpeed + randomSpeed + bossKills * 0.18 + Math.min(elapsed, 2
 
 | 注册表 | 职责 |
 | --- | --- |
-| `ENEMY_ARCHETYPES` | 敌人类型、贴图、基础数值、AI、出现幕数、生成权重 |
+| `ENEMY_ARCHETYPES` | 敌人类型、贴图、标签、复杂度、基础数值、AI、生成权重 |
 | `BOSS_ARCHETYPES` | Boss 类型、贴图、血量曲线、阶段技能、召唤池、出现幕数 |
 | `SKILL_DEFS` | 技能动画、特效动画、伤害模型、消耗、解锁幕数、HUD 图标 |
 | `ACT_CONFIGS` | 每幕敌人池、Boss 池、平台权重、奖励倍率、目标节奏 |
+
+Boss 出现节奏由波次进度和时间共同控制：
+
+| 幕段 | Min waves | Min elapsed in act | Max elapsed in act |
+| --- | ---: | ---: | ---: |
+| 1 | `3` | `45s` | `75s` |
+| 2-3 | `4` | `55s` | `90s` |
+| 4-6 | `5` | `65s` | `105s` |
+| 7-12 | `5` | `75s` | `120s` |
+| 13 | `3` | `45s` | `75s` |
+
+Boss 前 prelude 等待随幕数线性递减：
+
+```ts
+bossPreludeWaitSeconds = max(0, 3 * (13 - act) / 12)
+```
 
 ## Code Sources
 
@@ -108,5 +125,6 @@ platformSpeed = baseSpeed + randomSpeed + bossKills * 0.18 + Math.min(elapsed, 2
 
 - 先增加 `bossKills` 和 helper，再让各系统逐步读取派生的 `act` 和 `threatScalar`。
 - 实体更新逻辑只读取配置和当前运行状态，不直接写死“第几幕出现什么”。
-- 第 4 幕后平台、奖励和 Boss 可以继续使用 late-game 档位调参；敌人池允许第 5 幕、第 6 幕+ 继续解锁新 archetype，并通过轮换控制同幕常规池规模。
+- 敌人生成先实现纯函数配置层：`buildRunEnemyOrder`、`selectActProfile`、`buildCurrentEnemyPool`、`pickWavePlan`，再接运行时。
+- 第 4 幕后 profile 引入随机，但必须优先覆盖本局未重点出现过的机制标签；第 7-12 幕使用不重复 awakened profile cycle。
 - 新敌人和新 Boss 第一版等待正式素材接入，不使用临时图形占位。
