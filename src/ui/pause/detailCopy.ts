@@ -6,6 +6,7 @@ import {
   getSkill,
   romanLevel,
 } from "../uiDisplay";
+import { playerSkillDescription } from "../../systems/skillCatalog";
 import type { EquipmentDetailTarget, PauseDetailCopy, SkillDetailTarget } from "./types";
 
 export function equipmentDetailCopy(
@@ -42,7 +43,7 @@ export function skillDetailCopy(target: SkillDetailTarget, player: GameSnapshot[
     return {
       kicker: `技能 · 等级 ${level ? romanLevel(level) : "未解锁"}${equippedSlot >= 0 ? ` · 已装备 ${equippedSlot + 1}` : ""}`,
       title: skill?.name ?? "未知技能",
-      body: skill?.description ?? "暂无技能说明。",
+      body: skill && level ? playerSkillDescription(target.skillId, level) : skill?.description ?? "暂无技能说明。",
     };
   }
 
@@ -53,6 +54,6 @@ export function skillDetailCopy(target: SkillDetailTarget, player: GameSnapshot[
   return {
     kicker: `槽位 ${target.slotIndex + 1} · 快捷键 ${target.slotIndex + 1} · ${skill ? `等级 ${romanLevel(level)}` : "空槽"}`,
     title: skill?.name ?? "空槽",
-    body: skill?.description ?? "当前槽位未装备技能。",
+    body: skillId && level ? playerSkillDescription(skillId, level) : skill?.description ?? "当前槽位未装备技能。",
   };
 }

@@ -2,6 +2,8 @@ import { describe, expect, it } from "vitest";
 import { SKILL_IDS } from "../constants";
 import { implementedPlayerSkills } from "./skillCatalog";
 
+const BLOCKED_TECHNICAL_COPY = ["px", "帧", "判定", "半径", "宽高", "倍率", "系数", "Boss"];
+
 describe("player skill catalog copy", () => {
   it("uses the canonical display names for all implemented normal skills", () => {
     const skillNames = Object.fromEntries(
@@ -36,11 +38,16 @@ describe("player skill catalog copy", () => {
     }
   });
 
-  it("describes concrete level growth values for implemented skills", () => {
-    for (const skill of implementedPlayerSkills()) {
-      for (const [level, description] of Object.entries(skill.levelDescriptions)) {
-        expect(description, `${skill.id} Lv${level}`).toMatch(/\d/);
-      }
+  it("does not expose implementation units in player-facing skill copy", () => {
+    const exposedCopy = implementedPlayerSkills()
+      .flatMap((skill) => [
+        skill.description,
+        ...Object.values(skill.levelDescriptions),
+      ])
+      .join("\n");
+
+    for (const blockedCopy of BLOCKED_TECHNICAL_COPY) {
+      expect(exposedCopy).not.toContain(blockedCopy);
     }
   });
 });
