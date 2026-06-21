@@ -159,6 +159,29 @@ export function RewardOverlay({ snapshot }: { snapshot: GameSnapshot }) {
                   height={choiceCardSize.h}
                   className="relative mx-auto"
                 >
+                  {upgrade && upgradeStyle ? (
+                    <div
+                      className="absolute left-1/2 top-[4px] z-10 flex h-[46px] w-[46px] -translate-x-1/2 items-center justify-center overflow-hidden rounded-full border bg-[rgba(3,10,22,0.84)]"
+                      style={{
+                        borderColor: upgradeAccent,
+                        boxShadow: `0 0 14px ${upgradeStyle.glow}, inset 0 0 12px rgba(255,255,255,0.1)`,
+                      }}
+                    >
+                      {upgrade.skillId ? (
+                        <img
+                          src={playerSkillIconSrc(upgrade.skillId)}
+                          alt=""
+                          draggable={false}
+                          className="h-[38px] w-[38px] object-contain [image-rendering:pixelated]"
+                        />
+                      ) : (
+                        <span className="text-[18px] font-bold leading-none" style={{ color: upgradeAccent }}>
+                          {upgradeStyle.glyph}
+                        </span>
+                      )}
+                    </div>
+                  ) : null}
+
                   <div
                     className="absolute flex flex-col overflow-hidden"
                     style={{
@@ -188,29 +211,6 @@ export function RewardOverlay({ snapshot }: { snapshot: GameSnapshot }) {
                             {upgradeStyle.label}
                           </span>
                           <span className="text-[#86d9ee]">[{index + 1}]</span>
-                        </div>
-
-                        <div className="mt-2 flex justify-center">
-                          <div
-                            className="relative flex h-[38px] w-[38px] items-center justify-center overflow-hidden rounded-full border bg-[rgba(3,10,22,0.76)]"
-                            style={{
-                              borderColor: upgradeAccent,
-                              boxShadow: `0 0 12px ${upgradeStyle.glow}, inset 0 0 10px rgba(255,255,255,0.08)`,
-                            }}
-                          >
-                            {upgrade.skillId ? (
-                              <img
-                                src={playerSkillIconSrc(upgrade.skillId)}
-                                alt=""
-                                draggable={false}
-                                className="h-[30px] w-[30px] object-contain [image-rendering:pixelated]"
-                              />
-                            ) : (
-                              <span className="text-[16px] font-bold leading-none" style={{ color: upgradeAccent }}>
-                                {upgradeStyle.glyph}
-                              </span>
-                            )}
-                          </div>
                         </div>
 
                         <div className="mt-2 min-h-[31px] text-center text-[10px] font-bold leading-[1.25] text-[#fff8e6]">{choice.name}</div>
