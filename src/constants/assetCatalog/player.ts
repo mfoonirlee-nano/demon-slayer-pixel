@@ -37,11 +37,11 @@ export const PLAYER_SHEETS: Record<PlayerAnimationState, PlayerSheet> = {
   },
   [PLAYER_ANIMATION_STATES.attack]: {
     src: "assets/sprites/player/player_attack.png",
-    frameW: 640,
+    frameW: 768,
     frameH: 480,
     count: 8,
     image: null,
-    drawW: 189,
+    drawW: 227,
     drawH: 142,
     animSpeed: 3,
     anchorY: 0.979,
