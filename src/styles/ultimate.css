@@ -1,11 +1,11 @@
 .ultimate-orb {
   position: relative;
   overflow: hidden;
-  border: 2px solid #35100f;
+  border: 2px solid #12324d;
   border-radius: 50%;
   background:
-    radial-gradient(circle at 34% 26%, rgba(120, 18, 12, 0.5) 0%, transparent 28%),
-    radial-gradient(circle at 50% 58%, #170303 0%, #070101 64%, #020000 100%);
+    radial-gradient(circle at 34% 26%, rgba(95, 210, 255, 0.26) 0%, transparent 30%),
+    radial-gradient(circle at 50% 58%, #061a31 0%, #04101f 64%, #010611 100%);
   image-rendering: pixelated;
   image-rendering: crisp-edges;
 }
@@ -24,7 +24,7 @@
   position: absolute;
   inset: 0;
   overflow: hidden;
-  filter: drop-shadow(0 0 5px rgba(255, 92, 24, 0.86));
+  filter: drop-shadow(0 0 5px rgba(82, 211, 255, 0.78));
 }
 
 .ultimate-orb-sprite {
@@ -45,12 +45,12 @@
   animation: ultimate-orb-sprite-play 720ms step-end infinite;
 }
 
-.ultimate-orb-heat {
+.ultimate-orb-moon-glow {
   position: absolute;
   inset: 12%;
   border-radius: 50%;
-  background: radial-gradient(circle at 50% 70%, rgba(255, 86, 24, 0.42) 0%, rgba(255, 18, 8, 0.18) 46%, transparent 76%);
-  animation: ultimate-heat-pulse 520ms ease-in-out infinite alternate;
+  background: radial-gradient(circle at 50% 70%, rgba(168, 248, 255, 0.38) 0%, rgba(56, 190, 255, 0.16) 46%, transparent 76%);
+  animation: ultimate-moon-glow-pulse 680ms ease-in-out infinite alternate;
 }
 
 .ultimate-orb-tide {
@@ -74,7 +74,7 @@
   border-radius: 50%;
   box-shadow:
     inset 0 1px 2px rgba(255, 255, 255, 0.18),
-    inset 0 -3px 8px rgba(20, 0, 0, 0.85);
+    inset 0 -3px 8px rgba(0, 10, 28, 0.85);
 }
 
 @keyframes ultimate-orb-sprite-play {
@@ -119,7 +119,7 @@
   }
 }
 
-@keyframes ultimate-heat-pulse {
+@keyframes ultimate-moon-glow-pulse {
   from {
     transform: scale(0.9);
     opacity: 0.5;

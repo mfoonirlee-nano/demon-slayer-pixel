@@ -17,8 +17,8 @@ function clampMeterPercent(value: number, maxValue: number) {
 const GHOST_LERP_SPEED = 0.04;
 const GHOST_SNAP_EPSILON = 0.1;
 const ULTIMATE_ORB_DEFAULT_SIZE = 44;
-const ULTIMATE_FLAME_BASE_OPACITY = 0.28;
-const ULTIMATE_FLAME_OPACITY_SCALE = 0.92;
+const ULTIMATE_GLOW_BASE_OPACITY = 0.24;
+const ULTIMATE_GLOW_OPACITY_SCALE = 0.82;
 const ULTIMATE_CHARGE_LAST_FRAME = 7;
 const ULTIMATE_CHARGE_FRAME_COUNT = 8;
 const ULTIMATE_PERCENT_SCALE = 100;
@@ -142,7 +142,7 @@ function UltimateOrb({ value, max, ready, size = ULTIMATE_ORB_DEFAULT_SIZE, acti
 }) {
   const percent = clampMeterPercent(value, max) / HUD_UI.meterPercentMax;
   const active = activePercent > 0;
-  const flameOpacity = percent <= 0 ? 0 : Math.min(1, ULTIMATE_FLAME_BASE_OPACITY + percent * ULTIMATE_FLAME_OPACITY_SCALE);
+  const glowOpacity = percent <= 0 ? 0 : Math.min(1, ULTIMATE_GLOW_BASE_OPACITY + percent * ULTIMATE_GLOW_OPACITY_SCALE);
   const chargeFrame = Math.min(ULTIMATE_CHARGE_LAST_FRAME, Math.floor(percent * ULTIMATE_CHARGE_FRAME_COUNT));
   const chargeFramePosition = chargeFrame / ULTIMATE_CHARGE_LAST_FRAME * ULTIMATE_PERCENT_SCALE;
 
@@ -153,13 +153,13 @@ function UltimateOrb({ value, max, ready, size = ULTIMATE_ORB_DEFAULT_SIZE, acti
       style={{
         width: size,
         height: size,
-        borderColor: ready ? "#ffdf73" : active ? "#82f3ff" : percent > 0 ? "#a7271d" : "#35100f",
+        borderColor: ready ? "#bdf8ff" : active ? "#82f3ff" : percent > 0 ? "#3fb7e8" : "#12324d",
         boxShadow: ready
-          ? "0 0 12px rgba(255,122,47,0.95), inset 0 0 12px rgba(255,58,28,0.8)"
+          ? "0 0 12px rgba(139,238,255,0.95), inset 0 0 12px rgba(64,190,255,0.72)"
           : active
             ? "0 0 10px rgba(100,220,255,0.8), inset 0 0 10px rgba(52,170,255,0.55)"
             : percent > 0
-            ? "0 0 7px rgba(180,34,24,0.65), inset 0 0 9px rgba(129,20,18,0.72)"
+            ? "0 0 7px rgba(55,180,232,0.64), inset 0 0 9px rgba(25,96,156,0.68)"
             : "inset 0 0 8px rgba(0,0,0,0.9)",
       }}
     >
@@ -171,7 +171,7 @@ function UltimateOrb({ value, max, ready, size = ULTIMATE_ORB_DEFAULT_SIZE, acti
           style={ready ? undefined : { backgroundPosition: `${chargeFramePosition}% 0` }}
         />
       </div>
-      <div className="ultimate-orb-heat" style={{ opacity: flameOpacity }} />
+      <div className="ultimate-orb-moon-glow" style={{ opacity: glowOpacity }} />
       {active ? (
         <div className="ultimate-orb-tide" style={{ transform: `scaleY(${Math.max(ULTIMATE_TIDE_MIN_SCALE, Math.min(1, activePercent))})` }} />
       ) : null}
