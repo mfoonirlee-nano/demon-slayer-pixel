@@ -47,8 +47,18 @@ const BRUTE_CONFIG = {
   collisionScaleY: 0.94,
   advanceAnimSpeed: 9,
   brokenAdvanceAnimSpeed: 9,
-  shieldBashDrawScaleY: 1.24,
 } as const;
+
+const BRUTE_PHASE_DRAW_SCALE = {
+  advance: 1,
+  guard: 0.9,
+  shieldBash: 1.2,
+  recover: 1.1,
+  shieldBreak: 1.15,
+  brokenAdvance: 1.1,
+  cleave: 1.25,
+  brokenRecover: 1.45,
+} as const satisfies Record<BrutePhase, number>;
 
 const HALF_DIVISOR = 2;
 const BASH_BOX_REACH = 52;
@@ -129,6 +139,10 @@ function bruteLoopAnimSpeed(phase: BrutePhase) {
   return phase === "brokenAdvance"
     ? BRUTE_CONFIG.brokenAdvanceAnimSpeed
     : BRUTE_CONFIG.advanceAnimSpeed;
+}
+
+function bruteDrawScale(phase: BrutePhase) {
+  return enemyDrawScale(BRUTE_ARCHETYPE) * BRUTE_PHASE_DRAW_SCALE[phase];
 }
 
 function enterBrutePhase(enemy: EnemyState, phase: BrutePhase) {
@@ -300,7 +314,7 @@ function drawBrute(enemy: EnemyState) {
   const phase = enemy.brutePhase ?? "advance";
   const sheet = bruteSheetForPhase(phase);
   const facing = enemy.bruteFacing ?? (enemy.vx >= 0 ? 1 : -1);
-  const drawScale = enemyDrawScale(BRUTE_ARCHETYPE);
+  const drawScale = bruteDrawScale(phase);
 
   if (phase === "advance" || phase === "brokenAdvance") {
     drawEnemyFrame(enemy, sheet, drawScale, bruteLoopAnimSpeed(phase), state.elapsed, facing);
@@ -309,8 +323,7 @@ function drawBrute(enemy: EnemyState) {
 
   const frame = brutePhaseFrame(enemy, phase);
   const drawW = Math.round(sheet.frameW * drawScale);
-  const drawHScale = phase === "shieldBash" ? BRUTE_CONFIG.shieldBashDrawScaleY : 1;
-  const drawH = Math.round(sheet.frameH * drawScale * drawHScale);
+  const drawH = Math.round(sheet.frameH * drawScale);
   const centerX = enemyCenterX(enemy);
   const feetY = enemyFeetY(enemy);
   drawSheetFrame(sheet, frame, centerX - drawW / HALF_DIVISOR, feetY - drawH, drawW, drawH, facing);
