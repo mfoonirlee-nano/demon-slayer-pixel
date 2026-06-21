@@ -237,6 +237,7 @@ export type LineProjectileEffectState = {
   facing: number;
   frame: number;
   elapsed: number;
+  drawScale: number;
   damageMultiplier: number;
   refundedSkillEnergy?: boolean;
 };
@@ -249,6 +250,8 @@ export type CloseArcEffectState = {
   frame: number;
   elapsed: number;
   traveled: number;
+  drawScale: number;
+  maxTravel: number;
   damageMultiplier: number;
   refundedSkillEnergy?: boolean;
 };
@@ -257,6 +260,9 @@ export type GuardCounterEffectState = {
   elapsed: number;
   frame: number;
   hitsRemaining: number;
+  maxHits: number;
+  activeFrames: number;
+  counterPadding: number;
   damageMultiplier: number;
   barrierFlash: number;
 };

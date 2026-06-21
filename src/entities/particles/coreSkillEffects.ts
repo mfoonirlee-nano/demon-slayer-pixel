@@ -14,13 +14,14 @@ const CLOSE_ARC_EFFECT_CONFIG = CORE_PLAYER_SKILL_EFFECT_CONFIGS[SKILL_IDS.close
 
 export function updateLineProjectileEffects() {
   const sheet = LINE_PROJECTILE_EFFECT_SHEET;
-  const drawW = sheet.frameW * LINE_PROJECTILE_EFFECT_CONFIG.drawScale;
-  const drawH = sheet.frameH * LINE_PROJECTILE_EFFECT_CONFIG.drawScale;
   const p = state.player;
   const baseDamage = (p.baseAttack + p.attackBonus) * LINE_PROJECTILE_EFFECT_CONFIG.damageMultiplier;
 
   for (let i = state.lineProjectileEffects.length - 1; i >= 0; i -= 1) {
     const eff = state.lineProjectileEffects[i] as LineProjectileEffectState;
+    const drawScale = eff.drawScale ?? LINE_PROJECTILE_EFFECT_CONFIG.drawScale;
+    const drawW = sheet.frameW * drawScale;
+    const drawH = sheet.frameH * drawScale;
     const damage = baseDamage * eff.damageMultiplier;
     let hitTargets = 0;
     let bossHit = false;
@@ -95,13 +96,15 @@ export function updateLineProjectileEffects() {
 
 export function updateCloseArcEffects() {
   const sheet = CLOSE_ARC_EFFECT_SHEET;
-  const drawW = sheet.frameW * CLOSE_ARC_EFFECT_CONFIG.drawScale;
-  const drawH = sheet.frameH * CLOSE_ARC_EFFECT_CONFIG.drawScale;
   const p = state.player;
   const baseDamage = (p.baseAttack + p.attackBonus) * CLOSE_ARC_EFFECT_CONFIG.damageMultiplier;
 
   for (let i = state.closeArcEffects.length - 1; i >= 0; i -= 1) {
     const eff = state.closeArcEffects[i] as CloseArcEffectState;
+    const drawScale = eff.drawScale ?? CLOSE_ARC_EFFECT_CONFIG.drawScale;
+    const drawW = sheet.frameW * drawScale;
+    const drawH = sheet.frameH * drawScale;
+    const maxTravel = eff.maxTravel ?? CLOSE_ARC_EFFECT_CONFIG.maxTravel;
     const damage = baseDamage * eff.damageMultiplier;
     let hitTargets = 0;
     let bossHit = false;
@@ -159,7 +162,7 @@ export function updateCloseArcEffects() {
       eff.refundedSkillEnergy = true;
     }
 
-    if (eff.traveled >= CLOSE_ARC_EFFECT_CONFIG.maxTravel) state.closeArcEffects.splice(i, 1);
+    if (eff.traveled >= maxTravel) state.closeArcEffects.splice(i, 1);
   }
 }
 
@@ -167,9 +170,10 @@ export function drawLineProjectileEffects() {
   if (!ctx) return;
   const sheet = LINE_PROJECTILE_EFFECT_SHEET;
   if (!sheet.image) return;
-  const drawH = sheet.frameH * LINE_PROJECTILE_EFFECT_CONFIG.drawScale;
-  const drawW = sheet.frameW * LINE_PROJECTILE_EFFECT_CONFIG.drawScale;
   for (const e of state.lineProjectileEffects) {
+    const drawScale = e.drawScale ?? LINE_PROJECTILE_EFFECT_CONFIG.drawScale;
+    const drawH = sheet.frameH * drawScale;
+    const drawW = sheet.frameW * drawScale;
     const sx = e.frame * sheet.frameW;
     ctx.save();
     ctx.translate(e.x, e.y + drawH / 2);
@@ -183,11 +187,13 @@ export function drawCloseArcEffects() {
   if (!ctx) return;
   const sheet = CLOSE_ARC_EFFECT_SHEET;
   if (!sheet.image) return;
-  const drawH = sheet.frameH * CLOSE_ARC_EFFECT_CONFIG.drawScale;
-  const drawW = sheet.frameW * CLOSE_ARC_EFFECT_CONFIG.drawScale;
   for (const e of state.closeArcEffects) {
+    const drawScale = e.drawScale ?? CLOSE_ARC_EFFECT_CONFIG.drawScale;
+    const drawH = sheet.frameH * drawScale;
+    const drawW = sheet.frameW * drawScale;
+    const maxTravel = e.maxTravel ?? CLOSE_ARC_EFFECT_CONFIG.maxTravel;
     const sx = e.frame * sheet.frameW;
-    const fadeT = Math.max(0, e.traveled / CLOSE_ARC_EFFECT_CONFIG.maxTravel * 2 - 1);
+    const fadeT = Math.max(0, e.traveled / maxTravel * 2 - 1);
     const alpha = 1 - fadeT * 0.7;
     ctx.save();
     ctx.globalAlpha = alpha;

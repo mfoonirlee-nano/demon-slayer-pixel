@@ -155,21 +155,29 @@ export function hurtPlayer(damage: number, sourceVx: number) {
   if (p.invincible > 0) return;
 
   if (state.guardCounterEffect && state.guardCounterEffect.hitsRemaining > 0) {
-    state.guardCounterEffect.hitsRemaining -= 1;
-    state.guardCounterEffect.barrierFlash = GUARD_COUNTER_EFFECT_CONFIG.barrierFlashFrames;
+    const counter = state.guardCounterEffect;
+    const counterPadding = counter.counterPadding;
+    const counterRect = {
+      x: p.x - counterPadding,
+      y: p.y - counterPadding,
+      w: p.w + counterPadding * 2,
+      h: p.h + counterPadding * 2,
+    };
+    counter.hitsRemaining -= 1;
+    counter.barrierFlash = GUARD_COUNTER_EFFECT_CONFIG.barrierFlashFrames;
     p.invincible = PLAYER_COMBAT.hurtInvincibleFrames;
 
     const counterDamage = (p.baseAttack + p.attackBonus)
       * GUARD_COUNTER_EFFECT_CONFIG.damageMultiplier
-      * state.guardCounterEffect.damageMultiplier;
+      * counter.damageMultiplier;
     for (let i = state.enemies.length - 1; i >= 0; i -= 1) {
       const e = state.enemies[i];
-      if (!hitbox(p, e)) continue;
+      if (!hitbox(counterRect, e)) continue;
       const hitPoint = { x: e.x + e.w / 2, y: e.y + e.h / 2 };
       const hit = resolveEnemyHit({
         enemy: e,
         enemyIndex: i,
-        hitRect: p,
+        hitRect: counterRect,
         hitPoint,
         damage: counterDamage,
         reward: "enemy",
@@ -177,12 +185,12 @@ export function hurtPlayer(damage: number, sourceVx: number) {
       emitSlash(hit.hitX, hit.hitY, GUARD_COUNTER_HIT_COLOR, e.w);
       emitHitBurst(hit.hitX, hit.hitY, GUARD_COUNTER_HIT_COLOR, 1.5);
     }
-    if (state.boss && hitbox(p, state.boss)) {
+    if (state.boss && hitbox(counterRect, state.boss)) {
       const boss = state.boss;
       const hitPoint = { x: boss.x + boss.w / 2, y: boss.y + boss.h * 0.4 };
       const hit = resolveBossHit({
         boss,
-        hitRect: p,
+        hitRect: counterRect,
         hitPoint,
         damage: counterDamage,
       });

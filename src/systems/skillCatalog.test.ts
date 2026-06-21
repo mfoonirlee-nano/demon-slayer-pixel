@@ -35,4 +35,12 @@ describe("player skill catalog copy", () => {
       expect(exposedCopy).not.toContain(legacyName);
     }
   });
+
+  it("describes concrete level growth values for implemented skills", () => {
+    for (const skill of implementedPlayerSkills()) {
+      for (const [level, description] of Object.entries(skill.levelDescriptions)) {
+        expect(description, `${skill.id} Lv${level}`).toMatch(/\d/);
+      }
+    }
+  });
 });

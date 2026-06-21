@@ -12,7 +12,7 @@ export function updateGuardCounterEffect() {
   if (!eff) return;
   eff.elapsed += 1;
   if (eff.barrierFlash > 0) eff.barrierFlash -= 1;
-  const windowExpired = eff.elapsed >= GUARD_COUNTER_EFFECT_CONFIG.activeFrames;
+  const windowExpired = eff.elapsed >= eff.activeFrames;
   if ((eff.hitsRemaining <= 0 || windowExpired) && eff.barrierFlash <= 0) {
     state.guardCounterEffect = null;
     return;
@@ -41,7 +41,7 @@ export function drawGuardCounterEffect() {
   const p = state.player;
   const cx = p.x + p.w / 2;
   const feetY = p.y + p.h;
-  const remainingRatio = Math.max(0, eff.hitsRemaining / GUARD_COUNTER_EFFECT_CONFIG.maxHits);
+  const remainingRatio = Math.max(0, eff.hitsRemaining / Math.max(1, eff.maxHits));
   const showStartupBarrier = eff.elapsed < GUARD_COUNTER_EFFECT_CONFIG.startupFrames;
   const showHitBarrier = eff.barrierFlash > 0;
 

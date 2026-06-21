@@ -29,6 +29,10 @@ import {
   playerSkillDescription,
   playerSkillName,
 } from "./skillCatalog";
+import {
+  corePlayerSkillGrowth,
+  isGenericPlayerSkillId,
+} from "./playerSkills";
 
 const BASE_XP = 50;
 const XP_LINEAR = 22;
@@ -40,12 +44,6 @@ const HP_CURVE = 8;
 const SKILL_ENERGY_LINEAR = 10;
 const MIN_LEVEL_HEAL = 10;
 const LEVEL_HEAL_RATIO = 0.8;
-
-const SKILL_LEVEL_DAMAGE_MULTIPLIER: Record<SkillLevel, number> = {
-  1: 1,
-  2: 1.18,
-  3: 1.35,
-};
 
 type ActiveUltimateLevel = Exclude<UltimateLevel, 0>;
 
@@ -91,7 +89,11 @@ export function maxSkillChargesForEnergy(skillEnergyMax: number) {
 
 export function skillDamageMultiplier(state: GameState, skillId: SkillId) {
   const level = skillLevel(state, skillId);
-  return level ? SKILL_LEVEL_DAMAGE_MULTIPLIER[level] : 0;
+  if (!level) return 0;
+  const coreGrowth = corePlayerSkillGrowth(skillId, level);
+  if (coreGrowth) return coreGrowth.damageMultiplier;
+  if (isGenericPlayerSkillId(skillId)) return 1;
+  return 1;
 }
 
 export function effectiveUltimateLevel(level: UltimateLevel): ActiveUltimateLevel {

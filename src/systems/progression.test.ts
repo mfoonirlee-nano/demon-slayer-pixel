@@ -4,6 +4,7 @@ import { createInitialState } from "../game/state";
 import {
   addRunXp,
   applyUpgradeChoice,
+  skillDamageMultiplier,
   xpToNextLevel,
 } from "./progression";
 
@@ -59,6 +60,20 @@ describe("run progression skills", () => {
       SKILL_IDS.closeArc,
       SKILL_IDS.guardCounter,
     ]);
+  });
+
+  it("uses core skill growth for cast damage and leaves generic damage to each skill tuning", () => {
+    const state = createInitialState();
+
+    expect(skillDamageMultiplier(state, SKILL_IDS.lineProjectile)).toBe(1);
+
+    state.player.skillLevels[SKILL_IDS.lineProjectile] = 2;
+    expect(skillDamageMultiplier(state, SKILL_IDS.lineProjectile)).toBe(1.18);
+
+    state.player.skillLevels[SKILL_IDS.dashReposition] = 3;
+    expect(skillDamageMultiplier(state, SKILL_IDS.dashReposition)).toBe(1);
+
+    expect(skillDamageMultiplier(state, SKILL_IDS.verticalWave)).toBe(0);
   });
 
   it("skips upgrade choices when every implemented skill and ultimate are capped", () => {

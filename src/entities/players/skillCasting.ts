@@ -9,7 +9,7 @@ import {
 } from "../../systems/equipment";
 import { selectedSkill } from "../../systems/loadout";
 import { skillDamageMultiplier } from "../../systems/progression";
-import { isGenericPlayerSkillId } from "../../systems/playerSkills";
+import { corePlayerSkillGrowth, isGenericPlayerSkillId } from "../../systems/playerSkills";
 import {
   CORE_PLAYER_SKILL_EFFECT_CONFIGS,
   CORE_PLAYER_SKILL_EFFECT_SHEETS,
@@ -176,8 +176,10 @@ export function updateSkillCastRelease(): boolean {
         const cx = p.x + p.w / 2;
         const feetY = p.y + p.h;
         if (skill.id === SKILL_IDS.lineProjectile) {
-          const effectW = LINE_PROJECTILE_EFFECT_SHEET.frameW * LINE_PROJECTILE_EFFECT_CONFIG.drawScale;
-          const effectH = LINE_PROJECTILE_EFFECT_SHEET.frameH * LINE_PROJECTILE_EFFECT_CONFIG.drawScale;
+          const growth = corePlayerSkillGrowth(skill.id, state.player.skillLevels[skill.id]);
+          const drawScale = growth?.drawScale ?? LINE_PROJECTILE_EFFECT_CONFIG.drawScale;
+          const effectW = LINE_PROJECTILE_EFFECT_SHEET.frameW * drawScale;
+          const effectH = LINE_PROJECTILE_EFFECT_SHEET.frameH * drawScale;
           const skillDrawH = skill.frameH * skill.drawScale;
           const frontX = cx + p.facing * p.w / 2;
           state.lineProjectileEffects.push({
@@ -187,12 +189,15 @@ export function updateSkillCastRelease(): boolean {
             facing: p.facing,
             frame: 0,
             elapsed: 0,
+            drawScale,
             damageMultiplier: p.skillCastDamageMultiplier,
           });
           playSfx("playerSkillRelease", 0.96);
         } else if (skill.id === SKILL_IDS.closeArc) {
-          const effectW = CLOSE_ARC_EFFECT_SHEET.frameW * CLOSE_ARC_EFFECT_CONFIG.drawScale;
-          const effectBaselineY = CLOSE_ARC_EFFECT_CONFIG.groundBaselineY * CLOSE_ARC_EFFECT_CONFIG.drawScale;
+          const growth = corePlayerSkillGrowth(skill.id, state.player.skillLevels[skill.id]);
+          const drawScale = growth?.drawScale ?? CLOSE_ARC_EFFECT_CONFIG.drawScale;
+          const effectW = CLOSE_ARC_EFFECT_SHEET.frameW * drawScale;
+          const effectBaselineY = CLOSE_ARC_EFFECT_CONFIG.groundBaselineY * drawScale;
           const frontX = cx + p.facing * p.w / 2;
           state.closeArcEffects.push({
             x: frontX + p.facing * effectW / 2,
@@ -202,6 +207,8 @@ export function updateSkillCastRelease(): boolean {
             frame: 0,
             elapsed: 0,
             traveled: 0,
+            drawScale,
+            maxTravel: growth?.maxTravel ?? CLOSE_ARC_EFFECT_CONFIG.maxTravel,
             damageMultiplier: p.skillCastDamageMultiplier,
           });
           playSfx("playerSkillRelease", 1.08);
@@ -219,10 +226,15 @@ export function updateSkillCastRelease(): boolean {
 }
 
 function spawnGuardCounterEffect(damageMultiplier: number) {
+  const growth = corePlayerSkillGrowth(SKILL_IDS.guardCounter, state.player.skillLevels[SKILL_IDS.guardCounter]);
+  const maxHits = growth?.maxHits ?? GUARD_COUNTER_EFFECT_CONFIG.maxHits;
   state.guardCounterEffect = {
     elapsed: 0,
     frame: 0,
-    hitsRemaining: GUARD_COUNTER_EFFECT_CONFIG.maxHits,
+    hitsRemaining: maxHits,
+    maxHits,
+    activeFrames: growth?.activeFrames ?? GUARD_COUNTER_EFFECT_CONFIG.activeFrames,
+    counterPadding: growth?.counterPadding ?? 0,
     damageMultiplier,
     barrierFlash: 0,
   };

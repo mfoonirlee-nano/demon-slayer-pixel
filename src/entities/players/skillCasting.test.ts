@@ -1,5 +1,10 @@
 import { describe, expect, it } from "vitest";
-import { GUARD_COUNTER_EFFECT_CONFIG, SKILL_IDS } from "../../constants";
+import {
+  CLOSE_ARC_EFFECT_CONFIG,
+  GUARD_COUNTER_EFFECT_CONFIG,
+  LINE_PROJECTILE_EFFECT_CONFIG,
+  SKILL_IDS,
+} from "../../constants";
 import { updateGuardCounterEffect } from "../particle";
 import { resetState, state } from "../../game/state";
 import { playerSkillById } from "../../systems/skillCatalog";
@@ -57,7 +62,66 @@ describe("player skill casting", () => {
     updateSkillCastRelease();
     expect(state.guardCounterEffect).toMatchObject({
       hitsRemaining: 3,
+      maxHits: 3,
+      activeFrames: GUARD_COUNTER_EFFECT_CONFIG.activeFrames,
+      counterPadding: 0,
       damageMultiplier: 1,
+    });
+  });
+
+  it("applies core skill growth to spawned effect state", () => {
+    resetState();
+    state.player.skillEnergy = state.player.skillEnergyMax;
+    state.player.skillLevels[SKILL_IDS.lineProjectile] = 3;
+    state.player.skillIndex = 0;
+    const lineProjectile = skillById(SKILL_IDS.lineProjectile);
+
+    castSelectedSkill();
+    for (let frame = 0; frame < playerSkillReleaseFrame(lineProjectile); frame += 1) {
+      updateSkillCastRelease();
+    }
+
+    expect(state.lineProjectileEffects[0]).toMatchObject({
+      drawScale: 0.715,
+      damageMultiplier: 1.35,
+    });
+    expect(state.lineProjectileEffects[0].drawScale).toBeGreaterThan(LINE_PROJECTILE_EFFECT_CONFIG.drawScale);
+
+    resetState();
+    state.player.skillEnergy = state.player.skillEnergyMax;
+    state.player.skillLevels[SKILL_IDS.closeArc] = 2;
+    state.player.skillIndex = 1;
+    const closeArc = skillById(SKILL_IDS.closeArc);
+
+    castSelectedSkill();
+    for (let frame = 0; frame < playerSkillReleaseFrame(closeArc); frame += 1) {
+      updateSkillCastRelease();
+    }
+
+    expect(state.closeArcEffects[0]).toMatchObject({
+      drawScale: 0.705,
+      maxTravel: 158,
+      damageMultiplier: 1.18,
+    });
+    expect(state.closeArcEffects[0].maxTravel).toBeGreaterThan(CLOSE_ARC_EFFECT_CONFIG.maxTravel);
+
+    resetState();
+    state.player.skillEnergy = state.player.skillEnergyMax;
+    state.player.skillLevels[SKILL_IDS.guardCounter] = 3;
+    state.player.skillIndex = 2;
+    const guardCounter = skillById(SKILL_IDS.guardCounter);
+
+    castSelectedSkill();
+    for (let frame = 0; frame < playerSkillReleaseFrame(guardCounter); frame += 1) {
+      updateSkillCastRelease();
+    }
+
+    expect(state.guardCounterEffect).toMatchObject({
+      hitsRemaining: 4,
+      maxHits: 4,
+      activeFrames: 84,
+      counterPadding: 10,
+      damageMultiplier: 1.35,
     });
   });
 

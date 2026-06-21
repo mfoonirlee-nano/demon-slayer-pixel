@@ -1,7 +1,17 @@
-import { SKILL_IDS } from "../constants";
+import {
+  CLOSE_ARC_EFFECT_CONFIG,
+  GUARD_COUNTER_EFFECT_CONFIG,
+  LINE_PROJECTILE_EFFECT_CONFIG,
+  SKILL_IDS,
+} from "../constants";
 import type { SkillId } from "../types/assets";
 import type { SkillLevel } from "../types/game-state";
 import type { RectLike } from "../game/utils";
+
+export type CorePlayerSkillId =
+  | typeof SKILL_IDS.lineProjectile
+  | typeof SKILL_IDS.closeArc
+  | typeof SKILL_IDS.guardCounter;
 
 export type GenericPlayerSkillId =
   | "dash_reposition"
@@ -19,7 +29,25 @@ export type GenericPlayerSkillKind =
   | "returningBlade"
   | "verticalWave";
 
-type LevelTable = Record<SkillLevel, number>;
+export type LevelTable = Record<SkillLevel, number>;
+
+export type CoreSkillGrowthTuning = {
+  damageMultiplier: LevelTable;
+  drawScale?: LevelTable;
+  maxTravel?: LevelTable;
+  activeFrames?: LevelTable;
+  maxHits?: LevelTable;
+  counterPadding?: LevelTable;
+};
+
+export type CoreSkillGrowth = {
+  damageMultiplier: number;
+  drawScale?: number;
+  maxTravel?: number;
+  activeFrames?: number;
+  maxHits?: number;
+  counterPadding?: number;
+};
 
 export type GenericSkillTuning = {
   kind: GenericPlayerSkillKind;
@@ -52,6 +80,50 @@ export const GENERIC_PLAYER_SKILL_IDS: GenericPlayerSkillId[] = [
   SKILL_IDS.returningBlade,
   SKILL_IDS.verticalWave,
 ];
+
+export const CORE_PLAYER_SKILL_IDS: CorePlayerSkillId[] = [
+  SKILL_IDS.lineProjectile,
+  SKILL_IDS.closeArc,
+  SKILL_IDS.guardCounter,
+];
+
+export const CORE_PLAYER_SKILL_GROWTH: Record<CorePlayerSkillId, CoreSkillGrowthTuning> = {
+  [SKILL_IDS.lineProjectile]: {
+    damageMultiplier: { 1: 1, 2: 1.18, 3: 1.35 },
+    drawScale: {
+      1: LINE_PROJECTILE_EFFECT_CONFIG.drawScale,
+      2: 0.67,
+      3: 0.715,
+    },
+  },
+  [SKILL_IDS.closeArc]: {
+    damageMultiplier: { 1: 1, 2: 1.18, 3: 1.35 },
+    drawScale: {
+      1: CLOSE_ARC_EFFECT_CONFIG.drawScale,
+      2: 0.705,
+      3: 0.745,
+    },
+    maxTravel: {
+      1: CLOSE_ARC_EFFECT_CONFIG.maxTravel,
+      2: 158,
+      3: 176,
+    },
+  },
+  [SKILL_IDS.guardCounter]: {
+    damageMultiplier: { 1: 1, 2: 1.18, 3: 1.35 },
+    activeFrames: {
+      1: GUARD_COUNTER_EFFECT_CONFIG.activeFrames,
+      2: 78,
+      3: 84,
+    },
+    maxHits: {
+      1: GUARD_COUNTER_EFFECT_CONFIG.maxHits,
+      2: GUARD_COUNTER_EFFECT_CONFIG.maxHits,
+      3: 4,
+    },
+    counterPadding: { 1: 0, 2: 6, 3: 10 },
+  },
+};
 
 export const GENERIC_PLAYER_SKILL_TUNING: Record<GenericPlayerSkillId, GenericSkillTuning> = {
   [SKILL_IDS.dashReposition]: {
@@ -140,12 +212,29 @@ export const GENERIC_PLAYER_SKILL_TUNING: Record<GenericPlayerSkillId, GenericSk
   },
 };
 
+export function isCorePlayerSkillId(skillId: SkillId): skillId is CorePlayerSkillId {
+  return CORE_PLAYER_SKILL_IDS.includes(skillId as CorePlayerSkillId);
+}
+
 export function isGenericPlayerSkillId(skillId: SkillId): skillId is GenericPlayerSkillId {
   return GENERIC_PLAYER_SKILL_IDS.includes(skillId as GenericPlayerSkillId);
 }
 
 export function valueForSkillLevel(table: LevelTable, level: SkillLevel | 0 | undefined) {
   return table[(level || 1) as SkillLevel];
+}
+
+export function corePlayerSkillGrowth(skillId: SkillId, level: SkillLevel | 0 | undefined): CoreSkillGrowth | null {
+  if (!isCorePlayerSkillId(skillId)) return null;
+  const tuning = CORE_PLAYER_SKILL_GROWTH[skillId];
+  return {
+    damageMultiplier: valueForSkillLevel(tuning.damageMultiplier, level),
+    drawScale: tuning.drawScale ? valueForSkillLevel(tuning.drawScale, level) : undefined,
+    maxTravel: tuning.maxTravel ? valueForSkillLevel(tuning.maxTravel, level) : undefined,
+    activeFrames: tuning.activeFrames ? valueForSkillLevel(tuning.activeFrames, level) : undefined,
+    maxHits: tuning.maxHits ? valueForSkillLevel(tuning.maxHits, level) : undefined,
+    counterPadding: tuning.counterPadding ? valueForSkillLevel(tuning.counterPadding, level) : undefined,
+  };
 }
 
 export function rectFromCenter(centerX: number, centerY: number, width: number, height: number): RectLike {
