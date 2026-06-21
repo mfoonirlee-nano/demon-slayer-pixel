@@ -7,28 +7,26 @@ import { EQUIPMENT_SLOT_LABELS } from "./uiDisplay";
 import { getRewardOverlayLayout } from "./rewardOverlayLayout";
 import { UiSprite } from "./uiSprite";
 
+const ULTIMATE_SKILL_ICON_SRC = "assets/sprites/skills/ultimate_skill/icon.png";
+
 const UPGRADE_CHOICE_STYLE: Record<UpgradeChoiceType, {
   accent: string;
   glow: string;
-  glyph: string;
   label: string;
 }> = {
   unlockSkill: {
     accent: "#39f2ff",
     glow: "rgba(57, 242, 255, 0.18)",
-    glyph: "新",
     label: "新术",
   },
   upgradeSkill: {
     accent: "#c9f5ff",
     glow: "rgba(151, 229, 255, 0.15)",
-    glyph: "精",
     label: "精进",
   },
   upgradeUltimate: {
     accent: "#ffd36a",
     glow: "rgba(255, 185, 84, 0.18)",
-    glyph: "月",
     label: "终式",
   },
 };
@@ -45,6 +43,10 @@ function levelTransition(choice: UpgradeChoiceState) {
   if (choice.nextLevel === undefined) return "";
   const previousLevel = choice.type === "unlockSkill" ? 0 : choice.nextLevel - 1;
   return `${romanLevel(previousLevel)} -> ${romanLevel(choice.nextLevel)}`;
+}
+
+function upgradeChoiceIconSrc(choice: UpgradeChoiceState) {
+  return choice.skillId ? playerSkillIconSrc(choice.skillId) : ULTIMATE_SKILL_ICON_SRC;
 }
 
 export function RewardOverlay({ snapshot }: { snapshot: GameSnapshot }) {
@@ -159,26 +161,24 @@ export function RewardOverlay({ snapshot }: { snapshot: GameSnapshot }) {
                   height={choiceCardSize.h}
                   className="relative mx-auto"
                 >
-                  {upgrade && upgradeStyle ? (
+                  {upgrade && upgradeStyle && layout.cardIcon ? (
                     <div
-                      className="absolute left-1/2 top-[4px] z-10 flex h-[46px] w-[46px] -translate-x-1/2 items-center justify-center overflow-hidden rounded-full border bg-[rgba(3,10,22,0.84)]"
+                      className="absolute left-1/2 z-10 flex -translate-x-1/2 items-center justify-center overflow-hidden rounded-full border bg-[rgba(3,10,22,0.84)]"
                       style={{
                         borderColor: upgradeAccent,
                         boxShadow: `0 0 14px ${upgradeStyle.glow}, inset 0 0 12px rgba(255,255,255,0.1)`,
+                        height: layout.cardIcon.size,
+                        top: layout.cardIcon.top,
+                        width: layout.cardIcon.size,
                       }}
                     >
-                      {upgrade.skillId ? (
-                        <img
-                          src={playerSkillIconSrc(upgrade.skillId)}
-                          alt=""
-                          draggable={false}
-                          className="h-[38px] w-[38px] object-contain [image-rendering:pixelated]"
-                        />
-                      ) : (
-                        <span className="text-[18px] font-bold leading-none" style={{ color: upgradeAccent }}>
-                          {upgradeStyle.glyph}
-                        </span>
-                      )}
+                      <img
+                        src={upgradeChoiceIconSrc(upgrade)}
+                        alt=""
+                        draggable={false}
+                        className="object-contain [image-rendering:pixelated]"
+                        style={{ height: layout.cardIcon.iconSize, width: layout.cardIcon.iconSize }}
+                      />
                     </div>
                   ) : null}
 
@@ -199,9 +199,11 @@ export function RewardOverlay({ snapshot }: { snapshot: GameSnapshot }) {
                       </>
                     ) : upgrade && upgradeStyle ? (
                       <>
-                        <div className="flex items-center justify-between text-[7px] font-bold leading-none">
+                        <div className="text-right text-[7px] font-bold leading-none text-[#86d9ee]">[{index + 1}]</div>
+                        <div className="mt-2 flex min-h-[31px] flex-wrap items-center justify-center gap-1 text-center text-[10px] font-bold leading-[1.25] text-[#fff8e6]">
+                          <span>{choice.name}</span>
                           <span
-                            className="rounded-sm border px-1.5 py-[3px]"
+                            className="rounded-sm border px-1.5 py-[3px] text-[7px] leading-none"
                             style={{
                               backgroundColor: upgradeStyle.glow,
                               borderColor: upgradeAccent,
@@ -210,10 +212,7 @@ export function RewardOverlay({ snapshot }: { snapshot: GameSnapshot }) {
                           >
                             {upgradeStyle.label}
                           </span>
-                          <span className="text-[#86d9ee]">[{index + 1}]</span>
                         </div>
-
-                        <div className="mt-2 min-h-[31px] text-center text-[10px] font-bold leading-[1.25] text-[#fff8e6]">{choice.name}</div>
                         <div className="mt-1 text-center text-[8px] font-bold leading-none" style={{ color: upgradeAccent }}>
                           {levelTransition(upgrade)}
                         </div>

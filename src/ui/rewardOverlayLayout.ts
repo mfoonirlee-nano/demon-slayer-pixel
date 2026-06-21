@@ -10,6 +10,11 @@ type RewardLayoutConfig = {
     insetX: number;
     top: number;
   };
+  cardIconSource?: {
+    iconSize: number;
+    size: number;
+    top: number;
+  };
   cardRowTop: number;
   cardSprite: UiSpriteId;
   columnGap: number;
@@ -22,9 +27,14 @@ const REWARD_LAYOUTS: Record<RewardOverlayKind, RewardLayoutConfig> = {
   upgrade: {
     activeCardSprite: "upgradeChoiceCardActive",
     cardContentSource: {
-      bottom: 44,
+      bottom: 84,
       insetX: 22,
-      top: 62,
+      top: 104,
+    },
+    cardIconSource: {
+      iconSize: 44,
+      size: 56,
+      top: 22,
     },
     cardRowTop: 52,
     cardSprite: "upgradeChoiceCard",
@@ -91,6 +101,13 @@ export function getRewardOverlayLayout(kind: RewardOverlayKind, choiceCount: num
       insetX: scaledInset(config.cardContentSource.insetX, cardScale),
       top: scaledInset(config.cardContentSource.top, cardScale),
     },
+    cardIcon: config.cardIconSource
+      ? {
+        iconSize: scaledInset(config.cardIconSource.iconSize, cardScale),
+        size: scaledInset(config.cardIconSource.size, cardScale),
+        top: scaledInset(config.cardIconSource.top, cardScale),
+      }
+      : null,
     cardDisplaySize,
     cardRowTop: config.cardRowTop,
     cardScale,
