@@ -6,6 +6,7 @@ import { gameSnapshotAtom } from "../game/gameStore";
 import { DeathScreen } from "./deathScreen";
 import { PauseScreen } from "./pauseScreen";
 import { RewardOverlay } from "./rewardOverlay";
+import { VictoryScreen } from "./victoryScreen";
 import { getSkill, romanLevel, skillIconSrc } from "./uiDisplay";
 import { UiSprite, uiSpriteDisplaySize } from "./uiSprite";
 
@@ -182,7 +183,7 @@ function UltimateOrb({ value, max, ready, size = ULTIMATE_ORB_DEFAULT_SIZE, acti
 
 export function GameHud() {
   const snapshot = useAtomValue(gameSnapshotAtom);
-  const { player, boss, elapsed, spritesReady, gameOver } = snapshot;
+  const { player, boss, elapsed, spritesReady } = snapshot;
   const activeSkillId = player.equippedSkillIds[player.skillIndex];
   const activeSkill = getSkill(activeSkillId);
   const activeSkillLevel = activeSkillId ? player.skillLevels[activeSkillId] : undefined;
@@ -336,7 +337,8 @@ export function GameHud() {
         Lv.{player.runLevel}
       </div>
 
-      {gameOver ? <DeathScreen elapsed={elapsed} /> : null}
+      {snapshot.activeOverlay === "death" ? <DeathScreen elapsed={elapsed} /> : null}
+      {snapshot.activeOverlay === "victory" ? <VictoryScreen elapsed={elapsed} /> : null}
 
       {snapshot.activeOverlay === "pause" ? <PauseScreen snapshot={snapshot} /> : null}
       {snapshot.activeOverlay === "upgrade" || snapshot.activeOverlay === "bossEquipment" ? (

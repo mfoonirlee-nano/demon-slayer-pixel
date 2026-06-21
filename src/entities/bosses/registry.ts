@@ -12,10 +12,18 @@ import {
   DEAD_BELL_CONFIG,
   DEAD_BELL_SHEET,
   DEAD_BELL_WAVE_SHEET,
+  FANG_GALE_CONFIG,
+  FANG_GALE_SHEET,
+  FANG_GALE_WAVE_SHEET,
+  FANG_GALE_WINDUP_SHEET,
   LANTERN_EMBER_CONFIG,
   LANTERN_EMBER_LURE_EFFECT_SHEET,
   LANTERN_EMBER_SHEET,
   LANTERN_EMBER_SUMMON_SHEET,
+  MIST_BONE_CAST_SHEET,
+  MIST_BONE_CONFIG,
+  MIST_BONE_SHEET,
+  MIST_BONE_SPIKES_SHEET,
   MIRROR_DREAM_CAST_SHEET,
   MIRROR_DREAM_CONFIG,
   MIRROR_DREAM_SHEET,
@@ -58,7 +66,9 @@ export type BossArchetype = {
 
 export const BOSS_ARCHETYPE_IDS = {
   spiderString: "spider-string",
+  mistBone: "mist-bone",
   mirrorDream: "mirror-dream",
+  fangGale: "fang-gale",
   lanternEmber: "lantern-ember",
   deadBell: "dead-bell",
   bloodMoon: "blood-moon-many-faces",
@@ -101,11 +111,42 @@ export const BOSS_ARCHETYPES: Record<RegisteredBossArchetypeId, BossArchetype> =
       effect: BOSS_SKILL1_EFFECT_SHEET,
     },
   },
+  "mist-bone": {
+    id: BOSS_ARCHETYPE_IDS.mistBone,
+    displayName: "雾骨",
+    phaseTitle: (phase) => `血月眷属 · 雾骨 · 阶段 ${phase}`,
+    awakenedPhaseTitle: (phase) => `血月眷属 · 雾骨·蚀醒 · 阶段 ${phase}`,
+    unlockAct: 2,
+    awakenedUnlockAct: 8,
+    hpBase: 500,
+    hpPerKill: 50,
+    hpScaleByElapsed: 1.3,
+    collisionW: BOSS_CONFIG.w,
+    collisionH: BOSS_CONFIG.h,
+    yOffsetFromGround: BOSS_CONFIG.yOffsetFromGround,
+    phaseThresholds: [BOSS_CONFIG.phaseTwoThreshold, BOSS_CONFIG.phaseThreeThreshold],
+    contactDamageBase: 9,
+    contactDamagePhase: 2,
+    aiBaseCooldown: 114,
+    aiPhaseReduction: 10,
+    skillInitialCooldown: MIST_BONE_CONFIG.initialCooldown,
+    skillMode: "mistBoneSpike",
+    drawW: bossBodyDrawSize(MIST_BONE_CONFIG.drawW),
+    drawH: bossBodyDrawSize(MIST_BONE_CONFIG.drawH),
+    castDrawW: bossBodyDrawSize(MIST_BONE_CONFIG.castDrawW),
+    castDrawH: bossBodyDrawSize(MIST_BONE_CONFIG.castDrawH),
+    castBottomPadding: bossBodyDrawSize(MIST_BONE_CONFIG.castBottomPadding),
+    sheets: {
+      move: MIST_BONE_SHEET,
+      cast: MIST_BONE_CAST_SHEET,
+      effect: MIST_BONE_SPIKES_SHEET,
+    },
+  },
   "mirror-dream": {
     id: BOSS_ARCHETYPE_IDS.mirrorDream,
     displayName: "镜魇",
     phaseTitle: (phase) => `血月眷属 · 镜魇 · 阶段 ${phase}`,
-    unlockAct: 4,
+    unlockAct: 3,
     awakenedUnlockAct: 9,
     hpBase: 500,
     hpPerKill: 54,
@@ -129,6 +170,37 @@ export const BOSS_ARCHETYPES: Record<RegisteredBossArchetypeId, BossArchetype> =
       move: MIRROR_DREAM_SHEET,
       cast: MIRROR_DREAM_CAST_SHEET,
       effect: MIRROR_SHARD_SHEET,
+    },
+  },
+  "fang-gale": {
+    id: BOSS_ARCHETYPE_IDS.fangGale,
+    displayName: "牙岚",
+    phaseTitle: (phase) => `血月眷属 · 牙岚 · 阶段 ${phase}`,
+    awakenedPhaseTitle: (phase) => `血月眷属 · 牙岚·蚀醒 · 阶段 ${phase}`,
+    unlockAct: 4,
+    awakenedUnlockAct: 10,
+    hpBase: 520,
+    hpPerKill: 56,
+    hpScaleByElapsed: 1.45,
+    collisionW: BOSS_CONFIG.w,
+    collisionH: BOSS_CONFIG.h,
+    yOffsetFromGround: BOSS_CONFIG.yOffsetFromGround,
+    phaseThresholds: [BOSS_CONFIG.phaseTwoThreshold, BOSS_CONFIG.phaseThreeThreshold],
+    contactDamageBase: 11,
+    contactDamagePhase: 2,
+    aiBaseCooldown: 104,
+    aiPhaseReduction: 12,
+    skillInitialCooldown: FANG_GALE_CONFIG.initialCooldown,
+    skillMode: "fangGaleDash",
+    drawW: bossBodyDrawSize(FANG_GALE_CONFIG.drawW),
+    drawH: bossBodyDrawSize(FANG_GALE_CONFIG.drawH),
+    castDrawW: bossBodyDrawSize(FANG_GALE_CONFIG.castDrawW),
+    castDrawH: bossBodyDrawSize(FANG_GALE_CONFIG.castDrawH),
+    castBottomPadding: bossBodyDrawSize(FANG_GALE_CONFIG.castBottomPadding),
+    sheets: {
+      move: FANG_GALE_SHEET,
+      cast: FANG_GALE_WINDUP_SHEET,
+      effect: FANG_GALE_WAVE_SHEET,
     },
   },
   "lantern-ember": {
@@ -224,11 +296,20 @@ export const BOSS_ARCHETYPES: Record<RegisteredBossArchetypeId, BossArchetype> =
   },
 };
 
-export const BOSS_V1_SEQUENCE: BossArchetypeId[] = [
+export const BOSS_ACT_SEQUENCE: BossArchetypeId[] = [
   BOSS_ARCHETYPE_IDS.spiderString,
+  BOSS_ARCHETYPE_IDS.mistBone,
   BOSS_ARCHETYPE_IDS.mirrorDream,
+  BOSS_ARCHETYPE_IDS.fangGale,
   BOSS_ARCHETYPE_IDS.lanternEmber,
   BOSS_ARCHETYPE_IDS.deadBell,
+  BOSS_ARCHETYPE_IDS.spiderString,
+  BOSS_ARCHETYPE_IDS.mistBone,
+  BOSS_ARCHETYPE_IDS.mirrorDream,
+  BOSS_ARCHETYPE_IDS.fangGale,
+  BOSS_ARCHETYPE_IDS.lanternEmber,
+  BOSS_ARCHETYPE_IDS.deadBell,
+  BOSS_ARCHETYPE_IDS.bloodMoon,
 ];
 
 export const FINAL_BOSS_KILL_COUNT = 12;
@@ -238,6 +319,6 @@ export function bossArchetypeForId(id: BossArchetypeId) {
 }
 
 export function bossArchetypeForKillCount(bossKills: number) {
-  if (bossKills >= FINAL_BOSS_KILL_COUNT) return bossArchetypeForId(BOSS_ARCHETYPE_IDS.bloodMoon);
-  return bossArchetypeForId(BOSS_V1_SEQUENCE[bossKills % BOSS_V1_SEQUENCE.length]);
+  const actIndex = Math.min(FINAL_BOSS_KILL_COUNT, Math.max(0, bossKills));
+  return bossArchetypeForId(BOSS_ACT_SEQUENCE[actIndex]);
 }

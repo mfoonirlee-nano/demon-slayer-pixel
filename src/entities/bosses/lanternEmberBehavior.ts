@@ -3,7 +3,7 @@ import { canAutoSpawnEntities } from "../../game/debug";
 import { state } from "../../game/state";
 import { clamp } from "../../game/utils";
 import { playSfx } from "../../game/audio";
-import { spawnEnemy } from "../enemy";
+import { spawnBossSummonEnemy } from "../enemy";
 import { damagePlayerOnContact } from "./shared";
 import type { LiveBoss } from "./types";
 
@@ -121,7 +121,7 @@ function spawnLanternSummon(boss: LiveBoss) {
     ? LANTERN_EMBER_CONFIG.summonMaxEnemies
     : 1;
   if (canAutoSpawnEntities()) {
-    for (let i = 0; i < count; i += 1) spawnEnemy();
+    for (let i = 0; i < count; i += 1) spawnBossSummonEnemy();
   }
   state.lanternEmberLures.push({
     x: boss.x + boss.w / 2 + boss.castFacing * 36,

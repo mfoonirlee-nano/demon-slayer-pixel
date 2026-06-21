@@ -83,6 +83,34 @@ export type MirrorAfterimageState = {
   damage: number;
 };
 
+export type MistBoneSpikeState = {
+  x: number;
+  y: number;
+  w: number;
+  h: number;
+  delay: number;
+  warningFrames: number;
+  elapsed: number;
+  frame: number;
+  life: number;
+  damage: number;
+  hitPlayer: boolean;
+};
+
+export type FangGaleWaveState = {
+  x: number;
+  y: number;
+  w: number;
+  h: number;
+  vx: number;
+  facing: number;
+  warningFrames: number;
+  elapsed: number;
+  frame: number;
+  life: number;
+  damage: number;
+};
+
 export type LanternEmberLureState = {
   x: number;
   y: number;

@@ -1,6 +1,7 @@
 export * from "./world";
 export * from "./ids";
 export * from "./assets";
+export * from "./bossTuning";
 export * from "./combat";
 export * from "./runtime";
 export * from "./platform";

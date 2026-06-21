@@ -2,7 +2,7 @@ import { BOSS_CONFIG, BOSS_SKILL1_CONFIG } from "../../constants";
 import { canAutoSpawnEntities } from "../../game/debug";
 import { state } from "../../game/state";
 import { playSfx } from "../../game/audio";
-import { spawnEnemy } from "../enemy";
+import { spawnBossSummonEnemy } from "../enemy";
 import { spawnBossSkill1Effect } from "./spiderStringEffects";
 import { damagePlayerOnContact, moveChasingBoss } from "./shared";
 import type { LiveBoss } from "./types";
@@ -55,8 +55,8 @@ export function updateSpiderStringBoss(boss: LiveBoss) {
       }
       playSfx("bossProjectile", 1 + boss.phase * 0.04);
     } else if (canAutoSpawnEntities()) {
-      spawnEnemy();
-      if (boss.phase >= BOSS_CONFIG.summonExtraEnemyPhase) spawnEnemy();
+      spawnBossSummonEnemy();
+      if (boss.phase >= BOSS_CONFIG.summonExtraEnemyPhase) spawnBossSummonEnemy();
       playSfx("bossSummon", 0.92);
     }
     boss.aiTimer = BOSS_CONFIG.aiBaseCooldown - boss.phase * BOSS_CONFIG.aiPhaseReduction;

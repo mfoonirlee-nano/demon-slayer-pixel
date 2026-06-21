@@ -3,7 +3,7 @@ import { canAutoSpawnEntities } from "../../game/debug";
 import { state } from "../../game/state";
 import { clamp } from "../../game/utils";
 import { playSfx } from "../../game/audio";
-import { spawnEnemy } from "../enemy";
+import { spawnBossSummonEnemy } from "../enemy";
 import { spawnDeadBellBlade, spawnDeadBellWave, playerBladeLane } from "./deadBellBehavior";
 import { spawnLanternFireline } from "./lanternEmberBehavior";
 import { damagePlayerOnContact } from "./shared";
@@ -232,7 +232,7 @@ function spawnBloodMoonLanternBell(boss: LiveBoss) {
 
   if (canAutoSpawnEntities()) {
     const spawnCount = Math.min(2, Math.max(0, BLOOD_MOON_CONFIG.summonMaxEnemies - state.enemies.length));
-    for (let i = 0; i < spawnCount; i += 1) spawnEnemy();
+    for (let i = 0; i < spawnCount; i += 1) spawnBossSummonEnemy();
   }
   for (const enemy of state.enemies.slice(0, BLOOD_MOON_CONFIG.summonMaxEnemies)) {
     enemy.lanternBuffTimer = Math.max(enemy.lanternBuffTimer ?? 0, Math.floor(LANTERN_EMBER_CONFIG.buffFrames * 0.45));

@@ -6,7 +6,9 @@ import { BOSS_ARCHETYPE_IDS } from "./bosses/registry";
 import { bossPhaseForHp, createBossEncounter } from "./bosses/encounter";
 import { updateBloodMoonBoss } from "./bosses/bloodMoonBehavior";
 import { updateDeadBellBoss } from "./bosses/deadBellBehavior";
+import { updateFangGaleBoss } from "./bosses/fangGaleBehavior";
 import { updateLanternEmberBoss } from "./bosses/lanternEmberBehavior";
+import { updateMistBoneBoss } from "./bosses/mistBoneBehavior";
 import { updateMirrorDreamBoss } from "./bosses/mirrorDreamBehavior";
 import { updateSpiderStringBoss } from "./bosses/spiderStringBehavior";
 import type { LiveBoss } from "./bosses/types";
@@ -14,7 +16,9 @@ import type { LiveBoss } from "./bosses/types";
 export { drawBoss } from "./bosses/renderBoss";
 export { drawBossSkill1Effects, updateBossSkill1Effects } from "./bosses/spiderStringEffects";
 export { drawDeadBellEffects, updateDeadBellEffects } from "./bosses/deadBellEffects";
+export { drawFangGaleEffects, updateFangGaleEffects } from "./bosses/fangGaleEffects";
 export { drawMirrorDreamEffects, updateMirrorDreamEffects } from "./bosses/mirrorDreamEffects";
+export { drawMistBoneEffects, updateMistBoneEffects } from "./bosses/mistBoneEffects";
 export { drawLanternEmberEffects, updateLanternEmberEffects } from "./bosses/lanternEmberEffects";
 export { drawBloodMoonEffects, updateBloodMoonEffects } from "./bosses/bloodMoonEffects";
 
@@ -57,8 +61,12 @@ export function updateBoss() {
     updateDeadBellBoss(boss);
   } else if (boss.id === BOSS_ARCHETYPE_IDS.lanternEmber) {
     updateLanternEmberBoss(boss);
+  } else if (boss.id === BOSS_ARCHETYPE_IDS.fangGale) {
+    updateFangGaleBoss(boss);
   } else if (boss.id === BOSS_ARCHETYPE_IDS.mirrorDream) {
     updateMirrorDreamBoss(boss);
+  } else if (boss.id === BOSS_ARCHETYPE_IDS.mistBone) {
+    updateMistBoneBoss(boss);
   } else if (boss.id === BOSS_ARCHETYPE_IDS.bloodMoon) {
     updateBloodMoonBoss(boss);
   } else {

@@ -13,6 +13,7 @@ import { hitbox } from "../../game/utils";
 import type { CrystalType, PlatformState } from "../../types/game-state";
 import { emitHitBurst } from "../particle";
 import { healPlayer } from "../player";
+import { rewardValuesForAct } from "../../systems/runProgression";
 
 const FULL_CIRCLE_RADIANS = Math.PI * 2;
 
@@ -61,10 +62,11 @@ export function updateCrystals(dt: number) {
     const box = { x: x - c.size / 2, y: y - c.size / 2, w: c.size, h: c.size };
 
     if (hitbox(state.player, box)) {
+      const rewards = rewardValuesForAct(state.enemyDirector.act);
       if (c.type === CRYSTAL_TYPES_BY_KIND.attack) {
         state.player.attackBonus = Math.min(
           PLAYER_LIMITS.attackBonusCap,
-          state.player.attackBonus + CRYSTAL_CONFIG.attackBonusGain,
+          state.player.attackBonus + rewards.attackCrystal,
         );
         emitHitBurst(x, y, CRYSTAL_VISUAL.pickupBurstColors.attack, CRYSTAL_CONFIG.hitBurstPower.attack);
         playTone(
@@ -74,7 +76,7 @@ export function updateCrystals(dt: number) {
           CRYSTAL_CONFIG.tones.attack.volume,
         );
       } else {
-        healPlayer(CRYSTAL_CONFIG.healAmount);
+        healPlayer(rewards.healthCrystal);
         emitHitBurst(x, y, CRYSTAL_VISUAL.pickupBurstColors.health, CRYSTAL_CONFIG.hitBurstPower.health);
         playTone(
           CRYSTAL_CONFIG.tones.health.frequency,
@@ -107,11 +109,12 @@ export function updateChests(dt: number) {
 
     if (hitbox(state.player, box)) {
       c.collected = true;
+      const rewards = rewardValuesForAct(state.enemyDirector.act);
       // 50/50: attack or health chest
       if (Math.random() < 0.5) {
         state.player.attackBonus = Math.min(
           PLAYER_LIMITS.attackBonusCap,
-          state.player.attackBonus + CHEST_CONFIG.attackBonusGain,
+          state.player.attackBonus + rewards.chestAttack,
         );
         emitHitBurst(x, y, CHEST_VISUAL.burstColor, CHEST_CONFIG.hitBurstPower);
         playTone(
@@ -121,7 +124,7 @@ export function updateChests(dt: number) {
           CHEST_CONFIG.tones.attack.volume,
         );
       } else {
-        healPlayer(CHEST_CONFIG.healAmount);
+        healPlayer(rewards.chestHeal);
         emitHitBurst(x, y, CHEST_VISUAL.burstColor, CHEST_CONFIG.hitBurstPower);
         playTone(
           CHEST_CONFIG.tones.health.frequency,

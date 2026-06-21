@@ -2,8 +2,8 @@
 
 ## Implementation Status
 
-- 素材状态：未实现。
-- 玩法状态：未实现；目标定位为高速冲刺和近身压迫 Boss。
+- 素材状态：已接入 `assets/sprites/boss/fang-gale/`。
+- 玩法状态：已接入；定位为高速冲刺和近身压迫 Boss，使用断牙突、风牙裂和蚀醒三段连闪。
 
 ## Role
 

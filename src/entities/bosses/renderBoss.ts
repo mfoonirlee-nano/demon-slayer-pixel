@@ -10,10 +10,12 @@ import {
   BLOOD_MOON_SPIDER_MIST_CAST_SHEET,
   BOSS_SKILL1_CONFIG,
   DEAD_BELL_CONFIG,
+  FANG_GALE_CONFIG,
   LANTERN_EMBER_CONFIG,
   LANTERN_EMBER_BUFF_CAST_SHEET,
   LANTERN_EMBER_FIRELINE_CAST_SHEET,
   LANTERN_EMBER_SUMMON_SHEET,
+  MIST_BONE_CONFIG,
   MIRROR_DREAM_CONFIG,
 } from "../../constants";
 import { state } from "../../game/state";
@@ -22,6 +24,7 @@ import { ctx } from "../../rendering/context";
 import { drawSheetFrame } from "../../rendering/graphics";
 import { BOSS_ARCHETYPE_IDS, bossArchetypeForId } from "./registry";
 import { bloodMoonCastDuration } from "./bloodMoonBehavior";
+import { fangCastDuration } from "./fangGaleBehavior";
 import { lanternCastDuration } from "./lanternEmberBehavior";
 import type { LiveBoss } from "./types";
 
@@ -135,7 +138,9 @@ function bossCastDuration(boss: LiveBoss) {
       ? DEAD_BELL_CONFIG.comboCastDuration
       : DEAD_BELL_CONFIG.castDuration;
   }
+  if (boss.id === BOSS_ARCHETYPE_IDS.fangGale) return fangCastDuration(boss);
   if (boss.id === BOSS_ARCHETYPE_IDS.lanternEmber) return lanternCastDuration(boss);
+  if (boss.id === BOSS_ARCHETYPE_IDS.mistBone) return MIST_BONE_CONFIG.castDuration;
   if (boss.id === BOSS_ARCHETYPE_IDS.mirrorDream) return MIRROR_DREAM_CONFIG.castDuration;
   if (boss.id === BOSS_ARCHETYPE_IDS.bloodMoon) return bloodMoonCastDuration(boss);
   return BOSS_SKILL1_CONFIG.castDuration;
@@ -143,7 +148,9 @@ function bossCastDuration(boss: LiveBoss) {
 
 function bossCastFrameDuration(boss: LiveBoss) {
   if (boss.id === BOSS_ARCHETYPE_IDS.deadBell) return DEAD_BELL_CONFIG.castFrameDuration;
+  if (boss.id === BOSS_ARCHETYPE_IDS.fangGale) return FANG_GALE_CONFIG.castFrameDuration;
   if (boss.id === BOSS_ARCHETYPE_IDS.lanternEmber) return LANTERN_EMBER_CONFIG.castFrameDuration;
+  if (boss.id === BOSS_ARCHETYPE_IDS.mistBone) return MIST_BONE_CONFIG.castFrameDuration;
   if (boss.id === BOSS_ARCHETYPE_IDS.mirrorDream) return MIRROR_DREAM_CONFIG.castFrameDuration;
   if (boss.id === BOSS_ARCHETYPE_IDS.bloodMoon) return BLOOD_MOON_CONFIG.castFrameDuration;
   return BOSS_SKILL1_CONFIG.castFrameDuration;

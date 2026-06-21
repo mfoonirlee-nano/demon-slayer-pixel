@@ -3,6 +3,50 @@
   image-rendering: crisp-edges;
 }
 
+.victory-screen {
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
+  background: linear-gradient(180deg, #02040a 0%, #071427 54%, #02040a 100%);
+}
+
+.victory-title {
+  color: #e6fbff;
+  font-size: clamp(1.7rem, 5vw, 3.1rem);
+  font-weight: 800;
+  letter-spacing: 0.16em;
+  line-height: 1.2;
+  text-shadow:
+    2px 0 #062a3a,
+    -2px 0 #062a3a,
+    0 2px #062a3a,
+    0 -2px #062a3a,
+    0 0 18px rgba(116, 238, 255, 0.72);
+}
+
+.victory-message {
+  margin-top: clamp(1.2rem, 4vh, 2.4rem);
+  letter-spacing: 0.08em;
+  text-shadow:
+    2px 0 #001a22,
+    -2px 0 #001a22,
+    0 2px #001a22,
+    0 -2px #001a22,
+    0 0 8px rgba(80, 210, 255, 0.42);
+  animation: death-message-fade-in 520ms ease-out both;
+}
+
+.victory-clear-text {
+  color: #bff4ff;
+  font-size: clamp(0.82rem, 2.5vw, 1.08rem);
+  line-height: 1.7;
+}
+
+.victory-restart-text {
+  color: #f0d18a;
+  font-size: clamp(0.72rem, 2vw, 0.92rem);
+  line-height: 1.6;
+}
+
 .death-sprite-frame {
   width: 272px;
   height: 203px;

@@ -2,8 +2,8 @@
 
 ## Implementation Status
 
-- 素材状态：未实现。
-- 玩法状态：未实现；目标定位为区域封锁型 Boss。
+- 素材状态：已接入 `assets/sprites/boss/mist-bone/`。
+- 玩法状态：已接入；定位为区域封锁型 Boss，使用延迟骨刺、骨刺线和蚀醒骨林合围。
 
 ## Role
 

@@ -59,11 +59,12 @@ export type EquipmentSnapshot = {
   equipped: Record<EquipmentSlot, EquipmentItemState | null>;
 };
 
-export type ActiveOverlay = "none" | "pause" | "upgrade" | "bossEquipment" | "death";
+export type ActiveOverlay = "none" | "pause" | "upgrade" | "bossEquipment" | "death" | "victory";
 
 export type GameSnapshot = {
   elapsed: number;
   gameOver: boolean;
+  runCleared: boolean;
   paused: boolean;
   manualPaused: boolean;
   activeOverlay: ActiveOverlay;
@@ -79,6 +80,7 @@ export type GameSnapshot = {
 const initialSnapshot: GameSnapshot = {
   elapsed: 0,
   gameOver: false,
+  runCleared: false,
   paused: false,
   manualPaused: false,
   activeOverlay: "none",

@@ -15,6 +15,7 @@ import type {
   PlatformStyle,
   PlatformLayer,
 } from "../../types/game-state";
+import { platformSpeedForRun, segmentWeightsForAct, type SegmentKind } from "./actTuning";
 import { spawnChestOnPlatform, spawnCrystalOnPlatform } from "./collectibles";
 import {
   clamp,
@@ -31,16 +32,7 @@ import {
 } from "./helpers";
 
 const FULL_CIRCLE_RADIANS = Math.PI * 2;
-
-export type SegmentKind =
-  | "breather"
-  | "safeBridge"
-  | "stairUp"
-  | "stairDown"
-  | "zigzag"
-  | "gapJump"
-  | "hoverPair"
-  | "rewardRisk";
+export type { SegmentKind };
 
 type SegmentDifficulty = "easy" | "medium" | "hard";
 
@@ -94,17 +86,15 @@ function pickVariedLayer(current: PlatformLayer): PlatformLayer {
 
 
 function platformVx(): number {
-  return -(
-    PLATFORM_CONFIG.baseSpeed +
-    Math.random() * PLATFORM_CONFIG.randomSpeed +
-    state.elapsed * PLATFORM_CONFIG.speedScaleByElapsed
+  return -platformSpeedForRun(
+    state.bossKills,
+    state.elapsed,
+    Math.random() * PLATFORM_CONFIG.randomSpeed,
   );
 }
 
 function expectedPlatformSpeed(): number {
-  return PLATFORM_CONFIG.baseSpeed +
-    PLATFORM_CONFIG.randomSpeed / 2 +
-    state.elapsed * PLATFORM_CONFIG.speedScaleByElapsed;
+  return platformSpeedForRun(state.bossKills, state.elapsed, PLATFORM_CONFIG.randomSpeed / 2);
 }
 
 
@@ -301,19 +291,16 @@ function shouldRecoverLowLayer(): boolean {
 }
 
 function pickSegmentKind(): SegmentKind {
-  const difficulty = difficultyRatio();
   const highTension = tension >= MAP_GENERATION_CONFIG.tension.highThreshold;
+  const weights = { ...segmentWeightsForAct(state.enemyDirector.act) };
 
-  const weights: Record<SegmentKind, number> = {
-    breather: highTension ? 3.8 : 0.8,
-    safeBridge: highTension ? 2.6 : 1.6,
-    stairUp: lerp(1.2, 1.7, difficulty),
-    stairDown: lerp(1.1, 1.5, difficulty),
-    zigzag: lerp(0.7, 1.8, difficulty),
-    gapJump: highTension ? 0.3 : lerp(0.4, 1.6, difficulty),
-    hoverPair: highTension ? 0.2 : lerp(0.15, 1.2, difficulty),
-    rewardRisk: highTension ? 0.4 : lerp(0.25, 1.4, difficulty),
-  };
+  if (highTension) {
+    weights.breather *= 3.2;
+    weights.safeBridge *= 2.4;
+    weights.gapJump *= 0.28;
+    weights.hoverPair *= 0.25;
+    weights.rewardRisk *= 0.3;
+  }
 
   for (const kind of recentKinds) {
     weights[kind] *= 0.45;

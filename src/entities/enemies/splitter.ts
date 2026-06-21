@@ -110,6 +110,11 @@ function createSplitling(parent: EnemyState, offset: number): EnemyState {
   const facing = offset < 0 ? -1 : 1;
   const feetY = enemyFeetY(parent);
   return {
+    id: "splitter",
+    spawnSource: parent.spawnSource,
+    spawnCost: 0.5,
+    aiState: "spawn",
+    aiTimer: 0,
     x: enemyCenterX(parent) + offset - SPLITTER_CONFIG.childW / 2,
     y: feetY - SPLITTER_CONFIG.childH,
     w: SPLITTER_CONFIG.childW,

@@ -1,6 +1,6 @@
 # Boss 类型与技能池
 
-> 实现状态：目标设计，未实现。当前源码仍是单例 Boss，没有完整 Boss 注册表或轮换池。幕表以 [../game-design/act-structure.md](../game-design/act-structure.md) 为权威，本文只展开 Boss 注册表、蚀醒形态、终幕换相和血量曲线。
+> 实现状态：源码已接入 Boss 注册表、固定 13 幕 Boss 序列、6 个基础 Boss、6 个蚀醒复现和终幕万相血月；数值仍需试玩调参。幕表以 [../game-design/act-structure.md](../game-design/act-structure.md) 为权威，本文展开 Boss 注册表、蚀醒形态、终幕换相和血量曲线。
 
 ## Purpose
 

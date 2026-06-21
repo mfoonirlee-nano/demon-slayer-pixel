@@ -3,37 +3,57 @@ import {
   WIDTH,
   ENEMY_SHEETS,
   ENEMY_CONFIG,
-  LEAPER_UNLOCK_SECONDS,
-  SPLITTER_UNLOCK_SECONDS,
-  WARDEN_UNLOCK_SECONDS,
-  BURROWER_UNLOCK_SECONDS,
   LANTERN_EMBER_CONFIG,
-  RUNTIME_CONFIG,
 } from "../constants";
-import type { EnemyState } from "../types/game-state";
+import type { EnemyId, EnemySpawnSource, EnemyState, SpawnPattern } from "../types/game-state";
 import { hitbox } from "../game/utils";
 import { hurtPlayer } from "./player";
-import { createEnemyState, enemyBaseHp, enemyDamage } from "./enemies/common";
+import { createEnemyState } from "./enemies/common";
 import { canSpawnBrute, isBruteSheet } from "./enemies/brute";
-import { BINDER_UNLOCK_SECONDS, canSpawnBinder, isBinderSheet } from "./enemies/binder";
+import { canSpawnBinder, isBinderSheet } from "./enemies/binder";
 import { canSpawnDuelist, isDuelistSheet } from "./enemies/duelist";
-import { GLIDER_UNLOCK_SECONDS, canSpawnGlider, isGliderSheet } from "./enemies/glider";
+import { canSpawnGlider, isGliderSheet } from "./enemies/glider";
 import { canSpawnLeaper, isLeaperSheet } from "./enemies/leaper";
 import { canSpawnSplitter, isSplitterSheet } from "./enemies/splitter";
 import { applyWardenAuraBuffs, canSpawnWarden, isWardenSheet } from "./enemies/warden";
 import { canSpawnBurrower, isBurrowerSheet } from "./enemies/burrower";
 import { enemyArchetypeForSheet } from "./enemies/registry";
+import {
+  activeSpawnCost,
+  canSpawnByDirectorCap,
+  canSpawnBossSummon,
+  enemyArchetypeById,
+  enemyIdForSheetIndex,
+  enemySpawnStats,
+  maxActiveSpawnCostForAct,
+  pickBossSummonEnemyId,
+  pickRegularEnemyId,
+} from "../systems/enemyDirector";
+import { BOSS_ARCHETYPE_IDS } from "./bosses/registry";
 
-const CHASER_SHEET_INDEX = 0;
+function sideForPattern(pattern: SpawnPattern): number {
+  if (pattern === "left") return -1;
+  if (pattern === "right") return 1;
+  return Math.random() < ENEMY_CONFIG.spawnSideChance ? -1 : 1;
+}
 
-function createSpawnedEnemy(sheetIndex: number, side: number): EnemyState {
-  const archetype = enemyArchetypeForSheet(sheetIndex);
+function createSpawnedEnemy(
+  enemyId: EnemyId,
+  side: number,
+  spawnSource: EnemySpawnSource,
+): EnemyState {
+  const config = enemyArchetypeById(enemyId);
+  const archetype = enemyArchetypeForSheet(config.sheetIndex);
+  const stats = enemySpawnStats(enemyId, state.bossKills, state.elapsed);
   const spawnContext = {
+    enemyId,
+    spawnSource,
+    spawnCost: config.spawnCost,
     side,
-    sheetIndex,
-    speed: archetype.speed(),
-    damage: enemyDamage(state.elapsed),
-    baseHp: enemyBaseHp(state.elapsed),
+    sheetIndex: config.sheetIndex,
+    speed: stats.speed,
+    damage: stats.damage,
+    baseHp: stats.hp / (archetype.hpMultiplier ?? 1),
   };
   const enemy = createEnemyState(spawnContext, archetype);
   archetype.init?.(enemy, spawnContext);
@@ -53,35 +73,57 @@ function canSpawnSheetIndex(sheetIndex: number) {
   return true;
 }
 
-function canRandomSpawnSheetIndex(sheetIndex: number) {
-  if (isBinderSheet(sheetIndex) && state.elapsed < BINDER_UNLOCK_SECONDS) return false;
-  if (isGliderSheet(sheetIndex) && state.elapsed < GLIDER_UNLOCK_SECONDS) return false;
-  if (isLeaperSheet(sheetIndex) && state.elapsed < LEAPER_UNLOCK_SECONDS) return false;
-  if (isSplitterSheet(sheetIndex) && state.elapsed < SPLITTER_UNLOCK_SECONDS) return false;
-  if (isWardenSheet(sheetIndex) && state.elapsed < WARDEN_UNLOCK_SECONDS) return false;
-  if (isBurrowerSheet(sheetIndex) && state.elapsed < BURROWER_UNLOCK_SECONDS) return false;
-  return canSpawnSheetIndex(sheetIndex);
+function canSpawnEnemyId(enemyId: EnemyId, source: EnemySpawnSource) {
+  const config = enemyArchetypeById(enemyId);
+  if (!ENEMY_SHEETS[config.sheetIndex]) return false;
+  if (!canSpawnSheetIndex(config.sheetIndex)) return false;
+  if (source === "debug") return true;
+  if (!canSpawnByDirectorCap(state.enemies, enemyId)) return false;
+  if (source === "boss") {
+    return canSpawnBossSummon(
+      state.enemies,
+      config.spawnCost,
+      state.boss?.phase ?? 1,
+      state.boss?.awakened ?? false,
+      state.boss?.id === BOSS_ARCHETYPE_IDS.bloodMoon,
+    );
+  }
+  return activeSpawnCost(state.enemies) + config.spawnCost <= maxActiveSpawnCostForAct(
+    state.enemyDirector.act,
+    state.enemyDirector.elapsedInAct,
+  );
 }
 
-function randomSpawnSheetIndex() {
-  const candidates = ENEMY_SHEETS
-    .map((_, sheetIndex) => sheetIndex)
-    .filter(canRandomSpawnSheetIndex);
-  if (candidates.length === 0) return CHASER_SHEET_INDEX;
-  return candidates[Math.floor(Math.random() * candidates.length)];
+export function spawnEnemyById(
+  enemyId: EnemyId,
+  source: EnemySpawnSource = "regular",
+  pattern: SpawnPattern = "random_edge",
+) {
+  if (!canSpawnEnemyId(enemyId, source)) return false;
+
+  state.enemies.push(createSpawnedEnemy(enemyId, sideForPattern(pattern), source));
+  return true;
 }
 
-export function spawnEnemy() {
-  if (state.enemies.length >= RUNTIME_CONFIG.enemyMaxCount) return;
+export function spawnEnemy(source: EnemySpawnSource = "regular") {
+  const enemyId = source === "boss"
+    ? pickBossSummonEnemyId(state.enemyDirector, Math.random, {
+        phase: state.boss?.phase ?? 1,
+        awakened: state.boss?.awakened ?? false,
+        finalBoss: state.boss?.id === BOSS_ARCHETYPE_IDS.bloodMoon,
+      })
+    : pickRegularEnemyId(state.enemyDirector);
+  return spawnEnemyById(enemyId, source);
+}
 
-  const side = Math.random() < ENEMY_CONFIG.spawnSideChance ? -1 : 1;
-  const sheetIndex = randomSpawnSheetIndex();
-  state.enemies.push(createSpawnedEnemy(sheetIndex, side));
+export function spawnBossSummonEnemy() {
+  return spawnEnemy("boss");
 }
 
 export function spawnEnemyBySheetIndex(sheetIndex: number, side = 1) {
   if (!canSpawnSheetIndex(sheetIndex)) return;
-  state.enemies.push(createSpawnedEnemy(sheetIndex, side));
+  const enemyId = enemyIdForSheetIndex(sheetIndex);
+  state.enemies.push(createSpawnedEnemy(enemyId, side, "debug"));
 }
 
 export function updateEnemies() {

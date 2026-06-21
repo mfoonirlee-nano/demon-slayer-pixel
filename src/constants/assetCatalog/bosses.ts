@@ -24,6 +24,30 @@ export const BOSS_SKILL1_EFFECT_SHEET: SpriteSheet = {
   image: null,
 };
 
+export const MIST_BONE_SHEET: SpriteSheet = {
+  src: "assets/sprites/boss/mist-bone/mist_bone_move.png",
+  frameW: 350,
+  frameH: 419,
+  count: 4,
+  image: null,
+};
+
+export const MIST_BONE_CAST_SHEET: SpriteSheet = {
+  src: "assets/sprites/boss/mist-bone/mist_bone_cast.png",
+  frameW: 400,
+  frameH: 400,
+  count: 6,
+  image: null,
+};
+
+export const MIST_BONE_SPIKES_SHEET: SpriteSheet = {
+  src: "assets/sprites/boss/mist-bone/mist_bone_spikes.png",
+  frameW: 400,
+  frameH: 350,
+  count: 6,
+  image: null,
+};
+
 export const DEAD_BELL_SHEET: SpriteSheet = {
   src: "assets/sprites/boss/dead_bell/dead_bell.png",
   frameW: 350,
@@ -52,6 +76,30 @@ export const DEAD_BELL_BLADE_SHEET: SpriteSheet = {
   src: "assets/sprites/boss/dead_bell/dead_bell_blade.png",
   frameW: 420,
   frameH: 180,
+  count: 6,
+  image: null,
+};
+
+export const FANG_GALE_SHEET: SpriteSheet = {
+  src: "assets/sprites/boss/fang-gale/fang_gale_move.png",
+  frameW: 350,
+  frameH: 419,
+  count: 4,
+  image: null,
+};
+
+export const FANG_GALE_WINDUP_SHEET: SpriteSheet = {
+  src: "assets/sprites/boss/fang-gale/fang_gale_windup.png",
+  frameW: 400,
+  frameH: 400,
+  count: 6,
+  image: null,
+};
+
+export const FANG_GALE_WAVE_SHEET: SpriteSheet = {
+  src: "assets/sprites/boss/fang-gale/fang_gale_wave.png",
+  frameW: 400,
+  frameH: 350,
   count: 6,
   image: null,
 };

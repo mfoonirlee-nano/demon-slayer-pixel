@@ -7,7 +7,7 @@ import {
   BRUTE_SHEET_INDEX,
 } from "../../constants";
 import type { SpriteSheet } from "../../types/assets";
-import type { EnemyState } from "../../types/game-state";
+import type { EnemyId, EnemySpawnSource, EnemyState } from "../../types/game-state";
 import { frameIndex } from "../../game/utils";
 import { drawSheetFrame } from "../../rendering/graphics";
 import { playSfx } from "../../game/audio";
@@ -15,6 +15,9 @@ import { playSfx } from "../../game/audio";
 const HALF_DIVISOR = 2;
 
 export type EnemySpawnContext = {
+  enemyId: EnemyId;
+  spawnSource: EnemySpawnSource;
+  spawnCost: number;
   side: number;
   sheetIndex: number;
   speed: number;
@@ -126,6 +129,11 @@ export function enemyCollisionSize(sheetIndex: number, archetype: EnemyArchetype
 export function createEnemyState(context: EnemySpawnContext, archetype: EnemyArchetype): EnemyState {
   const size = enemyCollisionSize(context.sheetIndex, archetype);
   return {
+    id: context.enemyId,
+    spawnSource: context.spawnSource,
+    spawnCost: context.spawnCost,
+    aiState: "spawn",
+    aiTimer: 0,
     x: context.side === 1 ? WIDTH + ENEMY_CONFIG.spawnOffsetRight : ENEMY_CONFIG.spawnOffsetLeft,
     y: GROUND_Y - size.h,
     w: size.w,

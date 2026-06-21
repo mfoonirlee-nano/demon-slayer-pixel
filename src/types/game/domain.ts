@@ -26,9 +26,54 @@ export type LeaperPhase = "stalk" | "windup" | "leap" | "impact" | "recover";
 export type SplitterPhase = "move" | "hit" | "split" | "birth";
 export type WardenPhase = "move" | "aura" | "hit";
 export type BurrowerPhase = "move" | "sink" | "burrow" | "emerge" | "recover";
+export type EnemyId =
+  | "chaser"
+  | "crawler"
+  | "runner"
+  | "duelist"
+  | "caster"
+  | "leaper"
+  | "glider"
+  | "splitter"
+  | "brute"
+  | "burrower"
+  | "binder"
+  | "warden";
+export type EnemyTag =
+  | "baseline"
+  | "low"
+  | "melee"
+  | "fast"
+  | "melee_burst"
+  | "ranged"
+  | "vertical"
+  | "burst"
+  | "aerial"
+  | "swarm"
+  | "heavy"
+  | "ambush"
+  | "control"
+  | "support";
+export type EnemyProfileId =
+  | "basic_intro"
+  | "technique_intro"
+  | "vertical_intro"
+  | "heavy_wall"
+  | "ambush_swarm"
+  | "control_support"
+  | "mixed_pressure"
+  | "fast_mix"
+  | "vertical_pressure"
+  | "chaos_mixed"
+  | "final";
+export type EnemySpawnSource = "regular" | "boss" | "debug";
+export type EnemyAiState = "spawn" | "move" | "windup" | "attack" | "recover" | "dead";
+export type ActBand = "intro" | "awakened" | "final";
 export type BossArchetypeId =
   | "spider-string"
+  | "mist-bone"
   | "mirror-dream"
+  | "fang-gale"
   | "lantern-ember"
   | "dead-bell"
   | "blood-moon-many-faces";
@@ -42,12 +87,18 @@ export type BloodMoonEffectKind =
   | "manyFaces";
 export type BossSkillMode =
   | "spiderString"
+  | "mistBoneSpike"
+  | "mistBoneLine"
+  | "mistBoneCage"
   | "deadBellSingle"
   | "deadBellDouble"
   | "deadBellCombo"
   | "mirrorShard"
   | "mirrorAfterimage"
   | "mirrorNightmare"
+  | "fangGaleDash"
+  | "fangGaleWave"
+  | "fangGaleStorm"
   | "lanternLure"
   | "lanternFireline"
   | "lanternBuff"

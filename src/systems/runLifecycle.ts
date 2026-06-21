@@ -6,6 +6,14 @@ export function markSpritesReady(state: GameState) {
 
 export function endRun(state: GameState) {
   state.gameOver = true;
+  state.runCleared = false;
+  state.pendingEquipmentChoices = [];
+  state.pendingUpgradeChoices = [];
+}
+
+export function clearRun(state: GameState) {
+  state.gameOver = true;
+  state.runCleared = true;
   state.pendingEquipmentChoices = [];
   state.pendingUpgradeChoices = [];
 }

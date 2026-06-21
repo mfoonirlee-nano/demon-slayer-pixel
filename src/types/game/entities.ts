@@ -11,6 +11,9 @@ import type {
   CrawlerPhase,
   CrystalType,
   DuelistPhase,
+  EnemyAiState,
+  EnemyId,
+  EnemySpawnSource,
   GliderPhase,
   LeaperPhase,
   PlatformKind,
@@ -118,6 +121,14 @@ export type PlayerState = {
 };
 
 export type EnemyState = {
+  id: EnemyId;
+  spawnSource: EnemySpawnSource;
+  spawnCost: number;
+  aiState: EnemyAiState;
+  aiTimer: number;
+  targetX?: number;
+  targetY?: number;
+  attackCd?: number;
   x: number;
   y: number;
   w: number;
@@ -230,6 +241,7 @@ export type BossState = {
   skillMode: BossSkillMode;
   recoveryTimer: number;
   awakened: boolean;
+  comboStep?: number;
   phaseShiftTimer?: number;
   armorBreakTimer?: number;
   armorBreakMultiplier?: number;

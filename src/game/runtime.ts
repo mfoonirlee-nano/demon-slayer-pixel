@@ -17,10 +17,10 @@ import { drawBackground, drawGroundTileBase, drawGroundTileFront } from "../rend
 import { drawNearForeground } from "../rendering/nearForeground";
 
 import { updatePlayer, drawPlayer, triggerAttack, castSelectedSkill, castUltimateSkill, selectSkill, tryJump } from "../entities/player";
-import { spawnEnemy, spawnEnemyBySheetIndex, updateEnemies, drawEnemy } from "../entities/enemy";
+import { spawnEnemyById, spawnEnemyBySheetIndex, updateEnemies, drawEnemy } from "../entities/enemy";
 import { updateBindingZones, drawBindingZonesBack, drawBindingZonesFront } from "../entities/enemies/binder";
 import { drawWardenAuraIndicators } from "../entities/enemies/warden";
-import { spawnBoss, updateBoss, drawBoss, updateBossSkill1Effects, drawBossSkill1Effects, updateDeadBellEffects, drawDeadBellEffects, updateMirrorDreamEffects, drawMirrorDreamEffects, updateLanternEmberEffects, drawLanternEmberEffects, updateBloodMoonEffects, drawBloodMoonEffects } from "../entities/boss";
+import { spawnBoss, updateBoss, drawBoss, updateBossSkill1Effects, drawBossSkill1Effects, updateDeadBellEffects, drawDeadBellEffects, updateMistBoneEffects, drawMistBoneEffects, updateMirrorDreamEffects, drawMirrorDreamEffects, updateFangGaleEffects, drawFangGaleEffects, updateLanternEmberEffects, drawLanternEmberEffects, updateBloodMoonEffects, drawBloodMoonEffects } from "../entities/boss";
 import {
   spawnMapSegmentOfKind,
   spawnNextMapSegment,
@@ -62,7 +62,7 @@ import type { EquipmentItemId, EquipmentSlot } from "../types/game-state";
 import { applyUpgradeChoice } from "../systems/progression";
 import { chooseBossEquipment as chooseBossEquipmentReward, equipEquipment as equipEquipmentInState } from "../systems/equipment";
 import { equipSkillSlot as equipSkillSlotInState, SKILL_SLOT_COUNT } from "../systems/loadout";
-import { enemySpawnInterval } from "../systems/runProgression";
+import { updateEnemyDirector } from "../systems/enemyDirector";
 import { markSpritesReady } from "../systems/runLifecycle";
 
 let frameId = 0;
@@ -216,24 +216,27 @@ function loop(ts: number) {
   if (!state.gameOver) {
     state.elapsed += dt;
     if (canAutoSpawnEntities()) {
-      state.spawnTimer -= dt;
-      state.bossSpawnTimer -= dt;
-    }
-
-    if (canAutoSpawnEntities() && !state.boss && state.spawnTimer <= 0) {
-      spawnEnemy();
-      state.spawnTimer = enemySpawnInterval(state.elapsed);
+      const directorUpdate = updateEnemyDirector(state.enemyDirector, {
+        dt,
+        bossKills: state.bossKills,
+        elapsedSeconds: state.elapsed,
+        activeEnemies: state.enemies,
+        playerHp: state.player.hp,
+        playerMaxHp: state.player.maxHp,
+        bossActive: state.boss !== null,
+      });
+      for (const request of directorUpdate.spawnRequests) {
+        spawnEnemyById(request.enemyId, "regular", request.pattern);
+      }
+      if (!state.boss && directorUpdate.spawnBoss) {
+        spawnBoss();
+      }
     }
 
     if (canAutoSpawnEntities()) state.platformSpawnTimer -= dt;
     if (canAutoSpawnEntities() && state.platformSpawnTimer <= 0) {
       spawnNextMapSegment();
       state.platformSpawnTimer = nextMapSpawnInterval();
-    }
-
-    if (canAutoSpawnEntities() && !state.boss && state.bossSpawnTimer <= 0 && state.elapsed > RUNTIME_CONFIG.bossAppearAfterSeconds) {
-      spawnBoss();
-      state.bossSpawnTimer = RUNTIME_CONFIG.disableBossSpawnTimer;
     }
 
     updateBindingZones();
@@ -245,7 +248,9 @@ function loop(ts: number) {
     updateBoss();
     updateBossSkill1Effects();
     updateDeadBellEffects();
+    updateMistBoneEffects();
     updateMirrorDreamEffects();
+    updateFangGaleEffects();
     updateLanternEmberEffects();
     updateBloodMoonEffects();
     updateProjectiles();
@@ -304,7 +309,9 @@ function loop(ts: number) {
   drawBoss();
   drawBossSkill1Effects();
   drawDeadBellEffects();
+  drawMistBoneEffects();
   drawMirrorDreamEffects();
+  drawFangGaleEffects();
   drawLanternEmberEffects();
   drawBloodMoonEffects();
   drawLineProjectileEffects();

@@ -1,9 +1,10 @@
-import { BASIC_ATTACK, GROUND_Y, PLAYER_COMBAT, PLAYER_DEFAULTS, RUNTIME_CONFIG } from "../constants";
+import { BASIC_ATTACK, GROUND_Y, PLAYER_COMBAT, PLAYER_DEFAULTS } from "../constants";
 import { bossArchetypeForId } from "../entities/bosses/registry";
 import type { GameSnapshot } from "./gameStore";
 import { createInitialMoonState } from "../moon";
 import type { GameState, PlayerState } from "../types/game-state";
 import { equipmentItem } from "../systems/equipment";
+import { createEnemyDirectorState } from "../systems/enemyDirector";
 import {
   INITIAL_EQUIPPED_SKILL_IDS,
   INITIAL_SKILL_LEVELS,
@@ -84,9 +85,8 @@ export function createInitialState(): GameState {
   return {
     elapsed: 0,
     last: 0,
-    spawnTimer: 0,
-    bossSpawnTimer: RUNTIME_CONFIG.initialBossSpawnTimer,
     bossKills: 0,
+    enemyDirector: createEnemyDirectorState(),
     pendingUpgradeChoices: [],
     pendingEquipmentChoices: [],
     equipmentInventory: [],
@@ -97,6 +97,7 @@ export function createInitialState(): GameState {
     },
     platformSpawnTimer: 0,
     gameOver: false,
+    runCleared: false,
     boss: null,
     moon: createInitialMoonState(),
     spritesReady: false,
@@ -119,8 +120,10 @@ export function createInitialState(): GameState {
     bossSkill1Effects: [],
     deadBellWaves: [],
     deadBellBlades: [],
+    mistBoneSpikes: [],
     mirrorShards: [],
     mirrorAfterimages: [],
+    fangGaleWaves: [],
     lanternEmberLures: [],
     lanternEmberFirelines: [],
     lanternEmberBuffTethers: [],
@@ -157,8 +160,10 @@ export function resetState() {
   resetCollection(state.bossSkill1Effects, next.bossSkill1Effects);
   resetCollection(state.deadBellWaves, next.deadBellWaves);
   resetCollection(state.deadBellBlades, next.deadBellBlades);
+  resetCollection(state.mistBoneSpikes, next.mistBoneSpikes);
   resetCollection(state.mirrorShards, next.mirrorShards);
   resetCollection(state.mirrorAfterimages, next.mirrorAfterimages);
+  resetCollection(state.fangGaleWaves, next.fangGaleWaves);
   resetCollection(state.lanternEmberLures, next.lanternEmberLures);
   resetCollection(state.lanternEmberFirelines, next.lanternEmberFirelines);
   resetCollection(state.lanternEmberBuffTethers, next.lanternEmberBuffTethers);
@@ -169,9 +174,8 @@ export function resetState() {
   resetCollection(state.projectiles, next.projectiles);
   resetCollection(state.bindingZones, next.bindingZones);
   state.elapsed = next.elapsed;
-  state.spawnTimer = next.spawnTimer;
-  state.bossSpawnTimer = next.bossSpawnTimer;
   state.bossKills = next.bossKills;
+  state.enemyDirector = next.enemyDirector;
   resetCollection(state.pendingUpgradeChoices, next.pendingUpgradeChoices);
   resetCollection(state.pendingEquipmentChoices, next.pendingEquipmentChoices);
   resetCollection(state.equipmentInventory, next.equipmentInventory);
@@ -179,6 +183,7 @@ export function resetState() {
   state.platformSpawnTimer = next.platformSpawnTimer;
   state.boss = next.boss;
   state.gameOver = next.gameOver;
+  state.runCleared = next.runCleared;
   state.moon = next.moon;
   state.last = next.last;
   // spritesReady is not reset — loaded assets persist across game resets
@@ -188,7 +193,7 @@ export function getStateSnapshot(manualPaused = false, paused = manualPaused): G
   const bossArchetype = state.boss ? bossArchetypeForId(state.boss.id) : null;
   const ultimateConfig = moonTideUltimateConfig(state.player.ultimateLevel);
   const activeOverlay = state.gameOver
-    ? "death"
+    ? state.runCleared ? "victory" : "death"
     : state.pendingEquipmentChoices.length > 0
       ? "bossEquipment"
       : state.pendingUpgradeChoices.length > 0
@@ -199,6 +204,7 @@ export function getStateSnapshot(manualPaused = false, paused = manualPaused): G
   return {
     elapsed: state.elapsed,
     gameOver: state.gameOver,
+    runCleared: state.runCleared,
     paused,
     manualPaused,
     activeOverlay,
