@@ -1,4 +1,4 @@
-# Splitter - 裂影鬼
+# Splitter - 裂影夜妖
 
 ## Implementation Status
 

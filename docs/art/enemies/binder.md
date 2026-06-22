@@ -1,4 +1,4 @@
-# Binder - 缚咒鬼
+# Binder - 缚咒夜妖
 
 ## Implementation Status
 
@@ -29,7 +29,7 @@
 ## Visual Identity
 
 - 施法、束缚、区域控制。
-- 远看要像会画阵和抛出束缚物的妖鬼，而不是普通远程投射手。
+- 远看要像会画阵和抛出束缚物的夜妖，而不是普通远程投射手。
 
 ## Shape Details
 

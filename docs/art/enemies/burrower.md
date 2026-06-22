@@ -1,4 +1,4 @@
-# Burrower - 土潜鬼
+# Burrower - 土潜夜妖
 
 ## Implementation Status
 

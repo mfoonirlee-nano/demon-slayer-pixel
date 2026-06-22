@@ -6,7 +6,7 @@
 
 ## Shared Art Direction
 
-整体风格延续当前像素横版生存游戏的暗色、妖鬼、日式山林夜战氛围。敌人需要在 `960 x 540` 画布、快速移动和小尺寸绘制时仍能一眼读出功能。
+整体风格延续当前像素横版生存游戏的暗色、夜妖、日式山林夜战氛围。敌人需要在 `960 x 540` 画布、快速移动和小尺寸绘制时仍能一眼读出功能。
 
 通用要求：
 
@@ -14,7 +14,7 @@
 - 动作前摇必须可画。冲刺、斩击、施法、跳跃、潜行、分裂、束缚、光环都需要明确的预备姿态。
 - 颜色服务识别。不要让敌人主色大面积接近玩家水蓝技能色；水蓝只可作为少量受击或反制特效。
 - 尺寸保持小怪级别。即使是 `warden`，也不能像 Boss 一样占据画面中心。
-- 不直接照搬现有具体动漫角色或知名怪物造型，以原创妖鬼变体为准。
+- 不直接照搬现有具体动漫角色或知名怪物造型，以原创夜妖变体为准。
 
 ## Delivery Guide
 
@@ -31,18 +31,18 @@
 
 | Enemy | 工作名 | 实现状态 | 文件 |
 | --- | --- | --- | --- |
-| `chaser` | 裸身追鬼 | 素材已接入；基础追踪行为已实现 | [chaser.md](chaser.md) |
-| `crawler` | 伏地蛛鬼 | 素材已接入；低伏前扑行为已实现 | [crawler.md](crawler.md) |
-| `runner` | 角突鬼 | 素材已接入；前摇冲刺行为已实现 | [runner.md](runner.md) |
-| `caster` | 提灯咒鬼 | 多状态素材已接入；远程鬼火行为已实现 | [caster.md](caster.md) |
-| `duelist` | 双刃裂鬼 | 多状态素材已接入；近战斩击行为已实现 | [duelist.md](duelist.md) |
-| `brute` | 盾甲重鬼 | 原画设定已重构为站立持盾重型；运行时仍待重做 | [brute.md](brute.md) |
-| `leaper` | 裂足跳鬼 | 多状态素材已接入；锁定落点跳跃行为已实现 | [leaper.md](leaper.md) |
-| `glider` | 膜翼巡鬼 | 多状态素材已接入；低空俯冲行为已实现 | [glider.md](glider.md) |
-| `burrower` | 土潜鬼 | 多状态素材已接入；潜入/钻出行为已实现 | [burrower.md](burrower.md) |
-| `splitter` | 裂影鬼 | 未实现 | [splitter.md](splitter.md) |
-| `binder` | 缚咒鬼 | 多状态素材已接入；控场咒圈行为已实现 | [binder.md](binder.md) |
-| `warden` | 御阵鬼 | 未实现 | [warden.md](warden.md) |
+| `chaser` | 裸身追妖 | 素材已接入；基础追踪行为已实现 | [chaser.md](chaser.md) |
+| `crawler` | 伏地蛛妖 | 素材已接入；低伏前扑行为已实现 | [crawler.md](crawler.md) |
+| `runner` | 角突夜妖 | 素材已接入；前摇冲刺行为已实现 | [runner.md](runner.md) |
+| `caster` | 提灯咒妖 | 多状态素材已接入；远程幽火行为已实现 | [caster.md](caster.md) |
+| `duelist` | 双刃裂妖 | 多状态素材已接入；近战斩击行为已实现 | [duelist.md](duelist.md) |
+| `brute` | 盾甲重妖 | 原画设定已重构为站立持盾重型；运行时仍待重做 | [brute.md](brute.md) |
+| `leaper` | 裂足跳妖 | 多状态素材已接入；锁定落点跳跃行为已实现 | [leaper.md](leaper.md) |
+| `glider` | 膜翼巡妖 | 多状态素材已接入；低空俯冲行为已实现 | [glider.md](glider.md) |
+| `burrower` | 土潜夜妖 | 多状态素材已接入；潜入/钻出行为已实现 | [burrower.md](burrower.md) |
+| `splitter` | 裂影夜妖 | 未实现 | [splitter.md](splitter.md) |
+| `binder` | 缚咒夜妖 | 多状态素材已接入；控场咒圈行为已实现 | [binder.md](binder.md) |
+| `warden` | 御阵夜妖 | 未实现 | [warden.md](warden.md) |
 
 ## Readability Checklist
 

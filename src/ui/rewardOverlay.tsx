@@ -57,7 +57,7 @@ export function RewardOverlay({ snapshot }: { snapshot: GameSnapshot }) {
   const [selectedIndex, setSelectedIndex] = useState(0);
   const selectedChoiceIndex = choiceCount > 0 ? Math.min(selectedIndex, choiceCount - 1) : 0;
   const layout = getRewardOverlayLayout(isBossReward ? "bossEquipment" : "upgrade", choices.length);
-  const title = isBossReward ? "血鬼遗物" : "选择需要的强化";
+  const title = isBossReward ? "夜潮遗物" : "选择需要的强化";
   const subtitle = isBossReward
     ? "选择一件装备"
     : null;

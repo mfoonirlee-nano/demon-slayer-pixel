@@ -58,7 +58,7 @@ k = bossKills = act - 1
 | `crawler` | `crawler.png` | `low`, `melee` | `1` | `1.0` | `1.2` | `5` | 低矮贴地穿插 |
 | `runner` | `runner_approach.png` | `fast` | `1` | `1.2` | `1.1` | `3` | 短前摇冲刺 |
 | `duelist` | `duelist.png` | `melee_burst` | `2` | `1.5` | `1.0` | `3` | 近战斩击精英 |
-| `caster` | `caster_move.png` | `ranged` | `2` | `1.6` | `0.9` | `2` | 远程鬼火施压 |
+| `caster` | `caster_move.png` | `ranged` | `2` | `1.6` | `0.9` | `2` | 远程幽火施压 |
 | `leaper` | `leaper_stalk.png` | `vertical`, `burst` | `2` | `1.6` | `0.85` | `2` | 跳跃落点压力 |
 | `glider` | `glider_hover.png` | `vertical`, `aerial` | `2` | `1.7` | `0.8` | `2` | 低空俯冲压力 |
 | `splitter` | `splitter_move.png` | `swarm` | `3` | `2.0` | `0.75` | `2` | 分裂清场顺序 |
@@ -71,15 +71,15 @@ k = bossKills = act - 1
 
 | 当前素材 | 视觉特征 | 当前问题 | 目标改造 |
 | --- | --- | --- | --- |
-| `chaser.png` | 裸身奔跑鬼 | 已接入基础追踪；目标横穿/重入场规则未实现 | 作为默认 `chaser`，承担横穿追击的基础怪规则 |
+| `chaser.png` | 裸身奔跑夜妖 | 已接入基础追踪；目标横穿/重入场规则未实现 | 作为默认 `chaser`，承担横穿追击的基础怪规则 |
 | `crawler.png` | 低矮蛛形 | 已接入低伏前扑玩法 | 作为 `crawler`，低血高速，短前摇前扑后有恢复硬直；普攻必须稳定可命中 |
-| `runner_approach.png` | 角鬼奔跑/挥臂 | 已接入前摇冲刺状态机 | 作为 `runner`，由 enemy director 控制快攻压力和同时冲刺数量 |
-| `caster_move.png` | 提灯面具鬼 | 已接入远程鬼火状态机 | 作为 `caster`，由 enemy director 控制生成权重和投射物密度 |
-| `duelist.png` | 双刃鬼 | 已接入近战斩击状态机 | 作为 `duelist`，由 enemy director 控制近身压力和同时威胁数量 |
-| `brute_advance.png` | 站立持盾重鬼 | 已接入盾牌耐久、盾击、破盾硬直和无盾横扫状态机 | 作为 `brute`，由 enemy director 控制正面阻挡压力和生成预算 |
-| `glider_hover.png` | 膜翼巡鬼 | 已接入低空悬停/俯冲状态机，当前按 `elapsed >= 70s` 进入随机候选 | 作为 `glider`，目标设计中改为由 `tier 2` 和 `runEnemyOrder` 控制解锁并纳入预算 |
-| `binder_move.png` | 符咒长袍鬼 | 已接入控场咒圈状态机 | 作为 `binder`，目标设计中改为由 `tier 4`、`runEnemyOrder` 和 profile 控制解锁与权重 |
-| `burrower_move.png` | 铲爪土潜鬼 | 已接入潜入、地面轨迹、钻出和恢复状态机，当前按 `elapsed >= 90s` 进入随机候选 | 作为 `burrower`，目标设计中改为由 `tier 3` 和 `runEnemyOrder` 控制解锁并纳入预算 |
+| `runner_approach.png` | 角突夜妖奔跑/挥臂 | 已接入前摇冲刺状态机 | 作为 `runner`，由 enemy director 控制快攻压力和同时冲刺数量 |
+| `caster_move.png` | 提灯面具夜妖 | 已接入远程幽火状态机 | 作为 `caster`，由 enemy director 控制生成权重和投射物密度 |
+| `duelist.png` | 双刃夜妖 | 已接入近战斩击状态机 | 作为 `duelist`，由 enemy director 控制近身压力和同时威胁数量 |
+| `brute_advance.png` | 站立持盾重妖 | 已接入盾牌耐久、盾击、破盾硬直和无盾横扫状态机 | 作为 `brute`，由 enemy director 控制正面阻挡压力和生成预算 |
+| `glider_hover.png` | 膜翼巡妖 | 已接入低空悬停/俯冲状态机，当前按 `elapsed >= 70s` 进入随机候选 | 作为 `glider`，目标设计中改为由 `tier 2` 和 `runEnemyOrder` 控制解锁并纳入预算 |
+| `binder_move.png` | 符咒长袍夜妖 | 已接入控场咒圈状态机 | 作为 `binder`，目标设计中改为由 `tier 4`、`runEnemyOrder` 和 profile 控制解锁与权重 |
+| `burrower_move.png` | 铲爪土潜夜妖 | 已接入潜入、地面轨迹、钻出和恢复状态机，当前按 `elapsed >= 90s` 进入随机候选 | 作为 `burrower`，目标设计中改为由 `tier 3` 和 `runEnemyOrder` 控制解锁并纳入预算 |
 
 新增敌人面向原画师的形象说明见 [../art/enemies/README.md](../art/enemies/README.md)。仍未接入的新增敌人等待正式素材、前摇动画和命中特效准备好后再进入生成池。
 

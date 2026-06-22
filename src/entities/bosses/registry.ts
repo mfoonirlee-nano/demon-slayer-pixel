@@ -267,7 +267,7 @@ export const BOSS_ARCHETYPES: Record<RegisteredBossArchetypeId, BossArchetype> =
   "blood-moon-many-faces": {
     id: BOSS_ARCHETYPE_IDS.bloodMoon,
     displayName: "万相血月",
-    phaseTitle: (phase) => `终幕之鬼 · 万相血月 · 第 ${phase} 相`,
+    phaseTitle: (phase) => `终幕夜相 · 万相血月 · 第 ${phase} 相`,
     unlockAct: 13,
     awakenedUnlockAct: 13,
     hpBase: 1050,
