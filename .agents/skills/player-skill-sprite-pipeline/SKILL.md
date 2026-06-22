@@ -18,8 +18,9 @@ description: Generate, repair, integrate, and validate 2D player skill sprite sh
    - `assets/sprites/skills/<skill_id>/effect.png`
    - `icon.png` only if the user asks for icon work.
 3. Use the `imagegen` skill for bitmap generation. Do not replace requested generated sprites with canvas/SVG/code-drawn art.
-4. Save generated sources into `tmp/imagegen/`, remove chroma key locally, then write final transparent PNGs into `assets/sprites/skills/<skill_id>/`.
-5. Verify dimensions, alpha margins, runtime scale, typecheck, lint, and `git diff --check`. Do not start browsers or the game process.
+4. For built-in `imagegen`, read `image_generation_call.result` first; it is PNG base64. Decode it into `tmp/imagegen/` instead of searching directories for generated files.
+5. Save generated sources into `tmp/imagegen/`, remove chroma key locally, then write final transparent PNGs into `assets/sprites/skills/<skill_id>/`.
+6. Verify dimensions, alpha margins, runtime scale, typecheck, lint, and `git diff --check`. Do not start browsers or the game process.
 
 ## Imagegen Prompt Rules
 

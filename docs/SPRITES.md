@@ -10,7 +10,7 @@
 - 禁止使用 Python 代码生成、绘制、重绘或合成图片内容，也不要新增这类 Python 生成脚本。
 - Python 仅可用于确定性的后处理或检查，例如绿幕抠透明、压缩、尺寸校验；这些步骤不能改变图片创作内容。
 - 项目用素材生成后必须落到 `assets/sprites/` 对应目录中，不能只保留在 Image Gen 的默认输出目录。
-- 使用内置 `imagegen` 后必须检查工具返回本身，不要假设一定会写入 `~/.codex/generated_images/`。如果返回的是 PNG base64，从 session/tool result 中解码到 `tmp/imagegen/` 或目标工作区路径，再继续处理。
+- 使用内置 `imagegen` 后必须检查工具返回本身，不要假设一定会写入 `~/.codex/generated_images/`。内置图片生成的 `image_generation_call.result` 是 PNG base64；先从该字段解码到 `tmp/imagegen/` 或目标工作区路径，再继续后处理。
 - 生成结果进入 `assets/sprites/` 前必须做素材规格校验：确认宽高、文件格式、alpha 通道、四边透明像素、可见内容 bbox、帧数/单帧尺寸和运行时常量仍匹配现有使用方式。
 - `imagegen` 可能输出大尺寸 RGB 图、棋盘格伪透明背景或轻微风格漂移。允许做确定性的透明恢复、裁切、缩放和压缩；不允许用脚本补画、重绘或创作缺失的视觉内容。
 - 如果需要精确替换已有 UI/sprite，先记录原素材的尺寸和 alpha bbox，后处理时把生成图对齐回这些运行时约束，避免透明边界、碰撞/布局尺寸或卡片锚点漂移。
@@ -286,12 +286,13 @@ Burrower 运行时由 `BURROWER_SHEETS` 暴露并预加载。普通刷怪在 `el
 ## 资源更新流程
 
 1. 生成或编辑图片内容时，使用 Image Gen skill (`imagegen`)，优先输出为透明 PNG。
-2. 如果使用绿幕源图，先保存 `*_source.png`，再通过确定性后处理抠成运行时透明资源。
-3. 对横向序列帧，确保总宽度等于 `frameW * count`，总高度等于 `frameH`。
-4. 替换已有运行时素材时，如果切片规格不变，只需要覆盖 PNG。
-5. 如果切片规格变化，必须同步更新 `src/constants/assets.ts` 中的 `frameW`、`frameH`、`count`，并检查绘制缩放和碰撞范围。
-6. 运行时需要加载的新资源，必须在 `src/constants/assets.ts` 中暴露，并由 `src/assets.ts` 加入加载任务。
-7. 不参与运行时的制作源图需要在文件名中标注 `source`，避免误接入。
+2. 内置 `imagegen` 返回时，先检查 `image_generation_call.result`；该字段是 PNG base64，需要解码保存为源图，不要先去目录里查找生成产物。
+3. 如果使用绿幕源图，先保存 `*_source.png`，再通过确定性后处理抠成运行时透明资源。
+4. 对横向序列帧，确保总宽度等于 `frameW * count`，总高度等于 `frameH`。
+5. 替换已有运行时素材时，如果切片规格不变，只需要覆盖 PNG。
+6. 如果切片规格变化，必须同步更新 `src/constants/assets.ts` 中的 `frameW`、`frameH`、`count`，并检查绘制缩放和碰撞范围。
+7. 运行时需要加载的新资源，必须在 `src/constants/assets.ts` 中暴露，并由 `src/assets.ts` 加入加载任务。
+8. 不参与运行时的制作源图需要在文件名中标注 `source`，避免误接入。
 
 ## 脚本说明
 
