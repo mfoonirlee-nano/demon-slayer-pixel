@@ -1,4 +1,4 @@
-# Runner - 角突鬼
+# Runner - 角突夜妖
 
 ## Implementation Status
 

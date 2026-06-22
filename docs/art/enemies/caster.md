@@ -1,9 +1,9 @@
-# Caster - 提灯咒鬼
+# Caster - 提灯咒妖
 
 ## Implementation Status
 
-- 素材状态：多状态素材已实现并接入预加载，移动图集对应 `assets/sprites/enemies/caster/caster_move.png`，额外状态在 `assets/sprites/enemies/caster/`，独立鬼火为 `caster_wisp.png`。
-- 玩法状态：已接入专属 `caster` archetype，状态机为 `seekRange -> windup -> cast -> recover -> seekRange`，鬼火投射物会低速朝玩家方向飞行并轻微追踪。
+- 素材状态：多状态素材已实现并接入预加载，移动图集对应 `assets/sprites/enemies/caster/caster_move.png`，额外状态在 `assets/sprites/enemies/caster/`，独立幽火为 `caster_wisp.png`。
+- 玩法状态：已接入专属 `caster` archetype，状态机为 `seekRange -> windup -> cast -> recover -> seekRange`，幽火投射物会低速朝玩家方向飞行并轻微追踪。
 
 ## Role
 
@@ -15,7 +15,7 @@
 
 ## Visual Identity
 
-- 白色或灰白鬼面，眼孔发暗红光，面具轮廓清楚。
+- 白色或灰白妖面，眼孔发暗红光，面具轮廓清楚。
 - 破损黑袍或灰袍，姿态微驼，行动慢。
 - 一手提灯，一手下垂或结印，提灯位置始终可见。
 - 提灯发橙红光，施法前亮度增强。
@@ -39,13 +39,13 @@
 
 ## Projectile Notes
 
-- `caster_cast` 只表现提灯近处的起火和释放，不承载飞行中的鬼火。
+- `caster_cast` 只表现提灯近处的起火和释放，不承载飞行中的幽火。
 - `caster_wisp.png` 是独立 4 帧投射物图集，单帧 `96x96`。
-- 单个 caster 同时最多保有 `2` 个鬼火；难度提升后可单次补到 `2` 发。
-- 鬼火应保持暖橙/幽火读法，速度低，可躲避，不能变成高密度弹幕。
+- 单个 caster 同时最多保有 `2` 个幽火；难度提升后可单次补到 `2` 发。
+- 幽火应保持暖橙/幽火读法，速度低，可躲避，不能变成高密度弹幕。
 
 ## Avoid
 
 - 不要让提灯光覆盖大面积画面，它只是施法提示。
 - 不要把它画得太快或太强壮，定位应是后排远程压力。
-- 不要把飞离灯笼的鬼火画进 caster 动作帧；飞行形态只存在于 `caster_wisp.png`。
+- 不要把飞离灯笼的幽火画进 caster 动作帧；飞行形态只存在于 `caster_wisp.png`。
