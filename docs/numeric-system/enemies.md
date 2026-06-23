@@ -27,7 +27,7 @@
 
 - 没有 `bossKills`、`act` 或统一 `threatScalar`。
 - 没有按幕常规敌人池、轮换池或生成预算。
-- `splitter`、`warden` 没有运行时实现。
+- `splitter` 没有运行时实现；`warden` 已接入光环支援状态机。
 - Boss 召唤仍调用普通 `spawnEnemy()`，尚未读取 Boss archetype 的召唤池配置。
 
 无 Boss 时，运行时按刷怪计时器生成普通敌人。Boss 存在时常规刷怪暂停，但 Boss 召唤分支仍会调用 `spawnEnemy()`。

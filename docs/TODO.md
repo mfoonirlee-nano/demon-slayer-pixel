@@ -113,7 +113,7 @@
 * [ ] 用 `enemySpawnBudget` 和 active cap 替代单纯敌人数量上限。
   * 来源：`docs/numeric-system/implementation-order.md`、`docs/game-design/balance-acceptance.md`。
   * 验收：高复杂敌人不会同屏机制过载，低端设备不会因刷怪失控明显掉帧。
-* [ ] 补齐或整理未完成敌人：`burrower`、`splitter`、`warden`。
+* [ ] 补齐或整理未完成敌人：`burrower`、`splitter`；复核已接入的 `warden` 是否仍需按幕权重和预算微调。
   * 来源：`docs/game-design/content-roadmap.md`。
   * 验收：新敌人有正式状态机、可读前摇、active cap、碰撞盒和奖励规则；未完成前不进入实际生成池。
 * [ ] 新增 `BOSS_ARCHETYPES` 和 Boss 注册表。

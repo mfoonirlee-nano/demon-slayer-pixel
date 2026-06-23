@@ -42,7 +42,7 @@
 | `burrower` | 土潜夜妖 | 多状态素材已接入；潜入/钻出行为已实现 | [burrower.md](burrower.md) |
 | `splitter` | 裂影夜妖 | 未实现 | [splitter.md](splitter.md) |
 | `binder` | 缚咒夜妖 | 多状态素材已接入；控场咒圈行为已实现 | [binder.md](binder.md) |
-| `warden` | 御阵夜妖 | 未实现 | [warden.md](warden.md) |
+| `warden` | 御阵夜妖 | 多状态素材已接入；光环支援行为已实现 | [warden.md](warden.md) |
 
 ## Readability Checklist
 
