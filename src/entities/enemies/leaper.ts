@@ -268,6 +268,7 @@ function updateLeaper(enemy: EnemyState) {
 
     if (enemy.leaperTimer <= 0) {
       enterLeaperPhase(enemy, "impact");
+      triggerLeaperImpactHit(enemy);
     }
     return;
   }
