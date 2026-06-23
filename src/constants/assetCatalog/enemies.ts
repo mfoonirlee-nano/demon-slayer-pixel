@@ -401,6 +401,13 @@ export const SPLITTER_SHEETS: Record<SplitterPhase | "splitlingMove", SpriteShee
     count: 3,
     image: null,
   },
+  attack: {
+    src: "assets/sprites/enemies/splitter/splitter_attack.png",
+    frameW: 288,
+    frameH: 320,
+    count: 6,
+    image: null,
+  },
   split: {
     src: "assets/sprites/enemies/splitter/splitter_split.png",
     frameW: 288,

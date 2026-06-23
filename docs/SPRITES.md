@@ -243,11 +243,12 @@ Splitter 专属动作素材：
 | --- | ---: | ---: | ---: | --- | --- |
 | `enemies/splitter/splitter_move.png` | `1728x320` | 6 | `288x320` | `move` | 本体慢速追踪，双半脸面具和胸腹中线裂缝是主要读法 |
 | `enemies/splitter/splitter_hit.png` | `864x320` | 3 | `288x320` | `hit` | 受击短暂后仰，裂缝用暗紫红增强但不接近玩家水蓝 |
+| `enemies/splitter/splitter_attack.png` | `1728x320` | 6 | `288x320` | `attack` | 本体贴近玩家时短暂停步挥爪/骨刃，接触伤害仍走通用碰撞检测 |
 | `enemies/splitter/splitter_split.png` | `1728x320` | 6 | `288x320` | `split` | 本体死亡后从中线撕开，散出黑紫烟并生成两个分裂体 |
 | `enemies/splitter/splitling_birth.png` | `1440x240` | 6 | `240x240` | `birth` | 分裂体短暂半透明出生，期间不造成接触伤害 |
 | `enemies/splitter/splitling_move.png` | `1440x240` | 6 | `240x240` | `splitlingMove` | 低矮残缺半身快速追踪，死亡不再分裂 |
 
-Splitter 运行时由 `SPLITTER_SHEETS` 暴露并预加载。普通刷怪在 `elapsed >= 90s` 后才会抽取 splitter；同屏本体最多 `2` 个。本体死亡时先进入短分裂状态并禁用接触伤害，动画结束后生成两个更小更快的 splitling。splitling 击杀不给分数，仅给少量能量，避免刷分。
+Splitter 运行时由 `SPLITTER_SHEETS` 暴露并预加载。普通刷怪在 `elapsed >= 90s` 后才会抽取 splitter；同屏本体最多 `2` 个。本体碰撞玩家时进入短攻击动画，并继续通过通用接触伤害扣血。本体死亡时先进入短分裂状态并禁用接触伤害，动画结束后生成两个更小更快的 splitling。splitling 击杀不给分数，仅给少量能量，避免刷分。
 
 Warden 专属动作素材：
 

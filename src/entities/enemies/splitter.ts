@@ -9,7 +9,7 @@ import {
   SPLITTER_SHEETS,
 } from "../../constants";
 import type { EnemyState, SplitterPhase } from "../../types/game-state";
-import { frameIndex } from "../../game/utils";
+import { frameIndex, hitbox } from "../../game/utils";
 import type { EnemyArchetype, EnemyDefeatContext, EnemySpawnContext } from "./common";
 import { enemyBaseHp, enemyCenterX, enemyFeetY } from "./common";
 
@@ -23,6 +23,7 @@ const SPLITTER_CONFIG = {
   parentCollisionScaleX: 1.08,
   parentCollisionScaleY: 1.02,
   moveAnimSpeed: 8,
+  attackFrames: 18,
   hitFrames: 12,
   hitMoveScale: 0.35,
   splitFrames: 32,
@@ -146,6 +147,19 @@ function updateSplitterParentMove(enemy: EnemyState) {
   enemy.splitterFacing = facing;
   enemy.vx = facing * (enemy.splitterBaseSpeed ?? SPLITTER_CONFIG.parentBaseSpeed);
   enemy.x += enemy.vx;
+  if (hitbox(state.player, enemy)) {
+    enemy.vx = 0;
+    enemy.splitterPhase = "attack";
+    enemy.splitterTimer = SPLITTER_CONFIG.attackFrames;
+  }
+}
+
+function updateSplitterAttack(enemy: EnemyState) {
+  enemy.splitterTimer = (enemy.splitterTimer ?? 0) - 1;
+  enemy.vx = 0;
+  if (enemy.splitterTimer <= 0) {
+    enemy.splitterPhase = "move";
+  }
 }
 
 function updateSplitterHit(enemy: EnemyState) {
@@ -223,6 +237,11 @@ function updateSplitter(enemy: EnemyState) {
     return;
   }
 
+  if (enemy.splitterPhase === "attack") {
+    updateSplitterAttack(enemy);
+    return;
+  }
+
   updateSplitterParentMove(enemy);
 }
 
@@ -247,6 +266,9 @@ function splitterFrame(enemy: EnemyState) {
   const sheet = splitterSheetFor(enemy);
   if (phase === "hit") {
     return phaseFrame(sheet.count, SPLITTER_CONFIG.hitFrames, enemy.splitterTimer ?? 0);
+  }
+  if (phase === "attack") {
+    return phaseFrame(sheet.count, SPLITTER_CONFIG.attackFrames, enemy.splitterTimer ?? 0);
   }
   if (phase === "split") {
     return phaseFrame(sheet.count, SPLITTER_CONFIG.splitFrames, enemy.splitterTimer ?? 0);
