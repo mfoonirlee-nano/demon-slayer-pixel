@@ -112,6 +112,7 @@ function triggerArmorBreakImpact(effect: PlayerSkillEffectState, collision: Armo
       damage: effect.damage,
       hitCooldown: effect.hitCooldown,
       reward: "enemyNoCover",
+      damageKind: "armorBreak",
       afterDamage: () => applyArmorBreakToEnemy(
         collision.enemy,
         effect.armorBreakDuration ?? 0,

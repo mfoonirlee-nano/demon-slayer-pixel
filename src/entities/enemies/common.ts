@@ -39,7 +39,7 @@ export type EnemyArchetype = {
   shouldRemove?: (enemy: EnemyState) => boolean;
 };
 
-export type EnemyDamageKind = "normal" | "ultimate";
+export type EnemyDamageKind = "normal" | "ultimate" | "armorBreak";
 export type EnemyDefeatRewardKind = "none" | "enemy" | "enemyNoCover" | "attack";
 export const BRUTE_SHIELD_BREAK_FRAMES = 34;
 
@@ -62,15 +62,15 @@ function breakBruteShield(enemy: EnemyState) {
 }
 
 function damageBrute(enemy: EnemyState, damage: number, kind: EnemyDamageKind) {
-  if (kind === "ultimate") {
-    enemy.hp -= damage;
-    if (enemy.hp > 0) breakBruteShield(enemy);
-    return damage;
-  }
-
   if (enemy.bruteShieldBroken || (enemy.bruteShieldHp ?? 0) <= 0) {
     enemy.hp -= damage;
     return damage;
+  }
+
+  if (kind === "armorBreak") {
+    const shieldHp = enemy.bruteShieldHp ?? 0;
+    breakBruteShield(enemy);
+    return shieldHp;
   }
 
   const shieldHp = enemy.bruteShieldHp ?? 0;

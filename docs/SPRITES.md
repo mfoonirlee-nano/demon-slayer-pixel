@@ -197,7 +197,7 @@ Brute 专属动作素材：
 | `enemies/brute/brute_cleave.png` | `1600x360` | 5 | `320x360` | `cleave` | 破盾后慢速横扫，挥臂弧线烘入图集 |
 | `enemies/brute/brute_broken_recover.png` | `960x360` | 3 | `320x360` | `brokenRecover` | 无盾攻击后硬直，胸腹持续暴露 |
 
-Brute 运行时由 `BRUTE_SHEETS` 暴露并预加载。非大招伤害先扣盾牌耐久，盾牌归零后进入 `shieldBreak -> brokenRecover -> brokenAdvance`；大招对本体造成完整伤害，若 brute 存活且盾未破，会同步触发破盾。以上运行时只加载透明 PNG，不提交 `*_source.png` 绿幕制作源图。
+Brute 运行时由 `BRUTE_SHEETS` 暴露并预加载。完整盾牌先承受普通攻击、普通技能和大招伤害，盾牌归零后进入 `shieldBreak -> brokenRecover -> brokenAdvance`；`armor_break` 命中完整盾牌时直接触发破盾，但这一击不打本体。以上运行时只加载透明 PNG，不提交 `*_source.png` 绿幕制作源图。
 
 Binder 专属动作素材：
 

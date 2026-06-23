@@ -39,7 +39,7 @@ const BRUTE_CONFIG = {
   shieldBashImpactRemainingFrames: 9,
   cleaveImpactRemainingFrames: 12,
   hpMultiplier: 3.25,
-  shieldHpScale: 0.4,
+  shieldHpScale: 2,
   maxActiveBrutes: 2,
   maxActiveAttacks: 1,
   drawScale: 1.0,
