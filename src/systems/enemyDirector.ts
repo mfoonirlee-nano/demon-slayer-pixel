@@ -13,6 +13,7 @@ import {
   anyEnemyHasTag,
   canSpawnByDirectorCap,
   maxActiveSpawnCostForAct,
+  RECENT_ENEMY_LIMIT,
   seededRandom,
   weightedPick,
 } from "./enemyDirectorRules";
@@ -38,6 +39,7 @@ export {
   maxActiveSpawnCostForAct,
   pickBossSummonEnemyId,
   pickRegularEnemyId,
+  RECENT_ENEMY_LIMIT,
   selectActProfile,
   unlockedEnemiesForAct,
 } from "./enemyDirectorRules";
@@ -52,6 +54,24 @@ const MIN_ENTRY_DELAY = 0.42;
 const MIN_BREATHER_SECONDS = 1.2;
 const BASE_BREATHER_SECONDS = 2.1;
 const MAX_BREATHER_SECONDS = 4.5;
+const HARD_WAVE_INTERVAL = 4;
+const LIGHT_WAVE_INTERVAL = 3;
+const WAVE_SEED_ACT_SALT = 1009;
+const WAVE_SEED_CLEAR_SALT = 9176;
+const WAVE_SEED_RECENT_SALT = 37;
+const TIER_ONE_COMPLEXITY = 1;
+const PRESSURE_PINCER_CHANCE = 0.35;
+const REINFORCE_CLUSTER_CHANCE = 0.45;
+const DOUBLE_OPENER_CHANCE = 0.45;
+const OPENER_ENTRY_DELAY = 0.2;
+const PRESSURE_ENTRY_DELAY = 0.8;
+const SUPPORT_ENTRY_DELAY = 1.1;
+const EXTRA_ENTRY_BASE_DELAY = 0.7;
+const EXTRA_ENTRY_RANDOM_DELAY = 0.6;
+const MAX_WAVE_ENTRIES = 5;
+const PREPARE_WAVE_SECONDS = 0.65;
+const ACTIVE_COST_BREATHER_SCALE = 0.22;
+const LOW_HEALTH_RATIO = 0.35;
 
 export type EnemySpawnRequest = {
   enemyId: EnemyId;
@@ -65,16 +85,16 @@ export type EnemyDirectorUpdate = {
 
 function waveBudgetRatio(wavesCleared: number, lowHealth: boolean) {
   if (lowHealth) return LOW_HEALTH_WAVE_RATIO * LIGHT_WAVE_RATIO;
-  if (wavesCleared > 0 && wavesCleared % 4 === 0) return HARD_WAVE_RATIO;
-  if (wavesCleared % 3 === 0) return LIGHT_WAVE_RATIO;
+  if (wavesCleared > 0 && wavesCleared % HARD_WAVE_INTERVAL === 0) return HARD_WAVE_RATIO;
+  if (wavesCleared % LIGHT_WAVE_INTERVAL === 0) return LIGHT_WAVE_RATIO;
   return NORMAL_WAVE_RATIO;
 }
 
 function waveSeed(director: EnemyDirectorState) {
   return director.runSeed
-    + director.act * 1009
-    + director.wavesCleared * 9176
-    + director.recentEnemyIds.length * 37;
+    + director.act * WAVE_SEED_ACT_SALT
+    + director.wavesCleared * WAVE_SEED_CLEAR_SALT
+    + director.recentEnemyIds.length * WAVE_SEED_RECENT_SALT;
 }
 
 function pickPoolEnemy(
@@ -92,14 +112,14 @@ function roleForEnemy(enemyId: EnemyId, director: EnemyDirectorState): WaveEntry
   const profile = PROFILE_CONFIGS[director.currentProfile];
   if (anyEnemyHasTag(enemyId, ["ranged", "control", "support"])) return "support";
   if (anyEnemyHasTag(enemyId, profile.requiredTags)) return "pressure";
-  if (ENEMY_ARCHETYPES[enemyId].complexityTier === 1) return "opener";
+  if (ENEMY_ARCHETYPES[enemyId].complexityTier === TIER_ONE_COMPLEXITY) return "opener";
   return "reinforce";
 }
 
 function spawnPatternForRole(role: WaveEntryRole, rng: () => number): SpawnPattern {
   if (role === "support") return rng() < 0.5 ? "left" : "right";
-  if (role === "pressure") return rng() < 0.35 ? "pincer" : "random_edge";
-  if (role === "reinforce") return rng() < 0.45 ? "same_edge_cluster" : "random_edge";
+  if (role === "pressure") return rng() < PRESSURE_PINCER_CHANCE ? "pincer" : "random_edge";
+  if (role === "reinforce") return rng() < REINFORCE_CLUSTER_CHANCE ? "same_edge_cluster" : "random_edge";
   return "random_edge";
 }
 
@@ -133,27 +153,27 @@ export function pickWavePlan(director: EnemyDirectorState, lowHealth: boolean) {
     const enemyId = pickPoolEnemy(director, rng, predicate);
     const config = ENEMY_ARCHETYPES[enemyId];
     const role = roleForEnemy(enemyId, director);
-    const canDouble = config.complexityTier === 1 && plannedCost + config.spawnCost * 2 <= targetBudget;
-    const remaining = canDouble && rng() < 0.45 ? 2 : 1;
+    const canDouble = config.complexityTier === TIER_ONE_COMPLEXITY && plannedCost + config.spawnCost * 2 <= targetBudget;
+    const remaining = canDouble && rng() < DOUBLE_OPENER_CHANCE ? 2 : 1;
     entries.push(makeWaveEntry(enemyId, role, rng, remaining, delay));
     plannedCost += config.spawnCost * remaining;
   };
 
-  addEntry((enemyId) => ENEMY_ARCHETYPES[enemyId].complexityTier <= 2, 0.2);
-  addEntry((enemyId) => anyEnemyHasTag(enemyId, profile.requiredTags), 0.8);
-  addEntry((enemyId) => anyEnemyHasTag(enemyId, ["ranged", "control", "support"]), 1.1);
-  while (plannedCost < targetBudget && entries.length < 5) {
-    addEntry(() => true, 0.7 + rng() * 0.6);
+  addEntry((enemyId) => ENEMY_ARCHETYPES[enemyId].complexityTier <= 2, OPENER_ENTRY_DELAY);
+  addEntry((enemyId) => anyEnemyHasTag(enemyId, profile.requiredTags), PRESSURE_ENTRY_DELAY);
+  addEntry((enemyId) => anyEnemyHasTag(enemyId, ["ranged", "control", "support"]), SUPPORT_ENTRY_DELAY);
+  while (plannedCost < targetBudget && entries.length < MAX_WAVE_ENTRIES) {
+    addEntry(() => true, EXTRA_ENTRY_BASE_DELAY + rng() * EXTRA_ENTRY_RANDOM_DELAY);
   }
 
   return entries.length > 0
     ? entries
-    : [makeWaveEntry(director.currentPool[0]?.enemyId ?? "chaser", "opener", rng, 1, 0.2)];
+    : [makeWaveEntry(director.currentPool[0]?.enemyId ?? "chaser", "opener", rng, 1, OPENER_ENTRY_DELAY)];
 }
 
 function rememberRecentEnemy(director: EnemyDirectorState, enemyId: EnemyId) {
   director.recentEnemyIds.push(enemyId);
-  if (director.recentEnemyIds.length > 6) {
+  if (director.recentEnemyIds.length > RECENT_ENEMY_LIMIT) {
     director.recentEnemyIds.shift();
   }
 }
@@ -162,7 +182,7 @@ function startWave(director: EnemyDirectorState, lowHealth: boolean) {
   const entries = pickWavePlan(director, lowHealth);
   director.wave = {
     phase: "prepare",
-    timer: 0.65,
+    timer: PREPARE_WAVE_SECONDS,
     entries,
     nextEntryIndex: 0,
     activeBudget: maxActiveSpawnCostForAct(director.act, director.elapsedInAct),
@@ -171,7 +191,7 @@ function startWave(director: EnemyDirectorState, lowHealth: boolean) {
 
 function finishWave(director: EnemyDirectorState, activeCost: number, lowHealth: boolean) {
   director.wavesCleared += 1;
-  const pressureDelay = Math.min(MAX_BREATHER_SECONDS, BASE_BREATHER_SECONDS + activeCost * 0.22);
+  const pressureDelay = Math.min(MAX_BREATHER_SECONDS, BASE_BREATHER_SECONDS + activeCost * ACTIVE_COST_BREATHER_SCALE);
   director.wave = {
     phase: "breather",
     timer: Math.max(
@@ -277,7 +297,7 @@ export function updateEnemyDirector(
     return { spawnRequests, spawnBoss: bossPreludeWaitSeconds(director.act) <= 0 };
   }
 
-  const lowHealth = input.playerMaxHp > 0 && input.playerHp / input.playerMaxHp < 0.35;
+  const lowHealth = input.playerMaxHp > 0 && input.playerHp / input.playerMaxHp < LOW_HEALTH_RATIO;
   if (!director.wave) startWave(director, lowHealth);
   if (!director.wave) return { spawnRequests, spawnBoss: false };
 

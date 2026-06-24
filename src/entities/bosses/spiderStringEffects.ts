@@ -9,6 +9,8 @@ import { BOSS_ARCHETYPE_IDS, bossArchetypeForId } from "./registry";
 import type { BossSkill1EffectState } from "../../types/game-state";
 import type { LiveBoss } from "./types";
 
+const PROJECTILE_SFX_PITCH = 0.86;
+
 export function spawnBossSkill1Effect(boss: LiveBoss) {
   const facing = boss.castFacing;
   const archetype = bossArchetypeForId(boss.id);
@@ -39,7 +41,7 @@ export function spawnBossSkill1Effect(boss: LiveBoss) {
     damage,
     hitPlayerCd: 0,
   });
-  playSfx("bossProjectile", 0.86);
+  playSfx("bossProjectile", PROJECTILE_SFX_PITCH);
 }
 
 export function updateBossSkill1Effects() {

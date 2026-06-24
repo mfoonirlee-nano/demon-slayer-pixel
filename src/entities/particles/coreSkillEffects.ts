@@ -11,6 +11,7 @@ const LINE_PROJECTILE_EFFECT_SHEET = CORE_PLAYER_SKILL_EFFECT_SHEETS[SKILL_IDS.l
 const LINE_PROJECTILE_EFFECT_CONFIG = CORE_PLAYER_SKILL_EFFECT_CONFIGS[SKILL_IDS.lineProjectile];
 const CLOSE_ARC_EFFECT_SHEET = CORE_PLAYER_SKILL_EFFECT_SHEETS[SKILL_IDS.closeArc];
 const CLOSE_ARC_EFFECT_CONFIG = CORE_PLAYER_SKILL_EFFECT_CONFIGS[SKILL_IDS.closeArc];
+const CLOSE_ARC_FADE_ALPHA_GAIN = 0.7;
 
 export function updateLineProjectileEffects() {
   const sheet = LINE_PROJECTILE_EFFECT_SHEET;
@@ -194,7 +195,7 @@ export function drawCloseArcEffects() {
     const maxTravel = e.maxTravel ?? CLOSE_ARC_EFFECT_CONFIG.maxTravel;
     const sx = e.frame * sheet.frameW;
     const fadeT = Math.max(0, e.traveled / maxTravel * 2 - 1);
-    const alpha = 1 - fadeT * 0.7;
+    const alpha = 1 - fadeT * CLOSE_ARC_FADE_ALPHA_GAIN;
     ctx.save();
     ctx.globalAlpha = alpha;
     ctx.translate(e.x - e.facing * CLOSE_ARC_EFFECT_CONFIG.visualBackOffset, e.y + drawH / 2);

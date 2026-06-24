@@ -10,13 +10,29 @@ import {
 
 const NEAR_FOREGROUND_SPEED = 18;
 const NEAR_FOREGROUND_PATTERN_WIDTH = 1128;
+const TREE_COUNT = 12;
+const TREE_VARIANT_SEED_STEP = 7;
+const TREE_VARIANT_SEED_OFFSET = 3;
+const TREE_BASE_X_STEP = 122;
+const TREE_BASE_X_GROUP_MOD = 3;
+const TREE_BASE_X_GROUP_CENTER = 1;
+const TREE_BASE_X_GROUP_OFFSET = 22;
+const TREE_BOTTOM_OFFSET_BASE = 9;
+const TREE_BOTTOM_OFFSET_MOD = 2;
+const TREE_BOTTOM_OFFSET_STEP = 6;
+const TREE_DRAW_H_BASE = 150;
+const TREE_DRAW_H_MOD = 6;
+const TREE_DRAW_H_STEP = 22;
+const TREE_ALPHA_BASE = 0.86;
+const TREE_ALPHA_MOD = 4;
+const TREE_ALPHA_STEP = 0.035;
 
-const TREE_LINE = Array.from({ length: 12 }, (_, i) => ({
-  variantSeed: i * 7 + 3,
-  baseX: i * 122 + ((i % 3) - 1) * 22,
-  bottomOffset: 9 + (i % 2) * 6,
-  drawH: 150 + (i % 6) * 22,
-  alpha: 0.86 + (i % 4) * 0.035,
+const TREE_LINE = Array.from({ length: TREE_COUNT }, (_, i) => ({
+  variantSeed: i * TREE_VARIANT_SEED_STEP + TREE_VARIANT_SEED_OFFSET,
+  baseX: i * TREE_BASE_X_STEP + ((i % TREE_BASE_X_GROUP_MOD) - TREE_BASE_X_GROUP_CENTER) * TREE_BASE_X_GROUP_OFFSET,
+  bottomOffset: TREE_BOTTOM_OFFSET_BASE + (i % TREE_BOTTOM_OFFSET_MOD) * TREE_BOTTOM_OFFSET_STEP,
+  drawH: TREE_DRAW_H_BASE + (i % TREE_DRAW_H_MOD) * TREE_DRAW_H_STEP,
+  alpha: TREE_ALPHA_BASE + (i % TREE_ALPHA_MOD) * TREE_ALPHA_STEP,
 }));
 
 type ForegroundPropSheet = "stoneTower" | "stoneTowerSmall" | "torii";

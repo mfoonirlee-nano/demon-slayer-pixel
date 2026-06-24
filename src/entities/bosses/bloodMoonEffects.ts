@@ -14,6 +14,16 @@ import { drawSheetFrame } from "../../rendering/graphics";
 import { hurtPlayer } from "../player";
 import type { BloodMoonEffectState } from "../../types/game-state";
 
+const EFFECT_FADE_MIN_ALPHA = 0.24;
+const EFFECT_WARNING_ALPHA = 0.42;
+const WARNING_ALPHA_BASE = 0.26;
+const WARNING_ALPHA_GAIN = 0.36;
+const MANY_FACES_WARNING_LINE_WIDTH = 3;
+const MIRROR_FANG_WARNING_DASH_LENGTH = 18;
+const MIRROR_FANG_WARNING_DASH_GAP = 10;
+const DEFAULT_WARNING_DASH_LENGTH = 8;
+const DEFAULT_WARNING_DASH_GAP = 7;
+
 function bloodMoonEffectSpec(kind: BloodMoonEffectState["kind"]) {
   if (kind === "mirrorFang") {
     return {
@@ -119,10 +129,10 @@ export function drawBloodMoonEffects() {
     const drawY = spec.groundAligned
       ? effect.y + effect.h - spec.drawH + spec.bottomPadding
       : effect.y + effect.h / 2 - spec.drawH / 2;
-    const fade = clamp(effect.life / Math.max(1, effect.life + effect.elapsed), 0.24, 1);
+    const fade = clamp(effect.life / Math.max(1, effect.life + effect.elapsed), EFFECT_FADE_MIN_ALPHA, 1);
 
     ctx.save();
-    ctx.globalAlpha = effect.elapsed <= effect.warningFrames ? 0.42 : fade;
+    ctx.globalAlpha = effect.elapsed <= effect.warningFrames ? EFFECT_WARNING_ALPHA : fade;
     drawSheetFrame(
       spec.sheet,
       effect.frame,
@@ -140,13 +150,15 @@ function drawBloodMoonEffectWarning(effect: BloodMoonEffectState) {
   if (!ctx || effect.warningFrames <= 0 || effect.elapsed > effect.warningFrames) return;
   const progress = clamp(effect.elapsed / effect.warningFrames, 0, 1);
   ctx.save();
-  ctx.globalAlpha = 0.26 + progress * 0.36;
+  ctx.globalAlpha = WARNING_ALPHA_BASE + progress * WARNING_ALPHA_GAIN;
   ctx.strokeStyle = effect.kind === "mirrorFang" ? "#f0d08a" : "#e04038";
   ctx.fillStyle = effect.kind === "manyFaces"
     ? "rgba(150, 16, 28, 0.18)"
     : "rgba(210, 42, 42, 0.14)";
-  ctx.lineWidth = effect.kind === "manyFaces" ? 3 : 2;
-  ctx.setLineDash(effect.kind === "mirrorFang" ? [18, 10] : [8, 7]);
+  ctx.lineWidth = effect.kind === "manyFaces" ? MANY_FACES_WARNING_LINE_WIDTH : 2;
+  ctx.setLineDash(effect.kind === "mirrorFang"
+    ? [MIRROR_FANG_WARNING_DASH_LENGTH, MIRROR_FANG_WARNING_DASH_GAP]
+    : [DEFAULT_WARNING_DASH_LENGTH, DEFAULT_WARNING_DASH_GAP]);
 
   if (effect.kind === "mirrorFang") {
     const y = effect.y + effect.h / 2;

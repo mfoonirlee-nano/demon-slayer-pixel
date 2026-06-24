@@ -28,6 +28,20 @@ import { fangCastDuration } from "./fangGaleBehavior";
 import { lanternCastDuration } from "./lanternEmberBehavior";
 import type { LiveBoss } from "./types";
 
+const DEAD_BELL_CUE_CENTER_Y_SCALE = 0.42;
+const COUNTER_CUE_ALPHA_BASE = 0.35;
+const COUNTER_CUE_ALPHA_SCALE = 0.18;
+const COMBO_CUE_ALPHA_BASE = 0.42;
+const COMBO_CUE_ALPHA_SCALE = 0.25;
+const COUNTER_CUE_LINE_WIDTH = 2;
+const COMBO_CUE_LINE_WIDTH = 3;
+const COUNTER_CUE_DASH = 8;
+const COMBO_CUE_DASH = 3;
+const COMBO_CUE_GAP = 10;
+const COUNTER_CUE_RADIUS = 56;
+const COMBO_CUE_RADIUS = 72;
+const CUE_CROSS_HALF_WIDTH = 46;
+
 export function drawBoss() {
   const boss = state.boss;
   if (!boss) return;
@@ -165,22 +179,24 @@ function drawDeadBellBeatCue(boss: LiveBoss) {
   if (!comboStopBeat && !counterWindow) return;
 
   const centerX = boss.x + boss.w / 2;
-  const centerY = boss.y + boss.h * 0.42;
+  const centerY = boss.y + boss.h * DEAD_BELL_CUE_CENTER_Y_SCALE;
   const t = counterWindow
     ? boss.recoveryTimer / DEAD_BELL_CONFIG.recoveryFrames
     : boss.castTimer / DEAD_BELL_CONFIG.comboCastDuration;
   ctx.save();
-  ctx.globalAlpha = counterWindow ? 0.35 + t * 0.18 : 0.42 + (1 - t) * 0.25;
+  ctx.globalAlpha = counterWindow
+    ? COUNTER_CUE_ALPHA_BASE + t * COUNTER_CUE_ALPHA_SCALE
+    : COMBO_CUE_ALPHA_BASE + (1 - t) * COMBO_CUE_ALPHA_SCALE;
   ctx.strokeStyle = counterWindow ? "#f0d08a" : "#c94238";
-  ctx.lineWidth = counterWindow ? 2 : 3;
-  ctx.setLineDash(counterWindow ? [8, 8] : [3, 10]);
+  ctx.lineWidth = counterWindow ? COUNTER_CUE_LINE_WIDTH : COMBO_CUE_LINE_WIDTH;
+  ctx.setLineDash(counterWindow ? [COUNTER_CUE_DASH, COUNTER_CUE_DASH] : [COMBO_CUE_DASH, COMBO_CUE_GAP]);
   ctx.beginPath();
-  ctx.arc(centerX, centerY, counterWindow ? 56 : 72, 0, Math.PI * 2);
+  ctx.arc(centerX, centerY, counterWindow ? COUNTER_CUE_RADIUS : COMBO_CUE_RADIUS, 0, Math.PI * 2);
   ctx.stroke();
   ctx.setLineDash([]);
   ctx.beginPath();
-  ctx.moveTo(centerX - 46, centerY);
-  ctx.lineTo(centerX + 46, centerY);
+  ctx.moveTo(centerX - CUE_CROSS_HALF_WIDTH, centerY);
+  ctx.lineTo(centerX + CUE_CROSS_HALF_WIDTH, centerY);
   ctx.stroke();
   ctx.restore();
 }

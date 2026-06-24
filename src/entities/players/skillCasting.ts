@@ -37,6 +37,10 @@ const LINE_PROJECTILE_EFFECT_CONFIG = CORE_PLAYER_SKILL_EFFECT_CONFIGS[SKILL_IDS
 const CLOSE_ARC_EFFECT_SHEET = CORE_PLAYER_SKILL_EFFECT_SHEETS[SKILL_IDS.closeArc];
 const CLOSE_ARC_EFFECT_CONFIG = CORE_PLAYER_SKILL_EFFECT_CONFIGS[SKILL_IDS.closeArc];
 const GUARD_COUNTER_EFFECT_CONFIG = CORE_PLAYER_SKILL_EFFECT_CONFIGS[SKILL_IDS.guardCounter];
+const LINE_PROJECTILE_RELEASE_SFX_PITCH = 0.96;
+const CLOSE_ARC_RELEASE_SFX_PITCH = 1.08;
+const GUARD_COUNTER_RELEASE_SFX_PITCH = 0.98;
+const GENERIC_SKILL_RELEASE_SFX_PITCH = 1.02;
 
 export function playerSkillCastAnimFps(skill: Skill) {
   return skill.id === SKILL_IDS.antiAirMulti ? ANTI_AIR_MULTI_SKILL_ANIM_FPS : PLAYER_DRAW.skillAnimFps;
@@ -190,7 +194,7 @@ export function updateSkillCastRelease(): boolean {
             drawScale,
             damageMultiplier: p.skillCastDamageMultiplier,
           });
-          playSfx("playerSkillRelease", 0.96);
+          playSfx("playerSkillRelease", LINE_PROJECTILE_RELEASE_SFX_PITCH);
         } else if (skill.id === SKILL_IDS.closeArc) {
           const growth = corePlayerSkillGrowth(skill.id, state.player.skillLevels[skill.id]);
           const drawScale = growth?.drawScale ?? CLOSE_ARC_EFFECT_CONFIG.drawScale;
@@ -209,13 +213,13 @@ export function updateSkillCastRelease(): boolean {
             maxTravel: growth?.maxTravel ?? CLOSE_ARC_EFFECT_CONFIG.maxTravel,
             damageMultiplier: p.skillCastDamageMultiplier,
           });
-          playSfx("playerSkillRelease", 1.08);
+          playSfx("playerSkillRelease", CLOSE_ARC_RELEASE_SFX_PITCH);
         } else if (skill.id === SKILL_IDS.guardCounter) {
           spawnGuardCounterEffect(p.skillCastDamageMultiplier);
-          playSfx("playerSkillRelease", 0.98);
+          playSfx("playerSkillRelease", GUARD_COUNTER_RELEASE_SFX_PITCH);
         } else if (isGenericPlayerSkillId(skill.id)) {
           spawnPlayerSkillEffect(skill.id, p.skillCastDamageMultiplier);
-          playSfx("playerSkillRelease", 1.02);
+          playSfx("playerSkillRelease", GENERIC_SKILL_RELEASE_SFX_PITCH);
         }
       }
     }

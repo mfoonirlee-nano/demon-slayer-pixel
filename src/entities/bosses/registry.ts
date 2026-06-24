@@ -32,6 +32,13 @@ import {
 import type { SpriteSheet } from "../../types/assets";
 import type { BossArchetypeId, BossSkillMode } from "../../types/game-state";
 
+const BLOOD_MOON_PHASE_THRESHOLDS = {
+  first: 0.8,
+  second: 0.6,
+  third: 0.4,
+  fourth: 0.2,
+} as const;
+
 export type BossArchetype = {
   id: BossArchetypeId;
   displayName: string;
@@ -276,7 +283,7 @@ export const BOSS_ARCHETYPES: Record<RegisteredBossArchetypeId, BossArchetype> =
     collisionW: BOSS_CONFIG.w,
     collisionH: BOSS_CONFIG.h,
     yOffsetFromGround: BOSS_CONFIG.yOffsetFromGround,
-    phaseThresholds: [0.8, 0.6, 0.4, 0.2],
+    phaseThresholds: Object.values(BLOOD_MOON_PHASE_THRESHOLDS),
     contactDamageBase: 11,
     contactDamagePhase: 2,
     aiBaseCooldown: 104,

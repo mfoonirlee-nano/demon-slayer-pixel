@@ -1,3 +1,9 @@
+type RgbColor = readonly [number, number, number];
+
+function rgb(color: { r: number; g: number; b: number }): RgbColor {
+  return [color.r, color.g, color.b] as const;
+}
+
 export const MOON_LAYOUT = {
   x: 762,
   y: 80,
@@ -9,17 +15,17 @@ export const MOON_LAYOUT = {
 } as const;
 
 export const MOON_SKY_CONFIG = {
-  baseTop: [10, 18, 35] as const,
-  baseMid: [16, 27, 51] as const,
-  baseLow: [21, 39, 68] as const,
-  bloodTop: [72, 18, 28] as const,
-  bloodMid: [86, 24, 38] as const,
-  bloodLow: [58, 20, 36] as const,
+  baseTop: rgb({ r: 10, g: 18, b: 35 }),
+  baseMid: rgb({ r: 16, g: 27, b: 51 }),
+  baseLow: rgb({ r: 21, g: 39, b: 68 }),
+  bloodTop: rgb({ r: 72, g: 18, b: 28 }),
+  bloodMid: rgb({ r: 86, g: 24, b: 38 }),
+  bloodLow: rgb({ r: 58, g: 20, b: 36 }),
   midBlend: 0.92,
   lowBlend: 0.55,
-  upperOverlayColor: [120, 22, 32] as const,
+  upperOverlayColor: rgb({ r: 120, g: 22, b: 32 }),
   upperOverlayAlpha: 0.08,
-  midOverlayColor: [96, 18, 30] as const,
+  midOverlayColor: rgb({ r: 96, g: 18, b: 30 }),
   midOverlayAlpha: 0.05,
 } as const;
 
@@ -76,8 +82,8 @@ export const MOON_MOTION_CONFIG = {
 } as const;
 
 export const MOON_HAZE_CONFIG = {
-  color: [142, 28, 40] as const,
-  secondaryColor: [168, 34, 48] as const,
+  color: rgb({ r: 142, g: 28, b: 40 }),
+  secondaryColor: rgb({ r: 168, g: 34, b: 48 }),
   baseAlpha: 0.12,
   secondaryAlpha: 0.08,
   radiusX: 164,
@@ -91,8 +97,8 @@ export const MOON_HAZE_CONFIG = {
 } as const;
 
 export const MOON_MIST_CONFIG = {
-  color: [208, 224, 255] as const,
-  innerColor: [190, 206, 232] as const,
+  color: rgb({ r: 208, g: 224, b: 255 }),
+  innerColor: rgb({ r: 190, g: 206, b: 232 }),
   baseAlpha: 0.12,
   innerAlpha: 0.08,
   blur: 58,
@@ -109,48 +115,48 @@ export const MOON_MIST_CONFIG = {
 
 export const MOON_GLOW_CONFIG = {
   // 正常月光：蓝白内晕
-  coolGlowColor: [198, 220, 246] as const,
+  coolGlowColor: rgb({ r: 198, g: 220, b: 246 }),
   coolGlowAlpha: 0.28,
   coolGlowBlur: 32,
   coolGlowRadius: 52,
 
   // 正常月光：中层散射光（蓝白）
-  outerGlowColor: [210, 228, 252] as const,
+  outerGlowColor: rgb({ r: 210, g: 228, b: 252 }),
   outerGlowAlpha: 0.14,
   outerGlowBlur: 55,
   outerGlowRadius: 80,
 
   // 正常月光：最远散射（极淡蓝白）
-  farGlowColor: [220, 235, 255] as const,
+  farGlowColor: rgb({ r: 220, g: 235, b: 255 }),
   farGlowAlpha: 0.07,
   farGlowBlur: 90,
   farGlowRadius: 120,
 
   // 血月：内环
-  bloodRingColor: [255, 88, 102] as const,
+  bloodRingColor: rgb({ r: 255, g: 88, b: 102 }),
   bloodRingAlpha: 0.25,
   bloodRingBlur: 38,
   bloodRingRadius: 58,
 
   // 血月：中层光晕（用于插值替换 outerGlow）
-  bloodOuterColor: [255, 80, 80] as const,
+  bloodOuterColor: rgb({ r: 255, g: 80, b: 80 }),
   bloodOuterAlpha: 0.18,
 
   // 血月：最外层光晕（用于插值替换 farGlow）
-  bloodFarColor: [200, 40, 40] as const,
+  bloodFarColor: rgb({ r: 200, g: 40, b: 40 }),
   bloodFarAlpha: 0.12,
 } as const;
 
 export const MOON_SURFACE_CONFIG = {
-  baseColorA: [208, 226, 255] as const,
-  baseColorB: [255, 232, 190] as const,
-  bloodCoreColor: [186, 36, 42] as const,
-  shadowColor: [146, 18, 28] as const,
+  baseColorA: rgb({ r: 208, g: 226, b: 255 }),
+  baseColorB: rgb({ r: 255, g: 232, b: 190 }),
+  bloodCoreColor: rgb({ r: 186, g: 36, b: 42 }),
+  shadowColor: rgb({ r: 146, g: 18, b: 28 }),
   shadowAlpha: 0.18,
-  highlightColor: [255, 214, 214] as const,
+  highlightColor: rgb({ r: 255, g: 214, b: 214 }),
   highlightAlpha: 0.3,
   shimmerAlpha: 0.08,
-  craterColor: [132, 54, 68] as const,
+  craterColor: rgb({ r: 132, g: 54, b: 68 }),
   craterRows: [
     { x: -13, y: -5, w: 7, h: 1, driftX: 0.24, driftY: 0.18 },
     { x: -5, y: 3, w: 6, h: 1, driftX: -0.16, driftY: 0.12 },

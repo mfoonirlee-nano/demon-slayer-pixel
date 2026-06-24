@@ -6,6 +6,17 @@ import { drawSheetFrame } from "../../rendering/graphics";
 import { hurtPlayer } from "../player";
 import type { DeadBellBladeState, DeadBellWaveState } from "../../types/game-state";
 
+const WAVE_WARNING_RADIUS_PULSE = 4;
+const PLAYER_WAVE_RADIUS_RATIO = 0.35;
+const WAVE_CLEANUP_EXTRA_FRAMES = 14;
+const WAVE_FADE_EXTRA_FRAMES = 18;
+const WAVE_FADE_MIN_ALPHA = 0.28;
+const WAVE_WARNING_ALPHA = 0.52;
+const BLADE_WARNING_ALPHA_BASE = 0.2;
+const BLADE_WARNING_ALPHA_GAIN = 0.35;
+const BLADE_WARNING_DASH_LENGTH = 12;
+const BLADE_WARNING_DASH_GAP = 10;
+
 export function updateDeadBellEffects() {
   updateDeadBellWaves();
   updateDeadBellBlades();
@@ -21,7 +32,7 @@ function updateDeadBellWaves() {
 
     wave.elapsed += 1;
     if (wave.elapsed <= wave.warningFrames) {
-      wave.radius = DEAD_BELL_CONFIG.waveStartRadius + Math.sin(wave.elapsed * 0.5) * 4;
+      wave.radius = DEAD_BELL_CONFIG.waveStartRadius + Math.sin(wave.elapsed * 0.5) * WAVE_WARNING_RADIUS_PULSE;
       wave.frame = 0;
     } else {
       const activeElapsed = wave.elapsed - wave.warningFrames;
@@ -37,7 +48,7 @@ function updateDeadBellWaves() {
       const p = state.player;
       const px = p.x + p.w / 2;
       const py = p.y + p.h / 2;
-      const playerRadius = Math.max(p.w, p.h) * 0.35;
+      const playerRadius = Math.max(p.w, p.h) * PLAYER_WAVE_RADIUS_RATIO;
       const dist = Math.hypot(px - wave.x, py - wave.y);
       if (Math.abs(dist - wave.radius) <= wave.thickness + playerRadius) {
         wave.hitPlayer = true;
@@ -45,7 +56,7 @@ function updateDeadBellWaves() {
       }
     }
 
-    if (wave.elapsed > wave.warningFrames + wave.expandFrames + 14) {
+    if (wave.elapsed > wave.warningFrames + wave.expandFrames + WAVE_CLEANUP_EXTRA_FRAMES) {
       state.deadBellWaves.splice(i, 1);
     }
   }
@@ -89,11 +100,11 @@ function drawDeadBellWaves() {
   for (const wave of state.deadBellWaves) {
     const warning = wave.delay > 0 || wave.elapsed <= wave.warningFrames;
     const activeElapsed = Math.max(0, wave.elapsed - wave.warningFrames);
-    const fade = clamp(1 - activeElapsed / (wave.expandFrames + 18), 0.28, 1);
+    const fade = clamp(1 - activeElapsed / (wave.expandFrames + WAVE_FADE_EXTRA_FRAMES), WAVE_FADE_MIN_ALPHA, 1);
     const drawW = wave.radius * 2;
     const drawH = drawW * (DEAD_BELL_WAVE_SHEET.frameH / DEAD_BELL_WAVE_SHEET.frameW);
     ctx.save();
-    ctx.globalAlpha = warning ? 0.52 : fade;
+    ctx.globalAlpha = warning ? WAVE_WARNING_ALPHA : fade;
     drawSheetFrame(
       DEAD_BELL_WAVE_SHEET,
       warning ? 0 : wave.frame,
@@ -111,10 +122,11 @@ function drawDeadBellBlades() {
   for (const blade of state.deadBellBlades) {
     if (blade.delay > 0) {
       ctx.save();
-      ctx.globalAlpha = 0.2 + (1 - blade.delay / DEAD_BELL_CONFIG.bladeWarningFrames) * 0.35;
+      ctx.globalAlpha = BLADE_WARNING_ALPHA_BASE
+        + (1 - blade.delay / DEAD_BELL_CONFIG.bladeWarningFrames) * BLADE_WARNING_ALPHA_GAIN;
       ctx.strokeStyle = "#d7b66d";
       ctx.lineWidth = 2;
-      ctx.setLineDash([12, 10]);
+      ctx.setLineDash([BLADE_WARNING_DASH_LENGTH, BLADE_WARNING_DASH_GAP]);
       ctx.beginPath();
       ctx.moveTo(0, blade.y + blade.h / 2);
       ctx.lineTo(WIDTH, blade.y + blade.h / 2);

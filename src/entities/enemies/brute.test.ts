@@ -3,6 +3,8 @@ import { resetState, state } from "../../game/state";
 import { spawnEnemyById } from "../enemy";
 import { damageEnemy } from "./common";
 
+const SHIELD_TEST_DAMAGE = 30;
+
 function spawnBrute() {
   expect(spawnEnemyById("brute", "debug", "left")).toBe(true);
   return state.enemies[0];
@@ -25,10 +27,10 @@ describe("brute shield", () => {
     const hpBefore = brute.hp;
     const shieldBefore = brute.bruteShieldHp ?? 0;
 
-    damageEnemy(brute, 30, undefined, "ultimate");
+    damageEnemy(brute, SHIELD_TEST_DAMAGE, undefined, "ultimate");
 
     expect(brute.hp).toBe(hpBefore);
-    expect(brute.bruteShieldHp).toBeCloseTo(shieldBefore - 30);
+    expect(brute.bruteShieldHp).toBeCloseTo(shieldBefore - SHIELD_TEST_DAMAGE);
     expect(brute.bruteShieldBroken).toBe(false);
     expect(brute.brutePhase).toBe("advance");
   });
@@ -37,7 +39,7 @@ describe("brute shield", () => {
     const brute = spawnBrute();
     const hpBefore = brute.hp;
 
-    damageEnemy(brute, 30, undefined, "armorBreak");
+    damageEnemy(brute, SHIELD_TEST_DAMAGE, undefined, "armorBreak");
 
     expect(brute.hp).toBe(hpBefore);
     expect(brute.bruteShieldHp).toBe(0);

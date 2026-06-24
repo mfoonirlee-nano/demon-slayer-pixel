@@ -36,6 +36,8 @@ const LUNGE_BOX_HEIGHT_SCALE = 1.08;
 const LUNGE_BOX_REACH = 28;
 const LUNGE_BOX_FORWARD_RATIO = 0.45;
 const LUNGE_BOX_BACK_RATIO = 0.55;
+const LUNGE_WARNING_SFX_PITCH = 0.92;
+const LUNGE_START_SFX_PITCH = 0.88;
 
 function isCrawler(enemy: Pick<EnemyState, "sheetIndex">) {
   return enemy.sheetIndex === CRAWLER_SHEET_INDEX;
@@ -94,10 +96,10 @@ function enterCrawlerPhase(enemy: EnemyState, phase: CrawlerPhase) {
   enemy.crawlerLungeHit = false;
   if (phase === "windup") {
     enemy.crawlerTimer = CRAWLER_CONFIG.windupFrames;
-    playSfx("enemyWarning", 0.92);
+    playSfx("enemyWarning", LUNGE_WARNING_SFX_PITCH);
   } else if (phase === "lunge") {
     enemy.crawlerTimer = CRAWLER_CONFIG.lungeFrames;
-    playSfx("enemyLunge", 0.88);
+    playSfx("enemyLunge", LUNGE_START_SFX_PITCH);
   } else if (phase === "recover") {
     enemy.crawlerTimer = CRAWLER_CONFIG.recoverFrames;
   } else {

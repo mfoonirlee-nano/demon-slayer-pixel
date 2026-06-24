@@ -34,6 +34,8 @@ import {
   returningBladeOutboundDistance,
 } from "./playerSkillShared";
 
+const VERTICAL_WAVE_FORWARD_OFFSET = 34;
+
 let nextPlayerSkillRefundGroupId = 1;
 
 export function finishDashRepositionSkill(
@@ -259,12 +261,19 @@ export function spawnPlayerSkillEffect(skillId: SkillId, castDamageMultiplier = 
   if (skillId === SKILL_IDS.verticalWave) {
     const waveW = valueForSkillLevel(tuning.width, level);
     const waveH = valueForSkillLevel(tuning.height, level);
-    state.playerSkillEffects.push(makeGenericEffect(skillId, level, castDamageMultiplier, clamp(playerCenterX + player.facing * 34, waveW / 2, WIDTH - waveW / 2), feetY - waveH / 2, {
-      w: waveW,
-      h: waveH,
-      lift: valueForSkillLevel(tuning.lift ?? tuning.height, level),
-      refundGroupId,
-    }));
+    state.playerSkillEffects.push(makeGenericEffect(
+      skillId,
+      level,
+      castDamageMultiplier,
+      clamp(playerCenterX + player.facing * VERTICAL_WAVE_FORWARD_OFFSET, waveW / 2, WIDTH - waveW / 2),
+      feetY - waveH / 2,
+      {
+        w: waveW,
+        h: waveH,
+        lift: valueForSkillLevel(tuning.lift ?? tuning.height, level),
+        refundGroupId,
+      },
+    ));
     return true;
   }
 

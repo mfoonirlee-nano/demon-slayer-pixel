@@ -26,11 +26,22 @@ export const RAIN_LINE_FALLBACK_SPACING = 28;
 export const RAIN_LINE_TARGET_SIDE_OFFSET = 28;
 export const RAIN_LINE_TARGET_X_SCATTER = 8;
 export const RAIN_LINE_TARGET_Y_SCATTER = 7;
+export const RAIN_LINE_SCATTER_ROW_CYCLE = 3;
 export const RAIN_LINE_ANIM_STAGGER_FRAMES = 2;
 export const RAIN_LINE_ANIM_STAGGER_CYCLE = 8;
 export const RAIN_LINE_MAX_PREDICT_X = 36;
 export const RAIN_LINE_TARGET_Y_BIAS = 0.15;
 export const RAIN_LINE_EFFECT_BOTTOM_TRANSPARENT_PX = 18;
+export const RAIN_LINE_TARGET_CLAMP_MARGIN = 30;
+export const RAIN_LINE_FALLBACK_Y_OFFSET = 28;
+export const RAIN_LINE_AIRBORNE_GROUND_CLEARANCE = 24;
+export const RAIN_LINE_AIRBORNE_SCORE_BONUS = 90;
+export const RAIN_LINE_CASTER_SCORE_BONUS = 55;
+export const RAIN_LINE_LOW_HP_ATTACK_RATIO = 1.4;
+export const RAIN_LINE_LOW_HP_SCORE_BONUS = 35;
+export const RAIN_LINE_DISTANCE_SCORE_PENALTY = 0.04;
+export const RAIN_LINE_ENEMY_BASE_SCORE = 20;
+export const RAIN_LINE_BOSS_BASE_SCORE = 10;
 export const VORTEX_CAST_FORWARD_OFFSET = 86;
 export const VORTEX_GROUND_Y_OFFSET = 16;
 export const VORTEX_VERTICAL_RADIUS_SCALE = 0.58;
@@ -281,13 +292,17 @@ export function rainLineTargets(count: number) {
   const predictX = (vx: number) => clamp(vx * RAIN_LINE_TARGET_LEAD_FRAMES, -RAIN_LINE_MAX_PREDICT_X, RAIN_LINE_MAX_PREDICT_X);
   const lineScatter = (index: number) => ({
     x: player.facing * (index % 2 === 0 ? -RAIN_LINE_TARGET_X_SCATTER : RAIN_LINE_TARGET_X_SCATTER),
-    y: (index % 3 - 1) * RAIN_LINE_TARGET_Y_SCATTER,
+    y: (index % RAIN_LINE_SCATTER_ROW_CYCLE - 1) * RAIN_LINE_TARGET_Y_SCATTER,
     elapsed: index * RAIN_LINE_ANIM_STAGGER_FRAMES % RAIN_LINE_ANIM_STAGGER_CYCLE,
   });
   const targetFromCandidate = (candidate: RainLineCandidate, index: number, sideOffset = 0): RainLineTarget => {
     const scatter = lineScatter(index);
     return {
-      x: clamp(candidate.x + predictX(candidate.vx) + sideOffset + scatter.x, 30, WIDTH - 30),
+      x: clamp(
+        candidate.x + predictX(candidate.vx) + sideOffset + scatter.x,
+        RAIN_LINE_TARGET_CLAMP_MARGIN,
+        WIDTH - RAIN_LINE_TARGET_CLAMP_MARGIN,
+      ),
       y: candidate.y + scatter.y,
       elapsed: scatter.elapsed,
     };
@@ -302,10 +317,10 @@ export function rainLineTargets(count: number) {
     return {
       x: clamp(
         playerCenterX + player.facing * (RAIN_LINE_FALLBACK_FORWARD_DISTANCE + spreadX) + scatter.x,
-        30,
-        WIDTH - 30,
+        RAIN_LINE_TARGET_CLAMP_MARGIN,
+        WIDTH - RAIN_LINE_TARGET_CLAMP_MARGIN,
       ),
-      y: state.player.y + 28 + scatter.y,
+      y: state.player.y + RAIN_LINE_FALLBACK_Y_OFFSET + scatter.y,
       elapsed: scatter.elapsed,
     };
   };
@@ -313,15 +328,21 @@ export function rainLineTargets(count: number) {
     .map((enemy) => {
       const center = enemyCenter(enemy);
       const forwardDistance = (center.x - playerCenterX) * player.facing;
-      const airborne = enemy.y + enemy.h < GROUND_Y - 24 ? 90 : 0;
-      const caster = enemy.casterPhase === "windup" || enemy.casterPhase === "cast" ? 55 : 0;
-      const lowHp = enemy.hp <= (state.player.baseAttack + state.player.attackBonus) * 1.4 ? 35 : 0;
-      const distancePenalty = forwardDistance * 0.04;
+      const airborne = enemy.y + enemy.h < GROUND_Y - RAIN_LINE_AIRBORNE_GROUND_CLEARANCE
+        ? RAIN_LINE_AIRBORNE_SCORE_BONUS
+        : 0;
+      const caster = enemy.casterPhase === "windup" || enemy.casterPhase === "cast"
+        ? RAIN_LINE_CASTER_SCORE_BONUS
+        : 0;
+      const lowHp = enemy.hp <= (state.player.baseAttack + state.player.attackBonus) * RAIN_LINE_LOW_HP_ATTACK_RATIO
+        ? RAIN_LINE_LOW_HP_SCORE_BONUS
+        : 0;
+      const distancePenalty = forwardDistance * RAIN_LINE_DISTANCE_SCORE_PENALTY;
       return {
         x: center.x,
         y: center.y - enemy.h * RAIN_LINE_TARGET_Y_BIAS,
         vx: enemy.vx,
-        score: 20 + airborne + caster + lowHp - distancePenalty,
+        score: RAIN_LINE_ENEMY_BASE_SCORE + airborne + caster + lowHp - distancePenalty,
         forwardDistance,
       };
     })
@@ -338,7 +359,7 @@ export function rainLineTargets(count: number) {
         x: center.x,
         y: center.y - state.boss.h * RAIN_LINE_TARGET_Y_BIAS,
         vx: state.boss.vx,
-        score: 10 - forwardDistance * 0.04,
+        score: RAIN_LINE_BOSS_BASE_SCORE - forwardDistance * RAIN_LINE_DISTANCE_SCORE_PENALTY,
         forwardDistance,
       });
     }

@@ -12,11 +12,14 @@ import {
 
 const FAMILIES: EquipmentFamily[] = ["flow", "burst", "shadowstep", "hunt", "risk", "tempo"];
 const SLOTS: EquipmentSlot[] = ["blade", "garb", "talisman"];
+const EXPECTED_EQUIPMENT_CHOICE_COUNT = 18;
+const BOSS_REWARD_CHOICE_COUNT = 3;
+const TEMPO_TALISMAN_SKILL_COST = 24;
 
 describe("equipment system", () => {
   it("defines all six families with one item in each slot", () => {
-    expect(EQUIPMENT_CHOICE_IDS).toHaveLength(18);
-    expect(new Set(EQUIPMENT_CHOICE_IDS).size).toBe(18);
+    expect(EQUIPMENT_CHOICE_IDS).toHaveLength(EXPECTED_EQUIPMENT_CHOICE_COUNT);
+    expect(new Set(EQUIPMENT_CHOICE_IDS).size).toBe(EXPECTED_EQUIPMENT_CHOICE_COUNT);
 
     for (const family of FAMILIES) {
       const items = EQUIPMENT_CHOICE_IDS.map((id) => EQUIPMENT_ITEMS[id]).filter((item) => item.family === family);
@@ -29,9 +32,9 @@ describe("equipment system", () => {
     const state = createInitialState();
     const choices = createBossEquipmentChoices(state);
 
-    expect(choices).toHaveLength(3);
-    expect(new Set(choices.map((choice) => choice.id)).size).toBe(3);
-    expect(new Set(choices.map((choice) => choice.slot)).size).toBe(3);
+    expect(choices).toHaveLength(BOSS_REWARD_CHOICE_COUNT);
+    expect(new Set(choices.map((choice) => choice.id)).size).toBe(BOSS_REWARD_CHOICE_COUNT);
+    expect(new Set(choices.map((choice) => choice.slot)).size).toBe(BOSS_REWARD_CHOICE_COUNT);
   });
 
   it("equips the selected boss reward into its slot", () => {
@@ -47,7 +50,7 @@ describe("equipment system", () => {
     expect(state.equipmentInventory).toContain("tempo_talisman");
     expect(state.equippedEquipment.talisman).toBe("tempo_talisman");
     expect(state.pendingEquipmentChoices).toEqual([]);
-    expect(equipmentSkillEnergyCost(state)).toBe(24);
+    expect(equipmentSkillEnergyCost(state)).toBe(TEMPO_TALISMAN_SKILL_COST);
   });
 
   it("resets old slot runtime state when replacing equipment", () => {

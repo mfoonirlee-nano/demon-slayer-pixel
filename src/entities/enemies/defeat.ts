@@ -10,6 +10,7 @@ import { grantSkillEnergy, grantUltimateEnergy, recordEnemyDefeatEquipmentEffect
 
 const SPLITLING_SKILL_ENERGY_GAIN = 2;
 const SPLITLING_ULTIMATE_ENERGY_GAIN = 0.5;
+const SPLITLING_DEFEAT_SFX_PITCH = 1.25;
 
 function gainEnergy(skillAmount: number, ultimateAmount: number) {
   grantSkillEnergy(state, skillAmount);
@@ -58,7 +59,7 @@ export function resolveEnemyDefeat(
     return true;
   }
 
-  playSfx("enemyDefeat", enemy.splitterVariant === "child" ? 1.25 : 1);
+  playSfx("enemyDefeat", enemy.splitterVariant === "child" ? SPLITLING_DEFEAT_SFX_PITCH : 1);
   applyReward();
   remove();
   return true;

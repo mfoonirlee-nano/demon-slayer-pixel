@@ -8,6 +8,11 @@ import { hurtPlayer } from "../player";
 import { spawnMirrorNightmareShard } from "./mirrorDreamBehavior";
 import type { MirrorAfterimageState, MirrorShardState } from "../../types/game-state";
 
+const SHARD_BOUNCE_FRAME = 4;
+const SHARD_BOUNCE_SFX_PITCH = 1.28;
+const AFTERIMAGE_FADE_ALPHA_BASE = 0.24;
+const AFTERIMAGE_FADE_ALPHA_GAIN = 0.76;
+
 export function updateMirrorDreamEffects() {
   updateMirrorAfterimages();
   updateMirrorShards();
@@ -58,8 +63,8 @@ function updateMirrorShards() {
       shard.vx *= -1;
       shard.facing = shard.vx >= 0 ? 1 : -1;
       shard.bouncesRemaining -= 1;
-      shard.frame = Math.min(MIRROR_SHARD_SHEET.count - 1, 4);
-      playSfx("bossMirror", 1.28);
+      shard.frame = Math.min(MIRROR_SHARD_SHEET.count - 1, SHARD_BOUNCE_FRAME);
+      playSfx("bossMirror", SHARD_BOUNCE_SFX_PITCH);
     }
 
     if (hitbox(state.player, shard)) {
@@ -96,7 +101,9 @@ function drawMirrorAfterimages() {
     const feetY = afterimage.y + afterimage.h;
     const lifeT = clamp(afterimage.life / afterimage.maxLife, 0, 1);
     ctx.save();
-    ctx.globalAlpha = MIRROR_DREAM_CONFIG.afterimageAlpha * (0.24 + lifeT * 0.76);
+    ctx.globalAlpha = MIRROR_DREAM_CONFIG.afterimageAlpha * (
+      AFTERIMAGE_FADE_ALPHA_BASE + lifeT * AFTERIMAGE_FADE_ALPHA_GAIN
+    );
     drawSheetFrame(
       MIRROR_AFTERIMAGE_SHEET,
       afterimage.frame,

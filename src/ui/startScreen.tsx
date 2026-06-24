@@ -63,6 +63,7 @@ const KILL_DIGIT_SHEET_W = 1672;
 const KILL_DIGIT_SHEET_H = 941;
 const KILL_DIGIT_FRAME_W = Math.floor(KILL_DIGIT_SHEET_W / KILL_DIGIT_COLUMNS);
 const KILL_DIGIT_FRAME_H = Math.floor(KILL_DIGIT_SHEET_H / KILL_DIGIT_ROWS);
+const CUBIC_EASE_EXPONENT = 3;
 
 function lerp(from: number, to: number, progress: number) {
   return from + (to - from) * progress;
@@ -70,7 +71,7 @@ function lerp(from: number, to: number, progress: number) {
 
 function easeOutCubic(progress: number) {
   const clampedProgress = Math.max(0, Math.min(1, progress));
-  return 1 - (1 - clampedProgress) ** 3;
+  return 1 - (1 - clampedProgress) ** CUBIC_EASE_EXPONENT;
 }
 
 function readPrefersReducedMotion() {

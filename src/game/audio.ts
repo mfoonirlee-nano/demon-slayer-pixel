@@ -4,6 +4,7 @@ const AUDIO_CONFIG = {
   fadeOutVolume: 0.0001,
   minFrequency: 24,
 };
+const DEFAULT_PATTERN_MIN_GAP = 0.03;
 const AUDIO_VOLUME_STORAGE_KEY = "moonlit-tide-audio-volume";
 const DEFAULT_AUDIO_VOLUME_SETTINGS = {
   master: 1,
@@ -72,6 +73,54 @@ export type GameSfx =
   | "bossUltimate"
   | "bossKill";
 
+const SFX_MIN_GAPS: Record<GameSfx, number> = {
+  playerAttackStart: 0.04,
+  playerAttackHit: 0.035,
+  playerBossHit: 0.045,
+  playerFallAttackStart: 0.08,
+  playerFallAttackImpact: 0.08,
+  playerSkillCast: 0.1,
+  playerSkillRelease: 0.12,
+  playerUltimateCast: 0.2,
+  playerUltimateImpact: 0.25,
+  playerCounter: 0.08,
+  playerJump: 0.06,
+  playerHurt: 0.12,
+  playerDeath: 1,
+  enemyDefeat: 0.05,
+  enemyWarning: 0.12,
+  enemyLunge: 0.09,
+  enemyDash: 0.1,
+  enemySlash: 0.08,
+  enemyCastStart: 0.14,
+  enemyCastRelease: 0.1,
+  enemyShieldGuard: 0.16,
+  enemyShieldBash: 0.14,
+  enemyShieldBreak: 0.2,
+  enemyCleave: 0.13,
+  enemyDive: 0.12,
+  enemyLeap: 0.12,
+  enemyImpact: 0.12,
+  enemySplit: 0.16,
+  enemyBirth: 0.08,
+  enemyAura: 0.3,
+  enemyBurrow: 0.14,
+  enemyEmerge: 0.14,
+  enemyHitReact: 0.08,
+  bossSpawn: 1,
+  bossPhaseShift: 0.4,
+  bossCast: 0.18,
+  bossProjectile: 0.08,
+  bossSummon: 0.14,
+  bossWave: 0.12,
+  bossBlade: 0.1,
+  bossMirror: 0.12,
+  bossFire: 0.14,
+  bossBuff: 0.14,
+  bossUltimate: 0.3,
+  bossKill: 1,
+};
+
 let audioCtx: AudioContext | null = null;
 const lastSfxAt = new Map<GameSfx, number>();
 let audioVolumeSettings: AudioVolumeSettings = loadAudioVolumeSettings();
@@ -134,7 +183,11 @@ export function playTone(
   osc.stop(now + duration);
 }
 
-function playPattern(sfx: GameSfx, steps: ToneStep[], minGap = 0.03, pitch = 1) {
+function randomFrequency(range: { base: number; spread: number }) {
+  return range.base + Math.random() * range.spread;
+}
+
+function playPattern(sfx: GameSfx, steps: ToneStep[], minGap = DEFAULT_PATTERN_MIN_GAP, pitch = 1) {
   if (!audioCtx) return;
   const now = audioCtx.currentTime;
   const lastPlayed = lastSfxAt.get(sfx) ?? -Infinity;
@@ -190,264 +243,264 @@ export function playSfx(sfx: GameSfx, pitch = 1) {
     case "playerAttackStart":
       playPattern(sfx, [
         { frequency: 300, slideTo: 520, duration: 0.055, type: "triangle", volume: 0.045 },
-      ], 0.04, pitch);
+      ], SFX_MIN_GAPS.playerAttackStart, pitch);
       return;
     case "playerAttackHit":
       playPattern(sfx, [
-        { frequency: 420 + Math.random() * 70, duration: 0.035, type: "triangle", volume: 0.03 },
+        { frequency: randomFrequency({ base: 420, spread: 70 }), duration: 0.035, type: "triangle", volume: 0.03 },
         { frequency: 180, slideTo: 130, duration: 0.045, type: "square", volume: 0.018 },
-      ], 0.035, pitch);
+      ], SFX_MIN_GAPS.playerAttackHit, pitch);
       return;
     case "playerBossHit":
       playPattern(sfx, [
         { frequency: 190, slideTo: 130, duration: 0.07, type: "sawtooth", volume: 0.05 },
         { frequency: 480, duration: 0.045, type: "triangle", volume: 0.028, delay: 0.012 },
-      ], 0.045, pitch);
+      ], SFX_MIN_GAPS.playerBossHit, pitch);
       return;
     case "playerFallAttackStart":
       playPattern(sfx, [
         { frequency: 240, slideTo: 160, duration: 0.08, type: "triangle", volume: 0.052 },
         { frequency: 500, slideTo: 300, duration: 0.055, type: "sine", volume: 0.025 },
-      ], 0.08, pitch);
+      ], SFX_MIN_GAPS.playerFallAttackStart, pitch);
       return;
     case "playerFallAttackImpact":
       playPattern(sfx, [
         { frequency: 92, slideTo: 58, duration: 0.105, type: "sawtooth", volume: 0.07 },
         { frequency: 520, duration: 0.055, type: "triangle", volume: 0.045 },
         { frequency: 180, slideTo: 120, duration: 0.06, type: "square", volume: 0.028, delay: 0.018 },
-      ], 0.08, pitch);
+      ], SFX_MIN_GAPS.playerFallAttackImpact, pitch);
       return;
     case "playerSkillCast":
       playPattern(sfx, [
         { frequency: 620, slideTo: 760, duration: 0.11, type: "triangle", volume: 0.06 },
         { frequency: 860, slideTo: 520, duration: 0.09, type: "sawtooth", volume: 0.045 },
-      ], 0.1, pitch);
+      ], SFX_MIN_GAPS.playerSkillCast, pitch);
       return;
     case "playerSkillRelease":
       playPattern(sfx, [
         { frequency: 420, slideTo: 880, duration: 0.075, type: "triangle", volume: 0.045 },
         { frequency: 260, slideTo: 180, duration: 0.06, type: "sine", volume: 0.025 },
-      ], 0.12, pitch);
+      ], SFX_MIN_GAPS.playerSkillRelease, pitch);
       return;
     case "playerUltimateCast":
       playPattern(sfx, [
         { frequency: 220, slideTo: 110, duration: 0.16, type: "sawtooth", volume: 0.07 },
         { frequency: 880, slideTo: 1180, duration: 0.14, type: "triangle", volume: 0.055 },
-      ], 0.2, pitch);
+      ], SFX_MIN_GAPS.playerUltimateCast, pitch);
       return;
     case "playerUltimateImpact":
       playPattern(sfx, [
         { frequency: 76, slideTo: 42, duration: 0.18, type: "sawtooth", volume: 0.08 },
         { frequency: 190, slideTo: 95, duration: 0.12, type: "square", volume: 0.055, delay: 0.015 },
         { frequency: 720, slideTo: 960, duration: 0.09, type: "triangle", volume: 0.045, delay: 0.025 },
-      ], 0.25, pitch);
+      ], SFX_MIN_GAPS.playerUltimateImpact, pitch);
       return;
     case "playerCounter":
       playPattern(sfx, [
         { frequency: 440, slideTo: 660, duration: 0.075, type: "triangle", volume: 0.11 },
         { frequency: 920, duration: 0.045, type: "sine", volume: 0.05, delay: 0.03 },
-      ], 0.08, pitch);
+      ], SFX_MIN_GAPS.playerCounter, pitch);
       return;
     case "playerJump":
       playPattern(sfx, [
         { frequency: 250, slideTo: 360, duration: 0.055, type: "triangle", volume: 0.038 },
-      ], 0.06, pitch);
+      ], SFX_MIN_GAPS.playerJump, pitch);
       return;
     case "playerHurt":
       playPattern(sfx, [
         { frequency: 128, slideTo: 92, duration: 0.12, type: "square", volume: 0.055 },
         { frequency: 64, duration: 0.08, type: "sawtooth", volume: 0.028, delay: 0.012 },
-      ], 0.12, pitch);
+      ], SFX_MIN_GAPS.playerHurt, pitch);
       return;
     case "playerDeath":
       playPattern(sfx, [
         { frequency: 120, slideTo: 52, duration: 0.3, type: "sawtooth", volume: 0.07 },
         { frequency: 300, slideTo: 90, duration: 0.18, type: "triangle", volume: 0.04, delay: 0.05 },
-      ], 1, pitch);
+      ], SFX_MIN_GAPS.playerDeath, pitch);
       return;
     case "enemyDefeat":
       playPattern(sfx, [
         { frequency: 240, slideTo: 130, duration: 0.075, type: "square", volume: 0.033 },
         { frequency: 560, duration: 0.035, type: "triangle", volume: 0.02, delay: 0.018 },
-      ], 0.05, pitch);
+      ], SFX_MIN_GAPS.enemyDefeat, pitch);
       return;
     case "enemyWarning":
       playPattern(sfx, [
         { frequency: 180, slideTo: 240, duration: 0.09, type: "sawtooth", volume: 0.028 },
-      ], 0.12, pitch);
+      ], SFX_MIN_GAPS.enemyWarning, pitch);
       return;
     case "enemyLunge":
       playPattern(sfx, [
         { frequency: 190, slideTo: 95, duration: 0.085, type: "sawtooth", volume: 0.045 },
         { frequency: 360, slideTo: 280, duration: 0.045, type: "triangle", volume: 0.024 },
-      ], 0.09, pitch);
+      ], SFX_MIN_GAPS.enemyLunge, pitch);
       return;
     case "enemyDash":
       playPattern(sfx, [
         { frequency: 260, slideTo: 140, duration: 0.075, type: "sawtooth", volume: 0.04 },
-      ], 0.1, pitch);
+      ], SFX_MIN_GAPS.enemyDash, pitch);
       return;
     case "enemySlash":
       playPattern(sfx, [
         { frequency: 360, slideTo: 620, duration: 0.06, type: "triangle", volume: 0.035 },
         { frequency: 170, duration: 0.05, type: "square", volume: 0.02, delay: 0.015 },
-      ], 0.08, pitch);
+      ], SFX_MIN_GAPS.enemySlash, pitch);
       return;
     case "enemyCastStart":
       playPattern(sfx, [
         { frequency: 210, slideTo: 300, duration: 0.12, type: "sine", volume: 0.035 },
         { frequency: 420, duration: 0.08, type: "triangle", volume: 0.02, delay: 0.035 },
-      ], 0.14, pitch);
+      ], SFX_MIN_GAPS.enemyCastStart, pitch);
       return;
     case "enemyCastRelease":
       playPattern(sfx, [
         { frequency: 520, slideTo: 260, duration: 0.08, type: "sawtooth", volume: 0.045 },
         { frequency: 780, duration: 0.045, type: "triangle", volume: 0.025 },
-      ], 0.1, pitch);
+      ], SFX_MIN_GAPS.enemyCastRelease, pitch);
       return;
     case "enemyShieldGuard":
       playPattern(sfx, [
         { frequency: 110, slideTo: 135, duration: 0.11, type: "square", volume: 0.04 },
-      ], 0.16, pitch);
+      ], SFX_MIN_GAPS.enemyShieldGuard, pitch);
       return;
     case "enemyShieldBash":
       playPattern(sfx, [
         { frequency: 96, slideTo: 54, duration: 0.11, type: "sawtooth", volume: 0.065 },
         { frequency: 180, duration: 0.05, type: "square", volume: 0.03, delay: 0.02 },
-      ], 0.14, pitch);
+      ], SFX_MIN_GAPS.enemyShieldBash, pitch);
       return;
     case "enemyShieldBreak":
       playPattern(sfx, [
         { frequency: 82, slideTo: 42, duration: 0.16, type: "sawtooth", volume: 0.075 },
         { frequency: 240, slideTo: 120, duration: 0.095, type: "square", volume: 0.04, delay: 0.018 },
-      ], 0.2, pitch);
+      ], SFX_MIN_GAPS.enemyShieldBreak, pitch);
       return;
     case "enemyCleave":
       playPattern(sfx, [
         { frequency: 150, slideTo: 92, duration: 0.105, type: "sawtooth", volume: 0.055 },
         { frequency: 330, slideTo: 520, duration: 0.06, type: "triangle", volume: 0.03 },
-      ], 0.13, pitch);
+      ], SFX_MIN_GAPS.enemyCleave, pitch);
       return;
     case "enemyDive":
       playPattern(sfx, [
         { frequency: 380, slideTo: 160, duration: 0.12, type: "sawtooth", volume: 0.038 },
-      ], 0.12, pitch);
+      ], SFX_MIN_GAPS.enemyDive, pitch);
       return;
     case "enemyLeap":
       playPattern(sfx, [
         { frequency: 180, slideTo: 280, duration: 0.09, type: "triangle", volume: 0.04 },
-      ], 0.12, pitch);
+      ], SFX_MIN_GAPS.enemyLeap, pitch);
       return;
     case "enemyImpact":
       playPattern(sfx, [
         { frequency: 92, slideTo: 58, duration: 0.12, type: "sawtooth", volume: 0.06 },
         { frequency: 240, duration: 0.045, type: "square", volume: 0.028, delay: 0.015 },
-      ], 0.12, pitch);
+      ], SFX_MIN_GAPS.enemyImpact, pitch);
       return;
     case "enemySplit":
       playPattern(sfx, [
         { frequency: 180, slideTo: 95, duration: 0.13, type: "sawtooth", volume: 0.052 },
         { frequency: 360, slideTo: 520, duration: 0.07, type: "triangle", volume: 0.03, delay: 0.025 },
-      ], 0.16, pitch);
+      ], SFX_MIN_GAPS.enemySplit, pitch);
       return;
     case "enemyBirth":
       playPattern(sfx, [
         { frequency: 260, slideTo: 390, duration: 0.07, type: "triangle", volume: 0.026 },
-      ], 0.08, pitch);
+      ], SFX_MIN_GAPS.enemyBirth, pitch);
       return;
     case "enemyAura":
       playPattern(sfx, [
         { frequency: 160, slideTo: 220, duration: 0.16, type: "sine", volume: 0.035 },
         { frequency: 320, duration: 0.09, type: "triangle", volume: 0.022, delay: 0.04 },
-      ], 0.3, pitch);
+      ], SFX_MIN_GAPS.enemyAura, pitch);
       return;
     case "enemyBurrow":
       playPattern(sfx, [
         { frequency: 120, slideTo: 72, duration: 0.12, type: "sawtooth", volume: 0.046 },
-      ], 0.14, pitch);
+      ], SFX_MIN_GAPS.enemyBurrow, pitch);
       return;
     case "enemyEmerge":
       playPattern(sfx, [
         { frequency: 78, slideTo: 150, duration: 0.12, type: "sawtooth", volume: 0.058 },
         { frequency: 300, duration: 0.055, type: "square", volume: 0.027, delay: 0.02 },
-      ], 0.14, pitch);
+      ], SFX_MIN_GAPS.enemyEmerge, pitch);
       return;
     case "enemyHitReact":
       playPattern(sfx, [
         { frequency: 300, slideTo: 180, duration: 0.045, type: "square", volume: 0.02 },
-      ], 0.08, pitch);
+      ], SFX_MIN_GAPS.enemyHitReact, pitch);
       return;
     case "bossSpawn":
       playPattern(sfx, [
         { frequency: 120, slideTo: 70, duration: 0.24, type: "sawtooth", volume: 0.065 },
         { frequency: 90, slideTo: 55, duration: 0.28, type: "sawtooth", volume: 0.052, delay: 0.035 },
-      ], 1, pitch);
+      ], SFX_MIN_GAPS.bossSpawn, pitch);
       return;
     case "bossPhaseShift":
       playPattern(sfx, [
         { frequency: 150, slideTo: 84, duration: 0.16, type: "sawtooth", volume: 0.058 },
         { frequency: 430, slideTo: 620, duration: 0.11, type: "triangle", volume: 0.04, delay: 0.025 },
-      ], 0.4, pitch);
+      ], SFX_MIN_GAPS.bossPhaseShift, pitch);
       return;
     case "bossCast":
       playPattern(sfx, [
         { frequency: 170, slideTo: 250, duration: 0.15, type: "sawtooth", volume: 0.055 },
         { frequency: 410, slideTo: 520, duration: 0.1, type: "triangle", volume: 0.042, delay: 0.025 },
-      ], 0.18, pitch);
+      ], SFX_MIN_GAPS.bossCast, pitch);
       return;
     case "bossProjectile":
       playPattern(sfx, [
         { frequency: 190, slideTo: 120, duration: 0.08, type: "sawtooth", volume: 0.048 },
-      ], 0.08, pitch);
+      ], SFX_MIN_GAPS.bossProjectile, pitch);
       return;
     case "bossSummon":
       playPattern(sfx, [
         { frequency: 100, slideTo: 160, duration: 0.1, type: "square", volume: 0.045 },
         { frequency: 260, duration: 0.07, type: "triangle", volume: 0.025, delay: 0.025 },
-      ], 0.14, pitch);
+      ], SFX_MIN_GAPS.bossSummon, pitch);
       return;
     case "bossWave":
       playPattern(sfx, [
         { frequency: 130, slideTo: 86, duration: 0.18, type: "sine", volume: 0.06 },
         { frequency: 260, slideTo: 180, duration: 0.11, type: "triangle", volume: 0.03, delay: 0.02 },
-      ], 0.12, pitch);
+      ], SFX_MIN_GAPS.bossWave, pitch);
       return;
     case "bossBlade":
       playPattern(sfx, [
         { frequency: 480, slideTo: 740, duration: 0.07, type: "sawtooth", volume: 0.043 },
         { frequency: 150, duration: 0.055, type: "square", volume: 0.025, delay: 0.015 },
-      ], 0.1, pitch);
+      ], SFX_MIN_GAPS.bossBlade, pitch);
       return;
     case "bossMirror":
       playPattern(sfx, [
         { frequency: 520, slideTo: 760, duration: 0.085, type: "sine", volume: 0.045 },
         { frequency: 260, slideTo: 180, duration: 0.09, type: "triangle", volume: 0.03, delay: 0.02 },
-      ], 0.12, pitch);
+      ], SFX_MIN_GAPS.bossMirror, pitch);
       return;
     case "bossFire":
       playPattern(sfx, [
         { frequency: 120, slideTo: 82, duration: 0.16, type: "sawtooth", volume: 0.058 },
         { frequency: 360, slideTo: 280, duration: 0.08, type: "square", volume: 0.032, delay: 0.02 },
-      ], 0.14, pitch);
+      ], SFX_MIN_GAPS.bossFire, pitch);
       return;
     case "bossBuff":
       playPattern(sfx, [
         { frequency: 260, slideTo: 390, duration: 0.12, type: "sawtooth", volume: 0.045 },
         { frequency: 520, duration: 0.075, type: "triangle", volume: 0.026, delay: 0.035 },
-      ], 0.14, pitch);
+      ], SFX_MIN_GAPS.bossBuff, pitch);
       return;
     case "bossUltimate":
       playPattern(sfx, [
         { frequency: 88, slideTo: 44, duration: 0.26, type: "sawtooth", volume: 0.075 },
         { frequency: 230, slideTo: 115, duration: 0.14, type: "square", volume: 0.045, delay: 0.03 },
         { frequency: 520, slideTo: 760, duration: 0.1, type: "triangle", volume: 0.035, delay: 0.05 },
-      ], 0.3, pitch);
+      ], SFX_MIN_GAPS.bossUltimate, pitch);
       return;
     case "bossKill":
       playPattern(sfx, [
         { frequency: 700, slideTo: 980, duration: 0.12, type: "triangle", volume: 0.058 },
         { frequency: 180, slideTo: 75, duration: 0.22, type: "sawtooth", volume: 0.05, delay: 0.025 },
-      ], 1, pitch);
+      ], SFX_MIN_GAPS.bossKill, pitch);
       return;
     default:
       return;

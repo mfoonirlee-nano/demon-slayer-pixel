@@ -7,6 +7,20 @@ import { spawnBossSummonEnemy } from "../enemy";
 import { damagePlayerOnContact } from "./shared";
 import type { LiveBoss } from "./types";
 
+const CAST_SFX_PITCH = 0.96;
+const AWAKENED_GRID_PHASE = 4;
+const AWAKENED_GRID_CHANCE = 0.26;
+const BUFF_PHASE = 3;
+const BUFF_CHANCE = 0.56;
+const FIRELINE_PHASE = 2;
+const FIRELINE_CHANCE = 0.76;
+const MIN_SUMMON_COOLDOWN = 150;
+const SUMMON_COOLDOWN_PHASE_REDUCTION = 10;
+const LURE_FORWARD_OFFSET = 36;
+const SUMMON_SFX_PITCH = 0.95;
+const GRID_SFX_PITCH = 0.84;
+const ASH_ZONE_FORWARD_OFFSET = 42;
+
 export function updateLanternEmberBoss(boss: LiveBoss) {
   if (boss.recoveryTimer > 0) {
     boss.recoveryTimer -= 1;
@@ -68,14 +82,14 @@ function startLanternEmberCast(boss: LiveBoss) {
   boss.skillCd = lanternSkillCooldown(boss);
   boss.vx = 0;
 
-  playSfx("bossCast", 0.96);
+  playSfx("bossCast", CAST_SFX_PITCH);
 }
 
 function nextLanternEmberSkill(boss: LiveBoss) {
   const roll = Math.random();
-  if (boss.awakened && (boss.phase >= 4 || roll < 0.26)) return "lanternAwakenedGrid";
-  if (boss.phase >= 3 && state.enemies.length > 0 && roll < 0.56) return "lanternBuff";
-  if (boss.phase >= 2 && roll < 0.76) return "lanternFireline";
+  if (boss.awakened && (boss.phase >= AWAKENED_GRID_PHASE || roll < AWAKENED_GRID_CHANCE)) return "lanternAwakenedGrid";
+  if (boss.phase >= BUFF_PHASE && state.enemies.length > 0 && roll < BUFF_CHANCE) return "lanternBuff";
+  if (boss.phase >= FIRELINE_PHASE && roll < FIRELINE_CHANCE) return "lanternFireline";
   return "lanternLure";
 }
 
@@ -83,7 +97,7 @@ function lanternSkillCooldown(boss: LiveBoss) {
   if (boss.skillMode === "lanternAwakenedGrid") return LANTERN_EMBER_CONFIG.awakenedCooldown;
   if (boss.skillMode === "lanternBuff") return LANTERN_EMBER_CONFIG.buffCooldown;
   if (boss.skillMode === "lanternFireline") return LANTERN_EMBER_CONFIG.firelineCooldown;
-  return Math.max(150, LANTERN_EMBER_CONFIG.summonCooldown - boss.phase * 10);
+  return Math.max(MIN_SUMMON_COOLDOWN, LANTERN_EMBER_CONFIG.summonCooldown - boss.phase * SUMMON_COOLDOWN_PHASE_REDUCTION);
 }
 
 function moveLanternEmberBoss(boss: LiveBoss) {
@@ -124,7 +138,7 @@ function spawnLanternSummon(boss: LiveBoss) {
     for (let i = 0; i < count; i += 1) spawnBossSummonEnemy();
   }
   state.lanternEmberLures.push({
-    x: boss.x + boss.w / 2 + boss.castFacing * 36,
+    x: boss.x + boss.w / 2 + boss.castFacing * LURE_FORWARD_OFFSET,
     y: boss.y + LANTERN_EMBER_CONFIG.lureYOffset,
     vx: boss.castFacing * LANTERN_EMBER_CONFIG.lureSpeed,
     facing: boss.castFacing,
@@ -132,7 +146,7 @@ function spawnLanternSummon(boss: LiveBoss) {
     frame: 0,
     life: LANTERN_EMBER_CONFIG.lureLife,
   });
-  playSfx("bossSummon", 0.95);
+  playSfx("bossSummon", SUMMON_SFX_PITCH);
 }
 
 export function spawnLanternFireline(boss: LiveBoss) {
@@ -204,12 +218,12 @@ function spawnLanternAwakenedGrid(boss: LiveBoss) {
     hitPlayerCd: 0,
   });
   spawnLanternAshZone(boss);
-  playSfx("bossUltimate", 0.84);
+  playSfx("bossUltimate", GRID_SFX_PITCH);
 }
 
 export function spawnLanternAshZone(boss: LiveBoss) {
   const x = clamp(
-    state.player.x + state.player.w / 2 + boss.castFacing * 42,
+    state.player.x + state.player.w / 2 + boss.castFacing * ASH_ZONE_FORWARD_OFFSET,
     LANTERN_EMBER_CONFIG.ashZoneRadius,
     WIDTH - LANTERN_EMBER_CONFIG.ashZoneRadius,
   );

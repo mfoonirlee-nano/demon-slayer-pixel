@@ -16,6 +16,11 @@ import { healPlayer } from "../player";
 import { rewardValuesForAct } from "../../systems/runProgression";
 
 const FULL_CIRCLE_RADIANS = Math.PI * 2;
+const CHEST_MIN_TRAVEL_WIDTH = 16;
+const CHEST_GLOW_PHASE_MULTIPLIER = 1.6;
+const CHEST_GLOW_ALPHA_MULTIPLIER = 0.5;
+const CHEST_GLOW_PADDING = 4;
+const CHEST_LOCK_SIZE = 4;
 
 export function spawnCrystalOnPlatform(platform: PlatformState) {
   const type: CrystalType =
@@ -39,7 +44,7 @@ export function spawnChestOnPlatform(platform: PlatformState) {
     platform,
     offsetX:
       CHEST_CONFIG.offsetBase +
-      Math.random() * Math.max(16, platform.w - CHEST_CONFIG.offsetBase * 2),
+      Math.random() * Math.max(CHEST_MIN_TRAVEL_WIDTH, platform.w - CHEST_CONFIG.offsetBase * 2),
     phase: Math.random() * FULL_CIRCLE_RADIANS,
     collected: false,
   });
@@ -211,11 +216,16 @@ export function drawChests() {
     const s = CHEST_CONFIG.size;
     const half = s / 2;
     const glow =
-      CHEST_CONFIG.glowBase + CHEST_CONFIG.glowAmplitude * Math.sin(c.phase * 1.6);
+      CHEST_CONFIG.glowBase + CHEST_CONFIG.glowAmplitude * Math.sin(c.phase * CHEST_GLOW_PHASE_MULTIPLIER);
 
     // Glow
-    ctx.fillStyle = `rgba(${CHEST_VISUAL.glowColorRgb},${glow * 0.5})`;
-    ctx.fillRect(x - half - 4, y - half - 4, s + 8, s + 8);
+    ctx.fillStyle = `rgba(${CHEST_VISUAL.glowColorRgb},${glow * CHEST_GLOW_ALPHA_MULTIPLIER})`;
+    ctx.fillRect(
+      x - half - CHEST_GLOW_PADDING,
+      y - half - CHEST_GLOW_PADDING,
+      s + CHEST_GLOW_PADDING * 2,
+      s + CHEST_GLOW_PADDING * 2,
+    );
 
     // Chest body (bottom half)
     ctx.fillStyle = CHEST_VISUAL.baseColor;
@@ -231,6 +241,6 @@ export function drawChests() {
 
     // Lock
     ctx.fillStyle = CHEST_VISUAL.lockColor;
-    ctx.fillRect(x - 2, y - 2, 4, 4);
+    ctx.fillRect(x - CHEST_LOCK_SIZE / 2, y - CHEST_LOCK_SIZE / 2, CHEST_LOCK_SIZE, CHEST_LOCK_SIZE);
   }
 }

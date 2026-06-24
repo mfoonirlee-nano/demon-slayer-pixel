@@ -4,7 +4,28 @@ import { moonTideUltimateConfig } from "../../systems/progression";
 import { emitHitBurst } from "../particle";
 import type { UltimateLevel, UltimatePlayerGhostAction, UltimatePlayerGhostSnapshot } from "../../types/game-state";
 
+type MoonTideGhostLevel = 1 | 2 | 3;
+
 const FULL_CIRCLE = Math.PI * 2;
+const MAX_MOON_TIDE_GHOST_LEVEL = 3;
+const GHOST_STRENGTH_BASE = 0.82;
+const GHOST_STRENGTH_PER_LEVEL = 0.09;
+const TRAIL_BACK_OFFSET_X = 16;
+const TRAIL_Y_OFFSET = 14;
+const TRAIL_BASE_WIDTH = 34;
+const TRAIL_MAX_SPEED_WIDTH_BONUS = 26;
+const TRAIL_SPEED_WIDTH_SCALE = 5;
+const TRAIL_HEIGHT = 7;
+const AFTERIMAGE_MIN_SLASH_W = 48;
+const AFTERIMAGE_MAX_SLASH_W = 92;
+const AFTERIMAGE_SLASH_W_SCALE = 0.95;
+const AFTERIMAGE_MIN_SLASH_H = 18;
+const AFTERIMAGE_MAX_SLASH_H = 34;
+const AFTERIMAGE_SLASH_H_SCALE = 0.35;
+const AFTERIMAGE_FORWARD_OFFSET = 10;
+const AFTERIMAGE_FORWARD_STAGGER = 12;
+const AFTERIMAGE_Y_OFFSET = 8;
+const AFTERIMAGE_Y_JITTER = 10;
 const MOON_TIDE_PLAYER_GHOST = {
   lifeByAction: {
     idle: 22,
@@ -38,7 +59,7 @@ const MOON_TIDE_PLAYER_GHOST = {
   lifeByAction: Record<UltimatePlayerGhostAction, number>;
   levelThreeLifeBonus: number;
   hurtPauseFrames: number;
-  maxCountByLevel: Record<1 | 2 | 3, number>;
+  maxCountByLevel: Record<MoonTideGhostLevel, number>;
   intervalByAction: Record<UltimatePlayerGhostAction, number>;
   strengthByAction: Record<UltimatePlayerGhostAction, number>;
 };
@@ -78,14 +99,14 @@ export function moonTidePlayerAnimationFrameSpeed(action: UltimatePlayerGhostAct
   return Math.max(1, baseFrameSpeed / speedMultiplier);
 }
 
-function currentMoonTideLevel(): 1 | 2 | 3 {
+function currentMoonTideLevel(): MoonTideGhostLevel {
   const level = state.player.ultimateLevel;
-  if (level === 2 || level === 3) return level;
+  if (level === 2 || level === MAX_MOON_TIDE_GHOST_LEVEL) return level;
   return 1;
 }
 
 export function moonTidePlayerGhostMaxCount(level: UltimateLevel = state.player.ultimateLevel) {
-  const activeLevel = (level === 2 || level === 3 ? level : 1) as 1 | 2 | 3;
+  const activeLevel = (level === 2 || level === MAX_MOON_TIDE_GHOST_LEVEL ? level : 1) as MoonTideGhostLevel;
   return MOON_TIDE_PLAYER_GHOST.maxCountByLevel[activeLevel];
 }
 
@@ -105,9 +126,9 @@ export function recordMoonTidePlayerGhost(snapshot: UltimatePlayerGhostSnapshot)
 
   const level = currentMoonTideLevel();
   const maxLife = MOON_TIDE_PLAYER_GHOST.lifeByAction[snapshot.action]
-    + (level === 3 ? MOON_TIDE_PLAYER_GHOST.levelThreeLifeBonus : 0);
+    + (level === MAX_MOON_TIDE_GHOST_LEVEL ? MOON_TIDE_PLAYER_GHOST.levelThreeLifeBonus : 0);
   const baseStrength = MOON_TIDE_PLAYER_GHOST.strengthByAction[snapshot.action];
-  const levelStrength = baseStrength * (0.82 + level * 0.09);
+  const levelStrength = baseStrength * (GHOST_STRENGTH_BASE + level * GHOST_STRENGTH_PER_LEVEL);
   state.ultimatePlayerGhosts.push({
     ...snapshot,
     life: maxLife,
@@ -131,13 +152,13 @@ export function spawnMoonTideTrail() {
 
   const life = PLAYER_COMBAT.ultimateTrailLife;
   state.ultimateTrails.push({
-    x: p.x + p.w / 2 - Math.sign(p.vx || p.facing) * 16,
-    y: p.y + p.h - 14,
+    x: p.x + p.w / 2 - Math.sign(p.vx || p.facing) * TRAIL_BACK_OFFSET_X,
+    y: p.y + p.h - TRAIL_Y_OFFSET,
     facing: Math.sign(p.vx || p.facing),
     life,
     maxLife: life,
-    width: 34 + Math.min(26, Math.abs(p.vx) * 5),
-    height: 7,
+    width: TRAIL_BASE_WIDTH + Math.min(TRAIL_MAX_SPEED_WIDTH_BONUS, Math.abs(p.vx) * TRAIL_SPEED_WIDTH_SCALE),
+    height: TRAIL_HEIGHT,
     phase: Math.random() * FULL_CIRCLE,
   });
 }
@@ -158,12 +179,12 @@ export function triggerMoonTideAfterimageHit(
   applyDamage(damage);
 
   const life = PLAYER_COMBAT.ultimateAfterimageLife;
-  const slashW = Math.max(48, Math.min(92, targetSpread * 0.95));
-  const slashH = Math.max(18, Math.min(34, targetSpread * 0.35));
+  const slashW = Math.max(AFTERIMAGE_MIN_SLASH_W, Math.min(AFTERIMAGE_MAX_SLASH_W, targetSpread * AFTERIMAGE_SLASH_W_SCALE));
+  const slashH = Math.max(AFTERIMAGE_MIN_SLASH_H, Math.min(AFTERIMAGE_MAX_SLASH_H, targetSpread * AFTERIMAGE_SLASH_H_SCALE));
   for (let i = 0; i < config.afterimageCount; i += 1) {
     state.ultimateAfterimageSlashes.push({
-      x: hitX + p.facing * (10 + i * 12),
-      y: hitY - 8 + (Math.random() - 0.5) * 10,
+      x: hitX + p.facing * (AFTERIMAGE_FORWARD_OFFSET + i * AFTERIMAGE_FORWARD_STAGGER),
+      y: hitY - AFTERIMAGE_Y_OFFSET + (Math.random() - 0.5) * AFTERIMAGE_Y_JITTER,
       w: slashW,
       h: slashH,
       facing: p.facing,

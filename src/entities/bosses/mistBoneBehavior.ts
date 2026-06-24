@@ -6,6 +6,23 @@ import type { BossSkillMode } from "../../types/game-state";
 import { damagePlayerOnContact } from "./shared";
 import type { LiveBoss } from "./types";
 
+const RETREAT_PHASE_FORCE = 0.006;
+const STEERING_PHASE_FORCE = 0.004;
+const MOVE_COAST_DRAG = 0.86;
+const MAX_VELOCITY_PHASE_BONUS = 0.18;
+const CAST_SFX_PITCH = 0.92;
+const CAGE_PHASE = 4;
+const CAGE_RANDOM_CHANCE = 0.28;
+const LINE_PHASE = 2;
+const LINE_RANDOM_CHANCE = 0.72;
+const COOLDOWN_PHASE_REDUCTION = 12;
+const CAGE_MIN_COOLDOWN = 176;
+const CAGE_COOLDOWN_BONUS = 32;
+const LINE_MIN_COOLDOWN = 156;
+const SPIKE_MIN_COOLDOWN = 142;
+const SPIKE_COOLDOWN_BONUS = 18;
+const PATTERN_SFX_PITCH = 0.82;
+
 export function updateMistBoneBoss(boss: LiveBoss) {
   if (boss.recoveryTimer > 0) {
     boss.recoveryTimer -= 1;
@@ -54,18 +71,18 @@ function moveMistBoneBoss(boss: LiveBoss) {
   boss.actionState = "move";
 
   if (distance < MIST_BONE_CONFIG.closeDistance) {
-    boss.vx -= Math.sign(toPlayer) * (MIST_BONE_CONFIG.retreatForce + boss.phase * 0.006);
+    boss.vx -= Math.sign(toPlayer) * (MIST_BONE_CONFIG.retreatForce + boss.phase * RETREAT_PHASE_FORCE);
   } else if (distance > MIST_BONE_CONFIG.preferredDistance) {
-    boss.vx += Math.sign(toPlayer) * (MIST_BONE_CONFIG.steeringForce + boss.phase * 0.004);
+    boss.vx += Math.sign(toPlayer) * (MIST_BONE_CONFIG.steeringForce + boss.phase * STEERING_PHASE_FORCE);
   } else {
-    boss.vx *= 0.86;
+    boss.vx *= MOVE_COAST_DRAG;
   }
 
   boss.vx *= MIST_BONE_CONFIG.drag;
   boss.vx = clamp(
     boss.vx,
-    -(MIST_BONE_CONFIG.maxVelocity + boss.phase * 0.18),
-    MIST_BONE_CONFIG.maxVelocity + boss.phase * 0.18,
+    -(MIST_BONE_CONFIG.maxVelocity + boss.phase * MAX_VELOCITY_PHASE_BONUS),
+    MIST_BONE_CONFIG.maxVelocity + boss.phase * MAX_VELOCITY_PHASE_BONUS,
   );
   boss.x = clamp(boss.x + boss.vx, 0, WIDTH - boss.w);
 }
@@ -82,21 +99,23 @@ function startMistBoneCast(boss: LiveBoss) {
   boss.skillCd = mistBoneSkillCooldown(boss.skillMode, boss.phase);
   boss.vx = 0;
 
-  playSfx("bossCast", 0.92);
+  playSfx("bossCast", CAST_SFX_PITCH);
 }
 
 function nextMistBoneSkill(boss: LiveBoss): BossSkillMode {
   const roll = Math.random();
-  if (boss.awakened && (boss.phase >= 4 || roll < 0.28)) return "mistBoneCage";
-  if (boss.phase >= 2 && roll < 0.72) return "mistBoneLine";
+  if (boss.awakened && (boss.phase >= CAGE_PHASE || roll < CAGE_RANDOM_CHANCE)) return "mistBoneCage";
+  if (boss.phase >= LINE_PHASE && roll < LINE_RANDOM_CHANCE) return "mistBoneLine";
   return "mistBoneSpike";
 }
 
 function mistBoneSkillCooldown(skillMode: BossSkillMode, phase: number) {
-  const phaseReduction = phase * 12;
-  if (skillMode === "mistBoneCage") return Math.max(176, MIST_BONE_CONFIG.skillCooldown + 32 - phaseReduction);
-  if (skillMode === "mistBoneLine") return Math.max(156, MIST_BONE_CONFIG.skillCooldown - phaseReduction);
-  return Math.max(142, MIST_BONE_CONFIG.skillCooldown - 18 - phaseReduction);
+  const phaseReduction = phase * COOLDOWN_PHASE_REDUCTION;
+  if (skillMode === "mistBoneCage") {
+    return Math.max(CAGE_MIN_COOLDOWN, MIST_BONE_CONFIG.skillCooldown + CAGE_COOLDOWN_BONUS - phaseReduction);
+  }
+  if (skillMode === "mistBoneLine") return Math.max(LINE_MIN_COOLDOWN, MIST_BONE_CONFIG.skillCooldown - phaseReduction);
+  return Math.max(SPIKE_MIN_COOLDOWN, MIST_BONE_CONFIG.skillCooldown - SPIKE_COOLDOWN_BONUS - phaseReduction);
 }
 
 function spawnMistBonePattern(boss: LiveBoss) {
@@ -107,13 +126,13 @@ function spawnMistBonePattern(boss: LiveBoss) {
   } else {
     spawnMistBoneSpikeAtPlayer(boss, 0);
   }
-  playSfx("bossWave", 0.82);
+  playSfx("bossWave", PATTERN_SFX_PITCH);
 }
 
 function spawnMistBoneLine(boss: LiveBoss) {
   const count = Math.min(
     MIST_BONE_CONFIG.lineMaxCount,
-    MIST_BONE_CONFIG.lineBaseCount + Math.max(0, boss.phase - 2),
+    MIST_BONE_CONFIG.lineBaseCount + Math.max(0, boss.phase - LINE_PHASE),
   );
   const playerCenter = state.player.x + state.player.w / 2;
   const half = (count - 1) / 2;

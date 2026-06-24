@@ -32,6 +32,20 @@ import {
 } from "./helpers";
 
 const FULL_CIRCLE_RADIANS = Math.PI * 2;
+const SAME_LAYER_LONG_STREAK_WEIGHT = 0.08;
+const SAME_LAYER_SHORT_STREAK_WEIGHT = 0.22;
+const WIDE_PLATFORM_MIN_WIDTH = 190;
+const RISKY_CRYSTAL_CHANCE_BONUS = 0.18;
+const HIGH_RISE_THRESHOLD = 58;
+const MEDIUM_RISE_THRESHOLD = 24;
+const FALL_THRESHOLD = 36;
+const NARROW_PLATFORM_WIDTH_BONUS = 18;
+const RECOVERY_EXTRA_GAP = 18;
+const HARD_STEP_EXTRA_GAP = 18;
+const BREATHER_RANDOM_LAYER_CHANCE = 0.65;
+const STAIR_LONG_COUNT_CHANCE = 0.65;
+const STAIR_LONG_COUNT = 3;
+const ZIGZAG_PLATFORM_COUNT = 3;
 export type { SegmentKind };
 
 type SegmentDifficulty = "easy" | "medium" | "hard";
@@ -74,7 +88,7 @@ function pickVariedLayer(current: PlatformLayer): PlatformLayer {
   };
 
   if (sameLayerStreak > 0) {
-    weights[current] *= sameLayerStreak > 1 ? 0.08 : 0.22;
+    weights[current] *= sameLayerStreak > 1 ? SAME_LAYER_LONG_STREAK_WEIGHT : SAME_LAYER_SHORT_STREAK_WEIGHT;
     if (current !== "low" && weights.low > 0) weights.low += 0.18;
     if (current !== "mid" && weights.mid > 0) weights.mid += 0.22;
     if (current !== "high" && weights.high > 0) weights.high += 0.24;
@@ -133,7 +147,7 @@ function makePlatform(
   isHover: boolean,
   isChain: boolean,
 ): PlatformState {
-  const spriteKind = isChain ? "chain" : w >= 190 ? "wide" : "normal";
+  const spriteKind = isChain ? "chain" : w >= WIDE_PLATFORM_MIN_WIDTH ? "wide" : "normal";
   const spriteIndex = nearestSpriteIndex(spriteKind, w);
   const sprite = PLATFORM_SPRITES.regions[spriteIndex];
   const drawW = Math.round(sprite.sw * PLATFORM_SPRITES.drawScale);
@@ -206,7 +220,7 @@ function maybeSpawnReward(platform: PlatformState, risky: boolean) {
   if (consumeChestSlot(platform)) return;
 
   const chance = risky
-    ? PLATFORM_CONFIG.crystalSpawnChance + 0.18
+    ? PLATFORM_CONFIG.crystalSpawnChance + RISKY_CRYSTAL_CHANCE_BONUS
     : PLATFORM_CONFIG.crystalSpawnChance;
   if (
     rewardDebt >= MAP_GENERATION_CONFIG.reward.crystalDebtThreshold
@@ -275,11 +289,11 @@ function canReachNextPlatform(
   if (gap < reach.minGap) return false;
 
   let maxGap: number = reach.baseMaxGap;
-  if (rise > 58) maxGap = reach.highRiseMaxGap;
-  else if (rise > 24) maxGap = reach.mediumRiseMaxGap;
-  else if (fall > 36) maxGap = reach.fallMaxGap;
+  if (rise > HIGH_RISE_THRESHOLD) maxGap = reach.highRiseMaxGap;
+  else if (rise > MEDIUM_RISE_THRESHOLD) maxGap = reach.mediumRiseMaxGap;
+  else if (fall > FALL_THRESHOLD) maxGap = reach.fallMaxGap;
 
-  if (width < PLATFORM_WIDTH.chain.base + 18) maxGap -= reach.narrowPenalty;
+  if (width < PLATFORM_WIDTH.chain.base + NARROW_PLATFORM_WIDTH_BONUS) maxGap -= reach.narrowPenalty;
   if (isHover) maxGap -= reach.hoverPenalty;
 
   return gap <= maxGap;
@@ -353,7 +367,7 @@ function spawnLowRecoverySegment(): SegmentSpawnResult {
     const platform = addPlatform(platforms, x, y, width, vx, false, i > 0);
 
     if (i < layers.length - 1) {
-      const gap = randomBetween(CHAIN_CONFIG.gapMin, CHAIN_CONFIG.gapMin + 18);
+      const gap = randomBetween(CHAIN_CONFIG.gapMin, CHAIN_CONFIG.gapMin + RECOVERY_EXTRA_GAP);
       x = platform.x + platform.w + gap;
     }
   }
@@ -374,7 +388,7 @@ function nextReachableStep(fromY: number, direction: -1 | 0 | 1, hard: boolean) 
 
   for (let i = 0; i < MAP_GENERATION_CONFIG.segment.retryCount; i += 1) {
     const y = layerY(targetLayer);
-    const gap = randomBetween(CHAIN_CONFIG.gapMin, hard ? CHAIN_CONFIG.gapMax + 18 : CHAIN_CONFIG.gapMax);
+    const gap = randomBetween(CHAIN_CONFIG.gapMin, hard ? CHAIN_CONFIG.gapMax + HARD_STEP_EXTRA_GAP : CHAIN_CONFIG.gapMax);
     const width = platformWidth("chain");
     if (canReachNextPlatform(fromY, y, gap, width, false)) {
       return { y, gap, width };
@@ -391,7 +405,7 @@ function nextReachableStep(fromY: number, direction: -1 | 0 | 1, hard: boolean) 
 function spawnBreatherSegment(): SegmentSpawnResult {
   const targetLayer: PlatformLayer = lastLayer === "high" || lastLayer === "top"
     ? layerBelow(lastLayer)
-    : Math.random() < 0.65
+    : Math.random() < BREATHER_RANDOM_LAYER_CHANCE
       ? pickVariedLayer(lastLayer)
       : "low";
   const y = layerY(targetLayer);
@@ -402,7 +416,7 @@ function spawnBreatherSegment(): SegmentSpawnResult {
 }
 
 function spawnStairSegment(kind: "stairUp" | "stairDown"): SegmentSpawnResult {
-  const count = Math.random() < 0.65 ? 3 : 2;
+  const count = Math.random() < STAIR_LONG_COUNT_CHANCE ? STAIR_LONG_COUNT : 2;
   const direction = kind === "stairUp" ? -1 : 1;
   const vx = platformVx();
   const platforms: PlatformState[] = [];
@@ -433,7 +447,7 @@ function spawnZigzagSegment(): SegmentSpawnResult {
   let x = firstPlatformX();
   let direction: -1 | 1 = yToLayer(y) === "high" || yToLayer(y) === "top" ? 1 : -1;
 
-  for (let i = 0; i < 3; i += 1) {
+  for (let i = 0; i < ZIGZAG_PLATFORM_COUNT; i += 1) {
     const width = platformWidth(i === 0 ? "normal" : "chain");
     const platform = addPlatform(platforms, x, y, width, vx, false, i > 0);
     const step = nextReachableStep(y, direction, true);

@@ -17,6 +17,31 @@ const PARALLAX_SPEED = {
   background: 4,    // sky elements + far mountain ridge (slowest)
   midground: 12,    // mid/near mountains
 };
+const STAR_COUNT = 9;
+const STAR_X_STEP = 137;
+const STAR_X_GROUP_MOD = 5;
+const STAR_X_GROUP_OFFSET = 43;
+const STAR_Y_TOP = 18;
+const STAR_Y_ROW_MOD = 7;
+const STAR_Y_ROW_GAP = 28;
+const STAR_SCALE_BASE = 0.18;
+const STAR_SCALE_STEP_MOD = 4;
+const STAR_SCALE_STEP = 0.09;
+const STAR_SCALE_RATIO = 0.6666666666666666;
+const STAR_TWINKLE_OFFSET_STEP = 11;
+const STAR_TWINKLE_OFFSET_MOD = 24;
+const SKY_TOP_BAND_HEIGHT = 170;
+const SKY_MID_BAND_HEIGHT = 120;
+const SKY_LOW_BAND_Y = 290;
+const SKY_UPPER_OVERLAY_HEIGHT = 220;
+const SKY_MID_OVERLAY_Y = 110;
+const SKY_MID_OVERLAY_HEIGHT = 180;
+const STAR_COVER_FADE_SCALE = 0.22;
+const STAR_TWINKLE_BASE = 0.5;
+const STAR_TWINKLE_AMPLITUDE = 0.5;
+const STAR_TWINKLE_SPEED = 2.8;
+const MIN_VISIBLE_STAR_SIZE = 0.5;
+const STAR_ALPHA_SCALE = 0.82;
 
 // Mountain sub-parallax: each variant is placed on one of the three planes.
 // `plane` picks the scroll speed; `depthMul` lets us further stagger mountains
@@ -28,11 +53,11 @@ const MOUNTAIN_LAYERS = [
 ];
 
 // Sprite stars: only small/medium variants (no group), spread across sky
-const STARS = Array.from({ length: 9 }, (_, i) => ({
-  x: (i * 137 + (i % 5) * 43) % WIDTH,
-  y: 18 + (i % 7) * 28,
-  scale: (0.18 + (i % 4) * 0.09) * (2 / 3) * 0.5,
-  twinkleOffset: (i * 11) % 24,
+const STARS = Array.from({ length: STAR_COUNT }, (_, i) => ({
+  x: (i * STAR_X_STEP + (i % STAR_X_GROUP_MOD) * STAR_X_GROUP_OFFSET) % WIDTH,
+  y: STAR_Y_TOP + (i % STAR_Y_ROW_MOD) * STAR_Y_ROW_GAP,
+  scale: (STAR_SCALE_BASE + (i % STAR_SCALE_STEP_MOD) * STAR_SCALE_STEP) * STAR_SCALE_RATIO * 0.5,
+  twinkleOffset: (i * STAR_TWINKLE_OFFSET_STEP) % STAR_TWINKLE_OFFSET_MOD,
   variant: i % 2 as 0 | 1, // 0=small, 1=medium
 }));
 
@@ -100,16 +125,16 @@ export function drawBackground() {
   const scrollMidground  = elapsed * PARALLAX_SPEED.midground;
 
   ctx.fillStyle = nightTop;
-  ctx.fillRect(0, 0, WIDTH, 170);
+  ctx.fillRect(0, 0, WIDTH, SKY_TOP_BAND_HEIGHT);
   ctx.fillStyle = nightMid;
-  ctx.fillRect(0, 170, WIDTH, 120);
+  ctx.fillRect(0, SKY_TOP_BAND_HEIGHT, WIDTH, SKY_MID_BAND_HEIGHT);
   ctx.fillStyle = nightLow;
-  ctx.fillRect(0, 290, WIDTH, GROUND_Y - 290);
+  ctx.fillRect(0, SKY_LOW_BAND_Y, WIDTH, GROUND_Y - SKY_LOW_BAND_Y);
 
   ctx.fillStyle = upperOverlay;
-  ctx.fillRect(0, 0, WIDTH, 220);
+  ctx.fillRect(0, 0, WIDTH, SKY_UPPER_OVERLAY_HEIGHT);
   ctx.fillStyle = midOverlay;
-  ctx.fillRect(0, 110, WIDTH, 180);
+  ctx.fillRect(0, SKY_MID_OVERLAY_Y, WIDTH, SKY_MID_OVERLAY_HEIGHT);
 
   drawMoon({ elapsed, moon: state.moon });
 
@@ -117,18 +142,21 @@ export function drawBackground() {
   const spriteImg = SKY_SPRITES.image;
   const bloodLerp = state.moon.bloodLerp;
   if (spriteImg && bloodLerp < 1) {
-    const starVisibility = (1 - bloodLerp) * (1 - state.moon.coverProgress * 0.22);
+    const starVisibility = (1 - bloodLerp) * (1 - state.moon.coverProgress * STAR_COVER_FADE_SCALE);
     for (const s of STARS) {
       const region = s.variant === 0 ? SKY_SPRITES.starSmall : SKY_SPRITES.starMedium;
       // Scale twinkling: 0 → full size, giving a "blink in and out" effect
-      const twinkle = Math.max(0, 0.5 + 0.5 * Math.sin(elapsed * 2.8 + s.twinkleOffset));
+      const twinkle = Math.max(
+        0,
+        STAR_TWINKLE_BASE + STAR_TWINKLE_AMPLITUDE * Math.sin(elapsed * STAR_TWINKLE_SPEED + s.twinkleOffset),
+      );
       const drawW = region.sw * s.scale * twinkle;
       const drawH = region.sh * s.scale * twinkle;
-      if (drawW < 0.5) continue;
+      if (drawW < MIN_VISIBLE_STAR_SIZE) continue;
       const cx = s.x + region.sw * s.scale / 2;
       const cy = s.y + region.sh * s.scale / 2;
       ctx.save();
-      ctx.globalAlpha = starVisibility * 0.82;
+      ctx.globalAlpha = starVisibility * STAR_ALPHA_SCALE;
       ctx.drawImage(spriteImg, region.sx, region.sy, region.sw, region.sh, cx - drawW / 2, cy - drawH / 2, drawW, drawH);
       ctx.restore();
     }

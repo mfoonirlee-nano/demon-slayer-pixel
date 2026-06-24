@@ -41,6 +41,15 @@ export { castSelectedSkill, castUltimateSkill } from "./players/skillCasting";
 export { drawPlayer } from "./players/render";
 
 const DASH_REPOSITION_INVINCIBLE_REFRESH_FRAMES = 2;
+const FALL_ATTACK_ENEMY_SLASH_SCALE = 1.25;
+const FALL_ATTACK_BOSS_SLASH_SCALE = 0.9;
+const FALL_ATTACK_BOSS_BURST_BONUS = 0.6;
+const FALL_ATTACK_GROUND_SLASH_Y_OFFSET = 8;
+const FALL_ATTACK_GROUND_BURST_Y_OFFSET = 6;
+const FALL_ATTACK_GROUND_SLASH_SCALE = 0.8;
+const FALL_ATTACK_GROUND_BURST_BONUS = 0.4;
+const GUARD_COUNTER_ENEMY_BURST_POWER = 1.5;
+const GUARD_COUNTER_BOSS_HIT_Y_RATIO = 0.4;
 const GUARD_COUNTER_EFFECT_CONFIG = CORE_PLAYER_SKILL_EFFECT_CONFIGS[SKILL_IDS.guardCounter];
 const GUARD_COUNTER_HIT_COLOR = playerSkillColor(SKILL_IDS.guardCounter);
 
@@ -134,7 +143,7 @@ function triggerFallAttackImpact() {
       hitCooldown: FALL_ATTACK.enemyHitCooldown,
       reward: "attack",
     });
-    emitSlash(hit.hitX, hit.hitY, box.color, e.w * 1.25);
+    emitSlash(hit.hitX, hit.hitY, box.color, e.w * FALL_ATTACK_ENEMY_SLASH_SCALE);
     emitHitBurst(hit.hitX, hit.hitY, PLAYER_COMBAT.effects.skillEnemyBurstColor, FALL_ATTACK.impactBurstPower);
   }
 
@@ -148,15 +157,25 @@ function triggerFallAttackImpact() {
       damage: getPlayerAttackDamage() * FALL_ATTACK.bossDamageMultiplier,
       hitCooldown: FALL_ATTACK.bossHitCooldown,
     });
-    emitSlash(hit.hitX, hit.hitY, box.color, boss.w * 0.9);
-    emitHitBurst(hit.hitX, hit.hitY, PLAYER_COMBAT.effects.skillBossBurstColor, FALL_ATTACK.impactBurstPower + 0.6);
+    emitSlash(hit.hitX, hit.hitY, box.color, boss.w * FALL_ATTACK_BOSS_SLASH_SCALE);
+    emitHitBurst(
+      hit.hitX,
+      hit.hitY,
+      PLAYER_COMBAT.effects.skillBossBurstColor,
+      FALL_ATTACK.impactBurstPower + FALL_ATTACK_BOSS_BURST_BONUS,
+    );
     if (hit.defeated) {
       emitSlash(boss.x + boss.w / 2, boss.y + PLAYER_COMBAT.bossHitY, PLAYER_COMBAT.effects.bossKillSlashColor);
     }
   }
 
-  emitSlash(cx, impactY - 8, box.color, FALL_ATTACK.radius * 0.8);
-  emitHitBurst(cx, impactY - 6, box.color, FALL_ATTACK.impactBurstPower + 0.4);
+  emitSlash(cx, impactY - FALL_ATTACK_GROUND_SLASH_Y_OFFSET, box.color, FALL_ATTACK.radius * FALL_ATTACK_GROUND_SLASH_SCALE);
+  emitHitBurst(
+    cx,
+    impactY - FALL_ATTACK_GROUND_BURST_Y_OFFSET,
+    box.color,
+    FALL_ATTACK.impactBurstPower + FALL_ATTACK_GROUND_BURST_BONUS,
+  );
   p.invincible = Math.max(p.invincible, FALL_ATTACK.landingInvincibleFrames);
   playSfx("playerFallAttackImpact");
 }
@@ -195,11 +214,11 @@ export function hurtPlayer(damage: number, sourceVx: number) {
         reward: "enemy",
       });
       emitSlash(hit.hitX, hit.hitY, GUARD_COUNTER_HIT_COLOR, e.w);
-      emitHitBurst(hit.hitX, hit.hitY, GUARD_COUNTER_HIT_COLOR, 1.5);
+      emitHitBurst(hit.hitX, hit.hitY, GUARD_COUNTER_HIT_COLOR, GUARD_COUNTER_ENEMY_BURST_POWER);
     }
     if (state.boss && hitbox(counterRect, state.boss)) {
       const boss = state.boss;
-      const hitPoint = { x: boss.x + boss.w / 2, y: boss.y + boss.h * 0.4 };
+      const hitPoint = { x: boss.x + boss.w / 2, y: boss.y + boss.h * GUARD_COUNTER_BOSS_HIT_Y_RATIO };
       const hit = resolveBossHit({
         boss,
         hitRect: counterRect,

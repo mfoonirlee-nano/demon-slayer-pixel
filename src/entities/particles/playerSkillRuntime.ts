@@ -26,6 +26,17 @@ import {
   vortexContainment,
 } from "./playerSkillShared";
 
+const VERTICAL_WAVE_PUSH_DISTANCE = 4;
+const RAIN_LINE_MAX_ALPHA = 0.62;
+const RAIN_LINE_ALPHA_BASE = 0.2;
+const RAIN_LINE_ALPHA_GAIN = 0.42;
+const VORTEX_MAX_ALPHA = 0.78;
+const VORTEX_ALPHA_BASE = 0.3;
+const VORTEX_ALPHA_GAIN = 0.48;
+const DEFAULT_MAX_ALPHA = 0.9;
+const DEFAULT_ALPHA_BASE = 0.35;
+const DEFAULT_ALPHA_GAIN = 0.55;
+
 function tickEffectCooldowns(effect: PlayerSkillEffectState) {
   if (effect.bossCooldown !== undefined) {
     effect.bossCooldown = Math.max(0, effect.bossCooldown - 1);
@@ -152,7 +163,7 @@ function updateOneShotBoxEffect(effect: PlayerSkillEffectState) {
     if (!hitbox(box, enemy)) continue;
     effect.hitEnemies.push(enemy);
     if (effect.kind === "verticalWave") {
-      enemy.x += effect.facing * 4;
+      enemy.x += effect.facing * VERTICAL_WAVE_PUSH_DISTANCE;
       enemy.y = Math.max(0, enemy.y - (effect.lift ?? 0));
       enemy.vx *= 0.45;
     }
@@ -322,10 +333,10 @@ export function drawPlayerSkillEffects() {
       : null;
     const lifeRatio = effect.life / Math.max(1, effect.maxLife);
     const alpha = effect.kind === "rainLine"
-      ? Math.min(0.62, 0.2 + lifeRatio * 0.42)
+      ? Math.min(RAIN_LINE_MAX_ALPHA, RAIN_LINE_ALPHA_BASE + lifeRatio * RAIN_LINE_ALPHA_GAIN)
       : effect.kind === "vortex"
-        ? Math.min(0.78, 0.3 + lifeRatio * 0.48)
-        : Math.min(0.9, 0.35 + lifeRatio * 0.55);
+        ? Math.min(VORTEX_MAX_ALPHA, VORTEX_ALPHA_BASE + lifeRatio * VORTEX_ALPHA_GAIN)
+        : Math.min(DEFAULT_MAX_ALPHA, DEFAULT_ALPHA_BASE + lifeRatio * DEFAULT_ALPHA_GAIN);
 
     ctx.save();
     ctx.globalAlpha = alpha;

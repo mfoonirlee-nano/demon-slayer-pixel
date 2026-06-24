@@ -12,6 +12,12 @@ import {
   recordMoonTidePlayerGhost,
 } from "./moonTide";
 
+const LEVEL_ONE_GHOST_CAP = 3;
+const LEVEL_THREE_GHOST_CAP = 5;
+const IDLE_GHOST_VISIBLE_FRAMES = 18;
+const HURT_INVINCIBILITY_GHOST_RESUME_OFFSET = 12;
+const MOON_TIDE_LEVEL_THREE_MOVE_MULTIPLIER = 1.25;
+
 function ghostSnapshot(action: UltimatePlayerGhostAction): UltimatePlayerGhostSnapshot {
   return {
     source: "player",
@@ -41,8 +47,8 @@ describe("moon tide player ghosts", () => {
       recordMoonTidePlayerGhost(ghostSnapshot("attack"));
     }
 
-    expect(moonTidePlayerGhostMaxCount()).toBe(3);
-    expect(state.ultimatePlayerGhosts).toHaveLength(3);
+    expect(moonTidePlayerGhostMaxCount()).toBe(LEVEL_ONE_GHOST_CAP);
+    expect(state.ultimatePlayerGhosts).toHaveLength(LEVEL_ONE_GHOST_CAP);
 
     resetState();
     state.player.ultimateLevel = 3;
@@ -51,8 +57,8 @@ describe("moon tide player ghosts", () => {
       recordMoonTidePlayerGhost(ghostSnapshot("attack"));
     }
 
-    expect(moonTidePlayerGhostMaxCount()).toBe(5);
-    expect(state.ultimatePlayerGhosts).toHaveLength(5);
+    expect(moonTidePlayerGhostMaxCount()).toBe(LEVEL_THREE_GHOST_CAP);
+    expect(state.ultimatePlayerGhosts).toHaveLength(LEVEL_THREE_GHOST_CAP);
   });
 
   it("keeps idle ghosts sparse even while moon tide is active", () => {
@@ -73,7 +79,7 @@ describe("moon tide player ghosts", () => {
 
     expect(recordMoonTidePlayerGhost(ghostSnapshot("idle"))).toBe(true);
 
-    for (let frame = 0; frame < 18; frame += 1) {
+    for (let frame = 0; frame < IDLE_GHOST_VISIBLE_FRAMES; frame += 1) {
       updateUltimatePlayerGhosts();
     }
 
@@ -136,7 +142,7 @@ describe("moon tide player ghosts", () => {
 
     expect(recordMoonTidePlayerGhost(ghostSnapshot("attack"))).toBe(false);
 
-    state.player.invincible = PLAYER_COMBAT.hurtInvincibleFrames - 12;
+    state.player.invincible = PLAYER_COMBAT.hurtInvincibleFrames - HURT_INVINCIBILITY_GHOST_RESUME_OFFSET;
 
     expect(recordMoonTidePlayerGhost(ghostSnapshot("attack"))).toBe(true);
   });
@@ -170,7 +176,7 @@ describe("moon tide player ghosts", () => {
     const moonTideDistance = state.player.x - moonTideStartX;
 
     expect(moonTideDistance).toBeGreaterThan(normalDistance);
-    expect(moonTideDistance).toBeCloseTo(state.player.speed * 1.25);
+    expect(moonTideDistance).toBeCloseTo(state.player.speed * MOON_TIDE_LEVEL_THREE_MOVE_MULTIPLIER);
   });
 
   it("speeds up movement animation cadence during the active buff", () => {
@@ -181,7 +187,8 @@ describe("moon tide player ghosts", () => {
     state.player.ultimateLevel = 3;
     state.player.ultimateTimer = 30;
 
-    expect(moonTidePlayerAnimationFrameSpeed("move", baseRunFrameSpeed)).toBeCloseTo(baseRunFrameSpeed / 1.25);
+    expect(moonTidePlayerAnimationFrameSpeed("move", baseRunFrameSpeed))
+      .toBeCloseTo(baseRunFrameSpeed / MOON_TIDE_LEVEL_THREE_MOVE_MULTIPLIER);
     expect(moonTidePlayerAnimationFrameSpeed("attack", baseRunFrameSpeed)).toBe(baseRunFrameSpeed);
   });
 });

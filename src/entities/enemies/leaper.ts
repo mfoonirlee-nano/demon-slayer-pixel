@@ -61,6 +61,8 @@ const WARNING_CRACK_CENTER_X = -6;
 const WARNING_CRACK_CENTER_Y = 3;
 const WARNING_CRACK_CENTER_W = 14;
 const WARNING_CRACK_H = 2;
+const WINDUP_WARNING_SFX_PITCH = 0.78;
+const LEAP_SFX_PITCH = 0.92;
 
 function randomFrameCount(min: number, jitter: number) {
   return min + Math.floor(Math.random() * jitter);
@@ -137,13 +139,13 @@ function enterLeaperPhase(enemy: EnemyState, phase: LeaperPhase) {
     );
     enemy.leaperPhaseDuration = enemy.leaperTimer;
     enemy.leaperLandingX = leaperLandingLeft(enemy);
-    playSfx("enemyWarning", 0.78);
+    playSfx("enemyWarning", WINDUP_WARNING_SFX_PITCH);
   } else if (phase === "leap") {
     enemy.leaperTimer = LEAPER_CONFIG.leapFrames;
     enemy.leaperPhaseDuration = LEAPER_CONFIG.leapFrames;
     enemy.leaperLeapStartX = enemy.x;
     enemy.leaperLeapStartY = enemy.y;
-    playSfx("enemyLeap", 0.92);
+    playSfx("enemyLeap", LEAP_SFX_PITCH);
   } else if (phase === "impact") {
     enemy.leaperTimer = LEAPER_CONFIG.impactFrames;
     enemy.leaperPhaseDuration = LEAPER_CONFIG.impactFrames;

@@ -40,6 +40,8 @@ const RUNNER_RECOVER_DUST_BACK_OFFSET = 18;
 const RUNNER_RECOVER_DUST_Y_OFFSET = 7;
 const RUNNER_RECOVER_DUST_WIDTH = 20;
 const RUNNER_RECOVER_DUST_HEIGHT = 3;
+const RUNNER_WARNING_SFX_PITCH = 1.08;
+const RUNNER_DASH_SFX_PITCH = 1.08;
 
 function isRunner(enemy: Pick<EnemyState, "sheetIndex">) {
   return enemy.sheetIndex === RUNNER_SHEET_INDEX;
@@ -105,7 +107,7 @@ function updateRunner(enemy: EnemyState) {
       enemy.runnerPhase = "windup";
       enemy.runnerTimer = randomFrameCount(RUNNER_CONFIG.windupMinFrames, RUNNER_CONFIG.windupFrameJitter);
       enemy.vx = 0;
-      playSfx("enemyWarning", 1.08);
+      playSfx("enemyWarning", RUNNER_WARNING_SFX_PITCH);
     }
   } else if (enemy.runnerPhase === "windup") {
     enemy.runnerFacing = facing;
@@ -119,7 +121,7 @@ function updateRunner(enemy: EnemyState) {
         enemy.runnerTimer = randomFrameCount(RUNNER_CONFIG.dashMinFrames, RUNNER_CONFIG.dashFrameJitter);
         enemy.runnerFacing = facing;
         enemy.vx = facing * runnerDashSpeed();
-        playSfx("enemyDash", 1.08);
+        playSfx("enemyDash", RUNNER_DASH_SFX_PITCH);
       }
     }
   } else if (enemy.runnerPhase === "dash") {

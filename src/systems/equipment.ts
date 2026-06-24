@@ -23,6 +23,7 @@ type BossLike = {
 };
 
 const EQUIPMENT_SLOTS: EquipmentSlot[] = ["blade", "garb", "talisman"];
+const BOSS_EQUIPMENT_CHOICE_COUNT = 3;
 const LOW_HP_RATIO = 0.35;
 const FLOW_BLADE_HITS_REQUIRED = 4;
 const FLOW_BLADE_SKILL_DAMAGE_MULTIPLIER = 1.25;
@@ -39,9 +40,11 @@ const SHADOWSTEP_DISTANCE_REQUIRED = 220;
 const SHADOWSTEP_BLADE_REACH_BONUS = 36;
 const SHADOWSTEP_BLADE_DAMAGE_MULTIPLIER = 1.12;
 const SHADOWSTEP_GARB_MOVING_FRAMES = 8;
+const SHADOWSTEP_DISTANCE_DECAY = 4;
 const SHADOWSTEP_GARB_DAMAGE_MULTIPLIER = 0.88;
 const SHADOWSTEP_GARB_KNOCKBACK_MULTIPLIER = 0.82;
 const SHADOWSTEP_TALISMAN_RADIUS = 120;
+const SHADOWSTEP_TALISMAN_BOSS_RADIUS_MULTIPLIER = 1.4;
 const SHADOWSTEP_TALISMAN_COOLDOWN = 80;
 const SHADOWSTEP_TALISMAN_SKILL_GAIN = 3;
 const HUNT_KILL_WINDOW = 240;
@@ -76,11 +79,11 @@ export function createBossEquipmentChoices(state?: GameState): EquipmentItemStat
     const strictChoice = pickChoiceForSlot(slot, seed + choices.length, choices, ownedIds);
     const fallbackChoice = strictChoice ?? pickChoiceForSlot(slot, seed + choices.length, choices, equippedIds);
     if (fallbackChoice) choices.push(fallbackChoice);
-    if (choices.length >= 3) break;
+    if (choices.length >= BOSS_EQUIPMENT_CHOICE_COUNT) break;
   }
 
   for (const itemId of rotated(EQUIPMENT_CHOICE_IDS, seed)) {
-    if (choices.length >= 3) break;
+    if (choices.length >= BOSS_EQUIPMENT_CHOICE_COUNT) break;
     if (choices.includes(itemId) || equippedIds.has(itemId)) continue;
     choices.push(itemId);
   }
@@ -199,7 +202,7 @@ export function recordEquipmentMovement(state: GameState, movedDistance: number)
     }
     applyShadowstepTalismanMovementReward(state);
   } else if (!player.shadowstepBladeReady) {
-    player.shadowstepDistance = Math.max(0, player.shadowstepDistance - 4);
+    player.shadowstepDistance = Math.max(0, player.shadowstepDistance - SHADOWSTEP_DISTANCE_DECAY);
   }
 }
 
@@ -423,9 +426,10 @@ function applyShadowstepTalismanMovementReward(state: GameState) {
     Math.abs(enemy.x + enemy.w / 2 - playerCenterX) <= SHADOWSTEP_TALISMAN_RADIUS
     && Math.abs(enemy.y + enemy.h / 2 - playerCenterY) <= SHADOWSTEP_TALISMAN_RADIUS
   )).length;
+  const bossNearbyRadius = SHADOWSTEP_TALISMAN_RADIUS * SHADOWSTEP_TALISMAN_BOSS_RADIUS_MULTIPLIER;
   const bossNearby = state.boss
-    ? Math.abs(state.boss.x + state.boss.w / 2 - playerCenterX) <= SHADOWSTEP_TALISMAN_RADIUS * 1.4
-      && Math.abs(state.boss.y + state.boss.h / 2 - playerCenterY) <= SHADOWSTEP_TALISMAN_RADIUS * 1.4
+    ? Math.abs(state.boss.x + state.boss.w / 2 - playerCenterX) <= bossNearbyRadius
+      && Math.abs(state.boss.y + state.boss.h / 2 - playerCenterY) <= bossNearbyRadius
     : false;
 
   if (nearEnemyCount <= 0 && !bossNearby) return;

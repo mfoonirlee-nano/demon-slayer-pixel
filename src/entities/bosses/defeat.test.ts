@@ -4,6 +4,10 @@ import { spawnBoss } from "../boss";
 import { defeatBoss } from "./defeat";
 import { BOSS_ARCHETYPE_IDS } from "./registry";
 
+const BOSS_REWARD_CHOICE_COUNT = 3;
+const FINAL_BOSS_START_KILLS = 12;
+const FINAL_BOSS_CLEARED_KILLS = 13;
+
 describe("boss defeat progression", () => {
   it("grants equipment and continues the run after a non-final boss", () => {
     resetState();
@@ -17,12 +21,12 @@ describe("boss defeat progression", () => {
     expect(state.gameOver).toBe(false);
     expect(state.runCleared).toBe(false);
     expect(state.bossKills).toBe(1);
-    expect(state.pendingEquipmentChoices).toHaveLength(3);
+    expect(state.pendingEquipmentChoices).toHaveLength(BOSS_REWARD_CHOICE_COUNT);
   });
 
   it("clears the run after defeating the final boss without opening equipment choices", () => {
     resetState();
-    state.bossKills = 12;
+    state.bossKills = FINAL_BOSS_START_KILLS;
     spawnBoss(BOSS_ARCHETYPE_IDS.bloodMoon);
     if (!state.boss) throw new Error("Boss did not spawn");
     state.boss.hp = 0;
@@ -31,7 +35,7 @@ describe("boss defeat progression", () => {
 
     expect(state.gameOver).toBe(true);
     expect(state.runCleared).toBe(true);
-    expect(state.bossKills).toBe(13);
+    expect(state.bossKills).toBe(FINAL_BOSS_CLEARED_KILLS);
     expect(state.boss).toBeNull();
     expect(state.pendingEquipmentChoices).toEqual([]);
     expect(state.pendingUpgradeChoices).toEqual([]);

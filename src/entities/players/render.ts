@@ -25,6 +25,10 @@ import { playerSkillCastFrame } from "./skillCasting";
 const HALF_RATIO = 0.5;
 const FULL_CIRCLE = Math.PI * 2;
 const ULTIMATE_SKILL_SHEET = ULTIMATE_SKILL_ASSETS.skill;
+const MOON_TIDE_OUTLINE_MAX_LEVEL = 3;
+const MOON_TIDE_OUTLINE_ALPHA_BASE = 0.14;
+const MOON_TIDE_OUTLINE_ALPHA_PER_LEVEL = 0.04;
+const ULTIMATE_SKILL_CAST_ANCHOR_Y = 0.83;
 const MOON_TIDE_OUTLINE_FILTER = "brightness(0) saturate(100%) invert(82%) sepia(76%) saturate(1274%) hue-rotate(158deg) brightness(112%) contrast(105%) drop-shadow(0 0 7px rgba(118, 226, 255, 0.86))";
 
 const PLAYER_BINDING_SLOW_EFFECT = {
@@ -149,7 +153,7 @@ function drawRenderSnapshot(snapshot: UltimatePlayerGhostSnapshot, currentSkill:
 function drawMoonTideOutline(snapshot: UltimatePlayerGhostSnapshot, currentSkill: Skill | null = null) {
   if (!ctx || !moonTideActive()) return;
 
-  const level = state.player.ultimateLevel === 2 || state.player.ultimateLevel === 3
+  const level = state.player.ultimateLevel === 2 || state.player.ultimateLevel === MOON_TIDE_OUTLINE_MAX_LEVEL
     ? state.player.ultimateLevel
     : 1;
   const expand = 2 + level;
@@ -162,7 +166,7 @@ function drawMoonTideOutline(snapshot: UltimatePlayerGhostSnapshot, currentSkill
   };
 
   ctx.save();
-  ctx.globalAlpha = 0.14 + level * 0.04;
+  ctx.globalAlpha = MOON_TIDE_OUTLINE_ALPHA_BASE + level * MOON_TIDE_OUTLINE_ALPHA_PER_LEVEL;
   ctx.globalCompositeOperation = "lighter";
   ctx.filter = MOON_TIDE_OUTLINE_FILTER;
   drawRenderSnapshot(outline, currentSkill);
@@ -205,7 +209,7 @@ export function drawPlayer() {
         ULTIMATE_SKILL_SHEET,
         frame,
         refX - drawW / 2,
-        refY - drawH * 0.83,
+        refY - drawH * ULTIMATE_SKILL_CAST_ANCHOR_Y,
         drawW,
         drawH,
         p.facing,

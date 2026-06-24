@@ -67,6 +67,10 @@ const BINDER_CONFIG = {
 
 const SECONDS_PER_MINUTE = 60;
 const HALF_DIVISOR = 2;
+const ZONE_DAMAGE_SFX_PITCH = 0.82;
+const PLAYER_HURT_SFX_PITCH = 0.9;
+const CAST_START_SFX_PITCH = 0.86;
+const CAST_RELEASE_SFX_PITCH = 0.82;
 
 function difficultyK() {
   return state.elapsed / SECONDS_PER_MINUTE;
@@ -124,12 +128,12 @@ function applyBindingZoneDamage() {
 
   player.hp = Math.max(0, player.hp - bindingZoneDamage());
   player.invincible = BINDER_CONFIG.zoneDamageInvincibleFrames;
-  playSfx("enemyImpact", 0.82);
+  playSfx("enemyImpact", ZONE_DAMAGE_SFX_PITCH);
   if (player.hp <= 0) {
     playSfx("playerDeath");
     endRun(state);
   } else {
-    playSfx("playerHurt", 0.9);
+    playSfx("playerHurt", PLAYER_HURT_SFX_PITCH);
   }
 }
 
@@ -138,7 +142,7 @@ function enterBinderPhase(enemy: EnemyState, phase: BinderAiPhase) {
   enemy.binderCastSpawned = false;
   if (phase === "windup") {
     enemy.binderTimer = BINDER_CONFIG.windupFrames;
-    playSfx("enemyCastStart", 0.86);
+    playSfx("enemyCastStart", CAST_START_SFX_PITCH);
   } else if (phase === "cast") {
     enemy.binderTimer = BINDER_CONFIG.castFrames;
   } else if (phase === "recover") {
@@ -173,7 +177,7 @@ function spawnBindingZone() {
     elapsed: 0,
     frame: 0,
   });
-  playSfx("enemyCastRelease", 0.82);
+  playSfx("enemyCastRelease", CAST_RELEASE_SFX_PITCH);
 }
 
 function updateBinderSeek(enemy: EnemyState, facing: number, distance: number) {

@@ -6,6 +6,8 @@ import {
   bossArchetypeForKillCount,
 } from "./registry";
 
+const FANG_GALE_KILL_COUNT = 3;
+
 describe("boss act registry", () => {
   it("matches the fixed 13-act boss sequence", () => {
     expect(BOSS_ACT_SEQUENCE).toEqual([
@@ -27,7 +29,7 @@ describe("boss act registry", () => {
 
   it("selects Mist Bone, Fang Gale, and awakened repeats by kill count", () => {
     expect(bossArchetypeForKillCount(1).id).toBe(BOSS_ARCHETYPE_IDS.mistBone);
-    expect(bossArchetypeForKillCount(3).id).toBe(BOSS_ARCHETYPE_IDS.fangGale);
+    expect(bossArchetypeForKillCount(FANG_GALE_KILL_COUNT).id).toBe(BOSS_ARCHETYPE_IDS.fangGale);
     expect(createBossEncounter({ bossKills: 7, elapsedSeconds: 0 }).id).toBe(BOSS_ARCHETYPE_IDS.mistBone);
     expect(createBossEncounter({ bossKills: 7, elapsedSeconds: 0 }).awakened).toBe(true);
     expect(createBossEncounter({ bossKills: 9, elapsedSeconds: 0 }).id).toBe(BOSS_ARCHETYPE_IDS.fangGale);

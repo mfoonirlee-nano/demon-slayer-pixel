@@ -21,6 +21,7 @@ export type SkillTypeTag =
   | "vertical_wave";
 
 export type PlayerAnimationState = "idle" | "run" | "jump" | "attack" | "fallAttack";
+type SkillDescriptionLevel = 1 | 2 | 3;
 
 export type Skill = {
   // 技能的唯一标识符
@@ -36,11 +37,7 @@ export type Skill = {
   // UI 图标相对路径
   iconSrc: string;
   // 技能升级说明，按 Lv1/Lv2/Lv3 展示
-  levelDescriptions: {
-    1: string;
-    2: string;
-    3: string;
-  };
+  levelDescriptions: Record<SkillDescriptionLevel, string>;
   // 单次施放能量消耗。缺省由全局技能消耗兼容旧技能。
   energyCost?: number;
   // 技能序列图（SpriteSheet）的相对路径

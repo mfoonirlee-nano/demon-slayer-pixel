@@ -9,7 +9,12 @@ import { bossArchetypeForId, bossArchetypeForKillCount } from "./registry";
 
 export type LiveBossState = NonNullable<BossState>;
 
-const AWAKENED_PHASE_THRESHOLDS = [0.75, 0.5, 0.25] as const;
+const AWAKENED_PHASE_THRESHOLD_VALUES = {
+  first: 0.75,
+  second: 0.5,
+  third: 0.25,
+} as const;
+const AWAKENED_PHASE_THRESHOLDS = Object.values(AWAKENED_PHASE_THRESHOLD_VALUES);
 
 export type BossEncounterInput = {
   id?: BossArchetypeId;

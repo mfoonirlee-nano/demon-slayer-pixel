@@ -7,6 +7,10 @@ import { spawnBossSkill1Effect } from "./spiderStringEffects";
 import { damagePlayerOnContact, moveChasingBoss } from "./shared";
 import type { LiveBoss } from "./types";
 
+const CAST_SFX_PITCH = 0.92;
+const PROJECTILE_SFX_PITCH_STEP = 0.04;
+const SUMMON_SFX_PITCH = 0.92;
+
 export function updateSpiderStringBoss(boss: LiveBoss) {
   if (boss.castTimer > 0) {
     boss.vx = 0;
@@ -31,7 +35,7 @@ export function updateSpiderStringBoss(boss: LiveBoss) {
     boss.actionTimer = 0;
     boss.skillCd = BOSS_SKILL1_CONFIG.cooldown;
     boss.vx = 0;
-    playSfx("bossCast", 0.92);
+    playSfx("bossCast", CAST_SFX_PITCH);
     return;
   }
 
@@ -53,11 +57,11 @@ export function updateSpiderStringBoss(boss: LiveBoss) {
           damage: BOSS_CONFIG.projectileBaseDamage + boss.phase,
         });
       }
-      playSfx("bossProjectile", 1 + boss.phase * 0.04);
+      playSfx("bossProjectile", 1 + boss.phase * PROJECTILE_SFX_PITCH_STEP);
     } else if (canAutoSpawnEntities()) {
       spawnBossSummonEnemy();
       if (boss.phase >= BOSS_CONFIG.summonExtraEnemyPhase) spawnBossSummonEnemy();
-      playSfx("bossSummon", 0.92);
+      playSfx("bossSummon", SUMMON_SFX_PITCH);
     }
     boss.aiTimer = BOSS_CONFIG.aiBaseCooldown - boss.phase * BOSS_CONFIG.aiPhaseReduction;
   }

@@ -244,6 +244,45 @@ export const GROUND_TILE_SPRITES: {
   },
 };
 
+const PLATFORM_VARIANT_GROUPS = {
+  chain: {
+    chain01: 4,
+    chain02: 6,
+    chain03: 7,
+    chain04: 8,
+    chain05: 10,
+    chain06: 12,
+    chain07: 13,
+    chain08: 16,
+    chain09: 17,
+    chain10: 19,
+    chain11: 25,
+    chain12: 29,
+  },
+  normal: {
+    normal01: 0,
+    normal02: 5,
+    normal03: 9,
+    normal04: 11,
+    normal05: 14,
+    normal06: 15,
+    normal07: 18,
+    normal08: 20,
+    normal09: 22,
+    normal10: 23,
+    normal11: 24,
+    normal12: 26,
+  },
+  wide: {
+    wide01: 1,
+    wide02: 2,
+    wide03: 3,
+    wide04: 21,
+    wide05: 27,
+    wide06: 28,
+  },
+} as const;
+
 export const PLATFORM_SPRITES: {
   src: string;
   image: HTMLImageElement | null;
@@ -288,9 +327,9 @@ export const PLATFORM_SPRITES: {
     { sx: 466, sy: 509, sw: 404, sh: 54, surfaceY: 22 },
     { sx: 900, sy: 531, sw: 50, sh: 39, surfaceY: 11 },
   ],
-  chain: [4, 6, 7, 8, 10, 12, 13, 16, 17, 19, 25, 29],
-  normal: [0, 5, 9, 11, 14, 15, 18, 20, 22, 23, 24, 26],
-  wide: [1, 2, 3, 21, 27, 28],
+  chain: Object.values(PLATFORM_VARIANT_GROUPS.chain),
+  normal: Object.values(PLATFORM_VARIANT_GROUPS.normal),
+  wide: Object.values(PLATFORM_VARIANT_GROUPS.wide),
 };
 
 // Top row: rocks, grass, bushes (standalone clutter)

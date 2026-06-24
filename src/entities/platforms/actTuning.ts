@@ -13,6 +13,9 @@ export type SegmentKind =
 const PLATFORM_TIME_PRESSURE_CAP_SECONDS = 240;
 const PLATFORM_SPEED_PER_BOSS_KILL = 0.18;
 const PLATFORM_SPEED_PER_SECOND = 0.006;
+const ACT_TWO_TO_THREE_MAX = 3;
+const ACT_FOUR_TO_SIX_MAX = 6;
+const AWAKENED_ACT_MAX = 12;
 
 const SEGMENT_WEIGHTS: Record<"act1" | "act2to3" | "act4to6" | "awakened" | "final", Record<SegmentKind, number>> = {
   act1: {
@@ -76,8 +79,8 @@ export function platformSpeedForRun(bossKills: number, elapsedSeconds: number, r
 
 export function segmentWeightsForAct(act: number): Record<SegmentKind, number> {
   if (act <= 1) return SEGMENT_WEIGHTS.act1;
-  if (act <= 3) return SEGMENT_WEIGHTS.act2to3;
-  if (act <= 6) return SEGMENT_WEIGHTS.act4to6;
-  if (act <= 12) return SEGMENT_WEIGHTS.awakened;
+  if (act <= ACT_TWO_TO_THREE_MAX) return SEGMENT_WEIGHTS.act2to3;
+  if (act <= ACT_FOUR_TO_SIX_MAX) return SEGMENT_WEIGHTS.act4to6;
+  if (act <= AWAKENED_ACT_MAX) return SEGMENT_WEIGHTS.awakened;
   return SEGMENT_WEIGHTS.final;
 }

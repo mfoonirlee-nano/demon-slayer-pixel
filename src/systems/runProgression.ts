@@ -10,6 +10,35 @@ const INTRO_THREAT_PER_KILL = 0.26;
 const AWAKENED_THREAT_PER_KILL = 0.34;
 const INTRO_KILL_COUNT = 6;
 const BOSS_HP_SCALE_BY_ELAPSED = 0.35;
+const INTRO_LAST_ACT = 6;
+const AWAKENED_FIRST_ACT = 7;
+const AWAKENED_LAST_ACT = 12;
+const EARLY_ACT_LAST = 2;
+const MID_ACT_LAST = 4;
+const PRELUDE_BASE_WAIT_SECONDS = 3;
+const PRELUDE_TARGET_BASE_COST = 5;
+const PRELUDE_TARGET_COST_PER_ACT = 0.25;
+
+const BOSS_GATE_BY_BAND: Record<ActBand, { minWaves: number; minElapsed: number; maxElapsed: number }> = {
+  intro: { minWaves: 4, minElapsed: 55, maxElapsed: 90 },
+  awakened: { minWaves: 5, minElapsed: 75, maxElapsed: 120 },
+  final: { minWaves: 3, minElapsed: 45, maxElapsed: 75 },
+};
+const FIRST_ACT_BOSS_GATE = { minWaves: 3, minElapsed: 45, maxElapsed: 75 };
+const ADVANCED_INTRO_BOSS_GATE = { minWaves: 5, minElapsed: 65, maxElapsed: 105 };
+
+const REWARD_VALUES_BY_BAND: Record<"early" | "mid" | ActBand, {
+  attackCrystal: number;
+  healthCrystal: number;
+  chestAttack: number;
+  chestHeal: number;
+}> = {
+  early: { attackCrystal: 2, healthCrystal: 24, chestAttack: 6, chestHeal: 48 },
+  mid: { attackCrystal: 3, healthCrystal: 26, chestAttack: 8, chestHeal: 52 },
+  intro: { attackCrystal: 3, healthCrystal: 28, chestAttack: 8, chestHeal: 56 },
+  awakened: { attackCrystal: 4, healthCrystal: 30, chestAttack: 10, chestHeal: 60 },
+  final: { attackCrystal: 4, healthCrystal: 32, chestAttack: 10, chestHeal: 64 },
+};
 
 export function clampAct(act: number) {
   return Math.min(MAX_ACT, Math.max(1, Math.floor(act)));
@@ -21,8 +50,8 @@ export function actForBossKills(bossKills: number) {
 
 export function actBandForAct(act: number): ActBand {
   const clampedAct = clampAct(act);
-  if (clampedAct <= 6) return "intro";
-  if (clampedAct <= 12) return "awakened";
+  if (clampedAct <= INTRO_LAST_ACT) return "intro";
+  if (clampedAct <= AWAKENED_LAST_ACT) return "awakened";
   return "final";
 }
 
@@ -44,47 +73,36 @@ export function bossHpForEncounter(
 }
 
 export function isAwakenedBossEncounter(archetype: BossArchetype, act: number) {
-  return archetype.id !== BOSS_ARCHETYPE_IDS.bloodMoon && act >= 7 && act <= 12;
+  return archetype.id !== BOSS_ARCHETYPE_IDS.bloodMoon
+    && act >= AWAKENED_FIRST_ACT
+    && act <= AWAKENED_LAST_ACT;
 }
 
 export function bossGateForAct(act: number) {
   const clampedAct = clampAct(act);
   if (clampedAct === 1) {
-    return { minWaves: 3, minElapsed: 45, maxElapsed: 75 };
+    return FIRST_ACT_BOSS_GATE;
   }
-  if (clampedAct <= 3) {
-    return { minWaves: 4, minElapsed: 55, maxElapsed: 90 };
+  if (clampedAct <= EARLY_ACT_LAST + 1) {
+    return BOSS_GATE_BY_BAND.intro;
   }
-  if (clampedAct <= 6) {
-    return { minWaves: 5, minElapsed: 65, maxElapsed: 105 };
+  if (clampedAct <= INTRO_LAST_ACT) {
+    return ADVANCED_INTRO_BOSS_GATE;
   }
-  if (clampedAct <= 12) {
-    return { minWaves: 5, minElapsed: 75, maxElapsed: 120 };
-  }
-  return { minWaves: 3, minElapsed: 45, maxElapsed: 75 };
+  return BOSS_GATE_BY_BAND[actBandForAct(clampedAct)];
 }
 
 export function bossPreludeWaitSeconds(act: number) {
-  return Math.max(0, 3 * (MAX_ACT - clampAct(act)) / (MAX_ACT - 1));
+  return Math.max(0, PRELUDE_BASE_WAIT_SECONDS * (MAX_ACT - clampAct(act)) / (MAX_ACT - 1));
 }
 
 export function bossPreludeTargetCost(act: number) {
-  return Math.max(2, 5 - clampAct(act) * 0.25);
+  return Math.max(2, PRELUDE_TARGET_BASE_COST - clampAct(act) * PRELUDE_TARGET_COST_PER_ACT);
 }
 
 export function rewardValuesForAct(act: number) {
   const clampedAct = clampAct(act);
-  if (clampedAct <= 2) {
-    return { attackCrystal: 2, healthCrystal: 24, chestAttack: 6, chestHeal: 48 };
-  }
-  if (clampedAct <= 4) {
-    return { attackCrystal: 3, healthCrystal: 26, chestAttack: 8, chestHeal: 52 };
-  }
-  if (clampedAct <= 6) {
-    return { attackCrystal: 3, healthCrystal: 28, chestAttack: 8, chestHeal: 56 };
-  }
-  if (clampedAct <= 12) {
-    return { attackCrystal: 4, healthCrystal: 30, chestAttack: 10, chestHeal: 60 };
-  }
-  return { attackCrystal: 4, healthCrystal: 32, chestAttack: 10, chestHeal: 64 };
+  if (clampedAct <= EARLY_ACT_LAST) return REWARD_VALUES_BY_BAND.early;
+  if (clampedAct <= MID_ACT_LAST) return REWARD_VALUES_BY_BAND.mid;
+  return REWARD_VALUES_BY_BAND[actBandForAct(clampedAct)];
 }

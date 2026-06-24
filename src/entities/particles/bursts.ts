@@ -6,12 +6,13 @@ import { skillById } from "../../systems/loadout";
 
 const FULL_CIRCLE_RADIANS = Math.PI * 2;
 const DEFAULT_HIT_BURST_COLOR = "#9feaff";
+const SLASH_VERTICAL_SPREAD_SCALE = 0.6;
 
 export function emitSlash(x: number, y: number, color: string, spread: number = PARTICLE_CONFIG.slashDefaultSpread) {
   for (let i = 0; i < PARTICLE_CONFIG.slashCount; i += 1) {
     state.particles.push({
       x: x + (Math.random() - 0.5) * spread,
-      y: y + (Math.random() - 0.5) * spread * 0.6,
+      y: y + (Math.random() - 0.5) * spread * SLASH_VERTICAL_SPREAD_SCALE,
       vx: (Math.random() - 0.5) * PARTICLE_CONFIG.slashVelocity,
       vy: (Math.random() - 0.5) * PARTICLE_CONFIG.slashVelocity,
       life: PARTICLE_CONFIG.slashLifeBase + Math.random() * PARTICLE_CONFIG.slashLifeVariance,

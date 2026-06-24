@@ -10,6 +10,18 @@ import { drawEnemyFrame, enemyCenterX, enemyDrawScale, enemyFeetY } from "./comm
 
 const HALF_DIVISOR = 2;
 const FULL_CIRCLE = Math.PI * 2;
+const HIT_REACT_SFX_PITCH = 0.84;
+const AURA_RING_PULSE_BASE = 0.55;
+const AURA_RING_PULSE_SCALE = 0.12;
+const AURA_RING_PULSE_SPEED = 5.8;
+const AURA_RING_FEET_OFFSET = 6;
+const BUFF_MARK_PULSE_BASE = 0.38;
+const BUFF_MARK_PULSE_SCALE = 0.1;
+const BUFF_MARK_PULSE_SPEED = 7.2;
+const BUFF_MARK_FEET_OFFSET = 4;
+const BUFF_MARK_MIN_RADIUS_X = 14;
+const BUFF_MARK_RADIUS_X_SCALE = 0.32;
+const BUFF_MARK_RADIUS_Y = 5;
 
 const WARDEN_CONFIG = {
   minRange: 220,
@@ -94,7 +106,7 @@ function enterWardenPhase(enemy: EnemyState, phase: WardenPhase) {
     playSfx("enemyAura");
   } else if (phase === "hit") {
     enemy.wardenTimer = WARDEN_CONFIG.hitFrames;
-    playSfx("enemyHitReact", 0.84);
+    playSfx("enemyHitReact", HIT_REACT_SFX_PITCH);
   } else {
     enemy.wardenTimer = randomFrameCount(
       WARDEN_CONFIG.moveCooldownMinFrames,
@@ -242,9 +254,9 @@ export function applyWardenAuraBuffs() {
 
 function drawAuraRing(enemy: EnemyState) {
   if (!ctx || enemy.wardenPhase !== "aura") return;
-  const pulse = 0.55 + 0.12 * Math.sin(state.elapsed * 5.8 + enemy.animSeed);
+  const pulse = AURA_RING_PULSE_BASE + AURA_RING_PULSE_SCALE * Math.sin(state.elapsed * AURA_RING_PULSE_SPEED + enemy.animSeed);
   const centerX = enemyCenterX(enemy);
-  const feetY = enemyFeetY(enemy) - 6;
+  const feetY = enemyFeetY(enemy) - AURA_RING_FEET_OFFSET;
   const sheet = WARDEN_AURA_EFFECT_SHEET;
   const frame = frameIndex(sheet.count, WARDEN_CONFIG.auraEffectFrameDuration, state.elapsed, enemy.animSeed);
   const drawW = WARDEN_CONFIG.auraEffectDrawW;
@@ -257,16 +269,16 @@ function drawAuraRing(enemy: EnemyState) {
 
 function drawBuffMark(enemy: EnemyState) {
   if (!ctx || (enemy.wardenBuffedFrames ?? 0) <= 0) return;
-  const pulse = 0.38 + 0.1 * Math.sin(state.elapsed * 7.2 + enemy.animSeed);
+  const pulse = BUFF_MARK_PULSE_BASE + BUFF_MARK_PULSE_SCALE * Math.sin(state.elapsed * BUFF_MARK_PULSE_SPEED + enemy.animSeed);
   const centerX = enemyCenterX(enemy);
-  const feetY = enemyFeetY(enemy) - 4;
-  const radiusX = Math.max(14, enemy.w * 0.32);
+  const feetY = enemyFeetY(enemy) - BUFF_MARK_FEET_OFFSET;
+  const radiusX = Math.max(BUFF_MARK_MIN_RADIUS_X, enemy.w * BUFF_MARK_RADIUS_X_SCALE);
   ctx.save();
   ctx.globalAlpha = pulse;
   ctx.strokeStyle = `rgba(${WARDEN_CONFIG.auraMarkColor}, 0.95)`;
   ctx.lineWidth = 1.25;
   ctx.beginPath();
-  ctx.ellipse(centerX, feetY, radiusX, 5, 0, 0, FULL_CIRCLE);
+  ctx.ellipse(centerX, feetY, radiusX, BUFF_MARK_RADIUS_Y, 0, 0, FULL_CIRCLE);
   ctx.stroke();
   ctx.restore();
 }

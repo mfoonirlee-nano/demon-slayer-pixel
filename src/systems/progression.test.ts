@@ -8,6 +8,8 @@ import {
   xpToNextLevel,
 } from "./progression";
 
+const LINE_PROJECTILE_LEVEL_TWO_DAMAGE_MULTIPLIER = 1.18;
+
 describe("run progression skills", () => {
   it("starts each run with the three default normal skills learned and equipped", () => {
     const state = createInitialState();
@@ -68,7 +70,7 @@ describe("run progression skills", () => {
     expect(skillDamageMultiplier(state, SKILL_IDS.lineProjectile)).toBe(1);
 
     state.player.skillLevels[SKILL_IDS.lineProjectile] = 2;
-    expect(skillDamageMultiplier(state, SKILL_IDS.lineProjectile)).toBe(1.18);
+    expect(skillDamageMultiplier(state, SKILL_IDS.lineProjectile)).toBe(LINE_PROJECTILE_LEVEL_TWO_DAMAGE_MULTIPLIER);
 
     state.player.skillLevels[SKILL_IDS.dashReposition] = 3;
     expect(skillDamageMultiplier(state, SKILL_IDS.dashReposition)).toBe(1);

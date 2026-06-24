@@ -13,6 +13,21 @@ import { drawSheetFrame } from "../../rendering/graphics";
 import { hurtPlayer } from "../player";
 import type { LanternEmberAshZoneState, LanternEmberAwakenedGridState, LanternEmberBuffTetherState, LanternEmberFirelineState, LanternEmberLureState } from "../../types/game-state";
 
+const FIRELINE_FOOT_PADDING = 12;
+const AWAKENED_GRID_FOOT_PADDING = 14;
+const LURE_ALPHA_BASE = 0.36;
+const LURE_ALPHA_SCALE = 0.64;
+const FIRELINE_WARNING_ALPHA = 0.45;
+const FIRELINE_ALPHA_BASE = 0.35;
+const FIRELINE_ALPHA_SCALE = 0.65;
+const GRID_WARNING_ALPHA = 0.38;
+const GRID_ALPHA_BASE = 0.32;
+const GRID_ALPHA_SCALE = 0.6;
+const ASH_ZONE_FADE_FRAMES = 18;
+const ASH_ZONE_ALPHA_SCALE = 0.78;
+const TETHER_ALPHA_BASE = 0.35;
+const TETHER_ALPHA_SCALE = 0.65;
+
 export function updateLanternEmberEffects() {
   updateLanternLures();
   updateLanternBuffTethers();
@@ -130,7 +145,7 @@ function isPlayerInLanternFireline(fireline: LanternEmberFirelineState) {
   return footX >= fireline.x
     && footX <= fireline.x + fireline.w
     && footY >= fireline.y - fireline.h
-    && footY <= fireline.y + 12;
+    && footY <= fireline.y + FIRELINE_FOOT_PADDING;
 }
 
 function positiveModulo(value: number, divisor: number) {
@@ -141,7 +156,7 @@ function isPlayerInLanternGrid(grid: LanternEmberAwakenedGridState) {
   const p = state.player;
   const footX = p.x + p.w / 2;
   const footY = p.y + p.h;
-  if (footY < grid.y - grid.h || footY > grid.y + 14) return false;
+  if (footY < grid.y - grid.h || footY > grid.y + AWAKENED_GRID_FOOT_PADDING) return false;
   const localX = positiveModulo(footX - grid.x, LANTERN_EMBER_CONFIG.awakenedGridPeriod);
   return localX <= LANTERN_EMBER_CONFIG.awakenedGridDangerW;
 }
@@ -169,7 +184,7 @@ function drawLanternLures() {
   for (const lure of state.lanternEmberLures) {
     const fade = clamp(lure.life / LANTERN_EMBER_CONFIG.lureLife, 0, 1);
     ctx.save();
-    ctx.globalAlpha = 0.36 + fade * 0.64;
+    ctx.globalAlpha = LURE_ALPHA_BASE + fade * LURE_ALPHA_SCALE;
     drawSheetFrame(
       LANTERN_EMBER_LURE_EFFECT_SHEET,
       lure.frame,
@@ -190,7 +205,7 @@ function drawLanternFirelines() {
     const fade = clamp(fireline.life / LANTERN_EMBER_CONFIG.firelineLife, 0, 1);
     const drawH = LANTERN_EMBER_CONFIG.firelineDrawH;
     ctx.save();
-    ctx.globalAlpha = warning ? 0.45 : 0.35 + fade * 0.65;
+    ctx.globalAlpha = warning ? FIRELINE_WARNING_ALPHA : FIRELINE_ALPHA_BASE + fade * FIRELINE_ALPHA_SCALE;
     drawSheetFrame(
       LANTERN_EMBER_FIRELINE_SHEET,
       fireline.frame,
@@ -209,7 +224,7 @@ function drawLanternAwakenedGrids() {
     const warning = grid.elapsed <= grid.warningFrames;
     const fade = clamp(grid.life / LANTERN_EMBER_CONFIG.awakenedGridLife, 0, 1);
     ctx.save();
-    ctx.globalAlpha = warning ? 0.38 : 0.32 + fade * 0.6;
+    ctx.globalAlpha = warning ? GRID_WARNING_ALPHA : GRID_ALPHA_BASE + fade * GRID_ALPHA_SCALE;
     drawSheetFrame(
       LANTERN_EMBER_AWAKENED_GRID_SHEET,
       grid.frame,
@@ -229,11 +244,11 @@ function drawLanternAshZones() {
     const drawH = Math.round(drawW * LANTERN_EMBER_ASH_ZONE_SHEET.frameH / LANTERN_EMBER_ASH_ZONE_SHEET.frameW);
     const fade = Math.min(
       1,
-      zone.elapsed / 18,
-      zone.life / 18,
+      zone.elapsed / ASH_ZONE_FADE_FRAMES,
+      zone.life / ASH_ZONE_FADE_FRAMES,
     );
     ctx.save();
-    ctx.globalAlpha = 0.78 * fade;
+    ctx.globalAlpha = ASH_ZONE_ALPHA_SCALE * fade;
     drawSheetFrame(
       LANTERN_EMBER_ASH_ZONE_SHEET,
       zone.frame,
@@ -258,7 +273,7 @@ function drawLanternBuffTethers() {
     const sx = tether.frame * sheet.frameW;
     const fade = clamp(tether.life / LANTERN_EMBER_CONFIG.buffTetherLife, 0, 1);
     ctx.save();
-    ctx.globalAlpha = 0.35 + fade * 0.65;
+    ctx.globalAlpha = TETHER_ALPHA_BASE + fade * TETHER_ALPHA_SCALE;
     ctx.translate(tether.fromX, tether.fromY);
     ctx.rotate(Math.atan2(dy, dx));
     ctx.drawImage(image, sx, 0, sheet.frameW, sheet.frameH, 0, -drawH / 2, drawW, drawH);

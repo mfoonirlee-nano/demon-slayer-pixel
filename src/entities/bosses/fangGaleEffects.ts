@@ -6,6 +6,11 @@ import { drawSheetFrame } from "../../rendering/graphics";
 import type { FangGaleWaveState } from "../../types/game-state";
 import { hurtPlayer } from "../player";
 
+const WARNING_ALPHA_BASE = 0.25;
+const WARNING_ALPHA_GAIN = 0.36;
+const WARNING_DASH_LENGTH = 14;
+const WARNING_DASH_GAP = 10;
+
 export function updateFangGaleEffects() {
   for (let i = state.fangGaleWaves.length - 1; i >= 0; i -= 1) {
     const wave = state.fangGaleWaves[i] as FangGaleWaveState;
@@ -51,10 +56,10 @@ function drawFangWarning(wave: FangGaleWaveState) {
   const endX = wave.facing > 0 ? WIDTH : 0;
 
   ctx.save();
-  ctx.globalAlpha = 0.25 + t * 0.36;
+  ctx.globalAlpha = WARNING_ALPHA_BASE + t * WARNING_ALPHA_GAIN;
   ctx.strokeStyle = "#e6e2d7";
   ctx.lineWidth = 2;
-  ctx.setLineDash([14, 10]);
+  ctx.setLineDash([WARNING_DASH_LENGTH, WARNING_DASH_GAP]);
   ctx.beginPath();
   ctx.moveTo(startX, y);
   ctx.lineTo(endX, y);

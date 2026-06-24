@@ -13,6 +13,8 @@ import { updateMirrorDreamBoss } from "./bosses/mirrorDreamBehavior";
 import { updateSpiderStringBoss } from "./bosses/spiderStringBehavior";
 import type { LiveBoss } from "./bosses/types";
 
+const BLOOD_MOON_PHASE_SHIFT_PITCH_STEP = 0.04;
+
 export { drawBoss } from "./bosses/renderBoss";
 export { drawBossSkill1Effects, updateBossSkill1Effects } from "./bosses/spiderStringEffects";
 export { drawDeadBellEffects, updateDeadBellEffects } from "./bosses/deadBellEffects";
@@ -82,6 +84,6 @@ function updateBossPhase(boss: LiveBoss) {
     boss.actionState = "windup";
     boss.actionTimer = 0;
     boss.vx = 0;
-    playSfx("bossPhaseShift", 1 + boss.phase * 0.04);
+    playSfx("bossPhaseShift", 1 + boss.phase * BLOOD_MOON_PHASE_SHIFT_PITCH_STEP);
   }
 }

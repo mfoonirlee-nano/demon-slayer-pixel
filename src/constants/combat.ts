@@ -1,5 +1,11 @@
 const SECONDS_PER_MINUTE = 60;
 const FRAMES_PER_SECOND = 60;
+const ENEMY_ULTIMATE_ENERGY_GAIN_NUMERATOR = 8;
+const ENEMY_ULTIMATE_ENERGY_GAIN_DENOMINATOR = 3;
+const ENEMY_ULTIMATE_ENERGY_GAIN = ENEMY_ULTIMATE_ENERGY_GAIN_NUMERATOR / ENEMY_ULTIMATE_ENERGY_GAIN_DENOMINATOR;
+const MOON_TIDE_LEVEL_ONE_DURATION_SECONDS = 6;
+const MOON_TIDE_LEVEL_TWO_DURATION_SECONDS = 7.5;
+const MOON_TIDE_LEVEL_THREE_DURATION_SECONDS = 9;
 
 export const BASIC_ATTACK = {
   damage: 16,
@@ -68,7 +74,7 @@ export const PLAYER_COMBAT = {
   bossKillScore: 220,
   enemyEnergyGain: 10,
   bossEnergyGain: 60,
-  enemyUltimateEnergyGain: 8 / 3,
+  enemyUltimateEnergyGain: ENEMY_ULTIMATE_ENERGY_GAIN,
   bossUltimateEnergyGain: 40,
   ultimateRadius: 360,
   ultimateCastFrames: 24,
@@ -124,7 +130,7 @@ export const PLAYER_COMBAT = {
 
 export const MOON_TIDE_ULTIMATE = {
   1: {
-    durationFrames: 6 * FRAMES_PER_SECOND,
+    durationFrames: MOON_TIDE_LEVEL_ONE_DURATION_SECONDS * FRAMES_PER_SECOND,
     moveSpeedMultiplier: 1.12,
     jumpMultiplier: 1.08,
     attackFrameMultiplier: 0.9,
@@ -135,7 +141,7 @@ export const MOON_TIDE_ULTIMATE = {
     afterimageBurstPower: 0.7,
   },
   2: {
-    durationFrames: 7.5 * FRAMES_PER_SECOND,
+    durationFrames: MOON_TIDE_LEVEL_TWO_DURATION_SECONDS * FRAMES_PER_SECOND,
     moveSpeedMultiplier: 1.18,
     jumpMultiplier: 1.12,
     attackFrameMultiplier: 0.82,
@@ -146,7 +152,7 @@ export const MOON_TIDE_ULTIMATE = {
     afterimageBurstPower: 0.9,
   },
   3: {
-    durationFrames: 9 * FRAMES_PER_SECOND,
+    durationFrames: MOON_TIDE_LEVEL_THREE_DURATION_SECONDS * FRAMES_PER_SECOND,
     moveSpeedMultiplier: 1.25,
     jumpMultiplier: 1.16,
     attackFrameMultiplier: 0.76,

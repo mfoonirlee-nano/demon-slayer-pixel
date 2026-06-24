@@ -2,6 +2,8 @@ import { state } from "../../game/state";
 import { ctx } from "../../rendering/context";
 import { HOVER_CONFIG, PLATFORM_CONFIG, PLATFORM_SPRITES } from "../../constants";
 
+const HOVER_GLOW_EDGE_INSET = 4;
+
 export function updatePlatforms(dt: number) {
   for (let i = state.platforms.length - 1; i >= 0; i -= 1) {
     const p = state.platforms[i];
@@ -44,7 +46,7 @@ export function drawPlatforms() {
     // Hover indicator: faint glow strip on top edge
     if (p.kind === "hover") {
       ctx.fillStyle = "rgba(140,210,255,0.18)";
-      ctx.fillRect(p.x + 2, visualSurfaceY, p.w - 4, 2);
+      ctx.fillRect(p.x + HOVER_GLOW_EDGE_INSET / 2, visualSurfaceY, p.w - HOVER_GLOW_EDGE_INSET, 2);
     }
   }
 }

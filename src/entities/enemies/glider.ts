@@ -50,6 +50,7 @@ const GLIDER_CONFIG = {
   collisionScaleX: 1.25,
   collisionScaleY: 0.62,
   hoverAnimSpeed: 7,
+  windupSfxPitch: 1.28,
 } as const;
 
 const HALF_DIVISOR = 2;
@@ -164,7 +165,7 @@ function enterGliderPhase(enemy: EnemyState, phase: GliderPhase) {
   if (phase === "windup") {
     enemy.gliderTimer = GLIDER_CONFIG.windupFrames;
     enemy.gliderDiveVy = 0;
-    playSfx("enemyWarning", 1.28);
+    playSfx("enemyWarning", GLIDER_CONFIG.windupSfxPitch);
   } else if (phase === "dive") {
     enemy.gliderTimer = GLIDER_CONFIG.diveFrames;
     const targetY = clamp(

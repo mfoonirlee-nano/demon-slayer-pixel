@@ -21,7 +21,84 @@ import {
 import { actForBossKills, clampAct, threatScalarForRun } from "./runProgression";
 
 const RUN_SEED_MOD = 0x7fffffff;
+const RNG_INCREMENT = 0x6d2b79f5;
+const RNG_FIRST_SHIFT = 15;
+const RNG_SECOND_SHIFT = 7;
+const RNG_SECOND_MASK = 61;
+const RNG_FINAL_SHIFT = 14;
+const RNG_UNIT_DIVISOR = 4294967296;
 export const RECENT_ENEMY_LIMIT = 6;
+const DEFAULT_UNLOCKED_ENEMY_COUNT = 12;
+const DEFAULT_REGULAR_POOL_SIZE = 8;
+const FINAL_ACT = 13;
+const FINAL_ACT_REGULAR_POOL_SIZE = 9;
+const TIER_TWO_SHUFFLE_OFFSET = 17;
+const TIER_THREE_SHUFFLE_OFFSET = 31;
+const TIER_FOUR_SHUFFLE_OFFSET = 47;
+const MID_PROFILE_SEED_ACT_MULTIPLIER = 101;
+const REQUIRED_TAG_MISSING_PENALTY = 10;
+const PREFERRED_TAG_MISSING_PENALTY = 2;
+const REPEAT_PROFILE_PENALTY = -6;
+const INTRO_PROFILE_LAST_ACT = 3;
+const MID_PROFILE_LAST_ACT = 6;
+const AWAKENED_PROFILE_FIRST_ACT = 7;
+const AWAKENED_PROFILE_LAST_ACT = 12;
+const REQUIRED_TAG_PROFILE_WEIGHT = 1.55;
+const PREFERRED_TAG_PROFILE_WEIGHT = 1.25;
+const FALLBACK_PROFILE_WEIGHT = 0.85;
+const IMMEDIATE_REPEAT_WEIGHT = 0.35;
+const RECENT_REPEAT_WINDOW = 2;
+const RECENT_REPEAT_WEIGHT = 0.55;
+const LATE_TIER_ONE_FIRST_ACT = 6;
+const LATE_TIER_ONE_WEIGHT = 0.65;
+const TIER_ONE_COMPLEXITY = 1;
+const AWAKENED_PROFILE_SHUFFLE_OFFSET = 503;
+const ACTIVE_SPAWN_COST_RAMP_SECONDS = 45;
+const AWAKENED_BOSS_SUMMON_PHASE = 4;
+const ENRAGED_BOSS_SUMMON_PHASE = 3;
+const PRESSURE_BOSS_SUMMON_PHASE = 2;
+const FINAL_BOSS_MAX_SUMMON_TIER = 4;
+const AWAKENED_BOSS_MAX_SUMMON_TIER = 4;
+const ENRAGED_BOSS_MAX_SUMMON_TIER = 3;
+
+const UNLOCKED_ENEMY_COUNT_BY_ACT: Partial<Record<number, number>> = {
+  1: 3,
+  2: 5,
+  3: 7,
+  4: 9,
+  5: 11,
+};
+
+const REGULAR_POOL_SIZE_BY_ACT: Partial<Record<number, number>> = {
+  1: 3,
+  2: 4,
+  3: 5,
+  4: 6,
+  5: 7,
+  [FINAL_ACT]: FINAL_ACT_REGULAR_POOL_SIZE,
+};
+
+const MAX_ACTIVE_SPAWN_COST_BY_ACT: Partial<Record<number, number>> = {
+  1: 6,
+  2: 7,
+  3: 8,
+  4: 9,
+  5: 10,
+  6: 11,
+  7: 12,
+  8: 12,
+  9: 12,
+  10: 13,
+  11: 13,
+  12: 13,
+  [FINAL_ACT]: 11,
+};
+
+const FINAL_BOSS_SUMMON_BUDGET = { maxCount: 4, maxCost: 7 };
+const AWAKENED_BOSS_SUMMON_BUDGET = { maxCount: 3, maxCost: 5 };
+const ENRAGED_BOSS_SUMMON_BUDGET = { maxCount: 3, maxCost: 4 };
+const PRESSURE_BOSS_SUMMON_BUDGET = { maxCount: 2, maxCost: 3 };
+const BASE_BOSS_SUMMON_BUDGET = { maxCount: 1, maxCost: 1.2 };
 
 export type EnemySpawnStats = {
   hp: number;
@@ -32,11 +109,11 @@ export type EnemySpawnStats = {
 export function seededRandom(seed: number) {
   let value = seed >>> 0;
   return () => {
-    value += 0x6d2b79f5;
+    value += RNG_INCREMENT;
     let next = value;
-    next = Math.imul(next ^ (next >>> 15), next | 1);
-    next ^= next + Math.imul(next ^ (next >>> 7), next | 61);
-    return ((next ^ (next >>> 14)) >>> 0) / 4294967296;
+    next = Math.imul(next ^ (next >>> RNG_FIRST_SHIFT), next | 1);
+    next ^= next + Math.imul(next ^ (next >>> RNG_SECOND_SHIFT), next | RNG_SECOND_MASK);
+    return ((next ^ (next >>> RNG_FINAL_SHIFT)) >>> 0) / RNG_UNIT_DIVISOR;
   };
 }
 
@@ -77,31 +154,20 @@ export function anyEnemyHasTag(enemyId: EnemyId, tags: readonly EnemyTag[]) {
 
 function unlockedEnemyCountForAct(act: number) {
   const clampedAct = clampAct(act);
-  if (clampedAct === 1) return 3;
-  if (clampedAct === 2) return 5;
-  if (clampedAct === 3) return 7;
-  if (clampedAct === 4) return 9;
-  if (clampedAct === 5) return 11;
-  return 12;
+  return UNLOCKED_ENEMY_COUNT_BY_ACT[clampedAct] ?? DEFAULT_UNLOCKED_ENEMY_COUNT;
 }
 
 function regularPoolSizeForAct(act: number) {
   const clampedAct = clampAct(act);
-  if (clampedAct === 1) return 3;
-  if (clampedAct === 2) return 4;
-  if (clampedAct === 3) return 5;
-  if (clampedAct === 4) return 6;
-  if (clampedAct === 5) return 7;
-  if (clampedAct === 13) return 9;
-  return 8;
+  return REGULAR_POOL_SIZE_BY_ACT[clampedAct] ?? DEFAULT_REGULAR_POOL_SIZE;
 }
 
 export function buildRunEnemyOrder(seed: number) {
   return [
     ...TIER_ONE_ENEMIES,
-    ...shuffled(TIER_TWO_ENEMIES, seed + 17),
-    ...shuffled(TIER_THREE_ENEMIES, seed + 31),
-    ...shuffled(TIER_FOUR_ENEMIES, seed + 47),
+    ...shuffled(TIER_TWO_ENEMIES, seed + TIER_TWO_SHUFFLE_OFFSET),
+    ...shuffled(TIER_THREE_ENEMIES, seed + TIER_THREE_SHUFFLE_OFFSET),
+    ...shuffled(TIER_FOUR_ENEMIES, seed + TIER_FOUR_SHUFFLE_OFFSET),
   ];
 }
 
@@ -115,16 +181,19 @@ function chooseMidProfile(
   featuredTags: readonly EnemyTag[],
   previousProfile?: EnemyProfileId,
 ) {
-  const rng = seededRandom(seed + act * 101);
+  const rng = seededRandom(seed + act * MID_PROFILE_SEED_ACT_MULTIPLIER);
   const featured = new Set(featuredTags);
   const scored = MID_PROFILE_CANDIDATES.map((profileId) => {
     const profile = PROFILE_CONFIGS[profileId];
     const missingRequired = profile.requiredTags.filter((tag) => !featured.has(tag)).length;
     const missingPreferred = profile.preferredTags.filter((tag) => !featured.has(tag)).length;
-    const repeatPenalty = profileId === previousProfile ? -6 : 0;
+    const repeatPenalty = profileId === previousProfile ? REPEAT_PROFILE_PENALTY : 0;
     return {
       profileId,
-      score: missingRequired * 10 + missingPreferred * 2 + repeatPenalty + rng(),
+      score: missingRequired * REQUIRED_TAG_MISSING_PENALTY
+        + missingPreferred * PREFERRED_TAG_MISSING_PENALTY
+        + repeatPenalty
+        + rng(),
     };
   });
   scored.sort((a, b) => b.score - a.score);
@@ -139,31 +208,38 @@ export function selectActProfile(
   previousProfile?: EnemyProfileId,
 ) {
   const clampedAct = clampAct(act);
-  if (clampedAct <= 3) return INTRO_PROFILE_CYCLE[clampedAct - 1];
-  if (clampedAct <= 6) return chooseMidProfile(clampedAct, seed, featuredTags, previousProfile);
-  if (clampedAct <= 12) {
-    return awakenedProfileOrder[clampedAct - 7] ?? AWAKENED_PROFILE_CANDIDATES[clampedAct - 7];
+  if (clampedAct <= INTRO_PROFILE_LAST_ACT) return INTRO_PROFILE_CYCLE[clampedAct - 1];
+  if (clampedAct <= MID_PROFILE_LAST_ACT) return chooseMidProfile(clampedAct, seed, featuredTags, previousProfile);
+  if (clampedAct <= AWAKENED_PROFILE_LAST_ACT) {
+    const awakenedIndex = clampedAct - AWAKENED_PROFILE_FIRST_ACT;
+    return awakenedProfileOrder[awakenedIndex] ?? AWAKENED_PROFILE_CANDIDATES[awakenedIndex];
   }
   return "final";
 }
 
 function profileWeight(enemyId: EnemyId, profileId: EnemyProfileId) {
   const profile = PROFILE_CONFIGS[profileId];
-  if (anyEnemyHasTag(enemyId, profile.requiredTags)) return 1.55;
-  if (anyEnemyHasTag(enemyId, profile.preferredTags)) return 1.25;
-  return 0.85;
+  if (anyEnemyHasTag(enemyId, profile.requiredTags)) return REQUIRED_TAG_PROFILE_WEIGHT;
+  if (anyEnemyHasTag(enemyId, profile.preferredTags)) return PREFERRED_TAG_PROFILE_WEIGHT;
+  return FALLBACK_PROFILE_WEIGHT;
 }
 
 function recentWeight(enemyId: EnemyId, recentEnemyIds: readonly EnemyId[]) {
   const distanceFromEnd = recentEnemyIds.length - 1 - recentEnemyIds.lastIndexOf(enemyId);
-  if (distanceFromEnd === 0) return 0.35;
-  if (distanceFromEnd > 0 && distanceFromEnd <= 2) return 0.55;
+  if (distanceFromEnd === 0) return IMMEDIATE_REPEAT_WEIGHT;
+  if (distanceFromEnd > 0 && distanceFromEnd <= RECENT_REPEAT_WINDOW) return RECENT_REPEAT_WEIGHT;
   return 1;
 }
 
 function actWeight(enemyId: EnemyId, act: number) {
-  if (act === 13) return FINAL_WEIGHT_MULTIPLIERS[enemyId] ?? 0;
-  if (act >= 6 && act <= 12 && ENEMY_ARCHETYPES[enemyId].complexityTier === 1) return 0.65;
+  if (act === FINAL_ACT) return FINAL_WEIGHT_MULTIPLIERS[enemyId] ?? 0;
+  if (
+    act >= LATE_TIER_ONE_FIRST_ACT
+    && act <= AWAKENED_PROFILE_LAST_ACT
+    && ENEMY_ARCHETYPES[enemyId].complexityTier === TIER_ONE_COMPLEXITY
+  ) {
+    return LATE_TIER_ONE_WEIGHT;
+  }
   return 1;
 }
 
@@ -196,8 +272,8 @@ export function buildCurrentEnemyPool(
 ) {
   const poolSize = regularPoolSizeForAct(act);
   const unlocked = unlockedEnemiesForAct(order, act);
-  const candidates = act === 13
-    ? order.filter((enemyId) => ENEMY_ARCHETYPES[enemyId].complexityTier > 1)
+  const candidates = act === FINAL_ACT
+    ? order.filter((enemyId) => ENEMY_ARCHETYPES[enemyId].complexityTier > TIER_ONE_COMPLEXITY)
     : unlocked;
   const sorted = [...candidates].sort((a, b) => (
     poolWeight(b, act, profileId, recentEnemyIds) - poolWeight(a, act, profileId, recentEnemyIds)
@@ -267,7 +343,7 @@ function nextDirectorState(
 export function createEnemyDirectorState(seed = Math.floor(Math.random() * RUN_SEED_MOD)): EnemyDirectorState {
   const runSeed = seed || 1;
   const order = buildRunEnemyOrder(runSeed);
-  const awakenedProfileOrder = shuffled(AWAKENED_PROFILE_CANDIDATES, runSeed + 503);
+  const awakenedProfileOrder = shuffled(AWAKENED_PROFILE_CANDIDATES, runSeed + AWAKENED_PROFILE_SHUFFLE_OFFSET);
   return nextDirectorState(runSeed, order, awakenedProfileOrder, 0, 0);
 }
 
@@ -327,24 +403,8 @@ export function activeEnemyCountById(enemies: readonly EnemyState[], enemyId: En
 
 export function maxActiveSpawnCostForAct(act: number, elapsedInAct: number) {
   const clampedAct = clampAct(act);
-  const base = clampedAct === 1
-    ? 6
-    : clampedAct === 2
-      ? 7
-      : clampedAct === 3
-        ? 8
-        : clampedAct === 4
-          ? 9
-          : clampedAct === 5
-            ? 10
-            : clampedAct === 6
-              ? 11
-              : clampedAct <= 9
-                ? 12
-                : clampedAct <= 12
-                  ? 13
-                  : 11;
-  return base + Math.min(2, Math.floor(elapsedInAct / 45));
+  const base = MAX_ACTIVE_SPAWN_COST_BY_ACT[clampedAct] ?? MAX_ACTIVE_SPAWN_COST_BY_ACT[FINAL_ACT]!;
+  return base + Math.min(2, Math.floor(elapsedInAct / ACTIVE_SPAWN_COST_RAMP_SECONDS));
 }
 
 export function canSpawnByDirectorCap(enemies: readonly EnemyState[], enemyId: EnemyId) {
@@ -354,11 +414,11 @@ export function canSpawnByDirectorCap(enemies: readonly EnemyState[], enemyId: E
 }
 
 export function bossSummonBudgetForPhase(phase: number, awakened: boolean, finalBoss: boolean) {
-  if (finalBoss) return { maxCount: 4, maxCost: 7 };
-  if (awakened && phase >= 4) return { maxCount: 3, maxCost: 5 };
-  if (phase >= 3) return { maxCount: 3, maxCost: 4 };
-  if (phase >= 2) return { maxCount: 2, maxCost: 3 };
-  return { maxCount: 1, maxCost: 1.2 };
+  if (finalBoss) return FINAL_BOSS_SUMMON_BUDGET;
+  if (awakened && phase >= AWAKENED_BOSS_SUMMON_PHASE) return AWAKENED_BOSS_SUMMON_BUDGET;
+  if (phase >= ENRAGED_BOSS_SUMMON_PHASE) return ENRAGED_BOSS_SUMMON_BUDGET;
+  if (phase >= PRESSURE_BOSS_SUMMON_PHASE) return PRESSURE_BOSS_SUMMON_BUDGET;
+  return BASE_BOSS_SUMMON_BUDGET;
 }
 
 export function canSpawnBossSummon(
@@ -388,17 +448,17 @@ export function pickBossSummonEnemyId(
   boss: { phase: number; awakened: boolean; finalBoss: boolean } = { phase: 1, awakened: false, finalBoss: false },
 ) {
   const maxTier = boss.finalBoss
-    ? 4
-    : boss.awakened && boss.phase >= 4
-      ? 4
-      : boss.phase >= 3
-        ? 3
+    ? FINAL_BOSS_MAX_SUMMON_TIER
+    : boss.awakened && boss.phase >= AWAKENED_BOSS_SUMMON_PHASE
+      ? AWAKENED_BOSS_MAX_SUMMON_TIER
+      : boss.phase >= ENRAGED_BOSS_SUMMON_PHASE
+        ? ENRAGED_BOSS_MAX_SUMMON_TIER
         : boss.phase >= 2
           ? 2
           : 1;
   const pool = director.currentPool.filter((entry) => {
     const config = ENEMY_ARCHETYPES[entry.enemyId];
-    if (boss.finalBoss && config.complexityTier === 1) return false;
+    if (boss.finalBoss && config.complexityTier === TIER_ONE_COMPLEXITY) return false;
     return config.complexityTier <= maxTier;
   });
   return pickEnemyFromPool(pool.length > 0 ? pool : director.currentPool, random);

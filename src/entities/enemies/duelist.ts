@@ -37,6 +37,8 @@ const SLASH_BOX_HEIGHT_SCALE = 0.94;
 const SLASH_BOX_REACH = 48;
 const SLASH_BOX_FORWARD_RATIO = 0.52;
 const SLASH_BOX_BACK_RATIO = 0.48;
+const SLASH_WARNING_SFX_PITCH = 1.16;
+const SLASH_START_SFX_PITCH = 1.08;
 
 function isDuelist(enemy: Pick<EnemyState, "sheetIndex">) {
   return enemy.sheetIndex === DUELIST_SHEET_INDEX;
@@ -105,10 +107,10 @@ function enterDuelistPhase(enemy: EnemyState, phase: DuelistPhase) {
   enemy.duelistSlashHit = false;
   if (phase === "windup") {
     enemy.duelistTimer = DUELIST_CONFIG.windupFrames;
-    playSfx("enemyWarning", 1.16);
+    playSfx("enemyWarning", SLASH_WARNING_SFX_PITCH);
   } else if (phase === "slash") {
     enemy.duelistTimer = DUELIST_CONFIG.slashFrames;
-    playSfx("enemySlash", 1.08);
+    playSfx("enemySlash", SLASH_START_SFX_PITCH);
   } else if (phase === "recover") {
     enemy.duelistTimer = randomFrameCount(
       DUELIST_CONFIG.recoverMinFrames,

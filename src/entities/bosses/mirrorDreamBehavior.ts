@@ -6,6 +6,29 @@ import { damagePlayerOnContact } from "./shared";
 import type { LiveBoss } from "./types";
 import type { MirrorAfterimageState, MirrorShardState } from "../../types/game-state";
 
+const RETREAT_PHASE_FORCE = 0.006;
+const STEERING_PHASE_FORCE = 0.005;
+const MOVE_COAST_DRAG = 0.84;
+const MAX_VELOCITY_PHASE_BONUS = 0.2;
+const MIN_SKILL_COOLDOWN = 150;
+const SKILL_COOLDOWN_PHASE_REDUCTION = 18;
+const CAST_SFX_PITCH = 1.12;
+const NIGHTMARE_HIGH_PHASE = 3;
+const NIGHTMARE_MID_PHASE = 2;
+const NIGHTMARE_HIGH_PHASE_CHANCE = 0.42;
+const NIGHTMARE_MID_PHASE_CHANCE = 0.32;
+const AFTERIMAGE_CHANCE = 0.66;
+const AFTERIMAGE_SFX_PITCH = 1.12;
+const NIGHTMARE_SFX_PITCH = 0.82;
+const SHARD_FORWARD_OFFSET = 34;
+const SHARD_START_Y_SCALE = 0.36;
+const MIN_SHARD_TRAVEL_FRAMES = 28;
+const SHARD_MAX_VERTICAL_SPEED = 2.4;
+const SHARD_PHASE_SPEED_BONUS = 0.25;
+const SHARD_SFX_PITCH = 1.04;
+const NIGHTMARE_SHARD_START_Y_SCALE = 0.38;
+const NIGHTMARE_SHARD_SFX_PITCH = 1.22;
+
 export function updateMirrorDreamBoss(boss: LiveBoss) {
   if (boss.recoveryTimer > 0) {
     boss.recoveryTimer -= 1;
@@ -54,18 +77,18 @@ function moveMirrorDreamBoss(boss: LiveBoss) {
 
   const distance = Math.abs(toPlayer);
   if (distance < MIRROR_DREAM_CONFIG.closeDistance) {
-    boss.vx -= Math.sign(toPlayer) * (MIRROR_DREAM_CONFIG.retreatForce + boss.phase * 0.006);
+    boss.vx -= Math.sign(toPlayer) * (MIRROR_DREAM_CONFIG.retreatForce + boss.phase * RETREAT_PHASE_FORCE);
   } else if (distance > MIRROR_DREAM_CONFIG.preferredDistance) {
-    boss.vx += Math.sign(toPlayer) * (MIRROR_DREAM_CONFIG.steeringForce + boss.phase * 0.005);
+    boss.vx += Math.sign(toPlayer) * (MIRROR_DREAM_CONFIG.steeringForce + boss.phase * STEERING_PHASE_FORCE);
   } else {
-    boss.vx *= 0.84;
+    boss.vx *= MOVE_COAST_DRAG;
   }
 
   boss.vx *= MIRROR_DREAM_CONFIG.drag;
   boss.vx = clamp(
     boss.vx,
-    -(MIRROR_DREAM_CONFIG.maxVelocity + boss.phase * 0.2),
-    MIRROR_DREAM_CONFIG.maxVelocity + boss.phase * 0.2,
+    -(MIRROR_DREAM_CONFIG.maxVelocity + boss.phase * MAX_VELOCITY_PHASE_BONUS),
+    MIRROR_DREAM_CONFIG.maxVelocity + boss.phase * MAX_VELOCITY_PHASE_BONUS,
   );
   boss.x += boss.vx;
   boss.x = clamp(boss.x, 0, WIDTH - boss.w);
@@ -80,30 +103,30 @@ function startMirrorDreamCast(boss: LiveBoss) {
   boss.skillEffectSpawned = false;
   boss.actionState = "cast";
   boss.actionTimer = 0;
-  boss.skillCd = Math.max(150, MIRROR_DREAM_CONFIG.skillCooldown - boss.phase * 18);
+  boss.skillCd = Math.max(MIN_SKILL_COOLDOWN, MIRROR_DREAM_CONFIG.skillCooldown - boss.phase * SKILL_COOLDOWN_PHASE_REDUCTION);
   boss.vx = 0;
 
-  playSfx("bossCast", 1.12);
+  playSfx("bossCast", CAST_SFX_PITCH);
 }
 
 function nextMirrorDreamSkill(boss: LiveBoss) {
   const roll = Math.random();
-  if (boss.phase >= 3 && roll < 0.42) return "mirrorNightmare";
-  if (boss.phase >= 2 && roll < 0.32) return "mirrorNightmare";
-  return roll < 0.66 ? "mirrorAfterimage" : "mirrorShard";
+  if (boss.phase >= NIGHTMARE_HIGH_PHASE && roll < NIGHTMARE_HIGH_PHASE_CHANCE) return "mirrorNightmare";
+  if (boss.phase >= NIGHTMARE_MID_PHASE && roll < NIGHTMARE_MID_PHASE_CHANCE) return "mirrorNightmare";
+  return roll < AFTERIMAGE_CHANCE ? "mirrorAfterimage" : "mirrorShard";
 }
 
 function spawnMirrorDreamPattern(boss: LiveBoss) {
   if (boss.skillMode === "mirrorAfterimage") {
     spawnMirrorAfterimage(boss, undefined);
     teleportMirrorDreamBoss(boss);
-    playSfx("bossMirror", 1.12);
+    playSfx("bossMirror", AFTERIMAGE_SFX_PITCH);
     return;
   }
 
   if (boss.skillMode === "mirrorNightmare") {
     spawnMirrorNightmareImages(boss);
-    playSfx("bossMirror", 0.82);
+    playSfx("bossMirror", NIGHTMARE_SFX_PITCH);
     return;
   }
 
@@ -168,28 +191,28 @@ function spawnMirrorNightmareImages(boss: LiveBoss) {
 }
 
 function spawnMirrorShardFromBoss(boss: LiveBoss) {
-  const startX = boss.x + boss.w / 2 + boss.castFacing * 34;
-  const startY = boss.y + boss.h * 0.36;
+  const startX = boss.x + boss.w / 2 + boss.castFacing * SHARD_FORWARD_OFFSET;
+  const startY = boss.y + boss.h * SHARD_START_Y_SCALE;
   const targetX = state.player.x + state.player.w / 2;
   const targetY = state.player.y + state.player.h / 2;
   const dir = Math.sign(targetX - startX) || boss.castFacing;
-  const travelFrames = Math.max(28, Math.abs(targetX - startX) / MIRROR_DREAM_CONFIG.shardSpeed);
-  const vy = clamp((targetY - startY) / travelFrames, -2.4, 2.4);
+  const travelFrames = Math.max(MIN_SHARD_TRAVEL_FRAMES, Math.abs(targetX - startX) / MIRROR_DREAM_CONFIG.shardSpeed);
+  const vy = clamp((targetY - startY) / travelFrames, -SHARD_MAX_VERTICAL_SPEED, SHARD_MAX_VERTICAL_SPEED);
   spawnMirrorShard({
     kind: "shard",
     centerX: startX,
     centerY: startY,
-    vx: dir * (MIRROR_DREAM_CONFIG.shardSpeed + boss.phase * 0.25),
+    vx: dir * (MIRROR_DREAM_CONFIG.shardSpeed + boss.phase * SHARD_PHASE_SPEED_BONUS),
     vy,
     damage: MIRROR_DREAM_CONFIG.damageBase + boss.phase * MIRROR_DREAM_CONFIG.damagePhase,
     bouncesRemaining: 1,
   });
-  playSfx("bossMirror", 1.04);
+  playSfx("bossMirror", SHARD_SFX_PITCH);
 }
 
 export function spawnMirrorNightmareShard(afterimage: MirrorAfterimageState) {
   const centerX = afterimage.x + afterimage.w / 2;
-  const centerY = afterimage.y + afterimage.h * 0.38;
+  const centerY = afterimage.y + afterimage.h * NIGHTMARE_SHARD_START_Y_SCALE;
   const targetX = state.player.x + state.player.w / 2;
   const targetY = state.player.y + state.player.h / 2;
   const dx = targetX - centerX;
@@ -205,7 +228,7 @@ export function spawnMirrorNightmareShard(afterimage: MirrorAfterimageState) {
     damage: afterimage.damage,
     bouncesRemaining: 0,
   });
-  playSfx("bossMirror", 1.22);
+  playSfx("bossMirror", NIGHTMARE_SHARD_SFX_PITCH);
 }
 
 function spawnMirrorShard(params: {

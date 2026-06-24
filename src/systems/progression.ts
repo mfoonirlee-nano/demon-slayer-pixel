@@ -45,6 +45,27 @@ const HP_CURVE = 8;
 const SKILL_ENERGY_LINEAR = 10;
 const MIN_LEVEL_HEAL = 10;
 const LEVEL_HEAL_RATIO = 0.8;
+const XP_CURVE_EXPONENT = 1.45;
+const SPLITTER_CHILD_XP = 3;
+const DEFAULT_ENEMY_XP = 8;
+const BOSS_XP_BASE = 90;
+const BOSS_XP_PER_KILL = 25;
+const MAX_SKILL_LEVEL = 3;
+const UPGRADE_CHOICE_COUNT = 3;
+
+const ENEMY_XP_BY_SHEET_INDEX: Partial<Record<number, number>> = {
+  [CRAWLER_SHEET_INDEX]: 8,
+  [RUNNER_SHEET_INDEX]: 10,
+  [CASTER_SHEET_INDEX]: 14,
+  [DUELIST_SHEET_INDEX]: 16,
+  [BRUTE_SHEET_INDEX]: 20,
+  [BINDER_SHEET_INDEX]: 18,
+  [GLIDER_SHEET_INDEX]: 16,
+  [LEAPER_SHEET_INDEX]: 18,
+  [SPLITTER_SHEET_INDEX]: 16,
+  [WARDEN_SHEET_INDEX]: 24,
+  [BURROWER_SHEET_INDEX]: 20,
+};
 
 type ActiveUltimateLevel = Exclude<UltimateLevel, 0>;
 
@@ -61,7 +82,7 @@ export const INITIAL_EQUIPPED_SKILL_IDS: [SkillId | null, SkillId | null, SkillI
 ];
 
 export function xpToNextLevel(level: number) {
-  return Math.floor(BASE_XP + XP_LINEAR * level + XP_CURVE * level ** 1.45);
+  return Math.floor(BASE_XP + XP_LINEAR * level + XP_CURVE * level ** XP_CURVE_EXPONENT);
 }
 
 export function baseAttackForLevel(level: number) {
@@ -110,38 +131,12 @@ export function ultimateDamageMultiplier(state: GameState) {
 }
 
 export function enemyXp(enemy: EnemyState) {
-  if (enemy.splitterVariant === "child") return 3;
-
-  switch (enemy.sheetIndex) {
-    case CRAWLER_SHEET_INDEX:
-      return 8;
-    case RUNNER_SHEET_INDEX:
-      return 10;
-    case CASTER_SHEET_INDEX:
-      return 14;
-    case DUELIST_SHEET_INDEX:
-      return 16;
-    case BRUTE_SHEET_INDEX:
-      return 20;
-    case BINDER_SHEET_INDEX:
-      return 18;
-    case GLIDER_SHEET_INDEX:
-      return 16;
-    case LEAPER_SHEET_INDEX:
-      return 18;
-    case SPLITTER_SHEET_INDEX:
-      return 16;
-    case WARDEN_SHEET_INDEX:
-      return 24;
-    case BURROWER_SHEET_INDEX:
-      return 20;
-    default:
-      return 8;
-  }
+  if (enemy.splitterVariant === "child") return SPLITTER_CHILD_XP;
+  return ENEMY_XP_BY_SHEET_INDEX[enemy.sheetIndex] ?? DEFAULT_ENEMY_XP;
 }
 
 export function bossXp(bossKillsBeforeKill: number) {
-  return 90 + bossKillsBeforeKill * 25;
+  return BOSS_XP_BASE + bossKillsBeforeKill * BOSS_XP_PER_KILL;
 }
 
 export function addRunXp(state: GameState, amount: number) {
@@ -155,7 +150,7 @@ export function applyUpgradeChoice(state: GameState, index: number) {
 
   if ((choice.type === "unlockSkill" || choice.type === "upgradeSkill") && choice.skillId) {
     const currentLevel = state.player.skillLevels[choice.skillId] ?? 0;
-    const nextLevel = Math.min(3, currentLevel + 1) as SkillLevel;
+    const nextLevel = Math.min(MAX_SKILL_LEVEL, currentLevel + 1) as SkillLevel;
     state.player.skillLevels[choice.skillId] = nextLevel;
     if (choice.type === "unlockSkill") {
       autoEquipLearnedSkill(state, choice.skillId);
@@ -163,7 +158,7 @@ export function applyUpgradeChoice(state: GameState, index: number) {
   }
 
   if (choice.type === "upgradeUltimate") {
-    state.player.ultimateLevel = Math.min(3, state.player.ultimateLevel + 1) as UltimateLevel;
+    state.player.ultimateLevel = Math.min(MAX_SKILL_LEVEL, state.player.ultimateLevel + 1) as UltimateLevel;
   }
 
   state.pendingUpgradeChoices = [];
@@ -204,7 +199,7 @@ function applyLevelStatGrowth(state: GameState) {
 }
 
 function createUpgradeChoices(state: GameState): UpgradeChoiceState[] {
-  const nextUltimateLevel = Math.min(3, state.player.ultimateLevel + 1) as UltimateLevel;
+  const nextUltimateLevel = Math.min(MAX_SKILL_LEVEL, state.player.ultimateLevel + 1) as UltimateLevel;
   const unlockChoices: UpgradeChoiceState[] = [];
   const upgradeChoices: UpgradeChoiceState[] = [];
 
@@ -223,7 +218,7 @@ function createUpgradeChoices(state: GameState): UpgradeChoiceState[] {
       continue;
     }
 
-    if (currentLevel < 3 && isSkillLearned(state, skillId)) {
+    if (currentLevel < MAX_SKILL_LEVEL && isSkillLearned(state, skillId)) {
       const nextLevel = (currentLevel + 1) as SkillLevel;
       upgradeChoices.push({
         id: `upgrade-${skillId}-${state.player.runLevel}`,
@@ -237,7 +232,7 @@ function createUpgradeChoices(state: GameState): UpgradeChoiceState[] {
     }
   }
 
-  const ultimateChoice = state.player.ultimateLevel < 3
+  const ultimateChoice = state.player.ultimateLevel < MAX_SKILL_LEVEL
     ? {
         id: `ultimate-${state.player.runLevel}`,
         type: "upgradeUltimate" as const,
@@ -254,7 +249,7 @@ function createUpgradeChoices(state: GameState): UpgradeChoiceState[] {
   ]);
 
   for (const choice of [...unlockChoices, ...upgradeChoices]) {
-    if (choices.length >= 3) break;
+    if (choices.length >= UPGRADE_CHOICE_COUNT) break;
     choices.push(choice);
   }
 

@@ -4,6 +4,7 @@ import process from "node:process";
 
 const MAX_LINES = 600;
 const ROOT_DIR = process.cwd();
+const LINE_COUNT_PAD_WIDTH = 4;
 
 const CHECKED_EXTENSIONS = new Set([
   ".cjs",
@@ -82,7 +83,7 @@ if (violations.length > 0) {
   printError(`Line limit exceeded: files must be ${MAX_LINES} lines or fewer.`);
 
   for (const violation of violations) {
-    printError(`${violation.lineCount.toString().padStart(4, " ")} ${violation.path}`);
+    printError(`${violation.lineCount.toString().padStart(LINE_COUNT_PAD_WIDTH, " ")} ${violation.path}`);
   }
 
   process.exitCode = 1;
