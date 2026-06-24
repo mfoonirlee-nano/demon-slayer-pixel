@@ -54,11 +54,14 @@ moonlit-tide-survivor/
 ├── docs/                # 项目详细文档
 ├── src/                 # 源代码目录
 │   ├── entities/        # 游戏实体实现（玩家、敌人、Boss等）
-│   ├── App.tsx          # React 外壳、HUD 与触控按钮
+│   ├── app/             # React 应用外壳
+│   │   └── App.tsx      # Canvas 容器、HUD 挂载与开始流程
+│   ├── game/            # 运行时、输入、状态与 Jotai 状态桥
+│   │   ├── runtime.ts   # 游戏运行时与主循环
+│   │   ├── gameStore.ts # Jotai HUD 状态桥
+│   │   └── state.ts     # 运行时全局状态
+│   ├── rendering/       # Canvas 背景、前景与绘图上下文
 │   ├── main.tsx         # React 入口
-│   ├── runtime.ts       # 游戏运行时与主循环
-│   ├── gameStore.ts     # Jotai HUD 状态桥
-│   └── state.ts         # 运行时全局状态
 ├── assets/              # 静态资源（图片、音频）
 ├── index.html           # 页面入口
 └── package.json         # 项目配置文件与依赖

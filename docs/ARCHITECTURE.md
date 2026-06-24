@@ -5,15 +5,15 @@
 ## 核心设计模式
 
 ### 1. 游戏循环 (Game Loop)
-`src/runtime.ts` 中的 `loop()` 是游戏的核心。它使用 `requestAnimationFrame` 推进 update / draw 管线，并根据时间差 (`dt`) 更新月亮、玩家、敌人、Boss、地图片段、掉落物、技能弹道和粒子效果。
+`src/game/runtime.ts` 中的 `loop()` 是游戏的核心。它使用 `requestAnimationFrame` 推进 update / draw 管线，并根据时间差 (`dt`) 更新月亮、玩家、敌人、Boss、地图片段、掉落物、技能弹道和粒子效果。
 
 运行时会在暂停时保留帧循环但停止玩法更新，确保 React 暂停面板能立即显示当前快照。游戏重开时调用 `resetState()` 和 `resetMapGenerator()`，但已加载的素材不会重复加载。
 
 ### 2. 状态管理 (State Management)
-`src/state.ts` 维护运行时的全局可变状态，保存玩家、敌人、Boss、平台、宝箱、水晶、投射物、技能效果、粒子、月亮与战斗进度等实时数据。`src/gameStore.ts` 则把运行时快照桥接到 Jotai，供 React HUD、暂停面板和死亡界面读取显示。
+`src/game/state.ts` 维护运行时的全局可变状态，保存玩家、敌人、Boss、平台、宝箱、水晶、投射物、技能效果、粒子、月亮与战斗进度等实时数据。`src/game/gameStore.ts` 则把运行时快照桥接到 Jotai，供 React HUD、暂停面板和死亡界面读取显示。
 
 ### 3. React 外壳 + Canvas 渲染
-`src/App.tsx` 负责应用壳、HUD、暂停面板、死亡动画遮罩和移动端触控按钮。`src/context.ts` 提供当前 canvas/context 引用，`src/runtime.ts` 负责启动资源加载、输入绑定、主循环与绘制。
+`src/app/App.tsx` 负责应用壳、HUD、暂停面板、死亡动画遮罩和移动端触控按钮。`src/rendering/context.ts` 提供当前 canvas/context 引用，`src/game/runtime.ts` 负责启动资源加载、输入绑定、主循环与绘制。
 
 ### 4. 基于实体的逻辑 (Entity Logic)
 `src/entities/` 目录下的每个模块代表一种游戏实体或玩法对象（玩家、敌人、Boss、平台、投射物、粒子等）。每个模块负责该类对象的生成 (`spawn`)、更新 (`update`) 和绘制 (`draw`)。
@@ -26,10 +26,10 @@
 ## 代码目录结构
 
 - `src/main.tsx`: React 入口，挂载应用。
-- `src/App.tsx`: 页面外壳、HUD、移动端按钮与 canvas 容器。
-- `src/runtime.ts`: 游戏运行时，初始化输入、加载资源、启动主循环。
-- `src/state.ts`: 维护游戏全局运行时状态，并提供重置与快照方法。
-- `src/gameStore.ts`: 将运行时快照桥接到 Jotai。
+- `src/app/App.tsx`: 页面外壳、HUD、移动端按钮与 canvas 容器。
+- `src/game/runtime.ts`: 游戏运行时，初始化输入、加载资源、启动主循环。
+- `src/game/state.ts`: 维护游戏全局运行时状态，并提供重置与快照方法。
+- `src/game/gameStore.ts`: 将运行时快照桥接到 Jotai。
 - `src/constants/`:
   - `world.ts`: 画布尺寸、地面位置、重力等世界常量。
   - `assets.ts`: 技能、玩家/敌人/Boss、背景、云、地面、平台等精灵图元数据。
@@ -42,15 +42,15 @@
 - `src/types/`:
   - `assets.ts`: `Skill`、`SpriteSheet`、`PlayerSheet` 等资源类型。
   - `game-state.ts`: 玩家、敌人、Boss、平台、粒子等运行时状态类型。
-- `src/context.ts`: 管理 canvas 与 2D context 引用。
-- `src/assets.ts`: 异步加载图片资源，并在加载完成后更新 `spritesReady`。
-- `src/input.ts`: 处理键盘输入和移动端虚拟按键逻辑。
-- `src/background.ts`: 绘制天空、星星、月亮、云层、山脉和地面底色。
-- `src/clouds.ts`: 绘制大云/小云精灵，支持夜晚灰色滤镜和血月红色染色。
-- `src/nearForeground.ts`: 绘制近景树线、石塔和鸟居，使用独立视差速度。
+- `src/rendering/context.ts`: 管理 canvas 与 2D context 引用。
+- `src/assets/index.ts`: 异步加载图片资源，并在加载完成后更新 `spritesReady`。
+- `src/game/input.ts`: 处理键盘输入和移动端虚拟按键逻辑。
+- `src/rendering/background.ts`: 绘制天空、星星、月亮、云层、山脉和地面底色。
+- `src/rendering/clouds.ts`: 绘制大云/小云精灵，支持夜晚灰色滤镜和血月红色染色。
+- `src/rendering/nearForeground.ts`: 绘制近景树线、石塔和鸟居，使用独立视差速度。
 - `src/moon/`: 管理月亮状态、血月插值、天空配色和月亮渲染。
-- `src/audio.ts`: 使用 Web Audio 播放攻击、拾取和命中反馈音。
-- `src/utils.ts`: 通用工具函数。
+- `src/game/audio.ts`: 使用 Web Audio 播放攻击、拾取和命中反馈音。
+- `src/game/utils.ts`: 通用工具函数。
 - `src/entities/`:
   - `player.ts`: 玩家控制、重力、碰撞检测、技能释放逻辑。
   - `enemy.ts`: 小怪生成与 AI。
