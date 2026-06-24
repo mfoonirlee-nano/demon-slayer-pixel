@@ -1,5 +1,5 @@
 import { state } from "../../game/state";
-import { GROUND_Y, PLAYER_COMBAT, SKILL_IDS, WIDTH } from "../../constants";
+import { GROUND_Y, PLAYER_COMBAT, WIDTH } from "../../constants";
 import type { BossState, EnemyState, PlayerSkillEffectState, SkillLevel } from "../../types/game-state";
 import { clamp, hitbox, type RectLike } from "../../game/utils";
 import { applySkillHitEquipmentRefund } from "../../systems/equipment";
