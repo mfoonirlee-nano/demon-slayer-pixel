@@ -14,6 +14,9 @@ import { playerSkillEffectSheet } from "../../systems/skillCatalog";
 
 export const DEFAULT_HIT_BURST_COLOR = "#9feaff";
 export const RETURNING_BLADE_SPEED = 8;
+export const RETURNING_BLADE_SPAWN_FORWARD_OFFSET = 28;
+export const RETURNING_BLADE_OFFSCREEN_MARGIN = 120;
+export const RETURNING_BLADE_RETURN_LIFE_BUFFER = 30;
 export const RAIN_LINE_EFFECT_Y_OFFSET = 44;
 export const RAIN_LINE_TARGET_LEAD_FRAMES = 6;
 export const RAIN_LINE_TARGET_MAX_FORWARD_DISTANCE = 380;
@@ -63,6 +66,17 @@ export function genericSkillDamage(skillId: GenericPlayerSkillId, level: SkillLe
 
 export function effectBox(effect: PlayerSkillEffectState) {
   return rectFromCenter(effect.x, effect.y, effect.w, effect.h);
+}
+
+export function returningBladeOutboundDistance(startX: number, facing: number, minDistance: number) {
+  const offscreenDistance = facing >= 0
+    ? WIDTH + RETURNING_BLADE_OFFSCREEN_MARGIN - startX
+    : startX + RETURNING_BLADE_OFFSCREEN_MARGIN;
+  return Math.max(minDistance, offscreenDistance);
+}
+
+export function returningBladeLife(outboundDistance: number) {
+  return Math.ceil(outboundDistance * 2 / RETURNING_BLADE_SPEED) + RETURNING_BLADE_RETURN_LIFE_BUFFER;
 }
 
 export function enemyCenter(enemy: EnemyState) {

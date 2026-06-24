@@ -18,6 +18,7 @@ import {
   DASH_REPOSITION_TRAIL_EXTRA_LIFE,
   RAIN_LINE_EFFECT_BOTTOM_TRANSPARENT_PX,
   RAIN_LINE_EFFECT_Y_OFFSET,
+  RETURNING_BLADE_SPAWN_FORWARD_OFFSET,
   RETURNING_BLADE_SPEED,
   VORTEX_CAST_FORWARD_OFFSET,
   VORTEX_GROUND_Y_OFFSET,
@@ -29,6 +30,8 @@ import {
   makeGenericEffect,
   rainLineTargets,
   refundSkillGroupById,
+  returningBladeLife,
+  returningBladeOutboundDistance,
 } from "./playerSkillShared";
 
 let nextPlayerSkillRefundGroupId = 1;
@@ -232,13 +235,20 @@ export function spawnPlayerSkillEffect(skillId: SkillId, castDamageMultiplier = 
   }
 
   if (skillId === SKILL_IDS.returningBlade) {
-    state.playerSkillEffects.push(makeGenericEffect(skillId, level, castDamageMultiplier, playerCenterX + player.facing * 28, playerCenterY, {
+    const minDistance = valueForSkillLevel(tuning.distance ?? tuning.width, level);
+    const startX = playerCenterX + player.facing * RETURNING_BLADE_SPAWN_FORWARD_OFFSET;
+    const maxDistance = returningBladeOutboundDistance(startX, player.facing, minDistance);
+    const life = returningBladeLife(maxDistance);
+
+    state.playerSkillEffects.push(makeGenericEffect(skillId, level, castDamageMultiplier, startX, playerCenterY, {
       vx: player.facing * RETURNING_BLADE_SPEED,
       phase: "out",
       originX: playerCenterX,
       originY: playerCenterY,
       traveled: 0,
-      maxDistance: valueForSkillLevel(tuning.distance ?? tuning.width, level),
+      maxDistance,
+      life,
+      maxLife: life,
       maxHits: valueForSkillLevel(tuning.maxHits ?? tuning.life, level),
       returnHitEnemies: [],
       refundGroupId,

@@ -252,14 +252,18 @@ function updateReturningBladeEffect(effect: PlayerSkillEffectState) {
   const box = effectBox(effect);
   let hitTargets = 0;
   let bossHit = false;
+  const maxEnemyHits = effect.maxHits ?? Number.POSITIVE_INFINITY;
 
-  for (let j = state.enemies.length - 1; j >= 0; j -= 1) {
-    const enemy = state.enemies[j];
-    if (activeHits.includes(enemy)) continue;
-    if (!hitbox(box, enemy)) continue;
-    activeHits.push(enemy);
-    applyEffectDamageToEnemy(effect, enemy, j);
-    hitTargets += 1;
+  if (activeHits.length < maxEnemyHits) {
+    for (let j = state.enemies.length - 1; j >= 0; j -= 1) {
+      const enemy = state.enemies[j];
+      if (activeHits.includes(enemy)) continue;
+      if (!hitbox(box, enemy)) continue;
+      activeHits.push(enemy);
+      applyEffectDamageToEnemy(effect, enemy, j);
+      hitTargets += 1;
+      if (activeHits.length >= maxEnemyHits) break;
+    }
   }
 
   if (state.boss && !effect.bossCooldown && hitbox(box, state.boss)) {
@@ -270,9 +274,8 @@ function updateReturningBladeEffect(effect: PlayerSkillEffectState) {
   refundSkillGroup(effect, hitTargets, bossHit);
 
   if (effect.phase !== "return") {
-    const maxHitsReached = effect.hitEnemies.length >= (effect.maxHits ?? Number.POSITIVE_INFINITY);
     const distanceReached = (effect.traveled ?? 0) >= (effect.maxDistance ?? 0);
-    if (maxHitsReached || distanceReached) {
+    if (distanceReached) {
       effect.phase = "return";
       effect.returnHitEnemies ??= [];
       effect.bossCooldown = undefined;
