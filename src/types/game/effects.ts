@@ -1,4 +1,4 @@
-import type { SkillId } from "../assets";
+import type { PlayerAnimationState, SkillId } from "../assets";
 import type {
   BloodMoonEffectKind,
   BossSkillEffectKind,
@@ -367,3 +367,23 @@ export type UltimateAfterimageSlashState = {
   maxLife: number;
   power: number;
 };
+
+export type UltimatePlayerGhostAction = "idle" | "move" | "attack" | "skill" | "fallAttack";
+
+export type UltimatePlayerGhostState = {
+  source: "player" | "skill";
+  animationState?: PlayerAnimationState;
+  skillId?: SkillId;
+  action: UltimatePlayerGhostAction;
+  frame: number;
+  x: number;
+  y: number;
+  w: number;
+  h: number;
+  facing: number;
+  life: number;
+  maxLife: number;
+  strength: number;
+};
+
+export type UltimatePlayerGhostSnapshot = Omit<UltimatePlayerGhostState, "life" | "maxLife" | "strength">;

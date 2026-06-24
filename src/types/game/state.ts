@@ -41,6 +41,7 @@ import type {
   SkillBurstState,
   UltimateAfterimageSlashState,
   UltimateEffectState,
+  UltimatePlayerGhostState,
   UltimateTrailState,
 } from "./effects";
 
@@ -117,6 +118,7 @@ export type GameState = {
   ultimateEffects: UltimateEffectState[];
   ultimateTrails: UltimateTrailState[];
   ultimateAfterimageSlashes: UltimateAfterimageSlashState[];
+  ultimatePlayerGhosts: UltimatePlayerGhostState[];
   bossSkill1Effects: BossSkill1EffectState[];
   deadBellWaves: DeadBellWaveState[];
   deadBellBlades: DeadBellBladeState[];

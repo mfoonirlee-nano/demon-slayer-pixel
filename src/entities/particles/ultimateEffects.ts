@@ -1,11 +1,36 @@
 import { state } from "../../game/state";
 import { ctx } from "../../rendering/context";
-import { PLAYER_COMBAT } from "../../constants";
-import type { UltimateAfterimageSlashState, UltimateTrailState } from "../../types/game-state";
-import { ULTIMATE_SKILL_ASSETS } from "../../systems/skillCatalog";
+import { PLAYER_COMBAT, PLAYER_SHEETS } from "../../constants";
+import { drawSheetFrame, drawSkillFrame } from "../../rendering/graphics";
+import type {
+  UltimateAfterimageSlashState,
+  UltimatePlayerGhostState,
+  UltimateTrailState,
+} from "../../types/game-state";
+import { playerSkillById, ULTIMATE_SKILL_ASSETS } from "../../systems/skillCatalog";
 
 const FULL_CIRCLE_RADIANS = Math.PI * 2;
 const ULTIMATE_SKILL_EFFECT_SHEET = ULTIMATE_SKILL_ASSETS.effect;
+
+const PLAYER_GHOST_BODY_FILTER = "brightness(0) saturate(100%) invert(47%) sepia(86%) saturate(1382%) hue-rotate(166deg) brightness(92%) contrast(102%)";
+const PLAYER_GHOST_RIM_FILTER = "brightness(0) saturate(100%) invert(78%) sepia(92%) saturate(825%) hue-rotate(158deg) brightness(115%) contrast(108%) drop-shadow(0 0 3px rgba(117, 226, 255, 0.72))";
+const PLAYER_GHOST_ALPHA_BASE = 0.18;
+const PLAYER_GHOST_ALPHA_SCALE = 0.44;
+const PLAYER_GHOST_ALPHA_MAX = 0.6;
+const PLAYER_GHOST_RIM_ALPHA_RATIO = 0.24;
+const PLAYER_GHOST_RIM_ALPHA_MAX = 0.16;
+const PLAYER_GHOST_OFFSET_X: Record<UltimatePlayerGhostState["action"], number> = {
+  idle: 16,
+  move: 18,
+  attack: 22,
+  skill: 18,
+  fallAttack: 22,
+};
+const ULTIMATE_FOOT_EFFECT = {
+  drawScale: 0.38,
+  footYOffset: 6,
+  anchorY: 0.94,
+} as const;
 
 export function updateUltimateTrails() {
   for (let i = state.ultimateTrails.length - 1; i >= 0; i -= 1) {
@@ -20,6 +45,14 @@ export function updateUltimateAfterimageSlashes() {
     const slash = state.ultimateAfterimageSlashes[i] as UltimateAfterimageSlashState;
     slash.life -= 1;
     if (slash.life <= 0) state.ultimateAfterimageSlashes.splice(i, 1);
+  }
+}
+
+export function updateUltimatePlayerGhosts() {
+  for (let i = state.ultimatePlayerGhosts.length - 1; i >= 0; i -= 1) {
+    const ghost = state.ultimatePlayerGhosts[i] as UltimatePlayerGhostState;
+    ghost.life -= 1;
+    if (ghost.life <= 0) state.ultimatePlayerGhosts.splice(i, 1);
   }
 }
 
@@ -68,11 +101,11 @@ export function drawUltimateEffects() {
   if (!ctx) return;
   const sheet = ULTIMATE_SKILL_EFFECT_SHEET;
   if (!sheet.image) return;
-  const drawW = sheet.frameW * PLAYER_COMBAT.ultimateEffectDrawScale;
-  const drawH = sheet.frameH * PLAYER_COMBAT.ultimateEffectDrawScale;
+  const drawW = sheet.frameW * ULTIMATE_FOOT_EFFECT.drawScale;
+  const drawH = sheet.frameH * ULTIMATE_FOOT_EFFECT.drawScale;
   const p = state.player;
   const cx = p.x + p.w / 2;
-  const cy = p.y + p.h - PLAYER_COMBAT.ultimateEffectYOffset;
+  const footY = p.y + p.h + ULTIMATE_FOOT_EFFECT.footYOffset;
   for (const eff of state.ultimateEffects) {
     const sx = eff.frame * sheet.frameW;
     const openingFrames = sheet.count * PLAYER_COMBAT.ultimateEffectFrameDuration;
@@ -83,9 +116,9 @@ export function drawUltimateEffects() {
     ctx.save();
     ctx.globalAlpha = alpha;
     ctx.globalCompositeOperation = "lighter";
-    ctx.translate(cx, cy);
+    ctx.translate(cx, footY);
     ctx.scale(eff.facing, 1);
-    ctx.drawImage(sheet.image, sx, 0, sheet.frameW, sheet.frameH, -drawW / 2, -drawH / 2, drawW, drawH);
+    ctx.drawImage(sheet.image, sx, 0, sheet.frameW, sheet.frameH, -drawW / 2, -drawH * ULTIMATE_FOOT_EFFECT.anchorY, drawW, drawH);
     ctx.restore();
   }
 }
@@ -114,4 +147,52 @@ export function drawUltimateAfterimageSlashes() {
     ctx.stroke();
     ctx.restore();
   }
+}
+
+export function drawUltimatePlayerGhosts() {
+  if (!ctx) return;
+
+  for (const ghost of state.ultimatePlayerGhosts) {
+    const lifeRatio = ghost.life / ghost.maxLife;
+    const alpha = Math.min(
+      PLAYER_GHOST_ALPHA_MAX,
+      (PLAYER_GHOST_ALPHA_BASE + lifeRatio * PLAYER_GHOST_ALPHA_SCALE) * ghost.strength,
+    );
+
+    // Body pass keeps the ghost readable as a figure; rim pass adds the moon-tide edge light.
+    ctx.save();
+    ctx.globalCompositeOperation = "source-over";
+    ctx.globalAlpha = alpha;
+    ctx.filter = PLAYER_GHOST_BODY_FILTER;
+    drawUltimatePlayerGhost(ghost);
+    ctx.restore();
+
+    ctx.save();
+    ctx.globalCompositeOperation = "lighter";
+    ctx.globalAlpha = Math.min(PLAYER_GHOST_RIM_ALPHA_MAX, alpha * PLAYER_GHOST_RIM_ALPHA_RATIO);
+    ctx.filter = PLAYER_GHOST_RIM_FILTER;
+    drawUltimatePlayerGhost(ghost);
+    ctx.restore();
+  }
+}
+
+function drawUltimatePlayerGhost(ghost: UltimatePlayerGhostState) {
+  const drawX = ghost.x - ghost.facing * PLAYER_GHOST_OFFSET_X[ghost.action];
+  if (ghost.source === "player" && ghost.animationState) {
+    drawSheetFrame(
+      PLAYER_SHEETS[ghost.animationState],
+      ghost.frame,
+      drawX,
+      ghost.y,
+      ghost.w,
+      ghost.h,
+      ghost.facing,
+    );
+    return;
+  }
+
+  if (ghost.source !== "skill" || !ghost.skillId) return;
+  const skill = playerSkillById(ghost.skillId);
+  if (!skill) return;
+  drawSkillFrame(skill, ghost.frame, drawX, ghost.y, ghost.w, ghost.h, ghost.facing);
 }

@@ -117,6 +117,7 @@ export function createInitialState(): GameState {
     ultimateEffects: [],
     ultimateTrails: [],
     ultimateAfterimageSlashes: [],
+    ultimatePlayerGhosts: [],
     bossSkill1Effects: [],
     deadBellWaves: [],
     deadBellBlades: [],
@@ -157,6 +158,7 @@ export function resetState() {
   resetCollection(state.ultimateEffects, next.ultimateEffects);
   resetCollection(state.ultimateTrails, next.ultimateTrails);
   resetCollection(state.ultimateAfterimageSlashes, next.ultimateAfterimageSlashes);
+  resetCollection(state.ultimatePlayerGhosts, next.ultimatePlayerGhosts);
   resetCollection(state.bossSkill1Effects, next.bossSkill1Effects);
   resetCollection(state.deadBellWaves, next.deadBellWaves);
   resetCollection(state.deadBellBlades, next.deadBellBlades);

@@ -11,14 +11,21 @@ import {
 import { frameIndex, onGround } from "../../game/utils";
 import { drawSheetFrame, drawSkillFrame } from "../../rendering/graphics";
 import { selectedSkill } from "../../systems/loadout";
-import { ULTIMATE_SKILL_ASSETS } from "../../systems/skillCatalog";
+import { playerSkillById, ULTIMATE_SKILL_ASSETS } from "../../systems/skillCatalog";
+import type { Skill } from "../../types/assets";
+import type {
+  UltimatePlayerGhostAction,
+  UltimatePlayerGhostSnapshot,
+} from "../../types/game-state";
 import { bindingZonePlayerMoveScale } from "../enemies/binder";
 import { lanternAshZonePlayerMoveScale } from "./movementModifiers";
+import { moonTideActive, moonTidePlayerAnimationFrameSpeed, recordMoonTidePlayerGhost } from "./moonTide";
 import { playerSkillCastFrame } from "./skillCasting";
 
 const HALF_RATIO = 0.5;
 const FULL_CIRCLE = Math.PI * 2;
 const ULTIMATE_SKILL_SHEET = ULTIMATE_SKILL_ASSETS.skill;
+const MOON_TIDE_OUTLINE_FILTER = "brightness(0) saturate(100%) invert(82%) sepia(76%) saturate(1274%) hue-rotate(158deg) brightness(112%) contrast(105%) drop-shadow(0 0 7px rgba(118, 226, 255, 0.86))";
 
 const PLAYER_BINDING_SLOW_EFFECT = {
   filter: "sepia(0.38) saturate(1.55) hue-rotate(282deg) brightness(0.86)",
@@ -119,6 +126,56 @@ function drawBindingSlowEffect() {
   ctx.restore();
 }
 
+function drawRenderSnapshot(snapshot: UltimatePlayerGhostSnapshot, currentSkill: Skill | null = null) {
+  if (snapshot.source === "player" && snapshot.animationState) {
+    drawSheetFrame(
+      PLAYER_SHEETS[snapshot.animationState],
+      snapshot.frame,
+      snapshot.x,
+      snapshot.y,
+      snapshot.w,
+      snapshot.h,
+      snapshot.facing,
+    );
+    return;
+  }
+
+  if (snapshot.source !== "skill" || !snapshot.skillId) return;
+  const skill = currentSkill ?? playerSkillById(snapshot.skillId);
+  if (!skill) return;
+  drawSkillFrame(skill, snapshot.frame, snapshot.x, snapshot.y, snapshot.w, snapshot.h, snapshot.facing);
+}
+
+function drawMoonTideOutline(snapshot: UltimatePlayerGhostSnapshot, currentSkill: Skill | null = null) {
+  if (!ctx || !moonTideActive()) return;
+
+  const level = state.player.ultimateLevel === 2 || state.player.ultimateLevel === 3
+    ? state.player.ultimateLevel
+    : 1;
+  const expand = 2 + level;
+  const outline: UltimatePlayerGhostSnapshot = {
+    ...snapshot,
+    x: snapshot.x - expand,
+    y: snapshot.y - expand,
+    w: snapshot.w + expand * 2,
+    h: snapshot.h + expand * 2,
+  };
+
+  ctx.save();
+  ctx.globalAlpha = 0.14 + level * 0.04;
+  ctx.globalCompositeOperation = "lighter";
+  ctx.filter = MOON_TIDE_OUTLINE_FILTER;
+  drawRenderSnapshot(outline, currentSkill);
+  ctx.restore();
+}
+
+function playerGhostAction(stateName: keyof typeof PLAYER_SHEETS): UltimatePlayerGhostAction {
+  if (stateName === PLAYER_ANIMATION_STATES.attack) return "attack";
+  if (stateName === PLAYER_ANIMATION_STATES.fallAttack) return "fallAttack";
+  if (stateName === PLAYER_ANIMATION_STATES.run || stateName === PLAYER_ANIMATION_STATES.jump) return "move";
+  return "idle";
+}
+
 export function drawPlayer() {
   const p = state.player;
   const isDashRepositionSkillAnimation = p.skillTimer > 0 && selectedSkill(state)?.id === SKILL_IDS.dashReposition;
@@ -172,8 +229,21 @@ export function drawPlayer() {
       const anchorY = skill.anchorY ?? 1;
       // When facing left, the sprite is mirrored, so the horizontal anchor mirrors too.
       const effectiveAnchorX = p.facing === 1 ? anchorX : (1 - anchorX);
+      const snapshot: UltimatePlayerGhostSnapshot = {
+        source: "skill",
+        skillId: skill.id,
+        action: "skill",
+        frame,
+        x: refX - drawW * effectiveAnchorX,
+        y: refY - drawH * anchorY,
+        w: drawW,
+        h: drawH,
+        facing: p.facing,
+      };
+      recordMoonTidePlayerGhost(snapshot);
+      drawMoonTideOutline(snapshot, skill);
       drawWithBindingSlowFilter(isBindingSlowed, () => {
-        drawSkillFrame(skill, frame, refX - drawW * effectiveAnchorX, refY - drawH * anchorY, drawW, drawH, p.facing);
+        drawRenderSnapshot(snapshot, skill);
       });
       if (isBindingSlowed) drawBindingSlowEffect();
       return;
@@ -193,7 +263,8 @@ export function drawPlayer() {
 
   const sheet = PLAYER_SHEETS[stateName];
   const { drawW, drawH, animSpeed, anchorX = 0.5, anchorY = 1, flipX } = sheet;
-  let frame = frameIndex(sheet.count, animSpeed, state.elapsed);
+  const action = playerGhostAction(stateName);
+  let frame = frameIndex(sheet.count, moonTidePlayerAnimationFrameSpeed(action, animSpeed), state.elapsed);
   if (stateName === PLAYER_ANIMATION_STATES.fallAttack) {
     const airFrameCount = 5;
     const recoveryFrameCount = sheet.count - airFrameCount;
@@ -215,7 +286,20 @@ export function drawPlayer() {
     );
   }
   drawWithBindingSlowFilter(isBindingSlowed, () => {
-    drawSheetFrame(sheet, frame, refX - drawW * anchorX, refY - drawH * anchorY, drawW, drawH, p.facing * (flipX ? -1 : 1));
+    const snapshot: UltimatePlayerGhostSnapshot = {
+      source: "player",
+      animationState: stateName,
+      action,
+      frame,
+      x: refX - drawW * anchorX,
+      y: refY - drawH * anchorY,
+      w: drawW,
+      h: drawH,
+      facing: p.facing * (flipX ? -1 : 1),
+    };
+    recordMoonTidePlayerGhost(snapshot);
+    drawMoonTideOutline(snapshot);
+    drawRenderSnapshot(snapshot);
   });
   if (isBindingSlowed) drawBindingSlowEffect();
 }

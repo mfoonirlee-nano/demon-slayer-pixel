@@ -45,6 +45,7 @@ import {
   updateUltimateEffects,
   updateUltimateTrails,
   updateUltimateAfterimageSlashes,
+  updateUltimatePlayerGhosts,
   drawParticles,
   drawSkillBursts,
   drawHitBursts,
@@ -55,6 +56,7 @@ import {
   drawUltimateEffects,
   drawUltimateTrails,
   drawUltimateAfterimageSlashes,
+  drawUltimatePlayerGhosts,
 } from "../entities/particle";
 import type { GameSnapshot } from "./gameStore";
 import type { SkillId } from "../types/assets";
@@ -264,6 +266,7 @@ function loop(ts: number) {
     updateUltimateEffects();
     updateUltimateTrails();
     updateUltimateAfterimageSlashes();
+    updateUltimatePlayerGhosts();
   }
 
   drawBackground();
@@ -300,6 +303,7 @@ function loop(ts: number) {
     state.player.skillFlash -= 1;
   }
 
+  drawUltimatePlayerGhosts();
   drawPlayer();
   drawGuardCounterEffect();
   drawSkillBursts();
