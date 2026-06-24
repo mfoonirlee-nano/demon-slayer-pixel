@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { type CSSProperties, useEffect, useRef, useState } from "react";
 import { useAtomValue } from "jotai";
 import { HUD_UI, type UiSpriteId } from "../constants";
 import { DebugPanel } from "../game/debug";
@@ -23,7 +23,12 @@ const ULTIMATE_GLOW_OPACITY_SCALE = 0.82;
 const ULTIMATE_CHARGE_LAST_FRAME = 7;
 const ULTIMATE_CHARGE_FRAME_COUNT = 8;
 const ULTIMATE_PERCENT_SCALE = 100;
-const ULTIMATE_TIDE_MIN_SCALE = 0.02;
+const ULTIMATE_DECAY_FULL_ANGLE = 360;
+const ULTIMATE_DECAY_MIN_ANGLE = 8;
+const ULTIMATE_DECAY_MID_ANGLE_RATIO = 0.62;
+const ULTIMATE_DECAY_MAX_OPACITY = 0.86;
+const ULTIMATE_DECAY_BASE_OPACITY = 0.28;
+const ULTIMATE_DECAY_OPACITY_SCALE = 0.58;
 const HUD_HP_METER_FRAME: HudMeterFrame = {
   left: "hudHpBarLeft",
   mid: "hudHpBarMid",
@@ -143,9 +148,13 @@ function UltimateOrb({ value, max, ready, size = ULTIMATE_ORB_DEFAULT_SIZE, acti
 }) {
   const percent = clampMeterPercent(value, max) / HUD_UI.meterPercentMax;
   const active = activePercent > 0;
+  const activeClamped = Math.max(0, Math.min(1, activePercent));
   const glowOpacity = percent <= 0 ? 0 : Math.min(1, ULTIMATE_GLOW_BASE_OPACITY + percent * ULTIMATE_GLOW_OPACITY_SCALE);
   const chargeFrame = Math.min(ULTIMATE_CHARGE_LAST_FRAME, Math.floor(percent * ULTIMATE_CHARGE_FRAME_COUNT));
   const chargeFramePosition = chargeFrame / ULTIMATE_CHARGE_LAST_FRAME * ULTIMATE_PERCENT_SCALE;
+  const decayAngle = Math.max(ULTIMATE_DECAY_MIN_ANGLE, activeClamped * ULTIMATE_DECAY_FULL_ANGLE);
+  const decayMidAngle = decayAngle * ULTIMATE_DECAY_MID_ANGLE_RATIO;
+  const decayOpacity = Math.min(ULTIMATE_DECAY_MAX_OPACITY, ULTIMATE_DECAY_BASE_OPACITY + activeClamped * ULTIMATE_DECAY_OPACITY_SCALE);
 
   return (
     <div
@@ -174,7 +183,14 @@ function UltimateOrb({ value, max, ready, size = ULTIMATE_ORB_DEFAULT_SIZE, acti
       </div>
       <div className="ultimate-orb-moon-glow" style={{ opacity: glowOpacity }} />
       {active ? (
-        <div className="ultimate-orb-tide" style={{ transform: `scaleY(${Math.max(ULTIMATE_TIDE_MIN_SCALE, Math.min(1, activePercent))})` }} />
+        <div
+          className="ultimate-orb-tide"
+          style={{
+            "--ultimate-decay-angle": `${decayAngle}deg`,
+            "--ultimate-decay-mid-angle": `${decayMidAngle}deg`,
+            opacity: decayOpacity,
+          } as CSSProperties}
+        />
       ) : null}
       <div className="ultimate-orb-glass" />
     </div>

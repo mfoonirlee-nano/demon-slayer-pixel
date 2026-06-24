@@ -54,17 +54,57 @@
 }
 
 .ultimate-orb-tide {
+  --ultimate-decay-angle: 360deg;
+  --ultimate-decay-mid-angle: 223deg;
   position: absolute;
-  inset-inline: 4px;
-  bottom: 4px;
-  height: calc(100% - 8px);
-  transform-origin: bottom;
-  border-radius: 999px;
+  inset: 5px;
+  border-radius: 50%;
   background:
-    linear-gradient(180deg, rgba(173, 248, 255, 0.62), rgba(63, 190, 255, 0.48)),
-    repeating-linear-gradient(90deg, rgba(255, 255, 255, 0.18) 0 2px, transparent 2px 5px);
+    conic-gradient(
+      from -90deg,
+      rgba(194, 252, 255, 0.9) 0deg,
+      rgba(68, 204, 255, 0.7) var(--ultimate-decay-mid-angle),
+      rgba(39, 150, 255, 0.28) var(--ultimate-decay-angle),
+      transparent var(--ultimate-decay-angle) 360deg
+    );
+  -webkit-mask: radial-gradient(circle, transparent 0 46%, #000 49% 68%, transparent 72%);
+  mask: radial-gradient(circle, transparent 0 46%, #000 49% 68%, transparent 72%);
   mix-blend-mode: screen;
-  opacity: 0.78;
+  filter: drop-shadow(0 0 4px rgba(130, 232, 255, 0.65));
+}
+
+.ultimate-orb-tide::before {
+  position: absolute;
+  inset: 3px;
+  border-radius: inherit;
+  background:
+    conic-gradient(
+      from -86deg,
+      rgba(255, 255, 255, 0.4) 0deg,
+      rgba(122, 232, 255, 0.24) var(--ultimate-decay-mid-angle),
+      transparent var(--ultimate-decay-angle) 360deg
+    );
+  opacity: 0.58;
+  content: "";
+  -webkit-mask: radial-gradient(circle, transparent 0 34%, #000 39% 62%, transparent 68%);
+  mask: radial-gradient(circle, transparent 0 34%, #000 39% 62%, transparent 68%);
+}
+
+.ultimate-orb-tide::after {
+  position: absolute;
+  inset: 9px;
+  border-radius: inherit;
+  background:
+    conic-gradient(
+      from -92deg,
+      rgba(197, 253, 255, 0.22) 0deg,
+      rgba(64, 180, 255, 0.16) var(--ultimate-decay-mid-angle),
+      transparent var(--ultimate-decay-angle) 360deg
+    );
+  opacity: 0.72;
+  content: "";
+  -webkit-mask: radial-gradient(circle, #000 0 48%, transparent 58%);
+  mask: radial-gradient(circle, #000 0 48%, transparent 58%);
 }
 
 .ultimate-orb-glass {
