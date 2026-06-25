@@ -73,7 +73,7 @@
 * [x] 攻击产生的伤害效果应该在攻击发生的区域周围
 * [x] 游戏开始 UI 后续打磨
 
-## 未完成
+## 路线图与状态
 
 ### P0：发布与项目口径
 
@@ -89,64 +89,65 @@
 
 ### P1：第一个可构建里程碑 Boss 击杀推进第 2 幕
 
-* [ ] 新增统一 Boss 死亡入口 `defeatBoss()`，替换所有分散的 Boss 死亡结算分支。
+* [x] 新增统一 Boss 死亡入口 `defeatBoss()`，替换所有分散的 Boss 死亡结算分支。
   * 来源：`docs/game-design/system-status.md`、`docs/numeric-system/implementation-order.md`、`docs/game-design/content-roadmap.md`。
   * 验收：所有 Boss 死亡路径只结算一次，不重复加分、掉落、推进或重生。
-* [ ] 增加 `bossKills` 状态，以及 `getAct()`、`getThreatScalar()`、`getBossRespawnDelay()` helper。
+* [x] 增加 `bossKills` 状态，以及 `actForBossKills()`、`threatScalarForRun()`、`bossGateForAct()`、`bossPreludeWaitSeconds()` 等 helper。
   * 来源：`docs/numeric-system/implementation-order.md`。
-  * 验收：`act = bossKills + 1`，Boss 重生间隔和难度可以按击杀数派生。
-* [ ] 新增 `ACT_CONFIGS`，让平台、敌人、Boss 重生和奖励先读取当前幕配置。
+  * 验收：`act = bossKills + 1`，Boss 出场节奏和难度可以按击杀数派生。
+* [x] 新增按幕配置入口，让平台、敌人、Boss 出场和奖励先读取当前幕配置。
   * 来源：`docs/numeric-system/implementation-order.md`、`docs/game-design/content-roadmap.md`。
+  * 实现：`runProgression`、`enemyDirector`、平台 `actTuning`、奖励 `rewardValuesForAct()`。
   * 验收：击败第 1 个 Boss 后进入第 2 幕，即使不接新素材，敌人权重、平台权重或节奏也有可感知变化。
-* [ ] HUD 显示当前幕。
+* [x] HUD 显示当前幕。
   * 来源：`docs/game-design/content-roadmap.md`、`docs/game-design/ui-feedback.md`。
   * 验收：玩家能在常驻 UI 或短提示中明确看到当前处于第几幕。
-* [ ] Boss 击杀后出现清晰反馈。
+* [x] Boss 击杀后出现清晰反馈。
   * 来源：旧 `docs/TODO.md`、`docs/game-design/ui-feedback.md`、`docs/game-design/balance-acceptance.md`。
   * 验收：击杀 Boss 后有击败提示、短暂喘息、天空/血月变化或进入下一幕提示；后续再接 Boss 挑战选项。
 
 ### P2：敌人、Boss、地图与奖励基础配置化
 
-* [ ] 新增 `ENEMY_ARCHETYPES` 和 `ACT_ENEMY_POOLS`，把现有敌人从时间随机生成整理成按幕生成池。
+* [x] 新增 `ENEMY_ARCHETYPES` 和按幕 `currentPool` / profile，把现有敌人从时间随机生成整理成按幕生成池。
   * 来源：`docs/game-design/system-status.md`、`docs/game-design/content-roadmap.md`、`docs/numeric-system/implementation-order.md`。
   * 验收：第 1-4 幕敌人池逐步扩展，第 5 幕和第 6 幕+ 通过轮换进入后期敌人，而不是 12 种敌人同时常规刷怪。
-* [ ] 用 `enemySpawnBudget` 和 active cap 替代单纯敌人数量上限。
+* [x] 用 active spawn cost budget 和 active cap 替代单纯敌人数量上限。
   * 来源：`docs/numeric-system/implementation-order.md`、`docs/game-design/balance-acceptance.md`。
   * 验收：高复杂敌人不会同屏机制过载，低端设备不会因刷怪失控明显掉帧。
-* [ ] 补齐或整理未完成敌人：`burrower`、`splitter`；复核已接入的 `warden` 是否仍需按幕权重和预算微调。
+* [x] 补齐或整理未完成敌人：`burrower`、`splitter`；复核已接入的 `warden` 是否仍需按幕权重和预算微调。
   * 来源：`docs/game-design/content-roadmap.md`。
   * 验收：新敌人有正式状态机、可读前摇、active cap、碰撞盒和奖励规则；未完成前不进入实际生成池。
-* [ ] 新增 `BOSS_ARCHETYPES` 和 Boss 注册表。
+* [x] 新增 `BOSS_ARCHETYPES` 和 Boss 注册表。
   * 来源：`docs/game-design/system-status.md`、`docs/numeric-system/implementation-order.md`。
   * 验收：`spawnBoss()` 按当前幕和配置选择 Boss；当前 Boss 首轮体验不回退；未完成 Boss 不进入池。
-* [ ] 完成基础 Boss、蚀醒 Boss 与终幕 Boss 的内容骨架。
+* [x] 完成基础 Boss、蚀醒 Boss 与终幕 Boss 的内容骨架。
   * 来源：`docs/game-design/content-roadmap.md`、`docs/game-design/act-structure.md`。
   * 验收：6 个基础 Boss、6 个蚀醒形态、终幕万相血月都有注册表占位、状态说明、素材接入计划和不进入池的保护规则。
-* [ ] 平台生成接入 `act` / `threatScalar`，继续调整“逐渐变多但不重叠”。
+* [x] 平台生成接入 `act` / `threatScalar`，继续调整“逐渐变多但不重叠”。
   * 来源：旧 `docs/TODO.md`、`docs/game-design/content-roadmap.md`、`docs/game-design/balance-acceptance.md`。
   * 验收：连续 5 个片段内不出现明显不可达主路线；高压片段后有喘息片段；Boss 战期间平台压力降低。
-* [ ] 水晶和宝箱按幕调整数值、风险路线收益和刷新频率。
+* [x] 水晶和宝箱按幕调整数值、风险路线收益和刷新频率。
   * 来源：`docs/game-design/content-roadmap.md`。
   * 验收：治疗、攻击、宝箱不会让早期强度失控，也不会让 Boss 装备价值被稀释。
 
 ### P3：局内成长、装备、技能与大招
 
-* [ ] 实现 XP、角色等级和升级三选一。
+* [x] 实现 XP、角色等级和升级三选一。
   * 来源：旧 `docs/TODO.md`、`docs/game-design/system-status.md`、`docs/numeric-system/implementation-order.md`、`docs/game-design/ui-feedback.md`。
   * 验收：首次升级在目标时间窗内出现；升级 overlay 暂停战斗；支持鼠标、触屏和 `1/2/3` 选择。
-* [ ] 实现 Boss 装备三选一和三槽位装备系统。
+* [x] 实现 Boss 装备三选一和三槽位装备系统。
   * 来源：旧 `docs/TODO.md`、`docs/game-design/system-status.md`、`docs/numeric-system/implementation-order.md`。
   * 验收：Boss 击杀后出现装备选择，替换同槽装备时生命、攻击和派生属性边界正确夹取，重开后清空局内成长。
-* [ ] 确保升级三选一和装备三选一不会同时覆盖。
+* [x] 确保升级三选一和装备三选一不会同时覆盖。
   * 来源：`docs/game-design/ui-feedback.md`、`docs/game-design/balance-acceptance.md`。
   * 验收：同一时间只允许一个选择 overlay，另一个进入队列；Death 优先级最高。
-* [ ] 将当前 `SKILLS` 和技能特效配置逐步整理到 `SKILL_DEFS`。
+* [x] 将当前 `SKILLS` 和技能特效配置整理到 `PLAYER_SKILL_CATALOG`、`CORE_PLAYER_SKILL_GROWTH`、`GENERIC_PLAYER_SKILL_TUNING`。
   * 来源：`docs/game-design/content-roadmap.md`、`docs/numeric-system/implementation-order.md`。
   * 验收：当前三招默认 Lv1，可通过局内奖励提升到 Lv3；未解锁技能不出现在 HUD 或升级候选里。
-* [ ] 修复 `line_projectile`、`close_arc` 在游戏里的帧数 / 播放节奏问题。
+* [x] 修复 `line_projectile`、`close_arc` 在游戏里的帧数 / 播放节奏问题。
   * 来源：旧 `docs/TODO.md`。
   * 验收：技能释放、命中、消散和图集帧切片一致，不出现错帧、跳帧或持续时间与伤害窗口不一致。
-* [ ] 把大招从瞬时范围爆发改为有限持续时间强化状态，并接入 `ultimateLevel`。
+* [x] 把大招从瞬时范围爆发改为有限持续时间强化状态，并接入 `ultimateLevel`。
   * 来源：旧 `docs/TODO.md`、`docs/game-design/content-roadmap.md`、`docs/game-design/balance-acceptance.md`。
   * 验收：大招持续时间、移动、跳跃、攻速、伤害和残影潮刃读取等级；大招期间不是长期无敌，不遮挡 Boss 前摇。
 
@@ -158,6 +159,8 @@
 * [ ] 补 Boss intro 和 Act prompt。
   * 来源：`docs/game-design/ui-feedback.md`。
   * 验收：Boss 出场前后有名称、短暂停拍和音效 sting；Boss 击杀后短暂显示“第 N 幕”和核心压力变化。
+  * [x] Act prompt 已接入，Boss 击杀后短暂显示“第 N 幕”和压力变化。
+  * [ ] Boss intro 尚未接入。
 * [ ] 死亡结算增加主要死亡原因和一条复盘提示。
   * 来源：`docs/game-design/system-status.md`、`docs/game-design/ui-feedback.md`、`docs/game-design/balance-acceptance.md`。
   * 验收：死亡界面不只显示生存时间，玩家能知道主要失败原因。
@@ -191,7 +194,7 @@
 * [ ] 完成 13 幕主线：1-6 基础 Boss、7-12 蚀醒形态、13 终幕万相血月。
   * 来源：`docs/game-design/system-status.md`、`docs/game-design/content-roadmap.md`、`docs/game-design/balance-acceptance.md`。
   * 验收：每幕新机制可识别，一次完整 1→13 清版目标时长约 18-22 分钟。
-* [ ] 完成通关胜利结算。
+* [x] 完成通关胜利结算。
   * 来源：`docs/game-design/system-status.md`、`docs/game-design/balance-acceptance.md`。
   * 验收：击败终幕 Boss 后进入胜利结算，不继续普通 Boss 轮换。
 * [ ] 设计并实现通关后血月试炼进阶难度。
