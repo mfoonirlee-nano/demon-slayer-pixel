@@ -1,6 +1,7 @@
 .ultimate-orb {
   position: relative;
-  overflow: hidden;
+  isolation: isolate;
+  overflow: visible;
   border: 2px solid #12324d;
   border-radius: 50%;
   background:
@@ -22,8 +23,10 @@
 
 .ultimate-orb-sprite-stage {
   position: absolute;
+  z-index: 1;
   inset: 0;
   overflow: hidden;
+  border-radius: 50%;
   filter: drop-shadow(0 0 5px rgba(82, 211, 255, 0.78));
 }
 
@@ -47,68 +50,53 @@
 
 .ultimate-orb-moon-glow {
   position: absolute;
+  z-index: 2;
   inset: 12%;
   border-radius: 50%;
   background: radial-gradient(circle at 50% 70%, rgba(168, 248, 255, 0.38) 0%, rgba(56, 190, 255, 0.16) 46%, transparent 76%);
   animation: ultimate-moon-glow-pulse 680ms ease-in-out infinite alternate;
 }
 
-.ultimate-orb-tide {
+.ultimate-orb-countdown {
   --ultimate-decay-angle: 360deg;
-  --ultimate-decay-mid-angle: 223deg;
   position: absolute;
-  inset: 5px;
+  z-index: 0;
+  inset: -5px;
   border-radius: 50%;
+  pointer-events: none;
+  filter:
+    drop-shadow(0 0 2px rgba(124, 231, 255, 0.7))
+    drop-shadow(0 0 4px rgba(36, 154, 255, 0.34));
+}
+
+.ultimate-orb-countdown::before,
+.ultimate-orb-countdown::after {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  content: "";
+  -webkit-mask: radial-gradient(circle, transparent 0 63%, #000 65% 69%, transparent 71%);
+  mask: radial-gradient(circle, transparent 0 63%, #000 65% 69%, transparent 71%);
+}
+
+.ultimate-orb-countdown::before {
+  background: rgba(34, 110, 146, 0.36);
+}
+
+.ultimate-orb-countdown::after {
   background:
     conic-gradient(
       from -90deg,
-      rgba(194, 252, 255, 0.9) 0deg,
-      rgba(68, 204, 255, 0.7) var(--ultimate-decay-mid-angle),
-      rgba(39, 150, 255, 0.28) var(--ultimate-decay-angle),
+      rgba(238, 255, 255, 0.98) 0deg,
+      rgba(42, 167, 255, 0.78) var(--ultimate-decay-angle),
       transparent var(--ultimate-decay-angle) 360deg
     );
-  -webkit-mask: radial-gradient(circle, transparent 0 46%, #000 49% 68%, transparent 72%);
-  mask: radial-gradient(circle, transparent 0 46%, #000 49% 68%, transparent 72%);
   mix-blend-mode: screen;
-  filter: drop-shadow(0 0 4px rgba(130, 232, 255, 0.65));
-}
-
-.ultimate-orb-tide::before {
-  position: absolute;
-  inset: 3px;
-  border-radius: inherit;
-  background:
-    conic-gradient(
-      from -86deg,
-      rgba(255, 255, 255, 0.4) 0deg,
-      rgba(122, 232, 255, 0.24) var(--ultimate-decay-mid-angle),
-      transparent var(--ultimate-decay-angle) 360deg
-    );
-  opacity: 0.58;
-  content: "";
-  -webkit-mask: radial-gradient(circle, transparent 0 34%, #000 39% 62%, transparent 68%);
-  mask: radial-gradient(circle, transparent 0 34%, #000 39% 62%, transparent 68%);
-}
-
-.ultimate-orb-tide::after {
-  position: absolute;
-  inset: 9px;
-  border-radius: inherit;
-  background:
-    conic-gradient(
-      from -92deg,
-      rgba(197, 253, 255, 0.22) 0deg,
-      rgba(64, 180, 255, 0.16) var(--ultimate-decay-mid-angle),
-      transparent var(--ultimate-decay-angle) 360deg
-    );
-  opacity: 0.72;
-  content: "";
-  -webkit-mask: radial-gradient(circle, #000 0 48%, transparent 58%);
-  mask: radial-gradient(circle, #000 0 48%, transparent 58%);
 }
 
 .ultimate-orb-glass {
   position: absolute;
+  z-index: 3;
   inset: 3px;
   border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: 50%;

@@ -25,10 +25,6 @@ const ULTIMATE_CHARGE_FRAME_COUNT = 8;
 const ULTIMATE_PERCENT_SCALE = 100;
 const ULTIMATE_DECAY_FULL_ANGLE = 360;
 const ULTIMATE_DECAY_MIN_ANGLE = 8;
-const ULTIMATE_DECAY_MID_ANGLE_RATIO = 0.62;
-const ULTIMATE_DECAY_MAX_OPACITY = 0.86;
-const ULTIMATE_DECAY_BASE_OPACITY = 0.28;
-const ULTIMATE_DECAY_OPACITY_SCALE = 0.58;
 const HUD_HP_METER_FRAME: HudMeterFrame = {
   left: "hudHpBarLeft",
   mid: "hudHpBarMid",
@@ -153,8 +149,6 @@ function UltimateOrb({ value, max, ready, size = ULTIMATE_ORB_DEFAULT_SIZE, acti
   const chargeFrame = Math.min(ULTIMATE_CHARGE_LAST_FRAME, Math.floor(percent * ULTIMATE_CHARGE_FRAME_COUNT));
   const chargeFramePosition = chargeFrame / ULTIMATE_CHARGE_LAST_FRAME * ULTIMATE_PERCENT_SCALE;
   const decayAngle = Math.max(ULTIMATE_DECAY_MIN_ANGLE, activeClamped * ULTIMATE_DECAY_FULL_ANGLE);
-  const decayMidAngle = decayAngle * ULTIMATE_DECAY_MID_ANGLE_RATIO;
-  const decayOpacity = Math.min(ULTIMATE_DECAY_MAX_OPACITY, ULTIMATE_DECAY_BASE_OPACITY + activeClamped * ULTIMATE_DECAY_OPACITY_SCALE);
 
   return (
     <div
@@ -173,6 +167,14 @@ function UltimateOrb({ value, max, ready, size = ULTIMATE_ORB_DEFAULT_SIZE, acti
             : "inset 0 0 8px rgba(0,0,0,0.9)",
       }}
     >
+      {active ? (
+        <div
+          className="ultimate-orb-countdown"
+          style={{
+            "--ultimate-decay-angle": `${decayAngle}deg`,
+          } as CSSProperties}
+        />
+      ) : null}
       <div
         className="ultimate-orb-sprite-stage"
       >
@@ -182,16 +184,6 @@ function UltimateOrb({ value, max, ready, size = ULTIMATE_ORB_DEFAULT_SIZE, acti
         />
       </div>
       <div className="ultimate-orb-moon-glow" style={{ opacity: glowOpacity }} />
-      {active ? (
-        <div
-          className="ultimate-orb-tide"
-          style={{
-            "--ultimate-decay-angle": `${decayAngle}deg`,
-            "--ultimate-decay-mid-angle": `${decayMidAngle}deg`,
-            opacity: decayOpacity,
-          } as CSSProperties}
-        />
-      ) : null}
       <div className="ultimate-orb-glass" />
     </div>
   );
@@ -212,7 +204,7 @@ export function GameHud() {
   const ultimateActivePercent = player.ultimateTimer > 0
     ? player.ultimateTimer / Math.max(1, player.ultimateDuration)
     : player.ultimateCastTimer > 0
-      ? player.ultimateCastTimer / Math.max(1, player.ultimateCastDuration)
+      ? 1
       : 0;
 
   const ghostHp = useGhostValue(player.hp);
