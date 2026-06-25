@@ -45,6 +45,11 @@ const HUD_SKILL_METER_FRAME: HudMeterFrame = {
   fillInsetLeft: 15,
   fillInsetRight: 7,
 };
+const ACT_BAND_LABELS = {
+  intro: "血月眷属",
+  awakened: "蚀醒",
+  final: "终幕",
+} as const;
 
 function useGhostValue(value: number) {
   const [ghost, setGhost] = useState(value);
@@ -201,6 +206,9 @@ export function GameHud() {
   const bossHp = boss?.hp ?? 0;
   const bossHpMax = boss?.hpMax ?? 1;
   const xpPercent = clampMeterPercent(player.runXp, player.xpToNext);
+  const actPromptPercent = snapshot.actPrompt
+    ? clampMeterPercent(snapshot.actPrompt.timer, snapshot.actPrompt.duration)
+    : 0;
   const ultimateActivePercent = player.ultimateTimer > 0
     ? player.ultimateTimer / Math.max(1, player.ultimateDuration)
     : player.ultimateCastTimer > 0
@@ -327,6 +335,21 @@ export function GameHud() {
           >
             {boss.phaseTitle}
           </span>
+        </div>
+      ) : null}
+
+      <div className="hud-act-badge pointer-events-none absolute right-2 top-2 z-10 text-right">
+        <span className="hud-act-badge-main">第 {snapshot.act} 幕</span>
+        <span className="hud-act-badge-sub">{ACT_BAND_LABELS[snapshot.actBand]}</span>
+      </div>
+
+      {snapshot.actPrompt ? (
+        <div className="hud-act-prompt pointer-events-none absolute left-1/2 z-20 -translate-x-1/2 text-center">
+          <div className="hud-act-prompt-title">{snapshot.actPrompt.title}</div>
+          <div className="hud-act-prompt-subtitle">{snapshot.actPrompt.subtitle}</div>
+          <div className="hud-act-prompt-meter">
+            <div className="hud-act-prompt-meter-fill" style={{ width: `${actPromptPercent}%` }} />
+          </div>
         </div>
       ) : null}
 

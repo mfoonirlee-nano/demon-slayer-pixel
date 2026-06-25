@@ -1,7 +1,9 @@
 import { describe, expect, it, vi } from "vitest";
-import { createInitialState, resetState, state } from "./state";
+import { createInitialState, getStateSnapshot, resetState, state } from "./state";
 
 const DIRTY_VALUE = "dirty";
+const ACT_FIVE_BOSS_KILLS = 4;
+const ACT_FIVE = 5;
 
 function snapshotResettableState() {
   const { spritesReady: _spritesReady, ...resettableState } = state;
@@ -35,5 +37,17 @@ describe("resetState", () => {
     randomSpy.mockRestore();
     expect(snapshotResettableState()).toEqual(expectedState);
     expect(state.spritesReady).toBe(true);
+  });
+
+  it("derives act fields in the snapshot from boss kills", () => {
+    resetState();
+    state.bossKills = ACT_FIVE_BOSS_KILLS;
+
+    const snapshot = getStateSnapshot();
+
+    expect(snapshot.act).toBe(ACT_FIVE);
+    expect(snapshot.actBand).toBe("intro");
+    expect(snapshot.bossKills).toBe(ACT_FIVE_BOSS_KILLS);
+    expect(snapshot.threatScalar).toBeGreaterThan(1);
   });
 });

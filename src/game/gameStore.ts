@@ -9,6 +9,8 @@ import {
 } from "../systems/progression";
 import type { SkillId } from "../types/assets";
 import type {
+  ActBand,
+  ActPromptState,
   EquipmentItemState,
   EquipmentSlot,
   SkillLevel,
@@ -63,6 +65,11 @@ export type ActiveOverlay = "none" | "pause" | "upgrade" | "bossEquipment" | "de
 
 export type GameSnapshot = {
   elapsed: number;
+  act: number;
+  actBand: ActBand;
+  bossKills: number;
+  threatScalar: number;
+  actPrompt: ActPromptState | null;
   gameOver: boolean;
   runCleared: boolean;
   paused: boolean;
@@ -79,6 +86,11 @@ export type GameSnapshot = {
 
 const initialSnapshot: GameSnapshot = {
   elapsed: 0,
+  act: 1,
+  actBand: "intro",
+  bossKills: 0,
+  threatScalar: 1,
+  actPrompt: null,
   gameOver: false,
   runCleared: false,
   paused: false,

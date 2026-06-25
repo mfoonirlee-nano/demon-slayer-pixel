@@ -3,6 +3,10 @@ import { PLAYER_COMBAT } from "../../constants";
 import { recordBossCoverKill } from "../../game/coverProgress";
 import { state } from "../../game/state";
 import {
+  actForBossKills,
+  createActPrompt,
+} from "../../systems/runProgression";
+import {
   createBossEquipmentChoices,
   grantSkillEnergy,
   grantUltimateEnergy,
@@ -41,6 +45,7 @@ export function defeatBoss() {
   }
   playSfx("bossKill");
   state.bossKills += 1;
+  state.actPrompt = clearsRun ? null : createActPrompt(actForBossKills(state.bossKills));
   state.boss = null;
   clearBossSummons();
   advanceEnemyDirectorToAct(state.enemyDirector, state.bossKills, state.elapsed);

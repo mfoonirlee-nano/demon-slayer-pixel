@@ -6,6 +6,11 @@ import type { GameState, PlayerState } from "../types/game-state";
 import { equipmentItem } from "../systems/equipment";
 import { createEnemyDirectorState } from "../systems/enemyDirector";
 import {
+  actBandForAct,
+  actForBossKills,
+  threatScalarForRun,
+} from "../systems/runProgression";
+import {
   INITIAL_EQUIPPED_SKILL_IDS,
   INITIAL_SKILL_LEVELS,
   maxSkillChargesForEnergy,
@@ -86,6 +91,7 @@ export function createInitialState(): GameState {
     elapsed: 0,
     last: 0,
     bossKills: 0,
+    actPrompt: null,
     enemyDirector: createEnemyDirectorState(),
     pendingUpgradeChoices: [],
     pendingEquipmentChoices: [],
@@ -177,6 +183,7 @@ export function resetState() {
   resetCollection(state.bindingZones, next.bindingZones);
   state.elapsed = next.elapsed;
   state.bossKills = next.bossKills;
+  state.actPrompt = next.actPrompt;
   state.enemyDirector = next.enemyDirector;
   resetCollection(state.pendingUpgradeChoices, next.pendingUpgradeChoices);
   resetCollection(state.pendingEquipmentChoices, next.pendingEquipmentChoices);
@@ -194,6 +201,7 @@ export function resetState() {
 export function getStateSnapshot(manualPaused = false, paused = manualPaused): GameSnapshot {
   const bossArchetype = state.boss ? bossArchetypeForId(state.boss.id) : null;
   const ultimateConfig = moonTideUltimateConfig(state.player.ultimateLevel);
+  const act = actForBossKills(state.bossKills);
   const activeOverlay = state.gameOver
     ? state.runCleared ? "victory" : "death"
     : state.pendingEquipmentChoices.length > 0
@@ -205,6 +213,11 @@ export function getStateSnapshot(manualPaused = false, paused = manualPaused): G
           : "none";
   return {
     elapsed: state.elapsed,
+    act,
+    actBand: actBandForAct(act),
+    bossKills: state.bossKills,
+    threatScalar: threatScalarForRun(state.bossKills, state.elapsed),
+    actPrompt: state.actPrompt ? { ...state.actPrompt } : null,
     gameOver: state.gameOver,
     runCleared: state.runCleared,
     paused,
