@@ -2,13 +2,13 @@ import { describe, expect, it } from "vitest";
 import { getRewardOverlayLayout } from "./rewardOverlayLayout";
 
 const CHOICE_COUNT = 3;
-const BOSS_SOURCE_CARD_HEIGHT = 398;
+const BOSS_SOURCE_CARD_HEIGHT = 389;
 const BOSS_MIN_TEXT_INSET_X = 18;
 const BOSS_MIN_TEXT_TOP = 56;
 const BOSS_MIN_TEXT_BOTTOM = 48;
 const CARD_BODY_QUARTER_DIVISOR = 4;
-const UPGRADE_ICON_SLOT_SOURCE_CENTER_Y = 50;
-const UPGRADE_ICON_CENTER_TOLERANCE = 1;
+const CARD_ICON_SLOT_SOURCE_CENTER_Y = 50;
+const CARD_ICON_CENTER_TOLERANCE = 1;
 const UPGRADE_MAX_TITLE_TOP = 30;
 const UPGRADE_MIN_CARD_ROW_TOP = 48;
 const UPGRADE_MIN_TEXT_INSET_X = 23;
@@ -35,6 +35,16 @@ describe("reward overlay layout", () => {
     expect(layout.cardContent.top + layout.cardContent.bottom).toBeLessThan(layout.cardBoxH);
   });
 
+  it("aligns the boss equipment card icon frame to the upgrade reward rhythm", () => {
+    const layout = getRewardOverlayLayout("bossEquipment", CHOICE_COUNT);
+
+    expect(layout.cardIcon).not.toBeNull();
+    expect(layout.cardIcon!.top + layout.cardIcon!.size / 2).toBeCloseTo(
+      CARD_ICON_SLOT_SOURCE_CENTER_Y * layout.cardScale,
+      CARD_ICON_CENTER_TOLERANCE,
+    );
+  });
+
   it("keeps upgrade cards inside the framed panel area", () => {
     const layout = getRewardOverlayLayout("upgrade", CHOICE_COUNT);
 
@@ -52,8 +62,8 @@ describe("reward overlay layout", () => {
 
     expect(layout.cardIcon).not.toBeNull();
     expect(layout.cardIcon!.top + layout.cardIcon!.size / 2).toBeCloseTo(
-      UPGRADE_ICON_SLOT_SOURCE_CENTER_Y * layout.cardScale,
-      UPGRADE_ICON_CENTER_TOLERANCE,
+      CARD_ICON_SLOT_SOURCE_CENTER_Y * layout.cardScale,
+      CARD_ICON_CENTER_TOLERANCE,
     );
   });
 

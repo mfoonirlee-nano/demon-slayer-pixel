@@ -46,16 +46,21 @@ const REWARD_LAYOUTS: Record<RewardOverlayKind, RewardLayoutConfig> = {
   bossEquipment: {
     activeCardSprite: "bossChoiceCardActive",
     cardContentSource: {
-      bottom: 76,
-      insetX: 30,
-      top: 92,
+      bottom: 84,
+      insetX: 28,
+      top: 104,
     },
-    cardRowTop: 124,
+    cardIconSource: {
+      iconSize: 44,
+      size: 56,
+      top: 22,
+    },
+    cardRowTop: 52,
     cardSprite: "bossChoiceCard",
-    columnGap: 12,
+    columnGap: 10,
     panelBottomPadding: 44,
     panelSprite: "bossRewardPanel",
-    titleTop: 78,
+    titleTop: 28,
   },
 };
 

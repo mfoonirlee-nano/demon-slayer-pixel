@@ -38,9 +38,9 @@ export const UI_SPRITES = {
   upgradeChoiceCard: { src: "assets/sprites/ui/system/rewards/upgrade-choice-card.png", w: 196, h: 389 },
   upgradeChoiceCardActive: { src: "assets/sprites/ui/system/rewards/upgrade-choice-card-active.png", w: 198, h: 389 },
 
-  bossRewardPanel: { src: "assets/sprites/ui/system/rewards/boss-reward-panel.png", w: 744, h: 423 },
-  bossChoiceCard: { src: "assets/sprites/ui/system/rewards/boss-choice-card.png", w: 213, h: 398 },
-  bossChoiceCardActive: { src: "assets/sprites/ui/system/rewards/boss-choice-card-active.png", w: 217, h: 398 },
+  bossRewardPanel: { src: "assets/sprites/ui/system/rewards/boss-reward-panel.png", w: 704, h: 415 },
+  bossChoiceCard: { src: "assets/sprites/ui/system/rewards/boss-choice-card.png", w: 196, h: 389 },
+  bossChoiceCardActive: { src: "assets/sprites/ui/system/rewards/boss-choice-card-active.png", w: 198, h: 389 },
 } as const;
 
 export type UiSpriteId = keyof typeof UI_SPRITES;

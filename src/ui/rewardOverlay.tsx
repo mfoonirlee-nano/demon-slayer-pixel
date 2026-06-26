@@ -1,13 +1,23 @@
 import { useEffect, useState } from "react";
 import { chooseBossEquipment, chooseUpgradeReward } from "../game/runtime";
 import type { GameSnapshot } from "../game/gameStore";
+import { EQUIPMENT_FAMILY_LABELS } from "../systems/equipment";
 import { playerSkillColor, playerSkillIconSrc } from "../systems/skillCatalog";
-import type { EquipmentItemState, UpgradeChoiceState, UpgradeChoiceType } from "../types/game-state";
-import { EQUIPMENT_SLOT_LABELS } from "./uiDisplay";
+import type { EquipmentItemState, EquipmentTier, UpgradeChoiceState, UpgradeChoiceType } from "../types/game-state";
+import { EQUIPMENT_SLOT_LABELS, equipmentIconSrc, equipmentSlotBadgeSrc } from "./uiDisplay";
 import { getRewardOverlayLayout } from "./rewardOverlayLayout";
 import { UiSprite } from "./uiSprite";
 
 const ULTIMATE_SKILL_ICON_SRC = "assets/sprites/skills/ultimate_skill/icon.png";
+
+const EQUIPMENT_TIER_LABELS: Record<EquipmentTier, string> = {
+  awakened: "蚀醒",
+  common: "普通",
+  fine: "精良",
+};
+
+const BOSS_ICON_BADGE_MIN_SIZE = 12;
+const BOSS_ICON_BADGE_SIZE_RATIO = 0.34;
 
 const UPGRADE_CHOICE_STYLE: Record<UpgradeChoiceType, {
   accent: string;
@@ -58,9 +68,6 @@ export function RewardOverlay({ snapshot }: { snapshot: GameSnapshot }) {
   const selectedChoiceIndex = choiceCount > 0 ? Math.min(selectedIndex, choiceCount - 1) : 0;
   const layout = getRewardOverlayLayout(isBossReward ? "bossEquipment" : "upgrade", choices.length);
   const title = isBossReward ? "夜潮遗物" : "选择需要的强化";
-  const subtitle = isBossReward
-    ? "选择一件装备"
-    : null;
 
   useEffect(() => {
     setSelectedIndex(0);
@@ -122,7 +129,6 @@ export function RewardOverlay({ snapshot }: { snapshot: GameSnapshot }) {
 
         <div className="absolute inset-x-0 text-center" style={{ top: layout.titleTop }}>
           <div className={`text-[14px] font-bold leading-none ${isBossReward ? "text-[#ffd46e]" : "text-[#26d5ff]"}`}>{title}</div>
-          {subtitle ? <div className="mt-2 text-[9px] leading-none text-[#c8efff]">{subtitle}</div> : null}
         </div>
 
         <div
@@ -145,6 +151,12 @@ export function RewardOverlay({ snapshot }: { snapshot: GameSnapshot }) {
             const selected = index === selectedChoiceIndex;
             const choiceCardSprite = selected ? layout.activeCardSprite : layout.cardSprite;
             const choiceCardSize = selected ? layout.activeCardDisplaySize : layout.cardDisplaySize;
+            const bossAccent = selected ? "#ff6f61" : "#d94a45";
+            const bossGlow = selected ? "rgba(255, 82, 72, 0.24)" : "rgba(255, 82, 72, 0.14)";
+            const bossIconBadgeSize = layout.cardIcon
+              ? Math.max(BOSS_ICON_BADGE_MIN_SIZE, Math.round(layout.cardIcon.size * BOSS_ICON_BADGE_SIZE_RATIO))
+              : 0;
+            const equippedItem = item ? snapshot.equipment.equipped[item.slot] : null;
             return (
               <button
                 key={choice.id}
@@ -161,7 +173,38 @@ export function RewardOverlay({ snapshot }: { snapshot: GameSnapshot }) {
                   height={choiceCardSize.h}
                   className="relative mx-auto"
                 >
-                  {upgrade && upgradeStyle && layout.cardIcon ? (
+                  {item && layout.cardIcon ? (
+                    <div
+                      className="absolute left-1/2 z-10 flex -translate-x-1/2 items-center justify-center overflow-hidden rounded-full border bg-[rgba(3,10,22,0.86)]"
+                      style={{
+                        borderColor: bossAccent,
+                        boxShadow: `0 0 14px ${bossGlow}, inset 0 0 12px rgba(255,255,255,0.1)`,
+                        height: layout.cardIcon.size,
+                        top: layout.cardIcon.top,
+                        width: layout.cardIcon.size,
+                      }}
+                    >
+                      <img
+                        src={equipmentIconSrc(item.id)}
+                        alt=""
+                        draggable={false}
+                        className="object-contain [image-rendering:pixelated]"
+                        style={{ height: layout.cardIcon.iconSize, width: layout.cardIcon.iconSize }}
+                      />
+                      <img
+                        src={equipmentSlotBadgeSrc(item.slot)}
+                        alt=""
+                        draggable={false}
+                        className="absolute [image-rendering:pixelated]"
+                        style={{
+                          height: bossIconBadgeSize,
+                          right: 0,
+                          top: 0,
+                          width: bossIconBadgeSize,
+                        }}
+                      />
+                    </div>
+                  ) : upgrade && upgradeStyle && layout.cardIcon ? (
                     <div
                       className="absolute left-1/2 z-10 flex -translate-x-1/2 items-center justify-center overflow-hidden rounded-full border bg-[rgba(3,10,22,0.84)]"
                       style={{
@@ -191,11 +234,25 @@ export function RewardOverlay({ snapshot }: { snapshot: GameSnapshot }) {
                       bottom: layout.cardContent.bottom,
                     }}
                   >
-                    {isBossReward ? (
+                    {isBossReward && item ? (
                       <>
-                        <div className="text-[7px] leading-[1.35] text-[#ffd46e]">[{index + 1}] {item?.uiTags.join(" · ")}</div>
-                        <div className="mt-2 min-h-[40px] text-[10px] font-bold leading-[1.35] text-[#f7f3e9]">{choice.name}</div>
-                        <div className="mt-1 text-[8px] leading-[1.65] text-[#c8efff]">{item?.summary}</div>
+                        <div className="flex justify-center">
+                          <span
+                            className="rounded-sm border px-1.5 py-[3px] text-[7px] leading-none"
+                            style={{
+                              backgroundColor: bossGlow,
+                              borderColor: bossAccent,
+                              color: "#ffb09a",
+                            }}
+                          >
+                            {EQUIPMENT_SLOT_LABELS[item.slot]} · {EQUIPMENT_TIER_LABELS[item.tier]}
+                          </span>
+                        </div>
+                        <div className="mt-2 min-h-[31px] text-center text-[10px] font-bold leading-[1.25] text-[#fff8e6]">{choice.name}</div>
+                        <div className="mt-1 truncate text-center text-[8px] font-bold leading-none text-[#ffd46e]">
+                          {EQUIPMENT_FAMILY_LABELS[item.family]} · {item.uiTags[item.uiTags.length - 1]}
+                        </div>
+                        <div className="mt-2 line-clamp-3 text-center text-[8px] leading-[1.45] text-[#c8efff]">{item.summary}</div>
                       </>
                     ) : upgrade && upgradeStyle ? (
                       <>
@@ -219,8 +276,8 @@ export function RewardOverlay({ snapshot }: { snapshot: GameSnapshot }) {
                       </>
                     ) : null}
                     {isBossReward && item ? (
-                      <div className="mt-auto pt-2 text-[7px] leading-[1.45] text-[#ffd9a0]">
-                        当前{EQUIPMENT_SLOT_LABELS[item.slot]}：{snapshot.equipment.equipped[item.slot]?.name ?? "无"}
+                      <div className="mt-auto pt-2 text-center text-[7px] leading-[1.35] text-[#ffd9a0]">
+                        当前{EQUIPMENT_SLOT_LABELS[item.slot]}：{equippedItem?.name ?? "无"}
                       </div>
                     ) : null}
                   </div>
