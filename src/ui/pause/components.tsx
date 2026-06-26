@@ -2,6 +2,7 @@ import { type UiSpriteId } from "../../constants";
 import { UiSprite } from "../uiSprite";
 import {
   AUDIO_PERCENT_SCALE,
+  PAUSE_DETAIL_PANEL_H,
   PAUSE_ICON_OFFSET_Y,
   PAUSE_SLIDER_THUMB_H,
   PAUSE_SLIDER_THUMB_TOP,
@@ -108,10 +109,10 @@ export function PauseSquareIcon({
 
 export function PauseDetailPanel({ detail }: { detail: PauseDetailCopy }) {
   return (
-    <div className="pause-detail-panel">
+    <div className="pause-detail-panel" style={{ height: PAUSE_DETAIL_PANEL_H, minHeight: PAUSE_DETAIL_PANEL_H }}>
       <div className="truncate text-[7px] leading-none text-[#7fc8e0]">{detail.kicker}</div>
       <div className="mt-1 truncate text-[9px] font-bold leading-none text-[#ffd46e]">{detail.title}</div>
-      <div className="mt-1 line-clamp-3 text-[7px] leading-[1.45] text-[#c8efff]">{detail.body}</div>
+      <div className="mt-1 line-clamp-2 text-[7px] leading-[1.45] text-[#c8efff]">{detail.body}</div>
     </div>
   );
 }

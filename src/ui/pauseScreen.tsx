@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useLayoutEffect, useRef, useState } from "react";
 import { getAudioVolumeSettings, setAudioVolumeSettings, type AudioVolumeSettings } from "../game/audio";
 import { equipEquipment, equipSkillSlot } from "../game/runtime";
 import type { GameSnapshot } from "../game/gameStore";
@@ -17,7 +17,9 @@ import {
   ALL_EQUIPMENT_ITEMS,
   EQUIPMENT_SLOTS,
   PAUSE_CHOICE_FRAME_SIZE,
+  PAUSE_CHOICE_GRID_COLUMNS,
   PAUSE_CHOICE_GRID_GAP,
+  PAUSE_CHOICE_GRID_COLUMN_W,
   PAUSE_CHOICE_ICON_SIZE,
   PAUSE_CHOICE_BADGE_SIZE,
   PAUSE_CHOICES_COLUMN_W,
@@ -39,8 +41,10 @@ import {
   PAUSE_SETTINGS_INSET_X,
   PAUSE_SKILLS,
   PAUSE_TAB_CONTENT_CLASS,
+  PAUSE_TAB_BODY_GAP,
   PAUSE_TAB_GAP,
   PAUSE_TAB_H,
+  PAUSE_TAB_INSET_X,
   PAUSE_TAB_W,
   PAUSE_TABS,
 } from "./pause/constants";
@@ -48,8 +52,29 @@ import { AudioVolumeControl, PauseDetailPanel, PauseSquareIcon, StatRow } from "
 import { equipmentDetailCopy, skillDetailCopy } from "./pause/detailCopy";
 import type { EquipmentDetailTarget, PauseTab, SkillDetailTarget } from "./pause/types";
 
+function usePausePanelScale() {
+  const scaleFrameRef = useRef<HTMLDivElement>(null);
+  const [panelScale, setPanelScale] = useState(1);
+
+  useLayoutEffect(() => {
+    const updateScale = () => {
+      const frame = scaleFrameRef.current;
+      if (!frame) return;
+
+      setPanelScale(Math.min(1, frame.clientWidth / PAUSE_PANEL_W, frame.clientHeight / PAUSE_PANEL_H));
+    };
+
+    updateScale();
+    window.addEventListener("resize", updateScale);
+    return () => window.removeEventListener("resize", updateScale);
+  }, []);
+
+  return { panelScale, scaleFrameRef };
+}
+
 export function PauseScreen({ snapshot }: { snapshot: GameSnapshot }) {
   const { player, equipment } = snapshot;
+  const { panelScale, scaleFrameRef } = usePausePanelScale();
   const initialSkillSlot = Math.max(0, Math.min(player.equippedSkillIds.length - 1, player.skillIndex));
   const [activeTab, setActiveTab] = useState<PauseTab>("info");
   const [selectedSkillSlot, setSelectedSkillSlot] = useState(initialSkillSlot);
@@ -79,27 +104,34 @@ export function PauseScreen({ snapshot }: { snapshot: GameSnapshot }) {
 
   return (
     <div className="absolute inset-0 z-30 flex items-center justify-center bg-[rgba(5,10,22,0.72)] px-3 py-4">
-      <UiSprite
-        id="pausePanelCompact"
-        width={PAUSE_PANEL_W}
-        height={PAUSE_PANEL_H}
-        className="relative"
-        style={{
-          width: `min(${PAUSE_PANEL_W}px, calc(100vw - 24px))`,
-          height: "auto",
-          aspectRatio: `${PAUSE_PANEL_W} / ${PAUSE_PANEL_H}`,
-          backgroundSize: "100% 100%",
-        }}
-      >
+      <div ref={scaleFrameRef} className="flex h-full w-full items-center justify-center">
         <div
-          className="absolute flex min-h-0 flex-col text-left text-white"
+          className="relative shrink-0"
           style={{
-            left: PAUSE_PANEL_INSET_X,
-            right: PAUSE_PANEL_INSET_X,
-            top: PAUSE_PANEL_CONTENT_TOP,
-            bottom: PAUSE_PANEL_CONTENT_BOTTOM,
+            width: PAUSE_PANEL_W * panelScale,
+            height: PAUSE_PANEL_H * panelScale,
           }}
         >
+          <UiSprite
+            id="pausePanel"
+            width={PAUSE_PANEL_W}
+            height={PAUSE_PANEL_H}
+            className="absolute left-0 top-0"
+            style={{
+              transform: `scale(${panelScale})`,
+              transformOrigin: "top left",
+              backgroundSize: "100% 100%",
+            }}
+          >
+            <div
+              className="absolute flex min-h-0 flex-col text-left text-white"
+              style={{
+                left: PAUSE_TAB_INSET_X,
+                right: PAUSE_TAB_INSET_X,
+                top: PAUSE_PANEL_CONTENT_TOP,
+                bottom: PAUSE_PANEL_CONTENT_BOTTOM,
+              }}
+            >
           <div
             className="grid shrink-0 justify-center overflow-hidden"
             style={{
@@ -130,7 +162,10 @@ export function PauseScreen({ snapshot }: { snapshot: GameSnapshot }) {
             ))}
           </div>
 
-          <div className="mt-2 min-h-0 flex-1 overflow-hidden">
+              <div
+                className="min-h-0 flex-1 overflow-hidden"
+                style={{ marginInline: PAUSE_PANEL_INSET_X - PAUSE_TAB_INSET_X, marginTop: PAUSE_TAB_BODY_GAP }}
+              >
             {activeTab === "info" ? (
               <div
                 className="grid h-full grid-cols-2 overflow-y-auto pt-2"
@@ -160,13 +195,14 @@ export function PauseScreen({ snapshot }: { snapshot: GameSnapshot }) {
                   rowGap: PAUSE_CURRENT_ROW_GAP,
                 }}
               >
-                <div
-                  className="grid min-h-0"
-                  style={{
-                    gridTemplateColumns: `${PAUSE_CURRENT_COLUMN_W}px ${PAUSE_CHOICES_COLUMN_W}px`,
-                    columnGap: PAUSE_COLUMN_GAP,
-                  }}
-                >
+                  <div
+                    className="grid min-h-0"
+                    style={{
+                      gridTemplateColumns: `${PAUSE_CURRENT_COLUMN_W}px ${PAUSE_CHOICES_COLUMN_W}px`,
+                      columnGap: PAUSE_COLUMN_GAP,
+                      justifyContent: "center",
+                    }}
+                  >
                   <div
                     className="grid content-start"
                     style={{
@@ -232,7 +268,7 @@ export function PauseScreen({ snapshot }: { snapshot: GameSnapshot }) {
                       {visibleEquipmentItems.length > 0 ? (
                         <div
                           className="grid content-start"
-                          style={{ gridTemplateColumns: "repeat(4, 78px)", gap: PAUSE_CHOICE_GRID_GAP }}
+                          style={{ gridTemplateColumns: `repeat(${PAUSE_CHOICE_GRID_COLUMNS}, ${PAUSE_CHOICE_GRID_COLUMN_W}px)`, gap: PAUSE_CHOICE_GRID_GAP }}
                         >
                           {visibleEquipmentItems.map((item) => {
                             const unlocked = unlockedEquipmentIds.has(item.id);
@@ -303,13 +339,14 @@ export function PauseScreen({ snapshot }: { snapshot: GameSnapshot }) {
                   rowGap: PAUSE_CURRENT_ROW_GAP,
                 }}
               >
-                <div
-                  className="grid min-h-0"
-                  style={{
-                    gridTemplateColumns: `${PAUSE_CURRENT_COLUMN_W}px ${PAUSE_CHOICES_COLUMN_W}px`,
-                    columnGap: PAUSE_COLUMN_GAP,
-                  }}
-                >
+                  <div
+                    className="grid min-h-0"
+                    style={{
+                      gridTemplateColumns: `${PAUSE_CURRENT_COLUMN_W}px ${PAUSE_CHOICES_COLUMN_W}px`,
+                      columnGap: PAUSE_COLUMN_GAP,
+                      justifyContent: "center",
+                    }}
+                  >
                   <div
                     className="grid content-start"
                     style={{
@@ -372,7 +409,7 @@ export function PauseScreen({ snapshot }: { snapshot: GameSnapshot }) {
                       {PAUSE_SKILLS.length > 0 ? (
                         <div
                           className="grid content-start"
-                          style={{ gridTemplateColumns: "repeat(4, 78px)", gap: PAUSE_CHOICE_GRID_GAP }}
+                          style={{ gridTemplateColumns: `repeat(${PAUSE_CHOICE_GRID_COLUMNS}, ${PAUSE_CHOICE_GRID_COLUMN_W}px)`, gap: PAUSE_CHOICE_GRID_GAP }}
                         >
                           {PAUSE_SKILLS.map((skill) => {
                             const learned = Boolean(player.skillLevels[skill.id]);
@@ -455,6 +492,8 @@ export function PauseScreen({ snapshot }: { snapshot: GameSnapshot }) {
           </div>
         </div>
       </UiSprite>
+        </div>
+      </div>
     </div>
   );
 }
