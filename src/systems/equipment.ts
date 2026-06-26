@@ -370,6 +370,7 @@ export function grantSkillEnergy(state: GameState, amount: number) {
 
 export function grantUltimateEnergy(state: GameState, amount: number) {
   const player = state.player;
+  if (player.ultimateLevel <= 0) return;
   if (player.ultimateTimer > 0 || player.ultimateCastTimer > 0) return;
   const multiplier = state.equippedEquipment.talisman === "tempo_talisman"
     ? TEMPO_TALISMAN_ULTIMATE_GAIN_MULTIPLIER

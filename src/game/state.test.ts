@@ -50,4 +50,15 @@ describe("resetState", () => {
     expect(snapshot.bossKills).toBe(ACT_FIVE_BOSS_KILLS);
     expect(snapshot.threatScalar).toBeGreaterThan(1);
   });
+
+  it("does not mark the ultimate ready before it is learned", () => {
+    resetState();
+    state.player.ultimateEnergy = state.player.ultimateEnergyMax;
+
+    expect(getStateSnapshot().player.ultimateReady).toBe(false);
+
+    state.player.ultimateLevel = 1;
+
+    expect(getStateSnapshot().player.ultimateReady).toBe(true);
+  });
 });

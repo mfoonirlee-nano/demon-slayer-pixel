@@ -13,6 +13,7 @@ import {
 import {
   INITIAL_EQUIPPED_SKILL_IDS,
   INITIAL_SKILL_LEVELS,
+  hasLearnedUltimate,
   maxSkillChargesForEnergy,
   maxSkillEnergyForLevel,
   moonTideUltimateConfig,
@@ -261,7 +262,8 @@ export function getStateSnapshot(manualPaused = false, paused = manualPaused): G
       ultimateDuration: ultimateConfig.durationFrames,
       ultimateCastTimer: state.player.ultimateCastTimer,
       ultimateCastDuration: PLAYER_COMBAT.ultimateCastFrames,
-      ultimateReady: state.player.ultimateEnergy >= state.player.ultimateEnergyMax
+      ultimateReady: hasLearnedUltimate(state)
+        && state.player.ultimateEnergy >= state.player.ultimateEnergyMax
         && state.player.ultimateTimer <= 0
         && state.player.ultimateCastTimer <= 0,
     },

@@ -8,6 +8,7 @@ import {
   createBossEquipmentChoices,
   equipEquipment,
   equipmentSkillEnergyCost,
+  grantUltimateEnergy,
 } from "./equipment";
 
 const FAMILIES: EquipmentFamily[] = ["flow", "burst", "shadowstep", "hunt", "risk", "tempo"];
@@ -15,6 +16,7 @@ const SLOTS: EquipmentSlot[] = ["blade", "garb", "talisman"];
 const EXPECTED_EQUIPMENT_CHOICE_COUNT = 18;
 const BOSS_REWARD_CHOICE_COUNT = 3;
 const TEMPO_TALISMAN_SKILL_COST = 24;
+const ULTIMATE_TEST_GAIN = 40;
 
 describe("equipment system", () => {
   it("defines all six families with one item in each slot", () => {
@@ -51,6 +53,17 @@ describe("equipment system", () => {
     expect(state.equippedEquipment.talisman).toBe("tempo_talisman");
     expect(state.pendingEquipmentChoices).toEqual([]);
     expect(equipmentSkillEnergyCost(state)).toBe(TEMPO_TALISMAN_SKILL_COST);
+  });
+
+  it("only grants ultimate energy after the ultimate is learned", () => {
+    const state = createInitialState();
+
+    grantUltimateEnergy(state, ULTIMATE_TEST_GAIN);
+    expect(state.player.ultimateEnergy).toBe(0);
+
+    state.player.ultimateLevel = 1;
+    grantUltimateEnergy(state, ULTIMATE_TEST_GAIN);
+    expect(state.player.ultimateEnergy).toBe(ULTIMATE_TEST_GAIN);
   });
 
   it("resets old slot runtime state when replacing equipment", () => {

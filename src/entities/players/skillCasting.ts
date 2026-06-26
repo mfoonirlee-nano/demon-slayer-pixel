@@ -10,7 +10,7 @@ import {
   syncSkillChargesForEquipment,
 } from "../../systems/equipment";
 import { selectedSkill } from "../../systems/loadout";
-import { skillDamageMultiplier } from "../../systems/progression";
+import { hasLearnedUltimate, skillDamageMultiplier } from "../../systems/progression";
 import { corePlayerSkillGrowth, isGenericPlayerSkillId } from "../../systems/playerSkills";
 import {
   CORE_PLAYER_SKILL_EFFECT_CONFIGS,
@@ -123,6 +123,7 @@ export function castUltimateSkill() {
   const p = state.player;
   if (
     state.gameOver
+    || !hasLearnedUltimate(state)
     || p.ultimateCastTimer > 0
     || p.ultimateTimer > 0
     || p.skillTimer > 0

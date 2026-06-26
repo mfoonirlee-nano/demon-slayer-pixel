@@ -52,6 +52,7 @@ const BOSS_XP_BASE = 90;
 const BOSS_XP_PER_KILL = 25;
 const MAX_SKILL_LEVEL = 3;
 const UPGRADE_CHOICE_COUNT = 3;
+const BOSS_ULTIMATE_UNLOCK_DROP_CHANCE = 0.5;
 
 const ENEMY_XP_BY_SHEET_INDEX: Partial<Record<number, number>> = {
   [CRAWLER_SHEET_INDEX]: 8,
@@ -109,6 +110,10 @@ export function maxSkillChargesForEnergy(skillEnergyMax: number) {
   return Math.max(0, Math.floor(skillEnergyMax / PLAYER_COMBAT.skillCastEnergyCost));
 }
 
+export function hasLearnedUltimate(state: GameState) {
+  return state.player.ultimateLevel > 0;
+}
+
 export function skillDamageMultiplier(state: GameState, skillId: SkillId) {
   const level = skillLevel(state, skillId);
   if (!level) return 0;
@@ -163,6 +168,18 @@ export function applyUpgradeChoice(state: GameState, index: number) {
 
   state.pendingUpgradeChoices = [];
   processPendingLevelUps(state);
+  return true;
+}
+
+export function maybeDropBossUltimateUnlock(state: GameState, random = Math.random) {
+  if (hasLearnedUltimate(state)) return false;
+  if (state.pendingUpgradeChoices.some((choice) => choice.type === "upgradeUltimate")) return false;
+  if (random() >= BOSS_ULTIMATE_UNLOCK_DROP_CHANCE) return false;
+
+  state.pendingUpgradeChoices = [
+    createUltimateChoice(state, 1),
+    ...state.pendingUpgradeChoices,
+  ].slice(0, UPGRADE_CHOICE_COUNT);
   return true;
 }
 
@@ -232,15 +249,8 @@ function createUpgradeChoices(state: GameState): UpgradeChoiceState[] {
     }
   }
 
-  const ultimateChoice = state.player.ultimateLevel < MAX_SKILL_LEVEL
-    ? {
-        id: `ultimate-${state.player.runLevel}`,
-        type: "upgradeUltimate" as const,
-        title: "终式精进",
-        name: `终式·月潮无间 ${romanLevel(nextUltimateLevel)}`,
-        description: "延长月潮强化时间，提高移动、跳跃、普攻节奏、伤害和残影触发。",
-        nextLevel: nextUltimateLevel,
-      }
+  const ultimateChoice = hasLearnedUltimate(state) && state.player.ultimateLevel < MAX_SKILL_LEVEL
+    ? createUltimateChoice(state, nextUltimateLevel)
     : null;
   const choices = compactUpgradeChoices([
     unlockChoices.shift(),
@@ -254,6 +264,19 @@ function createUpgradeChoices(state: GameState): UpgradeChoiceState[] {
   }
 
   return choices;
+}
+
+function createUltimateChoice(state: GameState, nextLevel: UltimateLevel): UpgradeChoiceState {
+  return {
+    id: `${state.player.ultimateLevel > 0 ? "ultimate" : "unlock-ultimate"}-${state.player.runLevel}`,
+    type: "upgradeUltimate",
+    title: state.player.ultimateLevel > 0 ? "终式精进" : "习得终式",
+    name: `终式·月潮无间 ${romanLevel(nextLevel)}`,
+    description: state.player.ultimateLevel > 0
+      ? "延长月潮强化时间，提高移动、跳跃、普攻节奏、伤害和残影触发。"
+      : "学会终式·月潮无间。大招能量蓄满后，可释放月潮强化状态。",
+    nextLevel,
+  };
 }
 
 function compactUpgradeChoices(choices: Array<UpgradeChoiceState | null | undefined>) {

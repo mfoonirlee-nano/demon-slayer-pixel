@@ -11,6 +11,7 @@ import { playerSkillById } from "../../systems/skillCatalog";
 import type { SkillId } from "../../types/assets";
 import {
   castSelectedSkill,
+  castUltimateSkill,
   playerSkillCastFrames,
   playerSkillReleaseFrame,
   updateSkillCastRelease,
@@ -23,6 +24,27 @@ function skillById(skillId: SkillId) {
 }
 
 describe("player skill casting", () => {
+  it("does not cast the ultimate before it is learned", () => {
+    resetState();
+    state.player.ultimateEnergy = state.player.ultimateEnergyMax;
+
+    castUltimateSkill();
+
+    expect(state.player.ultimateCastTimer).toBe(0);
+    expect(state.player.ultimateEnergy).toBe(state.player.ultimateEnergyMax);
+  });
+
+  it("casts the ultimate once it is learned and fully charged", () => {
+    resetState();
+    state.player.ultimateLevel = 1;
+    state.player.ultimateEnergy = state.player.ultimateEnergyMax;
+
+    castUltimateSkill();
+
+    expect(state.player.ultimateCastTimer).toBeGreaterThan(0);
+    expect(state.player.ultimateEnergy).toBe(0);
+  });
+
   it("uses release frames that preserve each skill wind-up tier", () => {
     const releaseFrames: Record<SkillId, number> = {
       [SKILL_IDS.closeArc]: 8,
