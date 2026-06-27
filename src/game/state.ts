@@ -93,7 +93,6 @@ export function createInitialState(): GameState {
     elapsed: 0,
     last: 0,
     bossKills: 0,
-    actPrompt: null,
     enemyDirector: createEnemyDirectorState(),
     pendingUpgradeChoices: [],
     pendingEquipmentChoices: [],
@@ -187,7 +186,6 @@ export function resetState() {
   resetCollection(state.bindingZones, next.bindingZones);
   state.elapsed = next.elapsed;
   state.bossKills = next.bossKills;
-  state.actPrompt = next.actPrompt;
   state.enemyDirector = next.enemyDirector;
   resetCollection(state.pendingUpgradeChoices, next.pendingUpgradeChoices);
   resetCollection(state.pendingEquipmentChoices, next.pendingEquipmentChoices);
@@ -221,7 +219,6 @@ export function getStateSnapshot(manualPaused = false, paused = manualPaused): G
     actBand: actBandForAct(act),
     bossKills: state.bossKills,
     threatScalar: threatScalarForRun(state.bossKills, state.elapsed),
-    actPrompt: state.actPrompt ? { ...state.actPrompt } : null,
     gameOver: state.gameOver,
     runCleared: state.runCleared,
     paused,

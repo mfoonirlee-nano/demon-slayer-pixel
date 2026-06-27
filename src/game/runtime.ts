@@ -126,14 +126,6 @@ function runCombatAction(action: () => void) {
   action();
 }
 
-function updateActPrompt(dt: number) {
-  if (!state.actPrompt) return;
-  state.actPrompt.timer = Math.max(0, state.actPrompt.timer - dt);
-  if (state.actPrompt.timer <= 0) {
-    state.actPrompt = null;
-  }
-}
-
 export function chooseUpgradeReward(index: number) {
   if (applyUpgradeChoice(state, index)) publishCurrentState();
 }
@@ -225,7 +217,6 @@ function loop(ts: number) {
 
   if (!state.gameOver) {
     state.elapsed += dt;
-    updateActPrompt(dt);
     if (canAutoSpawnEntities()) {
       const directorUpdate = updateEnemyDirector(state.enemyDirector, {
         dt,

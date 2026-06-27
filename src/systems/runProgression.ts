@@ -3,7 +3,6 @@ import { BOSS_ARCHETYPE_IDS } from "../entities/bosses/registry";
 import type { ActBand } from "../types/game-state";
 
 const MAX_ACT = 13;
-const ACT_PROMPT_DURATION_SECONDS = 3.2;
 const TIME_PRESSURE_CAP_SECONDS = 360;
 const TIME_PRESSURE_REFERENCE_SECONDS = 240;
 const TIME_PRESSURE_SCALE = 0.10;
@@ -39,12 +38,6 @@ const REWARD_VALUES_BY_BAND: Record<"early" | "mid" | ActBand, {
   intro: { attackCrystal: 3, healthCrystal: 28, chestAttack: 8, chestHeal: 56 },
   awakened: { attackCrystal: 4, healthCrystal: 30, chestAttack: 10, chestHeal: 60 },
   final: { attackCrystal: 4, healthCrystal: 32, chestAttack: 10, chestHeal: 64 },
-};
-
-const ACT_PROMPT_SUBTITLE_BY_BAND: Record<ActBand, string> = {
-  intro: "新的血月眷属逼近",
-  awakened: "蚀醒形态开始显现",
-  final: "万相血月即将降临",
 };
 
 export function clampAct(act: number) {
@@ -112,16 +105,4 @@ export function rewardValuesForAct(act: number) {
   if (clampedAct <= EARLY_ACT_LAST) return REWARD_VALUES_BY_BAND.early;
   if (clampedAct <= MID_ACT_LAST) return REWARD_VALUES_BY_BAND.mid;
   return REWARD_VALUES_BY_BAND[actBandForAct(clampedAct)];
-}
-
-export function createActPrompt(act: number) {
-  const clampedAct = clampAct(act);
-  const band = actBandForAct(clampedAct);
-  return {
-    act: clampedAct,
-    title: `第 ${clampedAct} 幕`,
-    subtitle: ACT_PROMPT_SUBTITLE_BY_BAND[band],
-    timer: ACT_PROMPT_DURATION_SECONDS,
-    duration: ACT_PROMPT_DURATION_SECONDS,
-  };
 }

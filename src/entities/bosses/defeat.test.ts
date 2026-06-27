@@ -23,10 +23,6 @@ describe("boss defeat progression", () => {
     expect(state.runCleared).toBe(false);
     expect(state.bossKills).toBe(1);
     expect(state.enemyDirector.act).toBe(SECOND_ACT);
-    expect(state.actPrompt).toMatchObject({
-      act: SECOND_ACT,
-      title: "第 2 幕",
-    });
     expect(getStateSnapshot().act).toBe(SECOND_ACT);
     expect(state.pendingEquipmentChoices).toHaveLength(BOSS_REWARD_CHOICE_COUNT);
   });
@@ -63,7 +59,6 @@ describe("boss defeat progression", () => {
     expect(state.runCleared).toBe(true);
     expect(state.bossKills).toBe(FINAL_BOSS_CLEARED_KILLS);
     expect(state.boss).toBeNull();
-    expect(state.actPrompt).toBeNull();
     expect(state.pendingEquipmentChoices).toEqual([]);
     expect(state.pendingUpgradeChoices).toEqual([]);
     expect(getStateSnapshot().activeOverlay).toBe("victory");

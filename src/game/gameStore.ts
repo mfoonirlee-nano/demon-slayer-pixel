@@ -10,7 +10,6 @@ import {
 import type { SkillId } from "../types/assets";
 import type {
   ActBand,
-  ActPromptState,
   EquipmentItemState,
   EquipmentSlot,
   SkillLevel,
@@ -69,7 +68,6 @@ export type GameSnapshot = {
   actBand: ActBand;
   bossKills: number;
   threatScalar: number;
-  actPrompt: ActPromptState | null;
   gameOver: boolean;
   runCleared: boolean;
   paused: boolean;
@@ -90,7 +88,6 @@ const initialSnapshot: GameSnapshot = {
   actBand: "intro",
   bossKills: 0,
   threatScalar: 1,
-  actPrompt: null,
   gameOver: false,
   runCleared: false,
   paused: false,

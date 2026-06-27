@@ -88,19 +88,10 @@ export type EnemyDirectorState = {
   };
 };
 
-export type ActPromptState = {
-  act: number;
-  title: string;
-  subtitle: string;
-  timer: number;
-  duration: number;
-};
-
 export type GameState = {
   elapsed: number;
   last: number;
   bossKills: number;
-  actPrompt: ActPromptState | null;
   enemyDirector: EnemyDirectorState;
   pendingUpgradeChoices: UpgradeChoiceState[];
   pendingEquipmentChoices: EquipmentItemState[];
