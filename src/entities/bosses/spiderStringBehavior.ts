@@ -8,7 +8,6 @@ import { damagePlayerOnContact, moveChasingBoss } from "./shared";
 import type { LiveBoss } from "./types";
 
 const CAST_SFX_PITCH = 0.92;
-const PROJECTILE_SFX_PITCH_STEP = 0.04;
 const SUMMON_SFX_PITCH = 0.92;
 
 export function updateSpiderStringBoss(boss: LiveBoss) {
@@ -42,23 +41,7 @@ export function updateSpiderStringBoss(boss: LiveBoss) {
   moveChasingBoss(boss);
 
   if (boss.aiTimer <= 0) {
-    const toward = state.player.x + state.player.w / 2 - (boss.x + boss.w / 2);
-    if (boss.phase >= 2 && Math.random() < BOSS_CONFIG.projectileChance) {
-      const dir = Math.sign(toward) || 1;
-      for (let i = 0; i < boss.phase; i += 1) {
-        state.projectiles.push({
-          kind: "boss",
-          x: boss.x + boss.w / 2,
-          y: boss.y + BOSS_CONFIG.projectileYOffset + i * BOSS_CONFIG.projectileYOffsetStep,
-          w: BOSS_CONFIG.projectileW,
-          h: BOSS_CONFIG.projectileH,
-          vx: (BOSS_CONFIG.projectileBaseSpeed + i * BOSS_CONFIG.projectileSpeedStep) * dir,
-          life: BOSS_CONFIG.projectileLife,
-          damage: BOSS_CONFIG.projectileBaseDamage + boss.phase,
-        });
-      }
-      playSfx("bossProjectile", 1 + boss.phase * PROJECTILE_SFX_PITCH_STEP);
-    } else if (canAutoSpawnEntities()) {
+    if (canAutoSpawnEntities()) {
       spawnBossSummonEnemy();
       if (boss.phase >= BOSS_CONFIG.summonExtraEnemyPhase) spawnBossSummonEnemy();
       playSfx("bossSummon", SUMMON_SFX_PITCH);

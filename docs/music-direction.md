@@ -130,7 +130,7 @@ No vocals, no lyrics, no melody quote, no long trailer riser, no modern EDM impa
 
 ### Spider String - 血月眷属 · 蛛弦
 
-用途：当前已接入 Boss，追猎、蛛丝、召唤、弹幕。
+用途：当前已接入 Boss，追猎、蛛丝、召唤、蛛网投射物。
 
 ```text
 Instrumental seamless boss battle loop for an original 2D pixel action survival game. Theme: spider-string nightfiend hunting the player under a moonlit torii road. Use high tension string-like shamisen tremolo to suggest spider silk, sharp koto plucks like web cuts, low taiko chase rhythm, detuned FM bass, dry wooden clicks, and brief cracked bell accents.
