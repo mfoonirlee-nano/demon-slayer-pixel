@@ -36,11 +36,11 @@
 | `runner` | 角突夜妖 | 素材已接入；前摇冲刺行为已实现 | [runner.md](runner.md) |
 | `caster` | 提灯咒妖 | 多状态素材已接入；远程幽火行为已实现 | [caster.md](caster.md) |
 | `duelist` | 双刃裂妖 | 多状态素材已接入；近战斩击行为已实现 | [duelist.md](duelist.md) |
-| `brute` | 盾甲重妖 | 原画设定已重构为站立持盾重型；运行时仍待重做 | [brute.md](brute.md) |
+| `brute` | 盾甲重妖 | 多状态素材已接入；持盾、盾击、破盾和破盾后横扫行为已实现 | [brute.md](brute.md) |
 | `leaper` | 裂足跳妖 | 多状态素材已接入；锁定落点跳跃行为已实现 | [leaper.md](leaper.md) |
 | `glider` | 膜翼巡妖 | 多状态素材已接入；低空俯冲行为已实现 | [glider.md](glider.md) |
 | `burrower` | 土潜夜妖 | 多状态素材已接入；潜入/钻出行为已实现 | [burrower.md](burrower.md) |
-| `splitter` | 裂影夜妖 | 未实现 | [splitter.md](splitter.md) |
+| `splitter` | 裂影夜妖 | 多状态素材已接入；分裂和分裂体行为已实现 | [splitter.md](splitter.md) |
 | `binder` | 缚咒夜妖 | 多状态素材已接入；控场咒圈行为已实现 | [binder.md](binder.md) |
 | `warden` | 御阵夜妖 | 多状态素材已接入；光环支援行为已实现 | [warden.md](warden.md) |
 
@@ -67,5 +67,5 @@
 - 通过 silhouette 后再上色，不先做细节。
 - 动画师需要优先拿到前摇和攻击关键帧，而不是完整待机循环。
 - 已接入敌人继续补行为关键帧和可读性打磨，不需要推翻当前主体设计。
-- 第一批新敌人可先做 `leaper`、`glider`、`warden`，因为它们能验证跳跃、空中和支援行为的可读性。
-- `burrower` 和 `splitter` 需要额外动效支持，适合第二批制作。
+- 后续视觉一致性优先处理 `glider` 的 `hover` 体量，让它和收翼/俯冲/恢复状态切换更稳定。
+- `brute` 和 `splitter` 已按当前运行时接入，后续只做读招、受击、死亡和状态切换打磨。
