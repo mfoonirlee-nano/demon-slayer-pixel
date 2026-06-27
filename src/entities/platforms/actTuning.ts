@@ -11,6 +11,7 @@ export type SegmentKind =
   | "rewardRisk";
 
 const PLATFORM_TIME_PRESSURE_CAP_SECONDS = 240;
+const PLATFORM_SCROLL_SPEED_MULTIPLIER = 0.72;
 const PLATFORM_SPEED_PER_BOSS_KILL = 0.18;
 const PLATFORM_SPEED_PER_SECOND = 0.006;
 const ACT_TWO_TO_THREE_MAX = 3;
@@ -71,10 +72,11 @@ const SEGMENT_WEIGHTS: Record<"act1" | "act2to3" | "act4to6" | "awakened" | "fin
 };
 
 export function platformSpeedForRun(bossKills: number, elapsedSeconds: number, randomSpeed: number) {
-  return PLATFORM_CONFIG.baseSpeed
+  return (PLATFORM_CONFIG.baseSpeed
     + randomSpeed
     + bossKills * PLATFORM_SPEED_PER_BOSS_KILL
-    + Math.min(elapsedSeconds, PLATFORM_TIME_PRESSURE_CAP_SECONDS) * PLATFORM_SPEED_PER_SECOND;
+    + Math.min(elapsedSeconds, PLATFORM_TIME_PRESSURE_CAP_SECONDS) * PLATFORM_SPEED_PER_SECOND)
+    * PLATFORM_SCROLL_SPEED_MULTIPLIER;
 }
 
 export function segmentWeightsForAct(act: number): Record<SegmentKind, number> {
