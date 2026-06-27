@@ -3,6 +3,7 @@ import { useAtomValue } from "jotai";
 import { HUD_UI, type UiSpriteId } from "../constants";
 import { DebugPanel } from "../game/debug";
 import { gameSnapshotAtom } from "../game/gameStore";
+import { skillEnergyCostForTalisman } from "../systems/equipment";
 import { DeathScreen } from "./deathScreen";
 import { PauseScreen } from "./pauseScreen";
 import { RewardOverlay } from "./rewardOverlay";
@@ -13,6 +14,18 @@ import { UiSprite, uiSpriteDisplaySize } from "./uiSprite";
 function clampMeterPercent(value: number, maxValue: number) {
   if (maxValue <= 0) return 0;
   return Math.max(0, Math.min(HUD_UI.meterPercentMax, (value / maxValue) * HUD_UI.meterPercentMax));
+}
+
+function filledCostMarkerPercents(value: number, max: number, cost: number) {
+  if (value < cost || max <= 0 || cost <= 0) return [];
+  const percents: number[] = [];
+  const filledValue = Math.min(value, max);
+
+  for (let markerValue = cost; markerValue < max && markerValue <= filledValue; markerValue += cost) {
+    percents.push(clampMeterPercent(markerValue, max));
+  }
+
+  return percents;
 }
 
 const GHOST_LERP_SPEED = 0.04;
@@ -102,7 +115,7 @@ type HudMeterFrame = {
   fillInsetRight: number;
 };
 
-function HudMeter({ value, max, ghostValue, color, ghostColor, text, width, frame, className = "" }: {
+function HudMeter({ value, max, ghostValue, color, ghostColor, text, width, frame, markerPercents = [], className = "" }: {
   value: number;
   max: number;
   ghostValue: number;
@@ -111,6 +124,7 @@ function HudMeter({ value, max, ghostValue, color, ghostColor, text, width, fram
   text: string;
   width: number;
   frame: HudMeterFrame;
+  markerPercents?: number[];
   className?: string;
 }) {
   const leftW = uiSpriteDisplaySize(frame.left).w;
@@ -134,6 +148,17 @@ function HudMeter({ value, max, ghostValue, color, ghostColor, text, width, fram
         }}
       >
         <GhostBar value={value} max={max} ghostValue={ghostValue} color={color} ghostColor={ghostColor} />
+        {markerPercents.length > 0 ? (
+          <div className="player-hud-meter-cost-marks" aria-hidden="true">
+            {markerPercents.map((percent) => (
+              <span
+                key={percent}
+                className="player-hud-meter-cost-mark"
+                style={{ left: `${percent}%` }}
+              />
+            ))}
+          </div>
+        ) : null}
       </div>
       <span className="player-hud-meter-text" style={{ left: leftW, right: rightW }}>{text}</span>
     </div>
@@ -203,6 +228,10 @@ export function GameHud() {
 
   const skillValue = player.skillEnergy;
   const skillMax = player.skillEnergyMax;
+  const activeSkillEnergyCost = activeSkill
+    ? activeSkill.energyCost ?? skillEnergyCostForTalisman(snapshot.equipment.equipped.talisman?.id)
+    : 0;
+  const skillMarkerPercents = filledCostMarkerPercents(skillValue, skillMax, activeSkillEnergyCost);
   const bossHp = boss?.hp ?? 0;
   const bossHpMax = boss?.hpMax ?? 1;
   const xpPercent = clampMeterPercent(player.runXp, player.xpToNext);
@@ -272,6 +301,7 @@ export function GameHud() {
               text={`${Math.floor(skillValue)} / ${skillMax}`}
               width={playerBarWidth}
               frame={HUD_SKILL_METER_FRAME}
+              markerPercents={skillMarkerPercents}
             />
           </div>
         </div>

@@ -348,10 +348,14 @@ export function applySkillHitEquipmentRefund(
   return true;
 }
 
-export function equipmentSkillEnergyCost(state: GameState) {
-  return state.equippedEquipment.talisman === "tempo_talisman"
+export function skillEnergyCostForTalisman(talismanId: EquipmentItemId | null | undefined) {
+  return talismanId === "tempo_talisman"
     ? TEMPO_TALISMAN_SKILL_COST
     : PLAYER_COMBAT.skillCastEnergyCost;
+}
+
+export function equipmentSkillEnergyCost(state: GameState) {
+  return skillEnergyCostForTalisman(state.equippedEquipment.talisman);
 }
 
 export function syncSkillChargesForEquipment(state: GameState) {

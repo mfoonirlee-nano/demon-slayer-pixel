@@ -67,6 +67,25 @@
   background: #031033;
 }
 
+.player-hud-meter-cost-marks {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  pointer-events: none;
+}
+
+.player-hud-meter-cost-mark {
+  position: absolute;
+  top: 1px;
+  bottom: 1px;
+  width: 1px;
+  transform: translateX(-0.5px);
+  background: rgba(183, 245, 255, 0.42);
+  box-shadow:
+    -1px 0 rgba(2, 7, 12, 0.42),
+    1px 0 rgba(2, 7, 12, 0.36);
+}
+
 .player-hud-meter-text {
   position: absolute;
   top: 0;
