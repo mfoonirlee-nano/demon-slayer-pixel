@@ -120,8 +120,8 @@ export const PLAYER_SKILL_EFFECT_SHEETS: Partial<Record<SkillId, SpriteSheet>> =
   },
   [SKILL_IDS.verticalWave]: {
     src: "assets/sprites/skills/vertical_wave/effect.png",
-    frameW: 420,
-    frameH: 320,
+    frameW: 480,
+    frameH: 520,
     count: 7,
     image: null,
   },

@@ -200,7 +200,7 @@ export const GENERIC_PLAYER_SKILL_TUNING: Record<GenericPlayerSkillId, GenericSk
   [SKILL_IDS.verticalWave]: {
     kind: "verticalWave",
     frameDuration: 4,
-    drawScale: 0.5,
+    drawScale: 0.42,
     life: { 1: 26, 2: 28, 3: 30 },
     width: { 1: 72, 2: 82, 3: 92 },
     height: { 1: 130, 2: 145, 3: 160 },
