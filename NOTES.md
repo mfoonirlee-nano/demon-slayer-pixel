@@ -2,6 +2,9 @@
 
 ## Canonical Terms
 
+- Combat actor: any runtime body that represents a player character, enemy, or Boss across animation states.
+- Character-state visual unification: the workflow of making a combat actor read as the same identity across its idle/move/attack/cast/recover/death/etc. sprite sheets.
+- Identity baseline: the reference for a combat actor's stable silhouette, palette, costume/body landmarks, weapon or core prop, and material language.
 - Project-bound image asset: any generated or edited bitmap that will be referenced from this repository, usually under `assets/`.
 - Built-in imagegen: the `image_gen` tool available in Codex commentary. Its trusted artifact is the PNG base64 in `image_generation_call.result`.
 - Preview: an image rendered in the conversation. A preview is not a project file and must not be treated as an asset.
