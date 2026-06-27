@@ -24,12 +24,12 @@ Boss 需要保持比普通敌人更强的轮廓识别和阶段变化。设计重
 | Boss | 工作名 | 基础幕 | 蚀醒幕 | 实现状态 | 文件 |
 | --- | --- | ---: | ---: | --- | --- |
 | `moonbound_spider_string` | 血月眷属 · 蛛弦 | 1 | 7 | 当前 Boss 素材、玩法、HUD 名称已接入 | [spider-string.md](spider-string.md) |
-| `moonbound_mist_bone` | 血月眷属 · 雾骨 | 2 | 8 | 未实现 | [mist-bone.md](mist-bone.md) |
-| `moonbound_mirror_dream` | 血月眷属 · 镜魇 | 3 | 9 | 未实现 | [mirror-dream.md](mirror-dream.md) |
-| `moonbound_fang_gale` | 血月眷属 · 牙岚 | 4 | 10 | 未实现 | [fang-gale.md](fang-gale.md) |
-| `moonbound_lantern_ember` | 血月眷属 · 灯烬 | 5 | 11 | 未实现 | [lantern-ember.md](lantern-ember.md) |
-| `moonbound_dead_bell` | 血月眷属 · 枯铃 | 6 | 12 | v1 运行时已接入；暂与蛛弦双 Boss 轮换 | [dead-bell.md](dead-bell.md) |
-| `grand_boss_blood_moon_many_faces` | 终幕之妖 · 万相血月 | 13 | — | v1 运行时已接入；`bossKills >= 12` 触发，胜利 UI 未接 | [blood-moon-many-faces.md](blood-moon-many-faces.md) |
+| `moonbound_mist_bone` | 血月眷属 · 雾骨 | 2 | 8 | 素材和注册表已接入；雾骨钉行为已接入 | [mist-bone.md](mist-bone.md) |
+| `moonbound_mirror_dream` | 血月眷属 · 镜魇 | 3 | 9 | 素材和注册表已接入；碎镜、假身和噩梦代理行为已接入 | [mirror-dream.md](mirror-dream.md) |
+| `moonbound_fang_gale` | 血月眷属 · 牙岚 | 4 | 10 | 素材和注册表已接入；冲刺和风牙裂行为已接入 | [fang-gale.md](fang-gale.md) |
+| `moonbound_lantern_ember` | 血月眷属 · 灯烬 | 5 | 11 | 素材和注册表已接入；召唤、火线、强化和蚀醒区域行为已接入 | [lantern-ember.md](lantern-ember.md) |
+| `moonbound_dead_bell` | 血月眷属 · 枯铃 | 6 | 12 | 素材和注册表已接入；声波环、横向音刃和停拍组合已接入 | [dead-bell.md](dead-bell.md) |
+| `grand_boss_blood_moon_many_faces` | 终幕之妖 · 万相血月 | 13 | — | 素材和注册表已接入；`bossKills >= 12` 触发，胜利 UI 未接 | [blood-moon-many-faces.md](blood-moon-many-faces.md) |
 
 蚀醒形态优先复用基础 Boss 精灵 + 蚀醒视觉态（变色 / 特效密度提升 / 关键物件状态变化），只有蚀醒招新特效需要少量新素材。
 
@@ -48,4 +48,5 @@ Boss 需要保持比普通敌人更强的轮廓识别和阶段变化。设计重
 - 每个 Boss 先出黑白 silhouette 小稿，至少 3 个方案。
 - 通过 silhouette 后再细化主色、特效色和阶段差异。
 - 动画师需要优先拿到待机、移动、受击、死亡、核心技能前摇和核心技能命中帧。
-- 当前 Boss `蛛弦` 的后续工作优先补命名、登场提示和阶段视觉增强，不需要重做主体素材。
+- 当前 Boss 素材已覆盖基础轮换和终幕 Boss；后续优先补 Boss intro、死亡状态机、胜利结算和蚀醒视觉增强。
+- 视觉一致性审计中 `牙岚` 的 `move` / `windup` 只有轻微体量和色值漂移，后续可作为 asset-only 打磨项处理。
