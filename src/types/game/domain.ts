@@ -87,6 +87,7 @@ export type BloodMoonEffectKind =
   | "manyFaces";
 export type BossSkillMode =
   | "spiderString"
+  | "spiderStringCage"
   | "mistBoneSpike"
   | "mistBoneLine"
   | "mistBoneCage"

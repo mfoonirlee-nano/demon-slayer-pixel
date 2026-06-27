@@ -1,5 +1,5 @@
 import { state } from "../../game/state";
-import { LANTERN_EMBER_CONFIG } from "../../constants";
+import { LANTERN_EMBER_CONFIG, SPIDER_STRING_CAGE_CONFIG } from "../../constants";
 
 export function lanternAshZonePlayerMoveScale() {
   for (const zone of state.lanternEmberAshZones) {
@@ -12,4 +12,10 @@ export function lanternAshZonePlayerMoveScale() {
   }
 
   return 1;
+}
+
+export function spiderSilkSlowPlayerMoveScale() {
+  return state.player.spiderSilkSlowTimer > 0
+    ? SPIDER_STRING_CAGE_CONFIG.slowMoveScale
+    : 1;
 }

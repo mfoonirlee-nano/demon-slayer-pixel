@@ -34,7 +34,7 @@ import {
   spawnMoonTideTrail,
   triggerMoonTideAfterimageHit,
 } from "./players/moonTide";
-import { lanternAshZonePlayerMoveScale } from "./players/movementModifiers";
+import { lanternAshZonePlayerMoveScale, spiderSilkSlowPlayerMoveScale } from "./players/movementModifiers";
 import { updateSkillCastRelease, updateUltimateCastAndTimer } from "./players/skillCasting";
 
 export { castSelectedSkill, castUltimateSkill } from "./players/skillCasting";
@@ -271,7 +271,11 @@ export function updatePlayer() {
   if (!dashReposition && p.onPlatform && state.platforms.includes(p.onPlatform)) {
     p.x += p.onPlatform.vx;
   }
-  const moveScale = Math.min(bindingZonePlayerMoveScale(), lanternAshZonePlayerMoveScale())
+  const moveScale = Math.min(
+    bindingZonePlayerMoveScale(),
+    lanternAshZonePlayerMoveScale(),
+    spiderSilkSlowPlayerMoveScale(),
+  )
     * equipmentMoveSpeedMultiplier(state)
     * moonTideMoveSpeedMultiplier();
   let previousDashX = p.x;
@@ -431,4 +435,5 @@ export function updatePlayer() {
   }
 
   if (p.invincible > 0) p.invincible -= 1;
+  if (p.spiderSilkSlowTimer > 0) p.spiderSilkSlowTimer -= 1;
 }

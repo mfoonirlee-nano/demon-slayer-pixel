@@ -23,6 +23,23 @@ export type BossSkill1EffectState = {
   hitDone?: boolean;
 };
 
+export type SpiderStringCageSegmentKind = "ground" | "air" | "mixed";
+
+export type SpiderStringCageState = {
+  segmentIndex: number;
+  safeColumn: number;
+  previousSafeColumn: number | null;
+  columns: number;
+  elapsed: number;
+  warningFrames: number;
+  hitFrames: number;
+  afterFrames: number;
+  frame: number;
+  damage: number;
+  hitPlayer: boolean;
+  kind: SpiderStringCageSegmentKind;
+};
+
 export type DeadBellWaveState = {
   x: number;
   y: number;

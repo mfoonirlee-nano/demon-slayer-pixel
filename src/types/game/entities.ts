@@ -115,6 +115,7 @@ export type PlayerState = {
   huntGarbTimer: number;
   huntTalismanCooldown: number;
   riskTalismanTriggered: boolean;
+  spiderSilkSlowTimer: number;
   onPlatform: PlatformState | null;
   skillFlash: number;
   isPlayer: boolean;
@@ -243,6 +244,8 @@ export type BossState = {
   awakened: boolean;
   comboStep?: number;
   phaseShiftTimer?: number;
+  spiderStringCageUsed?: boolean;
+  spiderStringCageCd?: number;
   armorBreakTimer?: number;
   armorBreakMultiplier?: number;
 } | null;

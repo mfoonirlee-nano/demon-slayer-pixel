@@ -81,6 +81,7 @@ export function createInitialPlayerState(): PlayerState {
     huntGarbTimer: 0,
     huntTalismanCooldown: 0,
     riskTalismanTriggered: false,
+    spiderSilkSlowTimer: 0,
     onPlatform: null,
     skillFlash: 0,
     isPlayer: true,
@@ -126,6 +127,7 @@ export function createInitialState(): GameState {
     ultimateAfterimageSlashes: [],
     ultimatePlayerGhosts: [],
     bossSkill1Effects: [],
+    spiderStringCages: [],
     deadBellWaves: [],
     deadBellBlades: [],
     mistBoneSpikes: [],
@@ -167,6 +169,7 @@ export function resetState() {
   resetCollection(state.ultimateAfterimageSlashes, next.ultimateAfterimageSlashes);
   resetCollection(state.ultimatePlayerGhosts, next.ultimatePlayerGhosts);
   resetCollection(state.bossSkill1Effects, next.bossSkill1Effects);
+  resetCollection(state.spiderStringCages, next.spiderStringCages);
   resetCollection(state.deadBellWaves, next.deadBellWaves);
   resetCollection(state.deadBellBlades, next.deadBellBlades);
   resetCollection(state.mistBoneSpikes, next.mistBoneSpikes);

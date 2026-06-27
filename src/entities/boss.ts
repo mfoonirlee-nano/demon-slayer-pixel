@@ -17,6 +17,7 @@ const BLOOD_MOON_PHASE_SHIFT_PITCH_STEP = 0.04;
 
 export { drawBoss } from "./bosses/renderBoss";
 export { drawBossSkill1Effects, updateBossSkill1Effects } from "./bosses/spiderStringEffects";
+export { drawSpiderStringCageEffects, updateSpiderStringCageEffects } from "./bosses/spiderStringCageEffects";
 export { drawDeadBellEffects, updateDeadBellEffects } from "./bosses/deadBellEffects";
 export { drawFangGaleEffects, updateFangGaleEffects } from "./bosses/fangGaleEffects";
 export { drawMirrorDreamEffects, updateMirrorDreamEffects } from "./bosses/mirrorDreamEffects";

@@ -85,7 +85,7 @@
 | `splitter` | enemy | baseline clear; docs status stale | 6 | `ok` | none | 本体裂缝、双面半脸和 splitling 小型代理身份清楚；splitling 是代理体，不按完整本体尺寸要求。 | `contact-sheets/splitter.png` |
 | `warden` | enemy | baseline clear | 3 | `ok` | none | 背架、祭祀面具、金绿 aura 读法稳定。 | `contact-sheets/warden.png` |
 | `burrower` | enemy | baseline clear | 5 | `ok` | none | 土潜/钻出/恢复状态保留湿土甲壳和低矮钻地怪身份。 | `contact-sheets/burrower.png` |
-| `spider-string` | boss | baseline clear | 2 | `ok` | none | 白发、红袍和蛛足在 move/cast 中一致。 | `contact-sheets/spider-string.png` |
+| `spider-string` | boss | baseline clear | 3 | `ok` | none | 白发、红袍和蛛足在 move/cast/ultimateCast 中一致。 | `contact-sheets/spider-string.png` |
 | `mist-bone` | boss | baseline clear; README status stale | 2 | `ok` | none | 白骨、雾蓝身体和骨刺轮廓在 move/cast 中一致。 | `contact-sheets/mist-bone.png` |
 | `mirror-dream` | boss | baseline clear; README status stale | 4 | `ok` | none | 真身、cast 和 afterimage 保持碎镜/冷色身份；`nightmare` 后半段是碎光 proxy，符合代理审计。 | `contact-sheets/mirror-dream.png` |
 | `fang-gale` | boss | baseline clear; README status stale | 2 | `minor` | `asset-only repair` | `move` 与 `windup` 都是低伏牙兽，但 windup 更红、更长、更饱和；建议统一色值和可见体量。 | `contact-sheets/fang-gale.png` |

@@ -20,7 +20,7 @@ import { updatePlayer, drawPlayer, triggerAttack, castSelectedSkill, castUltimat
 import { spawnEnemyById, spawnEnemyBySheetIndex, updateEnemies, drawEnemy } from "../entities/enemy";
 import { updateBindingZones, drawBindingZonesBack, drawBindingZonesFront } from "../entities/enemies/binder";
 import { drawWardenAuraIndicators } from "../entities/enemies/warden";
-import { spawnBoss, updateBoss, drawBoss, updateBossSkill1Effects, drawBossSkill1Effects, updateDeadBellEffects, drawDeadBellEffects, updateMistBoneEffects, drawMistBoneEffects, updateMirrorDreamEffects, drawMirrorDreamEffects, updateFangGaleEffects, drawFangGaleEffects, updateLanternEmberEffects, drawLanternEmberEffects, updateBloodMoonEffects, drawBloodMoonEffects } from "../entities/boss";
+import { spawnBoss, updateBoss, drawBoss, updateBossSkill1Effects, drawBossSkill1Effects, updateSpiderStringCageEffects, drawSpiderStringCageEffects, updateDeadBellEffects, drawDeadBellEffects, updateMistBoneEffects, drawMistBoneEffects, updateMirrorDreamEffects, drawMirrorDreamEffects, updateFangGaleEffects, drawFangGaleEffects, updateLanternEmberEffects, drawLanternEmberEffects, updateBloodMoonEffects, drawBloodMoonEffects } from "../entities/boss";
 import {
   spawnMapSegmentOfKind,
   spawnNextMapSegment,
@@ -258,6 +258,7 @@ function loop(ts: number) {
     updateEnemies();
     updateBoss();
     updateBossSkill1Effects();
+    updateSpiderStringCageEffects();
     updateDeadBellEffects();
     updateMistBoneEffects();
     updateMirrorDreamEffects();
@@ -321,6 +322,7 @@ function loop(ts: number) {
   for (const e of state.enemies) drawEnemy(e);
   drawBoss();
   drawBossSkill1Effects();
+  drawSpiderStringCageEffects();
   drawDeadBellEffects();
   drawMistBoneEffects();
   drawMirrorDreamEffects();

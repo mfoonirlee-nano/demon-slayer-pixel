@@ -17,6 +17,8 @@ import {
   LANTERN_EMBER_SUMMON_SHEET,
   MIST_BONE_CONFIG,
   MIRROR_DREAM_CONFIG,
+  SPIDER_STRING_CAGE_CONFIG,
+  SPIDER_STRING_ULTIMATE_CAST_SHEET,
 } from "../../constants";
 import { state } from "../../game/state";
 import { frameIndex } from "../../game/utils";
@@ -132,6 +134,9 @@ export function drawBoss() {
 function bossCastSheet(boss: LiveBoss) {
   const archetype = bossArchetypeForId(boss.id);
   if (boss.id === BOSS_ARCHETYPE_IDS.bloodMoon) return bloodMoonCastSheet(boss);
+  if (boss.id === BOSS_ARCHETYPE_IDS.spiderString && boss.skillMode === "spiderStringCage") {
+    return SPIDER_STRING_ULTIMATE_CAST_SHEET;
+  }
   if (boss.id !== BOSS_ARCHETYPE_IDS.lanternEmber) return archetype.sheets.cast;
   if (boss.skillMode === "lanternFireline") return LANTERN_EMBER_FIRELINE_CAST_SHEET;
   if (boss.skillMode === "lanternBuff") return LANTERN_EMBER_BUFF_CAST_SHEET;
@@ -157,6 +162,9 @@ function bossCastDuration(boss: LiveBoss) {
   if (boss.id === BOSS_ARCHETYPE_IDS.mistBone) return MIST_BONE_CONFIG.castDuration;
   if (boss.id === BOSS_ARCHETYPE_IDS.mirrorDream) return MIRROR_DREAM_CONFIG.castDuration;
   if (boss.id === BOSS_ARCHETYPE_IDS.bloodMoon) return bloodMoonCastDuration(boss);
+  if (boss.id === BOSS_ARCHETYPE_IDS.spiderString && boss.skillMode === "spiderStringCage") {
+    return SPIDER_STRING_CAGE_CONFIG.castDuration;
+  }
   return BOSS_SKILL1_CONFIG.castDuration;
 }
 
@@ -167,6 +175,9 @@ function bossCastFrameDuration(boss: LiveBoss) {
   if (boss.id === BOSS_ARCHETYPE_IDS.mistBone) return MIST_BONE_CONFIG.castFrameDuration;
   if (boss.id === BOSS_ARCHETYPE_IDS.mirrorDream) return MIRROR_DREAM_CONFIG.castFrameDuration;
   if (boss.id === BOSS_ARCHETYPE_IDS.bloodMoon) return BLOOD_MOON_CONFIG.castFrameDuration;
+  if (boss.id === BOSS_ARCHETYPE_IDS.spiderString && boss.skillMode === "spiderStringCage") {
+    return SPIDER_STRING_CAGE_CONFIG.castFrameDuration;
+  }
   return BOSS_SKILL1_CONFIG.castFrameDuration;
 }
 

@@ -18,7 +18,7 @@ import type {
   UltimatePlayerGhostSnapshot,
 } from "../../types/game-state";
 import { bindingZonePlayerMoveScale } from "../enemies/binder";
-import { lanternAshZonePlayerMoveScale } from "./movementModifiers";
+import { lanternAshZonePlayerMoveScale, spiderSilkSlowPlayerMoveScale } from "./movementModifiers";
 import { moonTideActive, moonTidePlayerAnimationFrameSpeed, recordMoonTidePlayerGhost } from "./moonTide";
 import { playerSkillCastFrame } from "./skillCasting";
 
@@ -188,7 +188,11 @@ export function drawPlayer() {
     && !isDashRepositionSkillAnimation
     && Math.floor(p.invincible / PLAYER_COMBAT.blinkInterval) % 2 === 0
   ) return;
-  const isBindingSlowed = Math.min(bindingZonePlayerMoveScale(), lanternAshZonePlayerMoveScale()) < 1;
+  const isBindingSlowed = Math.min(
+    bindingZonePlayerMoveScale(),
+    lanternAshZonePlayerMoveScale(),
+    spiderSilkSlowPlayerMoveScale(),
+  ) < 1;
 
   // Unified reference point: player center X, feet Y minus global sprite padding.
   // All draw positions: drawX = refX - drawW * anchorX, drawY = refY - drawH * anchorY

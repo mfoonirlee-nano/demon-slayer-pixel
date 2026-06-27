@@ -39,6 +39,7 @@ import type {
   PlayerSkillEffectState,
   ProjectileState,
   SkillBurstState,
+  SpiderStringCageState,
   UltimateAfterimageSlashState,
   UltimateEffectState,
   UltimatePlayerGhostState,
@@ -129,6 +130,7 @@ export type GameState = {
   ultimateAfterimageSlashes: UltimateAfterimageSlashState[];
   ultimatePlayerGhosts: UltimatePlayerGhostState[];
   bossSkill1Effects: BossSkill1EffectState[];
+  spiderStringCages: SpiderStringCageState[];
   deadBellWaves: DeadBellWaveState[];
   deadBellBlades: DeadBellBladeState[];
   mistBoneSpikes: MistBoneSpikeState[];
