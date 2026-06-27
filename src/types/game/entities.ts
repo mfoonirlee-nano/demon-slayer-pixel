@@ -14,6 +14,7 @@ import type {
   EnemyAiState,
   EnemyId,
   EnemySpawnSource,
+  ActBand,
   GliderPhase,
   LeaperPhase,
   PlatformKind,
@@ -125,6 +126,8 @@ export type EnemyState = {
   id: EnemyId;
   spawnSource: EnemySpawnSource;
   spawnCost: number;
+  growthStage?: ActBand;
+  elite?: boolean;
   aiState: EnemyAiState;
   aiTimer: number;
   targetX?: number;

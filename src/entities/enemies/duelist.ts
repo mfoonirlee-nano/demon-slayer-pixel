@@ -6,7 +6,14 @@ import type { DuelistPhase, EnemyState } from "../../types/game-state";
 import { hitbox } from "../../game/utils";
 import { hurtPlayer } from "../player";
 import type { EnemyArchetype, EnemySpawnContext } from "./common";
-import { drawEnemyFrame, enemyCenterX, enemyDrawScale, enemyFeetY } from "./common";
+import {
+  drawEnemyFrame,
+  enemyCenterX,
+  enemyDrawScale,
+  enemyFeetY,
+  hasAwakenedGrowth,
+  isEliteEnemy,
+} from "./common";
 
 const DUELIST_CONFIG = {
   triggerDistance: 124,
@@ -22,6 +29,10 @@ const DUELIST_CONFIG = {
   slashDamageBonus: 2,
   recoverMinFrames: 18,
   recoverFrameJitter: 9,
+  awakenedRecoverMinFrames: 14,
+  eliteRecoverMinFrames: 12,
+  eliteWindupBonusFrames: 4,
+  eliteSlashReachBonus: 24,
   blockedRetryMinFrames: 6,
   blockedRetryFrameJitter: 8,
   hpMultiplier: 1.35,
@@ -88,16 +99,26 @@ function duelistSheetForPhase(phase: DuelistPhase) {
   return DUELIST_SHEETS[phase] || DUELIST_SHEETS.approach;
 }
 
-function duelistPhaseDuration(phase: DuelistPhase) {
-  if (phase === "windup") return DUELIST_CONFIG.windupFrames;
+function duelistWindupFrames(enemy: EnemyState) {
+  return DUELIST_CONFIG.windupFrames + (isEliteEnemy(enemy) ? DUELIST_CONFIG.eliteWindupBonusFrames : 0);
+}
+
+function duelistRecoverMinFrames(enemy: EnemyState) {
+  if (isEliteEnemy(enemy)) return DUELIST_CONFIG.eliteRecoverMinFrames;
+  if (hasAwakenedGrowth(enemy)) return DUELIST_CONFIG.awakenedRecoverMinFrames;
+  return DUELIST_CONFIG.recoverMinFrames;
+}
+
+function duelistPhaseDuration(enemy: EnemyState, phase: DuelistPhase) {
+  if (phase === "windup") return duelistWindupFrames(enemy);
   if (phase === "slash") return DUELIST_CONFIG.slashFrames;
-  if (phase === "recover") return DUELIST_CONFIG.recoverMinFrames;
+  if (phase === "recover") return duelistRecoverMinFrames(enemy);
   return 1;
 }
 
 function duelistPhaseFrame(enemy: EnemyState, phase: DuelistPhase) {
   const sheet = duelistSheetForPhase(phase);
-  const duration = duelistPhaseDuration(phase);
+  const duration = duelistPhaseDuration(enemy, phase);
   const elapsed = Math.max(0, duration - (enemy.duelistTimer ?? 0));
   return Math.min(sheet.count - 1, Math.floor(elapsed * sheet.count / duration));
 }
@@ -106,14 +127,14 @@ function enterDuelistPhase(enemy: EnemyState, phase: DuelistPhase) {
   enemy.duelistPhase = phase;
   enemy.duelistSlashHit = false;
   if (phase === "windup") {
-    enemy.duelistTimer = DUELIST_CONFIG.windupFrames;
+    enemy.duelistTimer = duelistWindupFrames(enemy);
     playSfx("enemyWarning", SLASH_WARNING_SFX_PITCH);
   } else if (phase === "slash") {
     enemy.duelistTimer = DUELIST_CONFIG.slashFrames;
     playSfx("enemySlash", SLASH_START_SFX_PITCH);
   } else if (phase === "recover") {
     enemy.duelistTimer = randomFrameCount(
-      DUELIST_CONFIG.recoverMinFrames,
+      duelistRecoverMinFrames(enemy),
       DUELIST_CONFIG.recoverFrameJitter,
     );
   } else {
@@ -123,7 +144,8 @@ function enterDuelistPhase(enemy: EnemyState, phase: DuelistPhase) {
 
 function duelistSlashBox(enemy: EnemyState) {
   const facing = enemy.duelistFacing ?? (enemy.vx >= 0 ? 1 : -1);
-  const w = Math.round(enemy.w * SLASH_BOX_WIDTH_SCALE + SLASH_BOX_REACH);
+  const reach = SLASH_BOX_REACH + (isEliteEnemy(enemy) ? DUELIST_CONFIG.eliteSlashReachBonus : 0);
+  const w = Math.round(enemy.w * SLASH_BOX_WIDTH_SCALE + reach);
   const h = Math.round(enemy.h * SLASH_BOX_HEIGHT_SCALE);
   return {
     x: facing === 1

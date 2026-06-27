@@ -12,6 +12,8 @@ import {
   enemyCenterX,
   enemyDrawScale,
   enemyFeetY,
+  hasAwakenedGrowth,
+  isEliteEnemy,
 } from "./common";
 
 const BRUTE_CONFIG = {
@@ -34,12 +36,16 @@ const BRUTE_CONFIG = {
   recoverFrameJitter: 11,
   brokenRecoverMinFrames: 20,
   brokenRecoverFrameJitter: 9,
+  awakenedBrokenRecoverMinFrames: 16,
+  eliteBrokenRecoverMinFrames: 14,
   cleaveMinFrames: 24,
   cleaveFrameJitter: 6,
   shieldBashImpactRemainingFrames: 9,
   cleaveImpactRemainingFrames: 12,
   hpMultiplier: 3.25,
   shieldHpScale: 2,
+  awakenedShieldHpScale: 2.35,
+  eliteShieldHpScale: 2.65,
   maxActiveBrutes: 2,
   maxActiveAttacks: 1,
   drawScale: 1.0,
@@ -118,19 +124,31 @@ function bruteSheetForPhase(phase: BrutePhase) {
   return BRUTE_SHEETS[phase] || BRUTE_SHEETS.advance;
 }
 
-function brutePhaseDuration(phase: BrutePhase) {
+function bruteShieldHpScale(enemy: EnemyState) {
+  if (isEliteEnemy(enemy)) return BRUTE_CONFIG.eliteShieldHpScale;
+  if (hasAwakenedGrowth(enemy)) return BRUTE_CONFIG.awakenedShieldHpScale;
+  return BRUTE_CONFIG.shieldHpScale;
+}
+
+function bruteBrokenRecoverMinFrames(enemy: EnemyState) {
+  if (isEliteEnemy(enemy)) return BRUTE_CONFIG.eliteBrokenRecoverMinFrames;
+  if (hasAwakenedGrowth(enemy)) return BRUTE_CONFIG.awakenedBrokenRecoverMinFrames;
+  return BRUTE_CONFIG.brokenRecoverMinFrames;
+}
+
+function brutePhaseDuration(enemy: EnemyState, phase: BrutePhase) {
   if (phase === "guard") return BRUTE_CONFIG.guardMinFrames;
   if (phase === "shieldBash") return BRUTE_CONFIG.shieldBashMinFrames;
   if (phase === "recover") return BRUTE_CONFIG.recoverMinFrames;
   if (phase === "shieldBreak") return BRUTE_SHIELD_BREAK_FRAMES;
   if (phase === "cleave") return BRUTE_CONFIG.cleaveMinFrames;
-  if (phase === "brokenRecover") return BRUTE_CONFIG.brokenRecoverMinFrames;
+  if (phase === "brokenRecover") return bruteBrokenRecoverMinFrames(enemy);
   return 1;
 }
 
 function brutePhaseFrame(enemy: EnemyState, phase: BrutePhase) {
   const sheet = bruteSheetForPhase(phase);
-  const duration = brutePhaseDuration(phase);
+  const duration = brutePhaseDuration(enemy, phase);
   const elapsed = Math.max(0, duration - (enemy.bruteTimer ?? 0));
   return Math.min(sheet.count - 1, Math.floor(elapsed * sheet.count / duration));
 }
@@ -160,7 +178,7 @@ function enterBrutePhase(enemy: EnemyState, phase: BrutePhase) {
     enemy.bruteTimer = BRUTE_SHIELD_BREAK_FRAMES;
   } else if (phase === "brokenRecover") {
     enemy.bruteTimer = randomFrameCount(
-      BRUTE_CONFIG.brokenRecoverMinFrames,
+      bruteBrokenRecoverMinFrames(enemy),
       BRUTE_CONFIG.brokenRecoverFrameJitter,
     );
   } else if (phase === "cleave") {
@@ -204,7 +222,7 @@ function initBrute(enemy: EnemyState, context: EnemySpawnContext) {
   enemy.bruteTimer = 0;
   enemy.bruteFacing = -context.side;
   enemy.bruteBaseSpeed = context.speed;
-  enemy.bruteShieldHp = enemy.hp * BRUTE_CONFIG.shieldHpScale;
+  enemy.bruteShieldHp = enemy.hp * bruteShieldHpScale(enemy);
   enemy.bruteShieldBroken = false;
   enemy.bruteAttackHit = false;
 }
@@ -214,7 +232,7 @@ function updateBrute(enemy: EnemyState) {
   enemy.bruteTimer ??= 0;
   enemy.bruteFacing ??= enemy.vx >= 0 ? 1 : -1;
   enemy.bruteBaseSpeed ??= bruteAdvanceSpeed();
-  enemy.bruteShieldHp ??= enemy.hp * BRUTE_CONFIG.shieldHpScale;
+  enemy.bruteShieldHp ??= enemy.hp * bruteShieldHpScale(enemy);
   enemy.bruteShieldBroken ??= false;
   enemy.bruteAttackHit ??= false;
 

@@ -6,7 +6,10 @@ import {
   buildRunEnemyOrder,
   canSpawnBossSummon,
   createEnemyDirectorState,
+  enemySpawnCost,
+  maxActiveSpawnCostForAct,
   pickBossSummonEnemyId,
+  pickWavePlan,
   updateEnemyDirector,
 } from "./enemyDirector";
 import {
@@ -58,6 +61,14 @@ const BOSS_PHASE_FIVE = 5;
 const FINAL_BOSS_SUMMON_BUDGET_COUNT = 4;
 const BOSS_SUMMON_SPAWN_COST = 1;
 const LATE_POOL_RANDOM_ROLL = 0.99;
+const AWAKENED_SAMPLE_WAVES = 12;
+const FINAL_SAMPLE_WAVES = 6;
+
+function wavePlanSpawnCost(entries: ReturnType<typeof pickWavePlan>) {
+  return entries.reduce((total, entry) => (
+    total + enemySpawnCost(entry.enemyId, entry.elite) * entry.count
+  ), 0);
+}
 
 describe("act progression", () => {
   it("derives the capped 13-act structure from boss kills", () => {
@@ -174,6 +185,54 @@ describe("enemy director rules", () => {
     finalPool.currentPool = buildCurrentEnemyPool(FINAL_ACT, finalPool.runEnemyOrder, "final");
 
     expect(finalPool.currentPool.some((entry) => tierOne.includes(entry.enemyId))).toBe(false);
+  });
+
+  it("does not mark intro wave entries as elite", () => {
+    const director = createEnemyDirectorState(TEST_RUN_SEED);
+    const plan = pickWavePlan(director, false);
+
+    expect(plan.every((entry) => !entry.elite)).toBe(true);
+  });
+
+  it("caps awakened elite replacements at one per wave and charges their spawn cost", () => {
+    const director = createEnemyDirectorState(TEST_RUN_SEED);
+    director.act = ACT_SEVEN;
+    director.currentProfile = "fast_mix";
+    director.currentPool = buildCurrentEnemyPool(ACT_SEVEN, director.runEnemyOrder, "fast_mix");
+    let sawElite = false;
+
+    for (let wave = 0; wave < AWAKENED_SAMPLE_WAVES; wave += 1) {
+      director.wavesCleared = wave;
+      const plan = pickWavePlan(director, false);
+      const eliteEntries = plan.filter((entry) => entry.elite);
+
+      expect(eliteEntries.length).toBeLessThanOrEqual(1);
+      expect(wavePlanSpawnCost(plan)).toBeLessThanOrEqual(maxActiveSpawnCostForAct(ACT_SEVEN, director.elapsedInAct));
+      for (const entry of eliteEntries) {
+        sawElite = true;
+        expect(entry.count).toBe(1);
+        expect(enemySpawnCost(entry.enemyId, true)).toBeGreaterThan(enemySpawnCost(entry.enemyId, false));
+      }
+    }
+
+    expect(sawElite).toBe(true);
+  });
+
+  it("puts one or two elite replacements into final waves within active budget", () => {
+    const director = createEnemyDirectorState(TEST_RUN_SEED);
+    director.act = FINAL_ACT;
+    director.currentProfile = "final";
+    director.currentPool = buildCurrentEnemyPool(FINAL_ACT, director.runEnemyOrder, "final");
+
+    for (let wave = 0; wave < FINAL_SAMPLE_WAVES; wave += 1) {
+      director.wavesCleared = wave;
+      const plan = pickWavePlan(director, false);
+      const eliteEntries = plan.filter((entry) => entry.elite);
+
+      expect(eliteEntries.length).toBeGreaterThanOrEqual(1);
+      expect(eliteEntries.length).toBeLessThanOrEqual(2);
+      expect(wavePlanSpawnCost(plan)).toBeLessThanOrEqual(maxActiveSpawnCostForAct(FINAL_ACT, director.elapsedInAct));
+    }
   });
 
   it("narrows boss summon picks by phase and caps final boss summons", () => {

@@ -333,3 +333,5 @@ export const FINAL_WEIGHT_MULTIPLIERS: Partial<Record<EnemyId, number>> = {
   binder: 0.65,
   warden: 0.6,
 };
+
+export const ELITE_ELIGIBLE_ENEMIES: EnemyId[] = ["runner", "duelist", "caster", "brute", "binder"];

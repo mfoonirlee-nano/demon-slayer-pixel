@@ -6,12 +6,13 @@ import type {
   WaveEntryRole,
   WaveEntryRuntimeState,
 } from "../types/game-state";
-import { ENEMY_ARCHETYPES, PROFILE_CONFIGS } from "./enemyDirectorConfig";
+import { ELITE_ELIGIBLE_ENEMIES, ENEMY_ARCHETYPES, PROFILE_CONFIGS } from "./enemyDirectorConfig";
 import {
   activeSpawnCost,
   advanceEnemyDirectorToAct,
   anyEnemyHasTag,
   canSpawnByDirectorCap,
+  enemySpawnCost,
   maxActiveSpawnCostForAct,
   RECENT_ENEMY_LIMIT,
   seededRandom,
@@ -35,6 +36,7 @@ export {
   createEnemyDirectorState,
   enemyArchetypeById,
   enemyIdForSheetIndex,
+  enemySpawnCost,
   enemySpawnStats,
   maxActiveSpawnCostForAct,
   pickBossSummonEnemyId,
@@ -60,6 +62,7 @@ const WAVE_SEED_ACT_SALT = 1009;
 const WAVE_SEED_CLEAR_SALT = 9176;
 const WAVE_SEED_RECENT_SALT = 37;
 const TIER_ONE_COMPLEXITY = 1;
+const FINAL_ACT = 13;
 const PRESSURE_PINCER_CHANCE = 0.35;
 const REINFORCE_CLUSTER_CHANCE = 0.45;
 const DOUBLE_OPENER_CHANCE = 0.45;
@@ -72,10 +75,18 @@ const MAX_WAVE_ENTRIES = 5;
 const PREPARE_WAVE_SECONDS = 0.65;
 const ACTIVE_COST_BREATHER_SCALE = 0.22;
 const LOW_HEALTH_RATIO = 0.35;
+const AWAKENED_ELITE_CHANCE = 0.45;
+const FINAL_SECOND_ELITE_CHANCE = 0.5;
+const AWAKENED_FIRST_ACT = 7;
+const AWAKENED_LAST_ACT = 12;
+const FINAL_ELITE_BASE_COUNT = 1;
+const ELITE_PRIORITY_ROLE_WEIGHT_BONUS = 0.4;
+const MIN_FINAL_ELITE_CANDIDATES = 1;
 
 export type EnemySpawnRequest = {
   enemyId: EnemyId;
   pattern: SpawnPattern;
+  elite: boolean;
 };
 
 export type EnemyDirectorUpdate = {
@@ -88,6 +99,131 @@ function waveBudgetRatio(wavesCleared: number, lowHealth: boolean) {
   if (wavesCleared > 0 && wavesCleared % HARD_WAVE_INTERVAL === 0) return HARD_WAVE_RATIO;
   if (wavesCleared % LIGHT_WAVE_INTERVAL === 0) return LIGHT_WAVE_RATIO;
   return NORMAL_WAVE_RATIO;
+}
+
+function maxEliteEntriesForAct(act: number) {
+  if (act === FINAL_ACT) return 2;
+  if (act >= AWAKENED_FIRST_ACT && act <= AWAKENED_LAST_ACT) return 1;
+  return 0;
+}
+
+function desiredEliteEntriesForWave(act: number, rng: () => number) {
+  const maxEliteEntries = maxEliteEntriesForAct(act);
+  if (maxEliteEntries === 0) return 0;
+  if (act === FINAL_ACT) {
+    return FINAL_ELITE_BASE_COUNT + (rng() < FINAL_SECOND_ELITE_CHANCE ? 1 : 0);
+  }
+  return rng() < AWAKENED_ELITE_CHANCE ? 1 : 0;
+}
+
+function eliteUpgradeExtraCost(entry: WaveEntryRuntimeState) {
+  return enemySpawnCost(entry.enemyId, true) - enemySpawnCost(entry.enemyId, false);
+}
+
+function canUpgradeEntryToElite(entry: WaveEntryRuntimeState, plannedCost: number, maxCost: number) {
+  return !entry.elite
+    && entry.count === 1
+    && ELITE_ELIGIBLE_ENEMIES.includes(entry.enemyId)
+    && plannedCost + eliteUpgradeExtraCost(entry) <= maxCost;
+}
+
+function eliteEntryWeight(entry: WaveEntryRuntimeState) {
+  const roleBonus = entry.role === "pressure" || entry.role === "support" ? ELITE_PRIORITY_ROLE_WEIGHT_BONUS : 0;
+  return ENEMY_ARCHETYPES[entry.enemyId].spawnCost + roleBonus;
+}
+
+function applyEliteUpgrades(
+  entries: WaveEntryRuntimeState[],
+  act: number,
+  rng: () => number,
+  plannedCost: number,
+  maxCost: number,
+) {
+  let budgetedCost = plannedCost;
+  let remainingEliteEntries = desiredEliteEntriesForWave(act, rng);
+
+  while (remainingEliteEntries > 0) {
+    const candidates = entries.filter((entry) => canUpgradeEntryToElite(entry, budgetedCost, maxCost));
+    const picked = weightedPick(candidates, eliteEntryWeight, rng);
+    if (!picked) return;
+
+    picked.elite = true;
+    budgetedCost += eliteUpgradeExtraCost(picked);
+    remainingEliteEntries -= 1;
+  }
+}
+
+function hasEliteCandidateEntry(entries: readonly WaveEntryRuntimeState[]) {
+  return entries.some(isEliteCandidateEntry);
+}
+
+function isEliteCandidateEntry(entry: WaveEntryRuntimeState) {
+  return entry.count === 1 && ELITE_ELIGIBLE_ENEMIES.includes(entry.enemyId);
+}
+
+function currentEntryCost(entries: readonly WaveEntryRuntimeState[]) {
+  return entries.reduce((total, entry) => total + enemySpawnCost(entry.enemyId, entry.elite) * entry.count, 0);
+}
+
+function ensureFinalEliteCandidateEntry(
+  entries: WaveEntryRuntimeState[],
+  director: EnemyDirectorState,
+  rng: () => number,
+  maxCost: number,
+) {
+  if (director.act !== FINAL_ACT || hasEliteCandidateEntry(entries)) return;
+
+  const candidates = director.currentPool.filter((entry) => ELITE_ELIGIBLE_ENEMIES.includes(entry.enemyId));
+  const picked = weightedPick(candidates, (entry) => entry.weight, rng);
+  if (!picked) return;
+
+  const replacement = makeWaveEntry(
+    picked.enemyId,
+    roleForEnemy(picked.enemyId, director),
+    rng,
+    1,
+    EXTRA_ENTRY_BASE_DELAY,
+  );
+  const replacementCost = enemySpawnCost(replacement.enemyId, false);
+  const existingCost = currentEntryCost(entries);
+
+  if (entries.length < MAX_WAVE_ENTRIES && existingCost + replacementCost <= maxCost) {
+    entries.push(replacement);
+    return;
+  }
+
+  for (let index = entries.length - 1; index >= 0; index -= 1) {
+    const entry = entries[index];
+    const nextCost = existingCost - enemySpawnCost(entry.enemyId, entry.elite) * entry.count + replacementCost;
+    if (nextCost <= maxCost) {
+      entries[index] = replacement;
+      return;
+    }
+  }
+}
+
+function reserveFinalEliteBudget(entries: WaveEntryRuntimeState[], act: number, maxCost: number) {
+  if (act !== FINAL_ACT) return;
+  const eliteCandidates = entries.filter(isEliteCandidateEntry);
+  const minEliteExtraCost = Math.min(...eliteCandidates.map(eliteUpgradeExtraCost));
+  if (!Number.isFinite(minEliteExtraCost)) return;
+
+  while (currentEntryCost(entries) + minEliteExtraCost > maxCost && entries.length > 1) {
+    let removableIndex = -1;
+    for (let index = entries.length - 1; index >= 0; index -= 1) {
+      const entry = entries[index];
+      if (!isEliteCandidateEntry(entry)) {
+        removableIndex = index;
+        break;
+      }
+    }
+    if (removableIndex < 0) {
+      const candidateCount = entries.filter(isEliteCandidateEntry).length;
+      if (candidateCount <= MIN_FINAL_ELITE_CANDIDATES) return;
+      removableIndex = entries.length - 1;
+    }
+    entries.splice(removableIndex, 1);
+  }
 }
 
 function waveSeed(director: EnemyDirectorState) {
@@ -133,6 +269,7 @@ function makeWaveEntry(
   return {
     enemyId,
     role,
+    elite: false,
     count: remaining,
     remaining,
     spawnPattern: spawnPatternForRole(role, rng),
@@ -166,9 +303,17 @@ export function pickWavePlan(director: EnemyDirectorState, lowHealth: boolean) {
     addEntry(() => true, EXTRA_ENTRY_BASE_DELAY + rng() * EXTRA_ENTRY_RANDOM_DELAY);
   }
 
-  return entries.length > 0
-    ? entries
-    : [makeWaveEntry(director.currentPool[0]?.enemyId ?? "chaser", "opener", rng, 1, OPENER_ENTRY_DELAY)];
+  if (entries.length === 0) {
+    entries.push(makeWaveEntry(director.currentPool[0]?.enemyId ?? "chaser", "opener", rng, 1, OPENER_ENTRY_DELAY));
+  }
+  ensureFinalEliteCandidateEntry(entries, director, rng, maxCost);
+  reserveFinalEliteBudget(entries, director.act, maxCost);
+  const wavePlannedCost = entries.reduce((total, entry) => (
+    total + enemySpawnCost(entry.enemyId, false) * entry.count
+  ), 0);
+  applyEliteUpgrades(entries, director.act, rng, wavePlannedCost, maxCost);
+
+  return entries;
 }
 
 function rememberRecentEnemy(director: EnemyDirectorState, enemyId: EnemyId) {
@@ -232,7 +377,7 @@ function updateSpawningWave(
   const wave = director.wave;
   if (!wave) return;
   const activeCost = activeSpawnCost(activeEnemies)
-    + spawnRequests.reduce((total, request) => total + ENEMY_ARCHETYPES[request.enemyId].spawnCost, 0);
+    + spawnRequests.reduce((total, request) => total + enemySpawnCost(request.enemyId, request.elite), 0);
 
   wave.timer = Math.max(0, wave.timer - dt);
   if (wave.timer > 0) return;
@@ -243,7 +388,7 @@ function updateSpawningWave(
     return;
   }
 
-  const spawnCost = ENEMY_ARCHETYPES[entry.enemyId].spawnCost;
+  const spawnCost = enemySpawnCost(entry.enemyId, entry.elite);
   if (
     activeCost + spawnCost > wave.activeBudget
     || !canSpawnByDirectorCap(activeEnemies, entry.enemyId)
@@ -252,7 +397,7 @@ function updateSpawningWave(
     return;
   }
 
-  spawnRequests.push({ enemyId: entry.enemyId, pattern: entry.spawnPattern });
+  spawnRequests.push({ enemyId: entry.enemyId, pattern: entry.spawnPattern, elite: entry.elite });
   rememberRecentEnemy(director, entry.enemyId);
   entry.remaining -= 1;
 

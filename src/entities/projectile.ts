@@ -89,13 +89,13 @@ export function updateProjectiles() {
     } else {
       updateBossProjectile(p);
     }
-    if (p.kind !== "casterWisp") p.life -= 1;
+    p.life -= 1;
     if (hitbox(state.player, p)) {
       hurtPlayer(p.damage, p.vx);
       state.projectiles.splice(i, 1);
       continue;
     }
-    if ((p.kind !== "casterWisp" && p.life <= 0) || projectileOutOfBounds(p)) {
+    if (p.life <= 0 || projectileOutOfBounds(p)) {
       state.projectiles.splice(i, 1);
     }
   }

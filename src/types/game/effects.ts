@@ -209,6 +209,8 @@ export type BindingZoneState = {
   x: number;
   y: number;
   radius: number;
+  elite?: boolean;
+  moveScale?: number;
   life: number;
   maxLife: number;
   elapsed: number;

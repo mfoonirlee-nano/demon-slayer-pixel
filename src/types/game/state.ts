@@ -57,6 +57,7 @@ export type SpawnPattern = "left" | "right" | "random_edge" | "opposite_pair" | 
 export type WaveEntryRuntimeState = {
   enemyId: EnemyId;
   role: WaveEntryRole;
+  elite: boolean;
   count: number;
   remaining: number;
   spawnPattern: SpawnPattern;

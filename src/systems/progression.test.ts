@@ -1,9 +1,11 @@
 import { describe, expect, it } from "vitest";
-import { SKILL_IDS } from "../constants";
+import { RUNNER_SHEET_INDEX, SKILL_IDS } from "../constants";
 import { createInitialState } from "../game/state";
+import type { EnemyState } from "../types/game-state";
 import {
   addRunXp,
   applyUpgradeChoice,
+  enemyXp,
   hasLearnedUltimate,
   maybeDropBossUltimateUnlock,
   skillDamageMultiplier,
@@ -12,6 +14,8 @@ import {
 
 const LINE_PROJECTILE_LEVEL_TWO_DAMAGE_MULTIPLIER = 1.18;
 const BOSS_DROP_FAIL_ROLL = 0.99;
+const RUNNER_XP = 10;
+const ELITE_RUNNER_XP = 15;
 
 describe("run progression skills", () => {
   it("starts each run with the three default normal skills learned and equipped", () => {
@@ -126,5 +130,23 @@ describe("run progression skills", () => {
 
     expect(state.player.runLevel).toBe(2);
     expect(state.pendingUpgradeChoices).toEqual([]);
+  });
+
+  it("only gives the elite XP bonus to regular elite enemies", () => {
+    const regularRunner = { sheetIndex: RUNNER_SHEET_INDEX, spawnSource: "regular" } as EnemyState;
+    const regularEliteRunner = {
+      sheetIndex: RUNNER_SHEET_INDEX,
+      spawnSource: "regular",
+      elite: true,
+    } as EnemyState;
+    const bossEliteRunner = {
+      sheetIndex: RUNNER_SHEET_INDEX,
+      spawnSource: "boss",
+      elite: true,
+    } as EnemyState;
+
+    expect(enemyXp(regularRunner)).toBe(RUNNER_XP);
+    expect(enemyXp(regularEliteRunner)).toBe(ELITE_RUNNER_XP);
+    expect(enemyXp(bossEliteRunner)).toBe(RUNNER_XP);
   });
 });

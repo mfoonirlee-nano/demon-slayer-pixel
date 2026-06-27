@@ -4,7 +4,14 @@ import { ENEMY_SHEETS, RUNNER_SHEET_INDEX, RUNNER_SHEETS } from "../../constants
 import type { EnemyState, RunnerPhase } from "../../types/game-state";
 import { ctx } from "../../rendering/context";
 import type { EnemyArchetype, EnemySpawnContext } from "./common";
-import { drawEnemyFrame, enemyDrawScale, enemyCenterX, enemyFeetY } from "./common";
+import {
+  drawEnemyFrame,
+  enemyDrawScale,
+  enemyCenterX,
+  enemyFeetY,
+  hasAwakenedGrowth,
+  isEliteEnemy,
+} from "./common";
 
 const RUNNER_CONFIG = {
   triggerDistance: 250,
@@ -18,7 +25,14 @@ const RUNNER_CONFIG = {
   windupFrameJitter: 5,
   dashMinFrames: 42,
   dashFrameJitter: 11,
+  awakenedDashFrameBonus: 5,
+  eliteDashFrameBonus: 9,
+  eliteDashSpeedScale: 1.12,
   recoverFrames: 24,
+  awakenedRecoverFrames: 18,
+  eliteRecoverFrames: 16,
+  awakenedRecoverChaseScale: 0.28,
+  eliteRecoverChaseScale: 0.42,
   hpMultiplier: 0.75,
   maxActiveDashes: 2,
   drawScale: 1.2,
@@ -60,11 +74,38 @@ function runnerApproachBaseSpeed() {
   return RUNNER_CONFIG.approachBaseSpeed + Math.random() * RUNNER_CONFIG.approachRandomSpeed;
 }
 
-function runnerDashSpeed() {
-  return Math.min(
+function runnerDashSpeed(enemy: EnemyState) {
+  const speed = Math.min(
     RUNNER_CONFIG.dashMaxSpeed,
     RUNNER_CONFIG.dashBaseSpeed + state.elapsed * RUNNER_CONFIG.dashSpeedScaleByElapsed,
   );
+  return isEliteEnemy(enemy) ? speed * RUNNER_CONFIG.eliteDashSpeedScale : speed;
+}
+
+function runnerWindupFrames(enemy: EnemyState) {
+  const extraFrames = isEliteEnemy(enemy) ? RUNNER_CONFIG.windupFrameJitter : 0;
+  return randomFrameCount(RUNNER_CONFIG.windupMinFrames + extraFrames, RUNNER_CONFIG.windupFrameJitter);
+}
+
+function runnerDashFrames(enemy: EnemyState) {
+  const bonus = isEliteEnemy(enemy)
+    ? RUNNER_CONFIG.eliteDashFrameBonus
+    : hasAwakenedGrowth(enemy)
+      ? RUNNER_CONFIG.awakenedDashFrameBonus
+      : 0;
+  return randomFrameCount(RUNNER_CONFIG.dashMinFrames + bonus, RUNNER_CONFIG.dashFrameJitter);
+}
+
+function runnerRecoverFrames(enemy: EnemyState) {
+  if (isEliteEnemy(enemy)) return RUNNER_CONFIG.eliteRecoverFrames;
+  if (hasAwakenedGrowth(enemy)) return RUNNER_CONFIG.awakenedRecoverFrames;
+  return RUNNER_CONFIG.recoverFrames;
+}
+
+function runnerRecoverChaseScale(enemy: EnemyState) {
+  if (isEliteEnemy(enemy)) return RUNNER_CONFIG.eliteRecoverChaseScale;
+  if (hasAwakenedGrowth(enemy)) return RUNNER_CONFIG.awakenedRecoverChaseScale;
+  return 0;
 }
 
 function runnerDashCount() {
@@ -105,7 +146,7 @@ function updateRunner(enemy: EnemyState) {
     );
     if (Math.abs(toward) <= RUNNER_CONFIG.triggerDistance) {
       enemy.runnerPhase = "windup";
-      enemy.runnerTimer = randomFrameCount(RUNNER_CONFIG.windupMinFrames, RUNNER_CONFIG.windupFrameJitter);
+      enemy.runnerTimer = runnerWindupFrames(enemy);
       enemy.vx = 0;
       playSfx("enemyWarning", RUNNER_WARNING_SFX_PITCH);
     }
@@ -118,23 +159,25 @@ function updateRunner(enemy: EnemyState) {
         enemy.runnerTimer = 1;
       } else {
         enemy.runnerPhase = "dash";
-        enemy.runnerTimer = randomFrameCount(RUNNER_CONFIG.dashMinFrames, RUNNER_CONFIG.dashFrameJitter);
+        enemy.runnerTimer = runnerDashFrames(enemy);
         enemy.runnerFacing = facing;
-        enemy.vx = facing * runnerDashSpeed();
+        enemy.vx = facing * runnerDashSpeed(enemy);
         playSfx("enemyDash", RUNNER_DASH_SFX_PITCH);
       }
     }
   } else if (enemy.runnerPhase === "dash") {
     enemy.runnerTimer -= 1;
-    enemy.vx = enemy.runnerFacing * runnerDashSpeed();
+    enemy.vx = enemy.runnerFacing * runnerDashSpeed(enemy);
     if (enemy.runnerTimer <= 0) {
       enemy.runnerPhase = "recover";
-      enemy.runnerTimer = RUNNER_CONFIG.recoverFrames;
+      enemy.runnerTimer = runnerRecoverFrames(enemy);
       enemy.vx = 0;
     }
   } else {
     enemy.runnerTimer -= 1;
-    enemy.vx = 0;
+    enemy.vx = (enemy.runnerFacing ?? facing)
+      * (enemy.runnerApproachSpeed ?? RUNNER_CONFIG.approachBaseSpeed)
+      * runnerRecoverChaseScale(enemy);
     if (enemy.runnerTimer <= 0) {
       enemy.runnerPhase = "approach";
     }

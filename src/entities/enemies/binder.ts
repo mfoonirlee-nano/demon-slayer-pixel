@@ -15,7 +15,14 @@ import { drawSheetFrame } from "../../rendering/graphics";
 import type { BinderAiPhase, BinderPhase, EnemyState } from "../../types/game-state";
 import { frameIndex } from "../../game/utils";
 import type { EnemyArchetype, EnemySpawnContext } from "./common";
-import { drawEnemyFrame, enemyCenterX, enemyDrawScale, enemyFeetY } from "./common";
+import {
+  drawEnemyFrame,
+  enemyCenterX,
+  enemyDrawScale,
+  enemyFeetY,
+  hasAwakenedGrowth,
+  isEliteEnemy,
+} from "./common";
 import { endRun } from "../../systems/runLifecycle";
 
 export const BINDER_UNLOCK_SECONDS = 90;
@@ -41,9 +48,14 @@ const BINDER_CONFIG = {
   maxActiveBinders: 1,
   maxActiveZones: 1,
   zoneLifeFrames: 150,
+  awakenedZoneLifeBonusFrames: 30,
+  eliteZoneLifeBonusFrames: 48,
   zoneRadius: 76,
+  awakenedZoneRadiusBonus: 8,
+  eliteZoneRadiusBonus: 16,
   zoneVerticalRadiusScale: 0.58,
   zoneMoveScale: 0.45,
+  eliteZoneMoveScale: 0.28,
   zoneDamageFirstFrame: 24,
   zoneDamageIntervalFrames: 36,
   zoneDamageInvincibleFrames: 10,
@@ -110,6 +122,22 @@ function bindingZoneDamage() {
   );
 }
 
+function bindingZoneLife(enemy: EnemyState) {
+  if (isEliteEnemy(enemy)) return BINDER_CONFIG.zoneLifeFrames + BINDER_CONFIG.eliteZoneLifeBonusFrames;
+  if (hasAwakenedGrowth(enemy)) return BINDER_CONFIG.zoneLifeFrames + BINDER_CONFIG.awakenedZoneLifeBonusFrames;
+  return BINDER_CONFIG.zoneLifeFrames;
+}
+
+function bindingZoneRadius(enemy: EnemyState) {
+  if (isEliteEnemy(enemy)) return BINDER_CONFIG.zoneRadius + BINDER_CONFIG.eliteZoneRadiusBonus;
+  if (hasAwakenedGrowth(enemy)) return BINDER_CONFIG.zoneRadius + BINDER_CONFIG.awakenedZoneRadiusBonus;
+  return BINDER_CONFIG.zoneRadius;
+}
+
+function bindingZoneMoveScale(zone: { moveScale?: number }) {
+  return zone.moveScale ?? BINDER_CONFIG.zoneMoveScale;
+}
+
 function isPlayerInBindingZone(zone: { x: number; y: number; radius: number }) {
   const player = state.player;
   const footX = player.x + player.w / HALF_DIVISOR;
@@ -166,14 +194,17 @@ function initBinder(enemy: EnemyState, context: EnemySpawnContext) {
   enemy.binderCastSpawned = false;
 }
 
-function spawnBindingZone() {
+function spawnBindingZone(enemy: EnemyState) {
   if (bindingZoneCount() >= BINDER_CONFIG.maxActiveZones) return;
+  const life = bindingZoneLife(enemy);
   state.bindingZones.push({
     x: playerCenterX(),
     y: state.player.onPlatform?.y ?? GROUND_Y,
-    radius: BINDER_CONFIG.zoneRadius,
-    life: BINDER_CONFIG.zoneLifeFrames,
-    maxLife: BINDER_CONFIG.zoneLifeFrames,
+    radius: bindingZoneRadius(enemy),
+    elite: isEliteEnemy(enemy),
+    moveScale: isEliteEnemy(enemy) ? BINDER_CONFIG.eliteZoneMoveScale : BINDER_CONFIG.zoneMoveScale,
+    life,
+    maxLife: life,
     elapsed: 0,
     frame: 0,
   });
@@ -230,7 +261,7 @@ function updateBinder(enemy: EnemyState) {
     const framesSinceCastStart = BINDER_CONFIG.castFrames - enemy.binderTimer;
     if (!enemy.binderCastSpawned && framesSinceCastStart >= BINDER_CONFIG.castSpawnFrame) {
       enemy.binderCastSpawned = true;
-      spawnBindingZone();
+      spawnBindingZone(enemy);
     }
     enemy.binderTimer -= 1;
     if (enemy.binderTimer <= 0) enterBinderPhase(enemy, "recover");
@@ -340,7 +371,7 @@ export function updateBindingZones() {
 
 export function bindingZonePlayerMoveScale() {
   for (const zone of state.bindingZones) {
-    if (isPlayerInBindingZone(zone)) return BINDER_CONFIG.zoneMoveScale;
+    if (isPlayerInBindingZone(zone)) return bindingZoneMoveScale(zone);
   }
 
   return 1;

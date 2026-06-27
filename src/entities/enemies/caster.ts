@@ -5,7 +5,14 @@ import { drawSheetFrame } from "../../rendering/graphics";
 import type { CasterAiPhase, CasterPhase, EnemyState } from "../../types/game-state";
 import { frameIndex } from "../../game/utils";
 import type { EnemyArchetype, EnemySpawnContext } from "./common";
-import { drawEnemyFrame, enemyCenterX, enemyDrawScale, enemyFeetY } from "./common";
+import {
+  drawEnemyFrame,
+  enemyCenterX,
+  enemyDrawScale,
+  enemyFeetY,
+  hasAwakenedGrowth,
+  isEliteEnemy,
+} from "./common";
 
 const CASTER_CONFIG = {
   minRange: 220,
@@ -35,15 +42,19 @@ const CASTER_CONFIG = {
   wispCollisionW: 24,
   wispCollisionH: 22,
   wispLifeFrames: 210,
+  awakenedWispLifeBonusFrames: 36,
   wispMaxDamage: 14,
   wispBaseDamage: 4,
   wispDamageScale: 0.45,
   wispBaseSpeed: 1.85,
   wispSpeedScale: 0.09,
   wispMaxSpeed: 2.85,
+  awakenedWispSpeedBonus: 0.12,
   wispBaseTurnRate: 0.014,
   wispTurnRateScale: 0.006,
   wispMaxTurnRate: 0.052,
+  awakenedWispTurnRateBonus: 0.012,
+  eliteWispTurnRateBonus: 0.018,
   wispSpreadRadians: 0.16,
   wispStartForwardRatio: 0.58,
   wispStartHeightRatio: 0.38,
@@ -90,17 +101,27 @@ function casterWispDamage() {
   );
 }
 
-function casterWispSpeed() {
-  return Math.min(
+function casterWispLife(enemy: EnemyState) {
+  return CASTER_CONFIG.wispLifeFrames + (hasAwakenedGrowth(enemy) ? CASTER_CONFIG.awakenedWispLifeBonusFrames : 0);
+}
+
+function casterWispSpeed(enemy: EnemyState) {
+  const speed = Math.min(
     CASTER_CONFIG.wispMaxSpeed,
     CASTER_CONFIG.wispBaseSpeed + difficultyK() * CASTER_CONFIG.wispSpeedScale,
   );
+  return hasAwakenedGrowth(enemy) ? speed + CASTER_CONFIG.awakenedWispSpeedBonus : speed;
 }
 
-function casterWispTurnRate() {
+function casterWispTurnRate(enemy: EnemyState) {
+  const bonus = isEliteEnemy(enemy)
+    ? CASTER_CONFIG.eliteWispTurnRateBonus
+    : hasAwakenedGrowth(enemy)
+      ? CASTER_CONFIG.awakenedWispTurnRateBonus
+      : 0;
   return Math.min(
     CASTER_CONFIG.wispMaxTurnRate,
-    CASTER_CONFIG.wispBaseTurnRate + difficultyK() * CASTER_CONFIG.wispTurnRateScale,
+    CASTER_CONFIG.wispBaseTurnRate + difficultyK() * CASTER_CONFIG.wispTurnRateScale + bonus,
   );
 }
 
@@ -149,7 +170,8 @@ function spawnCasterWisps(enemy: EnemyState) {
   const available = CASTER_CONFIG.maxActiveWisps - active;
   if (available <= 0) return;
 
-  const shotCount = Math.min(available, difficultyK() >= CASTER_CONFIG.wispDoubleCastThreshold ? 2 : 1);
+  const shouldDoubleCast = isEliteEnemy(enemy) || difficultyK() >= CASTER_CONFIG.wispDoubleCastThreshold;
+  const shotCount = Math.min(available, shouldDoubleCast ? 2 : 1);
   const facing = enemy.casterFacing ?? (enemy.vx >= 0 ? 1 : -1);
   const startX = enemyCenterX(enemy)
     + facing * enemy.w * CASTER_CONFIG.wispStartForwardRatio
@@ -159,7 +181,7 @@ function spawnCasterWisps(enemy: EnemyState) {
     - CASTER_CONFIG.wispCollisionH / HALF_DIVISOR;
   const targetX = playerCenterX();
   const targetY = playerCenterY();
-  const speed = casterWispSpeed();
+  const speed = casterWispSpeed(enemy);
   const baseAngle = Math.atan2(
     targetY - (startY + CASTER_CONFIG.wispCollisionH / HALF_DIVISOR),
     targetX - (startX + CASTER_CONFIG.wispCollisionW / HALF_DIVISOR),
@@ -178,13 +200,13 @@ function spawnCasterWisps(enemy: EnemyState) {
       h: CASTER_CONFIG.wispCollisionH,
       vx: Math.cos(angle) * speed,
       vy: Math.sin(angle) * speed,
-      life: CASTER_CONFIG.wispLifeFrames,
+      life: casterWispLife(enemy),
       damage: casterWispDamage(),
       ownerId: enemy.casterId,
       frame: 0,
       elapsed: 0,
       speed,
-      turnRate: casterWispTurnRate(),
+      turnRate: casterWispTurnRate(enemy),
     });
   }
   playSfx("enemyCastRelease", shotCount > 1 ? CASTER_CONFIG.wispDoubleCastPitch : 1);

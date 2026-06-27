@@ -228,7 +228,7 @@ function loop(ts: number) {
         bossActive: state.boss !== null,
       });
       for (const request of directorUpdate.spawnRequests) {
-        spawnEnemyById(request.enemyId, "regular", request.pattern);
+        spawnEnemyById(request.enemyId, "regular", request.pattern, { elite: request.elite });
       }
       if (!state.boss && directorUpdate.spawnBoss) {
         spawnBoss();

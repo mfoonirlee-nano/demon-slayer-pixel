@@ -8,7 +8,7 @@ import {
 import type { EnemyId, EnemySpawnSource, EnemyState, SpawnPattern } from "../types/game-state";
 import { hitbox } from "../game/utils";
 import { hurtPlayer } from "./player";
-import { createEnemyState } from "./enemies/common";
+import { createEnemyState, drawEnemyGrowthMarker } from "./enemies/common";
 import { canSpawnBrute, isBruteSheet } from "./enemies/brute";
 import { canSpawnBinder, isBinderSheet } from "./enemies/binder";
 import { canSpawnDuelist, isDuelistSheet } from "./enemies/duelist";
@@ -22,6 +22,7 @@ import {
   activeSpawnCost,
   canSpawnByDirectorCap,
   canSpawnBossSummon,
+  enemySpawnCost,
   enemyArchetypeById,
   enemyIdForSheetIndex,
   enemySpawnStats,
@@ -30,6 +31,11 @@ import {
   pickRegularEnemyId,
 } from "../systems/enemyDirector";
 import { BOSS_ARCHETYPE_IDS } from "./bosses/registry";
+import { actBandForAct } from "../systems/runProgression";
+
+type SpawnEnemyOptions = {
+  elite?: boolean;
+};
 
 function sideForPattern(pattern: SpawnPattern): number {
   if (pattern === "left") return -1;
@@ -41,14 +47,18 @@ function createSpawnedEnemy(
   enemyId: EnemyId,
   side: number,
   spawnSource: EnemySpawnSource,
+  options: SpawnEnemyOptions = {},
 ): EnemyState {
   const config = enemyArchetypeById(enemyId);
   const archetype = enemyArchetypeForSheet(config.sheetIndex);
   const stats = enemySpawnStats(enemyId, state.bossKills, state.elapsed);
+  const elite = options.elite === true && spawnSource === "regular";
   const spawnContext = {
     enemyId,
     spawnSource,
-    spawnCost: config.spawnCost,
+    spawnCost: enemySpawnCost(enemyId, elite),
+    growthStage: actBandForAct(state.enemyDirector.act),
+    elite,
     side,
     sheetIndex: config.sheetIndex,
     speed: stats.speed,
@@ -73,8 +83,10 @@ function canSpawnSheetIndex(sheetIndex: number) {
   return true;
 }
 
-function canSpawnEnemyId(enemyId: EnemyId, source: EnemySpawnSource) {
+function canSpawnEnemyId(enemyId: EnemyId, source: EnemySpawnSource, options: SpawnEnemyOptions = {}) {
   const config = enemyArchetypeById(enemyId);
+  const elite = options.elite === true && source === "regular";
+  const spawnCost = enemySpawnCost(enemyId, elite);
   if (!ENEMY_SHEETS[config.sheetIndex]) return false;
   if (!canSpawnSheetIndex(config.sheetIndex)) return false;
   if (source === "debug") return true;
@@ -82,13 +94,13 @@ function canSpawnEnemyId(enemyId: EnemyId, source: EnemySpawnSource) {
   if (source === "boss") {
     return canSpawnBossSummon(
       state.enemies,
-      config.spawnCost,
+      spawnCost,
       state.boss?.phase ?? 1,
       state.boss?.awakened ?? false,
       state.boss?.id === BOSS_ARCHETYPE_IDS.bloodMoon,
     );
   }
-  return activeSpawnCost(state.enemies) + config.spawnCost <= maxActiveSpawnCostForAct(
+  return activeSpawnCost(state.enemies) + spawnCost <= maxActiveSpawnCostForAct(
     state.enemyDirector.act,
     state.enemyDirector.elapsedInAct,
   );
@@ -98,10 +110,11 @@ export function spawnEnemyById(
   enemyId: EnemyId,
   source: EnemySpawnSource = "regular",
   pattern: SpawnPattern = "random_edge",
+  options: SpawnEnemyOptions = {},
 ) {
-  if (!canSpawnEnemyId(enemyId, source)) return false;
+  if (!canSpawnEnemyId(enemyId, source, options)) return false;
 
-  state.enemies.push(createSpawnedEnemy(enemyId, sideForPattern(pattern), source));
+  state.enemies.push(createSpawnedEnemy(enemyId, sideForPattern(pattern), source, options));
   return true;
 }
 
@@ -168,5 +181,7 @@ export function updateEnemies() {
 }
 
 export function drawEnemy(enemy: EnemyState) {
-  enemyArchetypeForSheet(enemy.sheetIndex).draw(enemy);
+  const archetype = enemyArchetypeForSheet(enemy.sheetIndex);
+  archetype.draw(enemy);
+  drawEnemyGrowthMarker(enemy, archetype);
 }

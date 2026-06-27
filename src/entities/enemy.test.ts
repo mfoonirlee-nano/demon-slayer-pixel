@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { GROUND_Y } from "../constants";
 import { resetState, state } from "../game/state";
+import { enemySpawnCost } from "../systems/enemyDirector";
 import { spawnEnemyById, updateEnemies } from "./enemy";
 
 const TEST_LEAPER_DAMAGE = 10;
@@ -9,6 +10,8 @@ const LEAPER_IMPACT_PHASE_DURATION = 28;
 const LEAPER_TEST_LANDING_X = 120;
 const LEAPER_TEST_PLAYER_X_OFFSET = 10;
 const EXPECTED_IMPACT_HP = 81;
+const AWAKENED_ACT = 7;
+const AWAKENED_BOSS_KILLS = 6;
 
 describe("leaper damage", () => {
   it("applies contact damage when the leaper body overlaps the player", () => {
@@ -45,5 +48,20 @@ describe("leaper damage", () => {
     updateEnemies();
 
     expect(state.player.hp).toBe(EXPECTED_IMPACT_HP);
+  });
+});
+
+describe("enemy growth spawns", () => {
+  it("creates regular elite enemies with the current act growth stage and elite cost", () => {
+    resetState();
+    state.bossKills = AWAKENED_BOSS_KILLS;
+    state.enemyDirector.act = AWAKENED_ACT;
+
+    expect(spawnEnemyById("runner", "regular", "left", { elite: true })).toBe(true);
+
+    const runner = state.enemies[0];
+    expect(runner.growthStage).toBe("awakened");
+    expect(runner.elite).toBe(true);
+    expect(runner.spawnCost).toBeCloseTo(enemySpawnCost("runner", true));
   });
 });

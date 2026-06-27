@@ -48,6 +48,7 @@ const LEVEL_HEAL_RATIO = 0.8;
 const XP_CURVE_EXPONENT = 1.45;
 const SPLITTER_CHILD_XP = 3;
 const DEFAULT_ENEMY_XP = 8;
+const REGULAR_ELITE_XP_MULTIPLIER = 1.5;
 const BOSS_XP_BASE = 90;
 const BOSS_XP_PER_KILL = 25;
 const MAX_SKILL_LEVEL = 3;
@@ -137,7 +138,9 @@ export function ultimateDamageMultiplier(state: GameState) {
 
 export function enemyXp(enemy: EnemyState) {
   if (enemy.splitterVariant === "child") return SPLITTER_CHILD_XP;
-  return ENEMY_XP_BY_SHEET_INDEX[enemy.sheetIndex] ?? DEFAULT_ENEMY_XP;
+  const baseXp = ENEMY_XP_BY_SHEET_INDEX[enemy.sheetIndex] ?? DEFAULT_ENEMY_XP;
+  if (enemy.elite && enemy.spawnSource === "regular") return Math.round(baseXp * REGULAR_ELITE_XP_MULTIPLIER);
+  return baseXp;
 }
 
 export function bossXp(bossKillsBeforeKill: number) {

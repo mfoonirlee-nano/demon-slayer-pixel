@@ -54,6 +54,7 @@ const LATE_TIER_ONE_WEIGHT = 0.65;
 const TIER_ONE_COMPLEXITY = 1;
 const AWAKENED_PROFILE_SHUFFLE_OFFSET = 503;
 const ACTIVE_SPAWN_COST_RAMP_SECONDS = 45;
+const ELITE_SPAWN_COST_MULTIPLIER = 1.6;
 const AWAKENED_BOSS_SUMMON_PHASE = 4;
 const ENRAGED_BOSS_SUMMON_PHASE = 3;
 const PRESSURE_BOSS_SUMMON_PHASE = 2;
@@ -105,6 +106,11 @@ export type EnemySpawnStats = {
   damage: number;
   speed: number;
 };
+
+export function enemySpawnCost(enemyId: EnemyId, elite = false) {
+  const baseCost = ENEMY_ARCHETYPES[enemyId].spawnCost;
+  return elite ? baseCost * ELITE_SPAWN_COST_MULTIPLIER : baseCost;
+}
 
 export function seededRandom(seed: number) {
   let value = seed >>> 0;
