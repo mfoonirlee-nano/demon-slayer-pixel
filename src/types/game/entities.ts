@@ -138,6 +138,8 @@ export type EnemyState = {
   w: number;
   h: number;
   vx: number;
+  vy?: number;
+  onPlatform?: PlatformState | null;
   hp: number;
   damage: number;
   hitCd: number;

@@ -194,6 +194,8 @@ export function createEnemyState(context: EnemySpawnContext, archetype: EnemyArc
     w: size.w,
     h: size.h,
     vx: -context.side * context.speed,
+    vy: 0,
+    onPlatform: null,
     hp: context.baseHp * (archetype.hpMultiplier ?? 1),
     damage: context.damage,
     hitCd: 0,

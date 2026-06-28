@@ -106,6 +106,27 @@ describe("enemy platform spawns", () => {
     );
   });
 
+  it("carries platform-spawned enemies with their supporting platform", () => {
+    resetState();
+    const movingPlatform = platform({ vx: -3 });
+    state.platforms.push(movingPlatform);
+
+    expect(spawnEnemyById("runner", "regular", "left")).toBe(true);
+
+    const runner = state.enemies[0];
+    runner.runnerPhase = "windup";
+    runner.runnerTimer = 10;
+    runner.vx = 0;
+    const originalX = runner.x;
+    movingPlatform.x += movingPlatform.vx;
+
+    updateEnemies();
+
+    expect(runner.x).toBeCloseTo(originalX + movingPlatform.vx);
+    expect(runner.y + runner.h).toBe(TEST_PLATFORM_Y);
+    expect(runner.onPlatform).toBe(movingPlatform);
+  });
+
   it("keeps boss and debug spawns on the ground even when a platform is available", () => {
     resetState();
     state.platforms.push(platform());
@@ -138,5 +159,25 @@ describe("enemy platform spawns", () => {
 
     const runner = state.enemies[0];
     expect(runner.y + runner.h).toBe(GROUND_Y);
+  });
+
+  it("applies gravity to platform-spawned enemies once their platform no longer supports them", () => {
+    resetState();
+    state.platforms.push(platform());
+
+    expect(spawnEnemyById("runner", "regular", "left")).toBe(true);
+
+    const runner = state.enemies[0];
+    runner.runnerPhase = "windup";
+    runner.runnerTimer = 10;
+    runner.vx = 0;
+    const originalY = runner.y;
+    state.platforms.length = 0;
+
+    updateEnemies();
+
+    expect(runner.y).toBeGreaterThan(originalY);
+    expect(runner.vy ?? 0).toBeGreaterThan(0);
+    expect(runner.onPlatform).toBeNull();
   });
 });

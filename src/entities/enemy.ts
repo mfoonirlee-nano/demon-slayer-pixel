@@ -1,9 +1,12 @@
 import { state } from "../game/state";
 import {
   WIDTH,
+  GRAVITY,
+  GROUND_Y,
   ENEMY_SHEETS,
   ENEMY_CONFIG,
   LANTERN_EMBER_CONFIG,
+  PLAYER_COMBAT,
 } from "../constants";
 import type { EnemyId, EnemySpawnSource, EnemyState, PlatformState, SpawnPattern } from "../types/game-state";
 import { hitbox } from "../game/utils";
@@ -78,6 +81,10 @@ function canUsePlatformSpawn(enemyId: EnemyId, source: EnemySpawnSource) {
   return source === "regular" && PLATFORM_READY_ENEMY_IDS.includes(enemyId);
 }
 
+function enemyUsesPlatformPhysics(enemy: EnemyState) {
+  return PLATFORM_READY_ENEMY_IDS.includes(enemy.id);
+}
+
 function clampEnemyCenterToPlatform(centerX: number, enemy: EnemyState, platform: PlatformState) {
   const minCenterX = platform.x + enemy.w / 2;
   const maxCenterX = platform.x + platform.w - enemy.w / 2;
@@ -93,6 +100,50 @@ function placeEnemyOnPlatform(enemy: EnemyState, platform: PlatformState) {
   );
   enemy.x = centerX - enemy.w / 2;
   enemy.y = platform.y - enemy.h;
+  enemy.vy = 0;
+  enemy.onPlatform = platform;
+}
+
+function enemyOverlapsPlatform(enemy: EnemyState, platform: PlatformState) {
+  return enemy.x + enemy.w > platform.x + PLAYER_COMBAT.platformEdgePadding
+    && enemy.x < platform.x + platform.w - PLAYER_COMBAT.platformEdgePadding;
+}
+
+function prepareEnemyPlatformPhysics(enemy: EnemyState) {
+  const platform = enemy.onPlatform ?? null;
+  if (platform && state.platforms.includes(platform) && enemyOverlapsPlatform(enemy, platform)) {
+    enemy.x += platform.vx;
+  } else {
+    enemy.onPlatform = null;
+  }
+
+  return enemy.y + enemy.h;
+}
+
+function applyEnemyPlatformPhysics(enemy: EnemyState, prevBottom: number) {
+  enemy.vy = (enemy.vy ?? 0) + GRAVITY;
+  enemy.y += enemy.vy;
+  enemy.onPlatform = null;
+
+  let landed = false;
+  if (enemy.vy >= 0) {
+    for (const platform of state.platforms) {
+      if (!enemyOverlapsPlatform(enemy, platform)) continue;
+      const nowBottom = enemy.y + enemy.h;
+      if (prevBottom <= platform.y + PLAYER_COMBAT.platformLandingTolerance && nowBottom >= platform.y) {
+        enemy.y = platform.y - enemy.h;
+        enemy.vy = 0;
+        enemy.onPlatform = platform;
+        landed = true;
+        break;
+      }
+    }
+  }
+
+  if (!landed && enemy.y + enemy.h >= GROUND_Y) {
+    enemy.y = GROUND_Y - enemy.h;
+    enemy.vy = 0;
+  }
 }
 
 function createSpawnedEnemy(
@@ -205,6 +256,8 @@ export function updateEnemies() {
     }
 
     const archetype = enemyArchetypeForSheet(enemy.sheetIndex);
+    const usesPlatformPhysics = enemyUsesPlatformPhysics(enemy);
+    const prevBottom = usesPlatformPhysics ? prepareEnemyPlatformPhysics(enemy) : 0;
     archetype.update(enemy);
     if (archetype.shouldRemove?.(enemy)) {
       state.enemies.splice(i, 1);
@@ -215,6 +268,8 @@ export function updateEnemies() {
       enemy.x += enemy.vx * LANTERN_EMBER_CONFIG.buffSpeedExtraScale;
       enemy.lanternBuffTimer = Math.max(0, (enemy.lanternBuffTimer ?? 0) - 1);
     }
+
+    if (usesPlatformPhysics) applyEnemyPlatformPhysics(enemy, prevBottom);
   }
 
   applyWardenAuraBuffs();
