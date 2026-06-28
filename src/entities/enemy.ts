@@ -5,7 +5,7 @@ import {
   ENEMY_CONFIG,
   LANTERN_EMBER_CONFIG,
 } from "../constants";
-import type { EnemyId, EnemySpawnSource, EnemyState, SpawnPattern } from "../types/game-state";
+import type { EnemyId, EnemySpawnSource, EnemyState, PlatformState, SpawnPattern } from "../types/game-state";
 import { hitbox } from "../game/utils";
 import { hurtPlayer } from "./player";
 import { createEnemyState, drawEnemyGrowthMarker } from "./enemies/common";
@@ -37,10 +37,62 @@ type SpawnEnemyOptions = {
   elite?: boolean;
 };
 
+const PLATFORM_SPAWN_MAX_DISTANCE = 260;
+const PLATFORM_SPAWN_CENTER_RATIO = 0.35;
+const PLATFORM_READY_ENEMY_IDS: readonly EnemyId[] = [
+  "chaser",
+  "crawler",
+  "runner",
+  "duelist",
+  "caster",
+  "splitter",
+  "brute",
+  "binder",
+  "warden",
+];
+
 function sideForPattern(pattern: SpawnPattern): number {
   if (pattern === "left") return -1;
   if (pattern === "right") return 1;
   return Math.random() < ENEMY_CONFIG.spawnSideChance ? -1 : 1;
+}
+
+function isPlatformSpawnCandidate(platform: PlatformState) {
+  return platform.x >= WIDTH
+    && platform.x <= WIDTH + PLATFORM_SPAWN_MAX_DISTANCE
+    && platform.kind !== "hover";
+}
+
+function platformSpawnCandidate() {
+  let picked: PlatformState | null = null;
+
+  for (const platform of state.platforms) {
+    if (!isPlatformSpawnCandidate(platform)) continue;
+    if (!picked || platform.x < picked.x) picked = platform;
+  }
+
+  return picked;
+}
+
+function canUsePlatformSpawn(enemyId: EnemyId, source: EnemySpawnSource) {
+  return source === "regular" && PLATFORM_READY_ENEMY_IDS.includes(enemyId);
+}
+
+function clampEnemyCenterToPlatform(centerX: number, enemy: EnemyState, platform: PlatformState) {
+  const minCenterX = platform.x + enemy.w / 2;
+  const maxCenterX = platform.x + platform.w - enemy.w / 2;
+  if (minCenterX > maxCenterX) return platform.x + platform.w / 2;
+  return Math.min(maxCenterX, Math.max(minCenterX, centerX));
+}
+
+function placeEnemyOnPlatform(enemy: EnemyState, platform: PlatformState) {
+  const centerX = clampEnemyCenterToPlatform(
+    platform.x + platform.w * PLATFORM_SPAWN_CENTER_RATIO,
+    enemy,
+    platform,
+  );
+  enemy.x = centerX - enemy.w / 2;
+  enemy.y = platform.y - enemy.h;
 }
 
 function createSpawnedEnemy(
@@ -66,6 +118,10 @@ function createSpawnedEnemy(
     baseHp: stats.hp / (archetype.hpMultiplier ?? 1),
   };
   const enemy = createEnemyState(spawnContext, archetype);
+  if (canUsePlatformSpawn(enemyId, spawnSource)) {
+    const platform = platformSpawnCandidate();
+    if (platform) placeEnemyOnPlatform(enemy, platform);
+  }
   archetype.init?.(enemy, spawnContext);
   return enemy;
 }

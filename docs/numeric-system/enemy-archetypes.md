@@ -413,7 +413,7 @@ if (enemy appeared in previous wave && !required) weight *= 0.35;
 
 ## Spawn Patterns
 
-所有敌人初始 spawn 必须在屏幕外，避免屏内突然出现。屏内出现只能来自敌人自身状态机，例如 `burrower` 潜行后钻出。
+普通敌人可优先在右侧屏幕外平台出生；其他初始 spawn 仍必须在屏幕外，避免屏内突然出现。屏内出现只能来自敌人自身状态机，例如 `burrower` 潜行后钻出。
 
 ```ts
 type SpawnLane = "ground" | "air";
