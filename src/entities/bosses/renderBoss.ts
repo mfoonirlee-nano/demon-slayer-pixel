@@ -153,7 +153,7 @@ function bloodMoonCastSheet(boss: LiveBoss) {
 
 function bossCastDuration(boss: LiveBoss) {
   if (boss.id === BOSS_ARCHETYPE_IDS.deadBell) {
-    return boss.skillMode === "deadBellCombo"
+    return boss.skillMode === "deadBellCombo" || boss.skillMode === "deadBellDuet"
       ? DEAD_BELL_CONFIG.comboCastDuration
       : DEAD_BELL_CONFIG.castDuration;
   }
@@ -184,7 +184,7 @@ function bossCastFrameDuration(boss: LiveBoss) {
 function drawDeadBellBeatCue(boss: LiveBoss) {
   if (!ctx || boss.id !== BOSS_ARCHETYPE_IDS.deadBell) return;
 
-  const comboStopBeat = boss.skillMode === "deadBellCombo"
+  const comboStopBeat = (boss.skillMode === "deadBellCombo" || boss.skillMode === "deadBellDuet")
     && boss.castTimer > DEAD_BELL_CONFIG.comboCastDuration - DEAD_BELL_CONFIG.comboSpawnAtFrame;
   const counterWindow = boss.recoveryTimer > 0;
   if (!comboStopBeat && !counterWindow) return;

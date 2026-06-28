@@ -251,6 +251,9 @@ export type BossState = {
   phaseShiftTimer?: number;
   spiderStringCageUsed?: boolean;
   spiderStringCageCd?: number;
+  mirrorTrueImageShiftPhase?: number;
+  deadBellReprisalTimer?: number;
+  deadBellReprisalHit?: boolean;
   armorBreakTimer?: number;
   armorBreakMultiplier?: number;
 } | null;

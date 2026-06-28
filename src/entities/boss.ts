@@ -25,11 +25,12 @@ export { drawMistBoneEffects, updateMistBoneEffects } from "./bosses/mistBoneEff
 export { drawLanternEmberEffects, updateLanternEmberEffects } from "./bosses/lanternEmberEffects";
 export { drawBloodMoonEffects, updateBloodMoonEffects } from "./bosses/bloodMoonEffects";
 
-export function spawnBoss(id?: BossArchetypeId) {
+export function spawnBoss(id?: BossArchetypeId, options: { awakened?: boolean } = {}) {
   state.boss = createBossEncounter({
     id,
     bossKills: state.bossKills,
     elapsedSeconds: state.elapsed,
+    awakened: options.awakened,
   });
   playSfx("bossSpawn");
 }

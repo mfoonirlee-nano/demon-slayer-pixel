@@ -5,7 +5,7 @@ import {
   bossHpForEncounter,
   isAwakenedBossEncounter,
 } from "../../systems/runProgression";
-import { bossArchetypeForId, bossArchetypeForKillCount } from "./registry";
+import { BOSS_ARCHETYPE_IDS, bossArchetypeForId, bossArchetypeForKillCount } from "./registry";
 
 export type LiveBossState = NonNullable<BossState>;
 
@@ -21,6 +21,7 @@ export type BossEncounterInput = {
   bossKills: number;
   elapsedSeconds: number;
   animSeed?: number;
+  awakened?: boolean;
 };
 
 export function createBossEncounter(input: BossEncounterInput): LiveBossState {
@@ -29,6 +30,8 @@ export function createBossEncounter(input: BossEncounterInput): LiveBossState {
     : bossArchetypeForKillCount(input.bossKills);
   const act = actForBossKills(input.bossKills);
   const hp = bossHpForEncounter(archetype, input.bossKills, input.elapsedSeconds);
+  const awakened = archetype.id !== BOSS_ARCHETYPE_IDS.bloodMoon
+    && (input.awakened ?? isAwakenedBossEncounter(archetype, act));
 
   return {
     id: archetype.id,
@@ -56,7 +59,7 @@ export function createBossEncounter(input: BossEncounterInput): LiveBossState {
     skillHitDone: false,
     skillMode: archetype.skillMode,
     recoveryTimer: 0,
-    awakened: isAwakenedBossEncounter(archetype, act),
+    awakened,
   };
 }
 

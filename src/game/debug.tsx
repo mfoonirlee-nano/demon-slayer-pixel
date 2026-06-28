@@ -41,7 +41,7 @@ type DebugRuntimeActions = {
   setInfiniteUltimateCharge: (enabled: boolean) => void;
   spawnEnemySheet: (sheetIndex: number, side: number, options?: { growthStage?: ActBand }) => void;
   spawnPlatformSegment: (kind: SegmentKind) => void;
-  spawnBoss: (id?: BossArchetypeId) => void;
+  spawnBoss: (id?: BossArchetypeId, options?: { awakened?: boolean }) => void;
   equipSkillSlot: (slotIndex: number, skillId: SkillId) => void;
 };
 
@@ -161,8 +161,8 @@ function spawnDebugPlatformSegment(kind: SegmentKind) {
   runDebugAction(() => runtimeActions.spawnPlatformSegment(kind));
 }
 
-function spawnDebugBoss(bossId: BossArchetypeId) {
-  runDebugAction(() => runtimeActions.spawnBoss(bossId));
+function spawnDebugBoss(bossId: BossArchetypeId, awakened: boolean) {
+  runDebugAction(() => runtimeActions.spawnBoss(bossId, { awakened }));
 }
 
 function equipDebugSkill(slotIndex: number, skillId: SkillId) {
@@ -194,6 +194,7 @@ export function DebugPanel() {
   const [enemyKind, setEnemyKind] = useState<DebugEnemyKind>("chaser");
   const [enemyGrowthStage, setEnemyGrowthStage] = useState<ActBand>("intro");
   const [bossId, setBossId] = useState<BossArchetypeId>(DEBUG_BOSS_OPTIONS[0]?.id ?? "spider-string");
+  const [bossAwakened, setBossAwakened] = useState(false);
   const [platformKind, setPlatformKind] = useState<SegmentKind>("safeBridge");
   const [skillSlotIndex, setSkillSlotIndex] = useState<number>(0);
   const [skillId, setSkillId] = useState<SkillId>(DEBUG_SKILL_OPTIONS[0]?.id ?? "line_projectile");
@@ -331,6 +332,16 @@ export function DebugPanel() {
         </button>
       </div>
       <label className="mt-2 block text-[8px] text-[#ffd899]" htmlFor="debug-boss-kind">Boss</label>
+      <label className="mt-1 flex items-center gap-2 text-[8px] text-[#ffe6b5]" htmlFor="debug-boss-awakened">
+        <input
+          id="debug-boss-awakened"
+          type="checkbox"
+          className="h-3 w-3 accent-[#ffcf7a]"
+          checked={bossAwakened}
+          onChange={(event) => setBossAwakened(event.target.checked)}
+        />
+        Awakened
+      </label>
       <div className="mt-1 flex gap-1">
         <select
           id="debug-boss-kind"
@@ -345,7 +356,7 @@ export function DebugPanel() {
         <button
           type="button"
           className="rounded-[4px] border border-[#ffcf7a99] bg-[#4a2b12] px-2 py-1 text-[9px] font-bold text-[#fff2c7] active:translate-y-px"
-          onClick={() => spawnDebugBoss(bossId)}
+          onClick={() => spawnDebugBoss(bossId, bossAwakened)}
         >
           Spawn
         </button>
