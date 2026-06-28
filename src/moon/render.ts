@@ -9,6 +9,7 @@ import {
   MOON_SKY_CONFIG,
   MOON_SURFACE_CONFIG,
 } from "./constants";
+import { getMoonBloodRingGlowScale, getMoonPhaseGlowScale } from "./phaseGlow";
 import type { MoonState } from "./types";
 
 const BASE_PULSE_SPEED_SCALE = 0.5;
@@ -16,8 +17,6 @@ const PULSE_WAVE_BASE = 0.5;
 const PULSE_WAVE_AMPLITUDE = 0.5;
 const BLOOD_WAVE_BASE = 0.35;
 const BLOOD_WAVE_SCALE = 0.65;
-const MOONLIGHT_SCALE_BASE = 0.78;
-const MOONLIGHT_COVER_SCALE = 0.42;
 const OUTER_GLOW_BASE_PULSE_RADIUS = 8;
 const OUTER_GLOW_BLOOD_RADIUS_SCALE = 1.5;
 const FAR_GLOW_BASE_PULSE_RADIUS = 15;
@@ -87,18 +86,27 @@ export function drawMoon(options: { elapsed: number; moon: MoonState }) {
   const { elapsed, moon } = options;
   const bloodLerp = moon.bloodLerp;
   const coverProgress = moon.coverProgress;
-  const moonlightScale = MOONLIGHT_SCALE_BASE + coverProgress * MOONLIGHT_COVER_SCALE;
+  const phaseSpriteImg = COVER_MOON_PHASE_SPRITES.image;
+  const phaseIndex = getCoverMoonPhaseIndex(coverProgress, COVER_MOON_PHASE_SPRITES.frames);
+  const phaseGlowScale = getMoonPhaseGlowScale(phaseIndex);
+  const bloodRingGlowScale = getMoonBloodRingGlowScale(phaseIndex);
   const motion = getMoonMotion(elapsed, bloodLerp);
   const moonX = MOON_LAYOUT.x + motion.moonX;
   const moonY = MOON_LAYOUT.y + motion.moonY;
-  const bloodRingRadius = MOON_GLOW_CONFIG.bloodRingRadius + motion.bloodWaveAmount * MOON_MOTION_CONFIG.bloodWave.radiusBoost;
+  const bloodRingRadius = (
+    MOON_GLOW_CONFIG.bloodRingRadius + motion.bloodWaveAmount * MOON_MOTION_CONFIG.bloodWave.radiusBoost
+  ) * bloodRingGlowScale;
   // 放大呼吸动画的振幅 (原本 1.5 -> 8, 2.5 -> 15)，让变化更明显
-  const outerGlowRadius = MOON_GLOW_CONFIG.outerGlowRadius * moonlightScale
-    + motion.basePulse * OUTER_GLOW_BASE_PULSE_RADIUS
-    + motion.bloodWaveAmount * MOON_MOTION_CONFIG.bloodWave.radiusBoost * OUTER_GLOW_BLOOD_RADIUS_SCALE;
-  const farGlowRadius = MOON_GLOW_CONFIG.farGlowRadius * moonlightScale
-    + motion.basePulse * FAR_GLOW_BASE_PULSE_RADIUS
-    + motion.bloodWaveAmount * MOON_MOTION_CONFIG.bloodWave.radiusBoost * FAR_GLOW_BLOOD_RADIUS_SCALE;
+  const outerGlowRadius = (
+    MOON_GLOW_CONFIG.outerGlowRadius
+      + motion.basePulse * OUTER_GLOW_BASE_PULSE_RADIUS
+      + motion.bloodWaveAmount * MOON_MOTION_CONFIG.bloodWave.radiusBoost * OUTER_GLOW_BLOOD_RADIUS_SCALE
+  ) * phaseGlowScale;
+  const farGlowRadius = (
+    MOON_GLOW_CONFIG.farGlowRadius
+      + motion.basePulse * FAR_GLOW_BASE_PULSE_RADIUS
+      + motion.bloodWaveAmount * MOON_MOTION_CONFIG.bloodWave.radiusBoost * FAR_GLOW_BLOOD_RADIUS_SCALE
+  ) * phaseGlowScale;
 
   const context = ctx;
 
@@ -106,16 +114,16 @@ export function drawMoon(options: { elapsed: number; moon: MoonState }) {
   const currentFarColor = lerpColor(MOON_GLOW_CONFIG.farGlowColor, MOON_GLOW_CONFIG.bloodFarColor, bloodLerp);
   const farGlowAlpha = Math.max(
     0,
-    MOON_GLOW_CONFIG.farGlowAlpha * moonlightScale
+    (MOON_GLOW_CONFIG.farGlowAlpha
       + (MOON_GLOW_CONFIG.bloodFarAlpha - MOON_GLOW_CONFIG.farGlowAlpha) * bloodLerp
-      + motion.basePulse * FAR_GLOW_ALPHA_PULSE,
+      + motion.basePulse * FAR_GLOW_ALPHA_PULSE) * phaseGlowScale,
   );
   const currentOuterColor = lerpColor(MOON_GLOW_CONFIG.outerGlowColor, MOON_GLOW_CONFIG.bloodOuterColor, bloodLerp);
   const outerGlowAlpha = Math.max(
     0,
-    MOON_GLOW_CONFIG.outerGlowAlpha * moonlightScale
+    (MOON_GLOW_CONFIG.outerGlowAlpha
       + (MOON_GLOW_CONFIG.bloodOuterAlpha - MOON_GLOW_CONFIG.outerGlowAlpha) * bloodLerp
-      + motion.basePulse * OUTER_GLOW_ALPHA_PULSE,
+      + motion.basePulse * OUTER_GLOW_ALPHA_PULSE) * phaseGlowScale,
   );
 
   // 最外层散射（radialGradient 替代 shadowBlur）
@@ -125,23 +133,24 @@ export function drawMoon(options: { elapsed: number; moon: MoonState }) {
   drawGlow(context, moonX, moonY, outerGlowRadius, currentOuterColor, outerGlowAlpha * OUTER_GLOW_ALPHA_SCALE);
 
   // 内层月光晕（血月时减弱）
-  const coolAlpha = (1 - bloodLerp * COOL_GLOW_BLOOD_FADE) * MOON_GLOW_CONFIG.coolGlowAlpha * moonlightScale;
+  const coolAlpha = (1 - bloodLerp * COOL_GLOW_BLOOD_FADE) * MOON_GLOW_CONFIG.coolGlowAlpha * phaseGlowScale;
   drawGlow(
     context,
     moonX,
     moonY,
-    MOON_GLOW_CONFIG.coolGlowRadius * moonlightScale + motion.pulseWave * COOL_GLOW_PULSE_RADIUS_SCALE,
+    (MOON_GLOW_CONFIG.coolGlowRadius + motion.pulseWave * COOL_GLOW_PULSE_RADIUS_SCALE) * phaseGlowScale,
     MOON_GLOW_CONFIG.coolGlowColor,
     coolAlpha * OUTER_GLOW_ALPHA_SCALE,
   );
 
   // 血月光环
   if (bloodLerp > 0) {
-    const ringAlpha = bloodLerp * (MOON_GLOW_CONFIG.bloodRingAlpha + Math.max(0, motion.bloodWaveAmount) * MOON_MOTION_CONFIG.bloodWave.alphaBoost);
+    const ringAlpha = bloodLerp * (
+      MOON_GLOW_CONFIG.bloodRingAlpha + Math.max(0, motion.bloodWaveAmount) * MOON_MOTION_CONFIG.bloodWave.alphaBoost
+    ) * bloodRingGlowScale;
     drawGlow(context, moonX, moonY, bloodRingRadius, MOON_GLOW_CONFIG.bloodRingColor, ringAlpha * BLOOD_RING_ALPHA_SCALE);
   }
 
-  const phaseSpriteImg = COVER_MOON_PHASE_SPRITES.image;
   const spriteImg = SKY_SPRITES.image;
   const moonDrawSize = MOON_LAYOUT.coreRadius * 2;
   const moonDrawX = moonX - MOON_LAYOUT.coreRadius;
@@ -149,7 +158,6 @@ export function drawMoon(options: { elapsed: number; moon: MoonState }) {
   const { sx, sy, sw, sh } = SKY_SPRITES.moon;
 
   if (phaseSpriteImg) {
-    const phaseIndex = getCoverMoonPhaseIndex(coverProgress, COVER_MOON_PHASE_SPRITES.frames);
     context.drawImage(
       phaseSpriteImg,
       phaseIndex * COVER_MOON_PHASE_SPRITES.frameW,

@@ -7,6 +7,7 @@ import {
   readLastSeenCoverKills,
   writeLastSeenCoverKills,
 } from "../game/coverProgress";
+import { getMoonPhaseGlowScale } from "../moon/phaseGlow";
 
 type CustomCssProperties = CSSProperties & Record<`--${string}`, string>;
 
@@ -64,6 +65,19 @@ const KILL_DIGIT_SHEET_H = 941;
 const KILL_DIGIT_FRAME_W = Math.floor(KILL_DIGIT_SHEET_W / KILL_DIGIT_COLUMNS);
 const KILL_DIGIT_FRAME_H = Math.floor(KILL_DIGIT_SHEET_H / KILL_DIGIT_ROWS);
 const CUBIC_EASE_EXPONENT = 3;
+const COVER_MOON_OPACITY_REST_BASE = 0.82;
+const COVER_MOON_OPACITY_REST_GAIN = 0.06;
+const COVER_MOON_OPACITY_PEAK_BASE = 0.92;
+const COVER_MOON_OPACITY_PEAK_GAIN = 0.08;
+const COVER_MOON_BRIGHTNESS_REST_BASE = 0.9;
+const COVER_MOON_BRIGHTNESS_REST_GAIN = 0.06;
+const COVER_MOON_BRIGHTNESS_PEAK_BASE = 0.96;
+const COVER_MOON_BRIGHTNESS_PEAK_GAIN = 0.12;
+const COVER_MOON_SHADOW_BLUR_REST = 6;
+const COVER_MOON_SHADOW_BLUR_PEAK = 10;
+const COVER_MOON_SHADOW_ALPHA_REST = 0.26;
+const COVER_MOON_SHADOW_ALPHA_PEAK = 0.42;
+const COVER_MOON_PHASE_FLARE_RADIUS = 92;
 
 function lerp(from: number, to: number, progress: number) {
   return from + (to - from) * progress;
@@ -113,6 +127,31 @@ function coverStyleFromProgress(progress: number): CustomCssProperties {
     "--cover-sweep-scale-x": lerp(SWEEP_SCALE_X_START, SWEEP_SCALE_X_END, progress).toFixed(CSS_VALUE_PRECISION),
     "--cover-sweep-center-y": `${lerp(SWEEP_CENTER_Y_START, SWEEP_CENTER_Y_END, progress).toFixed(2)}%`,
     "--cover-sweep-scale-y": lerp(SWEEP_SCALE_Y_START, SWEEP_SCALE_Y_END, progress).toFixed(CSS_VALUE_PRECISION),
+  };
+}
+
+function coverMoonStyleFromPhase(phaseIndex: number): CustomCssProperties {
+  const glowScale = getMoonPhaseGlowScale(phaseIndex);
+
+  return {
+    "--cover-moon-emitter-opacity-rest": Math.min(
+      1,
+      COVER_MOON_OPACITY_REST_BASE + glowScale * COVER_MOON_OPACITY_REST_GAIN,
+    ).toFixed(CSS_VALUE_PRECISION),
+    "--cover-moon-emitter-opacity-peak": Math.min(
+      1,
+      COVER_MOON_OPACITY_PEAK_BASE + glowScale * COVER_MOON_OPACITY_PEAK_GAIN,
+    ).toFixed(CSS_VALUE_PRECISION),
+    "--cover-moon-emitter-brightness-rest": (
+      COVER_MOON_BRIGHTNESS_REST_BASE + glowScale * COVER_MOON_BRIGHTNESS_REST_GAIN
+    ).toFixed(CSS_VALUE_PRECISION),
+    "--cover-moon-emitter-brightness-peak": (
+      COVER_MOON_BRIGHTNESS_PEAK_BASE + glowScale * COVER_MOON_BRIGHTNESS_PEAK_GAIN
+    ).toFixed(CSS_VALUE_PRECISION),
+    "--cover-moon-emitter-shadow-blur-rest": `${(COVER_MOON_SHADOW_BLUR_REST * glowScale).toFixed(2)}px`,
+    "--cover-moon-emitter-shadow-blur-peak": `${(COVER_MOON_SHADOW_BLUR_PEAK * glowScale).toFixed(2)}px`,
+    "--cover-moon-emitter-shadow-alpha-rest": (COVER_MOON_SHADOW_ALPHA_REST * glowScale).toFixed(CSS_VALUE_PRECISION),
+    "--cover-moon-emitter-shadow-alpha-peak": (COVER_MOON_SHADOW_ALPHA_PEAK * glowScale).toFixed(CSS_VALUE_PRECISION),
   };
 }
 
@@ -231,12 +270,14 @@ function CoverMoonPhase({ progress, transitionKind }: {
   transitionKind: CoverTransitionKind;
 }) {
   const phaseIndex = getCoverMoonPhaseIndex(progress);
+  const glowScale = getMoonPhaseGlowScale(phaseIndex);
   const moonCenterX = MOON_PHASE_X + MOON_PHASE_FRAME_W / 2;
   const moonCenterY = MOON_PHASE_Y + MOON_PHASE_FRAME_H / 2;
 
   return (
     <svg
       className="cover-layer cover-moon-emitter"
+      style={coverMoonStyleFromPhase(phaseIndex)}
       viewBox={`0 0 ${COVER_CANVAS_W} ${COVER_CANVAS_H}`}
       preserveAspectRatio="xMidYMid slice"
       aria-hidden="true"
@@ -262,7 +303,7 @@ function CoverMoonPhase({ progress, transitionKind }: {
           className={`cover-moon-flare cover-moon-flare-${transitionKind}`}
           cx={moonCenterX}
           cy={moonCenterY}
-          r={92}
+          r={COVER_MOON_PHASE_FLARE_RADIUS * glowScale}
         />
       ) : null}
     </svg>

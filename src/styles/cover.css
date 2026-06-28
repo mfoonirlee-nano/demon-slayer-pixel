@@ -40,7 +40,11 @@
 .cover-moon-emitter {
   z-index: 3;
   mix-blend-mode: screen;
-  filter: drop-shadow(0 0 8px rgba(148, 176, 255, 0.35));
+  filter: drop-shadow(
+    0 0
+    var(--cover-moon-emitter-shadow-blur-rest, 6px)
+    rgba(148, 176, 255, var(--cover-moon-emitter-shadow-alpha-rest, 0.26))
+  );
   animation: cover-moon-emitter-breathe 7.2s ease-in-out infinite;
 }
 
@@ -182,13 +186,25 @@
 @keyframes cover-moon-emitter-breathe {
   0%,
   100% {
-    opacity: 0.88;
-    filter: brightness(0.96) drop-shadow(0 0 6px rgba(148, 176, 255, 0.26));
+    opacity: var(--cover-moon-emitter-opacity-rest, 0.88);
+    filter:
+      brightness(var(--cover-moon-emitter-brightness-rest, 0.96))
+      drop-shadow(
+        0 0
+        var(--cover-moon-emitter-shadow-blur-rest, 6px)
+        rgba(148, 176, 255, var(--cover-moon-emitter-shadow-alpha-rest, 0.26))
+      );
   }
 
   50% {
-    opacity: 1;
-    filter: brightness(1.08) drop-shadow(0 0 10px rgba(148, 176, 255, 0.42));
+    opacity: var(--cover-moon-emitter-opacity-peak, 1);
+    filter:
+      brightness(var(--cover-moon-emitter-brightness-peak, 1.08))
+      drop-shadow(
+        0 0
+        var(--cover-moon-emitter-shadow-blur-peak, 10px)
+        rgba(148, 176, 255, var(--cover-moon-emitter-shadow-alpha-peak, 0.42))
+      );
   }
 }
 
