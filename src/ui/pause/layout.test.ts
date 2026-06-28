@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { uiSpriteDisplaySize } from "../uiSprite";
 import {
   EQUIPMENT_SLOTS,
   PAUSE_CHOICE_GRID_COLUMNS,
@@ -14,6 +15,8 @@ import {
   PAUSE_PANEL_CONTENT_TOP,
   PAUSE_PANEL_INSET_X,
   PAUSE_PANEL_H,
+  PAUSE_PANEL_TITLE_TOP,
+  PAUSE_PANEL_SPRITE,
   PAUSE_PANEL_W,
   PAUSE_TAB_BODY_GAP,
   PAUSE_TAB_GAP,
@@ -24,6 +27,14 @@ import {
 } from "./constants";
 
 describe("pause layout", () => {
+  it("keeps the reward-sized pause chrome and content rhythm readable", () => {
+    const panelSize = uiSpriteDisplaySize(PAUSE_PANEL_SPRITE);
+
+    expect(PAUSE_PANEL_W).toBe(panelSize.w);
+    expect(PAUSE_PANEL_H).toBe(panelSize.h);
+    expect(PAUSE_PANEL_TITLE_TOP).toBeLessThan(PAUSE_PANEL_CONTENT_TOP);
+  });
+
   it("keeps tab and body grids inside their panel safe areas", () => {
     const tabSafeWidth = PAUSE_PANEL_W - PAUSE_TAB_INSET_X * 2;
     const tabWidth = PAUSE_TAB_W * PAUSE_TABS.length + PAUSE_TAB_GAP * (PAUSE_TABS.length - 1);

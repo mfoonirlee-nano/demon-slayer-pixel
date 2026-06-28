@@ -84,10 +84,22 @@ body {
   right: 2px;
 }
 
+.pause-section-panel {
+  overflow: hidden;
+  padding: 8px;
+  border: 1px solid rgba(74, 132, 160, 0.46);
+  background: rgba(3, 13, 27, 0.64);
+  box-shadow:
+    inset 0 0 0 1px rgba(38, 213, 255, 0.08),
+    0 6px 18px rgba(0, 0, 0, 0.18);
+}
+
 .pause-detail-panel {
   overflow: hidden;
   padding: 6px 8px 5px;
-  border: 1px solid rgba(74, 132, 160, 0.55);
-  background: rgba(3, 13, 27, 0.72);
-  box-shadow: inset 0 0 0 1px rgba(38, 213, 255, 0.1);
+  border: 1px solid rgba(74, 132, 160, 0.58);
+  background: rgba(3, 13, 27, 0.76);
+  box-shadow:
+    inset 0 0 0 1px rgba(38, 213, 255, 0.12),
+    0 6px 18px rgba(0, 0, 0, 0.18);
 }

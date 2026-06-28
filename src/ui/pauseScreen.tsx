@@ -36,6 +36,8 @@ import {
   PAUSE_PANEL_CONTENT_TOP,
   PAUSE_PANEL_H,
   PAUSE_PANEL_INSET_X,
+  PAUSE_PANEL_SPRITE,
+  PAUSE_PANEL_TITLE_TOP,
   PAUSE_PANEL_W,
   PAUSE_SETTINGS_GAP,
   PAUSE_SETTINGS_INSET_X,
@@ -44,7 +46,6 @@ import {
   PAUSE_TAB_BODY_GAP,
   PAUSE_TAB_GAP,
   PAUSE_TAB_H,
-  PAUSE_TAB_INSET_X,
   PAUSE_TAB_W,
   PAUSE_TABS,
 } from "./pause/constants";
@@ -113,7 +114,7 @@ export function PauseScreen({ snapshot }: { snapshot: GameSnapshot }) {
           }}
         >
           <UiSprite
-            id="pausePanel"
+            id={PAUSE_PANEL_SPRITE}
             width={PAUSE_PANEL_W}
             height={PAUSE_PANEL_H}
             className="absolute left-0 top-0"
@@ -124,10 +125,16 @@ export function PauseScreen({ snapshot }: { snapshot: GameSnapshot }) {
             }}
           >
             <div
+              className="absolute inset-x-0 text-center text-[14px] font-bold leading-none text-[#26d5ff]"
+              style={{ top: PAUSE_PANEL_TITLE_TOP }}
+            >
+              月潮暂停
+            </div>
+            <div
               className="absolute flex min-h-0 flex-col text-left text-white"
               style={{
-                left: PAUSE_TAB_INSET_X,
-                right: PAUSE_TAB_INSET_X,
+                left: PAUSE_PANEL_INSET_X,
+                right: PAUSE_PANEL_INSET_X,
                 top: PAUSE_PANEL_CONTENT_TOP,
                 bottom: PAUSE_PANEL_CONTENT_BOTTOM,
               }}
@@ -164,7 +171,7 @@ export function PauseScreen({ snapshot }: { snapshot: GameSnapshot }) {
 
               <div
                 className="min-h-0 flex-1 overflow-hidden"
-                style={{ marginInline: PAUSE_PANEL_INSET_X - PAUSE_TAB_INSET_X, marginTop: PAUSE_TAB_BODY_GAP }}
+                style={{ marginTop: PAUSE_TAB_BODY_GAP }}
               >
             {activeTab === "info" ? (
               <div
@@ -204,7 +211,7 @@ export function PauseScreen({ snapshot }: { snapshot: GameSnapshot }) {
                     }}
                   >
                   <div
-                    className="grid content-start"
+                    className="pause-section-panel grid content-start"
                     style={{
                       gridTemplateRows: "auto 1fr",
                       rowGap: PAUSE_CURRENT_ROW_GAP,
@@ -255,7 +262,7 @@ export function PauseScreen({ snapshot }: { snapshot: GameSnapshot }) {
                   </div>
 
                   <div
-                    className="grid h-full min-h-0 overflow-hidden text-[9px] leading-none"
+                    className="pause-section-panel grid h-full min-h-0 overflow-hidden text-[9px] leading-none"
                     style={{ gridTemplateRows: "auto 1fr", rowGap: PAUSE_CURRENT_ROW_GAP }}
                   >
                     <div className="flex items-center justify-between gap-3 text-[8px] leading-none text-[#7fc8e0]">
@@ -348,7 +355,7 @@ export function PauseScreen({ snapshot }: { snapshot: GameSnapshot }) {
                     }}
                   >
                   <div
-                    className="grid content-start"
+                    className="pause-section-panel grid content-start"
                     style={{
                       gridTemplateRows: "auto 1fr",
                       rowGap: PAUSE_CURRENT_ROW_GAP,
@@ -398,7 +405,7 @@ export function PauseScreen({ snapshot }: { snapshot: GameSnapshot }) {
                   </div>
 
                   <div
-                    className="grid h-full min-h-0 overflow-hidden text-[9px] leading-none"
+                    className="pause-section-panel grid h-full min-h-0 overflow-hidden text-[9px] leading-none"
                     style={{ gridTemplateRows: "auto 1fr", rowGap: PAUSE_CURRENT_ROW_GAP }}
                   >
                     <div className="flex items-center justify-between gap-3 text-[8px] leading-none text-[#7fc8e0]">
@@ -474,7 +481,7 @@ export function PauseScreen({ snapshot }: { snapshot: GameSnapshot }) {
 
             {activeTab === "settings" ? (
               <div
-                className="grid h-full content-start overflow-y-auto pt-2"
+                className="pause-section-panel grid h-full content-start overflow-y-auto"
                 style={{ gap: PAUSE_SETTINGS_GAP, paddingInline: PAUSE_SETTINGS_INSET_X }}
               >
                 <AudioVolumeControl
