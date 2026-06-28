@@ -12,20 +12,26 @@ import type { BurrowerPhase, EnemyState } from "../../types/game-state";
 import { clamp, frameIndex, hitbox, lerp } from "../../game/utils";
 import { hurtPlayer } from "../player";
 import type { EnemyArchetype, EnemySpawnContext } from "./common";
-import { drawEnemyFrame, enemyCenterX, enemyDrawScale, enemyFeetY } from "./common";
+import { drawEnemyFrame, enemyCenterX, enemyDrawScale, enemyFeetY, hasAwakenedGrowth } from "./common";
 
 const BURROWER_CONFIG = {
   triggerDistance: 168,
+  awakenedTriggerDistanceBonus: 22,
   moveBaseSpeed: 0.58,
   moveRandomSpeed: 0.45,
   moveSpeedScaleByElapsed: 0.004,
   sinkMinFrames: 13,
+  awakenedSinkMinFrames: 10,
   sinkFrameJitter: 3,
   burrowMinFrames: 7,
+  awakenedBurrowMinFrames: 5,
   burrowFrameJitter: 3,
   emergeFrames: 18,
+  awakenedEmergeFrames: 16,
   emergeImpactElapsedFrames: 8,
+  awakenedEmergeImpactElapsedFrames: 6,
   recoverMinFrames: 24,
+  awakenedRecoverMinFrames: 18,
   recoverFrameJitter: 8,
   impactDamageMultiplier: 1.6,
   impactDamageBonus: 2,
@@ -69,6 +75,33 @@ function burrowerMoveSpeed() {
     + Math.random() * BURROWER_CONFIG.moveRandomSpeed;
 }
 
+function burrowerTriggerDistance(enemy: EnemyState) {
+  return BURROWER_CONFIG.triggerDistance
+    + (hasAwakenedGrowth(enemy) ? BURROWER_CONFIG.awakenedTriggerDistanceBonus : 0);
+}
+
+function burrowerSinkMinFrames(enemy: EnemyState) {
+  return hasAwakenedGrowth(enemy) ? BURROWER_CONFIG.awakenedSinkMinFrames : BURROWER_CONFIG.sinkMinFrames;
+}
+
+function burrowerBurrowMinFrames(enemy: EnemyState) {
+  return hasAwakenedGrowth(enemy) ? BURROWER_CONFIG.awakenedBurrowMinFrames : BURROWER_CONFIG.burrowMinFrames;
+}
+
+function burrowerEmergeFrames(enemy: EnemyState) {
+  return hasAwakenedGrowth(enemy) ? BURROWER_CONFIG.awakenedEmergeFrames : BURROWER_CONFIG.emergeFrames;
+}
+
+function burrowerEmergeImpactElapsedFrames(enemy: EnemyState) {
+  return hasAwakenedGrowth(enemy)
+    ? BURROWER_CONFIG.awakenedEmergeImpactElapsedFrames
+    : BURROWER_CONFIG.emergeImpactElapsedFrames;
+}
+
+function burrowerRecoverMinFrames(enemy: EnemyState) {
+  return hasAwakenedGrowth(enemy) ? BURROWER_CONFIG.awakenedRecoverMinFrames : BURROWER_CONFIG.recoverMinFrames;
+}
+
 function burrowerGroundTop(enemy: EnemyState) {
   return GROUND_Y - enemy.h;
 }
@@ -101,7 +134,7 @@ function enterBurrowerPhase(enemy: EnemyState, phase: BurrowerPhase) {
 
   if (phase === "sink") {
     enemy.burrowerTimer = randomFrameCount(
-      BURROWER_CONFIG.sinkMinFrames,
+      burrowerSinkMinFrames(enemy),
       BURROWER_CONFIG.sinkFrameJitter,
     );
     enemy.burrowerPhaseDuration = enemy.burrowerTimer;
@@ -112,7 +145,7 @@ function enterBurrowerPhase(enemy: EnemyState, phase: BurrowerPhase) {
 
   if (phase === "burrow") {
     enemy.burrowerTimer = randomFrameCount(
-      BURROWER_CONFIG.burrowMinFrames,
+      burrowerBurrowMinFrames(enemy),
       BURROWER_CONFIG.burrowFrameJitter,
     );
     enemy.burrowerPhaseDuration = enemy.burrowerTimer;
@@ -122,8 +155,8 @@ function enterBurrowerPhase(enemy: EnemyState, phase: BurrowerPhase) {
   }
 
   if (phase === "emerge") {
-    enemy.burrowerTimer = BURROWER_CONFIG.emergeFrames;
-    enemy.burrowerPhaseDuration = BURROWER_CONFIG.emergeFrames;
+    enemy.burrowerTimer = burrowerEmergeFrames(enemy);
+    enemy.burrowerPhaseDuration = burrowerEmergeFrames(enemy);
     enemy.x = enemy.burrowerTargetX ?? enemy.x;
     enemy.y = burrowerGroundTop(enemy);
     playSfx("enemyEmerge");
@@ -132,7 +165,7 @@ function enterBurrowerPhase(enemy: EnemyState, phase: BurrowerPhase) {
 
   if (phase === "recover") {
     enemy.burrowerTimer = randomFrameCount(
-      BURROWER_CONFIG.recoverMinFrames,
+      burrowerRecoverMinFrames(enemy),
       BURROWER_CONFIG.recoverFrameJitter,
     );
     enemy.burrowerPhaseDuration = enemy.burrowerTimer;
@@ -220,7 +253,7 @@ function updateBurrower(enemy: EnemyState) {
       + state.elapsed * BURROWER_CONFIG.moveSpeedScaleByElapsed
     );
 
-    if (Math.abs(toward) <= BURROWER_CONFIG.triggerDistance) {
+    if (Math.abs(toward) <= burrowerTriggerDistance(enemy)) {
       enemy.vx = 0;
       enterBurrowerPhase(enemy, "sink");
     } else {
@@ -256,12 +289,12 @@ function updateBurrower(enemy: EnemyState) {
   }
 
   if (phase === "emerge") {
-    const duration = Math.max(1, enemy.burrowerPhaseDuration ?? BURROWER_CONFIG.emergeFrames);
+    const duration = Math.max(1, enemy.burrowerPhaseDuration ?? burrowerEmergeFrames(enemy));
     const elapsed = duration - enemy.burrowerTimer;
     enemy.vx = 0;
     enemy.x = enemy.burrowerTargetX ?? enemy.x;
     enemy.y = burrowerGroundTop(enemy);
-    if (!enemy.burrowerEmergeHit && elapsed >= BURROWER_CONFIG.emergeImpactElapsedFrames) {
+    if (!enemy.burrowerEmergeHit && elapsed >= burrowerEmergeImpactElapsedFrames(enemy)) {
       triggerBurrowerEmergeHit(enemy);
     }
     enemy.burrowerTimer -= 1;

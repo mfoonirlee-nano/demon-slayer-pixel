@@ -13,7 +13,7 @@ import type { EnemyState, LeaperPhase } from "../../types/game-state";
 import { clamp, frameIndex, hitbox, lerp } from "../../game/utils";
 import { hurtPlayer } from "../player";
 import type { EnemyArchetype, EnemySpawnContext } from "./common";
-import { drawEnemyFrame, enemyCenterX, enemyDrawScale, enemyFeetY } from "./common";
+import { drawEnemyFrame, enemyCenterX, enemyDrawScale, enemyFeetY, hasAwakenedGrowth } from "./common";
 
 const LEAPER_CONFIG = {
   triggerDistance: 235,
@@ -21,11 +21,14 @@ const LEAPER_CONFIG = {
   stalkRandomSpeed: 0.26,
   stalkSpeedScaleByElapsed: 0.005,
   windupMinFrames: 18,
+  awakenedWindupMinFrames: 14,
   windupFrameJitter: 7,
   leapFrames: 28,
+  awakenedLeapFrames: 24,
   leapArcHeight: 86,
   impactFrames: 12,
   recoverMinFrames: 20,
+  awakenedRecoverMinFrames: 16,
   recoverFrameJitter: 11,
   blockedRetryFrames: 8,
   landingClampMargin: 26,
@@ -44,6 +47,7 @@ const HALF_DIVISOR = 2;
 const FULL_CIRCLE = Math.PI * 2;
 const IMPACT_BOX_WIDTH_SCALE = 2.35;
 const IMPACT_BOX_WIDTH_PAD = 34;
+const AWAKENED_IMPACT_BOX_WIDTH_PAD = 52;
 const IMPACT_BOX_HEIGHT_SCALE = 1.18;
 const WARNING_RADIUS_X = 44;
 const WARNING_RADIUS_Y = 7;
@@ -85,6 +89,22 @@ function leaperStalkSpeed() {
   return LEAPER_CONFIG.stalkBaseSpeed
     + state.elapsed * LEAPER_CONFIG.stalkSpeedScaleByElapsed
     + Math.random() * LEAPER_CONFIG.stalkRandomSpeed;
+}
+
+function leaperWindupMinFrames(enemy: EnemyState) {
+  return hasAwakenedGrowth(enemy)
+    ? LEAPER_CONFIG.awakenedWindupMinFrames
+    : LEAPER_CONFIG.windupMinFrames;
+}
+
+function leaperLeapFrames(enemy: EnemyState) {
+  return hasAwakenedGrowth(enemy) ? LEAPER_CONFIG.awakenedLeapFrames : LEAPER_CONFIG.leapFrames;
+}
+
+function leaperRecoverMinFrames(enemy: EnemyState) {
+  return hasAwakenedGrowth(enemy)
+    ? LEAPER_CONFIG.awakenedRecoverMinFrames
+    : LEAPER_CONFIG.recoverMinFrames;
 }
 
 function leaperGroundTop(enemy: EnemyState) {
@@ -134,15 +154,15 @@ function enterLeaperPhase(enemy: EnemyState, phase: LeaperPhase) {
 
   if (phase === "windup") {
     enemy.leaperTimer = randomFrameCount(
-      LEAPER_CONFIG.windupMinFrames,
+      leaperWindupMinFrames(enemy),
       LEAPER_CONFIG.windupFrameJitter,
     );
     enemy.leaperPhaseDuration = enemy.leaperTimer;
     enemy.leaperLandingX = leaperLandingLeft(enemy);
     playSfx("enemyWarning", WINDUP_WARNING_SFX_PITCH);
   } else if (phase === "leap") {
-    enemy.leaperTimer = LEAPER_CONFIG.leapFrames;
-    enemy.leaperPhaseDuration = LEAPER_CONFIG.leapFrames;
+    enemy.leaperTimer = leaperLeapFrames(enemy);
+    enemy.leaperPhaseDuration = leaperLeapFrames(enemy);
     enemy.leaperLeapStartX = enemy.x;
     enemy.leaperLeapStartY = enemy.y;
     playSfx("enemyLeap", LEAP_SFX_PITCH);
@@ -154,7 +174,7 @@ function enterLeaperPhase(enemy: EnemyState, phase: LeaperPhase) {
     playSfx("enemyImpact");
   } else if (phase === "recover") {
     enemy.leaperTimer = randomFrameCount(
-      LEAPER_CONFIG.recoverMinFrames,
+      leaperRecoverMinFrames(enemy),
       LEAPER_CONFIG.recoverFrameJitter,
     );
     enemy.leaperPhaseDuration = enemy.leaperTimer;
@@ -179,7 +199,8 @@ function leaperPhaseFrame(enemy: EnemyState, phase: LeaperPhase) {
 }
 
 function leaperImpactBox(enemy: EnemyState) {
-  const w = Math.round(enemy.w * IMPACT_BOX_WIDTH_SCALE + IMPACT_BOX_WIDTH_PAD);
+  const widthPad = hasAwakenedGrowth(enemy) ? AWAKENED_IMPACT_BOX_WIDTH_PAD : IMPACT_BOX_WIDTH_PAD;
+  const w = Math.round(enemy.w * IMPACT_BOX_WIDTH_SCALE + widthPad);
   const h = Math.round(enemy.h * IMPACT_BOX_HEIGHT_SCALE);
   return {
     x: enemyCenterX(enemy) - w / HALF_DIVISOR,
@@ -254,7 +275,7 @@ function updateLeaper(enemy: EnemyState) {
   }
 
   if (phase === "leap") {
-    const duration = LEAPER_CONFIG.leapFrames;
+    const duration = leaperLeapFrames(enemy);
     const elapsed = duration - enemy.leaperTimer;
     const t = clamp(elapsed / duration, 0, 1);
     const startX = enemy.leaperLeapStartX ?? enemy.x;

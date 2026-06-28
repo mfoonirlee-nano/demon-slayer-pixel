@@ -8,7 +8,7 @@ import {
   LANTERN_EMBER_CONFIG,
   PLAYER_COMBAT,
 } from "../constants";
-import type { EnemyId, EnemySpawnSource, EnemyState, PlatformState, SpawnPattern } from "../types/game-state";
+import type { ActBand, EnemyId, EnemySpawnSource, EnemyState, PlatformState, SpawnPattern } from "../types/game-state";
 import { hitbox } from "../game/utils";
 import { hurtPlayer } from "./player";
 import { createEnemyState, drawEnemyGrowthMarker } from "./enemies/common";
@@ -38,6 +38,7 @@ import { actBandForAct } from "../systems/runProgression";
 
 type SpawnEnemyOptions = {
   elite?: boolean;
+  growthStage?: ActBand;
 };
 
 const PLATFORM_SPAWN_MAX_DISTANCE = 260;
@@ -53,6 +54,11 @@ const PLATFORM_READY_ENEMY_IDS: readonly EnemyId[] = [
   "binder",
   "warden",
 ];
+const DEBUG_BOSS_KILLS_BY_GROWTH_STAGE: Record<ActBand, number> = {
+  intro: 0,
+  awakened: 6,
+  final: 12,
+};
 
 function sideForPattern(pattern: SpawnPattern): number {
   if (pattern === "left") return -1;
@@ -154,13 +160,17 @@ function createSpawnedEnemy(
 ): EnemyState {
   const config = enemyArchetypeById(enemyId);
   const archetype = enemyArchetypeForSheet(config.sheetIndex);
-  const stats = enemySpawnStats(enemyId, state.bossKills, state.elapsed);
+  const growthStage = options.growthStage ?? actBandForAct(state.enemyDirector.act);
+  const statBossKills = spawnSource === "debug" && options.growthStage
+    ? DEBUG_BOSS_KILLS_BY_GROWTH_STAGE[options.growthStage]
+    : state.bossKills;
+  const stats = enemySpawnStats(enemyId, statBossKills, state.elapsed);
   const elite = options.elite === true && spawnSource === "regular";
   const spawnContext = {
     enemyId,
     spawnSource,
     spawnCost: enemySpawnCost(enemyId, elite),
-    growthStage: actBandForAct(state.enemyDirector.act),
+    growthStage,
     elite,
     side,
     sheetIndex: config.sheetIndex,
@@ -240,10 +250,10 @@ export function spawnBossSummonEnemy() {
   return spawnEnemy("boss");
 }
 
-export function spawnEnemyBySheetIndex(sheetIndex: number, side = 1) {
+export function spawnEnemyBySheetIndex(sheetIndex: number, side = 1, options: SpawnEnemyOptions = {}) {
   if (!canSpawnSheetIndex(sheetIndex)) return;
   const enemyId = enemyIdForSheetIndex(sheetIndex);
-  state.enemies.push(createSpawnedEnemy(enemyId, side, "debug"));
+  state.enemies.push(createSpawnedEnemy(enemyId, side, "debug", options));
 }
 
 export function updateEnemies() {

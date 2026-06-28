@@ -17,7 +17,7 @@ import { BOSS_ARCHETYPES } from "../entities/bosses/registry";
 import { implementedPlayerSkills } from "../systems/skillCatalog";
 import type { SegmentKind } from "../entities/platform";
 import type { SkillId } from "../types/assets";
-import type { BossArchetypeId } from "../types/game-state";
+import type { ActBand, BossArchetypeId } from "../types/game-state";
 
 export type DebugEnemyKind =
   | "chaser"
@@ -39,7 +39,7 @@ type DebugRuntimeActions = {
   setInfiniteHealth: (enabled: boolean) => void;
   setInfiniteSkillCharge: (enabled: boolean) => void;
   setInfiniteUltimateCharge: (enabled: boolean) => void;
-  spawnEnemySheet: (sheetIndex: number, side: number) => void;
+  spawnEnemySheet: (sheetIndex: number, side: number, options?: { growthStage?: ActBand }) => void;
   spawnPlatformSegment: (kind: SegmentKind) => void;
   spawnBoss: (id?: BossArchetypeId) => void;
   equipSkillSlot: (slotIndex: number, skillId: SkillId) => void;
@@ -75,6 +75,12 @@ const DEBUG_ENEMY_OPTIONS: Array<{ kind: DebugEnemyKind; label: string }> = [
   { kind: "splitter", label: "splitter" },
   { kind: "warden", label: "warden" },
   { kind: "burrower", label: "burrower" },
+];
+
+const DEBUG_ENEMY_GROWTH_OPTIONS: Array<{ stage: ActBand; label: string }> = [
+  { stage: "intro", label: "intro" },
+  { stage: "awakened", label: "awakened" },
+  { stage: "final", label: "final" },
 ];
 
 const DEBUG_BOSS_OPTIONS = Object.values(BOSS_ARCHETYPES).map((boss) => ({
@@ -145,10 +151,10 @@ function runDebugAction(action: () => void) {
   runtimeActions.publish();
 }
 
-function spawnDebugEnemy(kind: DebugEnemyKind) {
+function spawnDebugEnemy(kind: DebugEnemyKind, growthStage: ActBand) {
   const sheetIndex = DEBUG_ENEMY_SHEET_INDEX[kind];
   if (!ENEMY_SHEETS[sheetIndex]) return;
-  runDebugAction(() => runtimeActions.spawnEnemySheet(sheetIndex, 1));
+  runDebugAction(() => runtimeActions.spawnEnemySheet(sheetIndex, 1, { growthStage }));
 }
 
 function spawnDebugPlatformSegment(kind: SegmentKind) {
@@ -186,6 +192,7 @@ function setDebugInfiniteHealth(enabled: boolean) {
 
 export function DebugPanel() {
   const [enemyKind, setEnemyKind] = useState<DebugEnemyKind>("chaser");
+  const [enemyGrowthStage, setEnemyGrowthStage] = useState<ActBand>("intro");
   const [bossId, setBossId] = useState<BossArchetypeId>(DEBUG_BOSS_OPTIONS[0]?.id ?? "spider-string");
   const [platformKind, setPlatformKind] = useState<SegmentKind>("safeBridge");
   const [skillSlotIndex, setSkillSlotIndex] = useState<number>(0);
@@ -284,10 +291,21 @@ export function DebugPanel() {
             <option key={option.kind} value={option.kind}>{option.label}</option>
           ))}
         </select>
+        <select
+          id="debug-enemy-growth"
+          aria-label="Enemy growth"
+          className="w-[74px] rounded-[4px] border border-[#70d7ff44] bg-[#102033] px-1 py-1 text-[9px] text-[#f2fbff]"
+          value={enemyGrowthStage}
+          onChange={(event) => setEnemyGrowthStage(event.target.value as ActBand)}
+        >
+          {DEBUG_ENEMY_GROWTH_OPTIONS.map((option) => (
+            <option key={option.stage} value={option.stage}>{option.label}</option>
+          ))}
+        </select>
         <button
           type="button"
           className="rounded-[4px] border border-[#88f3ff77] bg-[#12394a] px-2 py-1 text-[9px] font-bold text-[#e7fbff] active:translate-y-px"
-          onClick={() => spawnDebugEnemy(enemyKind)}
+          onClick={() => spawnDebugEnemy(enemyKind, enemyGrowthStage)}
         >
           Spawn
         </button>

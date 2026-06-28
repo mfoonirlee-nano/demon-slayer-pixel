@@ -6,21 +6,25 @@ import type { CrawlerPhase, EnemyState } from "../../types/game-state";
 import { hitbox } from "../../game/utils";
 import { hurtPlayer } from "../player";
 import type { EnemyArchetype, EnemySpawnContext } from "./common";
-import { drawEnemyFrame, enemyCenterX, enemyDrawScale, enemyFeetY } from "./common";
+import { drawEnemyFrame, enemyCenterX, enemyDrawScale, enemyFeetY, hasAwakenedGrowth } from "./common";
 
 const CRAWLER_CONFIG = {
   triggerDistance: 104,
+  awakenedTriggerDistanceBonus: 18,
   moveBaseSpeed: 1.22,
   moveRandomSpeed: 0.58,
   moveSpeedScaleByElapsed: 0.006,
   lungeBaseSpeed: 2.65,
   lungeSpeedScaleByElapsed: 0.006,
   lungeMaxSpeed: 3.35,
+  awakenedLungeSpeedScale: 1.08,
   lungeDamageMultiplier: 1.45,
   lungeDamageBonus: 1,
   windupFrames: 14,
   lungeFrames: 14,
+  awakenedLungeFrames: 18,
   recoverFrames: 22,
+  awakenedRecoverFrames: 17,
   blockedRetryFrames: 2,
   hpMultiplier: 0.65,
   maxActiveLunges: 2,
@@ -58,11 +62,17 @@ function crawlerMoveSpeed() {
     + Math.random() * CRAWLER_CONFIG.moveRandomSpeed;
 }
 
-function crawlerLungeSpeed() {
-  return Math.min(
+function crawlerTriggerDistance(enemy: EnemyState) {
+  return CRAWLER_CONFIG.triggerDistance
+    + (hasAwakenedGrowth(enemy) ? CRAWLER_CONFIG.awakenedTriggerDistanceBonus : 0);
+}
+
+function crawlerLungeSpeed(enemy: EnemyState) {
+  const speed = Math.min(
     CRAWLER_CONFIG.lungeMaxSpeed,
     CRAWLER_CONFIG.lungeBaseSpeed + state.elapsed * CRAWLER_CONFIG.lungeSpeedScaleByElapsed,
   );
+  return hasAwakenedGrowth(enemy) ? speed * CRAWLER_CONFIG.awakenedLungeSpeedScale : speed;
 }
 
 function crawlerActiveLungeCount() {
@@ -77,16 +87,24 @@ function crawlerSheetForPhase(phase: CrawlerPhase) {
   return CRAWLER_SHEETS[phase] || CRAWLER_SHEETS.move;
 }
 
-function crawlerPhaseDuration(phase: CrawlerPhase) {
+function crawlerLungeFrames(enemy: EnemyState) {
+  return hasAwakenedGrowth(enemy) ? CRAWLER_CONFIG.awakenedLungeFrames : CRAWLER_CONFIG.lungeFrames;
+}
+
+function crawlerRecoverFrames(enemy: EnemyState) {
+  return hasAwakenedGrowth(enemy) ? CRAWLER_CONFIG.awakenedRecoverFrames : CRAWLER_CONFIG.recoverFrames;
+}
+
+function crawlerPhaseDuration(enemy: EnemyState, phase: CrawlerPhase) {
   if (phase === "windup") return CRAWLER_CONFIG.windupFrames;
-  if (phase === "lunge") return CRAWLER_CONFIG.lungeFrames;
-  if (phase === "recover") return CRAWLER_CONFIG.recoverFrames;
+  if (phase === "lunge") return crawlerLungeFrames(enemy);
+  if (phase === "recover") return crawlerRecoverFrames(enemy);
   return 1;
 }
 
 function crawlerPhaseFrame(enemy: EnemyState, phase: CrawlerPhase) {
   const sheet = crawlerSheetForPhase(phase);
-  const duration = crawlerPhaseDuration(phase);
+  const duration = crawlerPhaseDuration(enemy, phase);
   const elapsed = Math.max(0, duration - (enemy.crawlerTimer ?? 0));
   return Math.min(sheet.count - 1, Math.floor(elapsed * sheet.count / duration));
 }
@@ -98,10 +116,10 @@ function enterCrawlerPhase(enemy: EnemyState, phase: CrawlerPhase) {
     enemy.crawlerTimer = CRAWLER_CONFIG.windupFrames;
     playSfx("enemyWarning", LUNGE_WARNING_SFX_PITCH);
   } else if (phase === "lunge") {
-    enemy.crawlerTimer = CRAWLER_CONFIG.lungeFrames;
+    enemy.crawlerTimer = crawlerLungeFrames(enemy);
     playSfx("enemyLunge", LUNGE_START_SFX_PITCH);
   } else if (phase === "recover") {
-    enemy.crawlerTimer = CRAWLER_CONFIG.recoverFrames;
+    enemy.crawlerTimer = crawlerRecoverFrames(enemy);
   } else {
     enemy.crawlerTimer = 0;
   }
@@ -157,7 +175,7 @@ function updateCrawler(enemy: EnemyState) {
       (enemy.crawlerBaseSpeed ?? CRAWLER_CONFIG.moveBaseSpeed)
       + state.elapsed * CRAWLER_CONFIG.moveSpeedScaleByElapsed
     );
-    if (Math.abs(toward) <= CRAWLER_CONFIG.triggerDistance) {
+    if (Math.abs(toward) <= crawlerTriggerDistance(enemy)) {
       enterCrawlerPhase(enemy, "windup");
       enemy.vx = 0;
     }
@@ -169,12 +187,12 @@ function updateCrawler(enemy: EnemyState) {
         enemy.crawlerTimer = CRAWLER_CONFIG.blockedRetryFrames;
       } else {
         enterCrawlerPhase(enemy, "lunge");
-        enemy.vx = (enemy.crawlerFacing ?? facing) * crawlerLungeSpeed();
+        enemy.vx = (enemy.crawlerFacing ?? facing) * crawlerLungeSpeed(enemy);
       }
     }
   } else if (phase === "lunge") {
     enemy.crawlerTimer -= 1;
-    enemy.vx = (enemy.crawlerFacing ?? facing) * crawlerLungeSpeed();
+    enemy.vx = (enemy.crawlerFacing ?? facing) * crawlerLungeSpeed(enemy);
     if (!enemy.crawlerLungeHit) triggerCrawlerLungeHit(enemy);
     if (enemy.crawlerTimer <= 0) {
       enterCrawlerPhase(enemy, "recover");

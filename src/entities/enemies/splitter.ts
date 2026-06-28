@@ -11,7 +11,7 @@ import {
 import type { EnemyState, SplitterPhase } from "../../types/game-state";
 import { frameIndex, hitbox } from "../../game/utils";
 import type { EnemyArchetype, EnemyDefeatContext, EnemySpawnContext } from "./common";
-import { enemyBaseHp, enemyCenterX, enemyFeetY } from "./common";
+import { enemyBaseHp, enemyCenterX, enemyFeetY, hasAwakenedGrowth } from "./common";
 
 const SPLITTER_CONFIG = {
   parentBaseSpeed: 0.48,
@@ -31,7 +31,9 @@ const SPLITTER_CONFIG = {
   childRandomSpeed: 0.26,
   childSpeedScaleByElapsed: 0.006,
   childHpMultiplier: 0.4,
+  awakenedChildHpScale: 1.18,
   childDamageScale: 0.65,
+  awakenedChildDamageScale: 1.1,
   childDrawScale: 0.9,
   childW: 38,
   childH: 48,
@@ -71,6 +73,21 @@ function splitlingSpeed() {
     + Math.random() * SPLITTER_CONFIG.childRandomSpeed;
 }
 
+function splitlingHp(parent: EnemyState) {
+  const baseHp = enemyBaseHp(state.elapsed) * SPLITTER_CONFIG.childHpMultiplier;
+  return hasAwakenedGrowth(parent) ? baseHp * SPLITTER_CONFIG.awakenedChildHpScale : baseHp;
+}
+
+function splitlingDamage(parent: EnemyState) {
+  const damage = parent.damage * SPLITTER_CONFIG.childDamageScale;
+  return hasAwakenedGrowth(parent) ? damage * SPLITTER_CONFIG.awakenedChildDamageScale : damage;
+}
+
+function splitlingOffsets(parent: EnemyState) {
+  const offset = SPLITTER_CONFIG.childSpawnOffset;
+  return hasAwakenedGrowth(parent) ? [-offset, 0, offset] : [-offset, offset];
+}
+
 export function splitterParentActiveCount() {
   let count = 0;
   for (const enemy of state.enemies) {
@@ -108,12 +125,14 @@ function enterSplitterSplit(enemy: EnemyState) {
 
 function createSplitling(parent: EnemyState, offset: number): EnemyState {
   const speed = splitlingSpeed();
-  const facing = offset < 0 ? -1 : 1;
+  const facing = offset === 0 ? parent.splitterFacing ?? 1 : offset < 0 ? -1 : 1;
   const feetY = enemyFeetY(parent);
   return {
     id: "splitter",
     spawnSource: parent.spawnSource,
     spawnCost: 0.5,
+    growthStage: parent.growthStage,
+    elite: parent.elite ?? false,
     aiState: "spawn",
     aiTimer: 0,
     x: enemyCenterX(parent) + offset - SPLITTER_CONFIG.childW / 2,
@@ -121,8 +140,8 @@ function createSplitling(parent: EnemyState, offset: number): EnemyState {
     w: SPLITTER_CONFIG.childW,
     h: SPLITTER_CONFIG.childH,
     vx: facing * speed * SPLITTER_CONFIG.childSpawnVelocityScale,
-    hp: enemyBaseHp(state.elapsed) * SPLITTER_CONFIG.childHpMultiplier,
-    damage: parent.damage * SPLITTER_CONFIG.childDamageScale,
+    hp: splitlingHp(parent),
+    damage: splitlingDamage(parent),
     hitCd: 0,
     animSeed: Math.floor(Math.random() * ENEMY_CONFIG.animSeedMax),
     sheetIndex: SPLITTER_SHEET_INDEX,
@@ -136,8 +155,9 @@ function createSplitling(parent: EnemyState, offset: number): EnemyState {
 }
 
 function spawnSplitlings(parent: EnemyState) {
-  state.enemies.push(createSplitling(parent, -SPLITTER_CONFIG.childSpawnOffset));
-  state.enemies.push(createSplitling(parent, SPLITTER_CONFIG.childSpawnOffset));
+  for (const offset of splitlingOffsets(parent)) {
+    state.enemies.push(createSplitling(parent, offset));
+  }
   playSfx("enemyBirth");
 }
 

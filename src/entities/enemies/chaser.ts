@@ -4,14 +4,16 @@ import { ENEMY_SHEETS, WIDTH } from "../../constants";
 import { ctx } from "../../rendering/context";
 import type { EnemyState } from "../../types/game-state";
 import type { EnemyArchetype, EnemySpawnContext } from "./common";
-import { drawEnemyFrame, enemyDrawScale, enemyFeetY } from "./common";
+import { drawEnemyFrame, enemyDrawScale, enemyFeetY, hasAwakenedGrowth } from "./common";
 
 const CHASER_CONFIG = {
   chargeBaseSpeed: 2.18,
   chargeRandomSpeed: 0.26,
   chargeSpeedScaleByElapsed: 0.012,
   chargeMaxSpeed: 3.45,
+  awakenedChargeSpeedScale: 1.06,
   reenterMinFrames: 24,
+  awakenedReenterMinFrames: 16,
   reenterFrameJitter: 18,
   offscreenBuffer: 56,
   animSpeed: 5,
@@ -52,6 +54,16 @@ function chaserChargeSpeed() {
   );
 }
 
+function chaserChargeSpeedScale(enemy: EnemyState) {
+  return hasAwakenedGrowth(enemy) ? CHASER_CONFIG.awakenedChargeSpeedScale : 1;
+}
+
+function chaserReenterMinFrames(enemy: EnemyState) {
+  return hasAwakenedGrowth(enemy)
+    ? CHASER_CONFIG.awakenedReenterMinFrames
+    : CHASER_CONFIG.reenterMinFrames;
+}
+
 function chaserHiddenX(enemy: EnemyState, facing: number) {
   return facing === 1
     ? -enemy.w - CHASER_CONFIG.offscreenBuffer
@@ -59,7 +71,7 @@ function chaserHiddenX(enemy: EnemyState, facing: number) {
 }
 
 function enterChaserReenter(enemy: EnemyState, nextFacing: number) {
-  const duration = randomFrameCount(CHASER_CONFIG.reenterMinFrames, CHASER_CONFIG.reenterFrameJitter);
+  const duration = randomFrameCount(chaserReenterMinFrames(enemy), CHASER_CONFIG.reenterFrameJitter);
   enemy.chaserPhase = "reenter";
   enemy.chaserTimer = duration;
   enemy.chaserReenterDuration = duration;
@@ -74,15 +86,15 @@ function initChaser(enemy: EnemyState, context: EnemySpawnContext) {
   enemy.chaserTimer = 0;
   enemy.chaserReenterDuration = 0;
   enemy.chaserFacing = -context.side;
-  enemy.chaserBaseSpeed = context.speed;
-  enemy.vx = enemy.chaserFacing * context.speed;
+  enemy.chaserBaseSpeed = context.speed * chaserChargeSpeedScale(enemy);
+  enemy.vx = enemy.chaserFacing * enemy.chaserBaseSpeed;
 }
 
 function updateChaser(enemy: EnemyState) {
   enemy.chaserPhase ??= "charge";
   enemy.chaserTimer ??= 0;
   enemy.chaserFacing ??= enemy.vx >= 0 ? 1 : -1;
-  enemy.chaserBaseSpeed ??= chaserChargeSpeed();
+  enemy.chaserBaseSpeed ??= chaserChargeSpeed() * chaserChargeSpeedScale(enemy);
 
   if (enemy.chaserPhase === "reenter") {
     enemy.chaserTimer -= 1;

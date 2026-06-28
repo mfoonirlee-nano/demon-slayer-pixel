@@ -5,7 +5,7 @@ import { drawSheetFrame } from "../../rendering/graphics";
 import type { EnemyState, GliderPhase } from "../../types/game-state";
 import { clamp, frameIndex } from "../../game/utils";
 import type { EnemyArchetype, EnemySpawnContext } from "./common";
-import { drawEnemyFrame, enemyCenterX, enemyDrawScale, enemyFeetY } from "./common";
+import { drawEnemyFrame, enemyCenterX, enemyDrawScale, enemyFeetY, hasAwakenedGrowth } from "./common";
 
 export const GLIDER_UNLOCK_SECONDS = 70;
 
@@ -29,15 +29,20 @@ const GLIDER_CONFIG = {
   minGroundClearance: 70,
   diveGroundClearance: 12,
   hoverMinFrames: 54,
+  awakenedHoverMinFrames: 40,
   hoverFrameJitter: 36,
   windupFrames: 34,
+  awakenedWindupFrames: 26,
   diveFrames: 20,
+  awakenedDiveFrames: 18,
   passFrames: 18,
   recoverFrames: 34,
+  awakenedRecoverFrames: 26,
   blockedRetryFrames: 16,
   diveBaseSpeed: 4.15,
   diveSpeedScaleByElapsed: 0.006,
   diveMaxSpeed: 5.45,
+  awakenedDiveSpeedScale: 1.08,
   diveTargetPlayerYRatio: 0.24,
   diveMaxAbsVy: 3.2,
   passSpeedScale: 0.82,
@@ -81,11 +86,12 @@ function gliderHoverSpeed() {
   );
 }
 
-function gliderDiveSpeed() {
-  return Math.min(
+function gliderDiveSpeed(enemy: EnemyState) {
+  const speed = Math.min(
     GLIDER_CONFIG.diveMaxSpeed,
     GLIDER_CONFIG.diveBaseSpeed + state.elapsed * GLIDER_CONFIG.diveSpeedScaleByElapsed,
   );
+  return hasAwakenedGrowth(enemy) ? speed * GLIDER_CONFIG.awakenedDiveSpeedScale : speed;
 }
 
 function gliderMaxHoverTopY(enemy: EnemyState) {
@@ -138,11 +144,30 @@ function gliderSheetForPhase(phase: GliderPhase) {
   return GLIDER_SHEETS[phase] || GLIDER_SHEETS.hover;
 }
 
-function gliderPhaseDuration(phase: GliderPhase) {
-  if (phase === "windup") return GLIDER_CONFIG.windupFrames;
-  if (phase === "dive") return GLIDER_CONFIG.diveFrames;
+function gliderHoverFrames(enemy: EnemyState) {
+  return randomFrameCount(
+    hasAwakenedGrowth(enemy) ? GLIDER_CONFIG.awakenedHoverMinFrames : GLIDER_CONFIG.hoverMinFrames,
+    GLIDER_CONFIG.hoverFrameJitter,
+  );
+}
+
+function gliderWindupFrames(enemy: EnemyState) {
+  return hasAwakenedGrowth(enemy) ? GLIDER_CONFIG.awakenedWindupFrames : GLIDER_CONFIG.windupFrames;
+}
+
+function gliderDiveFrames(enemy: EnemyState) {
+  return hasAwakenedGrowth(enemy) ? GLIDER_CONFIG.awakenedDiveFrames : GLIDER_CONFIG.diveFrames;
+}
+
+function gliderRecoverFrames(enemy: EnemyState) {
+  return hasAwakenedGrowth(enemy) ? GLIDER_CONFIG.awakenedRecoverFrames : GLIDER_CONFIG.recoverFrames;
+}
+
+function gliderPhaseDuration(enemy: EnemyState, phase: GliderPhase) {
+  if (phase === "windup") return gliderWindupFrames(enemy);
+  if (phase === "dive") return gliderDiveFrames(enemy);
   if (phase === "pass") return GLIDER_CONFIG.passFrames;
-  if (phase === "recover") return GLIDER_CONFIG.recoverFrames;
+  if (phase === "recover") return gliderRecoverFrames(enemy);
   return 1;
 }
 
@@ -155,7 +180,7 @@ function gliderPhaseFrame(enemy: EnemyState, phase: GliderPhase) {
   }
 
   const sheet = gliderSheetForPhase(phase);
-  const duration = gliderPhaseDuration(phase);
+  const duration = gliderPhaseDuration(enemy, phase);
   const elapsed = Math.max(0, duration - (enemy.gliderTimer ?? 0));
   return Math.min(sheet.count - 1, Math.floor(elapsed * sheet.count / duration));
 }
@@ -163,18 +188,18 @@ function gliderPhaseFrame(enemy: EnemyState, phase: GliderPhase) {
 function enterGliderPhase(enemy: EnemyState, phase: GliderPhase) {
   enemy.gliderPhase = phase;
   if (phase === "windup") {
-    enemy.gliderTimer = GLIDER_CONFIG.windupFrames;
+    enemy.gliderTimer = gliderWindupFrames(enemy);
     enemy.gliderDiveVy = 0;
     playSfx("enemyWarning", GLIDER_CONFIG.windupSfxPitch);
   } else if (phase === "dive") {
-    enemy.gliderTimer = GLIDER_CONFIG.diveFrames;
+    enemy.gliderTimer = gliderDiveFrames(enemy);
     const targetY = clamp(
       state.player.y + state.player.h * GLIDER_CONFIG.diveTargetPlayerYRatio - enemy.h / HALF_DIVISOR,
       GLIDER_CONFIG.minTopY,
       gliderMaxDiveTopY(enemy),
     );
     enemy.gliderDiveVy = clamp(
-      (targetY - enemy.y) / GLIDER_CONFIG.diveFrames,
+      (targetY - enemy.y) / gliderDiveFrames(enemy),
       -GLIDER_CONFIG.diveMaxAbsVy,
       GLIDER_CONFIG.diveMaxAbsVy,
     );
@@ -182,17 +207,17 @@ function enterGliderPhase(enemy: EnemyState, phase: GliderPhase) {
   } else if (phase === "pass") {
     enemy.gliderTimer = GLIDER_CONFIG.passFrames;
   } else if (phase === "recover") {
-    enemy.gliderTimer = GLIDER_CONFIG.recoverFrames;
+    enemy.gliderTimer = gliderRecoverFrames(enemy);
     enemy.gliderDiveVy = 0;
   } else {
-    enemy.gliderTimer = randomFrameCount(GLIDER_CONFIG.hoverMinFrames, GLIDER_CONFIG.hoverFrameJitter);
+    enemy.gliderTimer = gliderHoverFrames(enemy);
     enemy.gliderDiveVy = 0;
   }
 }
 
 function initGlider(enemy: EnemyState, context: EnemySpawnContext) {
   enemy.gliderPhase = "hover";
-  enemy.gliderTimer = randomFrameCount(GLIDER_CONFIG.hoverMinFrames, GLIDER_CONFIG.hoverFrameJitter);
+  enemy.gliderTimer = gliderHoverFrames(enemy);
   enemy.gliderFacing = -context.side;
   enemy.gliderBaseSpeed = context.speed;
   enemy.gliderDiveVy = 0;
@@ -245,18 +270,18 @@ function updateGlider(enemy: EnemyState) {
     if (enemy.gliderTimer <= 0) {
       enemy.gliderFacing = facing;
       enterGliderPhase(enemy, "dive");
-      enemy.vx = facing * gliderDiveSpeed();
+      enemy.vx = facing * gliderDiveSpeed(enemy);
     }
   } else if (phase === "dive") {
     enemy.gliderTimer -= 1;
-    enemy.vx = (enemy.gliderFacing ?? facing) * gliderDiveSpeed();
+    enemy.vx = (enemy.gliderFacing ?? facing) * gliderDiveSpeed(enemy);
     enemy.y = clamp(enemy.y + (enemy.gliderDiveVy ?? 0), GLIDER_CONFIG.minTopY, gliderMaxDiveTopY(enemy));
     if (enemy.gliderTimer <= 0) {
       enterGliderPhase(enemy, "pass");
     }
   } else if (phase === "pass") {
     enemy.gliderTimer -= 1;
-    enemy.vx = (enemy.gliderFacing ?? facing) * gliderDiveSpeed() * GLIDER_CONFIG.passSpeedScale;
+    enemy.vx = (enemy.gliderFacing ?? facing) * gliderDiveSpeed(enemy) * GLIDER_CONFIG.passSpeedScale;
     enemy.y = clamp(enemy.y - GLIDER_CONFIG.passLiftPerFrame, GLIDER_CONFIG.minTopY, gliderMaxDiveTopY(enemy));
     if (enemy.gliderTimer <= 0) {
       enterGliderPhase(enemy, "recover");

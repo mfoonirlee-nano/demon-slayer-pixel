@@ -6,7 +6,7 @@ import { drawSheetFrame } from "../../rendering/graphics";
 import type { EnemyState, WardenPhase } from "../../types/game-state";
 import { frameIndex } from "../../game/utils";
 import type { EnemyArchetype, EnemySpawnContext } from "./common";
-import { drawEnemyFrame, enemyCenterX, enemyDrawScale, enemyFeetY } from "./common";
+import { drawEnemyFrame, enemyCenterX, enemyDrawScale, enemyFeetY, hasAwakenedGrowth } from "./common";
 
 const HALF_DIVISOR = 2;
 const FULL_CIRCLE = Math.PI * 2;
@@ -35,14 +35,17 @@ const WARDEN_CONFIG = {
   driftScale: 0.3,
   retreatScale: 1.05,
   auraMinFrames: 60,
+  awakenedAuraMinFrames: 72,
   auraFrameJitter: 20,
   moveCooldownMinFrames: 18,
   moveCooldownJitterFrames: 18,
   hitFrames: 14,
   blockedRetryFrames: 12,
   auraRadius: 180,
+  awakenedAuraRadius: 218,
   auraVerticalRadiusScale: 0.72,
   auraSpeedScale: 1.12,
+  awakenedAuraSpeedScale: 1.18,
   maxActiveWardens: 1,
   hpMultiplier: 1.6,
   damageScale: 0.8,
@@ -83,15 +86,28 @@ function wardenMoveSpeed() {
   );
 }
 
+function wardenAuraMinFrames(enemy: EnemyState) {
+  return hasAwakenedGrowth(enemy) ? WARDEN_CONFIG.awakenedAuraMinFrames : WARDEN_CONFIG.auraMinFrames;
+}
+
+function wardenAuraRadius(enemy: EnemyState) {
+  return hasAwakenedGrowth(enemy) ? WARDEN_CONFIG.awakenedAuraRadius : WARDEN_CONFIG.auraRadius;
+}
+
+function wardenAuraSpeedScale(enemy: EnemyState) {
+  return hasAwakenedGrowth(enemy) ? WARDEN_CONFIG.awakenedAuraSpeedScale : WARDEN_CONFIG.auraSpeedScale;
+}
+
 function wardenSupportTargetCount(warden: EnemyState) {
   let count = 0;
   const centerX = enemyCenterX(warden);
   const centerY = warden.y + warden.h / HALF_DIVISOR;
-  const radiusY = WARDEN_CONFIG.auraRadius * WARDEN_CONFIG.auraVerticalRadiusScale;
+  const radiusX = wardenAuraRadius(warden);
+  const radiusY = radiusX * WARDEN_CONFIG.auraVerticalRadiusScale;
 
   for (const enemy of state.enemies) {
     if (enemy === warden || isWarden(enemy)) continue;
-    const dx = (enemyCenterX(enemy) - centerX) / WARDEN_CONFIG.auraRadius;
+    const dx = (enemyCenterX(enemy) - centerX) / radiusX;
     const dy = ((enemy.y + enemy.h / HALF_DIVISOR) - centerY) / radiusY;
     if (dx * dx + dy * dy <= 1) count += 1;
   }
@@ -102,7 +118,7 @@ function wardenSupportTargetCount(warden: EnemyState) {
 function enterWardenPhase(enemy: EnemyState, phase: WardenPhase) {
   enemy.wardenPhase = phase;
   if (phase === "aura") {
-    enemy.wardenTimer = randomFrameCount(WARDEN_CONFIG.auraMinFrames, WARDEN_CONFIG.auraFrameJitter);
+    enemy.wardenTimer = randomFrameCount(wardenAuraMinFrames(enemy), WARDEN_CONFIG.auraFrameJitter);
     playSfx("enemyAura");
   } else if (phase === "hit") {
     enemy.wardenTimer = WARDEN_CONFIG.hitFrames;
@@ -239,15 +255,16 @@ export function applyWardenAuraBuffs() {
   for (const warden of activeAuraWardens()) {
     const centerX = enemyCenterX(warden);
     const centerY = warden.y + warden.h / HALF_DIVISOR;
-    const radiusY = WARDEN_CONFIG.auraRadius * WARDEN_CONFIG.auraVerticalRadiusScale;
+    const radiusX = wardenAuraRadius(warden);
+    const radiusY = radiusX * WARDEN_CONFIG.auraVerticalRadiusScale;
 
     for (const enemy of state.enemies) {
       if (enemy === warden || isWarden(enemy)) continue;
-      const dx = (enemyCenterX(enemy) - centerX) / WARDEN_CONFIG.auraRadius;
+      const dx = (enemyCenterX(enemy) - centerX) / radiusX;
       const dy = ((enemy.y + enemy.h / HALF_DIVISOR) - centerY) / radiusY;
       if (dx * dx + dy * dy > 1) continue;
       enemy.wardenBuffedFrames = 2;
-      enemy.x += enemy.vx * (WARDEN_CONFIG.auraSpeedScale - 1);
+      enemy.x += enemy.vx * (wardenAuraSpeedScale(warden) - 1);
     }
   }
 }
@@ -259,7 +276,7 @@ function drawAuraRing(enemy: EnemyState) {
   const feetY = enemyFeetY(enemy) - AURA_RING_FEET_OFFSET;
   const sheet = WARDEN_AURA_EFFECT_SHEET;
   const frame = frameIndex(sheet.count, WARDEN_CONFIG.auraEffectFrameDuration, state.elapsed, enemy.animSeed);
-  const drawW = WARDEN_CONFIG.auraEffectDrawW;
+  const drawW = Math.round(WARDEN_CONFIG.auraEffectDrawW * wardenAuraRadius(enemy) / WARDEN_CONFIG.auraRadius);
   const drawH = Math.round(drawW * sheet.frameH / sheet.frameW);
   ctx.save();
   ctx.globalAlpha = WARDEN_CONFIG.auraEffectAlpha * pulse;
