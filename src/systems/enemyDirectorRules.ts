@@ -61,6 +61,18 @@ const PRESSURE_BOSS_SUMMON_PHASE = 2;
 const FINAL_BOSS_MAX_SUMMON_TIER = 4;
 const AWAKENED_BOSS_MAX_SUMMON_TIER = 4;
 const ENRAGED_BOSS_MAX_SUMMON_TIER = 3;
+const ACT_HP_SCALE = 0.035;
+const AWAKENED_HP_SCALE_BONUS = 0.1;
+const FINAL_HP_SCALE_BONUS = 0.08;
+const ACT_DAMAGE_SCALE = 0.04;
+const AWAKENED_DAMAGE_SCALE_BONUS = 0.12;
+const FINAL_DAMAGE_SCALE_BONUS = 0.15;
+const ACT_DAMAGE_CAP_SCALE = 0.04;
+const AWAKENED_DAMAGE_CAP_SCALE_BONUS = 0.12;
+const FINAL_DAMAGE_CAP_SCALE_BONUS = 0.15;
+const ACT_SPEED_SCALE = 0.008;
+const AWAKENED_SPEED_SCALE_BONUS = 0.025;
+const FINAL_SPEED_SCALE_BONUS = 0.02;
 
 const UNLOCKED_ENEMY_COUNT_BY_ACT: Partial<Record<number, number>> = {
   1: 3,
@@ -378,6 +390,20 @@ export function enemyIdForSheetIndex(sheetIndex: number): EnemyId {
   return found?.id ?? "chaser";
 }
 
+function actGrowthScale(
+  bossKills: number,
+  perAct: number,
+  awakenedBonus: number,
+  finalBonus: number,
+) {
+  const act = actForBossKills(bossKills);
+  const scale = 1
+    + (act - 1) * perAct
+    + (act >= AWAKENED_PROFILE_FIRST_ACT ? awakenedBonus : 0)
+    + (act === FINAL_ACT ? finalBonus : 0);
+  return scale;
+}
+
 export function enemySpawnStats(
   enemyId: EnemyId,
   bossKills: number,
@@ -386,10 +412,32 @@ export function enemySpawnStats(
 ): EnemySpawnStats {
   const config = ENEMY_ARCHETYPES[enemyId];
   const threatScalar = threatScalarForRun(bossKills, elapsedSeconds);
+  const hpScale = actGrowthScale(bossKills, ACT_HP_SCALE, AWAKENED_HP_SCALE_BONUS, FINAL_HP_SCALE_BONUS);
+  const damageScale = actGrowthScale(
+    bossKills,
+    ACT_DAMAGE_SCALE,
+    AWAKENED_DAMAGE_SCALE_BONUS,
+    FINAL_DAMAGE_SCALE_BONUS,
+  );
+  const damageCapScale = actGrowthScale(
+    bossKills,
+    ACT_DAMAGE_CAP_SCALE,
+    AWAKENED_DAMAGE_CAP_SCALE_BONUS,
+    FINAL_DAMAGE_CAP_SCALE_BONUS,
+  );
+  const speedScale = actGrowthScale(
+    bossKills,
+    ACT_SPEED_SCALE,
+    AWAKENED_SPEED_SCALE_BONUS,
+    FINAL_SPEED_SCALE_BONUS,
+  );
+  const baseDamage = config.damageBase + bossKills * config.damagePerBossKill;
+  const baseSpeed = config.speedBase + bossKills * config.speedPerBossKill + random() * config.randomSpeed;
+
   return {
-    hp: Math.round((config.hpBase + bossKills * config.hpPerBossKill) * threatScalar),
-    damage: Math.min(config.damageCap, config.damageBase + bossKills * config.damagePerBossKill),
-    speed: config.speedBase + bossKills * config.speedPerBossKill + random() * config.randomSpeed,
+    hp: Math.round((config.hpBase + bossKills * config.hpPerBossKill) * threatScalar * hpScale),
+    damage: Math.min(config.damageCap * damageCapScale, baseDamage * damageScale),
+    speed: baseSpeed * speedScale,
   };
 }
 

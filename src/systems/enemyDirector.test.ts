@@ -1,12 +1,14 @@
 import { describe, expect, it } from "vitest";
 import type { EnemyId, EnemyState } from "../types/game-state";
 import {
+  ENEMY_ARCHETYPES,
   bossSummonBudgetForPhase,
   buildCurrentEnemyPool,
   buildRunEnemyOrder,
   canSpawnBossSummon,
   createEnemyDirectorState,
   enemySpawnCost,
+  enemySpawnStats,
   maxActiveSpawnCostForAct,
   pickBossSummonEnemyId,
   pickWavePlan,
@@ -63,6 +65,8 @@ const BOSS_SUMMON_SPAWN_COST = 1;
 const LATE_POOL_RANDOM_ROLL = 0.99;
 const AWAKENED_SAMPLE_WAVES = 12;
 const FINAL_SAMPLE_WAVES = 6;
+const AWAKENED_ACT_BOSS_KILLS = 6;
+const MIN_RANDOM_ROLL = 0;
 
 function wavePlanSpawnCost(entries: ReturnType<typeof pickWavePlan>) {
   return entries.reduce((total, entry) => (
@@ -102,6 +106,27 @@ describe("act progression", () => {
       healthCrystal: FINAL_REWARD_HEALTH_CRYSTALS,
       chestHeal: FINAL_REWARD_CHEST_HEAL,
     });
+  });
+
+  it("adds act growth on top of per-kill enemy stats", () => {
+    const config = ENEMY_ARCHETYPES.runner;
+    const awakenedStats = enemySpawnStats("runner", AWAKENED_ACT_BOSS_KILLS, 0, () => MIN_RANDOM_ROLL);
+    const threatOnlyHp = Math.round(
+      (config.hpBase + AWAKENED_ACT_BOSS_KILLS * config.hpPerBossKill)
+        * threatScalarForRun(AWAKENED_ACT_BOSS_KILLS, 0),
+    );
+    const perKillDamage = config.damageBase + AWAKENED_ACT_BOSS_KILLS * config.damagePerBossKill;
+    const perKillSpeed = config.speedBase + AWAKENED_ACT_BOSS_KILLS * config.speedPerBossKill;
+
+    expect(awakenedStats.hp).toBeGreaterThan(threatOnlyHp);
+    expect(awakenedStats.damage).toBeGreaterThan(perKillDamage);
+    expect(awakenedStats.speed).toBeGreaterThan(perKillSpeed);
+  });
+
+  it("lets final-act enemy damage grow beyond the old base cap", () => {
+    const finalBrute = enemySpawnStats("brute", FINAL_ACT_BOSS_KILLS, 0, () => MIN_RANDOM_ROLL);
+
+    expect(finalBrute.damage).toBeGreaterThan(ENEMY_ARCHETYPES.brute.damageCap);
   });
 
   it("uses wave and prelude gates by act band", () => {
