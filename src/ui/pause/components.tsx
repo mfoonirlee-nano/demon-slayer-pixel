@@ -113,8 +113,8 @@ export function PauseDetailPanel({ detail }: { detail: PauseDetailCopy }) {
   return (
     <div className="pause-detail-panel" style={{ height: PAUSE_DETAIL_PANEL_H, minHeight: PAUSE_DETAIL_PANEL_H }}>
       <div className="truncate text-[8px] leading-none text-[#7fc8e0]">{detail.kicker}</div>
-      <div className="mt-[5px] truncate text-[11px] font-bold leading-none text-[#ffd46e]">{detail.title}</div>
-      <div className="mt-[5px] line-clamp-3 text-[7px] leading-[1.35] text-[#c8efff]">{detail.body}</div>
+      <div className="mt-[5px] truncate text-[12px] font-bold leading-none text-[#ffd46e]">{detail.title}</div>
+      <div className="mt-[5px] line-clamp-2 text-[8px] leading-[1.35] text-[#c8efff]">{detail.body}</div>
     </div>
   );
 }
@@ -132,10 +132,10 @@ export function AudioVolumeControl({ label, value, onChange }: {
       : "translateX(-50%)";
 
   return (
-    <label className="grid gap-1 text-[10px] leading-none text-[#c8efff]">
-      <span className="flex items-center justify-between gap-3">
-        <span>{label}</span>
-        <span className="font-bold text-[#26d5ff]">{percent}%</span>
+    <label className="grid gap-2 px-2 py-[5px] text-[10px] leading-none text-[#c8efff]">
+      <span className="flex items-baseline justify-between gap-3">
+        <span className="text-[#7fc8e0]">{label}</span>
+        <span className="text-[18px] font-bold text-[#26d5ff]">{percent}%</span>
       </span>
       <span className="relative block" style={{ height: PAUSE_SLIDER_WRAP_H }}>
         <UiSprite

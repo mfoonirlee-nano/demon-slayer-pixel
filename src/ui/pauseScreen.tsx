@@ -43,6 +43,8 @@ import {
   PAUSE_SETTINGS_GAP,
   PAUSE_SETTINGS_INSET_X,
   PAUSE_SKILLS,
+  PAUSE_TAB_BODY_INSET_BOTTOM,
+  PAUSE_TAB_BODY_INSET_TOP,
   PAUSE_TAB_CONTENT_CLASS,
   PAUSE_TAB_BODY_GAP,
   PAUSE_TAB_GAP,
@@ -229,14 +231,16 @@ export function PauseScreen({ snapshot }: { snapshot: GameSnapshot }) {
 
             {activeTab === "equipment" ? (
               <div
-                className="grid h-full"
+                className="grid h-full overflow-hidden"
                 style={{
-                  gridTemplateRows: "1fr auto",
+                  gridTemplateRows: "minmax(0, 1fr) auto",
                   rowGap: PAUSE_CURRENT_ROW_GAP,
+                  paddingTop: PAUSE_TAB_BODY_INSET_TOP,
+                  paddingBottom: PAUSE_TAB_BODY_INSET_BOTTOM,
                 }}
               >
                   <div
-                    className="grid min-h-0"
+                    className="grid min-h-0 overflow-hidden"
                     style={{
                       gridTemplateColumns: `${PAUSE_CURRENT_COLUMN_W}px ${PAUSE_CHOICES_COLUMN_W}px`,
                       columnGap: PAUSE_COLUMN_GAP,
@@ -244,13 +248,15 @@ export function PauseScreen({ snapshot }: { snapshot: GameSnapshot }) {
                     }}
                   >
                   <div
-                    className="pause-section-panel grid content-start"
+                    className="grid min-h-0 content-start overflow-hidden px-2"
                     style={{
                       gridTemplateRows: "auto 1fr",
                       rowGap: PAUSE_CURRENT_ROW_GAP,
                     }}
                   >
-                    <div className="text-[8px] leading-none text-[#7fc8e0]">当前装备</div>
+                    <div className="flex min-w-0 items-center justify-between gap-2 text-[10px] leading-none text-[#7fc8e0]">
+                      <span>当前装备</span>
+                    </div>
                     <div
                       className="grid content-start"
                       style={{
@@ -296,13 +302,13 @@ export function PauseScreen({ snapshot }: { snapshot: GameSnapshot }) {
                   </div>
 
                   <div
-                    className="pause-section-panel grid h-full min-h-0 overflow-hidden text-[9px] leading-none"
+                    className="grid h-full min-h-0 overflow-hidden px-2 text-[9px] leading-none"
                     style={{ gridTemplateRows: "auto 1fr", rowGap: PAUSE_CURRENT_ROW_GAP }}
                   >
-                    <div className="flex items-center justify-between gap-3 text-[8px] leading-none text-[#7fc8e0]">
+                    <div className="flex items-center justify-between gap-3 text-[10px] leading-none text-[#7fc8e0]">
                       <span>{EQUIPMENT_SLOT_LABELS[selectedEquipmentSlot]}候选</span>
                       <span className="truncate text-[#26d5ff]">
-                        {EQUIPMENT_SLOT_LABELS[selectedEquipmentSlot]} · {selectedEquipmentItem?.name ?? "未装备"}
+                        {selectedEquipmentItem?.name ?? "未装备"}
                       </span>
                     </div>
                     <div className="min-h-0 overflow-y-auto overflow-x-hidden">
@@ -378,14 +384,16 @@ export function PauseScreen({ snapshot }: { snapshot: GameSnapshot }) {
 
             {activeTab === "skills" ? (
               <div
-                className="grid h-full"
+                className="grid h-full overflow-hidden"
                 style={{
-                  gridTemplateRows: "1fr auto",
+                  gridTemplateRows: "minmax(0, 1fr) auto",
                   rowGap: PAUSE_CURRENT_ROW_GAP,
+                  paddingTop: PAUSE_TAB_BODY_INSET_TOP,
+                  paddingBottom: PAUSE_TAB_BODY_INSET_BOTTOM,
                 }}
               >
                   <div
-                    className="grid min-h-0"
+                    className="grid min-h-0 overflow-hidden"
                     style={{
                       gridTemplateColumns: `${PAUSE_CURRENT_COLUMN_W}px ${PAUSE_CHOICES_COLUMN_W}px`,
                       columnGap: PAUSE_COLUMN_GAP,
@@ -393,13 +401,15 @@ export function PauseScreen({ snapshot }: { snapshot: GameSnapshot }) {
                     }}
                   >
                   <div
-                    className="pause-section-panel grid content-start"
+                    className="grid min-h-0 content-start overflow-hidden px-2"
                     style={{
                       gridTemplateRows: "auto 1fr",
                       rowGap: PAUSE_CURRENT_ROW_GAP,
                     }}
                   >
-                    <div className="text-[8px] leading-none text-[#7fc8e0]">当前技能</div>
+                    <div className="flex min-w-0 items-center justify-between gap-2 text-[10px] leading-none text-[#7fc8e0]">
+                      <span>当前技能</span>
+                    </div>
                     <div
                       className="grid content-start"
                       style={{
@@ -444,12 +454,12 @@ export function PauseScreen({ snapshot }: { snapshot: GameSnapshot }) {
                   </div>
 
                   <div
-                    className="pause-section-panel grid h-full min-h-0 overflow-hidden text-[9px] leading-none"
+                    className="grid h-full min-h-0 overflow-hidden px-2 text-[9px] leading-none"
                     style={{ gridTemplateRows: "auto 1fr", rowGap: PAUSE_CURRENT_ROW_GAP }}
                   >
-                    <div className="flex items-center justify-between gap-3 text-[8px] leading-none text-[#7fc8e0]">
+                    <div className="flex items-center justify-between gap-3 text-[10px] leading-none text-[#7fc8e0]">
                       <span>全部技能</span>
-                      <span className="truncate text-[#26d5ff]">槽位 {selectedSkillSlot + 1} · {selectedSkill?.name ?? "空槽"}</span>
+                      <span className="truncate text-[#26d5ff]">{selectedSkill?.name ?? "空槽"}</span>
                     </div>
                     <div className="min-h-0 overflow-y-auto overflow-x-hidden">
                       {PAUSE_SKILLS.length > 0 ? (
@@ -524,8 +534,13 @@ export function PauseScreen({ snapshot }: { snapshot: GameSnapshot }) {
 
             {activeTab === "settings" ? (
               <div
-                className="pause-section-panel grid h-full content-start overflow-y-auto"
-                style={{ gap: PAUSE_SETTINGS_GAP, paddingInline: PAUSE_SETTINGS_INSET_X }}
+                className="grid h-full content-start overflow-hidden"
+                style={{
+                  gap: PAUSE_SETTINGS_GAP,
+                  paddingInline: PAUSE_SETTINGS_INSET_X,
+                  paddingTop: PAUSE_TAB_BODY_INSET_TOP,
+                  paddingBottom: PAUSE_TAB_BODY_INSET_BOTTOM,
+                }}
               >
                 <AudioVolumeControl
                   label="主音量"

@@ -21,11 +21,15 @@ import {
   PAUSE_PANEL_TAB_TOP,
   PAUSE_PANEL_W,
   PAUSE_TAB_BODY_GAP,
+  PAUSE_TAB_BODY_INSET_BOTTOM,
+  PAUSE_TAB_BODY_INSET_TOP,
   PAUSE_TAB_GAP,
   PAUSE_TAB_H,
   PAUSE_TAB_INSET_X,
   PAUSE_TAB_W,
   PAUSE_TABS,
+  PAUSE_SETTINGS_INSET_X,
+  PAUSE_SLIDER_TRACK_W,
 } from "./constants";
 
 const MIN_TAB_WIDTH_USAGE = 0.95;
@@ -76,14 +80,27 @@ describe("pause layout", () => {
 
   it("keeps a usable body row above the bottom detail panel", () => {
     const contentHeight = PAUSE_PANEL_H - PAUSE_PANEL_CONTENT_TOP - PAUSE_PANEL_CONTENT_BOTTOM;
-    const minimumBodyHeight = PAUSE_CURRENT_FRAME_SIZE + PAUSE_CURRENT_ROW_GAP + PAUSE_DETAIL_PANEL_H;
-    const minimumPanelContentHeight = PAUSE_TAB_H + PAUSE_TAB_BODY_GAP + minimumBodyHeight;
+    const tabBodyHeight = contentHeight - PAUSE_TAB_H - PAUSE_TAB_BODY_GAP;
+    const safeTabBodyHeight = tabBodyHeight - PAUSE_TAB_BODY_INSET_TOP - PAUSE_TAB_BODY_INSET_BOTTOM;
+    const pickerHeight = safeTabBodyHeight - PAUSE_CURRENT_ROW_GAP - PAUSE_DETAIL_PANEL_H;
 
-    expect(minimumPanelContentHeight).toBeLessThanOrEqual(contentHeight);
+    expect(pickerHeight).toBeGreaterThanOrEqual(PAUSE_CURRENT_FRAME_SIZE + PAUSE_CURRENT_ROW_GAP);
   });
 
   it("keeps the info grid away from the lower pause chrome", () => {
     expect(PAUSE_INFO_INSET_BOTTOM).toBeGreaterThan(PAUSE_INFO_INSET_TOP);
     expect(PAUSE_INFO_INSET_BOTTOM).toBeGreaterThanOrEqual(PAUSE_TAB_H);
+  });
+
+  it("uses the info tab rhythm for the other pause tab body bounds", () => {
+    expect(PAUSE_TAB_BODY_INSET_TOP).toBe(PAUSE_INFO_INSET_TOP);
+    expect(PAUSE_TAB_BODY_INSET_BOTTOM).toBe(PAUSE_INFO_INSET_BOTTOM);
+  });
+
+  it("keeps settings sliders inside the pause body width", () => {
+    const bodySafeWidth = PAUSE_PANEL_W - PAUSE_PANEL_INSET_X * 2;
+    const settingsWidth = bodySafeWidth - PAUSE_SETTINGS_INSET_X * 2;
+
+    expect(PAUSE_SLIDER_TRACK_W).toBeLessThanOrEqual(settingsWidth);
   });
 });
