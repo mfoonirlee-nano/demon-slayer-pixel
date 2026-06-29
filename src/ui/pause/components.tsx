@@ -16,9 +16,9 @@ import type { PauseDetailCopy } from "./types";
 
 export function StatRow({ label, value, accent = false }: { label: string; value: string | number; accent?: boolean }) {
   return (
-    <div className="flex min-h-[24px] items-center justify-between gap-3 rounded-sm border border-[rgba(74,132,160,0.42)] bg-[rgba(3,13,27,0.62)] px-2 py-[5px] text-[8px] leading-none shadow-[inset_0_0_0_1px_rgba(38,213,255,0.08)]">
-      <span className="text-[#7fc8e0]">{label}</span>
-      <span className={accent ? "font-bold text-[#ffd46e]" : "font-bold text-[#26d5ff]"}>{value}</span>
+    <div className="flex min-h-[24px] min-w-0 items-center justify-between gap-2 rounded-sm border border-[rgba(74,132,160,0.42)] bg-[rgba(3,13,27,0.62)] px-2 py-[5px] text-[8px] leading-none shadow-[inset_0_0_0_1px_rgba(38,213,255,0.08)]">
+      <span className="shrink-0 text-[#7fc8e0]">{label}</span>
+      <span className={`min-w-0 truncate text-right ${accent ? "font-bold text-[#ffd46e]" : "font-bold text-[#26d5ff]"}`}>{value}</span>
     </div>
   );
 }
@@ -110,9 +110,9 @@ export function PauseSquareIcon({
 export function PauseDetailPanel({ detail }: { detail: PauseDetailCopy }) {
   return (
     <div className="pause-detail-panel" style={{ height: PAUSE_DETAIL_PANEL_H, minHeight: PAUSE_DETAIL_PANEL_H }}>
-      <div className="truncate text-[7px] leading-none text-[#7fc8e0]">{detail.kicker}</div>
-      <div className="mt-1 truncate text-[10px] font-bold leading-none text-[#ffd46e]">{detail.title}</div>
-      <div className="mt-1 line-clamp-2 text-[7px] leading-[1.35] text-[#c8efff]">{detail.body}</div>
+      <div className="truncate text-[8px] leading-none text-[#7fc8e0]">{detail.kicker}</div>
+      <div className="mt-[5px] truncate text-[11px] font-bold leading-none text-[#ffd46e]">{detail.title}</div>
+      <div className="mt-[5px] line-clamp-3 text-[7px] leading-[1.35] text-[#c8efff]">{detail.body}</div>
     </div>
   );
 }

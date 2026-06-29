@@ -1,4 +1,4 @@
-import { useLayoutEffect, useRef, useState } from "react";
+import { useLayoutEffect, useRef, useState, type KeyboardEvent } from "react";
 import { getAudioVolumeSettings, setAudioVolumeSettings, type AudioVolumeSettings } from "../game/audio";
 import { equipEquipment, equipSkillSlot } from "../game/runtime";
 import type { GameSnapshot } from "../game/gameStore";
@@ -76,6 +76,7 @@ function usePausePanelScale() {
 export function PauseScreen({ snapshot }: { snapshot: GameSnapshot }) {
   const { player, equipment } = snapshot;
   const { panelScale, scaleFrameRef } = usePausePanelScale();
+  const tabRefs = useRef<Array<HTMLButtonElement | null>>([]);
   const initialSkillSlot = Math.max(0, Math.min(player.equippedSkillIds.length - 1, player.skillIndex));
   const [activeTab, setActiveTab] = useState<PauseTab>("info");
   const [selectedSkillSlot, setSelectedSkillSlot] = useState(initialSkillSlot);
@@ -101,6 +102,35 @@ export function PauseScreen({ snapshot }: { snapshot: GameSnapshot }) {
 
   const updateVolume = (setting: keyof AudioVolumeSettings, value: number) => {
     setVolumeSettings(setAudioVolumeSettings({ [setting]: value }));
+  };
+
+  const selectPauseTab = (tabId: PauseTab) => {
+    setActiveTab(tabId);
+    setHoveredEquipmentDetail(null);
+    setHoveredSkillDetail(null);
+  };
+
+  const focusTab = (index: number) => {
+    window.requestAnimationFrame(() => tabRefs.current[index]?.focus());
+  };
+
+  const handleTabKeyDown = (event: KeyboardEvent<HTMLButtonElement>, index: number) => {
+    let nextIndex: number;
+    if (event.key === "ArrowRight" || event.key === "ArrowDown") {
+      nextIndex = (index + 1) % PAUSE_TABS.length;
+    } else if (event.key === "ArrowLeft" || event.key === "ArrowUp") {
+      nextIndex = (index - 1 + PAUSE_TABS.length) % PAUSE_TABS.length;
+    } else if (event.key === "Home") {
+      nextIndex = 0;
+    } else if (event.key === "End") {
+      nextIndex = PAUSE_TABS.length - 1;
+    } else {
+      return;
+    }
+
+    event.preventDefault();
+    selectPauseTab(PAUSE_TABS[nextIndex].id);
+    focusTab(nextIndex);
   };
 
   return (
@@ -148,14 +178,19 @@ export function PauseScreen({ snapshot }: { snapshot: GameSnapshot }) {
             role="tablist"
             aria-label="暂停菜单"
           >
-            {PAUSE_TABS.map((tab) => (
+            {PAUSE_TABS.map((tab, index) => (
               <button
                 key={tab.id}
+                ref={(element) => {
+                  tabRefs.current[index] = element;
+                }}
                 type="button"
                 role="tab"
                 aria-selected={activeTab === tab.id}
-                className="border-0 bg-transparent p-0 text-[9px] font-bold"
-                onClick={() => setActiveTab(tab.id)}
+                tabIndex={activeTab === tab.id ? 0 : -1}
+                className="pause-tab-button border-0 bg-transparent p-0 text-[9px] font-bold"
+                onClick={() => selectPauseTab(tab.id)}
+                onKeyDown={(event) => handleTabKeyDown(event, index)}
               >
                 <UiSprite
                   id={activeTab === tab.id ? "pauseTabActive" : "pauseTabNormal"}
@@ -175,7 +210,7 @@ export function PauseScreen({ snapshot }: { snapshot: GameSnapshot }) {
               >
             {activeTab === "info" ? (
               <div
-                className="grid h-full grid-cols-2 overflow-y-auto pt-2"
+                className="grid h-full grid-cols-3 content-start overflow-y-auto pt-2"
                 style={{
                   paddingInline: PAUSE_INFO_INSET_X,
                   columnGap: PAUSE_INFO_COLUMN_GAP,
@@ -223,6 +258,7 @@ export function PauseScreen({ snapshot }: { snapshot: GameSnapshot }) {
                       style={{
                         gridTemplateColumns: `repeat(${EQUIPMENT_SLOTS.length}, ${PAUSE_CURRENT_FRAME_SIZE}px)`,
                         gap: PAUSE_CURRENT_ROW_GAP,
+                        justifyContent: "center",
                       }}
                     >
                       {EQUIPMENT_SLOTS.map((slot) => {
@@ -275,7 +311,11 @@ export function PauseScreen({ snapshot }: { snapshot: GameSnapshot }) {
                       {visibleEquipmentItems.length > 0 ? (
                         <div
                           className="grid content-start"
-                          style={{ gridTemplateColumns: `repeat(${PAUSE_CHOICE_GRID_COLUMNS}, ${PAUSE_CHOICE_GRID_COLUMN_W}px)`, gap: PAUSE_CHOICE_GRID_GAP }}
+                          style={{
+                            gridTemplateColumns: `repeat(${PAUSE_CHOICE_GRID_COLUMNS}, ${PAUSE_CHOICE_GRID_COLUMN_W}px)`,
+                            gap: PAUSE_CHOICE_GRID_GAP,
+                            justifyContent: "center",
+                          }}
                         >
                           {visibleEquipmentItems.map((item) => {
                             const unlocked = unlockedEquipmentIds.has(item.id);
@@ -367,6 +407,7 @@ export function PauseScreen({ snapshot }: { snapshot: GameSnapshot }) {
                       style={{
                         gridTemplateColumns: `repeat(${player.equippedSkillIds.length}, ${PAUSE_CURRENT_FRAME_SIZE}px)`,
                         gap: PAUSE_CURRENT_ROW_GAP,
+                        justifyContent: "center",
                       }}
                     >
                       {player.equippedSkillIds.map((skillId, index) => {
@@ -416,7 +457,11 @@ export function PauseScreen({ snapshot }: { snapshot: GameSnapshot }) {
                       {PAUSE_SKILLS.length > 0 ? (
                         <div
                           className="grid content-start"
-                          style={{ gridTemplateColumns: `repeat(${PAUSE_CHOICE_GRID_COLUMNS}, ${PAUSE_CHOICE_GRID_COLUMN_W}px)`, gap: PAUSE_CHOICE_GRID_GAP }}
+                          style={{
+                            gridTemplateColumns: `repeat(${PAUSE_CHOICE_GRID_COLUMNS}, ${PAUSE_CHOICE_GRID_COLUMN_W}px)`,
+                            gap: PAUSE_CHOICE_GRID_GAP,
+                            justifyContent: "center",
+                          }}
                         >
                           {PAUSE_SKILLS.map((skill) => {
                             const learned = Boolean(player.skillLevels[skill.id]);

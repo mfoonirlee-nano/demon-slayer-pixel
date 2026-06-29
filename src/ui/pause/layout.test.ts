@@ -26,6 +26,10 @@ import {
   PAUSE_TABS,
 } from "./constants";
 
+const MIN_TAB_WIDTH_USAGE = 0.95;
+const MIN_BODY_WIDTH_USAGE = 0.98;
+const MIN_CHOICE_COLUMN_USAGE = 0.93;
+
 describe("pause layout", () => {
   it("keeps the reward-sized pause chrome and content rhythm readable", () => {
     const panelSize = uiSpriteDisplaySize(PAUSE_PANEL_SPRITE);
@@ -43,6 +47,19 @@ describe("pause layout", () => {
 
     expect(tabWidth).toBeLessThanOrEqual(tabSafeWidth);
     expect(bodyColumnWidth).toBeLessThanOrEqual(bodySafeWidth);
+  });
+
+  it("uses most of the available horizontal pause space", () => {
+    const tabSafeWidth = PAUSE_PANEL_W - PAUSE_TAB_INSET_X * 2;
+    const tabWidth = PAUSE_TAB_W * PAUSE_TABS.length + PAUSE_TAB_GAP * (PAUSE_TABS.length - 1);
+    const bodySafeWidth = PAUSE_PANEL_W - PAUSE_PANEL_INSET_X * 2;
+    const bodyColumnWidth = PAUSE_CURRENT_COLUMN_W + PAUSE_COLUMN_GAP + PAUSE_CHOICES_COLUMN_W;
+    const choiceGridWidth = PAUSE_CHOICE_GRID_COLUMN_W * PAUSE_CHOICE_GRID_COLUMNS
+      + PAUSE_CHOICE_GRID_GAP * (PAUSE_CHOICE_GRID_COLUMNS - 1);
+
+    expect(tabWidth / tabSafeWidth).toBeGreaterThanOrEqual(MIN_TAB_WIDTH_USAGE);
+    expect(bodyColumnWidth / bodySafeWidth).toBeGreaterThanOrEqual(MIN_BODY_WIDTH_USAGE);
+    expect(choiceGridWidth / PAUSE_CHOICES_COLUMN_W).toBeGreaterThanOrEqual(MIN_CHOICE_COLUMN_USAGE);
   });
 
   it("keeps pause slot grids inside their columns", () => {
