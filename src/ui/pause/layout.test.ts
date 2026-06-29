@@ -15,8 +15,8 @@ import {
   PAUSE_PANEL_CONTENT_TOP,
   PAUSE_PANEL_INSET_X,
   PAUSE_PANEL_H,
-  PAUSE_PANEL_TITLE_TOP,
   PAUSE_PANEL_SPRITE,
+  PAUSE_PANEL_TAB_TOP,
   PAUSE_PANEL_W,
   PAUSE_TAB_BODY_GAP,
   PAUSE_TAB_GAP,
@@ -36,7 +36,7 @@ describe("pause layout", () => {
 
     expect(PAUSE_PANEL_W).toBe(panelSize.w);
     expect(PAUSE_PANEL_H).toBe(panelSize.h);
-    expect(PAUSE_PANEL_TITLE_TOP).toBeLessThan(PAUSE_PANEL_CONTENT_TOP);
+    expect(PAUSE_PANEL_CONTENT_TOP).toBe(PAUSE_PANEL_TAB_TOP);
   });
 
   it("keeps tab and body grids inside their panel safe areas", () => {

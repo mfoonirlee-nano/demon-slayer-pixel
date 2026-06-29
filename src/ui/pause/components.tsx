@@ -16,7 +16,7 @@ import type { PauseDetailCopy } from "./types";
 
 export function StatRow({ label, value, accent = false }: { label: string; value: string | number; accent?: boolean }) {
   return (
-    <div className="flex min-h-[24px] min-w-0 items-center justify-between gap-2 rounded-sm border border-[rgba(74,132,160,0.42)] bg-[rgba(3,13,27,0.62)] px-2 py-[5px] text-[8px] leading-none shadow-[inset_0_0_0_1px_rgba(38,213,255,0.08)]">
+    <div className="flex min-h-[24px] min-w-0 items-center justify-between gap-2 px-2 py-[5px] text-[10px] leading-none">
       <span className="shrink-0 text-[#7fc8e0]">{label}</span>
       <span className={`min-w-0 truncate text-right ${accent ? "font-bold text-[#ffd46e]" : "font-bold text-[#26d5ff]"}`}>{value}</span>
     </div>

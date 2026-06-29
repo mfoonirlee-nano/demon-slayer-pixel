@@ -37,7 +37,6 @@ import {
   PAUSE_PANEL_H,
   PAUSE_PANEL_INSET_X,
   PAUSE_PANEL_SPRITE,
-  PAUSE_PANEL_TITLE_TOP,
   PAUSE_PANEL_W,
   PAUSE_SETTINGS_GAP,
   PAUSE_SETTINGS_INSET_X,
@@ -93,6 +92,7 @@ export function PauseScreen({ snapshot }: { snapshot: GameSnapshot }) {
     : `${totalAttack}`;
   const skillEnergyText = `${Math.floor(player.skillEnergy)} / ${player.skillEnergyMax}`;
   const ultimateEnergyText = `${Math.floor(player.ultimateEnergy)} / ${player.ultimateEnergyMax}`;
+  const ultimateLevelText = player.ultimateLevel > 0 ? romanLevel(player.ultimateLevel) : "未习得";
   const selectedEquipmentItem = equipment.equipped[selectedEquipmentSlot];
   const unlockedEquipmentIds = new Set(equipment.inventory.map((item) => item.id));
   const visibleEquipmentItems = ALL_EQUIPMENT_ITEMS.filter((item) => item.slot === selectedEquipmentSlot);
@@ -155,12 +155,6 @@ export function PauseScreen({ snapshot }: { snapshot: GameSnapshot }) {
             }}
           >
             <div
-              className="absolute inset-x-0 text-center text-[14px] font-bold leading-none text-[#26d5ff]"
-              style={{ top: PAUSE_PANEL_TITLE_TOP }}
-            >
-              月潮暂停
-            </div>
-            <div
               className="absolute flex min-h-0 flex-col text-left text-white"
               style={{
                 left: PAUSE_PANEL_INSET_X,
@@ -188,7 +182,7 @@ export function PauseScreen({ snapshot }: { snapshot: GameSnapshot }) {
                 role="tab"
                 aria-selected={activeTab === tab.id}
                 tabIndex={activeTab === tab.id ? 0 : -1}
-                className="pause-tab-button border-0 bg-transparent p-0 text-[9px] font-bold"
+                className="pause-tab-button border-0 bg-transparent p-0 text-[12px] font-bold"
                 onClick={() => selectPauseTab(tab.id)}
                 onKeyDown={(event) => handleTabKeyDown(event, index)}
               >
@@ -210,7 +204,7 @@ export function PauseScreen({ snapshot }: { snapshot: GameSnapshot }) {
               >
             {activeTab === "info" ? (
               <div
-                className="grid h-full grid-cols-3 content-start overflow-y-auto pt-2"
+                className="grid h-full grid-cols-2 content-start overflow-y-auto pt-2"
                 style={{
                   paddingInline: PAUSE_INFO_INSET_X,
                   columnGap: PAUSE_INFO_COLUMN_GAP,
@@ -221,11 +215,10 @@ export function PauseScreen({ snapshot }: { snapshot: GameSnapshot }) {
                 <StatRow label="经验" value={`${player.runXp} / ${player.xpToNext}`} />
                 <StatRow label="生命值" value={`${Math.max(0, Math.floor(player.hp))} / ${player.maxHp}`} />
                 <StatRow label="攻击力" value={attackText} />
-                <StatRow label="技能充能" value={skillEnergyText} />
-                <StatRow label="大招充能" value={ultimateEnergyText} accent={player.ultimateReady} />
-                <StatRow label="终式等级" value={romanLevel(player.ultimateLevel)} />
+                <StatRow label="技能能量" value={skillEnergyText} />
                 <StatRow label="当前技能" value={activeSkill?.name ?? "未装备"} />
-                <StatRow label="分数" value={player.score} />
+                <StatRow label="大招能量" value={ultimateEnergyText} accent={player.ultimateReady} />
+                <StatRow label="大招等级" value={ultimateLevelText} />
               </div>
             ) : null}
 
