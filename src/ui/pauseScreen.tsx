@@ -30,6 +30,8 @@ import {
   PAUSE_CURRENT_ICON_SIZE,
   PAUSE_CURRENT_ROW_GAP,
   PAUSE_INFO_COLUMN_GAP,
+  PAUSE_INFO_INSET_BOTTOM,
+  PAUSE_INFO_INSET_TOP,
   PAUSE_INFO_INSET_X,
   PAUSE_INFO_ROW_GAP,
   PAUSE_PANEL_CONTENT_BOTTOM,
@@ -204,11 +206,14 @@ export function PauseScreen({ snapshot }: { snapshot: GameSnapshot }) {
               >
             {activeTab === "info" ? (
               <div
-                className="grid h-full grid-cols-2 content-start overflow-y-auto pt-2"
+                className="grid h-full grid-cols-2 overflow-hidden"
                 style={{
                   paddingInline: PAUSE_INFO_INSET_X,
+                  paddingTop: PAUSE_INFO_INSET_TOP,
+                  paddingBottom: PAUSE_INFO_INSET_BOTTOM,
                   columnGap: PAUSE_INFO_COLUMN_GAP,
                   rowGap: PAUSE_INFO_ROW_GAP,
+                  gridTemplateRows: "repeat(4, minmax(0, 1fr))",
                 }}
               >
                 <StatRow label="等级" value={`Lv.${player.runLevel}`} />

@@ -16,9 +16,11 @@ import type { PauseDetailCopy } from "./types";
 
 export function StatRow({ label, value, accent = false }: { label: string; value: string | number; accent?: boolean }) {
   return (
-    <div className="flex min-h-[24px] min-w-0 items-center justify-between gap-2 px-2 py-[5px] text-[10px] leading-none">
-      <span className="shrink-0 text-[#7fc8e0]">{label}</span>
-      <span className={`min-w-0 truncate text-right ${accent ? "font-bold text-[#ffd46e]" : "font-bold text-[#26d5ff]"}`}>{value}</span>
+    <div className="flex h-full min-h-[24px] min-w-0 items-center px-2 py-[5px] text-[10px] leading-none">
+      <div className="flex w-full min-w-0 items-baseline justify-between gap-2">
+        <span className="shrink-0 text-[#7fc8e0]">{label}</span>
+        <span className={`min-w-0 truncate text-right text-[18px] ${accent ? "font-bold text-[#ffd46e]" : "font-bold text-[#26d5ff]"}`}>{value}</span>
+      </div>
     </div>
   );
 }

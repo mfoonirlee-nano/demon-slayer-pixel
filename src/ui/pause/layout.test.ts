@@ -11,6 +11,8 @@ import {
   PAUSE_CURRENT_FRAME_SIZE,
   PAUSE_CURRENT_ROW_GAP,
   PAUSE_DETAIL_PANEL_H,
+  PAUSE_INFO_INSET_BOTTOM,
+  PAUSE_INFO_INSET_TOP,
   PAUSE_PANEL_CONTENT_BOTTOM,
   PAUSE_PANEL_CONTENT_TOP,
   PAUSE_PANEL_INSET_X,
@@ -78,5 +80,10 @@ describe("pause layout", () => {
     const minimumPanelContentHeight = PAUSE_TAB_H + PAUSE_TAB_BODY_GAP + minimumBodyHeight;
 
     expect(minimumPanelContentHeight).toBeLessThanOrEqual(contentHeight);
+  });
+
+  it("keeps the info grid away from the lower pause chrome", () => {
+    expect(PAUSE_INFO_INSET_BOTTOM).toBeGreaterThan(PAUSE_INFO_INSET_TOP);
+    expect(PAUSE_INFO_INSET_BOTTOM).toBeGreaterThanOrEqual(PAUSE_TAB_H);
   });
 });
