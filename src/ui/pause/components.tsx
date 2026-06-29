@@ -62,7 +62,7 @@ export function PauseSquareIcon({
       id={pauseSquareSprite(active, disabled, empty)}
       width={size}
       height={size}
-      className="relative"
+      className={disabled ? "relative pause-square-disabled" : "relative"}
     >
       {iconSrc ? (
         <img
