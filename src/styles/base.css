@@ -11,6 +11,41 @@
   box-sizing: border-box;
 }
 
+button,
+input,
+select,
+textarea {
+  color: inherit;
+  font: inherit;
+}
+
+button,
+[role="button"] {
+  padding: 0;
+  border: 0;
+  background: transparent;
+  -webkit-tap-highlight-color: transparent;
+  user-select: none;
+}
+
+button:focus,
+button:focus-visible,
+[role="button"]:focus,
+[role="button"]:focus-visible,
+input:focus,
+input:focus-visible,
+select:focus,
+select:focus-visible,
+textarea:focus,
+textarea:focus-visible {
+  outline: none;
+  box-shadow: none;
+}
+
+button::-moz-focus-inner {
+  border: 0;
+}
+
 html,
 body,
 #root {
@@ -47,13 +82,6 @@ body {
   cursor: not-allowed;
 }
 
-.pause-square-button:focus-visible,
-.pause-choice-button:focus-visible,
-.pause-tab-button:focus-visible {
-  outline: 1px solid #26d5ff;
-  outline-offset: 2px;
-}
-
 .pause-square-button > .ui-sprite,
 .pause-choice-button > .ui-sprite,
 .pause-tab-button > .ui-sprite {
@@ -64,11 +92,8 @@ body {
 }
 
 .pause-square-button:hover > .ui-sprite,
-.pause-square-button:focus-visible > .ui-sprite,
 .pause-choice-button:not([aria-disabled="true"]):hover > .ui-sprite,
-.pause-choice-button:not([aria-disabled="true"]):focus-visible > .ui-sprite,
-.pause-tab-button:hover > .ui-sprite,
-.pause-tab-button:focus-visible > .ui-sprite {
+.pause-tab-button:hover > .ui-sprite {
   filter: brightness(1.12);
   transform: translateY(-1px);
 }
