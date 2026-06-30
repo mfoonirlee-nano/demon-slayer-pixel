@@ -7,6 +7,7 @@ import {
   GROUND_Y,
   WIDTH,
 } from "../../constants";
+import { ctx } from "../../rendering/context";
 import { drawSheetFrame } from "../../rendering/graphics";
 import type { BurrowerPhase, EnemyState } from "../../types/game-state";
 import { clamp, frameIndex, hitbox, lerp } from "../../game/utils";
@@ -51,6 +52,17 @@ const EMERGE_BOX_WIDTH_SCALE = 1.45;
 const EMERGE_BOX_WIDTH_PAD = 34;
 const EMERGE_BOX_HEIGHT_SCALE = 1.28;
 const EMERGE_BOX_FORWARD_OFFSET_SCALE = 0.22;
+const BURROW_TRAIL_HEIGHT = 5;
+const BURROW_TRAIL_Y_OFFSET = 8;
+const BURROW_MARKER_RADIUS_X = 38;
+const BURROW_MARKER_RADIUS_Y = 7;
+const BURROW_MARKER_CRACK_W = 22;
+const BURROW_MARKER_CRACK_H = 2;
+const BURROW_MARKER_CRACK_GAP = 8;
+const BURROW_SINK_ALPHA_BASE = 0.24;
+const BURROW_SINK_ALPHA_SCALE = 0.24;
+const BURROW_TRAIL_ALPHA = 0.4;
+const BURROW_EMERGE_ALPHA = 0.52;
 
 function randomFrameCount(min: number, jitter: number) {
   return min + Math.floor(Math.random() * jitter);
@@ -221,6 +233,51 @@ function triggerBurrowerEmergeHit(enemy: EnemyState) {
   );
 }
 
+function drawBurrowMarker(centerX: number, y: number, alpha: number) {
+  if (!ctx) return;
+  ctx.save();
+  ctx.globalAlpha = alpha;
+  ctx.strokeStyle = "rgba(124, 74, 38, 1)";
+  ctx.fillStyle = "rgba(86, 47, 28, 1)";
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.ellipse(centerX, y, BURROW_MARKER_RADIUS_X, BURROW_MARKER_RADIUS_Y, 0, 0, Math.PI * 2);
+  ctx.stroke();
+  ctx.fillRect(
+    centerX - BURROW_MARKER_CRACK_GAP - BURROW_MARKER_CRACK_W,
+    y - 1,
+    BURROW_MARKER_CRACK_W,
+    BURROW_MARKER_CRACK_H,
+  );
+  ctx.fillRect(centerX + BURROW_MARKER_CRACK_GAP, y - 2, BURROW_MARKER_CRACK_W, BURROW_MARKER_CRACK_H);
+  ctx.restore();
+}
+
+function drawBurrowerGroundCue(enemy: EnemyState, phase: BurrowerPhase) {
+  if (!ctx || enemy.burrowerTargetX === undefined) return;
+  if (phase !== "sink" && phase !== "burrow" && phase !== "emerge") return;
+
+  const targetCenterX = enemy.burrowerTargetX + enemy.w / HALF_DIVISOR;
+  const groundY = GROUND_Y - BURROW_TRAIL_Y_OFFSET;
+  const duration = Math.max(1, enemy.burrowerPhaseDuration ?? 1);
+  const progress = 1 - Math.max(0, enemy.burrowerTimer ?? 0) / duration;
+
+  if (phase === "burrow") {
+    const currentCenterX = enemyCenterX(enemy);
+    const left = Math.min(currentCenterX, targetCenterX);
+    const width = Math.abs(currentCenterX - targetCenterX);
+    ctx.fillStyle = `rgba(126, 78, 42, ${BURROW_TRAIL_ALPHA})`;
+    ctx.fillRect(left, groundY, width, BURROW_TRAIL_HEIGHT);
+    drawBurrowMarker(targetCenterX, groundY, BURROW_TRAIL_ALPHA);
+    return;
+  }
+
+  const alpha = phase === "sink"
+    ? BURROW_SINK_ALPHA_BASE + progress * BURROW_SINK_ALPHA_SCALE
+    : BURROW_EMERGE_ALPHA;
+  drawBurrowMarker(targetCenterX, groundY, alpha);
+}
+
 function initBurrower(enemy: EnemyState, context: EnemySpawnContext) {
   enemy.burrowerPhase = "move";
   enemy.burrowerTimer = 0;
@@ -317,6 +374,7 @@ function drawBurrower(enemy: EnemyState) {
   const sheet = burrowerSheetForPhase(phase);
   const facing = enemy.burrowerFacing ?? (enemy.vx >= 0 ? 1 : -1);
   const drawScale = enemyDrawScale(BURROWER_ARCHETYPE);
+  drawBurrowerGroundCue(enemy, phase);
 
   if (phase === "move") {
     drawEnemyFrame(enemy, sheet, drawScale, BURROWER_CONFIG.moveAnimSpeed, state.elapsed, facing);

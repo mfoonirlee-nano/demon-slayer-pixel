@@ -252,9 +252,7 @@ function pickPoolEnemy(
   predicate: (enemyId: EnemyId) => boolean = () => true,
 ) {
   const candidates = director.currentPool.filter((entry) => predicate(entry.enemyId));
-  return weightedPick(candidates, (entry) => entry.weight, rng)?.enemyId
-    ?? director.currentPool[0]?.enemyId
-    ?? "chaser";
+  return weightedPick(candidates, (entry) => entry.weight, rng)?.enemyId ?? null;
 }
 
 function roleForEnemy(enemyId: EnemyId, director: EnemyDirectorState): WaveEntryRole {
@@ -299,21 +297,23 @@ export function pickWavePlan(director: EnemyDirectorState, lowHealth: boolean) {
   let plannedCost = 0;
 
   const addEntry = (predicate: (enemyId: EnemyId) => boolean, delay: number) => {
-    if (plannedCost >= targetBudget) return;
+    if (plannedCost >= targetBudget) return false;
     const enemyId = pickPoolEnemy(director, rng, predicate);
+    if (!enemyId) return false;
     const config = ENEMY_ARCHETYPES[enemyId];
     const role = roleForEnemy(enemyId, director);
     const canDouble = config.complexityTier === TIER_ONE_COMPLEXITY && plannedCost + config.spawnCost * 2 <= targetBudget;
     const remaining = canDouble && rng() < DOUBLE_OPENER_CHANCE ? 2 : 1;
     entries.push(makeWaveEntry(enemyId, role, rng, remaining, delay));
     plannedCost += config.spawnCost * remaining;
+    return true;
   };
 
   addEntry((enemyId) => ENEMY_ARCHETYPES[enemyId].complexityTier <= 2, OPENER_ENTRY_DELAY);
   addEntry((enemyId) => anyEnemyHasTag(enemyId, profile.requiredTags), PRESSURE_ENTRY_DELAY);
   addEntry((enemyId) => anyEnemyHasTag(enemyId, ["ranged", "control", "support"]), SUPPORT_ENTRY_DELAY);
   while (plannedCost < targetBudget && entries.length < MAX_WAVE_ENTRIES) {
-    addEntry(() => true, EXTRA_ENTRY_BASE_DELAY + rng() * EXTRA_ENTRY_RANDOM_DELAY);
+    if (!addEntry(() => true, EXTRA_ENTRY_BASE_DELAY + rng() * EXTRA_ENTRY_RANDOM_DELAY)) break;
   }
 
   if (entries.length === 0) {

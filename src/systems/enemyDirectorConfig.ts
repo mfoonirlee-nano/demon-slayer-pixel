@@ -84,7 +84,7 @@ export const ENEMY_ARCHETYPES: Record<EnemyId, EnemyArchetypeConfig> = {
     complexityTier: 1,
     spawnCost: 1.2,
     baseWeight: 1.1,
-    maxActive: 2,
+    maxActive: 3,
     hpBase: 12,
     hpPerBossKill: 1.5,
     damageBase: 3,

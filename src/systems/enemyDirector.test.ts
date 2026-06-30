@@ -71,6 +71,7 @@ const AWAKENED_SAMPLE_WAVES = 12;
 const FINAL_SAMPLE_WAVES = 6;
 const AWAKENED_ACT_BOSS_KILLS = 6;
 const MIN_RANDOM_ROLL = 0;
+const RUNNER_DESIGN_MAX_ACTIVE = 3;
 
 function compressedSeconds(seconds: number) {
   return Math.round(seconds * ACT_TIMING_SCALE);
@@ -222,6 +223,14 @@ describe("enemy director rules", () => {
     expect(final).not.toContain("runner");
   });
 
+  it("keeps preferred tags as weighted support instead of mandatory pool coverage", () => {
+    const order = buildRunEnemyOrder(TEST_RUN_SEED);
+    const chaosPool = buildCurrentEnemyPool(ACT_SEVEN, order, "chaos_mixed").map((entry) => entry.enemyId);
+
+    expect(ENEMY_ARCHETYPES.runner.maxActive).toBe(RUNNER_DESIGN_MAX_ACTIVE);
+    expect(chaosPool).not.toContain("binder");
+  });
+
   it("creates a non-repeating awakened profile cycle", () => {
     const director = createEnemyDirectorState(TEST_RUN_SEED);
     const awakenedProfiles = new Set(director.awakenedProfileOrder);
@@ -273,6 +282,16 @@ describe("enemy director rules", () => {
     const plan = pickWavePlan(director, false);
 
     expect(plan.every((entry) => !entry.elite)).toBe(true);
+  });
+
+  it("falls back safely if a wave has no pool entries", () => {
+    const director = createEnemyDirectorState(TEST_RUN_SEED);
+    director.currentPool = [];
+
+    const plan = pickWavePlan(director, false);
+
+    expect(plan).toHaveLength(1);
+    expect(plan[0]?.enemyId).toBe("chaser");
   });
 
   it("caps awakened elite replacements at one per wave and charges their spawn cost", () => {

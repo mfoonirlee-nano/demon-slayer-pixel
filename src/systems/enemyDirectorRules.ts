@@ -300,7 +300,6 @@ export function buildCurrentEnemyPool(
   const profile = PROFILE_CONFIGS[profileId];
 
   addProfileTagCoverage(selected, sorted, profile.requiredTags);
-  addProfileTagCoverage(selected, sorted, profile.preferredTags);
   for (const enemyId of sorted) {
     if (selected.length >= poolSize) break;
     if (!selected.includes(enemyId)) selected.push(enemyId);

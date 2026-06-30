@@ -1,6 +1,7 @@
 import { state } from "../../game/state";
 import { playSfx } from "../../game/audio";
 import { CRAWLER_SHEET_INDEX, CRAWLER_SHEETS, ENEMY_SHEETS } from "../../constants";
+import { ctx } from "../../rendering/context";
 import { drawSheetFrame } from "../../rendering/graphics";
 import type { CrawlerPhase, EnemyState } from "../../types/game-state";
 import { hitbox } from "../../game/utils";
@@ -42,6 +43,15 @@ const LUNGE_BOX_FORWARD_RATIO = 0.45;
 const LUNGE_BOX_BACK_RATIO = 0.55;
 const LUNGE_WARNING_SFX_PITCH = 0.92;
 const LUNGE_START_SFX_PITCH = 0.88;
+const LUNGE_CUE_HEIGHT = 5;
+const LUNGE_CUE_Y_OFFSET = 8;
+const LUNGE_CUE_MARKER_WIDTH = 4;
+const LUNGE_CUE_MARKER_HEIGHT = 18;
+const LUNGE_CUE_WINDUP_ALPHA_BASE = 0.24;
+const LUNGE_CUE_WINDUP_ALPHA_SCALE = 0.32;
+const LUNGE_CUE_ACTIVE_ALPHA = 0.42;
+const LUNGE_CUE_HIGHLIGHT_ALPHA_CAP = 0.78;
+const LUNGE_CUE_HIGHLIGHT_ALPHA_BOOST = 0.2;
 
 function isCrawler(enemy: Pick<EnemyState, "sheetIndex">) {
   return enemy.sheetIndex === CRAWLER_SHEET_INDEX;
@@ -147,6 +157,31 @@ function triggerCrawlerLungeHit(enemy: EnemyState) {
   hurtPlayer(enemy.damage * CRAWLER_CONFIG.lungeDamageMultiplier + CRAWLER_CONFIG.lungeDamageBonus, facing);
 }
 
+function drawCrawlerLungeCue(enemy: EnemyState, phase: CrawlerPhase, facing: number) {
+  if (!ctx || (phase !== "windup" && phase !== "lunge")) return;
+
+  const box = crawlerLungeBox(enemy);
+  const duration = Math.max(1, crawlerPhaseDuration(enemy, phase));
+  const progress = phase === "windup"
+    ? 1 - Math.max(0, enemy.crawlerTimer ?? 0) / duration
+    : 1;
+  const alpha = phase === "windup"
+    ? LUNGE_CUE_WINDUP_ALPHA_BASE + progress * LUNGE_CUE_WINDUP_ALPHA_SCALE
+    : LUNGE_CUE_ACTIVE_ALPHA;
+  const feetY = enemyFeetY(enemy);
+  const markerX = facing === 1 ? box.x + box.w - LUNGE_CUE_MARKER_WIDTH : box.x;
+
+  ctx.save();
+  ctx.fillStyle = `rgba(158, 74, 48, ${alpha})`;
+  ctx.fillRect(box.x, feetY - LUNGE_CUE_Y_OFFSET, box.w, LUNGE_CUE_HEIGHT);
+  ctx.fillStyle = `rgba(236, 146, 82, ${Math.min(
+    LUNGE_CUE_HIGHLIGHT_ALPHA_CAP,
+    alpha + LUNGE_CUE_HIGHLIGHT_ALPHA_BOOST,
+  )})`;
+  ctx.fillRect(markerX, feetY - LUNGE_CUE_MARKER_HEIGHT, LUNGE_CUE_MARKER_WIDTH, LUNGE_CUE_MARKER_HEIGHT);
+  ctx.restore();
+}
+
 function initCrawler(enemy: EnemyState, context: EnemySpawnContext) {
   enemy.crawlerPhase = "move";
   enemy.crawlerTimer = 0;
@@ -214,6 +249,7 @@ function drawCrawler(enemy: EnemyState) {
   const sheet = crawlerSheetForPhase(phase);
   const facing = enemy.crawlerFacing ?? (enemy.vx >= 0 ? 1 : -1);
   const drawScale = enemyDrawScale(CRAWLER_ARCHETYPE);
+  drawCrawlerLungeCue(enemy, phase, facing);
 
   if (phase === "move") {
     drawEnemyFrame(enemy, sheet, drawScale, CRAWLER_CONFIG.moveAnimSpeed, state.elapsed, facing);
