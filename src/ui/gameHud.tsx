@@ -1,6 +1,6 @@
 import { type CSSProperties, useEffect, useRef, useState } from "react";
 import { useAtomValue } from "jotai";
-import { HUD_UI, type UiSpriteId } from "../constants";
+import { HUD_UI } from "../constants";
 import { DebugPanel } from "../game/debug";
 import { gameSnapshotAtom } from "../game/gameStore";
 import { skillEnergyCostForTalisman } from "../systems/equipment";
@@ -10,6 +10,7 @@ import { RewardOverlay } from "./rewardOverlay";
 import { VictoryScreen } from "./victoryScreen";
 import { getSkill, romanLevel, skillIconSrc } from "./uiDisplay";
 import { UiSprite, uiSpriteDisplaySize } from "./uiSprite";
+import { HUD_HP_METER_FRAME, HUD_SKILL_METER_FRAME, type HudMeterFrame } from "./gameHudLayout";
 
 function clampMeterPercent(value: number, maxValue: number) {
   if (maxValue <= 0) return 0;
@@ -38,26 +39,6 @@ const ULTIMATE_CHARGE_FRAME_COUNT = 8;
 const ULTIMATE_PERCENT_SCALE = 100;
 const ULTIMATE_DECAY_FULL_ANGLE = 360;
 const ULTIMATE_DECAY_MIN_ANGLE = 8;
-const HUD_HP_METER_FRAME: HudMeterFrame = {
-  left: "hudHpBarLeft",
-  mid: "hudHpBarMid",
-  right: "hudHpBarRight",
-  height: 20,
-  fillTop: 7,
-  fillBottom: 1,
-  fillInsetLeft: 15,
-  fillInsetRight: 7,
-};
-const HUD_SKILL_METER_FRAME: HudMeterFrame = {
-  left: "hudSkillBarLeft",
-  mid: "hudSkillBarMid",
-  right: "hudSkillBarRight",
-  height: 18,
-  fillTop: 7,
-  fillBottom: 3,
-  fillInsetLeft: 15,
-  fillInsetRight: 7,
-};
 function useGhostValue(value: number) {
   const [ghost, setGhost] = useState(value);
   const ghostRef = useRef(value);
@@ -97,17 +78,6 @@ function GhostBar({ value, max, ghostValue, color, ghostColor }: {
     </>
   );
 }
-
-type HudMeterFrame = {
-  left: UiSpriteId;
-  mid: UiSpriteId;
-  right: UiSpriteId;
-  height: number;
-  fillTop: number;
-  fillBottom: number;
-  fillInsetLeft: number;
-  fillInsetRight: number;
-};
 
 function HudMeter({ value, max, ghostValue, color, ghostColor, text, width, frame, markerPercents = [], className = "" }: {
   value: number;

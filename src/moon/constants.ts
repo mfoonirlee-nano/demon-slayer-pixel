@@ -8,7 +8,6 @@ export const MOON_LAYOUT = {
   x: 762,
   y: 80,
   coreRadius: 34,
-  shadowRadius: 46,
   highlightRadius: 10,
   highlightOffsetX: -12,
   highlightOffsetY: -9,
@@ -145,21 +144,4 @@ export const MOON_GLOW_CONFIG = {
   // 血月：最外层光晕（用于插值替换 farGlow）
   bloodFarColor: rgb({ r: 200, g: 40, b: 40 }),
   bloodFarAlpha: 0.12,
-} as const;
-
-export const MOON_SURFACE_CONFIG = {
-  baseColorA: rgb({ r: 208, g: 226, b: 255 }),
-  baseColorB: rgb({ r: 255, g: 232, b: 190 }),
-  bloodCoreColor: rgb({ r: 186, g: 36, b: 42 }),
-  shadowColor: rgb({ r: 146, g: 18, b: 28 }),
-  shadowAlpha: 0.18,
-  highlightColor: rgb({ r: 255, g: 214, b: 214 }),
-  highlightAlpha: 0.3,
-  shimmerAlpha: 0.08,
-  craterColor: rgb({ r: 132, g: 54, b: 68 }),
-  craterRows: [
-    { x: -13, y: -5, w: 7, h: 1, driftX: 0.24, driftY: 0.18 },
-    { x: -5, y: 3, w: 6, h: 1, driftX: -0.16, driftY: 0.12 },
-    { x: 5, y: -1, w: 5, h: 1, driftX: 0.14, driftY: -0.12 },
-  ],
 } as const;

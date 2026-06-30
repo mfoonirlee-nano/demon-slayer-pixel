@@ -1,5 +1,5 @@
 import { ctx } from "../rendering/context";
-import { COVER_MOON_PHASE_SPRITES, SKY_SPRITES } from "../constants";
+import { COVER_MOON_PHASE_SPRITES } from "../constants";
 import { getCoverMoonPhaseIndex } from "../game/coverProgress";
 import { colorLerp } from "../game/utils";
 import {
@@ -7,7 +7,6 @@ import {
   MOON_LAYOUT,
   MOON_MOTION_CONFIG,
   MOON_SKY_CONFIG,
-  MOON_SURFACE_CONFIG,
 } from "./constants";
 import { getMoonBloodRingGlowScale, getMoonPhaseGlowScale } from "./phaseGlow";
 import type { MoonState } from "./types";
@@ -28,9 +27,6 @@ const OUTER_GLOW_ALPHA_SCALE = 2.0;
 const COOL_GLOW_BLOOD_FADE = 0.8;
 const COOL_GLOW_PULSE_RADIUS_SCALE = 1.4;
 const BLOOD_RING_ALPHA_SCALE = 2.0;
-const BLOOD_TINT_ALPHA = 0.55;
-const BLOOD_CORE_TINT_ALPHA = 0.5;
-const SHADOW_PULSE_RADIUS_SCALE = 1.2;
 
 function rgba(color: readonly number[], alpha: number) {
   return `rgba(${color[0]},${color[1]},${color[2]},${alpha})`;
@@ -151,11 +147,9 @@ export function drawMoon(options: { elapsed: number; moon: MoonState }) {
     drawGlow(context, moonX, moonY, bloodRingRadius, MOON_GLOW_CONFIG.bloodRingColor, ringAlpha * BLOOD_RING_ALPHA_SCALE);
   }
 
-  const spriteImg = SKY_SPRITES.image;
   const moonDrawSize = MOON_LAYOUT.coreRadius * 2;
   const moonDrawX = moonX - MOON_LAYOUT.coreRadius;
   const moonDrawY = moonY - MOON_LAYOUT.coreRadius;
-  const { sx, sy, sw, sh } = SKY_SPRITES.moon;
 
   if (phaseSpriteImg) {
     context.drawImage(
@@ -169,43 +163,6 @@ export function drawMoon(options: { elapsed: number; moon: MoonState }) {
       moonDrawSize,
       moonDrawSize,
     );
-    if (bloodLerp > 0) {
-      // 直接在主 canvas 叠色：用圆形裁剪区域限制到月亮范围
-      context.save();
-      context.beginPath();
-      context.arc(moonX, moonY, MOON_LAYOUT.coreRadius, 0, Math.PI * 2);
-      context.clip();
-      context.fillStyle = `rgba(60,0,0,${bloodLerp * BLOOD_TINT_ALPHA})`;
-      context.fillRect(moonDrawX, moonDrawY, moonDrawSize, moonDrawSize);
-      const [tintR, tintG, tintB] = MOON_SURFACE_CONFIG.bloodCoreColor;
-      context.fillStyle = `rgba(${tintR},${tintG},${tintB},${bloodLerp * BLOOD_CORE_TINT_ALPHA})`;
-      context.fillRect(moonDrawX, moonDrawY, moonDrawSize, moonDrawSize);
-      context.restore();
-    }
-  } else if (spriteImg) {
-    context.drawImage(spriteImg, sx, sy, sw, sh, moonDrawX, moonDrawY, moonDrawSize, moonDrawSize);
-    if (bloodLerp > 0) {
-      // 直接在主 canvas 叠色：用圆形裁剪区域限制到月亮范围
-      context.save();
-      context.beginPath();
-      context.arc(moonX, moonY, MOON_LAYOUT.coreRadius, 0, Math.PI * 2);
-      context.clip();
-      context.fillStyle = `rgba(60,0,0,${bloodLerp * BLOOD_TINT_ALPHA})`;
-      context.fillRect(moonDrawX, moonDrawY, moonDrawSize, moonDrawSize);
-      const [tintR, tintG, tintB] = MOON_SURFACE_CONFIG.bloodCoreColor;
-      context.fillStyle = `rgba(${tintR},${tintG},${tintB},${bloodLerp * BLOOD_CORE_TINT_ALPHA})`;
-      context.fillRect(moonDrawX, moonDrawY, moonDrawSize, moonDrawSize);
-      context.restore();
-    }
-  } else {
-    context.fillStyle = rgba(MOON_SURFACE_CONFIG.shadowColor, bloodLerp * MOON_SURFACE_CONFIG.shadowAlpha);
-    context.beginPath();
-    context.arc(moonX, moonY, MOON_LAYOUT.shadowRadius + motion.pulseWave * SHADOW_PULSE_RADIUS_SCALE, 0, Math.PI * 2);
-    context.fill();
-    context.fillStyle = colorLerp(MOON_SURFACE_CONFIG.baseColorA, MOON_SURFACE_CONFIG.bloodCoreColor, bloodLerp);
-    context.beginPath();
-    context.arc(moonX, moonY, MOON_LAYOUT.coreRadius, 0, Math.PI * 2);
-    context.fill();
   }
 }
 
