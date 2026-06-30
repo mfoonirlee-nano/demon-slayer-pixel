@@ -117,25 +117,21 @@ export const MOON_GLOW_CONFIG = {
   coolGlowColor: rgb({ r: 198, g: 220, b: 246 }),
   coolGlowAlpha: 0.28,
   coolGlowBlur: 32,
-  coolGlowRadius: 52,
 
   // 正常月光：中层散射光（蓝白）
   outerGlowColor: rgb({ r: 210, g: 228, b: 252 }),
   outerGlowAlpha: 0.14,
   outerGlowBlur: 55,
-  outerGlowRadius: 80,
 
   // 正常月光：最远散射（极淡蓝白）
   farGlowColor: rgb({ r: 220, g: 235, b: 255 }),
   farGlowAlpha: 0.07,
   farGlowBlur: 90,
-  farGlowRadius: 120,
 
-  // 血月：内环
+  // 血月：贴合月相轮廓的红晕
   bloodRingColor: rgb({ r: 255, g: 88, b: 102 }),
   bloodRingAlpha: 0.25,
   bloodRingBlur: 38,
-  bloodRingRadius: 58,
 
   // 血月：中层光晕（用于插值替换 outerGlow）
   bloodOuterColor: rgb({ r: 255, g: 80, b: 80 }),

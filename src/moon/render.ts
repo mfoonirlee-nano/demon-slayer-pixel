@@ -16,17 +16,29 @@ const PULSE_WAVE_BASE = 0.5;
 const PULSE_WAVE_AMPLITUDE = 0.5;
 const BLOOD_WAVE_BASE = 0.35;
 const BLOOD_WAVE_SCALE = 0.65;
-const OUTER_GLOW_BASE_PULSE_RADIUS = 8;
-const OUTER_GLOW_BLOOD_RADIUS_SCALE = 1.5;
-const FAR_GLOW_BASE_PULSE_RADIUS = 15;
-const FAR_GLOW_BLOOD_RADIUS_SCALE = 2;
+const OUTER_GLOW_BASE_PULSE_BLUR = 8;
+const OUTER_GLOW_BLOOD_BLUR_SCALE = 1.5;
+const FAR_GLOW_BASE_PULSE_BLUR = 15;
+const FAR_GLOW_BLOOD_BLUR_SCALE = 2;
 const FAR_GLOW_ALPHA_PULSE = 0.03;
 const OUTER_GLOW_ALPHA_PULSE = 0.05;
 const FAR_GLOW_ALPHA_SCALE = 2.2;
 const OUTER_GLOW_ALPHA_SCALE = 2.0;
 const COOL_GLOW_BLOOD_FADE = 0.8;
-const COOL_GLOW_PULSE_RADIUS_SCALE = 1.4;
+const COOL_GLOW_PULSE_BLUR_SCALE = 1.4;
 const BLOOD_RING_ALPHA_SCALE = 2.0;
+
+type MoonPhaseFrame = {
+  image: HTMLImageElement;
+  sx: number;
+  sy: number;
+  sw: number;
+  sh: number;
+  dx: number;
+  dy: number;
+  dw: number;
+  dh: number;
+};
 
 function rgba(color: readonly number[], alpha: number) {
   return `rgba(${color[0]},${color[1]},${color[2]},${alpha})`;
@@ -44,14 +56,99 @@ function lerpColor(
   ];
 }
 
-function drawGlow(context: CanvasRenderingContext2D, cx: number, cy: number, radius: number, color: readonly number[], alpha: number) {
-  const grad = context.createRadialGradient(cx, cy, 0, cx, cy, radius);
-  grad.addColorStop(0, `rgba(${color[0]},${color[1]},${color[2]},${alpha})`);
-  grad.addColorStop(1, `rgba(${color[0]},${color[1]},${color[2]},0)`);
-  context.fillStyle = grad;
-  context.beginPath();
-  context.arc(cx, cy, radius, 0, Math.PI * 2);
-  context.fill();
+function clampAlpha(alpha: number) {
+  return Math.max(0, Math.min(1, alpha));
+}
+
+function drawMoonPhaseFrame(context: CanvasRenderingContext2D, frame: MoonPhaseFrame) {
+  context.drawImage(
+    frame.image,
+    frame.sx,
+    frame.sy,
+    frame.sw,
+    frame.sh,
+    frame.dx,
+    frame.dy,
+    frame.dw,
+    frame.dh,
+  );
+}
+
+function drawMoonPhaseGlowLayer(
+  context: CanvasRenderingContext2D,
+  frame: MoonPhaseFrame,
+  color: readonly number[],
+  alpha: number,
+  blur: number,
+) {
+  const clampedAlpha = clampAlpha(alpha);
+  if (clampedAlpha <= 0) return;
+
+  context.save();
+  context.globalAlpha = clampedAlpha;
+  context.shadowColor = rgba(color, 1);
+  context.shadowBlur = Math.max(0, blur);
+  context.shadowOffsetX = 0;
+  context.shadowOffsetY = 0;
+  drawMoonPhaseFrame(context, frame);
+  context.restore();
+}
+
+function drawMoonPhaseGlow(
+  context: CanvasRenderingContext2D,
+  frame: MoonPhaseFrame,
+  options: {
+    bloodLerp: number;
+    phaseGlowScale: number;
+    bloodRingGlowScale: number;
+    motion: ReturnType<typeof getMoonMotion>;
+  },
+) {
+  const { bloodLerp, phaseGlowScale, bloodRingGlowScale, motion } = options;
+  const currentFarColor = lerpColor(MOON_GLOW_CONFIG.farGlowColor, MOON_GLOW_CONFIG.bloodFarColor, bloodLerp);
+  const currentOuterColor = lerpColor(MOON_GLOW_CONFIG.outerGlowColor, MOON_GLOW_CONFIG.bloodOuterColor, bloodLerp);
+  const farGlowAlpha = Math.max(
+    0,
+    (MOON_GLOW_CONFIG.farGlowAlpha
+      + (MOON_GLOW_CONFIG.bloodFarAlpha - MOON_GLOW_CONFIG.farGlowAlpha) * bloodLerp
+      + motion.basePulse * FAR_GLOW_ALPHA_PULSE) * phaseGlowScale,
+  ) * FAR_GLOW_ALPHA_SCALE;
+  const farGlowBlur = (
+    MOON_GLOW_CONFIG.farGlowBlur
+      + motion.basePulse * FAR_GLOW_BASE_PULSE_BLUR
+      + motion.bloodWaveAmount * MOON_MOTION_CONFIG.bloodWave.radiusBoost * FAR_GLOW_BLOOD_BLUR_SCALE
+  ) * phaseGlowScale;
+  const outerGlowAlpha = Math.max(
+    0,
+    (MOON_GLOW_CONFIG.outerGlowAlpha
+      + (MOON_GLOW_CONFIG.bloodOuterAlpha - MOON_GLOW_CONFIG.outerGlowAlpha) * bloodLerp
+      + motion.basePulse * OUTER_GLOW_ALPHA_PULSE) * phaseGlowScale,
+  ) * OUTER_GLOW_ALPHA_SCALE;
+  const outerGlowBlur = (
+    MOON_GLOW_CONFIG.outerGlowBlur
+      + motion.basePulse * OUTER_GLOW_BASE_PULSE_BLUR
+      + motion.bloodWaveAmount * MOON_MOTION_CONFIG.bloodWave.radiusBoost * OUTER_GLOW_BLOOD_BLUR_SCALE
+  ) * phaseGlowScale;
+  const coolAlpha = (
+    1 - bloodLerp * COOL_GLOW_BLOOD_FADE
+  ) * MOON_GLOW_CONFIG.coolGlowAlpha * phaseGlowScale * OUTER_GLOW_ALPHA_SCALE;
+  const coolBlur = (
+    MOON_GLOW_CONFIG.coolGlowBlur + motion.pulseWave * COOL_GLOW_PULSE_BLUR_SCALE
+  ) * phaseGlowScale;
+
+  drawMoonPhaseGlowLayer(context, frame, currentFarColor, farGlowAlpha, farGlowBlur);
+  drawMoonPhaseGlowLayer(context, frame, currentOuterColor, outerGlowAlpha, outerGlowBlur);
+  drawMoonPhaseGlowLayer(context, frame, MOON_GLOW_CONFIG.coolGlowColor, coolAlpha, coolBlur);
+
+  if (bloodLerp > 0) {
+    const ringAlpha = bloodLerp * (
+      MOON_GLOW_CONFIG.bloodRingAlpha + Math.max(0, motion.bloodWaveAmount) * MOON_MOTION_CONFIG.bloodWave.alphaBoost
+    ) * bloodRingGlowScale * BLOOD_RING_ALPHA_SCALE;
+    const ringBlur = (
+      MOON_GLOW_CONFIG.bloodRingBlur + motion.bloodWaveAmount * MOON_MOTION_CONFIG.bloodWave.radiusBoost
+    ) * bloodRingGlowScale;
+    drawMoonPhaseGlowLayer(context, frame, MOON_GLOW_CONFIG.bloodRingColor, ringAlpha, ringBlur);
+  }
 }
 
 function getMoonMotion(elapsed: number, bloodLerp: number) {
@@ -89,80 +186,30 @@ export function drawMoon(options: { elapsed: number; moon: MoonState }) {
   const motion = getMoonMotion(elapsed, bloodLerp);
   const moonX = MOON_LAYOUT.x + motion.moonX;
   const moonY = MOON_LAYOUT.y + motion.moonY;
-  const bloodRingRadius = (
-    MOON_GLOW_CONFIG.bloodRingRadius + motion.bloodWaveAmount * MOON_MOTION_CONFIG.bloodWave.radiusBoost
-  ) * bloodRingGlowScale;
-  // 放大呼吸动画的振幅 (原本 1.5 -> 8, 2.5 -> 15)，让变化更明显
-  const outerGlowRadius = (
-    MOON_GLOW_CONFIG.outerGlowRadius
-      + motion.basePulse * OUTER_GLOW_BASE_PULSE_RADIUS
-      + motion.bloodWaveAmount * MOON_MOTION_CONFIG.bloodWave.radiusBoost * OUTER_GLOW_BLOOD_RADIUS_SCALE
-  ) * phaseGlowScale;
-  const farGlowRadius = (
-    MOON_GLOW_CONFIG.farGlowRadius
-      + motion.basePulse * FAR_GLOW_BASE_PULSE_RADIUS
-      + motion.bloodWaveAmount * MOON_MOTION_CONFIG.bloodWave.radiusBoost * FAR_GLOW_BLOOD_RADIUS_SCALE
-  ) * phaseGlowScale;
-
   const context = ctx;
-
-  // 光晕颜色随 bloodLerp 从蓝白月光插值到血红，叠加呼吸波动
-  const currentFarColor = lerpColor(MOON_GLOW_CONFIG.farGlowColor, MOON_GLOW_CONFIG.bloodFarColor, bloodLerp);
-  const farGlowAlpha = Math.max(
-    0,
-    (MOON_GLOW_CONFIG.farGlowAlpha
-      + (MOON_GLOW_CONFIG.bloodFarAlpha - MOON_GLOW_CONFIG.farGlowAlpha) * bloodLerp
-      + motion.basePulse * FAR_GLOW_ALPHA_PULSE) * phaseGlowScale,
-  );
-  const currentOuterColor = lerpColor(MOON_GLOW_CONFIG.outerGlowColor, MOON_GLOW_CONFIG.bloodOuterColor, bloodLerp);
-  const outerGlowAlpha = Math.max(
-    0,
-    (MOON_GLOW_CONFIG.outerGlowAlpha
-      + (MOON_GLOW_CONFIG.bloodOuterAlpha - MOON_GLOW_CONFIG.outerGlowAlpha) * bloodLerp
-      + motion.basePulse * OUTER_GLOW_ALPHA_PULSE) * phaseGlowScale,
-  );
-
-  // 最外层散射（radialGradient 替代 shadowBlur）
-  drawGlow(context, moonX, moonY, farGlowRadius, currentFarColor, farGlowAlpha * FAR_GLOW_ALPHA_SCALE);
-
-  // 次外层散射
-  drawGlow(context, moonX, moonY, outerGlowRadius, currentOuterColor, outerGlowAlpha * OUTER_GLOW_ALPHA_SCALE);
-
-  // 内层月光晕（血月时减弱）
-  const coolAlpha = (1 - bloodLerp * COOL_GLOW_BLOOD_FADE) * MOON_GLOW_CONFIG.coolGlowAlpha * phaseGlowScale;
-  drawGlow(
-    context,
-    moonX,
-    moonY,
-    (MOON_GLOW_CONFIG.coolGlowRadius + motion.pulseWave * COOL_GLOW_PULSE_RADIUS_SCALE) * phaseGlowScale,
-    MOON_GLOW_CONFIG.coolGlowColor,
-    coolAlpha * OUTER_GLOW_ALPHA_SCALE,
-  );
-
-  // 血月光环
-  if (bloodLerp > 0) {
-    const ringAlpha = bloodLerp * (
-      MOON_GLOW_CONFIG.bloodRingAlpha + Math.max(0, motion.bloodWaveAmount) * MOON_MOTION_CONFIG.bloodWave.alphaBoost
-    ) * bloodRingGlowScale;
-    drawGlow(context, moonX, moonY, bloodRingRadius, MOON_GLOW_CONFIG.bloodRingColor, ringAlpha * BLOOD_RING_ALPHA_SCALE);
-  }
-
   const moonDrawSize = MOON_LAYOUT.coreRadius * 2;
   const moonDrawX = moonX - MOON_LAYOUT.coreRadius;
   const moonDrawY = moonY - MOON_LAYOUT.coreRadius;
 
   if (phaseSpriteImg) {
-    context.drawImage(
-      phaseSpriteImg,
-      phaseIndex * COVER_MOON_PHASE_SPRITES.frameW,
-      0,
-      COVER_MOON_PHASE_SPRITES.frameW,
-      COVER_MOON_PHASE_SPRITES.frameH,
-      moonDrawX,
-      moonDrawY,
-      moonDrawSize,
-      moonDrawSize,
-    );
+    const phaseFrame = {
+      image: phaseSpriteImg,
+      sx: phaseIndex * COVER_MOON_PHASE_SPRITES.frameW,
+      sy: 0,
+      sw: COVER_MOON_PHASE_SPRITES.frameW,
+      sh: COVER_MOON_PHASE_SPRITES.frameH,
+      dx: moonDrawX,
+      dy: moonDrawY,
+      dw: moonDrawSize,
+      dh: moonDrawSize,
+    };
+    drawMoonPhaseGlow(context, phaseFrame, {
+      bloodLerp,
+      phaseGlowScale,
+      bloodRingGlowScale,
+      motion,
+    });
+    drawMoonPhaseFrame(context, phaseFrame);
   }
 }
 
