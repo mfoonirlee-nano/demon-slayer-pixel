@@ -1,6 +1,7 @@
 import { state } from "../../game/state";
 import { playSfx } from "../../game/audio";
 import { DUELIST_SHEET_INDEX, DUELIST_SHEETS, ENEMY_SHEETS } from "../../constants";
+import { ctx } from "../../rendering/context";
 import { drawSheetFrame } from "../../rendering/graphics";
 import type { DuelistPhase, EnemyState } from "../../types/game-state";
 import { hitbox } from "../../game/utils";
@@ -50,6 +51,15 @@ const SLASH_BOX_FORWARD_RATIO = 0.52;
 const SLASH_BOX_BACK_RATIO = 0.48;
 const SLASH_WARNING_SFX_PITCH = 1.16;
 const SLASH_START_SFX_PITCH = 1.08;
+const SLASH_CUE_HEIGHT = 7;
+const SLASH_CUE_Y_RATIO = 0.44;
+const SLASH_CUE_MARKER_WIDTH = 4;
+const SLASH_CUE_MARKER_HEIGHT_RATIO = 0.48;
+const SLASH_CUE_WINDUP_ALPHA_BASE = 0.22;
+const SLASH_CUE_WINDUP_ALPHA_SCALE = 0.34;
+const SLASH_CUE_ACTIVE_ALPHA = 0.42;
+const SLASH_CUE_HIGHLIGHT_ALPHA_CAP = 0.78;
+const SLASH_CUE_HIGHLIGHT_ALPHA_BOOST = 0.2;
 
 function isDuelist(enemy: Pick<EnemyState, "sheetIndex">) {
   return enemy.sheetIndex === DUELIST_SHEET_INDEX;
@@ -165,6 +175,32 @@ function triggerDuelistSlashHit(enemy: EnemyState) {
   hurtPlayer(enemy.damage * DUELIST_CONFIG.slashDamageMultiplier + DUELIST_CONFIG.slashDamageBonus, -facing);
 }
 
+function drawDuelistSlashCue(enemy: EnemyState, phase: DuelistPhase, facing: number) {
+  if (!ctx || (phase !== "windup" && phase !== "slash")) return;
+
+  const box = duelistSlashBox(enemy);
+  const duration = Math.max(1, duelistPhaseDuration(enemy, phase));
+  const progress = phase === "windup"
+    ? 1 - Math.max(0, enemy.duelistTimer ?? 0) / duration
+    : 1;
+  const alpha = phase === "windup"
+    ? SLASH_CUE_WINDUP_ALPHA_BASE + progress * SLASH_CUE_WINDUP_ALPHA_SCALE
+    : SLASH_CUE_ACTIVE_ALPHA;
+  const cueY = box.y + box.h * SLASH_CUE_Y_RATIO;
+  const markerX = facing === 1 ? box.x + box.w - SLASH_CUE_MARKER_WIDTH : box.x;
+  const markerHeight = box.h * SLASH_CUE_MARKER_HEIGHT_RATIO;
+
+  ctx.save();
+  ctx.fillStyle = `rgba(180, 58, 64, ${alpha})`;
+  ctx.fillRect(box.x, cueY, box.w, SLASH_CUE_HEIGHT);
+  ctx.fillStyle = `rgba(246, 196, 170, ${Math.min(
+    SLASH_CUE_HIGHLIGHT_ALPHA_CAP,
+    alpha + SLASH_CUE_HIGHLIGHT_ALPHA_BOOST,
+  )})`;
+  ctx.fillRect(markerX, cueY - markerHeight / HALF_DIVISOR, SLASH_CUE_MARKER_WIDTH, markerHeight);
+  ctx.restore();
+}
+
 function initDuelist(enemy: EnemyState, context: EnemySpawnContext) {
   enemy.duelistPhase = "approach";
   enemy.duelistTimer = randomFrameCount(
@@ -247,6 +283,7 @@ function drawDuelist(enemy: EnemyState) {
   const sheet = duelistSheetForPhase(phase);
   const facing = enemy.duelistFacing ?? (enemy.vx >= 0 ? 1 : -1);
   const drawScale = enemyDrawScale(DUELIST_ARCHETYPE);
+  drawDuelistSlashCue(enemy, phase, facing);
 
   if (phase === "approach") {
     drawEnemyFrame(enemy, sheet, drawScale, DUELIST_CONFIG.approachAnimSpeed, state.elapsed, facing);
