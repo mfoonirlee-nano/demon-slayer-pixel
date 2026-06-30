@@ -27,6 +27,7 @@ docs/
 │   ├── system-status.md
 │   ├── content-roadmap.md
 │   ├── ui-feedback.md
+│   ├── enemy-difference-matrix.md
 │   └── balance-acceptance.md
 ├── numeric-system/
 │   ├── README.md
@@ -65,6 +66,7 @@ docs/
 | [system-status.md](system-status.md) | 当前实现状态、目标状态、优先级、源码/文档依据 | 防止实现状态混淆 |
 | [content-roadmap.md](content-roadmap.md) | 敌人、Boss、技能、地图、奖励、音乐内容扩展优先级 | 安排内容制作和系统接入 |
 | [ui-feedback.md](ui-feedback.md) | UI 状态流、overlay 暂停规则、输入、反馈清单 | 指导 UI/UX 和手感反馈 |
+| [enemy-difference-matrix.md](enemy-difference-matrix.md) | 每个 EnemyId 的战斗问题、可读语言和组合职责矩阵 | 指导敌人设计、素材读法和 enemy director 组合 |
 | [balance-acceptance.md](balance-acceptance.md) | 平衡测试指标、验收口径、试玩记录格式 | 判断原案是否成立 |
 
 ## Source Documents
