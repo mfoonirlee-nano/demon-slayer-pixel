@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import type { EnemyId, EnemyState } from "../types/game-state";
 import {
   ENEMY_ARCHETYPES,
+  advanceEnemyDirectorToAct,
   bossSummonBudgetForPhase,
   buildCurrentEnemyPool,
   buildRunEnemyOrder,
@@ -15,6 +16,7 @@ import {
   updateEnemyDirector,
 } from "./enemyDirector";
 import {
+  ACT_TIMING_SCALE,
   actForBossKills,
   bossGateForAct,
   bossPreludeWaitSeconds,
@@ -47,11 +49,11 @@ const MID_REWARD_CHEST_HEAL = 60;
 const FINAL_REWARD_HEALTH_CRYSTALS = 32;
 const FINAL_REWARD_CHEST_HEAL = 64;
 const ACT_ONE_MIN_WAVES = 3;
-const ACT_ONE_MIN_ELAPSED = 45;
-const ACT_ONE_MAX_ELAPSED = 75;
+const ACT_ONE_UNCOMPRESSED_MIN_ELAPSED = 45;
+const ACT_ONE_UNCOMPRESSED_MAX_ELAPSED = 75;
 const ACT_EIGHT_MIN_WAVES = 5;
-const ACT_EIGHT_MIN_ELAPSED = 75;
-const ACT_EIGHT_MAX_ELAPSED = 120;
+const ACT_EIGHT_UNCOMPRESSED_MIN_ELAPSED = 75;
+const ACT_EIGHT_UNCOMPRESSED_MAX_ELAPSED = 120;
 const TEST_RUN_SEED = 1234;
 const TUTORIAL_ENEMY_COUNT = 3;
 const FULL_ENEMY_ROSTER_SIZE = 12;
@@ -59,6 +61,8 @@ const FINAL_POOL_SIZE = 9;
 const ACT_ONE_PLAYER_HP = 100;
 const ACT_ONE_PLAYER_MAX_HP = 100;
 const SECOND_UPDATE_ELAPSED_SECONDS = 48;
+const DIRECTOR_STEP_SECONDS = 0.25;
+const MAX_DIRECTOR_PRELUDE_STEPS = 800;
 const BOSS_PHASE_FIVE = 5;
 const FINAL_BOSS_SUMMON_BUDGET_COUNT = 4;
 const BOSS_SUMMON_SPAWN_COST = 1;
@@ -68,10 +72,46 @@ const FINAL_SAMPLE_WAVES = 6;
 const AWAKENED_ACT_BOSS_KILLS = 6;
 const MIN_RANDOM_ROLL = 0;
 
+function compressedSeconds(seconds: number) {
+  return Math.round(seconds * ACT_TIMING_SCALE);
+}
+
+const ACT_ONE_MIN_ELAPSED = compressedSeconds(ACT_ONE_UNCOMPRESSED_MIN_ELAPSED);
+const ACT_ONE_MAX_ELAPSED = compressedSeconds(ACT_ONE_UNCOMPRESSED_MAX_ELAPSED);
+const ACT_EIGHT_MIN_ELAPSED = compressedSeconds(ACT_EIGHT_UNCOMPRESSED_MIN_ELAPSED);
+const ACT_EIGHT_MAX_ELAPSED = compressedSeconds(ACT_EIGHT_UNCOMPRESSED_MAX_ELAPSED);
+
 function wavePlanSpawnCost(entries: ReturnType<typeof pickWavePlan>) {
   return entries.reduce((total, entry) => (
     total + enemySpawnCost(entry.enemyId, entry.elite) * entry.count
   ), 0);
+}
+
+function runDirectorUntilPrelude(director: ReturnType<typeof createEnemyDirectorState>, bossKills: number) {
+  let spawnCount = 0;
+  let steps = 0;
+
+  while (!director.bossPrelude) {
+    steps += 1;
+    if (steps > MAX_DIRECTOR_PRELUDE_STEPS) throw new Error("Enemy director did not reach boss prelude.");
+
+    const update = updateEnemyDirector(director, {
+      dt: DIRECTOR_STEP_SECONDS,
+      bossKills,
+      elapsedSeconds: director.elapsedInAct,
+      activeEnemies: [],
+      playerHp: ACT_ONE_PLAYER_HP,
+      playerMaxHp: ACT_ONE_PLAYER_MAX_HP,
+      bossActive: false,
+    });
+    spawnCount += update.spawnRequests.length;
+  }
+
+  return {
+    elapsedInAct: director.elapsedInAct,
+    spawnCount,
+    wavesCleared: director.wavesCleared,
+  };
 }
 
 describe("act progression", () => {
@@ -141,6 +181,22 @@ describe("act progression", () => {
       maxElapsed: ACT_EIGHT_MAX_ELAPSED,
     });
     expect(bossPreludeWaitSeconds(FINAL_ACT)).toBe(0);
+  });
+
+  it("keeps required wave volume inside the compressed act windows", () => {
+    const actOneDirector = createEnemyDirectorState(TEST_RUN_SEED);
+    const actOneResult = runDirectorUntilPrelude(actOneDirector, NO_BOSS_KILLS);
+    const actEightDirector = createEnemyDirectorState(TEST_RUN_SEED);
+    const actEightBossKills = ACT_EIGHT - 1;
+    advanceEnemyDirectorToAct(actEightDirector, actEightBossKills, 0);
+    const actEightResult = runDirectorUntilPrelude(actEightDirector, actEightBossKills);
+
+    expect(actOneResult.elapsedInAct).toBeLessThanOrEqual(ACT_ONE_MIN_ELAPSED + DIRECTOR_STEP_SECONDS);
+    expect(actOneResult.wavesCleared).toBeGreaterThanOrEqual(ACT_ONE_MIN_WAVES);
+    expect(actOneResult.spawnCount).toBeGreaterThan(ACT_ONE_MIN_WAVES);
+    expect(actEightResult.elapsedInAct).toBeLessThanOrEqual(ACT_EIGHT_MIN_ELAPSED + DIRECTOR_STEP_SECONDS);
+    expect(actEightResult.wavesCleared).toBeGreaterThanOrEqual(ACT_EIGHT_MIN_WAVES);
+    expect(actEightResult.spawnCount).toBeGreaterThan(ACT_EIGHT_MIN_WAVES);
   });
 });
 
