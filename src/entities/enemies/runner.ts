@@ -34,7 +34,7 @@ const RUNNER_CONFIG = {
   awakenedRecoverChaseScale: 0.28,
   eliteRecoverChaseScale: 0.42,
   hpMultiplier: 0.75,
-  maxActiveDashes: 2,
+  maxActiveDashes: 1,
   drawScale: 1.2,
   dashDrawScaleMultiplier: 1.12,
   dashAnimSpeed: 3,
@@ -56,6 +56,21 @@ const RUNNER_RECOVER_DUST_WIDTH = 20;
 const RUNNER_RECOVER_DUST_HEIGHT = 3;
 const RUNNER_WARNING_SFX_PITCH = 1.08;
 const RUNNER_DASH_SFX_PITCH = 1.08;
+const RUNNER_LOCK_LINE_LENGTH = 180;
+const RUNNER_LOCK_LINE_HEIGHT = 3;
+const RUNNER_LOCK_LINE_Y_OFFSET = 22;
+const RUNNER_DASH_LINE_LENGTH = 220;
+const RUNNER_DASH_LINE_HEIGHT = 4;
+const RUNNER_DASH_LINE_Y_OFFSET = 24;
+const RUNNER_RECOVER_BRACE_WIDTH = 26;
+const RUNNER_RECOVER_BRACE_HEIGHT = 5;
+const RUNNER_RECOVER_BRACE_Y_OFFSET = 26;
+const RUNNER_LOCK_PULSE_BASE_ALPHA = 0.45;
+const RUNNER_LOCK_PULSE_PERIOD = 10;
+const RUNNER_LOCK_PULSE_DIVISOR = 30;
+const RUNNER_LOCK_MARKER_WIDTH = 4;
+const RUNNER_LOCK_MARKER_Y_PADDING = 3;
+const RUNNER_LOCK_MARKER_HEIGHT_PADDING = 6;
 
 function isRunner(enemy: Pick<EnemyState, "sheetIndex">) {
   return enemy.sheetIndex === RUNNER_SHEET_INDEX;
@@ -147,11 +162,12 @@ function updateRunner(enemy: EnemyState) {
     if (Math.abs(toward) <= RUNNER_CONFIG.triggerDistance) {
       enemy.runnerPhase = "windup";
       enemy.runnerTimer = runnerWindupFrames(enemy);
+      enemy.runnerFacing = facing;
       enemy.vx = 0;
       playSfx("enemyWarning", RUNNER_WARNING_SFX_PITCH);
     }
   } else if (enemy.runnerPhase === "windup") {
-    enemy.runnerFacing = facing;
+    const lockedFacing = enemy.runnerFacing ?? facing;
     enemy.runnerTimer -= 1;
     enemy.vx = 0;
     if (enemy.runnerTimer <= 0) {
@@ -160,8 +176,8 @@ function updateRunner(enemy: EnemyState) {
       } else {
         enemy.runnerPhase = "dash";
         enemy.runnerTimer = runnerDashFrames(enemy);
-        enemy.runnerFacing = facing;
-        enemy.vx = facing * runnerDashSpeed(enemy);
+        enemy.runnerFacing = lockedFacing;
+        enemy.vx = lockedFacing * runnerDashSpeed(enemy);
         playSfx("enemyDash", RUNNER_DASH_SFX_PITCH);
       }
     }
@@ -184,6 +200,39 @@ function updateRunner(enemy: EnemyState) {
   }
 
   enemy.x += enemy.vx;
+}
+
+function drawRunnerReadabilityCue(enemy: EnemyState, phase: RunnerPhase, facing: number) {
+  if (!ctx) return;
+  const feetY = enemyFeetY(enemy);
+
+  if (phase === "windup") {
+    const lineX = facing === 1 ? enemy.x + enemy.w : enemy.x - RUNNER_LOCK_LINE_LENGTH;
+    const pulse = RUNNER_LOCK_PULSE_BASE_ALPHA + (state.elapsed % RUNNER_LOCK_PULSE_PERIOD) / RUNNER_LOCK_PULSE_DIVISOR;
+    ctx.fillStyle = `rgba(255, 80, 72, ${pulse})`;
+    ctx.fillRect(lineX, feetY - RUNNER_LOCK_LINE_Y_OFFSET, RUNNER_LOCK_LINE_LENGTH, RUNNER_LOCK_LINE_HEIGHT);
+    ctx.fillStyle = "rgba(255, 210, 120, 0.8)";
+    ctx.fillRect(
+      facing === 1 ? enemy.x + enemy.w - RUNNER_LOCK_MARKER_WIDTH : enemy.x,
+      feetY - RUNNER_LOCK_LINE_Y_OFFSET - RUNNER_LOCK_MARKER_Y_PADDING,
+      RUNNER_LOCK_MARKER_WIDTH,
+      RUNNER_LOCK_LINE_HEIGHT + RUNNER_LOCK_MARKER_HEIGHT_PADDING,
+    );
+    return;
+  }
+
+  if (phase === "dash") {
+    const lineX = facing === 1 ? enemy.x - RUNNER_DASH_LINE_LENGTH : enemy.x + enemy.w;
+    ctx.fillStyle = "rgba(255, 214, 112, 0.36)";
+    ctx.fillRect(lineX, feetY - RUNNER_DASH_LINE_Y_OFFSET, RUNNER_DASH_LINE_LENGTH, RUNNER_DASH_LINE_HEIGHT);
+    return;
+  }
+
+  if (phase === "recover") {
+    const braceX = facing === 1 ? enemy.x - RUNNER_RECOVER_BRACE_WIDTH : enemy.x + enemy.w;
+    ctx.fillStyle = "rgba(130, 190, 255, 0.42)";
+    ctx.fillRect(braceX, feetY - RUNNER_RECOVER_BRACE_Y_OFFSET, RUNNER_RECOVER_BRACE_WIDTH, RUNNER_RECOVER_BRACE_HEIGHT);
+  }
 }
 
 function drawRunnerDust(enemy: EnemyState, phase: RunnerPhase, facing: number) {
@@ -224,6 +273,7 @@ function drawRunner(enemy: EnemyState) {
   const drawScale = enemyDrawScale(RUNNER_ARCHETYPE) * (
     phase === "dash" ? RUNNER_CONFIG.dashDrawScaleMultiplier : 1
   );
+  drawRunnerReadabilityCue(enemy, phase, facing);
   drawRunnerDust(enemy, phase, facing);
   drawEnemyFrame(enemy, sheet, drawScale, animSpeed, state.elapsed, facing);
 }
