@@ -56,7 +56,7 @@ k = bossKills = act - 1
 | --- | --- | --- | ---: | ---: | ---: | ---: | --- |
 | `chaser` | `chaser.png` | `baseline` | `1` | `1.0` | `1.4` | 按预算 | 基础横穿追击 |
 | `crawler` | `crawler.png` | `low`, `melee` | `1` | `1.0` | `1.2` | `5` | 低矮贴地穿插 |
-| `runner` | `runner_approach.png` | `fast` | `1` | `1.2` | `1.1` | `3` | 短前摇冲刺 |
+| `runner` | `runner_approach.png` | `fast` | `1` | `1.2` | `1.1` | `2` | 反应测试型直线冲刺 |
 | `duelist` | `duelist.png` | `melee_burst` | `2` | `1.5` | `1.0` | `3` | 近战斩击精英 |
 | `caster` | `caster_move.png` | `ranged` | `2` | `1.6` | `0.9` | `2` | 远程幽火施压 |
 | `leaper` | `leaper_stalk.png` | `vertical`, `burst` | `2` | `1.6` | `0.85` | `2` | 跳跃落点压力 |
@@ -73,7 +73,7 @@ k = bossKills = act - 1
 | --- | --- | --- | --- |
 | `chaser.png` | 裸身奔跑夜妖 | 已接入基础追踪；目标横穿/重入场规则未实现 | 作为默认 `chaser`，承担横穿追击的基础怪规则 |
 | `crawler.png` | 低矮蛛形 | 已接入低伏前扑玩法 | 作为 `crawler`，低血高速，短前摇前扑后有恢复硬直；普攻必须稳定可命中 |
-| `runner_approach.png` | 角突夜妖奔跑/挥臂 | 已接入前摇冲刺状态机 | 作为 `runner`，由 enemy director 控制快攻压力和同时冲刺数量 |
+| `runner_approach.png` | 角突夜妖奔跑/挥臂 | 已接入前摇冲刺状态机 | 作为 `runner`，由 enemy director 控制快攻压力；`maxActive` 限制同屏数量，状态机限制同时冲刺数量 |
 | `caster_move.png` | 提灯面具夜妖 | 已接入远程幽火状态机 | 作为 `caster`，由 enemy director 控制生成权重和投射物密度 |
 | `duelist.png` | 双刃夜妖 | 已接入近战斩击状态机 | 作为 `duelist`，由 enemy director 控制近身压力和同时威胁数量 |
 | `brute_advance.png` | 站立持盾重妖 | 已接入盾牌耐久、盾击、破盾硬直和无盾横扫状态机 | 作为 `brute`，由 enemy director 控制正面阻挡压力和生成预算 |
