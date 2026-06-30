@@ -12,13 +12,10 @@ import { playerSkillById, ULTIMATE_SKILL_ASSETS } from "../../systems/skillCatal
 const FULL_CIRCLE_RADIANS = Math.PI * 2;
 const ULTIMATE_SKILL_EFFECT_SHEET = ULTIMATE_SKILL_ASSETS.effect;
 
-const PLAYER_GHOST_BODY_FILTER = "brightness(0) saturate(100%) invert(47%) sepia(86%) saturate(1382%) hue-rotate(166deg) brightness(92%) contrast(102%)";
-const PLAYER_GHOST_RIM_FILTER = "brightness(0) saturate(100%) invert(78%) sepia(92%) saturate(825%) hue-rotate(158deg) brightness(115%) contrast(108%) drop-shadow(0 0 3px rgba(117, 226, 255, 0.72))";
+const PLAYER_GHOST_FILTER = "brightness(0) saturate(100%) invert(78%) sepia(92%) saturate(825%) hue-rotate(158deg) brightness(108%) contrast(105%) drop-shadow(0 0 3px rgba(117, 226, 255, 0.72))";
 const PLAYER_GHOST_ALPHA_BASE = 0.18;
 const PLAYER_GHOST_ALPHA_SCALE = 0.44;
 const PLAYER_GHOST_ALPHA_MAX = 0.6;
-const PLAYER_GHOST_RIM_ALPHA_RATIO = 0.24;
-const PLAYER_GHOST_RIM_ALPHA_MAX = 0.16;
 const PLAYER_GHOST_OFFSET_X: Record<UltimatePlayerGhostState["action"], number> = {
   idle: 16,
   move: 18,
@@ -198,18 +195,10 @@ export function drawUltimatePlayerGhosts() {
       (PLAYER_GHOST_ALPHA_BASE + lifeRatio * PLAYER_GHOST_ALPHA_SCALE) * ghost.strength,
     );
 
-    // Body pass keeps the ghost readable as a figure; rim pass adds the moon-tide edge light.
     ctx.save();
     ctx.globalCompositeOperation = "source-over";
     ctx.globalAlpha = alpha;
-    ctx.filter = PLAYER_GHOST_BODY_FILTER;
-    drawUltimatePlayerGhost(ghost);
-    ctx.restore();
-
-    ctx.save();
-    ctx.globalCompositeOperation = "lighter";
-    ctx.globalAlpha = Math.min(PLAYER_GHOST_RIM_ALPHA_MAX, alpha * PLAYER_GHOST_RIM_ALPHA_RATIO);
-    ctx.filter = PLAYER_GHOST_RIM_FILTER;
+    ctx.filter = PLAYER_GHOST_FILTER;
     drawUltimatePlayerGhost(ghost);
     ctx.restore();
   }

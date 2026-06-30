@@ -55,7 +55,7 @@ describe("drawMoon", () => {
     setCanvas(null);
   });
 
-  it("draws shaped glow and the current moon phase from the cover moon sprite sheet", () => {
+  it("draws phase glow and the current moon phase without runtime blur", () => {
     const context = createMockContext();
     const moonSheet = {} as HTMLImageElement;
     COVER_MOON_PHASE_SPRITES.image = moonSheet;
@@ -89,8 +89,7 @@ describe("drawMoon", () => {
       expect.any(Number),
       expect.any(Number),
     ]);
-    expect(context.shadowBlurValues).toHaveLength(drawImageCalls.length - 1);
-    expect(context.shadowBlurValues.every((value) => value > 0)).toBe(true);
+    expect(context.shadowBlurValues).toHaveLength(0);
     expect(context.createRadialGradient).not.toHaveBeenCalled();
     expect(context.clip).not.toHaveBeenCalled();
     expect(context.fillRect).not.toHaveBeenCalled();

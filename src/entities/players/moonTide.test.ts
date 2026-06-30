@@ -1,10 +1,11 @@
-import { beforeEach, describe, expect, it } from "vitest";
-import { PLAYER_ANIMATION_STATES, PLAYER_COMBAT } from "../../constants";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { PLAYER_ANIMATION_STATES, PLAYER_COMBAT, PLAYER_SHEETS } from "../../constants";
 import { keys } from "../../game/input";
 import { resetState, state } from "../../game/state";
+import { setCanvas } from "../../rendering/context";
 import type { UltimatePlayerGhostAction, UltimatePlayerGhostSnapshot } from "../../types/game-state";
 import { updatePlayer } from "../player";
-import { updateUltimatePlayerGhosts } from "../particle";
+import { drawUltimatePlayerGhosts, updateUltimatePlayerGhosts } from "../particle";
 import { drawPlayer } from "./render";
 import {
   moonTidePlayerAnimationFrameSpeed,
@@ -17,6 +18,11 @@ const LEVEL_THREE_GHOST_CAP = 5;
 const IDLE_GHOST_VISIBLE_FRAMES = 18;
 const HURT_INVINCIBILITY_GHOST_RESUME_OFFSET = 12;
 const MOON_TIDE_LEVEL_THREE_MOVE_MULTIPLIER = 1.25;
+
+type MockCanvasContext = CanvasRenderingContext2D & {
+  drawImage: ReturnType<typeof vi.fn>;
+  filterValues: string[];
+};
 
 function ghostSnapshot(action: UltimatePlayerGhostAction): UltimatePlayerGhostSnapshot {
   return {
@@ -34,10 +40,41 @@ function ghostSnapshot(action: UltimatePlayerGhostAction): UltimatePlayerGhostSn
   };
 }
 
+function createMockContext(): MockCanvasContext {
+  const context = {
+    drawImage: vi.fn(),
+    filterValues: [],
+    restore: vi.fn(),
+    save: vi.fn(),
+    scale: vi.fn(),
+    translate: vi.fn(),
+  } as unknown as MockCanvasContext;
+
+  Object.defineProperty(context, "filter", {
+    get: () => context.filterValues[context.filterValues.length - 1] ?? "none",
+    set: (value: string) => {
+      context.filterValues.push(value);
+    },
+  });
+
+  return context;
+}
+
+function installMockContext(context: CanvasRenderingContext2D) {
+  setCanvas({
+    getContext: () => context,
+  } as unknown as HTMLCanvasElement);
+}
+
 describe("moon tide player ghosts", () => {
   beforeEach(() => {
     resetState();
     keys.clear();
+  });
+
+  afterEach(() => {
+    PLAYER_SHEETS[PLAYER_ANIMATION_STATES.idle].image = null;
+    setCanvas(null);
   });
 
   it("caps concurrent ghosts by ultimate level", () => {
@@ -156,6 +193,27 @@ describe("moon tide player ghosts", () => {
     resetState();
 
     expect(state.ultimatePlayerGhosts).toHaveLength(0);
+  });
+
+  it("draws each active player ghost with one filtered sprite pass", () => {
+    const context = createMockContext();
+    const idleSheet = PLAYER_SHEETS[PLAYER_ANIMATION_STATES.idle];
+    idleSheet.image = {} as HTMLImageElement;
+    installMockContext(context);
+
+    state.ultimatePlayerGhosts.push({
+      ...ghostSnapshot("idle"),
+      animationState: PLAYER_ANIMATION_STATES.idle,
+      life: 10,
+      maxLife: 10,
+      strength: 1,
+    });
+
+    drawUltimatePlayerGhosts();
+
+    expect(context.drawImage).toHaveBeenCalledTimes(1);
+    expect(context.filterValues).toHaveLength(1);
+    expect(context.filterValues[0]).toContain("drop-shadow");
   });
 
   it("applies the moon tide movement multiplier during the active buff", () => {
