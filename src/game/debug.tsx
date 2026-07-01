@@ -197,6 +197,7 @@ function setDebugInfiniteHealth(enabled: boolean) {
 }
 
 export function DebugPanel() {
+  const [collapsed, setCollapsed] = useState(false);
   const [enemyKind, setEnemyKind] = useState<DebugEnemyKind>("chaser");
   const [enemyGrowthStage, setEnemyGrowthStage] = useState<ActBand>("intro");
   const [bossId, setBossId] = useState<BossArchetypeId>(DEBUG_BOSS_OPTIONS[0]?.id ?? "spider-string");
@@ -210,12 +211,38 @@ export function DebugPanel() {
 
   if (!isDebugMode) return null;
 
-  return (
-    <div className="pointer-events-auto absolute right-2 top-2 z-30 w-[190px] max-w-[calc(100%-16px)] rounded-[6px] border border-[#70d7ff66] bg-[#07131ee6] p-2 text-left text-[10px] leading-none text-[#e7f8ff] shadow-[0_8px_20px_rgba(0,0,0,0.35)]">
-      <div className="mb-2 flex items-center justify-between border-b border-[#70d7ff33] pb-1">
-        <span className="text-[9px] font-bold text-[#7fe8ff]">DEBUG</span>
-        <span className="text-[8px] text-[#9fbfd0]">Auto off</span>
+  const panelClassName = `${collapsed ? "w-[82px]" : "w-[190px]"} pointer-events-auto absolute right-2 top-2 z-30 max-w-[calc(100%-16px)] rounded-[6px] border border-[#70d7ff66] bg-[#07131ee6] p-2 text-left text-[10px] leading-none text-[#e7f8ff] shadow-[0_8px_20px_rgba(0,0,0,0.35)]`;
+  const collapseLabel = collapsed ? "Expand debug panel" : "Collapse debug panel";
+  const panelHeader = (
+    <div className={`${collapsed ? "" : "mb-2 border-b border-[#70d7ff33] pb-1"} flex items-center justify-between gap-2`}>
+      <span className="text-[9px] font-bold text-[#7fe8ff]">DEBUG</span>
+      <div className="flex items-center gap-1">
+        {collapsed ? null : <span className="text-[8px] text-[#9fbfd0]">Auto off</span>}
+        <button
+          type="button"
+          className="flex h-5 w-5 shrink-0 items-center justify-center rounded-[4px] border border-[#70d7ff55] bg-[#102033] text-[13px] font-bold leading-none text-[#c3efff] active:translate-y-px"
+          aria-expanded={!collapsed}
+          aria-label={collapseLabel}
+          title={collapseLabel}
+          onClick={() => setCollapsed((current) => !current)}
+        >
+          {collapsed ? "+" : "-"}
+        </button>
       </div>
+    </div>
+  );
+
+  if (collapsed) {
+    return (
+      <div className={panelClassName}>
+        {panelHeader}
+      </div>
+    );
+  }
+
+  return (
+    <div className={panelClassName}>
+      {panelHeader}
       <label className="mb-2 flex items-center gap-2 text-[8px] text-[#c3efff]" htmlFor="debug-infinite-health">
         <input
           id="debug-infinite-health"
