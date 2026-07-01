@@ -29,10 +29,10 @@ const STAGE_FRAME_EFFECT: Record<Exclude<ActBand, "intro">, SpriteFrameEffect> =
     },
   },
   final: {
-    filter: "brightness(0.74) saturate(1.28) contrast(1.16)",
+    filter: "brightness(0.82) saturate(1.22) contrast(1.12)",
     tint: {
-      color: "rgb(104, 10, 24)",
-      alpha: 0.46,
+      color: "rgb(126, 16, 34)",
+      alpha: 0.38,
     },
   },
 };
