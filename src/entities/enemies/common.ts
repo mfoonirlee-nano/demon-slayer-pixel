@@ -22,10 +22,10 @@ const MARKER_RING_Y_OFFSET = 2;
 const MARKER_RING_WIDTH_SCALE = 0.38;
 const STAGE_FRAME_EFFECT: Record<Exclude<ActBand, "intro">, SpriteFrameEffect> = {
   awakened: {
-    filter: "brightness(1.08) saturate(1.18) contrast(1.06)",
+    filter: "brightness(0.94) saturate(1.12) contrast(1.08)",
     tint: {
-      color: "rgb(177, 48, 176)",
-      alpha: 0.36,
+      color: "rgb(142, 28, 92)",
+      alpha: 0.28,
     },
   },
   final: {
