@@ -2,12 +2,18 @@ import { state } from "../../game/state";
 import { playSfx } from "../../game/audio";
 import { CRAWLER_SHEET_INDEX, CRAWLER_SHEETS, ENEMY_SHEETS } from "../../constants";
 import { ctx } from "../../rendering/context";
-import { drawSheetFrame } from "../../rendering/graphics";
 import type { CrawlerPhase, EnemyState } from "../../types/game-state";
 import { hitbox } from "../../game/utils";
 import { hurtPlayer } from "../player";
 import type { EnemyArchetype, EnemySpawnContext } from "./common";
-import { drawEnemyFrame, enemyCenterX, enemyDrawScale, enemyFeetY, hasAwakenedGrowth } from "./common";
+import {
+  drawEnemyFrame,
+  drawEnemySheetFrame,
+  enemyCenterX,
+  enemyDrawScale,
+  enemyFeetY,
+  hasAwakenedGrowth,
+} from "./common";
 
 const CRAWLER_CONFIG = {
   triggerDistance: 104,
@@ -261,7 +267,7 @@ function drawCrawler(enemy: EnemyState) {
   const drawH = Math.round(sheet.frameH * drawScale);
   const centerX = enemyCenterX(enemy);
   const feetY = enemyFeetY(enemy);
-  drawSheetFrame(sheet, frame, centerX - drawW / HALF_DIVISOR, feetY - drawH, drawW, drawH, facing);
+  drawEnemySheetFrame(enemy, sheet, frame, centerX - drawW / HALF_DIVISOR, feetY - drawH, drawW, drawH, facing);
 }
 
 export const CRAWLER_ARCHETYPE: EnemyArchetype = {

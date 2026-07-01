@@ -6,7 +6,14 @@ import { drawSheetFrame } from "../../rendering/graphics";
 import type { EnemyState, WardenPhase } from "../../types/game-state";
 import { frameIndex } from "../../game/utils";
 import type { EnemyArchetype, EnemySpawnContext } from "./common";
-import { drawEnemyFrame, enemyCenterX, enemyDrawScale, enemyFeetY, hasAwakenedGrowth } from "./common";
+import {
+  drawEnemyFrame,
+  drawEnemySheetFrame,
+  enemyCenterX,
+  enemyDrawScale,
+  enemyFeetY,
+  hasAwakenedGrowth,
+} from "./common";
 
 const HALF_DIVISOR = 2;
 const FULL_CIRCLE = Math.PI * 2;
@@ -232,7 +239,8 @@ function drawWarden(enemy: EnemyState) {
   const frame = wardenHitFrame(enemy);
   const drawW = Math.round(sheet.frameW * drawScale);
   const drawH = Math.round(sheet.frameH * drawScale);
-  drawSheetFrame(
+  drawEnemySheetFrame(
+    enemy,
     sheet,
     frame,
     enemyCenterX(enemy) - drawW / HALF_DIVISOR,

@@ -1,12 +1,12 @@
 import { state } from "../../game/state";
 import { playSfx } from "../../game/audio";
 import { CASTER_SHEET_INDEX, CASTER_SHEETS, ENEMY_SHEETS } from "../../constants";
-import { drawSheetFrame } from "../../rendering/graphics";
 import type { CasterAiPhase, CasterPhase, EnemyState } from "../../types/game-state";
 import { frameIndex } from "../../game/utils";
 import type { EnemyArchetype, EnemySpawnContext } from "./common";
 import {
   drawEnemyFrame,
+  drawEnemySheetFrame,
   enemyCenterX,
   enemyDrawScale,
   enemyFeetY,
@@ -319,7 +319,7 @@ function drawCaster(enemy: EnemyState) {
   const drawH = Math.round(sheet.frameH * drawScale);
   const centerX = enemyCenterX(enemy);
   const feetY = enemyFeetY(enemy);
-  drawSheetFrame(sheet, frame, centerX - drawW / HALF_DIVISOR, feetY - drawH, drawW, drawH, facing);
+  drawEnemySheetFrame(enemy, sheet, frame, centerX - drawW / HALF_DIVISOR, feetY - drawH, drawW, drawH, facing);
 }
 
 export const CASTER_ARCHETYPE: EnemyArchetype = {

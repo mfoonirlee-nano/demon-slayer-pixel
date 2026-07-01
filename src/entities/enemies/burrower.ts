@@ -8,12 +8,18 @@ import {
   WIDTH,
 } from "../../constants";
 import { ctx } from "../../rendering/context";
-import { drawSheetFrame } from "../../rendering/graphics";
 import type { BurrowerPhase, EnemyState } from "../../types/game-state";
 import { clamp, frameIndex, hitbox, lerp } from "../../game/utils";
 import { hurtPlayer } from "../player";
 import type { EnemyArchetype, EnemySpawnContext } from "./common";
-import { drawEnemyFrame, enemyCenterX, enemyDrawScale, enemyFeetY, hasAwakenedGrowth } from "./common";
+import {
+  drawEnemyFrame,
+  drawEnemySheetFrame,
+  enemyCenterX,
+  enemyDrawScale,
+  enemyFeetY,
+  hasAwakenedGrowth,
+} from "./common";
 
 const BURROWER_CONFIG = {
   triggerDistance: 168,
@@ -386,7 +392,7 @@ function drawBurrower(enemy: EnemyState) {
   const drawH = Math.round(sheet.frameH * drawScale);
   const centerX = enemyCenterX(enemy);
   const feetY = enemyFeetY(enemy);
-  drawSheetFrame(sheet, frame, centerX - drawW / HALF_DIVISOR, feetY - drawH, drawW, drawH, facing);
+  drawEnemySheetFrame(enemy, sheet, frame, centerX - drawW / HALF_DIVISOR, feetY - drawH, drawW, drawH, facing);
 }
 
 export const BURROWER_ARCHETYPE: EnemyArchetype = {

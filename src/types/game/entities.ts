@@ -159,6 +159,8 @@ export type EnemyState = {
   runnerTimer?: number;
   runnerFacing?: number;
   runnerApproachSpeed?: number;
+  runnerDashElapsed?: number;
+  runnerDashLandingTimer?: number;
   duelistPhase?: DuelistPhase;
   duelistTimer?: number;
   duelistFacing?: number;

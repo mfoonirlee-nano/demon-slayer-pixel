@@ -1,15 +1,19 @@
 import { state } from "../../game/state";
 import { playSfx } from "../../game/audio";
-import { ENEMY_SHEETS, RUNNER_SHEET_INDEX, RUNNER_SHEETS } from "../../constants";
+import { ENEMY_SHEETS, GROUND_Y, RUNNER_SHEET_INDEX, RUNNER_SHEETS } from "../../constants";
 import type { EnemyState, RunnerPhase } from "../../types/game-state";
 import type { EnemyArchetype, EnemySpawnContext } from "./common";
 import {
   drawEnemyFrame,
+  drawEnemySheetFrame,
   enemyDrawScale,
   enemyCenterX,
+  enemyFeetY,
   hasAwakenedGrowth,
   isEliteEnemy,
 } from "./common";
+
+const HALF_DIVISOR = 2;
 
 const RUNNER_CONFIG = {
   triggerDistance: 250,
@@ -21,10 +25,10 @@ const RUNNER_CONFIG = {
   dashMaxSpeed: 5.2,
   windupMinFrames: 14,
   windupFrameJitter: 5,
-  dashMinFrames: 42,
-  dashFrameJitter: 11,
-  awakenedDashFrameBonus: 5,
-  eliteDashFrameBonus: 9,
+  dashNormalMinBodyWidths: 3,
+  dashNormalMaxBodyWidths: 4,
+  dashAwakenedMinBodyWidths: 6,
+  dashAwakenedMaxBodyWidths: 7,
   eliteDashSpeedScale: 1.12,
   recoverFrames: 24,
   awakenedRecoverFrames: 18,
@@ -36,12 +40,16 @@ const RUNNER_CONFIG = {
   drawScale: 1.2,
   dashDrawScaleMultiplier: 1.12,
   dashAnimSpeed: 3,
+  dashHoldFrame: 3,
+  dashLandingFrame: 4,
+  dashLandingFrames: 3,
   windupAnimSpeed: 5,
   defaultAnimSpeed: 7,
 } as const;
 
 const RUNNER_WARNING_SFX_PITCH = 1.08;
 const RUNNER_DASH_SFX_PITCH = 1.08;
+const RUNNER_GROUND_CONTACT_EPSILON = 0.1;
 
 function isRunner(enemy: Pick<EnemyState, "sheetIndex">) {
   return enemy.sheetIndex === RUNNER_SHEET_INDEX;
@@ -49,6 +57,10 @@ function isRunner(enemy: Pick<EnemyState, "sheetIndex">) {
 
 function randomFrameCount(min: number, jitter: number) {
   return min + Math.floor(Math.random() * jitter);
+}
+
+function randomFrameCountBetween(min: number, max: number) {
+  return min + Math.floor(Math.random() * (max - min + 1));
 }
 
 function runnerFacing(enemy: EnemyState, toward: number) {
@@ -73,13 +85,29 @@ function runnerWindupFrames(enemy: EnemyState) {
   return randomFrameCount(RUNNER_CONFIG.windupMinFrames + extraFrames, RUNNER_CONFIG.windupFrameJitter);
 }
 
+function runnerDashBodyWidthRange(enemy: EnemyState) {
+  return hasAwakenedGrowth(enemy)
+    ? {
+        min: RUNNER_CONFIG.dashAwakenedMinBodyWidths,
+        max: RUNNER_CONFIG.dashAwakenedMaxBodyWidths,
+      }
+    : {
+        min: RUNNER_CONFIG.dashNormalMinBodyWidths,
+        max: RUNNER_CONFIG.dashNormalMaxBodyWidths,
+      };
+}
+
+function runnerVisualBodyWidth() {
+  return RUNNER_SHEETS.approach.frameW * enemyDrawScale(RUNNER_ARCHETYPE);
+}
+
 function runnerDashFrames(enemy: EnemyState) {
-  const bonus = isEliteEnemy(enemy)
-    ? RUNNER_CONFIG.eliteDashFrameBonus
-    : hasAwakenedGrowth(enemy)
-      ? RUNNER_CONFIG.awakenedDashFrameBonus
-      : 0;
-  return randomFrameCount(RUNNER_CONFIG.dashMinFrames + bonus, RUNNER_CONFIG.dashFrameJitter);
+  const bodyWidths = runnerDashBodyWidthRange(enemy);
+  const speed = runnerDashSpeed(enemy);
+  const bodyWidth = runnerVisualBodyWidth();
+  const minFrames = Math.ceil(bodyWidth * bodyWidths.min / speed);
+  const maxFrames = Math.floor(bodyWidth * bodyWidths.max / speed);
+  return randomFrameCountBetween(minFrames, Math.max(minFrames, maxFrames));
 }
 
 function runnerRecoverFrames(enemy: EnemyState) {
@@ -104,6 +132,38 @@ function runnerDashCount() {
 
 function runnerSheetForPhase(phase: RunnerPhase) {
   return RUNNER_SHEETS[phase] || RUNNER_SHEETS.approach;
+}
+
+function runnerGrounded(enemy: EnemyState) {
+  return enemy.onPlatform !== null || enemyFeetY(enemy) >= GROUND_Y - RUNNER_GROUND_CONTACT_EPSILON;
+}
+
+function holdRunnerDashFrame(enemy: EnemyState) {
+  const holdFrameElapsed = RUNNER_CONFIG.dashHoldFrame * RUNNER_CONFIG.dashAnimSpeed;
+  enemy.runnerDashElapsed = Math.max(enemy.runnerDashElapsed ?? 0, holdFrameElapsed);
+}
+
+function startRunnerDashLanding(enemy: EnemyState) {
+  holdRunnerDashFrame(enemy);
+  enemy.runnerTimer = 0;
+  enemy.runnerDashLandingTimer = RUNNER_CONFIG.dashLandingFrames;
+  enemy.vx = 0;
+}
+
+function enterRunnerRecover(enemy: EnemyState) {
+  enemy.runnerPhase = "recover";
+  enemy.runnerTimer = runnerRecoverFrames(enemy);
+  enemy.runnerDashElapsed = 0;
+  enemy.runnerDashLandingTimer = 0;
+  enemy.vx = 0;
+}
+
+export function runnerDashAnimationFrame(dashElapsedFrames: number, landingFrameActive = false) {
+  if (landingFrameActive) return RUNNER_CONFIG.dashLandingFrame;
+  return Math.min(
+    RUNNER_CONFIG.dashHoldFrame,
+    Math.floor(dashElapsedFrames / RUNNER_CONFIG.dashAnimSpeed),
+  );
 }
 
 function initRunner(enemy: EnemyState, context: EnemySpawnContext) {
@@ -147,17 +207,36 @@ function updateRunner(enemy: EnemyState) {
       } else {
         enemy.runnerPhase = "dash";
         enemy.runnerTimer = runnerDashFrames(enemy);
+        enemy.runnerDashElapsed = 0;
+        enemy.runnerDashLandingTimer = 0;
         enemy.runnerFacing = lockedFacing;
         enemy.vx = lockedFacing * runnerDashSpeed(enemy);
         playSfx("enemyDash", RUNNER_DASH_SFX_PITCH);
       }
     }
   } else if (enemy.runnerPhase === "dash") {
-    enemy.runnerTimer -= 1;
-    enemy.vx = enemy.runnerFacing * runnerDashSpeed(enemy);
-    if (enemy.runnerTimer <= 0) {
-      enemy.runnerPhase = "recover";
-      enemy.runnerTimer = runnerRecoverFrames(enemy);
+    const landingTimer = enemy.runnerDashLandingTimer ?? 0;
+
+    if (landingTimer > 0) {
+      enemy.runnerDashLandingTimer = landingTimer - 1;
+      enemy.vx = 0;
+      if (enemy.runnerDashLandingTimer <= 0) enterRunnerRecover(enemy);
+    } else if (enemy.runnerTimer > 0) {
+      enemy.runnerDashElapsed = (enemy.runnerDashElapsed ?? 0) + 1;
+      enemy.runnerTimer -= 1;
+      enemy.vx = enemy.runnerFacing * runnerDashSpeed(enemy);
+      if (enemy.runnerTimer <= 0) {
+        if (runnerGrounded(enemy)) {
+          startRunnerDashLanding(enemy);
+        } else {
+          holdRunnerDashFrame(enemy);
+          enemy.vx = 0;
+        }
+      }
+    } else if (runnerGrounded(enemy)) {
+      startRunnerDashLanding(enemy);
+    } else {
+      holdRunnerDashFrame(enemy);
       enemy.vx = 0;
     }
   } else {
@@ -185,6 +264,28 @@ function drawRunner(enemy: EnemyState) {
   const drawScale = enemyDrawScale(RUNNER_ARCHETYPE) * (
     phase === "dash" ? RUNNER_CONFIG.dashDrawScaleMultiplier : 1
   );
+  if (phase === "dash") {
+    const frame = runnerDashAnimationFrame(
+      enemy.runnerDashElapsed ?? 0,
+      (enemy.runnerDashLandingTimer ?? 0) > 0,
+    );
+    const drawW = Math.round(sheet.frameW * drawScale);
+    const drawH = Math.round(sheet.frameH * drawScale);
+    const centerX = enemyCenterX(enemy);
+    const feetY = enemyFeetY(enemy);
+    drawEnemySheetFrame(
+      enemy,
+      sheet,
+      frame,
+      centerX - drawW / HALF_DIVISOR,
+      feetY - drawH,
+      drawW,
+      drawH,
+      facing,
+    );
+    return;
+  }
+
   drawEnemyFrame(enemy, sheet, drawScale, animSpeed, state.elapsed, facing);
 }
 

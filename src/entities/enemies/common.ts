@@ -9,7 +9,7 @@ import {
 import type { SpriteSheet } from "../../types/assets";
 import type { ActBand, EnemyId, EnemySpawnSource, EnemyState } from "../../types/game-state";
 import { frameIndex } from "../../game/utils";
-import { drawSheetFrame } from "../../rendering/graphics";
+import { drawSheetFrame, type SpriteFrameEffect } from "../../rendering/graphics";
 import { ctx } from "../../rendering/context";
 import { playSfx } from "../../game/audio";
 import { state } from "../../game/state";
@@ -17,15 +17,24 @@ import { state } from "../../game/state";
 const HALF_DIVISOR = 2;
 const ELITE_BRUTE_PROTECTION_RANGE = 190;
 const ELITE_BRUTE_PROTECTION_DAMAGE_SCALE = 0.86;
-const MARKER_LINE_WIDTH = 2;
-const MARKER_INSET = 4;
 const MARKER_RING_HEIGHT = 8;
 const MARKER_RING_Y_OFFSET = 2;
 const MARKER_RING_WIDTH_SCALE = 0.38;
-const STAGE_MARKER_COLOR: Record<ActBand, string> = {
-  intro: "rgba(0, 0, 0, 0)",
-  awakened: "rgba(148, 72, 190, 0.42)",
-  final: "rgba(190, 42, 58, 0.52)",
+const STAGE_FRAME_EFFECT: Record<Exclude<ActBand, "intro">, SpriteFrameEffect> = {
+  awakened: {
+    filter: "brightness(1.08) saturate(1.18) contrast(1.06)",
+    tint: {
+      color: "rgb(177, 48, 176)",
+      alpha: 0.36,
+    },
+  },
+  final: {
+    filter: "brightness(0.74) saturate(1.28) contrast(1.16)",
+    tint: {
+      color: "rgb(104, 10, 24)",
+      alpha: 0.46,
+    },
+  },
 };
 const ELITE_MARKER_COLOR = "rgba(235, 64, 70, 0.72)";
 const ELITE_MARKER_FILL = "rgba(235, 64, 70, 0.18)";
@@ -218,6 +227,25 @@ export function steerEnemyTowardX(enemy: EnemyState, targetX: number) {
   enemy.vx = Math.max(-ENEMY_CONFIG.maxAbsVelocity, Math.min(ENEMY_CONFIG.maxAbsVelocity, enemy.vx));
 }
 
+function enemyGrowthFrameEffect(enemy: EnemyState): SpriteFrameEffect | undefined {
+  const stage = enemyGrowthStage(enemy);
+  if (stage === "intro") return undefined;
+  return STAGE_FRAME_EFFECT[stage];
+}
+
+export function drawEnemySheetFrame(
+  enemy: EnemyState,
+  sheet: SpriteSheet,
+  frame: number,
+  x: number,
+  y: number,
+  w: number,
+  h: number,
+  facing = 1,
+) {
+  drawSheetFrame(sheet, frame, x, y, w, h, facing, enemyGrowthFrameEffect(enemy));
+}
+
 export function drawEnemyFrame(
   enemy: EnemyState,
   sheet: SpriteSheet,
@@ -231,45 +259,34 @@ export function drawEnemyFrame(
   const drawH = Math.round(sheet.frameH * drawScale);
   const centerX = enemyCenterX(enemy);
   const feetY = enemyFeetY(enemy);
-  drawSheetFrame(sheet, frame, centerX - drawW / HALF_DIVISOR, feetY - drawH, drawW, drawH, facing);
+  drawEnemySheetFrame(enemy, sheet, frame, centerX - drawW / HALF_DIVISOR, feetY - drawH, drawW, drawH, facing);
 }
 
-export function drawEnemyGrowthMarker(enemy: EnemyState, archetype: EnemyArchetype) {
+export function drawEnemyEliteMarker(enemy: EnemyState, archetype: EnemyArchetype) {
   if (!ctx) return;
   const elite = isEliteEnemy(enemy);
-  const stage = enemyGrowthStage(enemy);
-  if (!elite && stage === "intro") return;
+  if (!elite) return;
 
   const sheet = ENEMY_SHEETS[enemy.sheetIndex % ENEMY_SHEETS.length] || ENEMY_SHEETS[0];
   const drawScale = enemyDrawScale(archetype);
   const drawW = Math.round(sheet.frameW * drawScale);
-  const drawH = Math.round(sheet.frameH * drawScale);
   const centerX = enemyCenterX(enemy);
   const feetY = enemyFeetY(enemy);
-  const markerColor = elite ? ELITE_MARKER_COLOR : STAGE_MARKER_COLOR[stage];
 
   ctx.save();
-  if (elite) {
-    ctx.fillStyle = ELITE_MARKER_FILL;
-    ctx.beginPath();
-    ctx.ellipse(
-      centerX,
-      feetY - MARKER_RING_Y_OFFSET,
-      drawW * MARKER_RING_WIDTH_SCALE,
-      MARKER_RING_HEIGHT,
-      0,
-      0,
-      Math.PI * 2,
-    );
-    ctx.fill();
-  }
-  ctx.strokeStyle = markerColor;
-  ctx.lineWidth = MARKER_LINE_WIDTH;
-  ctx.strokeRect(
-    centerX - drawW / HALF_DIVISOR + MARKER_INSET,
-    feetY - drawH + MARKER_INSET,
-    Math.max(1, drawW - MARKER_INSET * 2),
-    Math.max(1, drawH - MARKER_INSET * 2),
+  ctx.fillStyle = ELITE_MARKER_FILL;
+  ctx.beginPath();
+  ctx.ellipse(
+    centerX,
+    feetY - MARKER_RING_Y_OFFSET,
+    drawW * MARKER_RING_WIDTH_SCALE,
+    MARKER_RING_HEIGHT,
+    0,
+    0,
+    Math.PI * 2,
   );
+  ctx.fill();
+  ctx.strokeStyle = ELITE_MARKER_COLOR;
+  ctx.stroke();
   ctx.restore();
 }

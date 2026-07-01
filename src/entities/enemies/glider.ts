@@ -2,11 +2,17 @@ import { state } from "../../game/state";
 import { playSfx } from "../../game/audio";
 import { ENEMY_SHEETS, GLIDER_SHEET_INDEX, GLIDER_SHEETS, GROUND_Y } from "../../constants";
 import { ctx } from "../../rendering/context";
-import { drawSheetFrame } from "../../rendering/graphics";
 import type { EnemyState, GliderPhase } from "../../types/game-state";
 import { clamp, frameIndex } from "../../game/utils";
 import type { EnemyArchetype, EnemySpawnContext } from "./common";
-import { drawEnemyFrame, enemyCenterX, enemyDrawScale, enemyFeetY, hasAwakenedGrowth } from "./common";
+import {
+  drawEnemyFrame,
+  drawEnemySheetFrame,
+  enemyCenterX,
+  enemyDrawScale,
+  enemyFeetY,
+  hasAwakenedGrowth,
+} from "./common";
 
 export const GLIDER_UNLOCK_SECONDS = 70;
 
@@ -363,7 +369,7 @@ function drawGlider(enemy: EnemyState) {
   const drawH = Math.round(sheet.frameH * drawScale);
   const centerX = enemyCenterX(enemy);
   const feetY = enemyFeetY(enemy);
-  drawSheetFrame(sheet, frame, centerX - drawW / HALF_DIVISOR, feetY - drawH, drawW, drawH, facing);
+  drawEnemySheetFrame(enemy, sheet, frame, centerX - drawW / HALF_DIVISOR, feetY - drawH, drawW, drawH, facing);
 }
 
 export const GLIDER_ARCHETYPE: EnemyArchetype = {

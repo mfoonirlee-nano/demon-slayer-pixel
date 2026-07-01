@@ -2,13 +2,13 @@ import { state } from "../../game/state";
 import { playSfx } from "../../game/audio";
 import { DUELIST_SHEET_INDEX, DUELIST_SHEETS, ENEMY_SHEETS } from "../../constants";
 import { ctx } from "../../rendering/context";
-import { drawSheetFrame } from "../../rendering/graphics";
 import type { DuelistPhase, EnemyState } from "../../types/game-state";
 import { hitbox } from "../../game/utils";
 import { hurtPlayer } from "../player";
 import type { EnemyArchetype, EnemySpawnContext } from "./common";
 import {
   drawEnemyFrame,
+  drawEnemySheetFrame,
   enemyCenterX,
   enemyDrawScale,
   enemyFeetY,
@@ -295,7 +295,7 @@ function drawDuelist(enemy: EnemyState) {
   const drawH = Math.round(sheet.frameH * drawScale);
   const centerX = enemyCenterX(enemy);
   const feetY = enemyFeetY(enemy);
-  drawSheetFrame(sheet, frame, centerX - drawW / HALF_DIVISOR, feetY - drawH, drawW, drawH, facing);
+  drawEnemySheetFrame(enemy, sheet, frame, centerX - drawW / HALF_DIVISOR, feetY - drawH, drawW, drawH, facing);
 }
 
 export const DUELIST_ARCHETYPE: EnemyArchetype = {

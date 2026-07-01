@@ -1,5 +1,4 @@
 import { ctx } from "../../rendering/context";
-import { drawSheetFrame } from "../../rendering/graphics";
 import { state } from "../../game/state";
 import { playSfx } from "../../game/audio";
 import {
@@ -11,7 +10,7 @@ import {
 import type { EnemyState, SplitterPhase } from "../../types/game-state";
 import { frameIndex, hitbox } from "../../game/utils";
 import type { EnemyArchetype, EnemyDefeatContext, EnemySpawnContext } from "./common";
-import { enemyBaseHp, enemyCenterX, enemyFeetY, hasAwakenedGrowth } from "./common";
+import { drawEnemySheetFrame, enemyBaseHp, enemyCenterX, enemyFeetY, hasAwakenedGrowth } from "./common";
 
 const SPLITTER_CONFIG = {
   parentBaseSpeed: 0.48,
@@ -333,12 +332,12 @@ function drawSplitter(enemy: EnemyState) {
   if (ctx && alpha < 1) {
     ctx.save();
     ctx.globalAlpha *= alpha;
-    drawSheetFrame(sheet, splitterFrame(enemy), drawX, drawY, drawW, drawH, enemy.splitterFacing ?? 1);
+    drawEnemySheetFrame(enemy, sheet, splitterFrame(enemy), drawX, drawY, drawW, drawH, enemy.splitterFacing ?? 1);
     ctx.restore();
     return;
   }
 
-  drawSheetFrame(sheet, splitterFrame(enemy), drawX, drawY, drawW, drawH, enemy.splitterFacing ?? 1);
+  drawEnemySheetFrame(enemy, sheet, splitterFrame(enemy), drawX, drawY, drawW, drawH, enemy.splitterFacing ?? 1);
 }
 
 function handleSplitterDefeated(enemy: EnemyState, context: EnemyDefeatContext) {

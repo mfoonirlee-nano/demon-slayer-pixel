@@ -17,6 +17,7 @@ import { frameIndex } from "../../game/utils";
 import type { EnemyArchetype, EnemySpawnContext } from "./common";
 import {
   drawEnemyFrame,
+  drawEnemySheetFrame,
   enemyCenterX,
   enemyDrawScale,
   enemyFeetY,
@@ -316,7 +317,7 @@ function drawBinder(enemy: EnemyState) {
   const drawH = Math.round(sheet.frameH * drawScale);
   const centerX = enemyCenterX(enemy);
   const feetY = enemyFeetY(enemy);
-  drawSheetFrame(sheet, frame, centerX - drawW / HALF_DIVISOR, feetY - drawH, drawW, drawH, facing);
+  drawEnemySheetFrame(enemy, sheet, frame, centerX - drawW / HALF_DIVISOR, feetY - drawH, drawW, drawH, facing);
 }
 
 export const BINDER_ARCHETYPE: EnemyArchetype = {

@@ -2,7 +2,6 @@ import { state } from "../../game/state";
 import { playSfx } from "../../game/audio";
 import { BRUTE_SHEET_INDEX, BRUTE_SHEETS, ENEMY_SHEETS } from "../../constants";
 import { ctx } from "../../rendering/context";
-import { drawSheetFrame } from "../../rendering/graphics";
 import type { BrutePhase, EnemyState } from "../../types/game-state";
 import { hitbox } from "../../game/utils";
 import { hurtPlayer } from "../player";
@@ -10,6 +9,7 @@ import type { EnemyArchetype, EnemySpawnContext } from "./common";
 import {
   BRUTE_SHIELD_BREAK_FRAMES,
   drawEnemyFrame,
+  drawEnemySheetFrame,
   enemyCenterX,
   enemyDrawScale,
   enemyFeetY,
@@ -392,7 +392,7 @@ function drawBrute(enemy: EnemyState) {
   const drawH = Math.round(sheet.frameH * drawScale);
   const centerX = enemyCenterX(enemy);
   const feetY = enemyFeetY(enemy);
-  drawSheetFrame(sheet, frame, centerX - drawW / HALF_DIVISOR, feetY - drawH, drawW, drawH, facing);
+  drawEnemySheetFrame(enemy, sheet, frame, centerX - drawW / HALF_DIVISOR, feetY - drawH, drawW, drawH, facing);
 }
 
 export const BRUTE_ARCHETYPE: EnemyArchetype = {

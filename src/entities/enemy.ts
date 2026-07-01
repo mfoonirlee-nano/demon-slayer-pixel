@@ -11,7 +11,7 @@ import {
 import type { ActBand, EnemyId, EnemySpawnSource, EnemyState, PlatformState, SpawnPattern } from "../types/game-state";
 import { hitbox } from "../game/utils";
 import { hurtPlayer } from "./player";
-import { createEnemyState, drawEnemyGrowthMarker } from "./enemies/common";
+import { createEnemyState, drawEnemyEliteMarker } from "./enemies/common";
 import { canSpawnBrute, isBruteSheet } from "./enemies/brute";
 import { canSpawnBinder, isBinderSheet } from "./enemies/binder";
 import { canSpawnDuelist, isDuelistSheet } from "./enemies/duelist";
@@ -304,5 +304,5 @@ export function updateEnemies() {
 export function drawEnemy(enemy: EnemyState) {
   const archetype = enemyArchetypeForSheet(enemy.sheetIndex);
   archetype.draw(enemy);
-  drawEnemyGrowthMarker(enemy, archetype);
+  drawEnemyEliteMarker(enemy, archetype);
 }

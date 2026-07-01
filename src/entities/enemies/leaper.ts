@@ -8,12 +8,18 @@ import {
   LEAPER_SHEETS,
   WIDTH,
 } from "../../constants";
-import { drawSheetFrame } from "../../rendering/graphics";
 import type { EnemyState, LeaperPhase } from "../../types/game-state";
 import { clamp, frameIndex, hitbox, lerp } from "../../game/utils";
 import { hurtPlayer } from "../player";
 import type { EnemyArchetype, EnemySpawnContext } from "./common";
-import { drawEnemyFrame, enemyCenterX, enemyDrawScale, enemyFeetY, hasAwakenedGrowth } from "./common";
+import {
+  drawEnemyFrame,
+  drawEnemySheetFrame,
+  enemyCenterX,
+  enemyDrawScale,
+  enemyFeetY,
+  hasAwakenedGrowth,
+} from "./common";
 
 const LEAPER_CONFIG = {
   triggerDistance: 235,
@@ -367,7 +373,7 @@ function drawLeaper(enemy: EnemyState) {
   const drawH = Math.round(sheet.frameH * drawScale);
   const centerX = enemyCenterX(enemy);
   const feetY = enemyFeetY(enemy);
-  drawSheetFrame(sheet, frame, centerX - drawW / HALF_DIVISOR, feetY - drawH, drawW, drawH, facing);
+  drawEnemySheetFrame(enemy, sheet, frame, centerX - drawW / HALF_DIVISOR, feetY - drawH, drawW, drawH, facing);
 }
 
 export const LEAPER_ARCHETYPE: EnemyArchetype = {
