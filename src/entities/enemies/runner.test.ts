@@ -12,10 +12,11 @@ const DASH_THIRD_FRAME_INDEX = 2;
 const DASH_HOLD_FRAME_INDEX = 3;
 const DASH_LANDING_FRAME_INDEX = 4;
 const DASH_LONG_ELAPSED_FRAMES = 120;
-const INTRO_DASH_MIN_BODY_WIDTHS = 3;
-const INTRO_DASH_MAX_BODY_WIDTHS = 4;
-const AWAKENED_DASH_MIN_BODY_WIDTHS = 6;
-const AWAKENED_DASH_MAX_BODY_WIDTHS = 7;
+const INTRO_DASH_SPEED = 6.15;
+const INTRO_DASH_MIN_BODY_WIDTHS = 2;
+const INTRO_DASH_MAX_BODY_WIDTHS = 2.67;
+const AWAKENED_DASH_MIN_BODY_WIDTHS = 4;
+const AWAKENED_DASH_MAX_BODY_WIDTHS = 4.67;
 const BODY_WIDTH_TOLERANCE = 0.05;
 const AIRBORNE_DASH_CLEARANCE = 1;
 const LANDING_RECOVER_GUARD_FRAMES = 10;
@@ -55,7 +56,13 @@ describe("runner dash tuning", () => {
     expect(runnerDashAnimationFrame(DASH_LONG_ELAPSED_FRAMES, true)).toBe(DASH_LANDING_FRAME_INDEX);
   });
 
-  it("travels 3-4 visual body widths in the intro growth stage", () => {
+  it("uses the faster intro dash speed", () => {
+    const runner = enterRunnerDash("intro");
+
+    expect(Math.abs(runner.vx)).toBeCloseTo(INTRO_DASH_SPEED);
+  });
+
+  it("travels 2-2.67 visual body widths in the intro growth stage", () => {
     const runner = enterRunnerDash("intro");
     const bodyWidths = dashDistanceInBodyWidths(runner);
 
@@ -63,7 +70,7 @@ describe("runner dash tuning", () => {
     expect(bodyWidths).toBeLessThanOrEqual(INTRO_DASH_MAX_BODY_WIDTHS + BODY_WIDTH_TOLERANCE);
   });
 
-  it("travels 6-7 visual body widths in awakened growth stages", () => {
+  it("travels 4-4.67 visual body widths in awakened growth stages", () => {
     const runner = enterRunnerDash("awakened");
     const bodyWidths = dashDistanceInBodyWidths(runner);
 
