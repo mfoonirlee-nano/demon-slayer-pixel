@@ -2,13 +2,11 @@ import { state } from "../../game/state";
 import { playSfx } from "../../game/audio";
 import { ENEMY_SHEETS, RUNNER_SHEET_INDEX, RUNNER_SHEETS } from "../../constants";
 import type { EnemyState, RunnerPhase } from "../../types/game-state";
-import { ctx } from "../../rendering/context";
 import type { EnemyArchetype, EnemySpawnContext } from "./common";
 import {
   drawEnemyFrame,
   enemyDrawScale,
   enemyCenterX,
-  enemyFeetY,
   hasAwakenedGrowth,
   isEliteEnemy,
 } from "./common";
@@ -42,35 +40,8 @@ const RUNNER_CONFIG = {
   defaultAnimSpeed: 7,
 } as const;
 
-const RUNNER_DUST_LIFE_WIDTH = 28;
-const RUNNER_DASH_DUST_Y_OFFSET = 8;
-const RUNNER_DASH_DUST_HEIGHT = 4;
-const RUNNER_DASH_DUST_DETAIL_X_OFFSET = 8;
-const RUNNER_DASH_DUST_DETAIL_Y_OFFSET = 15;
-const RUNNER_DASH_DUST_DETAIL_WIDTH = 12;
-const RUNNER_DASH_DUST_DETAIL_HEIGHT = 3;
-const RUNNER_RECOVER_DUST_LEAD_OFFSET = 10;
-const RUNNER_RECOVER_DUST_BACK_OFFSET = 18;
-const RUNNER_RECOVER_DUST_Y_OFFSET = 7;
-const RUNNER_RECOVER_DUST_WIDTH = 20;
-const RUNNER_RECOVER_DUST_HEIGHT = 3;
 const RUNNER_WARNING_SFX_PITCH = 1.08;
 const RUNNER_DASH_SFX_PITCH = 1.08;
-const RUNNER_LOCK_LINE_LENGTH = 180;
-const RUNNER_LOCK_LINE_HEIGHT = 3;
-const RUNNER_LOCK_LINE_Y_OFFSET = 22;
-const RUNNER_DASH_LINE_LENGTH = 220;
-const RUNNER_DASH_LINE_HEIGHT = 4;
-const RUNNER_DASH_LINE_Y_OFFSET = 24;
-const RUNNER_RECOVER_BRACE_WIDTH = 26;
-const RUNNER_RECOVER_BRACE_HEIGHT = 5;
-const RUNNER_RECOVER_BRACE_Y_OFFSET = 26;
-const RUNNER_LOCK_PULSE_BASE_ALPHA = 0.45;
-const RUNNER_LOCK_PULSE_PERIOD = 10;
-const RUNNER_LOCK_PULSE_DIVISOR = 30;
-const RUNNER_LOCK_MARKER_WIDTH = 4;
-const RUNNER_LOCK_MARKER_Y_PADDING = 3;
-const RUNNER_LOCK_MARKER_HEIGHT_PADDING = 6;
 
 function isRunner(enemy: Pick<EnemyState, "sheetIndex">) {
   return enemy.sheetIndex === RUNNER_SHEET_INDEX;
@@ -202,65 +173,6 @@ function updateRunner(enemy: EnemyState) {
   enemy.x += enemy.vx;
 }
 
-function drawRunnerReadabilityCue(enemy: EnemyState, phase: RunnerPhase, facing: number) {
-  if (!ctx) return;
-  const feetY = enemyFeetY(enemy);
-
-  if (phase === "windup") {
-    const lineX = facing === 1 ? enemy.x + enemy.w : enemy.x - RUNNER_LOCK_LINE_LENGTH;
-    const pulse = RUNNER_LOCK_PULSE_BASE_ALPHA + (state.elapsed % RUNNER_LOCK_PULSE_PERIOD) / RUNNER_LOCK_PULSE_DIVISOR;
-    ctx.fillStyle = `rgba(255, 80, 72, ${pulse})`;
-    ctx.fillRect(lineX, feetY - RUNNER_LOCK_LINE_Y_OFFSET, RUNNER_LOCK_LINE_LENGTH, RUNNER_LOCK_LINE_HEIGHT);
-    ctx.fillStyle = "rgba(255, 210, 120, 0.8)";
-    ctx.fillRect(
-      facing === 1 ? enemy.x + enemy.w - RUNNER_LOCK_MARKER_WIDTH : enemy.x,
-      feetY - RUNNER_LOCK_LINE_Y_OFFSET - RUNNER_LOCK_MARKER_Y_PADDING,
-      RUNNER_LOCK_MARKER_WIDTH,
-      RUNNER_LOCK_LINE_HEIGHT + RUNNER_LOCK_MARKER_HEIGHT_PADDING,
-    );
-    return;
-  }
-
-  if (phase === "dash") {
-    const lineX = facing === 1 ? enemy.x - RUNNER_DASH_LINE_LENGTH : enemy.x + enemy.w;
-    ctx.fillStyle = "rgba(255, 214, 112, 0.36)";
-    ctx.fillRect(lineX, feetY - RUNNER_DASH_LINE_Y_OFFSET, RUNNER_DASH_LINE_LENGTH, RUNNER_DASH_LINE_HEIGHT);
-    return;
-  }
-
-  if (phase === "recover") {
-    const braceX = facing === 1 ? enemy.x - RUNNER_RECOVER_BRACE_WIDTH : enemy.x + enemy.w;
-    ctx.fillStyle = "rgba(130, 190, 255, 0.42)";
-    ctx.fillRect(braceX, feetY - RUNNER_RECOVER_BRACE_Y_OFFSET, RUNNER_RECOVER_BRACE_WIDTH, RUNNER_RECOVER_BRACE_HEIGHT);
-  }
-}
-
-function drawRunnerDust(enemy: EnemyState, phase: RunnerPhase, facing: number) {
-  if (!ctx) return;
-  const feetY = enemyFeetY(enemy);
-
-  if (phase === "dash") {
-    const dustX = facing === 1 ? enemy.x - RUNNER_DUST_LIFE_WIDTH : enemy.x + enemy.w;
-    ctx.fillStyle = "rgba(190, 122, 74, 0.46)";
-    ctx.fillRect(dustX, feetY - RUNNER_DASH_DUST_Y_OFFSET, RUNNER_DUST_LIFE_WIDTH, RUNNER_DASH_DUST_HEIGHT);
-    ctx.fillRect(
-      dustX + (facing === 1 ? RUNNER_DASH_DUST_DETAIL_X_OFFSET : -RUNNER_DASH_DUST_DETAIL_X_OFFSET),
-      feetY - RUNNER_DASH_DUST_DETAIL_Y_OFFSET,
-      RUNNER_DASH_DUST_DETAIL_WIDTH,
-      RUNNER_DASH_DUST_DETAIL_HEIGHT,
-    );
-    return;
-  }
-
-  if (phase === "recover") {
-    const dustX = facing === 1
-      ? enemy.x - RUNNER_RECOVER_DUST_LEAD_OFFSET
-      : enemy.x + enemy.w - RUNNER_RECOVER_DUST_BACK_OFFSET;
-    ctx.fillStyle = "rgba(190, 122, 74, 0.34)";
-    ctx.fillRect(dustX, feetY - RUNNER_RECOVER_DUST_Y_OFFSET, RUNNER_RECOVER_DUST_WIDTH, RUNNER_RECOVER_DUST_HEIGHT);
-  }
-}
-
 function drawRunner(enemy: EnemyState) {
   const phase = enemy.runnerPhase ?? "approach";
   const sheet = runnerSheetForPhase(phase);
@@ -273,8 +185,6 @@ function drawRunner(enemy: EnemyState) {
   const drawScale = enemyDrawScale(RUNNER_ARCHETYPE) * (
     phase === "dash" ? RUNNER_CONFIG.dashDrawScaleMultiplier : 1
   );
-  drawRunnerReadabilityCue(enemy, phase, facing);
-  drawRunnerDust(enemy, phase, facing);
   drawEnemyFrame(enemy, sheet, drawScale, animSpeed, state.elapsed, facing);
 }
 

@@ -19,12 +19,6 @@ const CHASER_CONFIG = {
   animSpeed: 5,
 } as const;
 
-const TRAIL_MAIN_WIDTH = 30;
-const TRAIL_MAIN_HEIGHT = 4;
-const TRAIL_DETAIL_WIDTH = 16;
-const TRAIL_DETAIL_HEIGHT = 3;
-const TRAIL_Y_OFFSET = 8;
-const TRAIL_DETAIL_Y_OFFSET = 18;
 const CUE_WIDTH = 36;
 const CUE_HEIGHT = 5;
 const CUE_Y_OFFSET = 12;
@@ -118,21 +112,6 @@ function updateChaser(enemy: EnemyState) {
   }
 }
 
-function drawChaserTrail(enemy: EnemyState, facing: number) {
-  if (!ctx) return;
-  const feetY = enemyFeetY(enemy);
-  const trailX = facing === 1 ? enemy.x - TRAIL_MAIN_WIDTH : enemy.x + enemy.w;
-  ctx.fillStyle = "rgba(168, 82, 48, 0.42)";
-  ctx.fillRect(trailX, feetY - TRAIL_Y_OFFSET, TRAIL_MAIN_WIDTH, TRAIL_MAIN_HEIGHT);
-  ctx.fillStyle = "rgba(218, 130, 74, 0.34)";
-  ctx.fillRect(
-    trailX + (facing === 1 ? -TRAIL_DETAIL_WIDTH : TRAIL_MAIN_WIDTH),
-    feetY - TRAIL_DETAIL_Y_OFFSET,
-    TRAIL_DETAIL_WIDTH,
-    TRAIL_DETAIL_HEIGHT,
-  );
-}
-
 function drawChaserReentryCue(enemy: EnemyState, facing: number) {
   if (!ctx) return;
   const duration = Math.max(1, enemy.chaserReenterDuration ?? CHASER_CONFIG.reenterMinFrames);
@@ -165,7 +144,6 @@ export const CHASER_ARCHETYPE: EnemyArchetype = {
       return;
     }
 
-    drawChaserTrail(enemy, facing);
     drawEnemyFrame(enemy, ENEMY_SHEETS[0], enemyDrawScale(CHASER_ARCHETYPE), CHASER_CONFIG.animSpeed, state.elapsed, facing);
   },
   contactDamageDisabled: (enemy) => enemy.chaserPhase === "reenter",
