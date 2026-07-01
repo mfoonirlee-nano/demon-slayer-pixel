@@ -17,7 +17,7 @@ import { BOSS_ARCHETYPES } from "../entities/bosses/registry";
 import { implementedPlayerSkills } from "../systems/skillCatalog";
 import type { SegmentKind } from "../entities/platform";
 import type { SkillId } from "../types/assets";
-import type { ActBand, BossArchetypeId } from "../types/game-state";
+import type { ActBand, BossArchetypeId, GameState } from "../types/game-state";
 
 export type DebugEnemyKind =
   | "chaser"
@@ -139,6 +139,12 @@ export function hasDebugInfiniteUltimateCharge() {
 
 export function hasDebugInfiniteHealth() {
   return isDebugMode && debugInfiniteHealth;
+}
+
+export function applyDebugInfiniteUltimateCharge(gameState: GameState) {
+  const player = gameState.player;
+  if (player.ultimateLevel <= 0) player.ultimateLevel = 1;
+  player.ultimateEnergy = player.ultimateEnergyMax;
 }
 
 export function setDebugRuntimeActions(actions: DebugRuntimeActions) {

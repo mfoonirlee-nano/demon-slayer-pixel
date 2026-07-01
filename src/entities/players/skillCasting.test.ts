@@ -6,6 +6,7 @@ import {
   SKILL_IDS,
 } from "../../constants";
 import { updateGuardCounterEffect } from "../particle";
+import { applyDebugInfiniteUltimateCharge } from "../../game/debug";
 import { resetState, state } from "../../game/state";
 import { playerSkillById } from "../../systems/skillCatalog";
 import type { SkillId } from "../../types/assets";
@@ -41,6 +42,17 @@ describe("player skill casting", () => {
 
     castUltimateSkill();
 
+    expect(state.player.ultimateCastTimer).toBeGreaterThan(0);
+    expect(state.player.ultimateEnergy).toBe(0);
+  });
+
+  it("lets debug ultimate charge make the ultimate castable", () => {
+    resetState();
+
+    applyDebugInfiniteUltimateCharge(state);
+    castUltimateSkill();
+
+    expect(state.player.ultimateLevel).toBe(1);
     expect(state.player.ultimateCastTimer).toBeGreaterThan(0);
     expect(state.player.ultimateEnergy).toBe(0);
   });

@@ -1,7 +1,14 @@
 import { state, resetState, getStateSnapshot } from "./state";
 import { ctx } from "../rendering/context";
 import { updateMoon } from "../moon";
-import { canAutoSpawnEntities, hasDebugInfiniteHealth, hasDebugInfiniteSkillCharge, hasDebugInfiniteUltimateCharge, setDebugRuntimeActions } from "./debug";
+import {
+  applyDebugInfiniteUltimateCharge,
+  canAutoSpawnEntities,
+  hasDebugInfiniteHealth,
+  hasDebugInfiniteSkillCharge,
+  hasDebugInfiniteUltimateCharge,
+  setDebugRuntimeActions,
+} from "./debug";
 import {
   WIDTH,
   HEIGHT,
@@ -100,7 +107,7 @@ function syncDebugInfiniteSkillCharge() {
 
 function syncDebugInfiniteUltimateCharge() {
   if (!hasDebugInfiniteUltimateCharge()) return;
-  state.player.ultimateEnergy = state.player.ultimateEnergyMax;
+  applyDebugInfiniteUltimateCharge(state);
 }
 
 function togglePause() {
