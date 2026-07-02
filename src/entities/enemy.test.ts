@@ -20,6 +20,11 @@ const TEST_PLATFORM_Y = GROUND_Y - TEST_PLATFORM_Y_OFFSET_FROM_GROUND;
 const TEST_PLATFORM_WIDTH = 180;
 const PLATFORM_SPAWN_CENTER_RATIO = 0.35;
 
+const CHASER_TEST_BASE_SPEED = 2;
+const CHASER_NEAR_SPEED = CHASER_TEST_BASE_SPEED * 1.5;
+const CHASER_FAR_PLAYER_OFFSET = 260;
+const CHASER_NEAR_PLAYER_OFFSET = 120;
+
 function platform(overrides: Partial<PlatformState> = {}): PlatformState {
   return {
     x: OFFSCREEN_PLATFORM_X,
@@ -74,6 +79,59 @@ describe("leaper damage", () => {
     updateEnemies();
 
     expect(state.player.hp).toBe(EXPECTED_IMPACT_HP);
+  });
+});
+
+describe("chaser awakened charge", () => {
+  it("keeps awakened chaser speed at its base value while the player is far ahead", () => {
+    resetState();
+
+    expect(spawnEnemyById("chaser", "debug", "left", { growthStage: "awakened" })).toBe(true);
+
+    const chaser = state.enemies[0];
+    chaser.chaserPhase = "charge";
+    chaser.chaserFacing = 1;
+    chaser.chaserBaseSpeed = CHASER_TEST_BASE_SPEED;
+    chaser.x = 100;
+    state.player.x = chaser.x + chaser.w + CHASER_FAR_PLAYER_OFFSET;
+
+    updateEnemies();
+
+    expect(chaser.vx).toBe(CHASER_TEST_BASE_SPEED);
+  });
+
+  it("accelerates awakened chasers by fifty percent when the player is close ahead", () => {
+    resetState();
+
+    expect(spawnEnemyById("chaser", "debug", "left", { growthStage: "awakened" })).toBe(true);
+
+    const chaser = state.enemies[0];
+    chaser.chaserPhase = "charge";
+    chaser.chaserFacing = 1;
+    chaser.chaserBaseSpeed = CHASER_TEST_BASE_SPEED;
+    chaser.x = 100;
+    state.player.x = chaser.x + CHASER_NEAR_PLAYER_OFFSET;
+
+    updateEnemies();
+
+    expect(chaser.vx).toBe(CHASER_NEAR_SPEED);
+  });
+
+  it("does not accelerate intro chasers near the player", () => {
+    resetState();
+
+    expect(spawnEnemyById("chaser", "debug", "left", { growthStage: "intro" })).toBe(true);
+
+    const chaser = state.enemies[0];
+    chaser.chaserPhase = "charge";
+    chaser.chaserFacing = 1;
+    chaser.chaserBaseSpeed = CHASER_TEST_BASE_SPEED;
+    chaser.x = 100;
+    state.player.x = chaser.x + CHASER_NEAR_PLAYER_OFFSET;
+
+    updateEnemies();
+
+    expect(chaser.vx).toBe(CHASER_TEST_BASE_SPEED);
   });
 });
 
