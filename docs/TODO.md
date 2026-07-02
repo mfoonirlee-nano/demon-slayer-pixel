@@ -2,7 +2,7 @@
 
 ## `crawler` awakened / final 高阶突进行为
 
-- [ ] 优化 `crawler` 在 awakened / final 状态下的高阶突进行为。
+- [x] 优化 `crawler` 在 awakened / final 状态下的高阶突进行为。
   - 当前状态：`crawler` 已有低伏接近、前摇、贴地前扑、恢复硬直；awakened 仅通过更远触发距离、更快/更久前扑和更短恢复体现成长。
   - 目标：awakened 和 final 状态下，`crawler` 在读招后可以跳起旋转突进，沿抛物线冲向玩家当前位置，形成区别于基础贴地前扑的高阶压力。
   - 验收：基础状态仍保持贴地前扑教学；awakened / final 的跳跃旋转突进有清晰起跳前摇、空中旋转帧或视觉提示、落点/突进危险区和落地恢复窗口；突进会朝玩家方向修正但不锁死追踪；同屏并发和伤害频率受现有 crawler 前扑数量限制或单独 cap 约束。

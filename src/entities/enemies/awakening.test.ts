@@ -67,12 +67,11 @@ describe("enemy awakening behavior", () => {
     expect(awakenedChaser.chaserReenterDuration).toBeLessThan(introReenterDuration);
   });
 
-  it("extends awakened crawler lunges", () => {
+  it("turns awakened crawler windups into aerial leaps", () => {
     const introCrawler = spawn("crawler");
     introCrawler.crawlerPhase = "windup";
     introCrawler.crawlerTimer = 1;
     updateEnemies();
-    const introLungeFrames = introCrawler.crawlerTimer ?? 0;
 
     resetState();
     const awakenedCrawler = spawn("crawler", "awakened");
@@ -80,8 +79,9 @@ describe("enemy awakening behavior", () => {
     awakenedCrawler.crawlerTimer = 1;
     updateEnemies();
 
-    expect(awakenedCrawler.crawlerPhase).toBe("lunge");
-    expect(awakenedCrawler.crawlerTimer).toBeGreaterThan(introLungeFrames);
+    expect(introCrawler.crawlerPhase).toBe("lunge");
+    expect(awakenedCrawler.crawlerPhase).toBe("leap");
+    expect(awakenedCrawler.crawlerLeapTargetX).toBeDefined();
   });
 
   it("shortens awakened glider dive cycles", () => {

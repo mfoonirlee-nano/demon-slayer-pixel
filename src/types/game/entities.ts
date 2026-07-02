@@ -155,6 +155,11 @@ export type EnemyState = {
   crawlerFacing?: number;
   crawlerBaseSpeed?: number;
   crawlerLungeHit?: boolean;
+  crawlerLeapStartX?: number;
+  crawlerLeapStartY?: number;
+  crawlerLeapTargetX?: number;
+  crawlerLeapTargetY?: number;
+  crawlerLeapBaseTargetX?: number;
   runnerPhase?: RunnerPhase;
   runnerTimer?: number;
   runnerFacing?: number;
