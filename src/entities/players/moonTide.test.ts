@@ -5,7 +5,7 @@ import { resetState, state } from "../../game/state";
 import { setCanvas } from "../../rendering/context";
 import type { UltimatePlayerGhostAction, UltimatePlayerGhostSnapshot } from "../../types/game-state";
 import { updatePlayer } from "../player";
-import { drawUltimatePlayerGhosts, updateUltimatePlayerGhosts } from "../particle";
+import { drawUltimateAfterimageSlashes, drawUltimatePlayerGhosts, updateUltimatePlayerGhosts } from "../particle";
 import { drawPlayer } from "./render";
 import {
   moonTidePlayerAnimationFrameSpeed,
@@ -22,6 +22,7 @@ const MOON_TIDE_LEVEL_THREE_MOVE_MULTIPLIER = 1.25;
 type MockCanvasContext = CanvasRenderingContext2D & {
   drawImage: ReturnType<typeof vi.fn>;
   filterValues: string[];
+  strokeStyleValues: string[];
 };
 
 function ghostSnapshot(action: UltimatePlayerGhostAction): UltimatePlayerGhostSnapshot {
@@ -44,9 +45,14 @@ function createMockContext(): MockCanvasContext {
   const context = {
     drawImage: vi.fn(),
     filterValues: [],
+    strokeStyleValues: [],
+    beginPath: vi.fn(),
+    moveTo: vi.fn(),
+    quadraticCurveTo: vi.fn(),
     restore: vi.fn(),
     save: vi.fn(),
     scale: vi.fn(),
+    stroke: vi.fn(),
     translate: vi.fn(),
   } as unknown as MockCanvasContext;
 
@@ -54,6 +60,12 @@ function createMockContext(): MockCanvasContext {
     get: () => context.filterValues[context.filterValues.length - 1] ?? "none",
     set: (value: string) => {
       context.filterValues.push(value);
+    },
+  });
+  Object.defineProperty(context, "strokeStyle", {
+    get: () => context.strokeStyleValues[context.strokeStyleValues.length - 1] ?? "#000",
+    set: (value: string | CanvasGradient | CanvasPattern) => {
+      context.strokeStyleValues.push(String(value));
     },
   });
 
@@ -214,6 +226,32 @@ describe("moon tide player ghosts", () => {
     expect(context.drawImage).toHaveBeenCalledTimes(1);
     expect(context.filterValues).toHaveLength(1);
     expect(context.filterValues[0]).toContain("drop-shadow");
+    expect(context.filterValues[0]).toContain("invert(60%)");
+    expect(context.filterValues[0]).toContain("hue-rotate(172deg)");
+    expect(context.filterValues[0]).toContain("rgba(42, 178, 255");
+  });
+
+  it("draws afterimage slashes with water-blue strokes", () => {
+    const context = createMockContext();
+    installMockContext(context);
+
+    state.ultimateAfterimageSlashes.push({
+      x: 140,
+      y: 180,
+      w: 76,
+      h: 24,
+      facing: 1,
+      life: 10,
+      maxLife: 10,
+      power: 1,
+    });
+
+    drawUltimateAfterimageSlashes();
+
+    expect(context.strokeStyleValues).toEqual([
+      "rgba(78, 210, 255, 0.9)",
+      "rgba(34, 142, 255, 0.64)",
+    ]);
   });
 
   it("applies the moon tide movement multiplier during the active buff", () => {

@@ -12,7 +12,7 @@ import { playerSkillById, ULTIMATE_SKILL_ASSETS } from "../../systems/skillCatal
 const FULL_CIRCLE_RADIANS = Math.PI * 2;
 const ULTIMATE_SKILL_EFFECT_SHEET = ULTIMATE_SKILL_ASSETS.effect;
 
-const PLAYER_GHOST_FILTER = "brightness(0) saturate(100%) invert(78%) sepia(92%) saturate(825%) hue-rotate(158deg) brightness(108%) contrast(105%) drop-shadow(0 0 3px rgba(117, 226, 255, 0.72))";
+const PLAYER_GHOST_FILTER = "brightness(0) saturate(100%) invert(60%) sepia(92%) saturate(1600%) hue-rotate(172deg) brightness(103%) contrast(102%) drop-shadow(0 0 3px rgba(42, 178, 255, 0.72))";
 const PLAYER_GHOST_ALPHA_BASE = 0.18;
 const PLAYER_GHOST_ALPHA_SCALE = 0.44;
 const PLAYER_GHOST_ALPHA_MAX = 0.6;
@@ -159,7 +159,7 @@ export function drawUltimateAfterimageSlashes() {
     ctx.globalAlpha = alpha;
     ctx.translate(slash.x, slash.y);
     ctx.scale(slash.facing, 1);
-    ctx.strokeStyle = "rgba(186, 246, 255, 0.9)";
+    ctx.strokeStyle = "rgba(78, 210, 255, 0.9)";
     ctx.lineWidth = OUTER_SLASH_LINE_WIDTH;
     ctx.beginPath();
     ctx.moveTo(-slash.w / 2, slash.h * OUTER_SLASH_START_Y_SCALE);
@@ -170,7 +170,7 @@ export function drawUltimateAfterimageSlashes() {
       -slash.h * OUTER_SLASH_END_Y_SCALE,
     );
     ctx.stroke();
-    ctx.strokeStyle = "rgba(93, 196, 255, 0.62)";
+    ctx.strokeStyle = "rgba(34, 142, 255, 0.64)";
     ctx.lineWidth = INNER_SLASH_LINE_WIDTH;
     ctx.beginPath();
     ctx.moveTo(-slash.w * INNER_SLASH_START_X_SCALE, slash.h * INNER_SLASH_START_Y_SCALE);

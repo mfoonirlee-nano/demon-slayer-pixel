@@ -29,7 +29,7 @@ const MOON_TIDE_OUTLINE_MAX_LEVEL = 3;
 const MOON_TIDE_OUTLINE_ALPHA_BASE = 0.14;
 const MOON_TIDE_OUTLINE_ALPHA_PER_LEVEL = 0.04;
 const ULTIMATE_SKILL_CAST_ANCHOR_Y = 0.83;
-const MOON_TIDE_OUTLINE_FILTER = "brightness(0) saturate(100%) invert(82%) sepia(76%) saturate(1274%) hue-rotate(158deg) brightness(112%) contrast(105%) drop-shadow(0 0 7px rgba(118, 226, 255, 0.86))";
+const MOON_TIDE_OUTLINE_FILTER = "brightness(0) saturate(100%) invert(64%) sepia(88%) saturate(1320%) hue-rotate(166deg) brightness(103%) contrast(103%) drop-shadow(0 0 7px rgba(52, 196, 255, 0.82))";
 
 const PLAYER_BINDING_SLOW_EFFECT = {
   filter: "sepia(0.38) saturate(1.55) hue-rotate(282deg) brightness(0.86)",
