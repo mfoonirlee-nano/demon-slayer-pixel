@@ -9,7 +9,7 @@ export const MIST_BONE_CONFIG = {
   drawH: 208,
   castDrawW: 228,
   castDrawH: 228,
-  castBottomPadding: 26,
+  castBottomPadding: 0,
   preferredDistance: 196,
   closeDistance: 128,
   steeringForce: 0.04,

@@ -3,6 +3,7 @@ import { createBossEncounter } from "./encounter";
 import {
   BOSS_ACT_SEQUENCE,
   BOSS_ARCHETYPE_IDS,
+  bossArchetypeForId,
   bossArchetypeForKillCount,
 } from "./registry";
 
@@ -34,5 +35,11 @@ describe("boss act registry", () => {
     expect(createBossEncounter({ bossKills: 7, elapsedSeconds: 0 }).awakened).toBe(true);
     expect(createBossEncounter({ bossKills: 9, elapsedSeconds: 0 }).id).toBe(BOSS_ARCHETYPE_IDS.fangGale);
     expect(createBossEncounter({ bossKills: 9, elapsedSeconds: 0 }).awakened).toBe(true);
+  });
+
+  it("keeps Mist Bone's cast sprite bottom on the same feet line as movement", () => {
+    const mistBone = bossArchetypeForId(BOSS_ARCHETYPE_IDS.mistBone);
+
+    expect(mistBone.castBottomPadding).toBe(0);
   });
 });

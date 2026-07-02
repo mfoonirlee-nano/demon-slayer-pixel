@@ -18,9 +18,10 @@ const WARNING_FILL_ALPHA_SCALE = 0.22;
 const WARNING_INNER_RADIUS_X_SCALE = 0.52;
 const WARNING_INNER_RADIUS_Y_BASE = 6;
 const WARNING_INNER_RADIUS_Y_SCALE = 4;
-const SPIKE_BOTTOM_OFFSET = 12;
+const SPIKE_BOTTOM_OFFSET = 0;
 const SPIKE_FADE_EXTRA_FRAMES = 8;
 const SPIKE_MIN_FADE = 0.35;
+const SPIKE_ANIMATION_FRAMES = MIST_BONE_SPIKES_SHEET.count * MIST_BONE_CONFIG.spikeFrameDuration;
 
 export function updateMistBoneEffects() {
   for (let i = state.mistBoneSpikes.length - 1; i >= 0; i -= 1) {
@@ -31,19 +32,21 @@ export function updateMistBoneEffects() {
     }
 
     spike.elapsed += 1;
-    const activeElapsed = Math.max(0, spike.elapsed - spike.warningFrames);
-    spike.frame = Math.min(
-      MIST_BONE_SPIKES_SHEET.count - 1,
-      Math.floor(activeElapsed / MIST_BONE_CONFIG.spikeFrameDuration),
-    );
-
-    if (!spike.hitPlayer && spike.elapsed > spike.warningFrames && hitbox(state.player, spike)) {
-      spike.hitPlayer = true;
-      hurtPlayer(spike.damage, state.player.x + state.player.w / 2 - (spike.x + spike.w / 2));
+    const activeElapsed = spike.elapsed - spike.warningFrames - 1;
+    const visibleLife = Math.min(spike.life, SPIKE_ANIMATION_FRAMES);
+    if (activeElapsed >= visibleLife) {
+      state.mistBoneSpikes.splice(i, 1);
+      continue;
     }
 
-    if (spike.elapsed > spike.warningFrames + spike.life) {
-      state.mistBoneSpikes.splice(i, 1);
+    spike.frame = Math.min(
+      MIST_BONE_SPIKES_SHEET.count - 1,
+      Math.floor(Math.max(0, activeElapsed) / MIST_BONE_CONFIG.spikeFrameDuration),
+    );
+
+    if (!spike.hitPlayer && activeElapsed >= 0 && hitbox(state.player, spike)) {
+      spike.hitPlayer = true;
+      hurtPlayer(spike.damage, state.player.x + state.player.w / 2 - (spike.x + spike.w / 2));
     }
   }
 }
@@ -104,8 +107,9 @@ function drawMistBoneSpike(spike: MistBoneSpikeState) {
   if (!ctx) return;
   const centerX = spike.x + spike.w / 2;
   const bottomY = spike.y + spike.h + SPIKE_BOTTOM_OFFSET;
-  const activeElapsed = spike.elapsed - spike.warningFrames;
-  const fade = clamp(1 - activeElapsed / (spike.life + SPIKE_FADE_EXTRA_FRAMES), SPIKE_MIN_FADE, 1);
+  const activeElapsed = Math.max(0, spike.elapsed - spike.warningFrames - 1);
+  const visibleLife = Math.min(spike.life, SPIKE_ANIMATION_FRAMES);
+  const fade = clamp(1 - activeElapsed / (visibleLife + SPIKE_FADE_EXTRA_FRAMES), SPIKE_MIN_FADE, 1);
   ctx.save();
   ctx.globalAlpha = fade;
   drawSheetFrame(
