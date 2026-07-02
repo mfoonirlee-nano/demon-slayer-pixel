@@ -10,6 +10,7 @@ import {
 } from "../constants";
 import { drawMoon, getMoonSkyColors } from "../moon";
 import { drawClouds } from "./clouds";
+import { resolveGroundTileRenderPlan } from "./groundTiles";
 
 // Three-plane parallax speeds (pixels per second of elapsed time). Each plane
 // scrolls at a different rate so the scene has a true sense of depth.
@@ -61,28 +62,47 @@ const STARS = Array.from({ length: STAR_COUNT }, (_, i) => ({
   variant: i % 2 as 0 | 1, // 0=small, 1=medium
 }));
 
-type GroundTileLayer = "base" | "front";
+type GroundTileLayer = "base" | "occlusion";
 
 function drawGroundTileLayer(layer: GroundTileLayer) {
   if (!ctx) return;
 
   const tileSize = GROUND_TILE_SPRITES.tileSize;
-  const patternLength = GROUND_TILE_SPRITES.grassPerStone + 1;
+  const renderPlan = resolveGroundTileRenderPlan({
+    elapsed: state.elapsed,
+    bossActive: state.boss !== null,
+    bossKills: state.bossKills,
+    bossPreludeElapsed: state.enemyDirector.bossPrelude?.elapsed ?? null,
+    act: state.enemyDirector.act,
+    elapsedInAct: state.enemyDirector.elapsedInAct,
+  });
+  const patternLength = renderPlan.pattern.length;
+  const patternPixelWidth = patternLength * tileSize;
+  const scroll = Math.floor(renderPlan.scrollPixels);
+  const offset = ((scroll % patternPixelWidth) + patternPixelWidth) % patternPixelWidth;
+  const startCol = Math.floor(offset / tileSize);
+  const tileOffset = offset % tileSize;
   const rows = Math.ceil((HEIGHT - GROUND_Y) / tileSize) + 2;
 
   for (let row = 0; row < rows; row += 1) {
-    let x = 0;
-    let col = 0;
+    let x = -tileOffset;
+    let col = startCol;
     while (x < WIDTH) {
-      const isStone = col % patternLength === GROUND_TILE_SPRITES.grassPerStone;
-      const tileSet = isStone ? GROUND_TILE_SPRITES.stone : GROUND_TILE_SPRITES.grass;
-      const image = layer === "front" ? tileSet.frontImage : tileSet.image;
-      if (!image) break;
+      const patternIndex = col % patternLength;
+      const patternEntry = renderPlan.pattern[patternIndex];
+      const setKey = patternEntry.set;
+      const tileSet = GROUND_TILE_SPRITES.sets[setKey];
+      const image = layer === "occlusion" ? tileSet.occlusionImage : tileSet.image;
+      const regions = layer === "occlusion" ? tileSet.occlusionRegions ?? tileSet.regions : tileSet.regions;
+      if (!image) {
+        x += tileSize;
+        col += 1;
+        continue;
+      }
 
-      const variantIndex = isStone ? Math.floor(col / patternLength) + row : col + row * Math.ceil(WIDTH / tileSize);
-      const region = tileSet.regions[variantIndex % tileSet.regions.length];
-      const fillWidth = region.fillRight - region.fillLeft + 1;
-      const stepWidth = Math.max(1, fillWidth - GROUND_TILE_SPRITES.seamOverlap);
+      const variantIndex = col + row * Math.ceil(WIDTH / tileSize);
+      const regionIndex = patternEntry.regionIndex ?? variantIndex % regions.length;
+      const region = regions[regionIndex % regions.length];
 
       ctx.drawImage(
         image,
@@ -90,12 +110,12 @@ function drawGroundTileLayer(layer: GroundTileLayer) {
         region.sy,
         region.sw,
         region.sh,
-        x - region.fillLeft,
+        x,
         GROUND_Y + GROUND_TILE_SPRITES.drawOffsetY + row * tileSize - region.surfaceY,
         region.sw,
         region.sh,
       );
-      x += stepWidth;
+      x += tileSize;
       col += 1;
     }
   }
@@ -105,13 +125,13 @@ export function drawGroundTileBase() {
   drawGroundTileLayer("base");
 }
 
-export function drawGroundTileFront() {
-  drawGroundTileLayer("front");
+export function drawGroundTileOcclusion() {
+  drawGroundTileLayer("occlusion");
 }
 
 export function drawGroundTiles() {
   drawGroundTileBase();
-  drawGroundTileFront();
+  drawGroundTileOcclusion();
 }
 
 export function drawBackground() {

@@ -3,10 +3,10 @@ export const UI_SPRITES = {
   currentSkillFrame: { src: "assets/sprites/ui/system/hud/current-skill-frame.png", w: 108, h: 108, displayW: 36, displayH: 36 },
   hudHpBarLeft: { src: "assets/sprites/ui/system/hud/hud-hp-bar-left.png", w: 78, h: 60, displayW: 26, displayH: 20 },
   hudHpBarMid: { src: "assets/sprites/ui/system/hud/hud-hp-bar-mid.png", w: 72, h: 60, displayW: 24, displayH: 20 },
-  hudHpBarRight: { src: "assets/sprites/ui/system/hud/hud-hp-bar-right.png", w: 78, h: 60, displayW: 26, displayH: 20 },
+  hudHpBarRight: { src: "assets/sprites/ui/system/hud/hud-hp-bar-right.png", w: 76, h: 73, displayW: 25, displayH: 24 },
   hudSkillBarLeft: { src: "assets/sprites/ui/system/hud/hud-skill-bar-left.png", w: 78, h: 54, displayW: 26, displayH: 18 },
   hudSkillBarMid: { src: "assets/sprites/ui/system/hud/hud-skill-bar-mid.png", w: 72, h: 54, displayW: 24, displayH: 18 },
-  hudSkillBarRight: { src: "assets/sprites/ui/system/hud/hud-skill-bar-right.png", w: 78, h: 54, displayW: 26, displayH: 18 },
+  hudSkillBarRight: { src: "assets/sprites/ui/system/hud/hud-skill-bar-right.png", w: 92, h: 75, displayW: 31, displayH: 25 },
 
   skillSlotNormal: { src: "assets/sprites/ui/system/slots/skill-slot-normal.png", w: 286, h: 286 },
   skillSlotActive: { src: "assets/sprites/ui/system/slots/skill-slot-active.png", w: 286, h: 286 },

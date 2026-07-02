@@ -162,15 +162,13 @@ export function spriteImageLoadTargets(): ImageLoadTarget[] {
       STONE_TOWER_SMALL_SPRITES,
       TORII_SPRITES,
       MOUNTAIN_SPRITES,
-      GROUND_TILE_SPRITES.grass,
-      GROUND_TILE_SPRITES.stone,
+      ...Object.values(GROUND_TILE_SPRITES.sets),
       PLATFORM_SPRITES,
       ...playerSkillEffectSheets(),
       ...ultimateSkillSheets(),
       ...allPlayerSkills(),
     ]),
-    frontImageTarget(GROUND_TILE_SPRITES.grass),
-    frontImageTarget(GROUND_TILE_SPRITES.stone),
+    ...Object.values(GROUND_TILE_SPRITES.sets).map(occlusionImageTarget),
   ];
 }
 
@@ -191,11 +189,11 @@ function imageTarget(asset: LoadableImageAsset): ImageLoadTarget {
   };
 }
 
-function frontImageTarget(asset: { frontSrc: string; frontImage: HTMLImageElement | null }): ImageLoadTarget {
+function occlusionImageTarget(asset: { occlusionSrc: string; occlusionImage: HTMLImageElement | null }): ImageLoadTarget {
   return {
-    src: asset.frontSrc,
+    src: asset.occlusionSrc,
     setImage: (image) => {
-      asset.frontImage = image;
+      asset.occlusionImage = image;
     },
   };
 }

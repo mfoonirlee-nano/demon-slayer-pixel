@@ -67,7 +67,7 @@ Strong success criteria let you loop independently. Weak criteria ("make it work
 ## 6. Asset Generation
 
 - All generated image assets must be created with the `imagegen` skill/tool. Do not hand-roll raster assets with scripts or code-native drawing as a substitute for image generation.
-- Do not assume `imagegen` wrote files to disk. For built-in imagegen, treat `image_generation_call.result` as the only trusted artifact source: it is PNG base64, and you must decode it explicitly into `tmp/imagegen/` or the target workspace path before post-processing. Do not scan `~/.codex/generated_images/` to find the latest output.
+- Do not assume `imagegen` wrote files to disk. For built-in imagegen, trusted artifact sources are `image_generation_call.result` PNG base64, or an exact `~/.codex/generated_images/...` file path explicitly provided by the current imagegen tool/developer output. Decode or copy that exact artifact into `tmp/imagegen/` or the target workspace path before post-processing. Do not scan `~/.codex/generated_images/` to infer the latest output.
 - Treat generated image dimensions, mode, and transparency as untrusted. Before replacing an asset, validate exact width/height, alpha channel, transparent edges, and any runtime bbox expected by the existing asset.
 - Deterministic post-processing is allowed only for file handling, transparency recovery, cropping, scaling, compression, and validation. Do not use scripts to invent or repaint the image content.
 - Use the Image Gen CLI fallback only when explicitly needed and after checking the environment supports it; missing `OPENAI_API_KEY` means the built-in tool output must be used instead of pretending the CLI path worked.

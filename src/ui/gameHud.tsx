@@ -10,7 +10,14 @@ import { RewardOverlay } from "./rewardOverlay";
 import { VictoryScreen } from "./victoryScreen";
 import { getSkill, romanLevel, skillIconSrc } from "./uiDisplay";
 import { UiSprite, uiSpriteDisplaySize } from "./uiSprite";
-import { HUD_HP_METER_FRAME, HUD_SKILL_METER_FRAME, type HudMeterFrame } from "./gameHudLayout";
+import {
+  HUD_HP_METER_FRAME,
+  HUD_HP_METER_PLACEMENT,
+  HUD_SKILL_METER_FRAME,
+  HUD_SKILL_METER_PLACEMENT,
+  type HudMeterFrame,
+  type HudMeterPlacement,
+} from "./gameHudLayout";
 
 function clampMeterPercent(value: number, maxValue: number) {
   if (maxValue <= 0) return 0;
@@ -79,7 +86,7 @@ function GhostBar({ value, max, ghostValue, color, ghostColor }: {
   );
 }
 
-function HudMeter({ value, max, ghostValue, color, ghostColor, text, width, frame, markerPercents = [], className = "" }: {
+function HudMeter({ value, max, ghostValue, color, ghostColor, text, width, frame, placement, markerPercents = [], className = "" }: {
   value: number;
   max: number;
   ghostValue: number;
@@ -88,19 +95,29 @@ function HudMeter({ value, max, ghostValue, color, ghostColor, text, width, fram
   text: string;
   width: number;
   frame: HudMeterFrame;
+  placement: HudMeterPlacement;
   markerPercents?: number[];
   className?: string;
 }) {
   const leftW = uiSpriteDisplaySize(frame.left).w;
-  const rightW = uiSpriteDisplaySize(frame.right).w;
+  const rightSize = uiSpriteDisplaySize(frame.right);
+  const rightW = rightSize.w;
   const midWidth = Math.max(uiSpriteDisplaySize(frame.mid).w, width - leftW - rightW);
 
   return (
-    <div className={`player-hud-meter ${className}`} style={{ width, height: frame.height }}>
+    <div
+      className={`player-hud-meter ${className}`}
+      style={{ width, height: frame.height, left: placement.left, top: placement.top }}
+    >
       <div className="player-hud-meter-frame">
         <UiSprite id={frame.left} width={leftW} height={frame.height} />
         <UiSprite id={frame.mid} width={midWidth} height={frame.height} />
-        <UiSprite id={frame.right} width={rightW} height={frame.height} />
+        <UiSprite
+          id={frame.right}
+          width={rightW}
+          height={rightSize.h}
+          style={{ position: "relative", top: frame.rightTop }}
+        />
       </div>
       <div
         className="player-hud-meter-fill"
@@ -251,6 +268,7 @@ export function GameHud() {
               text={`${Math.max(0, Math.floor(player.hp))} / ${player.maxHp}`}
               width={playerBarWidth}
               frame={HUD_HP_METER_FRAME}
+              placement={HUD_HP_METER_PLACEMENT}
             />
             <HudMeter
               className="player-hud-meter-skill"
@@ -262,6 +280,7 @@ export function GameHud() {
               text={`${Math.floor(skillValue)} / ${skillMax}`}
               width={playerBarWidth}
               frame={HUD_SKILL_METER_FRAME}
+              placement={HUD_SKILL_METER_PLACEMENT}
               markerPercents={skillMarkerPercents}
             />
           </div>

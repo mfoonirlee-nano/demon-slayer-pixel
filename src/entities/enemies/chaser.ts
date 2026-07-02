@@ -1,7 +1,6 @@
 import { state } from "../../game/state";
 import { playSfx } from "../../game/audio";
 import { ENEMY_SHEETS, WIDTH } from "../../constants";
-import { ctx } from "../../rendering/context";
 import type { EnemyState } from "../../types/game-state";
 import type { EnemyArchetype, EnemySpawnContext } from "./common";
 import { drawEnemyFrame, enemyCenterX, enemyDrawScale, enemyFeetY, hasAwakenedGrowth } from "./common";
@@ -21,19 +20,6 @@ const CHASER_CONFIG = {
   animSpeed: 5,
 } as const;
 
-const CUE_WIDTH = 36;
-const CUE_HEIGHT = 5;
-const CUE_Y_OFFSET = 12;
-const CUE_MARK_HEIGHT = 26;
-const CUE_MARK_WIDTH = 3;
-const CUE_ALPHA_BASE = 0.22;
-const CUE_ALPHA_RANGE = 0.34;
-const CUE_ALPHA_HIGHLIGHT_BOOST = 0.12;
-const CUE_EDGE_INSET = 8;
-const CUE_SECOND_MARK_LEFT_INSET = 15;
-const CUE_SECOND_MARK_RIGHT_OFFSET = -18;
-const CUE_SECOND_MARK_Y_OFFSET = 8;
-const CUE_SECOND_MARK_HEIGHT_REDUCTION = 8;
 const CHASER_WARNING_PITCH = 0.74;
 const CHASER_CHARGE_PITCH = 0.94;
 
@@ -127,26 +113,6 @@ function updateChaser(enemy: EnemyState) {
   }
 }
 
-function drawChaserReentryCue(enemy: EnemyState, facing: number) {
-  if (!ctx) return;
-  const duration = Math.max(1, enemy.chaserReenterDuration ?? CHASER_CONFIG.reenterMinFrames);
-  const timer = Math.max(0, enemy.chaserTimer ?? 0);
-  const alpha = CUE_ALPHA_BASE + (1 - timer / duration) * CUE_ALPHA_RANGE;
-  const edgeX = facing === 1 ? 0 : WIDTH;
-  const markX = facing === 1 ? CUE_EDGE_INSET : WIDTH - CUE_EDGE_INSET - CUE_MARK_WIDTH;
-  const dustX = facing === 1 ? 0 : WIDTH - CUE_WIDTH;
-  const feetY = enemyFeetY(enemy);
-  const secondMarkX = edgeX + (facing === 1 ? CUE_SECOND_MARK_LEFT_INSET : CUE_SECOND_MARK_RIGHT_OFFSET);
-  const secondMarkY = feetY - CUE_MARK_HEIGHT - CUE_SECOND_MARK_Y_OFFSET;
-  const secondMarkHeight = CUE_MARK_HEIGHT - CUE_SECOND_MARK_HEIGHT_REDUCTION;
-
-  ctx.fillStyle = `rgba(255, 95, 63, ${alpha})`;
-  ctx.fillRect(dustX, feetY - CUE_Y_OFFSET, CUE_WIDTH, CUE_HEIGHT);
-  ctx.fillStyle = `rgba(255, 174, 91, ${alpha + CUE_ALPHA_HIGHLIGHT_BOOST})`;
-  ctx.fillRect(markX, feetY - CUE_MARK_HEIGHT, CUE_MARK_WIDTH, CUE_MARK_HEIGHT);
-  ctx.fillRect(secondMarkX, secondMarkY, CUE_MARK_WIDTH, secondMarkHeight);
-}
-
 export const CHASER_ARCHETYPE: EnemyArchetype = {
   speed: chaserChargeSpeed,
   init: initChaser,
@@ -155,7 +121,6 @@ export const CHASER_ARCHETYPE: EnemyArchetype = {
     const phase = enemy.chaserPhase ?? "charge";
     const facing = enemy.chaserFacing ?? (enemy.vx >= 0 ? 1 : -1);
     if (phase === "reenter") {
-      drawChaserReentryCue(enemy, facing);
       return;
     }
 

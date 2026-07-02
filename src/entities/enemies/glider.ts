@@ -1,7 +1,6 @@
 import { state } from "../../game/state";
 import { playSfx } from "../../game/audio";
 import { ENEMY_SHEETS, GLIDER_SHEET_INDEX, GLIDER_SHEETS, GROUND_Y } from "../../constants";
-import { ctx } from "../../rendering/context";
 import type { EnemyState, GliderPhase } from "../../types/game-state";
 import { clamp, frameIndex } from "../../game/utils";
 import type { EnemyArchetype, EnemySpawnContext } from "./common";
@@ -66,17 +65,6 @@ const GLIDER_CONFIG = {
 } as const;
 
 const HALF_DIVISOR = 2;
-const DIVE_CUE_LENGTH = 168;
-const DIVE_CUE_HEIGHT = 6;
-const DIVE_CUE_Y_OFFSET = 18;
-const DIVE_CUE_WINDUP_ALPHA = 0.34;
-const DIVE_CUE_ACTIVE_ALPHA = 0.44;
-const DIVE_CUE_HIGHLIGHT_ALPHA_CAP = 0.75;
-const DIVE_CUE_HIGHLIGHT_ALPHA_BOOST = 0.18;
-const DIVE_CUE_MARKER_WIDTH = 18;
-const RECOVER_CUE_WIDTH = 44;
-const RECOVER_CUE_HEIGHT = 5;
-const RECOVER_CUE_Y_OFFSET = 20;
 
 function randomFrameCount(min: number, jitter: number) {
   return min + Math.floor(Math.random() * jitter);
@@ -316,48 +304,11 @@ function updateGlider(enemy: EnemyState) {
   enemy.x += enemy.vx;
 }
 
-function drawGliderDiveCue(enemy: EnemyState, phase: GliderPhase, facing: number) {
-  if (!ctx) return;
-  if (phase !== "windup" && phase !== "dive" && phase !== "pass" && phase !== "recover") return;
-
-  const centerX = enemyCenterX(enemy);
-  const feetY = enemyFeetY(enemy);
-  if (phase === "recover") {
-    ctx.fillStyle = "rgba(120, 190, 255, 0.42)";
-    ctx.fillRect(
-      centerX - RECOVER_CUE_WIDTH / HALF_DIVISOR,
-      feetY - RECOVER_CUE_Y_OFFSET,
-      RECOVER_CUE_WIDTH,
-      RECOVER_CUE_HEIGHT,
-    );
-    return;
-  }
-
-  const speedX = facing * gliderDiveSpeed(enemy);
-  const angle = Math.atan2(enemy.gliderDiveVy ?? 0, speedX);
-  const alpha = phase === "windup" ? DIVE_CUE_WINDUP_ALPHA : DIVE_CUE_ACTIVE_ALPHA;
-  const originX = facing === 1 ? enemy.x + enemy.w : enemy.x;
-  const originY = feetY - DIVE_CUE_Y_OFFSET;
-
-  ctx.save();
-  ctx.translate(originX, originY);
-  ctx.rotate(angle);
-  ctx.fillStyle = `rgba(136, 82, 170, ${alpha})`;
-  ctx.fillRect(0, -DIVE_CUE_HEIGHT / HALF_DIVISOR, DIVE_CUE_LENGTH, DIVE_CUE_HEIGHT);
-  ctx.fillStyle = `rgba(210, 170, 255, ${Math.min(
-    DIVE_CUE_HIGHLIGHT_ALPHA_CAP,
-    alpha + DIVE_CUE_HIGHLIGHT_ALPHA_BOOST,
-  )})`;
-  ctx.fillRect(0, -DIVE_CUE_HEIGHT, DIVE_CUE_MARKER_WIDTH, DIVE_CUE_HEIGHT * 2);
-  ctx.restore();
-}
-
 function drawGlider(enemy: EnemyState) {
   const phase = enemy.gliderPhase ?? "hover";
   const sheet = gliderSheetForPhase(phase);
   const facing = enemy.gliderFacing ?? (enemy.vx >= 0 ? 1 : -1);
   const drawScale = enemyDrawScale(GLIDER_ARCHETYPE);
-  drawGliderDiveCue(enemy, phase, facing);
 
   if (phase === "hover") {
     drawEnemyFrame(enemy, sheet, drawScale, GLIDER_CONFIG.hoverAnimSpeed, state.elapsed, facing);
