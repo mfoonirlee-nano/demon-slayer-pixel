@@ -11,10 +11,10 @@
 | 解锁规则 | `tier 1` 基础压力；`runEnemyOrder` 前 3 位必须覆盖 `baseline` |
 | 主要压力 | 逼迫玩家移动和普攻 |
 | 状态机 | `spawn -> charge -> reenter -> charge`，死亡进入 `dead` |
-| 攻击窗口 | `charge` 期间按接触伤害结算，方向稳定，不持续急转 |
+| 攻击窗口 | `charge` 期间按接触伤害结算，方向稳定，不持续急转；蚀醒状态下玩家在前方近距离时，横穿速度瞬间提升 `50%` 形成贴近冲刺 |
 | 恢复窗口 | 离开屏幕后有短暂 `reenter` 等待，重入场前给玩家读方向 |
 | 玩家反制 | 普攻 `1-2` 次、任意技能、大招清场 |
-| 不可做边界 | 不瞬移到玩家脚下，不贴脸突然反向，不增加后期额外技能 |
+| 不可做边界 | 不瞬移到玩家脚下，不贴脸突然反向，不增加后期额外技能；蚀醒加速只改变接近节奏，不改变横穿方向 |
 | 同屏限制 | 按预算生成；多个 `chaser` 的重入场时间错开 |
 | 可读性约束 | 使用最清楚的奔跑轮廓，不携带施法、冲刺、重型等机制暗示 |
 
@@ -25,6 +25,7 @@ actIndex = Math.max(0, act - 1)
 chaserHp = round((16 + actIndex * 2) * threatScalar)
 chaserDamage = min(12, 3 + actIndex * 0.35)
 chaserDashSpeed = 2.20 + actIndex * 0.12 + random(0, 0.25)
+awakenedCloseDashSpeed = chaserDashSpeed * 1.5 // 玩家位于前方近距离时
 ```
 
 ## `crawler`

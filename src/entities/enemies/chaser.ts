@@ -3,7 +3,7 @@ import { playSfx } from "../../game/audio";
 import { ENEMY_SHEETS, WIDTH } from "../../constants";
 import type { EnemyState } from "../../types/game-state";
 import type { EnemyArchetype, EnemySpawnContext } from "./common";
-import { drawEnemyFrame, enemyDrawScale, hasAwakenedGrowth } from "./common";
+import { drawEnemyFrame, enemyCenterX, enemyDrawScale, enemyFeetY, hasAwakenedGrowth } from "./common";
 
 const CHASER_CONFIG = {
   chargeBaseSpeed: 2.18,
@@ -11,6 +11,8 @@ const CHASER_CONFIG = {
   chargeSpeedScaleByElapsed: 0.012,
   chargeMaxSpeed: 3.45,
   awakenedChargeSpeedScale: 1.06,
+  awakenedCloseRangeSpeedScale: 1.5,
+  awakenedCloseRangeDistance: 190,
   reenterMinFrames: 24,
   awakenedReenterMinFrames: 16,
   reenterFrameJitter: 18,
@@ -42,6 +44,19 @@ function chaserReenterMinFrames(enemy: EnemyState) {
   return hasAwakenedGrowth(enemy)
     ? CHASER_CONFIG.awakenedReenterMinFrames
     : CHASER_CONFIG.reenterMinFrames;
+}
+
+function chaserChargeSpeedForRange(enemy: EnemyState) {
+  const baseSpeed = enemy.chaserBaseSpeed ?? chaserChargeSpeed() * chaserChargeSpeedScale(enemy);
+  if (!hasAwakenedGrowth(enemy)) return baseSpeed;
+
+  const facing = enemy.chaserFacing ?? (enemy.vx >= 0 ? 1 : -1);
+  const playerCenterX = state.player.x + state.player.w / 2;
+  const playerDelta = playerCenterX - enemyCenterX(enemy);
+  const playerAhead = Math.sign(playerDelta) === facing;
+  if (!playerAhead || Math.abs(playerDelta) > CHASER_CONFIG.awakenedCloseRangeDistance) return baseSpeed;
+
+  return baseSpeed * CHASER_CONFIG.awakenedCloseRangeSpeedScale;
 }
 
 function chaserHiddenX(enemy: EnemyState, facing: number) {
@@ -82,13 +97,13 @@ function updateChaser(enemy: EnemyState) {
     enemy.x = chaserHiddenX(enemy, enemy.chaserFacing);
     if (enemy.chaserTimer <= 0) {
       enemy.chaserPhase = "charge";
-      enemy.vx = enemy.chaserFacing * enemy.chaserBaseSpeed;
+      enemy.vx = enemy.chaserFacing * chaserChargeSpeedForRange(enemy);
       playSfx("enemyDash", CHASER_CHARGE_PITCH);
     }
     return;
   }
 
-  enemy.vx = enemy.chaserFacing * enemy.chaserBaseSpeed;
+  enemy.vx = enemy.chaserFacing * chaserChargeSpeedForRange(enemy);
   enemy.x += enemy.vx;
 
   if (enemy.chaserFacing === 1 && enemy.x > WIDTH + CHASER_CONFIG.offscreenBuffer) {
