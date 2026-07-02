@@ -9,6 +9,12 @@ export type HudMeterFrame = {
   fillBottom: number;
   fillInsetLeft: number;
   fillInsetRight: number;
+  rightTop: number;
+};
+
+export type HudMeterPlacement = {
+  left: number;
+  top: number;
 };
 
 export const HUD_HP_METER_FRAME: HudMeterFrame = {
@@ -20,6 +26,12 @@ export const HUD_HP_METER_FRAME: HudMeterFrame = {
   fillBottom: 1,
   fillInsetLeft: 15,
   fillInsetRight: 7,
+  rightTop: -4,
+};
+
+export const HUD_HP_METER_PLACEMENT: HudMeterPlacement = {
+  left: 68,
+  top: 15,
 };
 
 export const HUD_SKILL_METER_FRAME: HudMeterFrame = {
@@ -31,4 +43,10 @@ export const HUD_SKILL_METER_FRAME: HudMeterFrame = {
   fillBottom: 5,
   fillInsetLeft: 15,
   fillInsetRight: 7,
+  rightTop: -4,
+};
+
+export const HUD_SKILL_METER_PLACEMENT: HudMeterPlacement = {
+  left: 92,
+  top: 39,
 };

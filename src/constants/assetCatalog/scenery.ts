@@ -1,11 +1,19 @@
 type SpriteRegion = { sx: number; sy: number; sw: number; sh: number };
 type PlatformSpriteRegion = SpriteRegion & { surfaceY: number };
-type GroundTileRegion = SpriteRegion & {
-  surfaceY: number;
-  fillLeft: number;
-  fillRight: number;
-  fillTop: number;
-  fillBottom: number;
+type GroundTileRegion = SpriteRegion & { surfaceY: number };
+export type GroundTileSetKey = "forest" | "forestToShrine" | "shrine" | "shrineToForest";
+export type GroundTilePatternKey = GroundTileSetKey;
+export type GroundTilePatternEntry = {
+  set: GroundTileSetKey;
+  regionIndex?: number;
+};
+type GroundTileSet = {
+  src: string;
+  image: HTMLImageElement | null;
+  occlusionSrc: string;
+  occlusionImage: HTMLImageElement | null;
+  occlusionRegions?: GroundTileRegion[];
+  regions: GroundTileRegion[];
 };
 
 export const SKY_SPRITES: {
@@ -187,60 +195,115 @@ export const GROUND_SPRITES: {
 export const GROUND_TILE_SPRITES: {
   tileSize: number;
   drawOffsetY: number;
-  seamOverlap: number;
-  grassPerStone: number;
-  grass: {
-    src: string;
-    image: HTMLImageElement | null;
-    frontSrc: string;
-    frontImage: HTMLImageElement | null;
-    regions: GroundTileRegion[];
-  };
-  stone: {
-    src: string;
-    image: HTMLImageElement | null;
-    frontSrc: string;
-    frontImage: HTMLImageElement | null;
-    regions: GroundTileRegion[];
-  };
+  scrollSpeed: number;
+  bossApproachTransitionTiles: number;
+  bossExitTransitionTiles: number;
+  bossExitTransitionSeconds: number;
+  minBossApproachTransitionSeconds: number;
+  patterns: Record<GroundTilePatternKey, GroundTilePatternEntry[]>;
+  sets: Record<GroundTileSetKey, GroundTileSet>;
 } = {
   tileSize: 150,
   drawOffsetY: -10,
-  seamOverlap: 52,
-  grassPerStone: 3,
-  grass: {
-    src: "assets/sprites/ground/grass_ground_150_150_base.png",
-    image: null,
-    frontSrc: "assets/sprites/ground/grass_ground_150_150_front.png",
-    frontImage: null,
-    regions: [
-      { sx: 0, sy: 0, sw: 150, sh: 150, surfaceY: 28, fillLeft: 1, fillRight: 145, fillTop: 18, fillBottom: 139 },
-      { sx: 150, sy: 0, sw: 150, sh: 150, surfaceY: 28, fillLeft: 2, fillRight: 141, fillTop: 18, fillBottom: 139 },
-      { sx: 300, sy: 0, sw: 150, sh: 150, surfaceY: 28, fillLeft: 9, fillRight: 125, fillTop: 17, fillBottom: 138 },
-      { sx: 450, sy: 0, sw: 150, sh: 150, surfaceY: 29, fillLeft: 6, fillRight: 139, fillTop: 0, fillBottom: 141 },
-      { sx: 600, sy: 0, sw: 150, sh: 150, surfaceY: 30, fillLeft: 5, fillRight: 142, fillTop: 3, fillBottom: 143 },
-      { sx: 750, sy: 0, sw: 150, sh: 150, surfaceY: 32, fillLeft: 4, fillRight: 138, fillTop: 3, fillBottom: 146 },
-      { sx: 0, sy: 150, sw: 150, sh: 150, surfaceY: 23, fillLeft: 0, fillRight: 144, fillTop: 14, fillBottom: 136 },
-      { sx: 150, sy: 150, sw: 150, sh: 150, surfaceY: 28, fillLeft: 7, fillRight: 144, fillTop: 17, fillBottom: 137 },
-      { sx: 300, sy: 150, sw: 150, sh: 150, surfaceY: 28, fillLeft: 19, fillRight: 134, fillTop: 20, fillBottom: 139 },
-      { sx: 450, sy: 150, sw: 150, sh: 150, surfaceY: 25, fillLeft: 9, fillRight: 126, fillTop: 15, fillBottom: 136 },
-      { sx: 600, sy: 150, sw: 150, sh: 150, surfaceY: 26, fillLeft: 11, fillRight: 136, fillTop: 15, fillBottom: 135 },
-      { sx: 750, sy: 150, sw: 150, sh: 150, surfaceY: 30, fillLeft: 8, fillRight: 137, fillTop: 17, fillBottom: 137 },
+  scrollSpeed: 48,
+  bossApproachTransitionTiles: 6,
+  bossExitTransitionTiles: 6,
+  bossExitTransitionSeconds: 5,
+  minBossApproachTransitionSeconds: 1.5,
+  patterns: {
+    forest: [
+      { set: "forest" }, { set: "forest" }, { set: "forest" }, { set: "forest" },
+      { set: "forest" }, { set: "forest" }, { set: "forest" }, { set: "forest" },
+    ],
+    forestToShrine: [
+      { set: "forest" }, { set: "forest" },
+      { set: "forestToShrine", regionIndex: 0 },
+      { set: "forestToShrine", regionIndex: 1 },
+      { set: "forestToShrine", regionIndex: 2 },
+      { set: "forestToShrine", regionIndex: 3 },
+      { set: "shrine" }, { set: "shrine" }, { set: "shrine" }, { set: "shrine" },
+      { set: "shrine" }, { set: "shrine" }, { set: "shrine" }, { set: "shrine" },
+    ],
+    shrine: [
+      { set: "shrine" }, { set: "shrine" }, { set: "shrine" }, { set: "shrine" },
+      { set: "shrine" }, { set: "shrine" }, { set: "shrine" }, { set: "shrine" },
+    ],
+    shrineToForest: [
+      { set: "shrine" }, { set: "shrine" },
+      { set: "shrineToForest", regionIndex: 0 },
+      { set: "shrineToForest", regionIndex: 1 },
+      { set: "shrineToForest", regionIndex: 2 },
+      { set: "shrineToForest", regionIndex: 3 },
+      { set: "forest" }, { set: "forest" }, { set: "forest" }, { set: "forest" },
+      { set: "forest" }, { set: "forest" }, { set: "forest" }, { set: "forest" },
     ],
   },
-  stone: {
-    src: "assets/sprites/ground/stone_ground_150_150_base.png",
-    image: null,
-    frontSrc: "assets/sprites/ground/stone_ground_150_150_front.png",
-    frontImage: null,
-    regions: [
-      { sx: 0, sy: 0, sw: 150, sh: 150, surfaceY: 27, fillLeft: 11, fillRight: 135, fillTop: 10, fillBottom: 139 },
-      { sx: 150, sy: 0, sw: 150, sh: 150, surfaceY: 29, fillLeft: 13, fillRight: 131, fillTop: 4, fillBottom: 144 },
-      { sx: 300, sy: 0, sw: 150, sh: 150, surfaceY: 30, fillLeft: 12, fillRight: 133, fillTop: 5, fillBottom: 144 },
-      { sx: 450, sy: 0, sw: 150, sh: 150, surfaceY: 28, fillLeft: 20, fillRight: 136, fillTop: 18, fillBottom: 140 },
-      { sx: 600, sy: 0, sw: 150, sh: 150, surfaceY: 29, fillLeft: 13, fillRight: 127, fillTop: 19, fillBottom: 140 },
-      { sx: 750, sy: 0, sw: 150, sh: 150, surfaceY: 29, fillLeft: 3, fillRight: 145, fillTop: 19, fillBottom: 141 },
-    ],
+  sets: {
+    forest: {
+      src: "assets/sprites/ground/moon_forest_ground_base.png",
+      image: null,
+      occlusionSrc: "assets/sprites/ground/moon_forest_ground_occlusion.png",
+      occlusionImage: null,
+      regions: [
+        { sx: 0, sy: 0, sw: 150, sh: 150, surfaceY: 24 },
+        { sx: 150, sy: 0, sw: 150, sh: 150, surfaceY: 24 },
+        { sx: 300, sy: 0, sw: 150, sh: 150, surfaceY: 24 },
+        { sx: 450, sy: 0, sw: 150, sh: 150, surfaceY: 24 },
+        { sx: 600, sy: 0, sw: 150, sh: 150, surfaceY: 24 },
+        { sx: 750, sy: 0, sw: 150, sh: 150, surfaceY: 24 },
+        { sx: 900, sy: 0, sw: 150, sh: 150, surfaceY: 24 },
+        { sx: 1050, sy: 0, sw: 150, sh: 150, surfaceY: 24 },
+      ],
+    },
+    forestToShrine: {
+      src: "assets/sprites/ground/moon_forest_to_shrine_transition_base.png",
+      image: null,
+      occlusionSrc: "assets/sprites/ground/moon_forest_to_shrine_transition_occlusion.png",
+      occlusionImage: null,
+      regions: [
+        { sx: 0, sy: 0, sw: 150, sh: 150, surfaceY: 24 },
+        { sx: 150, sy: 0, sw: 150, sh: 150, surfaceY: 24 },
+        { sx: 300, sy: 0, sw: 150, sh: 150, surfaceY: 24 },
+        { sx: 450, sy: 0, sw: 150, sh: 150, surfaceY: 24 },
+      ],
+    },
+    shrine: {
+      src: "assets/sprites/ground/moon_shrine_stone_base.png",
+      image: null,
+      occlusionSrc: "assets/sprites/ground/moon_shrine_stone_occlusion.png",
+      occlusionImage: null,
+      occlusionRegions: [
+        { sx: 0, sy: 0, sw: 150, sh: 150, surfaceY: 24 },
+        { sx: 150, sy: 0, sw: 150, sh: 150, surfaceY: 24 },
+        { sx: 300, sy: 0, sw: 150, sh: 150, surfaceY: 24 },
+        { sx: 450, sy: 0, sw: 150, sh: 150, surfaceY: 24 },
+        { sx: 600, sy: 0, sw: 150, sh: 150, surfaceY: 24 },
+        { sx: 750, sy: 0, sw: 150, sh: 150, surfaceY: 24 },
+        { sx: 900, sy: 0, sw: 150, sh: 150, surfaceY: 24 },
+      ],
+      regions: [
+        { sx: 0, sy: 0, sw: 150, sh: 150, surfaceY: 24 },
+        { sx: 150, sy: 0, sw: 150, sh: 150, surfaceY: 24 },
+        { sx: 300, sy: 0, sw: 150, sh: 150, surfaceY: 24 },
+        { sx: 450, sy: 0, sw: 150, sh: 150, surfaceY: 24 },
+        { sx: 600, sy: 0, sw: 150, sh: 150, surfaceY: 24 },
+        { sx: 750, sy: 0, sw: 150, sh: 150, surfaceY: 24 },
+        { sx: 900, sy: 0, sw: 150, sh: 150, surfaceY: 24 },
+        { sx: 1050, sy: 0, sw: 150, sh: 150, surfaceY: 24 },
+      ],
+    },
+    shrineToForest: {
+      src: "assets/sprites/ground/moon_shrine_to_forest_transition_base.png",
+      image: null,
+      occlusionSrc: "assets/sprites/ground/moon_shrine_to_forest_transition_occlusion.png",
+      occlusionImage: null,
+      regions: [
+        { sx: 0, sy: 0, sw: 150, sh: 150, surfaceY: 24 },
+        { sx: 150, sy: 0, sw: 150, sh: 150, surfaceY: 24 },
+        { sx: 300, sy: 0, sw: 150, sh: 150, surfaceY: 24 },
+        { sx: 450, sy: 0, sw: 150, sh: 150, surfaceY: 24 },
+      ],
+    },
   },
 };
 

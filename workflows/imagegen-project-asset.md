@@ -47,19 +47,23 @@ If a target file is already modified, treat it as user-owned work unless the use
 
 ## Non-Negotiable Artifact Rule
 
-For built-in imagegen, the only trusted generated artifact is the PNG base64 in `image_generation_call.result`.
+For built-in imagegen, trusted generated artifacts are:
+
+- The PNG base64 in `image_generation_call.result`.
+- An exact `~/.codex/generated_images/...` file path explicitly provided by the current imagegen tool/developer output.
 
 The agent must:
 
-1. Decode `image_generation_call.result` into `tmp/imagegen/<asset>_source_from_result.png`.
-2. Use that decoded file as the source for all post-processing.
+1. Decode `image_generation_call.result` into `tmp/imagegen/<asset>_source_from_result.png`, or copy the exact provided generated-image path into `tmp/imagegen/<asset>_source_from_generated_images.png`.
+2. Use that decoded or copied file as the source for all post-processing.
 3. Preserve source and intermediate files in `tmp/imagegen/`.
 
 The agent must not:
 
 - Scan default output folders for the newest generated file.
+- Use a generated-image path unless it was explicitly provided for the current imagegen call.
 - Treat an inline preview as a saved file.
-- Claim completion before the decoded result has been written and validated.
+- Claim completion before the source artifact has been written and validated.
 
 ## Extracting The Built-In Result
 
@@ -69,6 +73,12 @@ Preferred path:
 2. Base64-decode it into `tmp/imagegen/`.
 3. Confirm the decoded file with `file` and an image dimension check.
 
+Explicit generated-image path:
+
+1. Read the exact generated-image file path provided by the current imagegen tool/developer output.
+2. Copy that exact file into `tmp/imagegen/`; leave the original in place.
+3. Confirm the copied file with `file` and an image dimension check.
+
 Fallback path when the UI shows only an image preview:
 
 1. Locate the current Codex thread id from `CODEX_THREAD_ID`.
@@ -77,7 +87,7 @@ Fallback path when the UI shows only an image preview:
 4. Decode that exact `payload.result` into `tmp/imagegen/`.
 5. Do not print the base64 into the conversation or logs.
 
-If no `image_generation_call.result` is available, the run is blocked unless CLI fallback is explicitly available.
+If neither `image_generation_call.result` nor an exact current-call generated-image path is available, the run is blocked unless CLI fallback is explicitly available.
 
 ## CLI Fallback
 
@@ -99,8 +109,8 @@ Before running CLI fallback:
 2. Inspect target asset and runtime constants.
 3. State assumptions and success criteria.
 4. Generate or edit with built-in imagegen.
-5. Decode `image_generation_call.result` into `tmp/imagegen/`.
-6. Inspect decoded source dimensions, mode, and visual contents.
+5. Decode `image_generation_call.result` into `tmp/imagegen/`, or copy the exact current-call generated-image path into `tmp/imagegen/`.
+6. Inspect source dimensions, mode, and visual contents.
 7. If transparency is needed, remove chroma key with:
 
    ```bash
@@ -141,7 +151,7 @@ The brief should include:
 
 Recommended answer for missing result extraction:
 
-"Stop. Do not scan generated image folders. Retry built-in imagegen or enable CLI fallback with `OPENAI_API_KEY`."
+"Stop. Do not scan generated image folders. Retry built-in imagegen, provide the exact generated-image path for this call, or enable CLI fallback with `OPENAI_API_KEY`."
 
 ## Validation
 
@@ -169,17 +179,17 @@ Do not start headless browsers or game processes.
 The workflow run is done only when:
 
 - The final asset is written at the requested project path.
-- The decoded source and intermediates are preserved under `tmp/imagegen/`.
+- The decoded or copied source and intermediates are preserved under `tmp/imagegen/`.
 - Runtime contract validation passes.
 - Required project checks pass or failures are clearly identified as unrelated.
 - The final report names the final asset, intermediate files, prompt summary, runtime constant changes, and validation results.
 
 ## Failure Modes
 
-If the agent cannot obtain `image_generation_call.result`, say:
+If the agent cannot obtain `image_generation_call.result` or an exact current-call generated-image path, say:
 
-"The built-in imagegen preview exists, but no trusted PNG artifact is available yet. I will not scan default generated-image directories. The run is blocked unless we retry built-in imagegen or use CLI fallback with `OPENAI_API_KEY`."
+"The built-in imagegen preview exists, but no trusted PNG artifact is available yet. I will not scan default generated-image directories. The run is blocked unless we retry built-in imagegen, use an exact generated-image path from this call, or use CLI fallback with `OPENAI_API_KEY`."
 
 If `OPENAI_API_KEY` is missing, say:
 
-"CLI fallback is unavailable because `OPENAI_API_KEY` is not set. The run remains blocked unless built-in `image_generation_call.result` can be extracted."
+"CLI fallback is unavailable because `OPENAI_API_KEY` is not set. The run remains blocked unless built-in `image_generation_call.result` or an exact current-call generated-image path can be extracted."

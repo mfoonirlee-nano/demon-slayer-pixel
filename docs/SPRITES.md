@@ -10,7 +10,7 @@
 - 禁止使用 Python 代码生成、绘制、重绘或合成图片内容，也不要新增这类 Python 生成脚本。
 - Python 仅可用于确定性的后处理或检查，例如绿幕抠透明、压缩、尺寸校验；这些步骤不能改变图片创作内容。
 - 项目用素材生成后必须落到 `assets/sprites/` 对应目录中，不能只保留在 Image Gen 的默认输出目录。
-- 使用内置 `imagegen` 后必须检查工具返回本身，不要假设一定会写入 `~/.codex/generated_images/`。内置图片生成的 `image_generation_call.result` 是唯一可信产物来源；该字段是 PNG base64，必须先解码到 `tmp/imagegen/` 或目标工作区路径，再继续后处理。不要扫描 `~/.codex/generated_images/` 查找最新生成图。
+- 使用内置 `imagegen` 后必须检查工具返回本身，不要假设一定会写入 `~/.codex/generated_images/`。可信产物来源包括当前调用的 `image_generation_call.result` PNG base64，或当前 imagegen 工具/开发者输出明确给出的 `~/.codex/generated_images/...` 精确文件路径；必须先解码或复制到 `tmp/imagegen/` 或目标工作区路径，再继续后处理。不要扫描 `~/.codex/generated_images/` 查找最新生成图。
 - 生成结果进入 `assets/sprites/` 前必须做素材规格校验：确认宽高、文件格式、alpha 通道、四边透明像素、可见内容 bbox、帧数/单帧尺寸和运行时常量仍匹配现有使用方式。
 - `imagegen` 可能输出大尺寸 RGB 图、棋盘格伪透明背景或轻微风格漂移。允许做确定性的透明恢复、裁切、缩放和压缩；不允许用脚本补画、重绘或创作缺失的视觉内容。
 - 如果需要精确替换已有 UI/sprite，先记录原素材的尺寸和 alpha bbox，后处理时把生成图对齐回这些运行时约束，避免透明边界、碰撞/布局尺寸或卡片锚点漂移。
@@ -279,17 +279,21 @@ Burrower 运行时由 `BURROWER_SHEETS` 暴露并预加载。普通刷怪在 `el
 
 | 路径 | 总尺寸 | 单帧 | 运行时用途 |
 | --- | ---: | ---: | --- |
-| `ground/grass_ground_150_150_base.png` | `900x300` | `150x150` | 地面主体层 |
-| `ground/grass_ground_150_150_front.png` | `900x300` | `150x150` | 草尖/近端遮挡层 |
-| `ground/stone_ground_150_150_base.png` | `900x150` | `150x150` | 地面主体层 |
-| `ground/stone_ground_150_150_front.png` | `900x150` | `150x150` | 石缘/草尖遮挡层 |
+| `ground/moon_forest_ground_base.png` | `1200x150` | `150x150` | 月林湿土地面主体层 |
+| `ground/moon_forest_ground_occlusion.png` | `1200x150` | `150x150` | 月林低矮脚边遮挡层 |
+| `ground/moon_shrine_stone_base.png` | `1200x150` | `150x150` | 破神社石地主体层 |
+| `ground/moon_shrine_stone_occlusion.png` | `1050x150` | `150x150` | 神社石地低矮脚边遮挡层 |
+| `ground/moon_forest_to_shrine_transition_base.png` | `600x150` | `150x150` | 月林到神社石地过渡主体层 |
+| `ground/moon_forest_to_shrine_transition_occlusion.png` | `600x150` | `150x150` | 月林到神社石地过渡遮挡层 |
+| `ground/moon_shrine_to_forest_transition_base.png` | `600x150` | `150x150` | 神社石地到月林过渡主体层 |
+| `ground/moon_shrine_to_forest_transition_occlusion.png` | `600x150` | `150x150` | 神社石地到月林过渡遮挡层 |
 
-运行时绘制顺序为 `drawGroundTileBase()`、`drawBindingZonesBack()`、角色/敌人/技能主体、`drawGroundTileFront()`、`drawBindingZonesFront()`，让咒圈与草地边缘保持前后穿插。
+运行时绘制顺序为 `drawGroundTileBase()`、`drawBindingZonesBack()`、角色/敌人/技能主体、`drawGroundTileOcclusion()`、`drawBindingZonesFront()`，让咒圈与低矮地面遮挡保持前后穿插。地面 pattern 由 Boss 阶段驱动：普通战斗使用月林，Boss prelude 使用月林到神社石地过渡，Boss 战中保持神社石地，Boss 击败后的 `5s` 内使用神社石地到月林过渡。base 与 occlusion 共用同一横向偏移；两组过渡资源在 pattern 中显式按 `0→1→2→3` 帧序绘制，避免列号取模导致过渡帧错位。旧 `ground/*_front.png` 资源不再作为 ground 前景接入，已移动为平台 legacy 参考素材。
 
 ## 资源更新流程
 
 1. 生成或编辑图片内容时，使用 Image Gen skill (`imagegen`)，优先输出为透明 PNG。
-2. 内置 `imagegen` 返回时，先检查 `image_generation_call.result`；该字段是唯一可信产物来源和 PNG base64，需要解码保存为源图，不要去 `~/.codex/generated_images/` 或其他目录里查找生成产物。
+2. 内置 `imagegen` 返回时，先检查 `image_generation_call.result`；也可以使用当前 imagegen 工具/开发者输出明确给出的 `~/.codex/generated_images/...` 精确文件路径。将该 base64 或精确路径对应的文件保存为源图，不要去 `~/.codex/generated_images/` 或其他目录里查找最新生成产物。
 3. 如果使用绿幕源图，先保存 `*_source.png`，再通过确定性后处理抠成运行时透明资源。
 4. 对横向序列帧，确保总宽度等于 `frameW * count`，总高度等于 `frameH`。
 5. 替换已有运行时素材时，如果切片规格不变，只需要覆盖 PNG。

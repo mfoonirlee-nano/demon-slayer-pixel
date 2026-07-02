@@ -36,20 +36,8 @@
 }
 
 .player-hud-meter {
-  position: relative;
+  position: absolute;
   isolation: isolate;
-}
-
-.player-hud-meter-hp {
-  position: absolute;
-  left: 68px;
-  top: 11px;
-}
-
-.player-hud-meter-skill {
-  position: absolute;
-  left: 92px;
-  top: 37px;
 }
 
 .player-hud-meter-frame {

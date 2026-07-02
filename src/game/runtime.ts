@@ -20,7 +20,7 @@ import {
 import { loadSprites } from "../assets";
 import { getCoverProgress } from "./coverProgress";
 import { setupInput, teardownInput, debugCollisionBoxes } from "./input";
-import { drawBackground, drawGroundTileBase, drawGroundTileFront } from "../rendering/background";
+import { drawBackground, drawGroundTileBase, drawGroundTileOcclusion } from "../rendering/background";
 import { drawNearForeground } from "../rendering/nearForeground";
 
 import { updatePlayer, drawPlayer, triggerAttack, castSelectedSkill, castUltimateSkill, selectSkill, tryJump } from "../entities/player";
@@ -328,7 +328,7 @@ function loop(ts: number) {
   drawLanternEmberEffects();
   drawBloodMoonEffects();
   drawLineProjectileEffects();
-  drawGroundTileFront();
+  drawGroundTileOcclusion();
   drawCloseArcEffects();
   drawPlayerSkillEffects();
   drawBindingZonesFront();

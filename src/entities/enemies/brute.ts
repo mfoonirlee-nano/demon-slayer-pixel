@@ -1,7 +1,6 @@
 import { state } from "../../game/state";
 import { playSfx } from "../../game/audio";
 import { BRUTE_SHEET_INDEX, BRUTE_SHEETS, ENEMY_SHEETS } from "../../constants";
-import { ctx } from "../../rendering/context";
 import type { BrutePhase, EnemyState } from "../../types/game-state";
 import { hitbox } from "../../game/utils";
 import { hurtPlayer } from "../player";
@@ -77,15 +76,6 @@ const CLEAVE_BOX_WIDTH_SCALE = 1.65;
 const CLEAVE_BOX_HEIGHT_SCALE = 1.08;
 const ATTACK_BOX_FORWARD_RATIO = 0.55;
 const ATTACK_BOX_BACK_RATIO = 0.45;
-const ATTACK_CUE_HEIGHT = 8;
-const ATTACK_CUE_Y_RATIO = 0.62;
-const ATTACK_CUE_MARKER_WIDTH = 5;
-const ATTACK_CUE_MARKER_HEIGHT_RATIO = 0.56;
-const ATTACK_CUE_WINDUP_ALPHA_BASE = 0.22;
-const ATTACK_CUE_WINDUP_ALPHA_SCALE = 0.28;
-const ATTACK_CUE_ACTIVE_ALPHA = 0.38;
-const ATTACK_CUE_HIGHLIGHT_ALPHA_CAP = 0.76;
-const ATTACK_CUE_HIGHLIGHT_ALPHA_BOOST = 0.18;
 
 function isBrute(enemy: Pick<EnemyState, "sheetIndex">) {
   return enemy.sheetIndex === BRUTE_SHEET_INDEX;
@@ -227,43 +217,6 @@ function triggerBruteAttackHit(
   hurtPlayer(enemy.damage * damageMultiplier + damageBonus, -facing);
 }
 
-function bruteCueBoxForPhase(enemy: EnemyState, phase: BrutePhase) {
-  if (phase === "guard" || phase === "shieldBash") {
-    return bruteAttackBox(enemy, BASH_BOX_REACH, BASH_BOX_WIDTH_SCALE, BASH_BOX_HEIGHT_SCALE, BASH_BOX_HEIGHT_PAD);
-  }
-  if (phase === "cleave") {
-    return bruteAttackBox(enemy, CLEAVE_BOX_REACH, CLEAVE_BOX_WIDTH_SCALE, CLEAVE_BOX_HEIGHT_SCALE);
-  }
-  return null;
-}
-
-function drawBruteAttackCue(enemy: EnemyState, phase: BrutePhase, facing: number) {
-  if (!ctx) return;
-  const box = bruteCueBoxForPhase(enemy, phase);
-  if (!box) return;
-
-  const duration = Math.max(1, brutePhaseDuration(enemy, phase));
-  const progress = phase === "guard"
-    ? 1 - Math.max(0, enemy.bruteTimer ?? 0) / duration
-    : 1;
-  const alpha = phase === "guard"
-    ? ATTACK_CUE_WINDUP_ALPHA_BASE + progress * ATTACK_CUE_WINDUP_ALPHA_SCALE
-    : ATTACK_CUE_ACTIVE_ALPHA;
-  const cueY = box.y + box.h * ATTACK_CUE_Y_RATIO;
-  const markerX = facing === 1 ? box.x + box.w - ATTACK_CUE_MARKER_WIDTH : box.x;
-  const markerHeight = box.h * ATTACK_CUE_MARKER_HEIGHT_RATIO;
-
-  ctx.save();
-  ctx.fillStyle = `rgba(104, 78, 64, ${alpha})`;
-  ctx.fillRect(box.x, cueY, box.w, ATTACK_CUE_HEIGHT);
-  ctx.fillStyle = `rgba(238, 205, 166, ${Math.min(
-    ATTACK_CUE_HIGHLIGHT_ALPHA_CAP,
-    alpha + ATTACK_CUE_HIGHLIGHT_ALPHA_BOOST,
-  )})`;
-  ctx.fillRect(markerX, cueY - markerHeight / HALF_DIVISOR, ATTACK_CUE_MARKER_WIDTH, markerHeight);
-  ctx.restore();
-}
-
 function initBrute(enemy: EnemyState, context: EnemySpawnContext) {
   enemy.brutePhase = "advance";
   enemy.bruteTimer = 0;
@@ -380,7 +333,6 @@ function drawBrute(enemy: EnemyState) {
   const sheet = bruteSheetForPhase(phase);
   const facing = enemy.bruteFacing ?? (enemy.vx >= 0 ? 1 : -1);
   const drawScale = bruteDrawScale(phase);
-  drawBruteAttackCue(enemy, phase, facing);
 
   if (phase === "advance" || phase === "brokenAdvance") {
     drawEnemyFrame(enemy, sheet, drawScale, bruteLoopAnimSpeed(phase), state.elapsed, facing);

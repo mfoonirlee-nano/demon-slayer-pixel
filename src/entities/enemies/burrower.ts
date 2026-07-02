@@ -58,7 +58,6 @@ const EMERGE_BOX_WIDTH_SCALE = 1.45;
 const EMERGE_BOX_WIDTH_PAD = 34;
 const EMERGE_BOX_HEIGHT_SCALE = 1.28;
 const EMERGE_BOX_FORWARD_OFFSET_SCALE = 0.22;
-const BURROW_TRAIL_HEIGHT = 5;
 const BURROW_TRAIL_Y_OFFSET = 8;
 const BURROW_MARKER_RADIUS_X = 38;
 const BURROW_MARKER_RADIUS_Y = 7;
@@ -269,11 +268,6 @@ function drawBurrowerGroundCue(enemy: EnemyState, phase: BurrowerPhase) {
   const progress = 1 - Math.max(0, enemy.burrowerTimer ?? 0) / duration;
 
   if (phase === "burrow") {
-    const currentCenterX = enemyCenterX(enemy);
-    const left = Math.min(currentCenterX, targetCenterX);
-    const width = Math.abs(currentCenterX - targetCenterX);
-    ctx.fillStyle = `rgba(126, 78, 42, ${BURROW_TRAIL_ALPHA})`;
-    ctx.fillRect(left, groundY, width, BURROW_TRAIL_HEIGHT);
     drawBurrowMarker(targetCenterX, groundY, BURROW_TRAIL_ALPHA);
     return;
   }
