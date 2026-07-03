@@ -15,7 +15,9 @@ export function equipmentDetailCopy(
   unlockedEquipmentIds: ReadonlySet<EquipmentItemId>,
 ): PauseDetailCopy {
   if (target.type === "item") {
-    const item = EQUIPMENT_ITEMS[target.itemId];
+    const catalogItem = EQUIPMENT_ITEMS[target.itemId];
+    const ownedItem = equipment.inventory.find((entry) => entry.id === target.itemId);
+    const item = ownedItem ?? catalogItem;
     const equipped = equipment.equipped[item.slot]?.id === item.id;
     const unlocked = unlockedEquipmentIds.has(item.id);
 

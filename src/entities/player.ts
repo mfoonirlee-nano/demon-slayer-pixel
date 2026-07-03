@@ -20,6 +20,7 @@ import {
   grantUltimateEnergy,
   recordBasicAttackHit,
   recordEquipmentMovement,
+  recordEquipmentHurt,
   tickEquipmentEffects,
 } from "../systems/equipment";
 import { applyBossDamage, applyEnemyDamage, resolveBossHit, resolveEnemyHit } from "../systems/combatResolution";
@@ -245,6 +246,7 @@ export function hurtPlayer(damage: number, sourceVx: number) {
   p.vx = -Math.sign(sourceVx || 1) * PLAYER_COMBAT.hurtKnockbackX * knockbackMultiplier;
   p.vy = PLAYER_COMBAT.hurtKnockbackY * knockbackMultiplier;
   emitSlash(p.x + p.w / 2, p.y + PLAYER_COMBAT.attackKillY, PLAYER_COMBAT.effects.hurtSlashColor);
+  recordEquipmentHurt(state);
   applyLowHealthEquipmentTriggers(state);
   if (p.hp <= 0) {
     playSfx("playerDeath");

@@ -3,9 +3,9 @@ import { PLAYER_COMBAT } from "../../constants";
 import { recordBossCoverKill } from "../../game/coverProgress";
 import { state } from "../../game/state";
 import {
-  createBossEquipmentChoices,
   grantSkillEnergy,
   grantUltimateEnergy,
+  queueBossEquipmentChoices,
   recordBossDefeatEquipmentEffects,
 } from "../../systems/equipment";
 import { addRunXp, bossXp, maybeDropBossUltimateUnlock } from "../../systems/progression";
@@ -37,14 +37,18 @@ export function defeatBoss() {
   addRunXp(state, bossXp(state.bossKills));
   if (!clearsRun) maybeDropBossUltimateUnlock(state);
   recordBossDefeatEquipmentEffects(state);
-  if (!clearsRun) {
-    state.pendingEquipmentChoices = createBossEquipmentChoices(state);
+  if (clearsRun) {
+    state.pendingUpgradeChoices = [];
+    const hasFinalEquipmentChoices = queueBossEquipmentChoices(state, { placeholderReward: false });
+    state.pendingVictoryAfterEquipment = hasFinalEquipmentChoices;
+  } else {
+    queueBossEquipmentChoices(state);
   }
   playSfx("bossKill");
   state.bossKills += 1;
   state.boss = null;
   clearBossSummons();
   advanceEnemyDirectorToAct(state.enemyDirector, state.bossKills, state.elapsed);
-  if (clearsRun) clearRun(state);
+  if (clearsRun && !state.pendingVictoryAfterEquipment) clearRun(state);
   return true;
 }

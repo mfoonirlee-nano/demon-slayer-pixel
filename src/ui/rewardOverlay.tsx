@@ -1,20 +1,14 @@
 import { useEffect, useState } from "react";
 import { chooseBossEquipment, chooseUpgradeReward } from "../game/runtime";
 import type { GameSnapshot } from "../game/gameStore";
-import { EQUIPMENT_FAMILY_LABELS } from "../systems/equipment";
+import { EQUIPMENT_FAMILY_LABELS, EQUIPMENT_TIER_LABELS } from "../systems/equipment";
 import { playerSkillColor, playerSkillIconSrc } from "../systems/skillCatalog";
-import type { EquipmentItemState, EquipmentTier, UpgradeChoiceState, UpgradeChoiceType } from "../types/game-state";
+import type { EquipmentChoiceState, UpgradeChoiceState, UpgradeChoiceType } from "../types/game-state";
 import { EQUIPMENT_SLOT_LABELS, equipmentIconSrc, equipmentSlotBadgeSrc } from "./uiDisplay";
 import { getRewardOverlayLayout } from "./rewardOverlayLayout";
 import { UiSprite } from "./uiSprite";
 
 const ULTIMATE_SKILL_ICON_SRC = "assets/sprites/skills/ultimate_skill/icon.png";
-
-const EQUIPMENT_TIER_LABELS: Record<EquipmentTier, string> = {
-  awakened: "蚀醒",
-  common: "普通",
-  fine: "精良",
-};
 
 const BOSS_ICON_BADGE_MIN_SIZE = 12;
 const BOSS_ICON_BADGE_SIZE_RATIO = 0.34;
@@ -57,6 +51,14 @@ function levelTransition(choice: UpgradeChoiceState) {
 
 function upgradeChoiceIconSrc(choice: UpgradeChoiceState) {
   return choice.skillId ? playerSkillIconSrc(choice.skillId) : ULTIMATE_SKILL_ICON_SRC;
+}
+
+function equipmentChoiceStatus(choice: EquipmentChoiceState, currentName: string | undefined) {
+  if (choice.reason === "tierUpgrade" && choice.previousTier) {
+    return `品质提升：${EQUIPMENT_TIER_LABELS[choice.previousTier]} -> ${EQUIPMENT_TIER_LABELS[choice.tier]}`;
+  }
+  if (choice.reason === "replacement") return `替换：当前${EQUIPMENT_SLOT_LABELS[choice.slot]}「${currentName ?? "无"}」`;
+  return `新装备：${EQUIPMENT_TIER_LABELS[choice.tier]}`;
 }
 
 export function RewardOverlay({ snapshot }: { snapshot: GameSnapshot }) {
@@ -140,7 +142,7 @@ export function RewardOverlay({ snapshot }: { snapshot: GameSnapshot }) {
           }}
         >
           {choices.map((choice, index) => {
-            const item = isBossReward ? choice as EquipmentItemState : null;
+            const item = isBossReward ? choice as EquipmentChoiceState : null;
             const upgrade = isBossReward ? null : choice as typeof snapshot.pendingUpgradeChoices[number];
             const upgradeStyle = upgrade ? UPGRADE_CHOICE_STYLE[upgrade.type] : null;
             const upgradeAccent = upgrade && upgradeStyle
@@ -277,7 +279,7 @@ export function RewardOverlay({ snapshot }: { snapshot: GameSnapshot }) {
                     ) : null}
                     {isBossReward && item ? (
                       <div className="mt-auto pt-2 text-center text-[7px] leading-[1.35] text-[#ffd9a0]">
-                        当前{EQUIPMENT_SLOT_LABELS[item.slot]}：{equippedItem?.name ?? "无"}
+                        {equipmentChoiceStatus(item, equippedItem?.name)}
                       </div>
                     ) : null}
                   </div>

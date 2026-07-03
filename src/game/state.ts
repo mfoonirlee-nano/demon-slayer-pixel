@@ -66,21 +66,38 @@ export function createInitialPlayerState(): PlayerState {
     ultimateEffectSpawned: false,
     flowBladeHits: 0,
     flowBladeSurgeReady: false,
+    flowBladeSurgeSkillTimer: 0,
     flowGarbTimer: 0,
     burstGarbProtectionUsed: false,
+    burstGarbSpeedTimer: 0,
+    burstBladeExecuteReady: false,
+    burstBladeExecuteUsed: false,
+    burstBladeAwakenedSlashUsed: false,
     burstTalismanCooldown: 0,
     shadowstepDistance: 0,
+    shadowstepBladeQuickTimer: 0,
     shadowstepBladeReady: false,
     shadowstepBladeStrike: false,
     shadowstepGarbMovingTimer: 0,
+    shadowstepGarbHurtSpeedTimer: 0,
     shadowstepTalismanCooldown: 0,
     huntKillTimer: 0,
     huntKillCount: 0,
     huntBladeReady: false,
     huntBladeStrike: false,
+    huntBladeWaterTimer: 0,
     huntGarbTimer: 0,
+    huntGarbGuardReady: false,
     huntTalismanCooldown: 0,
+    riskBladeLowHpSkillReady: false,
+    riskBladeLowHpSkillUsed: false,
+    riskGarbBossLowHpProtectionUsed: false,
     riskTalismanTriggered: false,
+    tempoBladeHitCount: 0,
+    tempoBladeNoPenaltyReady: false,
+    tempoGarbRecoveryTimer: 0,
+    tempoGarbRecoverySkillGranted: false,
+    tempoTalismanLastSkillId: null,
     spiderSilkSlowTimer: 0,
     onPlatform: null,
     skillFlash: 0,
@@ -102,6 +119,7 @@ export function createInitialState(): GameState {
       garb: null,
       talisman: null,
     },
+    pendingVictoryAfterEquipment: false,
     platformSpawnTimer: 0,
     gameOver: false,
     runCleared: false,
@@ -191,6 +209,7 @@ export function resetState() {
   resetCollection(state.pendingEquipmentChoices, next.pendingEquipmentChoices);
   resetCollection(state.equipmentInventory, next.equipmentInventory);
   state.equippedEquipment = next.equippedEquipment;
+  state.pendingVictoryAfterEquipment = next.pendingVictoryAfterEquipment;
   state.platformSpawnTimer = next.platformSpawnTimer;
   state.boss = next.boss;
   state.gameOver = next.gameOver;
@@ -268,11 +287,20 @@ export function getStateSnapshot(manualPaused = false, paused = manualPaused): G
         && state.player.ultimateCastTimer <= 0,
     },
     equipment: {
-      inventory: state.equipmentInventory.map((itemId) => equipmentItem(itemId)).filter((item) => item !== null),
+      inventory: state.equipmentInventory.map((entry) => equipmentItem(entry.id, entry.tier)).filter((item) => item !== null),
       equipped: {
-        blade: equipmentItem(state.equippedEquipment.blade),
-        garb: equipmentItem(state.equippedEquipment.garb),
-        talisman: equipmentItem(state.equippedEquipment.talisman),
+        blade: equipmentItem(
+          state.equippedEquipment.blade,
+          state.equipmentInventory.find((entry) => entry.id === state.equippedEquipment.blade)?.tier,
+        ),
+        garb: equipmentItem(
+          state.equippedEquipment.garb,
+          state.equipmentInventory.find((entry) => entry.id === state.equippedEquipment.garb)?.tier,
+        ),
+        talisman: equipmentItem(
+          state.equippedEquipment.talisman,
+          state.equipmentInventory.find((entry) => entry.id === state.equippedEquipment.talisman)?.tier,
+        ),
       },
     },
     pendingUpgradeChoices: [...state.pendingUpgradeChoices],

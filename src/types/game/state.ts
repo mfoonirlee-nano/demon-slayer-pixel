@@ -3,8 +3,9 @@ import type {
   EnemyId,
   EnemyProfileId,
   EnemyTag,
+  EquipmentChoiceState,
+  EquipmentInventoryEntry,
   EquipmentItemId,
-  EquipmentItemState,
   EquipmentSlot,
   UpgradeChoiceState,
 } from "./domain";
@@ -97,9 +98,10 @@ export type GameState = {
   bossKills: number;
   enemyDirector: EnemyDirectorState;
   pendingUpgradeChoices: UpgradeChoiceState[];
-  pendingEquipmentChoices: EquipmentItemState[];
-  equipmentInventory: EquipmentItemId[];
+  pendingEquipmentChoices: EquipmentChoiceState[];
+  equipmentInventory: EquipmentInventoryEntry[];
   equippedEquipment: Record<EquipmentSlot, EquipmentItemId | null>;
+  pendingVictoryAfterEquipment: boolean;
   platformSpawnTimer: number;
   gameOver: boolean;
   runCleared: boolean;

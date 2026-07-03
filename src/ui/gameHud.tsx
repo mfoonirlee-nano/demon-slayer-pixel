@@ -210,7 +210,10 @@ export function GameHud() {
   const skillValue = player.skillEnergy;
   const skillMax = player.skillEnergyMax;
   const activeSkillEnergyCost = activeSkill
-    ? activeSkill.energyCost ?? skillEnergyCostForTalisman(snapshot.equipment.equipped.talisman?.id)
+    ? activeSkill.energyCost ?? skillEnergyCostForTalisman(
+        snapshot.equipment.equipped.talisman?.id,
+        snapshot.equipment.equipped.talisman?.tier,
+      )
     : 0;
   const skillMarkerPercents = filledCostMarkerPercents(skillValue, skillMax, activeSkillEnergyCost);
   const bossHp = boss?.hp ?? 0;

@@ -9,6 +9,13 @@ export function endRun(state: GameState) {
   state.runCleared = false;
   state.pendingEquipmentChoices = [];
   state.pendingUpgradeChoices = [];
+  state.equipmentInventory = [];
+  state.equippedEquipment = {
+    blade: null,
+    garb: null,
+    talisman: null,
+  };
+  state.pendingVictoryAfterEquipment = false;
 }
 
 export function clearRun(state: GameState) {
@@ -16,4 +23,5 @@ export function clearRun(state: GameState) {
   state.runCleared = true;
   state.pendingEquipmentChoices = [];
   state.pendingUpgradeChoices = [];
+  state.pendingVictoryAfterEquipment = false;
 }

@@ -147,6 +147,19 @@ export type EquipmentItemState = {
   tier: EquipmentTier;
   summary: string;
   uiTags: string[];
+  requiresUltimate?: boolean;
+};
+
+export type EquipmentInventoryEntry = {
+  id: EquipmentItemId;
+  tier: EquipmentTier;
+};
+
+export type EquipmentChoiceReason = "new" | "tierUpgrade" | "replacement";
+
+export type EquipmentChoiceState = EquipmentItemState & {
+  previousTier: EquipmentTier | null;
+  reason: EquipmentChoiceReason;
 };
 
 export type UpgradeChoiceState = {

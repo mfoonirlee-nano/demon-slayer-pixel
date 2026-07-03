@@ -10,6 +10,7 @@ import {
 import type { SkillId } from "../types/assets";
 import type {
   ActBand,
+  EquipmentChoiceState,
   EquipmentItemState,
   EquipmentSlot,
   SkillLevel,
@@ -79,7 +80,7 @@ export type GameSnapshot = {
   player: PlayerSnapshot;
   equipment: EquipmentSnapshot;
   pendingUpgradeChoices: UpgradeChoiceState[];
-  pendingEquipmentChoices: EquipmentItemState[];
+  pendingEquipmentChoices: EquipmentChoiceState[];
 };
 
 const initialSnapshot: GameSnapshot = {

@@ -96,7 +96,7 @@ export function castSelectedSkill() {
     || isGenericPlayerSkillId(skill.id)
   );
   p.skillCastDamageMultiplier = castDamageMultiplier;
-  applySkillCastEquipmentEffects(state);
+  applySkillCastEquipmentEffects(state, skill.id);
 
   const cx = p.x + p.w / 2;
   const cy = p.y + p.h / 2;
