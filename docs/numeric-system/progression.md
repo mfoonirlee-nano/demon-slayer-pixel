@@ -199,38 +199,40 @@ hp = Math.min(newMaxHp, hp + healOnLevelUp);
 xpToNextLevel(level) = Math.floor(
   baseXp
   + xpLinear * level
-  + xpCurve * level ** 1.45
+  + xpCurve * level ** 1.6
 );
 ```
 
 推荐参数：
 
 ```ts
-baseXp = 50;
-xpLinear = 22;
-xpCurve = 13;
+baseXp = 650;
+xpLinear = 45;
+xpCurve = 5;
 ```
 
 最终公式：
 
 ```ts
-xpToNextLevel(level) = Math.floor(50 + 22 * level + 13 * level ** 1.45);
+xpToNextLevel(level) = Math.floor(650 + 45 * level + 5 * level ** 1.6);
 ```
 
 示例值：
 
 | 当前等级 | 升下一级 XP |
 | ---: | ---: |
-| Lv1 → Lv2 | 85 |
-| Lv2 → Lv3 | 129 |
-| Lv3 → Lv4 | 177 |
-| Lv4 → Lv5 | 228 |
-| Lv5 → Lv6 | 281 |
-| Lv10 → Lv11 | 637 |
-| Lv15 → Lv16 | 1026 |
-| Lv20 → Lv21 | 1455 |
-| Lv30 → Lv31 | 2421 |
-| Lv50 → Lv51 | 4752 |
+| Lv1 → Lv2 | 700 |
+| Lv2 → Lv3 | 755 |
+| Lv3 → Lv4 | 813 |
+| Lv4 → Lv5 | 875 |
+| Lv5 → Lv6 | 940 |
+| Lv10 → Lv11 | 1299 |
+| Lv15 → Lv16 | 1705 |
+| Lv20 → Lv21 | 2153 |
+| Lv30 → Lv31 | 3154 |
+| Lv50 → Lv51 | 5514 |
+
+当前曲线按现有 enemy director 的 13 幕结构校准：完整清掉每幕的普通刷怪、Boss 前奏增援和 Boss 后，至少能推进 1 个局内等级；首幕不再因为 85 XP 的旧需求连续升级。
 
 ## XP Sources
 

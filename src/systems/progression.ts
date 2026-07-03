@@ -35,9 +35,9 @@ import {
 } from "./playerSkills";
 import { syncSkillChargesForEquipment } from "./equipment";
 
-const BASE_XP = 50;
-const XP_LINEAR = 22;
-const XP_CURVE = 13;
+const BASE_XP = 650;
+const XP_LINEAR = 45;
+const XP_CURVE = 5;
 const ATTACK_LINEAR = 1.2;
 const ATTACK_CURVE = 1.6;
 const HP_LINEAR = 10;
@@ -45,7 +45,7 @@ const HP_CURVE = 8;
 const SKILL_ENERGY_LINEAR = 10;
 const MIN_LEVEL_HEAL = 10;
 const LEVEL_HEAL_RATIO = 0.8;
-const XP_CURVE_EXPONENT = 1.45;
+const XP_CURVE_EXPONENT = 1.6;
 const SPLITTER_CHILD_XP = 3;
 const DEFAULT_ENEMY_XP = 8;
 const REGULAR_ELITE_XP_MULTIPLIER = 1.5;
