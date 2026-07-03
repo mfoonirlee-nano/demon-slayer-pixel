@@ -16,6 +16,9 @@ const LINE_PROJECTILE_LEVEL_TWO_DAMAGE_MULTIPLIER = 1.18;
 const BOSS_DROP_FAIL_ROLL = 0.99;
 const RUNNER_XP = 10;
 const ELITE_RUNNER_XP = 15;
+const UPGRADE_CHOICE_COUNT = 3;
+const MAX_UNLEARNED_CHOICE_COUNT = 2;
+const MAX_TEST_SKILL_LEVEL = 3;
 
 describe("run progression skills", () => {
   it("starts each run with the three default normal skills learned and equipped", () => {
@@ -35,26 +38,55 @@ describe("run progression skills", () => {
     expect(hasLearnedUltimate(state)).toBe(false);
   });
 
-  it("does not offer ultimate upgrades before the boss drop teaches the ultimate", () => {
+  it("always offers the ultimate unlock before it is learned while keeping a learned skill upgrade", () => {
     const state = createInitialState();
 
     addRunXp(state, xpToNextLevel(1));
 
     expect(state.player.runLevel).toBe(2);
+    expect(state.pendingUpgradeChoices).toHaveLength(UPGRADE_CHOICE_COUNT);
     expect(state.pendingUpgradeChoices.map((choice) => choice.type)).toEqual([
-      "unlockSkill",
+      "upgradeUltimate",
       "upgradeSkill",
       "unlockSkill",
     ]);
     expect(state.pendingUpgradeChoices[0]).toMatchObject({
-      skillId: SKILL_IDS.dashReposition,
+      title: "习得终式",
       nextLevel: 1,
     });
     expect(state.pendingUpgradeChoices[1]).toMatchObject({
       skillId: SKILL_IDS.lineProjectile,
       nextLevel: 2,
     });
-    expect(state.pendingUpgradeChoices.some((choice) => choice.type === "upgradeUltimate")).toBe(false);
+    expect(state.pendingUpgradeChoices.filter((choice) => choice.type === "unlockSkill")).toHaveLength(1);
+  });
+
+  it("limits unlearned normal skill options to two", () => {
+    const state = createInitialState();
+    state.player.ultimateLevel = MAX_TEST_SKILL_LEVEL;
+    state.player.skillLevels[SKILL_IDS.lineProjectile] = MAX_TEST_SKILL_LEVEL;
+    state.player.skillLevels[SKILL_IDS.closeArc] = MAX_TEST_SKILL_LEVEL;
+    state.player.skillLevels[SKILL_IDS.guardCounter] = MAX_TEST_SKILL_LEVEL;
+
+    addRunXp(state, xpToNextLevel(1));
+
+    expect(
+      state.pendingUpgradeChoices.filter((choice) => choice.type === "unlockSkill").length,
+    ).toBeLessThanOrEqual(MAX_UNLEARNED_CHOICE_COUNT);
+  });
+
+  it("counts the ultimate unlock against the unlearned option limit", () => {
+    const state = createInitialState();
+    state.player.skillLevels[SKILL_IDS.lineProjectile] = MAX_TEST_SKILL_LEVEL;
+    state.player.skillLevels[SKILL_IDS.closeArc] = MAX_TEST_SKILL_LEVEL;
+    state.player.skillLevels[SKILL_IDS.guardCounter] = MAX_TEST_SKILL_LEVEL;
+
+    addRunXp(state, xpToNextLevel(1));
+
+    const unlearnedChoiceCount = state.pendingUpgradeChoices.filter((choice) => (
+      choice.type === "unlockSkill" || choice.title === "习得终式"
+    )).length;
+    expect(unlearnedChoiceCount).toBeLessThanOrEqual(MAX_UNLEARNED_CHOICE_COUNT);
   });
 
   it("can drop the ultimate unlock from a boss kill and learn it as level 1", () => {
@@ -94,7 +126,11 @@ describe("run progression skills", () => {
     const state = createInitialState();
 
     addRunXp(state, xpToNextLevel(1));
-    expect(applyUpgradeChoice(state, 0)).toBe(true);
+    const unlockSkillIndex = state.pendingUpgradeChoices.findIndex((choice) => (
+      choice.type === "unlockSkill" && choice.skillId === SKILL_IDS.dashReposition
+    ));
+    expect(unlockSkillIndex).toBeGreaterThanOrEqual(0);
+    expect(applyUpgradeChoice(state, unlockSkillIndex)).toBe(true);
 
     expect(state.player.skillLevels[SKILL_IDS.dashReposition]).toBe(1);
     expect(state.player.equippedSkillIds).toEqual([

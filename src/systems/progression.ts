@@ -53,6 +53,7 @@ const BOSS_XP_BASE = 90;
 const BOSS_XP_PER_KILL = 25;
 const MAX_SKILL_LEVEL = 3;
 const UPGRADE_CHOICE_COUNT = 3;
+const MAX_UNLEARNED_CHOICE_COUNT = 2;
 const BOSS_ULTIMATE_UNLOCK_DROP_CHANCE = 0.5;
 
 const ENEMY_XP_BY_SHEET_INDEX: Partial<Record<number, number>> = {
@@ -255,15 +256,32 @@ function createUpgradeChoices(state: GameState): UpgradeChoiceState[] {
   const ultimateChoice = hasLearnedUltimate(state) && state.player.ultimateLevel < MAX_SKILL_LEVEL
     ? createUltimateChoice(state, nextUltimateLevel)
     : null;
-  const choices = compactUpgradeChoices([
-    unlockChoices.shift(),
-    ultimateChoice,
-    upgradeChoices.shift(),
-  ]);
+  const choices: UpgradeChoiceState[] = [];
+  const hasUltimate = hasLearnedUltimate(state);
+  let unlearnedChoiceCount = 0;
+  const addChoice = (choice: UpgradeChoiceState | null | undefined) => {
+    if (!choice || choices.length >= UPGRADE_CHOICE_COUNT) return;
+    const isUnlearnedChoice = choice.type === "unlockSkill" || (!hasUltimate && choice.type === "upgradeUltimate");
+    if (isUnlearnedChoice) {
+      if (unlearnedChoiceCount >= MAX_UNLEARNED_CHOICE_COUNT) return;
+      unlearnedChoiceCount += 1;
+    }
+    choices.push(choice);
+  };
+
+  if (hasUltimate) {
+    addChoice(unlockChoices.shift());
+    addChoice(ultimateChoice);
+    addChoice(upgradeChoices.shift());
+  } else {
+    addChoice(createUltimateChoice(state, 1));
+    addChoice(upgradeChoices.shift());
+    addChoice(unlockChoices.shift());
+  }
 
   for (const choice of [...unlockChoices, ...upgradeChoices]) {
     if (choices.length >= UPGRADE_CHOICE_COUNT) break;
-    choices.push(choice);
+    addChoice(choice);
   }
 
   return choices;
@@ -280,10 +298,6 @@ function createUltimateChoice(state: GameState, nextLevel: UltimateLevel): Upgra
       : "学会终式·月潮无间。大招能量蓄满后，可释放月潮强化状态。",
     nextLevel,
   };
-}
-
-function compactUpgradeChoices(choices: Array<UpgradeChoiceState | null | undefined>) {
-  return choices.filter((choice): choice is UpgradeChoiceState => Boolean(choice));
 }
 
 function implementedSkillIds(): SkillId[] {
