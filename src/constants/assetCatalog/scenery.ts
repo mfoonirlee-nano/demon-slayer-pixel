@@ -16,6 +16,21 @@ type GroundTileSet = {
   regions: GroundTileRegion[];
 };
 
+const GROUND_TILE_VISIBLE_BUFFER_TILES = 8;
+const GROUND_TILE_TRANSITION_FRAME_COUNT = 4;
+const GROUND_TILE_TRANSITION_SCROLL_TILES = (
+  GROUND_TILE_VISIBLE_BUFFER_TILES + GROUND_TILE_TRANSITION_FRAME_COUNT
+);
+const GROUND_TILE_SIZE = 150;
+const GROUND_TILE_SCROLL_SPEED = 48;
+const GROUND_TILE_TRANSITION_SECONDS = (
+  GROUND_TILE_TRANSITION_SCROLL_TILES * GROUND_TILE_SIZE / GROUND_TILE_SCROLL_SPEED
+);
+
+function repeatedGroundTiles(set: GroundTileSetKey, count: number): GroundTilePatternEntry[] {
+  return Array.from({ length: count }, () => ({ set }));
+}
+
 export const SKY_SPRITES: {
   src: string;
   image: HTMLImageElement | null;
@@ -203,12 +218,12 @@ export const GROUND_TILE_SPRITES: {
   patterns: Record<GroundTilePatternKey, GroundTilePatternEntry[]>;
   sets: Record<GroundTileSetKey, GroundTileSet>;
 } = {
-  tileSize: 150,
+  tileSize: GROUND_TILE_SIZE,
   drawOffsetY: -10,
-  scrollSpeed: 48,
-  bossApproachTransitionTiles: 6,
-  bossExitTransitionTiles: 6,
-  bossExitTransitionSeconds: 5,
+  scrollSpeed: GROUND_TILE_SCROLL_SPEED,
+  bossApproachTransitionTiles: GROUND_TILE_TRANSITION_SCROLL_TILES,
+  bossExitTransitionTiles: GROUND_TILE_TRANSITION_SCROLL_TILES,
+  bossExitTransitionSeconds: GROUND_TILE_TRANSITION_SECONDS,
   minBossApproachTransitionSeconds: 1.5,
   patterns: {
     forest: [
@@ -216,26 +231,24 @@ export const GROUND_TILE_SPRITES: {
       { set: "forest" }, { set: "forest" }, { set: "forest" }, { set: "forest" },
     ],
     forestToShrine: [
-      { set: "forest" }, { set: "forest" },
+      ...repeatedGroundTiles("forest", GROUND_TILE_VISIBLE_BUFFER_TILES),
       { set: "forestToShrine", regionIndex: 0 },
       { set: "forestToShrine", regionIndex: 1 },
       { set: "forestToShrine", regionIndex: 2 },
       { set: "forestToShrine", regionIndex: 3 },
-      { set: "shrine" }, { set: "shrine" }, { set: "shrine" }, { set: "shrine" },
-      { set: "shrine" }, { set: "shrine" }, { set: "shrine" }, { set: "shrine" },
+      ...repeatedGroundTiles("shrine", GROUND_TILE_VISIBLE_BUFFER_TILES),
     ],
     shrine: [
       { set: "shrine" }, { set: "shrine" }, { set: "shrine" }, { set: "shrine" },
       { set: "shrine" }, { set: "shrine" }, { set: "shrine" }, { set: "shrine" },
     ],
     shrineToForest: [
-      { set: "shrine" }, { set: "shrine" },
+      ...repeatedGroundTiles("shrine", GROUND_TILE_VISIBLE_BUFFER_TILES),
       { set: "shrineToForest", regionIndex: 0 },
       { set: "shrineToForest", regionIndex: 1 },
       { set: "shrineToForest", regionIndex: 2 },
       { set: "shrineToForest", regionIndex: 3 },
-      { set: "forest" }, { set: "forest" }, { set: "forest" }, { set: "forest" },
-      { set: "forest" }, { set: "forest" }, { set: "forest" }, { set: "forest" },
+      ...repeatedGroundTiles("forest", GROUND_TILE_VISIBLE_BUFFER_TILES),
     ],
   },
   sets: {

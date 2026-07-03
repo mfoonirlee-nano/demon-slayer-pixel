@@ -18,6 +18,7 @@ import {
 import {
   ACT_TIMING_SCALE,
   actForBossKills,
+  bossApproachGroundTransitionSeconds,
   bossGateForAct,
   bossPreludeWaitSeconds,
   rewardValuesForAct,
@@ -63,6 +64,7 @@ const ACT_ONE_PLAYER_MAX_HP = 100;
 const SECOND_UPDATE_ELAPSED_SECONDS = 48;
 const DIRECTOR_STEP_SECONDS = 0.25;
 const MAX_DIRECTOR_PRELUDE_STEPS = 800;
+const ACT_ONE_APPROACH_TRANSITION_SECONDS = bossApproachGroundTransitionSeconds(ACT_ONE);
 const BOSS_PHASE_FIVE = 5;
 const FINAL_BOSS_SUMMON_BUDGET_COUNT = 4;
 const BOSS_SUMMON_SPAWN_COST = 1;
@@ -254,7 +256,7 @@ describe("enemy director rules", () => {
       bossActive: false,
     });
     const secondUpdate = updateEnemyDirector(director, {
-      dt: bossPreludeWaitSeconds(ACT_ONE),
+      dt: ACT_ONE_APPROACH_TRANSITION_SECONDS,
       bossKills: NO_BOSS_KILLS,
       elapsedSeconds: SECOND_UPDATE_ELAPSED_SECONDS,
       activeEnemies: [],
@@ -265,6 +267,72 @@ describe("enemy director rules", () => {
 
     expect(firstUpdate.spawnBoss).toBe(false);
     expect(secondUpdate.spawnBoss).toBe(true);
+  });
+
+  it("does not request the boss before the approach ground transition can complete", () => {
+    const director = createEnemyDirectorState(TEST_RUN_SEED);
+    director.wavesCleared = ACT_ONE_MIN_WAVES;
+    director.elapsedInAct = ACT_ONE_MIN_ELAPSED;
+
+    updateEnemyDirector(director, {
+      dt: 0,
+      bossKills: NO_BOSS_KILLS,
+      elapsedSeconds: ACT_ONE_MIN_ELAPSED,
+      activeEnemies: [],
+      playerHp: ACT_ONE_PLAYER_HP,
+      playerMaxHp: ACT_ONE_PLAYER_MAX_HP,
+      bossActive: false,
+    });
+    const earlyUpdate = updateEnemyDirector(director, {
+      dt: ACT_ONE_APPROACH_TRANSITION_SECONDS - DIRECTOR_STEP_SECONDS,
+      bossKills: NO_BOSS_KILLS,
+      elapsedSeconds: SECOND_UPDATE_ELAPSED_SECONDS,
+      activeEnemies: [],
+      playerHp: ACT_ONE_PLAYER_HP,
+      playerMaxHp: ACT_ONE_PLAYER_MAX_HP,
+      bossActive: false,
+    });
+    const readyUpdate = updateEnemyDirector(director, {
+      dt: DIRECTOR_STEP_SECONDS,
+      bossKills: NO_BOSS_KILLS,
+      elapsedSeconds: SECOND_UPDATE_ELAPSED_SECONDS + DIRECTOR_STEP_SECONDS,
+      activeEnemies: [],
+      playerHp: ACT_ONE_PLAYER_HP,
+      playerMaxHp: ACT_ONE_PLAYER_MAX_HP,
+      bossActive: false,
+    });
+
+    expect(earlyUpdate.spawnBoss).toBe(false);
+    expect(readyUpdate.spawnBoss).toBe(true);
+  });
+
+  it("spawns regular reinforcements during the boss prelude", () => {
+    const director = createEnemyDirectorState(TEST_RUN_SEED);
+    director.wavesCleared = ACT_ONE_MIN_WAVES;
+    director.elapsedInAct = ACT_ONE_MIN_ELAPSED;
+
+    updateEnemyDirector(director, {
+      dt: 0,
+      bossKills: NO_BOSS_KILLS,
+      elapsedSeconds: ACT_ONE_MIN_ELAPSED,
+      activeEnemies: [],
+      playerHp: ACT_ONE_PLAYER_HP,
+      playerMaxHp: ACT_ONE_PLAYER_MAX_HP,
+      bossActive: false,
+    });
+    const update = updateEnemyDirector(director, {
+      dt: DIRECTOR_STEP_SECONDS,
+      bossKills: NO_BOSS_KILLS,
+      elapsedSeconds: SECOND_UPDATE_ELAPSED_SECONDS,
+      activeEnemies: [],
+      playerHp: ACT_ONE_PLAYER_HP,
+      playerMaxHp: ACT_ONE_PLAYER_MAX_HP,
+      bossActive: false,
+    });
+
+    expect(update.spawnBoss).toBe(false);
+    expect(update.spawnRequests.length).toBeGreaterThan(0);
+    expect(update.spawnRequests.every((request) => !request.elite)).toBe(true);
   });
 
   it("does not request regular tier-one enemies in the final pool", () => {

@@ -254,6 +254,7 @@ export type BossState = {
   skillMode: BossSkillMode;
   recoveryTimer: number;
   awakened: boolean;
+  spawnedAt: number;
   comboStep?: number;
   phaseShiftTimer?: number;
   spiderStringCageUsed?: boolean;

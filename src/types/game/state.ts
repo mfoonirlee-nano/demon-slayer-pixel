@@ -79,6 +79,8 @@ export type EnemyDirectorState = {
   awakenedProfileOrder: EnemyProfileId[];
   bossPrelude: null | {
     elapsed: number;
+    reinforcementTimer: number;
+    reinforcementsSpawned: number;
   };
   wave: null | {
     phase: "prepare" | "spawning" | "breather";

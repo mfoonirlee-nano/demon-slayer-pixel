@@ -71,6 +71,7 @@ function drawGroundTileLayer(layer: GroundTileLayer) {
   const renderPlan = resolveGroundTileRenderPlan({
     elapsed: state.elapsed,
     bossActive: state.boss !== null,
+    bossActiveElapsed: state.boss ? Math.max(0, state.elapsed - state.boss.spawnedAt) : null,
     bossKills: state.bossKills,
     bossPreludeElapsed: state.enemyDirector.bossPrelude?.elapsed ?? null,
     act: state.enemyDirector.act,

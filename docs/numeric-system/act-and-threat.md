@@ -108,6 +108,8 @@ Boss 前 prelude 等待随幕数线性递减：
 bossPreludeWaitSeconds = max(0, 3 * (13 - act) / 12)
 ```
 
+运行时会至少等待地面“月林 → 神社石地”按普通地面速度完成过渡后再刷新 Boss。地面滚动速度始终保持 `GROUND_TILE_SPRITES.scrollSpeed`；延长的 prelude 期间会按预算补普通小怪。
+
 ## Code Sources
 
 目标落地点：

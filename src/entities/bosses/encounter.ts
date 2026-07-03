@@ -60,6 +60,7 @@ export function createBossEncounter(input: BossEncounterInput): LiveBossState {
     skillMode: archetype.skillMode,
     recoveryTimer: 0,
     awakened,
+    spawnedAt: input.elapsedSeconds,
   };
 }
 

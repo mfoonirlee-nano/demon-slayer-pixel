@@ -170,6 +170,8 @@ type EnemyDirectorState = {
   wavesCleared: number;
   bossPrelude: null | {
     elapsed: number;
+    reinforcementTimer: number;
+    reinforcementsSpawned: number;
   };
   wave: null | {
     phase: "prepare" | "spawning" | "breather";
@@ -447,20 +449,12 @@ Boss 出现由“完成若干常规波 + 最短时间”触发，并有最长时
 | 7-12 | `5` | `56s` | `90s` |
 | 13 | `3` | `34s` | `56s` |
 
-Boss 条件满足后进入 prelude：不再开新常规波，但保留场上普通残敌。等待时间随幕数线性递减：
+Boss 条件满足后进入 prelude：不再开新常规波，但保留场上普通残敌。等待时间随幕数线性递减；运行时会取该等待时间和地面“月林 → 神社石地”按普通滚动速度完成过渡所需时长中的较大值，保证 Boss 刷新前地面过渡已经完成。地面滚动速度始终保持 `GROUND_TILE_SPRITES.scrollSpeed`，prelude 延长期间按预算补普通小怪，避免场面空等：
 
 ```ts
 function bossPreludeWaitSeconds(act: number) {
   const clampedAct = Math.max(1, Math.min(13, act));
   return Math.max(0, 3 * (13 - clampedAct) / 12);
-}
-```
-
-Boss 前降压目标使用普通敌人的 active spawn cost：
-
-```ts
-function bossPreludeTargetCost(act: number) {
-  return Math.max(2, 5 - act * 0.25);
 }
 ```
 

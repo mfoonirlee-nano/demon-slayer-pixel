@@ -1,5 +1,6 @@
 import type { BossArchetype } from "../entities/bosses/registry";
 import { BOSS_ARCHETYPE_IDS } from "../entities/bosses/registry";
+import { GROUND_TILE_SPRITES } from "../constants/assetCatalog/scenery";
 import type { ActBand } from "../types/game-state";
 
 const MAX_ACT = 13;
@@ -16,8 +17,6 @@ const AWAKENED_LAST_ACT = 12;
 const EARLY_ACT_LAST = 2;
 const MID_ACT_LAST = 4;
 const PRELUDE_BASE_WAIT_SECONDS = 3;
-const PRELUDE_TARGET_BASE_COST = 5;
-const PRELUDE_TARGET_COST_PER_ACT = 0.25;
 export const ACT_TIMING_SCALE = 0.75;
 
 type BossGate = { minWaves: number; minElapsed: number; maxElapsed: number };
@@ -119,8 +118,18 @@ export function bossPreludeWaitSeconds(act: number) {
   return Math.max(0, PRELUDE_BASE_WAIT_SECONDS * (MAX_ACT - clampAct(act)) / (MAX_ACT - 1));
 }
 
-export function bossPreludeTargetCost(act: number) {
-  return Math.max(2, PRELUDE_TARGET_BASE_COST - clampAct(act) * PRELUDE_TARGET_COST_PER_ACT);
+export function bossApproachGroundTransitionSeconds(act: number) {
+  const groundTransitionSeconds = (
+    GROUND_TILE_SPRITES.bossApproachTransitionTiles
+    * GROUND_TILE_SPRITES.tileSize
+    / GROUND_TILE_SPRITES.scrollSpeed
+  );
+
+  return Math.max(
+    GROUND_TILE_SPRITES.minBossApproachTransitionSeconds,
+    bossPreludeWaitSeconds(act),
+    groundTransitionSeconds,
+  );
 }
 
 export function rewardValuesForAct(act: number) {

@@ -288,7 +288,7 @@ Burrower 运行时由 `BURROWER_SHEETS` 暴露并预加载。普通刷怪在 `el
 | `ground/moon_shrine_to_forest_transition_base.png` | `600x150` | `150x150` | 神社石地到月林过渡主体层 |
 | `ground/moon_shrine_to_forest_transition_occlusion.png` | `600x150` | `150x150` | 神社石地到月林过渡遮挡层 |
 
-运行时绘制顺序为 `drawGroundTileBase()`、`drawBindingZonesBack()`、角色/敌人/技能主体、`drawGroundTileOcclusion()`、`drawBindingZonesFront()`，让咒圈与低矮地面遮挡保持前后穿插。地面 pattern 由 Boss 阶段驱动：普通战斗使用月林，Boss prelude 使用月林到神社石地过渡，Boss 战中保持神社石地，Boss 击败后的 `5s` 内使用神社石地到月林过渡。base 与 occlusion 共用同一横向偏移；两组过渡资源在 pattern 中显式按 `0→1→2→3` 帧序绘制，避免列号取模导致过渡帧错位。旧 `ground/*_front.png` 资源不再作为 ground 前景接入，已移动为平台 legacy 参考素材。
+运行时绘制顺序为 `drawGroundTileBase()`、`drawBindingZonesBack()`、角色/敌人/技能主体、`drawGroundTileOcclusion()`、`drawBindingZonesFront()`，让咒圈与低矮地面遮挡保持前后穿插。地面 pattern 由 Boss 阶段驱动：普通战斗使用月林，Boss prelude 使用月林到神社石地过渡，Boss 战中保持神社石地，Boss 击败后使用神社石地到月林过渡。所有地面阶段都保持 `GROUND_TILE_SPRITES.scrollSpeed` 匀速滚动；Boss 战石地滚动从过渡完成位置继续，避免入场帧跳动。base 与 occlusion 共用同一横向偏移；两组过渡资源在 pattern 中显式按 `0→1→2→3` 帧序绘制，避免列号取模导致过渡帧错位。旧 `ground/*_front.png` 资源不再作为 ground 前景接入，已移动为平台 legacy 参考素材。
 
 ## 资源更新流程
 

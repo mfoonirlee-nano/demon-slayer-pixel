@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 
-import { GROUND_TILE_SPRITES } from "../constants";
-import { bossPreludeWaitSeconds } from "../systems/runProgression";
+import { GROUND_TILE_SPRITES, WIDTH } from "../constants";
+import { bossApproachGroundTransitionSeconds } from "../systems/runProgression";
 import { resolveGroundTileRenderPlan, type GroundTileRenderInput } from "./groundTiles";
 
 const BASE_INPUT: GroundTileRenderInput = {
@@ -9,6 +9,7 @@ const BASE_INPUT: GroundTileRenderInput = {
   bossActive: false,
   bossKills: 0,
   bossPreludeElapsed: null,
+  bossActiveElapsed: null,
   act: 1,
   elapsedInAct: 10,
 };
@@ -22,11 +23,20 @@ const TRANSITION_FRAME_ORDER = [
   TRANSITION_FRAME_2,
   TRANSITION_FRAME_3,
 ];
+const VISIBLE_TILE_COUNT = Math.ceil(WIDTH / GROUND_TILE_SPRITES.tileSize) + 1;
+const ONE_SECOND = 1;
 
 function transitionFrames(patternKey: "forestToShrine" | "shrineToForest") {
   return GROUND_TILE_SPRITES.patterns[patternKey]
     .filter((entry) => entry.set === patternKey)
     .map((entry) => entry.regionIndex);
+}
+
+function visibleSets(patternKey: "forestToShrine" | "shrineToForest", scrollTiles: number) {
+  const pattern = GROUND_TILE_SPRITES.patterns[patternKey];
+  return Array.from({ length: VISIBLE_TILE_COUNT }, (_, index) => (
+    pattern[(scrollTiles + index) % pattern.length]?.set
+  ));
 }
 
 describe("ground tile render plan", () => {
@@ -42,7 +52,7 @@ describe("ground tile render plan", () => {
     const start = resolveGroundTileRenderPlan({ ...BASE_INPUT, bossPreludeElapsed: 0 });
     const end = resolveGroundTileRenderPlan({
       ...BASE_INPUT,
-      bossPreludeElapsed: bossPreludeWaitSeconds(BASE_INPUT.act),
+      bossPreludeElapsed: bossApproachGroundTransitionSeconds(BASE_INPUT.act),
     });
 
     expect(start.patternKey).toBe("forestToShrine");
@@ -53,11 +63,61 @@ describe("ground tile render plan", () => {
     );
   });
 
+  it("keeps the approach transition at the normal ground scroll speed", () => {
+    const start = resolveGroundTileRenderPlan({ ...BASE_INPUT, bossPreludeElapsed: 0 });
+    const oneSecond = resolveGroundTileRenderPlan({ ...BASE_INPUT, bossPreludeElapsed: ONE_SECOND });
+
+    expect(oneSecond.scrollPixels - start.scrollPixels).toBe(GROUND_TILE_SPRITES.scrollSpeed);
+  });
+
   it("keeps shrine stone under the active boss", () => {
-    const plan = resolveGroundTileRenderPlan({ ...BASE_INPUT, bossActive: true });
+    const plan = resolveGroundTileRenderPlan({
+      ...BASE_INPUT,
+      bossActive: true,
+      bossActiveElapsed: 0,
+    });
 
     expect(plan.patternKey).toBe("shrine");
     expect(plan.pattern).toBe(GROUND_TILE_SPRITES.patterns.shrine);
+  });
+
+  it("anchors active boss stone to the completed approach transition", () => {
+    const transitionEnd = resolveGroundTileRenderPlan({
+      ...BASE_INPUT,
+      bossPreludeElapsed: bossApproachGroundTransitionSeconds(BASE_INPUT.act),
+    });
+    const bossStart = resolveGroundTileRenderPlan({
+      ...BASE_INPUT,
+      bossActive: true,
+      bossActiveElapsed: 0,
+    });
+
+    expect(bossStart.scrollPixels).toBe(transitionEnd.scrollPixels);
+  });
+
+  it("keeps active boss stone at the normal ground scroll speed", () => {
+    const start = resolveGroundTileRenderPlan({
+      ...BASE_INPUT,
+      bossActive: true,
+      bossActiveElapsed: 0,
+    });
+    const oneSecond = resolveGroundTileRenderPlan({
+      ...BASE_INPUT,
+      bossActive: true,
+      bossActiveElapsed: ONE_SECOND,
+    });
+
+    expect(oneSecond.scrollPixels - start.scrollPixels).toBe(GROUND_TILE_SPRITES.scrollSpeed);
+  });
+
+  it("keeps the visible approach transition forest at the start and stone at the end", () => {
+    expect(visibleSets("forestToShrine", 0).every((set) => set === "forest")).toBe(true);
+    expect(
+      visibleSets(
+        "forestToShrine",
+        GROUND_TILE_SPRITES.bossApproachTransitionTiles,
+      ).every((set) => set === "shrine"),
+    ).toBe(true);
   });
 
   it("scrolls back from shrine stone to moon forest after a boss defeat", () => {
@@ -75,6 +135,21 @@ describe("ground tile render plan", () => {
     expect(start.patternKey).toBe("shrineToForest");
     expect(start.scrollPixels).toBe(0);
     expect(end.patternKey).toBe("forest");
+  });
+
+  it("keeps the post-boss exit transition at the normal ground scroll speed", () => {
+    const start = resolveGroundTileRenderPlan({
+      ...BASE_INPUT,
+      bossKills: 1,
+      elapsedInAct: 0,
+    });
+    const oneSecond = resolveGroundTileRenderPlan({
+      ...BASE_INPUT,
+      bossKills: 1,
+      elapsedInAct: ONE_SECOND,
+    });
+
+    expect(oneSecond.scrollPixels - start.scrollPixels).toBe(GROUND_TILE_SPRITES.scrollSpeed);
   });
 
   it("pins transition frames in left-to-right asset order", () => {

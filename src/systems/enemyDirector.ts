@@ -21,9 +21,8 @@ import {
 import {
   ACT_TIMING_SCALE,
   actForBossKills,
+  bossApproachGroundTransitionSeconds,
   bossGateForAct,
-  bossPreludeTargetCost,
-  bossPreludeWaitSeconds,
 } from "./runProgression";
 
 export {
@@ -85,8 +84,13 @@ const EXTRA_ENTRY_RANDOM_DELAY = UNCOMPRESSED_EXTRA_ENTRY_RANDOM_DELAY * ACT_TIM
 const MAX_WAVE_ENTRIES = 5;
 const UNCOMPRESSED_PREPARE_WAVE_SECONDS = 0.65;
 const UNCOMPRESSED_ACTIVE_COST_BREATHER_SCALE = 0.22;
+const UNCOMPRESSED_BOSS_PRELUDE_REINFORCEMENT_INTERVAL = 2;
 const PREPARE_WAVE_SECONDS = UNCOMPRESSED_PREPARE_WAVE_SECONDS * ACT_TIMING_SCALE;
 const ACTIVE_COST_BREATHER_SCALE = UNCOMPRESSED_ACTIVE_COST_BREATHER_SCALE * ACT_TIMING_SCALE;
+const BOSS_PRELUDE_REINFORCEMENT_INTERVAL = UNCOMPRESSED_BOSS_PRELUDE_REINFORCEMENT_INTERVAL * ACT_TIMING_SCALE;
+const BOSS_PRELUDE_REINFORCEMENT_BUDGET_RATIO = 0.7;
+const BOSS_PRELUDE_REINFORCEMENT_ACT_SALT = 7919;
+const BOSS_PRELUDE_REINFORCEMENT_SPAWN_SALT = 6151;
 const LOW_HEALTH_RATIO = 0.35;
 const AWAKENED_ELITE_CHANCE = 0.45;
 const FINAL_SECOND_ELITE_CHANCE = 0.5;
@@ -368,12 +372,83 @@ function shouldStartBossPrelude(director: EnemyDirectorState) {
   return director.wavesCleared >= gate.minWaves && director.elapsedInAct >= gate.minElapsed;
 }
 
-function updateBossPrelude(director: EnemyDirectorState, dt: number, activeCost: number) {
+function preludeReinforcementRng(director: EnemyDirectorState) {
+  return seededRandom(
+    director.runSeed
+    + director.act * BOSS_PRELUDE_REINFORCEMENT_ACT_SALT
+    + (director.bossPrelude?.reinforcementsSpawned ?? 0) * BOSS_PRELUDE_REINFORCEMENT_SPAWN_SALT,
+  );
+}
+
+function queuedSpawnCost(spawnRequests: readonly EnemySpawnRequest[]) {
+  return spawnRequests.reduce((total, request) => (
+    total + enemySpawnCost(request.enemyId, request.elite)
+  ), 0);
+}
+
+function queueBossPreludeReinforcement(
+  director: EnemyDirectorState,
+  activeEnemies: readonly EnemyState[],
+  spawnRequests: EnemySpawnRequest[],
+) {
+  if (!director.bossPrelude) return false;
+
+  const rng = preludeReinforcementRng(director);
+  const enemyId = pickPoolEnemy(
+    director,
+    rng,
+    (candidateId) => ENEMY_ARCHETYPES[candidateId].complexityTier <= 2,
+  ) ?? pickPoolEnemy(director, rng);
+  if (!enemyId) return false;
+
+  const spawnCost = enemySpawnCost(enemyId, false);
+  const activeCost = activeSpawnCost(activeEnemies) + queuedSpawnCost(spawnRequests);
+  const preludeBudget = maxActiveSpawnCostForAct(director.act, director.elapsedInAct)
+    * BOSS_PRELUDE_REINFORCEMENT_BUDGET_RATIO;
+  if (activeCost + spawnCost > preludeBudget) return false;
+
+  const role = roleForEnemy(enemyId, director);
+  spawnRequests.push({
+    enemyId,
+    pattern: spawnPatternForRole(role, rng),
+    elite: false,
+  });
+  rememberRecentEnemy(director, enemyId);
+  director.bossPrelude.reinforcementsSpawned += 1;
+  return true;
+}
+
+function updateBossPreludeReinforcements(
+  director: EnemyDirectorState,
+  dt: number,
+  activeEnemies: readonly EnemyState[],
+  spawnRequests: EnemySpawnRequest[],
+) {
+  const prelude = director.bossPrelude;
+  if (!prelude) return;
+
+  prelude.reinforcementTimer -= dt;
+  while (prelude.reinforcementTimer <= 0) {
+    if (!queueBossPreludeReinforcement(director, activeEnemies, spawnRequests)) {
+      prelude.reinforcementTimer = BOSS_PRELUDE_REINFORCEMENT_INTERVAL;
+      return;
+    }
+    prelude.reinforcementTimer += BOSS_PRELUDE_REINFORCEMENT_INTERVAL;
+  }
+}
+
+function updateBossPrelude(
+  director: EnemyDirectorState,
+  dt: number,
+  activeEnemies: readonly EnemyState[],
+  spawnRequests: EnemySpawnRequest[],
+) {
   if (!director.bossPrelude) return false;
   director.bossPrelude.elapsed += dt;
-  const readyByWait = director.bossPrelude.elapsed >= bossPreludeWaitSeconds(director.act);
-  const readyByPressure = activeCost <= bossPreludeTargetCost(director.act);
-  if (!readyByWait && !readyByPressure) return false;
+  if (director.bossPrelude.elapsed < bossApproachGroundTransitionSeconds(director.act)) {
+    updateBossPreludeReinforcements(director, dt, activeEnemies, spawnRequests);
+    return false;
+  }
 
   director.bossPrelude = null;
   director.wave = null;
@@ -444,15 +519,21 @@ export function updateEnemyDirector(
   if (input.bossActive) return { spawnRequests, spawnBoss: false };
 
   director.elapsedInAct += input.dt;
-  const activeCost = activeSpawnCost(input.activeEnemies);
-  if (updateBossPrelude(director, input.dt, activeCost)) {
+  if (updateBossPrelude(director, input.dt, input.activeEnemies, spawnRequests)) {
     return { spawnRequests, spawnBoss: true };
   }
 
   if (!director.bossPrelude && shouldStartBossPrelude(director)) {
-    director.bossPrelude = { elapsed: 0 };
+    director.bossPrelude = {
+      elapsed: 0,
+      reinforcementTimer: 0,
+      reinforcementsSpawned: 0,
+    };
     director.wave = null;
-    return { spawnRequests, spawnBoss: bossPreludeWaitSeconds(director.act) <= 0 };
+    return {
+      spawnRequests,
+      spawnBoss: bossApproachGroundTransitionSeconds(director.act) <= 0,
+    };
   }
 
   const lowHealth = input.playerMaxHp > 0 && input.playerHp / input.playerMaxHp < LOW_HEALTH_RATIO;
