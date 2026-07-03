@@ -59,7 +59,6 @@ export function drawSheetFrame(
   h: number,
   facing = 1,
   effect?: SpriteFrameEffect,
-  rotation = 0,
 ) {
   if (!ctx || !sheet.image) return;
   const safeFrame = ((frame % sheet.count) + sheet.count) % sheet.count;
@@ -67,7 +66,6 @@ export function drawSheetFrame(
   ctx.save();
   ctx.translate(x + w / 2, y + h / 2);
   ctx.scale(facing, 1);
-  if (rotation !== 0) ctx.rotate(rotation);
   if (effect?.filter) ctx.filter = effect.filter;
   ctx.drawImage(sheet.image, sx, 0, sheet.frameW, sheet.frameH, -w / 2, -h / 2, w, h);
   if (effect?.tint) drawFrameTint(sheet, safeFrame, -w / 2, -h / 2, w, h, effect.tint);

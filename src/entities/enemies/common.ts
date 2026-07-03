@@ -242,9 +242,8 @@ export function drawEnemySheetFrame(
   w: number,
   h: number,
   facing = 1,
-  rotation = 0,
 ) {
-  drawSheetFrame(sheet, frame, x, y, w, h, facing, enemyGrowthFrameEffect(enemy), rotation);
+  drawSheetFrame(sheet, frame, x, y, w, h, facing, enemyGrowthFrameEffect(enemy));
 }
 
 export function drawEnemyFrame(

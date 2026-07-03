@@ -98,6 +98,14 @@ const CRAWLER_LUNGE_SHEET: SpriteSheet = {
   image: null,
 };
 
+const CRAWLER_SPIN_LUNGE_SHEET: SpriteSheet = {
+  src: "assets/sprites/enemies/crawler/crawler_spin_lunge.png",
+  frameW: 314,
+  frameH: 145,
+  count: 8,
+  image: null,
+};
+
 export const CRAWLER_SHEETS: Record<CrawlerPhase, SpriteSheet> = {
   move: ENEMY_SHEETS[CRAWLER_SHEET_INDEX],
   windup: {
@@ -108,7 +116,7 @@ export const CRAWLER_SHEETS: Record<CrawlerPhase, SpriteSheet> = {
     image: null,
   },
   lunge: CRAWLER_LUNGE_SHEET,
-  leap: CRAWLER_LUNGE_SHEET,
+  leap: CRAWLER_SPIN_LUNGE_SHEET,
   recover: {
     src: "assets/sprites/enemies/crawler/crawler_recover.png",
     frameW: 314,

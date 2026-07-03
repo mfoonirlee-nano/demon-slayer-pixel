@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { GROUND_Y } from "../../constants";
+import { CRAWLER_SHEETS, GROUND_Y } from "../../constants";
 import { resetState, state } from "../../game/state";
 import type { ActBand, EnemyState } from "../../types/game-state";
 import { spawnEnemyById, updateEnemies } from "../enemy";
@@ -13,6 +13,7 @@ const TEST_PLAYER_CENTER_OFFSET = 118;
 const TARGET_SHIFT = 260;
 const LIMITED_CORRECTION_MAX_STEP = 20;
 const EXPECTED_BLOCKED_RETRY_FRAMES = 2;
+const SPIN_LUNGE_FRAME_COUNT = 8;
 
 function enterIntroCrawlerLunge() {
   resetState();
@@ -68,6 +69,12 @@ function enterCrawlerLeap(growthStage: Exclude<ActBand, "intro"> = "awakened") {
 }
 
 describe("crawler lunge tuning", () => {
+  it("uses a dedicated drawn spin-lunge sheet for leap frames", () => {
+    expect(CRAWLER_SHEETS.leap.src).toBe("assets/sprites/enemies/crawler/crawler_spin_lunge.png");
+    expect(CRAWLER_SHEETS.leap.count).toBe(SPIN_LUNGE_FRAME_COUNT);
+    expect(CRAWLER_SHEETS.leap).not.toBe(CRAWLER_SHEETS.lunge);
+  });
+
   it("travels the doubled intro lunge distance", () => {
     const { crawler, startX } = enterIntroCrawlerLunge();
 

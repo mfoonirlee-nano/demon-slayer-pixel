@@ -147,6 +147,7 @@ Crawler 专属动作素材：
 | `enemies/crawler/crawler.png` | `1256x145` | 4 | `314x145` | `move` | 低矮贴地移动，腿部交替但主体稳定 |
 | `enemies/crawler/crawler_windup.png` | `1256x145` | 4 | `314x145` | `windup` | 停住压低，前肢张开，红眼和前爪作为读招 |
 | `enemies/crawler/crawler_lunge.png` | `1570x145` | 5 | `314x145` | `lunge` | 短距离贴地前扑，前爪和少量尘迹/气弧烘进图集 |
+| `enemies/crawler/crawler_spin_lunge.png` | `2512x145` | 8 | `314x145` | `leap` | 蚀醒/终幕跳跃旋转前冲，旋转姿态烘进序列帧，不靠运行时旋转整图 |
 | `enemies/crawler/crawler_recover.png` | `942x145` | 3 | `314x145` | `recover` | 扑击后停顿，腿部回收，给玩家反打窗口 |
 
 Crawler 动作素材不提交 `*_source.png` 绿幕制作源图；运行时只加载以上透明 PNG。

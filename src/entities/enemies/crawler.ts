@@ -52,7 +52,6 @@ const CRAWLER_CONFIG = {
   collisionScaleX: 1.45,
   collisionScaleY: 1.15,
   moveAnimSpeed: 6,
-  leapSpinRotations: 2.35,
 } as const;
 
 const HALF_DIVISOR = 2;
@@ -83,12 +82,6 @@ const LANDING_CRACK_CENTER_Y = 3;
 const LANDING_CRACK_W = 24;
 const LANDING_CRACK_SHORT_W = 15;
 const LANDING_CRACK_H = 2;
-const SPIN_CUE_ALPHA = 0.32;
-const SPIN_CUE_OUTER_RADIUS_X_SCALE = 0.24;
-const SPIN_CUE_OUTER_RADIUS_Y_SCALE = 0.18;
-const SPIN_CUE_INNER_RADIUS_X_SCALE = 0.18;
-const SPIN_CUE_INNER_RADIUS_Y_SCALE = 0.12;
-const SPIN_CUE_CENTER_Y_RATIO = 0.48;
 
 function isCrawler(enemy: Pick<EnemyState, "sheetIndex">) {
   return enemy.sheetIndex === CRAWLER_SHEET_INDEX;
@@ -432,40 +425,6 @@ function drawCrawlerLandingWarning(enemy: EnemyState, phase: CrawlerPhase) {
   ctx.restore();
 }
 
-function drawCrawlerSpinCue(centerX: number, centerY: number, drawW: number, drawH: number, progress: number) {
-  if (!ctx) return;
-
-  ctx.save();
-  ctx.globalAlpha = SPIN_CUE_ALPHA;
-  ctx.strokeStyle = "rgba(214, 72, 78, 0.9)";
-  ctx.lineWidth = 2;
-  ctx.translate(centerX, centerY);
-  ctx.rotate(progress * FULL_CIRCLE * CRAWLER_CONFIG.leapSpinRotations);
-  ctx.beginPath();
-  ctx.ellipse(
-    0,
-    0,
-    drawW * SPIN_CUE_OUTER_RADIUS_X_SCALE,
-    drawH * SPIN_CUE_OUTER_RADIUS_Y_SCALE,
-    0,
-    0,
-    FULL_CIRCLE,
-  );
-  ctx.stroke();
-  ctx.beginPath();
-  ctx.ellipse(
-    0,
-    0,
-    drawW * SPIN_CUE_INNER_RADIUS_X_SCALE,
-    drawH * SPIN_CUE_INNER_RADIUS_Y_SCALE,
-    0,
-    0,
-    FULL_CIRCLE,
-  );
-  ctx.stroke();
-  ctx.restore();
-}
-
 function drawCrawler(enemy: EnemyState) {
   const phase = enemy.crawlerPhase ?? "move";
   const sheet = crawlerSheetForPhase(phase);
@@ -484,14 +443,7 @@ function drawCrawler(enemy: EnemyState) {
   const drawH = Math.round(sheet.frameH * drawScale);
   const centerX = enemyCenterX(enemy);
   const feetY = enemyFeetY(enemy);
-  const progress = crawlerPhaseProgress(enemy, phase);
-  const rotation = phase === "leap"
-    ? progress * FULL_CIRCLE * CRAWLER_CONFIG.leapSpinRotations
-    : 0;
 
-  if (phase === "leap") {
-    drawCrawlerSpinCue(centerX, enemy.y + enemy.h * SPIN_CUE_CENTER_Y_RATIO, drawW, drawH, progress);
-  }
   drawEnemySheetFrame(
     enemy,
     sheet,
@@ -501,7 +453,6 @@ function drawCrawler(enemy: EnemyState) {
     drawW,
     drawH,
     facing,
-    rotation,
   );
 }
 
