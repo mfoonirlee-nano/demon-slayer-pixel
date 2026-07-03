@@ -95,14 +95,18 @@ export function updateUltimateEffects() {
 
 export function drawUltimateTrails() {
   if (!ctx) return;
+  if (state.ultimateTrails.length === 0) return;
+
+  ctx.save();
+  ctx.globalCompositeOperation = "lighter";
+  ctx.strokeStyle = "rgba(126, 226, 255, 0.72)";
+  ctx.lineWidth = 2;
+  ctx.fillStyle = "rgba(156, 242, 255, 0.5)";
+
   for (const trail of state.ultimateTrails) {
     const t = trail.life / trail.maxLife;
     const ripple = Math.sin(trail.phase + trail.life * TRAIL_RIPPLE_PHASE_SCALE) * TRAIL_RIPPLE_AMPLITUDE;
-    ctx.save();
-    ctx.globalCompositeOperation = "lighter";
     ctx.globalAlpha = TRAIL_STROKE_ALPHA_BASE + t * TRAIL_STROKE_ALPHA_SCALE;
-    ctx.strokeStyle = "rgba(126, 226, 255, 0.72)";
-    ctx.lineWidth = 2;
     ctx.beginPath();
     ctx.ellipse(
       trail.x,
@@ -115,26 +119,30 @@ export function drawUltimateTrails() {
     );
     ctx.stroke();
     ctx.globalAlpha = TRAIL_FILL_ALPHA_BASE + t * TRAIL_FILL_ALPHA_SCALE;
-    ctx.fillStyle = "rgba(156, 242, 255, 0.5)";
-    ctx.translate(trail.x, trail.y);
-    ctx.scale(trail.facing, 1);
-    ctx.fillRect(-trail.width * TRAIL_FILL_X_OFFSET_SCALE, -1, trail.width * 0.5, 2);
-    ctx.restore();
+    const fillW = trail.width * 0.5;
+    const fillOffset = trail.width * TRAIL_FILL_X_OFFSET_SCALE;
+    const fillX = trail.facing === 1
+      ? trail.x - fillOffset
+      : trail.x + fillOffset - fillW;
+    ctx.fillRect(fillX, trail.y - 1, fillW, 2);
   }
+
+  ctx.restore();
 }
 
 export function drawUltimateEffects() {
   if (!ctx) return;
   const sheet = ULTIMATE_SKILL_EFFECT_SHEET;
   if (!sheet.image) return;
+  if (state.ultimateEffects.length === 0) return;
   const drawW = sheet.frameW * ULTIMATE_FOOT_EFFECT.drawScale;
   const drawH = sheet.frameH * ULTIMATE_FOOT_EFFECT.drawScale;
+  const openingFrames = sheet.count * PLAYER_COMBAT.ultimateEffectFrameDuration;
   const p = state.player;
   const cx = p.x + p.w / 2;
   const footY = p.y + p.h + ULTIMATE_FOOT_EFFECT.footYOffset;
   for (const eff of state.ultimateEffects) {
     const sx = eff.frame * sheet.frameW;
-    const openingFrames = sheet.count * PLAYER_COMBAT.ultimateEffectFrameDuration;
     const lifeRatio = eff.life / eff.maxLife;
     const alpha = eff.elapsed <= openingFrames
       ? FOOT_EFFECT_OPENING_ALPHA
@@ -151,43 +159,52 @@ export function drawUltimateEffects() {
 
 export function drawUltimateAfterimageSlashes() {
   if (!ctx) return;
+  if (state.ultimateAfterimageSlashes.length === 0) return;
+
+  ctx.save();
+  ctx.globalCompositeOperation = "lighter";
+
   for (const slash of state.ultimateAfterimageSlashes) {
     const t = slash.life / slash.maxLife;
     const alpha = Math.min(SLASH_ALPHA_MAX, (SLASH_ALPHA_BASE + t * SLASH_ALPHA_SCALE) * slash.power);
-    ctx.save();
-    ctx.globalCompositeOperation = "lighter";
     ctx.globalAlpha = alpha;
-    ctx.translate(slash.x, slash.y);
-    ctx.scale(slash.facing, 1);
     ctx.strokeStyle = "rgba(78, 210, 255, 0.9)";
     ctx.lineWidth = OUTER_SLASH_LINE_WIDTH;
     ctx.beginPath();
-    ctx.moveTo(-slash.w / 2, slash.h * OUTER_SLASH_START_Y_SCALE);
+    ctx.moveTo(slash.x - slash.facing * slash.w / 2, slash.y + slash.h * OUTER_SLASH_START_Y_SCALE);
     ctx.quadraticCurveTo(
-      -slash.w * OUTER_SLASH_CONTROL_X_SCALE,
-      -slash.h * OUTER_SLASH_CONTROL_Y_SCALE,
-      slash.w / 2,
-      -slash.h * OUTER_SLASH_END_Y_SCALE,
+      slash.x - slash.facing * slash.w * OUTER_SLASH_CONTROL_X_SCALE,
+      slash.y - slash.h * OUTER_SLASH_CONTROL_Y_SCALE,
+      slash.x + slash.facing * slash.w / 2,
+      slash.y - slash.h * OUTER_SLASH_END_Y_SCALE,
     );
     ctx.stroke();
     ctx.strokeStyle = "rgba(34, 142, 255, 0.64)";
     ctx.lineWidth = INNER_SLASH_LINE_WIDTH;
     ctx.beginPath();
-    ctx.moveTo(-slash.w * INNER_SLASH_START_X_SCALE, slash.h * INNER_SLASH_START_Y_SCALE);
+    ctx.moveTo(
+      slash.x - slash.facing * slash.w * INNER_SLASH_START_X_SCALE,
+      slash.y + slash.h * INNER_SLASH_START_Y_SCALE,
+    );
     ctx.quadraticCurveTo(
-      0,
-      -slash.h * INNER_SLASH_CONTROL_Y_SCALE,
-      slash.w * INNER_SLASH_END_X_SCALE,
-      slash.h * INNER_SLASH_END_Y_SCALE,
+      slash.x,
+      slash.y - slash.h * INNER_SLASH_CONTROL_Y_SCALE,
+      slash.x + slash.facing * slash.w * INNER_SLASH_END_X_SCALE,
+      slash.y + slash.h * INNER_SLASH_END_Y_SCALE,
     );
     ctx.stroke();
-    ctx.restore();
   }
+
+  ctx.restore();
 }
 
 export function drawUltimatePlayerGhosts() {
   if (!ctx) return;
+  if (state.ultimatePlayerGhosts.length === 0) return;
 
+  ctx.save();
+  ctx.globalCompositeOperation = "source-over";
+  ctx.filter = PLAYER_GHOST_FILTER;
   for (const ghost of state.ultimatePlayerGhosts) {
     const lifeRatio = ghost.life / ghost.maxLife;
     const alpha = Math.min(
@@ -195,13 +212,10 @@ export function drawUltimatePlayerGhosts() {
       (PLAYER_GHOST_ALPHA_BASE + lifeRatio * PLAYER_GHOST_ALPHA_SCALE) * ghost.strength,
     );
 
-    ctx.save();
-    ctx.globalCompositeOperation = "source-over";
     ctx.globalAlpha = alpha;
-    ctx.filter = PLAYER_GHOST_FILTER;
     drawUltimatePlayerGhost(ghost);
-    ctx.restore();
   }
+  ctx.restore();
 }
 
 function drawUltimatePlayerGhost(ghost: UltimatePlayerGhostState) {

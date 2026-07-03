@@ -11,10 +11,22 @@ import {
   moonTidePlayerAnimationFrameSpeed,
   moonTidePlayerGhostMaxCount,
   recordMoonTidePlayerGhost,
+  spawnMoonTideTrail,
+  triggerMoonTideAfterimageHit,
 } from "./moonTide";
 
 const LEVEL_ONE_GHOST_CAP = 3;
 const LEVEL_THREE_GHOST_CAP = 5;
+const EXPECTED_TRAIL_CAP = Math.ceil(
+  PLAYER_COMBAT.ultimateTrailLife / PLAYER_COMBAT.ultimateTrailSpawnInterval,
+) + 2;
+const EXPECTED_AFTERIMAGE_SLASH_CAP = 24;
+const TRAIL_STRESS_FRAMES = 90;
+const TRAIL_START_TIMER = 300;
+const AFTERIMAGE_STRESS_HITS = 20;
+const AFTERIMAGE_HIT_X = 160;
+const AFTERIMAGE_HIT_Y = 180;
+const AFTERIMAGE_TARGET_SPREAD = 80;
 const IDLE_GHOST_VISIBLE_FRAMES = 18;
 const HURT_INVINCIBILITY_GHOST_RESUME_OFFSET = 12;
 const MOON_TIDE_LEVEL_THREE_MOVE_MULTIPLIER = 1.25;
@@ -207,7 +219,7 @@ describe("moon tide player ghosts", () => {
     expect(state.ultimatePlayerGhosts).toHaveLength(0);
   });
 
-  it("draws each active player ghost with one filtered sprite pass", () => {
+  it("draws active player ghosts with one batched filter setup", () => {
     const context = createMockContext();
     const idleSheet = PLAYER_SHEETS[PLAYER_ANIMATION_STATES.idle];
     idleSheet.image = {} as HTMLImageElement;
@@ -220,10 +232,19 @@ describe("moon tide player ghosts", () => {
       maxLife: 10,
       strength: 1,
     });
+    state.ultimatePlayerGhosts.push({
+      ...ghostSnapshot("idle"),
+      animationState: PLAYER_ANIMATION_STATES.idle,
+      frame: 1,
+      x: 96,
+      life: 8,
+      maxLife: 10,
+      strength: 0.8,
+    });
 
     drawUltimatePlayerGhosts();
 
-    expect(context.drawImage).toHaveBeenCalledTimes(1);
+    expect(context.drawImage).toHaveBeenCalledTimes(2);
     expect(context.filterValues).toHaveLength(1);
     expect(context.filterValues[0]).toContain("drop-shadow");
     expect(context.filterValues[0]).toContain("invert(60%)");
@@ -252,6 +273,36 @@ describe("moon tide player ghosts", () => {
       "rgba(78, 210, 255, 0.9)",
       "rgba(34, 142, 255, 0.64)",
     ]);
+  });
+
+  it("caps moon tide trail visuals to the visible lifetime window", () => {
+    state.player.ultimateLevel = 3;
+    state.player.vx = state.player.speed;
+
+    for (let frame = 0; frame < TRAIL_STRESS_FRAMES; frame += 1) {
+      state.player.ultimateTimer = TRAIL_START_TIMER - frame;
+      spawnMoonTideTrail();
+    }
+
+    expect(state.ultimateTrails).toHaveLength(EXPECTED_TRAIL_CAP);
+  });
+
+  it("caps afterimage slash visuals without dropping the extra hit damage", () => {
+    const applyDamage = vi.fn();
+    state.player.ultimateLevel = 3;
+    state.player.ultimateTimer = 120;
+
+    for (let hit = 0; hit < AFTERIMAGE_STRESS_HITS; hit += 1) {
+      expect(triggerMoonTideAfterimageHit(
+        AFTERIMAGE_HIT_X,
+        AFTERIMAGE_HIT_Y,
+        AFTERIMAGE_TARGET_SPREAD,
+        applyDamage,
+      )).toBe(true);
+    }
+
+    expect(applyDamage).toHaveBeenCalledTimes(AFTERIMAGE_STRESS_HITS);
+    expect(state.ultimateAfterimageSlashes).toHaveLength(EXPECTED_AFTERIMAGE_SLASH_CAP);
   });
 
   it("applies the moon tide movement multiplier during the active buff", () => {

@@ -150,6 +150,7 @@ export function triggerUltimateOpeningEffect() {
 
   playSfx("playerUltimateImpact");
 
+  state.ultimateEffects.length = 0;
   state.ultimateEffects.push({
     x: cx,
     y: cy,

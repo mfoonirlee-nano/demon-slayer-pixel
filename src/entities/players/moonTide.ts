@@ -26,6 +26,10 @@ const AFTERIMAGE_FORWARD_OFFSET = 10;
 const AFTERIMAGE_FORWARD_STAGGER = 12;
 const AFTERIMAGE_Y_OFFSET = 8;
 const AFTERIMAGE_Y_JITTER = 10;
+const MAX_MOON_TIDE_TRAILS = Math.ceil(
+  PLAYER_COMBAT.ultimateTrailLife / PLAYER_COMBAT.ultimateTrailSpawnInterval,
+) + 2;
+const MAX_MOON_TIDE_AFTERIMAGE_SLASHES = 24;
 const MOON_TIDE_PLAYER_GHOST = {
   lifeByAction: {
     idle: 22,
@@ -63,6 +67,12 @@ const MOON_TIDE_PLAYER_GHOST = {
   intervalByAction: Record<UltimatePlayerGhostAction, number>;
   strengthByAction: Record<UltimatePlayerGhostAction, number>;
 };
+
+function trimOldest<T>(collection: T[], maxCount: number) {
+  if (collection.length > maxCount) {
+    collection.splice(0, collection.length - maxCount);
+  }
+}
 
 export function moonTideActive() {
   return state.player.ultimateTimer > 0;
@@ -161,6 +171,7 @@ export function spawnMoonTideTrail() {
     height: TRAIL_HEIGHT,
     phase: Math.random() * FULL_CIRCLE,
   });
+  trimOldest(state.ultimateTrails, MAX_MOON_TIDE_TRAILS);
 }
 
 export function triggerMoonTideAfterimageHit(
@@ -193,6 +204,7 @@ export function triggerMoonTideAfterimageHit(
       power: config.afterimageBurstPower,
     });
   }
+  trimOldest(state.ultimateAfterimageSlashes, MAX_MOON_TIDE_AFTERIMAGE_SLASHES);
 
   emitHitBurst(hitX, hitY, PLAYER_COMBAT.effects.attackEnemyBurstColor, config.afterimageBurstPower);
   return true;

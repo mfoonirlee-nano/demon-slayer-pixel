@@ -15,6 +15,7 @@ import {
   castUltimateSkill,
   playerSkillCastFrames,
   playerSkillReleaseFrame,
+  triggerUltimateOpeningEffect,
   updateSkillCastRelease,
 } from "./skillCasting";
 
@@ -55,6 +56,16 @@ describe("player skill casting", () => {
     expect(state.player.ultimateLevel).toBe(1);
     expect(state.player.ultimateCastTimer).toBeGreaterThan(0);
     expect(state.player.ultimateEnergy).toBe(0);
+  });
+
+  it("keeps only one ultimate opening aura instance", () => {
+    resetState();
+    state.player.ultimateLevel = 3;
+
+    triggerUltimateOpeningEffect();
+    triggerUltimateOpeningEffect();
+
+    expect(state.ultimateEffects).toHaveLength(1);
   });
 
   it("uses release frames that preserve each skill wind-up tier", () => {
