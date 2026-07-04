@@ -1,6 +1,6 @@
 # 装备系统
 
-> 实现状态：第一版已接入。当前源码实现了 18 件普通品质装备、Boss 三选一、三槽位换装和暂停页展示；精良/觉醒品质与 `actBand` 掉落规则仍是后续目标。
+> 实现状态：第一版已接入。当前源码实现了 18 件普通品质装备、Boss 三选一、三槽位换装和暂停页展示；精良/觉醒品质、单局升品、13+ 觉醒掉落和无限关卡前置规则仍是目标设计。
 
 ## Purpose
 
@@ -21,7 +21,7 @@
 ```text
 Boss 击杀
   ↓
-生成 3 个装备候选
+生成最多 3 个装备候选
   ↓
 玩家选择 1 件
   ↓
@@ -48,11 +48,22 @@ Boss 装备选择和经验升级选择必须使用不同队列，不能互相覆
 
 ```ts
 equipment: {
-  blade?: EquipmentItem;
-  garb?: EquipmentItem;
-  talisman?: EquipmentItem;
+  inventory: EquipmentInventoryEntry[];
+  equipped: Record<EquipmentSlot, EquipmentItemId | null>;
+  pendingChoices: EquipmentChoice[];
 };
-pendingEquipmentChoices: EquipmentItem[];
+
+type EquipmentInventoryEntry = {
+  id: EquipmentItemId;
+  tier: EquipmentTier;
+};
+
+type EquipmentChoice = {
+  id: EquipmentItemId;
+  tier: EquipmentTier;
+  previousTier: EquipmentTier | null;
+  reason: "new" | "tierUpgrade" | "replacement";
+};
 ```
 
 ## Families
@@ -76,15 +87,11 @@ pendingEquipmentChoices: EquipmentItem[];
 | --- | --- | --- | --- |
 | `common` | 普通 | intro 1-6 | 给出核心机制，数值保守 |
 | `fine` | 精良 | awakened 7-12 | 降低触发门槛，增加稳定性 |
-| `awakened` | 觉醒 | final 13 | 增加额外行为反馈或终局效果 |
+| `awakened` | 觉醒 | final 13+ | 增加额外行为反馈或终局效果 |
 
 ```ts
 function equipmentTier(actBand: ActBand): EquipmentTier {
-  return actBand === "final"
-    ? "awakened"
-    : actBand === "awakened"
-      ? "fine"
-      : "common";
+  return actBand === "final" ? "awakened" : actBand === "awakened" ? "fine" : "common";
 }
 ```
 
@@ -93,6 +100,83 @@ function equipmentTier(actBand: ActBand): EquipmentTier {
 - 普通：让玩家知道这件装备鼓励什么行为。
 - 精良：让该行为更容易触发，或收益更稳定。
 - 觉醒：加入一个能改变体验的额外效果，但不改变槽位职责。
+- 品质提升以机制完整度为主，数值只作为门槛、冷却、稳定性的辅助调参。
+- 高品质包含低品质的核心玩法，但实现时按当前 `tier` 产出一份完整效果，不叠加多个品质效果对象。
+- 最高品质在装备 UI 中显示为“觉醒”；“蚀醒”只用于 Boss 或敌方状态。
+
+## Quality Upgrade Flow
+
+品质提升仍然只通过 Boss 装备奖励进入，不加入材料、强化石、暂停页主动强化或局外养成。
+
+```text
+Boss 击杀
+  ↓
+按当前幕段生成装备候选及固定 tier
+  ↓
+玩家选择 1 件
+  ↓
+背包同 ID 记录被新高品质覆盖
+  ↓
+选择项自动装备到对应槽位
+  ↓
+该槽位旧运行时状态清零
+```
+
+品质与装备 ID 分离。同一件装备保持稳定 ID，例如 `flow_blade` 始终表示“流水刃”；背包记录该 ID 在本局内获得的最高品质。`equippedEquipment` 只保存槽位里的 `EquipmentItemId | null`，实际品质从背包最高品质读取。
+
+背包规则：
+
+- 背包里同一 `EquipmentItemId` 只保留一条记录。
+- 获得同 ID 更高品质时，覆盖旧品质。
+- 相同或更低品质不会进入候选。
+- 普通可以直接升到觉醒；精良不是必经步骤。
+- 品质记录和装备一样都是单局状态，死亡、重开或返回开始界面后清空。
+
+掉落品质：
+
+```text
+Act 1-6: common
+Act 7-12: fine
+Act 13+: awakened
+```
+
+后期首次获得某件装备时，也直接获得当前幕段品质。这样玩家在精良或觉醒阶段转流派时不会被迫从低品质补课。
+
+升品不会保留该槽位运行时层数、冷却或 ready 状态。选择高品质同 ID 装备视为一次重新装备，例如 `flow_blade` 普通的普攻命中层数在升到精良后清零。
+
+### Ultimate Dependency
+
+当前品质效果如果包含大招能量获取、大招命中、大招保留或大招期间收益，需要显式标记 `requiresUltimate: true`。玩家尚未习得大招时，这类候选不进入掉落池。
+
+过滤规则按“当前品质”判断，而不是按整件装备判断：
+
+```text
+流水刃普通/精良不依赖大招，可以掉落。
+流水刃觉醒含大招能量收益，未习得大招时不掉落。
+燃魂符普通起就依赖大招，未习得大招时所有品质都不掉落。
+```
+
+被 `requiresUltimate` 过滤后不降级 fallback，也不提供相同 ID 的低品质重复卡。升品保底会跳过不可用候选，继续尝试其他已装备装备。
+
+### Final Boss And Endless Bridge
+
+目标长期规则：第 13 幕最终 Boss 击败后直接进入觉醒装备三选一，选择后进入 14+ 无限关卡。
+
+当前版本尚未实现无限关卡时，先接入可验证的过渡行为：
+
+```text
+击败 blood-moon-many-faces
+  ↓
+如果有觉醒装备候选，弹觉醒装备选择
+  ↓
+玩家选择后写入背包并自动装备
+  ↓
+进入 victory
+```
+
+如果第 13 幕最终 Boss 击败时没有觉醒装备候选，则跳过装备 overlay，进入 victory。
+
+最终 Boss 后不再展示经验升级三选一。当前版本可以丢弃最终 Boss XP 触发但尚未展示的 `pendingUpgradeChoices`；未来接入 14+ 无限关卡后，再改为“觉醒装备选择 -> 经验升级选择 -> 无限关卡”。
 
 ## Equipment Data Model
 
@@ -152,14 +236,14 @@ familyCount = countEquipmentByFamily(equipment, family);
 
 ## Drop Rules
 
-Boss 击杀后生成 3 个装备选项。候选项应构成一个选择题，而不是 3 个随机数值。
+Boss 击杀后优先生成最多 3 个装备选项。候选项应构成一个选择题，而不是 3 个随机数值。有效候选不足时可以少于 3 张。
 
 ### Candidate Intent
 
 每次三选一优先包含：
 
-1. 强化已有路线：给出当前已有流派的另一个槽位，或更高品质替换。
-2. 补足短板：根据玩家当前状态给出生存、资源或输出方向。
+1. 强化已有路线：最多 1 张当前已装备装备的更高品质卡。
+2. 补足短板：如果存在空槽，尽量保留 1 张空槽装备卡。
 3. 改变打法：给出不同流派的强选项，允许转型。
 
 示例：
@@ -174,13 +258,25 @@ Boss 击杀后生成 3 个装备选项。候选项应构成一个选择题，而
 
 ### Slot Rules
 
-- 候选数量固定为 3。
-- 同一次候选中尽量不出现 3 件同槽位装备。
-- 如果玩家某槽位为空，候选中至少 1 件优先来自空槽位。
+- 候选数量最多为 3。
+- 有效装备候选充足时显示 3 张；只有 1-2 个有效候选时，只显示 1-2 张装备卡。
+- 有效装备候选为 0 时，不打开装备 overlay，改发无候选占位奖励。
+- 同一次候选优先覆盖 `blade / garb / talisman` 三个槽位，不足时才允许重复槽位。
+- 如果玩家某槽位为空，候选中尽量保留 1 件空槽装备。
 - 同槽位装备允许替换旧装备。
-- 当前已装备的同 ID 低品质版本不再出现。
-- 觉醒品质只在 final 幕段出现。
-- 未配置完整效果或没有 UI 文案的装备不进入掉落池。
+- 当前已拥有的同 ID 相同或低品质版本不再出现。
+- 当前已装备的同 ID 更高品质版本可以出现，并优先作为升品保底。
+- 觉醒品质只在 `act >= 13` 出现。
+- 未配置完整效果、没有 UI 文案、未通过基础测试或被 `requiresUltimate` 过滤的品质不进入掉落池。
+
+无候选占位奖励：
+
+```ts
+heal = Math.ceil(player.maxHp * 0.2);
+player.hp = Math.min(player.maxHp, player.hp + heal);
+```
+
+这个治疗只用于避免 Boss 奖励完全空掉，不作为无限关卡平衡系统。后续如果有正式无限奖励系统，可以替换该占位。
 
 ### Family Weighting
 
@@ -197,11 +293,11 @@ Boss 击杀后生成 3 个装备选项。候选项应构成一个选择题，而
 | Boss 战耗时过长 | `burst` 倾向提高 |
 | 小怪击杀压力过大 | `hunt`、`shadowstep` 倾向提高 |
 
-第一版实现可以先用规则化候选，不必做复杂权重模型。
+第一版品质实现使用规则化候选，不接 Boss 偏好权重，也不做复杂权重模型。
 
-## Boss Archetype Preference
+## Future Boss Archetype Preference
 
-Boss archetype 可以轻微影响掉落池，但不能完全锁死装备。建议每个 Boss 偏好 2-3 个流派。
+Boss archetype 后续可以轻微影响普通候选池，但不能影响升品保底，也不能完全锁死装备。第一版品质实现不启用该规则。
 
 | Boss archetype | 偏好流派 | 说明 |
 | --- | --- | --- |
@@ -264,6 +360,7 @@ skillEnergyCost = clamp(30 - equipmentSkillCostReduction, 24, 30);
 1. 它属于哪个槽位。
 2. 它属于哪个流派。
 3. 它希望玩家怎么打。
+4. 它是新获得、替换还是品质提升。
 
 推荐卡片格式：
 
@@ -276,6 +373,26 @@ skillEnergyCost = clamp(30 - equipmentSkillCostReduction, 24, 30);
 
 替换：当前刃器「流水刃」
 ```
+
+品质变化展示：
+
+```text
+流水刃
+刃器 / 流水 / 精良
+
+品质提升：普通 -> 精良
+```
+
+新获得展示：
+
+```text
+踏影衣
+衣装 / 影步 / 精良
+
+新装备：精良
+```
+
+暂停页只展示当前品质，不展示历史品质。第一版不新增品质图标或品质宝石；只用文字显示 `普通 / 精良 / 觉醒`。
 
 UI 标签示例：
 
@@ -293,6 +410,7 @@ UI 标签示例：
 - 玩家选择装备后进入对应槽位。
 - 如果槽位为空，直接装备。
 - 如果槽位已有装备，新装备替换旧装备。
+- 如果选择的是同 ID 更高品质，背包品质覆盖并继续装备在原槽位。
 - 替换时 UI 必须显示旧装备名和新装备槽位。
 - 如果替换影响最大生命，需要重新夹取当前生命。
 - 替换时清除旧装备提供的持续状态，例如影斩层数、连杀触发状态、低血每幕触发标记。
@@ -306,6 +424,10 @@ UI 标签示例：
 - 18 件装备都能对应一个明确流派和主动行为。
 - 每个流派都有输出、生存、资源三件装备。
 - 每件装备有普通、精良、觉醒三档机制描述。
+- 品质提升规则只服务单局内构筑，不保留任何局外进度。
+- `act 1-6 / 7-12 / 13+` 分别对应普通、精良、觉醒。
+- 当前已装备升品最多保底 1 张，空槽补位尽量保留 1 张。
+- 未习得大招时，当前品质带 `requiresUltimate` 的候选不掉落。
 - 影步系替代原守势方向，强调移动穿梭而非被动防御。
 - 掉落三选一能表达“强化已有路线 / 补足短板 / 改变打法”。
 - 同流派有软协同，但没有硬套装。
@@ -313,29 +435,50 @@ UI 标签示例：
 
 实现验收：
 
-- Boss 死亡后出现 3 个装备选项。
+- Boss 死亡后优先出现最多 3 个装备选项。
+- 装备背包支持 `{ id, tier }[]`，并保证同 ID 只有一条记录。
+- `pendingEquipmentChoices` 固定保存 `id / tier / previousTier / reason`，UI 不临时按 act 推导品质。
+- Boss 候选按当前幕段生成品质，并支持普通直接跳到觉醒。
+- 同 ID 高品质覆盖低品质；相同或低品质不进入候选。
+- 候选可少于 3 张；0 候选时跳过装备 overlay 并给 20% 最大生命治疗。
 - 选择装备后进入正确槽位。
 - 同槽位装备会替换旧装备。
+- 同 ID 升品也重置该槽位运行时状态。
 - 重开或死亡后装备清空。
 - 装备选择不会覆盖经验升级选择。
+- 普通 Boss 后的队列顺序为装备选择优先，其后继续展示经验升级选择。
+- 第 13 幕最终 Boss 当前版本在觉醒装备选择后进入 victory，不再展示经验升级选择。
 - 替换最大生命相关装备时当前生命被正确夹取。
 - 触发型装备不会在原地或无风险状态下无限刷收益。
+- 18 件装备的精良和觉醒效果全部接入；表现型追加斩击、水刃等第一版可以实现为额外伤害结算，不新增 projectile 或 VFX 资产。
+- 效果测试覆盖每件装备至少一个高品质差异点；UI 测试只覆盖品质显示和品质变化，不为每件装备做快照。
 
 ## Code Sources
 
 目标落地点：
 
-- `src/types/game-state.ts`
-- `src/state.ts`
+- `src/types/game/domain.ts`
+- `src/types/game/state.ts`
+- `src/types/game/entities.ts`
+- `src/game/state.ts`
+- `src/entities/bosses/defeat.ts`
 - `src/entities/player.ts`
 - `src/entities/enemy.ts`
-- `src/entities/boss.ts`
-- `src/entities/projectile.ts`
-- `src/App.tsx`
+- `src/systems/equipment.ts`
+- `src/systems/equipmentCatalog.ts`
+- `src/ui/rewardOverlay.tsx`
+- `src/ui/pauseScreen.tsx`
+- `src/ui/pause/detailCopy.ts`
 
 ## Implementation Notes
 
-- 第一版先实现配置、状态、掉落、选择 UI 和少数核心触发事件。
-- 不要把 18 件装备一次性写成大量特殊分支，应优先抽象触发条件和效果处理。
-- 建议优先实现 3 个垂直切片：`flow_blade`、`shadowstep_blade`、`hunt_talisman`，验证触发、UI、替换和派生流程。
-- 装备没有正式图标时不接图标占位，先用卡片标题、槽位、流派、品质、效果文案表达。
+- 先改文档准规格，再实现逻辑。
+- 实现顺序：
+  1. 数据模型和 helper：背包记录、品质比较、候选记录、`requiresUltimate` 过滤。
+  2. 掉落/选择规则测试：幕段品质、高品质覆盖、跳级、保底、空槽、0 候选治疗。
+  3. UI：奖励卡显示新获得/品质提升，暂停页显示当前品质。
+  4. 18 件高品质效果：沿用现有专用 runtime 字段风格，必要时只加触发状态字段。
+  5. 效果测试：每件装备至少覆盖一个高品质差异点，资源公式和一次性触发类重点测试。
+  6. 第 13 幕最终 Boss 觉醒掉落后进入 victory 的当前版本流程。
+- 不先做通用装备效果引擎；按现有 `flowBladeHits`、`huntKillTimer`、`burstTalismanCooldown` 风格增加少量必要 runtime 字段。
+- 不新增装备特效资产、品质图标或专属动画；第一版用现有反馈表达效果。

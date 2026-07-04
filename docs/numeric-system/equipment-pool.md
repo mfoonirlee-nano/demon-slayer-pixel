@@ -2,6 +2,33 @@
 
 > 从 [equipment.md](./equipment.md) 拆出，用于记录 6 个流派、18 件装备和各品质效果。
 
+本文件是第一版品质实现的效果准稿。普通、精良、觉醒三档效果都要实现；具体数值、冷却和倍率可以在实现时微调，但不能改变每件装备的定位。
+
+## Implementation Flags
+
+`requiresUltimate` 表示当前品质的主要收益依赖大招能量、大招命中、大招保留或大招期间状态。玩家尚未习得大招时，该品质候选不进入掉落池，也不降级补同 ID 低品质。
+
+| 装备 ID | 需要 `requiresUltimate` 的品质 | 说明 |
+| --- | --- | --- |
+| `flow_blade` | 觉醒 | 觉醒效果给大招能量。 |
+| `flow_garb` | 无 | 只影响释放技能后的机动和减伤。 |
+| `flow_talisman` | 觉醒 | 觉醒效果额外给大招能量。 |
+| `burst_blade` | 觉醒 | 觉醒效果依赖大招命中低血 Boss。 |
+| `burst_garb` | 无 | Boss 保命和技能能量，不依赖大招。 |
+| `burst_talisman` | 普通、精良、觉醒 | 整件装备定位是 Boss 战大招循环。 |
+| `shadowstep_blade` | 觉醒 | 觉醒效果给大招能量。 |
+| `shadowstep_garb` | 无 | 只影响移动容错。 |
+| `shadowstep_talisman` | 觉醒 | 觉醒效果在 Boss 附近给大招能量。 |
+| `hunt_blade` | 无 | 水刃表现第一版实现为额外伤害结算。 |
+| `hunt_garb` | 无 | 只影响击杀后的机动和受伤减免。 |
+| `hunt_talisman` | 精良、觉醒 | 高品质连杀收益包含大招能量。 |
+| `risk_blade` | 无 | 只影响低血伤害窗口。 |
+| `risk_garb` | 无 | 只影响低血或 Boss 战保命窗口。 |
+| `risk_talisman` | 觉醒 | 觉醒效果包含部分大招能量。 |
+| `tempo_blade` | 无 | 只影响普攻频率和伤害惩罚。 |
+| `tempo_garb` | 无 | 只影响受伤后的节奏恢复。 |
+| `tempo_talisman` | 无 | 大招能量获取降低是代价，不是掉落依赖；未习得大招时只生效技能消耗部分。 |
+
 ## Equipment Pool
 
 ### 1. 流水系 `flow`
