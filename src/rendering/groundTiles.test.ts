@@ -39,6 +39,12 @@ function visibleSets(patternKey: "forestToShrine" | "shrineToForest", scrollTile
   ));
 }
 
+function regionCountForLayer(patternKey: "forest" | "shrine", layer: "base" | "occlusion") {
+  const tileSet = GROUND_TILE_SPRITES.sets[patternKey];
+  if (layer === "occlusion") return (tileSet.occlusionRegions ?? tileSet.regions).length;
+  return tileSet.regions.length;
+}
+
 describe("ground tile render plan", () => {
   it("uses moon forest while the run is between boss phases", () => {
     const plan = resolveGroundTileRenderPlan(BASE_INPUT);
@@ -155,5 +161,14 @@ describe("ground tile render plan", () => {
   it("pins transition frames in left-to-right asset order", () => {
     expect(transitionFrames("forestToShrine")).toEqual(TRANSITION_FRAME_ORDER);
     expect(transitionFrames("shrineToForest")).toEqual(TRANSITION_FRAME_ORDER);
+  });
+
+  it("keeps looping ground patterns aligned with each drawn layer", () => {
+    for (const patternKey of ["forest", "shrine"] as const) {
+      const patternLength = GROUND_TILE_SPRITES.patterns[patternKey].length;
+
+      expect(patternLength % regionCountForLayer(patternKey, "base")).toBe(0);
+      expect(patternLength % regionCountForLayer(patternKey, "occlusion")).toBe(0);
+    }
   });
 });

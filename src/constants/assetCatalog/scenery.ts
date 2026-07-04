@@ -26,6 +26,9 @@ const GROUND_TILE_SCROLL_SPEED = 48;
 const GROUND_TILE_TRANSITION_SECONDS = (
   GROUND_TILE_TRANSITION_SCROLL_TILES * GROUND_TILE_SIZE / GROUND_TILE_SCROLL_SPEED
 );
+// Shrine base has 8 regions while its occlusion layer has 7. The looping
+// pattern must cover their shared period or the occlusion layer jumps at wrap.
+const GROUND_TILE_SHRINE_LOOP_TILES = 56;
 
 function repeatedGroundTiles(set: GroundTileSetKey, count: number): GroundTilePatternEntry[] {
   return Array.from({ length: count }, () => ({ set }));
@@ -239,8 +242,7 @@ export const GROUND_TILE_SPRITES: {
       ...repeatedGroundTiles("shrine", GROUND_TILE_VISIBLE_BUFFER_TILES),
     ],
     shrine: [
-      { set: "shrine" }, { set: "shrine" }, { set: "shrine" }, { set: "shrine" },
-      { set: "shrine" }, { set: "shrine" }, { set: "shrine" }, { set: "shrine" },
+      ...repeatedGroundTiles("shrine", GROUND_TILE_SHRINE_LOOP_TILES),
     ],
     shrineToForest: [
       ...repeatedGroundTiles("shrine", GROUND_TILE_VISIBLE_BUFFER_TILES),
