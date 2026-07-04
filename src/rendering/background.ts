@@ -102,7 +102,7 @@ function drawGroundTileLayer(layer: GroundTileLayer) {
         continue;
       }
 
-      const variantIndex = col + row * Math.ceil(WIDTH / tileSize);
+      const variantIndex = col + row * Math.ceil(WIDTH / tileSize) + renderPlan.variantOffset;
       const regionIndex = patternEntry.regionIndex ?? variantIndex % regions.length;
       const region = regions[regionIndex % regions.length];
 
