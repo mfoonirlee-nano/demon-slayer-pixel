@@ -34,20 +34,19 @@ function repeatedGroundTiles(set: GroundTileSetKey, count: number): GroundTilePa
   return Array.from({ length: count }, () => ({ set }));
 }
 
-export const SKY_SPRITES: {
+export const STAR_SPRITES: {
   src: string;
   image: HTMLImageElement | null;
-  moon: SpriteRegion;
-  starSmall: SpriteRegion;
-  starMedium: SpriteRegion;
-  starGroup: SpriteRegion;
+  variants: SpriteRegion[];
 } = {
-  src: "assets/sprites/background/sky_sprites.png",
+  src: "assets/sprites/background/stars.png",
   image: null,
-  moon: { sx: 35, sy: 37, sw: 321, sh: 322 },
-  starSmall: { sx: 107, sy: 635, sw: 57, sh: 56 },
-  starMedium: { sx: 409, sy: 564, sw: 207, sh: 214 },
-  starGroup: { sx: 790, sy: 544, sw: 309, sh: 286 },
+  variants: [
+    { sx: 277, sy: 83, sw: 110, sh: 109 },
+    { sx: 621, sy: 39, sw: 120, sh: 188 },
+    { sx: 266, sy: 292, sw: 132, sh: 150 },
+    { sx: 603, sy: 292, sw: 155, sh: 156 },
+  ],
 };
 
 export const COVER_MOON_PHASE_SPRITES: {

@@ -4,7 +4,7 @@ import {
   WIDTH,
   HEIGHT,
   GROUND_Y,
-  SKY_SPRITES,
+  STAR_SPRITES,
   MOUNTAIN_SPRITES,
   GROUND_TILE_SPRITES,
 } from "../constants";
@@ -43,6 +43,7 @@ const STAR_TWINKLE_AMPLITUDE = 0.5;
 const STAR_TWINKLE_SPEED = 2.8;
 const MIN_VISIBLE_STAR_SIZE = 0.5;
 const STAR_ALPHA_SCALE = 0.82;
+const STAR_VARIANT_COUNT = STAR_SPRITES.variants.length;
 
 // Mountain sub-parallax: each variant is placed on one of the three planes.
 // `plane` picks the scroll speed; `depthMul` lets us further stagger mountains
@@ -53,13 +54,13 @@ const MOUNTAIN_LAYERS = [
   { variantIndex: 2, plane: "midground"  as const, depthMul: 1.0, bottom: -15  },
 ];
 
-// Sprite stars: only small/medium variants (no group), spread across sky
+// Sprite stars: spread across the sky from the standalone star sheet.
 const STARS = Array.from({ length: STAR_COUNT }, (_, i) => ({
   x: (i * STAR_X_STEP + (i % STAR_X_GROUP_MOD) * STAR_X_GROUP_OFFSET) % WIDTH,
   y: STAR_Y_TOP + (i % STAR_Y_ROW_MOD) * STAR_Y_ROW_GAP,
   scale: (STAR_SCALE_BASE + (i % STAR_SCALE_STEP_MOD) * STAR_SCALE_STEP) * STAR_SCALE_RATIO * 0.5,
   twinkleOffset: (i * STAR_TWINKLE_OFFSET_STEP) % STAR_TWINKLE_OFFSET_MOD,
-  variant: i % 2 as 0 | 1, // 0=small, 1=medium
+  variant: i % STAR_VARIANT_COUNT,
 }));
 
 type GroundTileLayer = "base" | "occlusion";
@@ -160,12 +161,12 @@ export function drawBackground() {
   drawMoon({ elapsed, moon: state.moon });
 
   // Draw sprite stars with scale-based twinkling; hidden during blood moon
-  const spriteImg = SKY_SPRITES.image;
+  const spriteImg = STAR_SPRITES.image;
   const bloodLerp = state.moon.bloodLerp;
   if (spriteImg && bloodLerp < 1) {
     const starVisibility = (1 - bloodLerp) * (1 - state.moon.coverProgress * STAR_COVER_FADE_SCALE);
     for (const s of STARS) {
-      const region = s.variant === 0 ? SKY_SPRITES.starSmall : SKY_SPRITES.starMedium;
+      const region = STAR_SPRITES.variants[s.variant];
       // Scale twinkling: 0 → full size, giving a "blink in and out" effect
       const twinkle = Math.max(
         0,
