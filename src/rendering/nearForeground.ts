@@ -6,17 +6,18 @@ import {
   STONE_TOWER_SPRITES,
   STONE_TOWER_SMALL_SPRITES,
   TORII_SPRITES,
+  FOREGROUND_SPRITES,
 } from "../constants";
 
 const NEAR_FOREGROUND_SPEED = 18;
-const NEAR_FOREGROUND_PATTERN_WIDTH = 1128;
-const TREE_COUNT = 12;
+const NEAR_FOREGROUND_PATTERN_WIDTH = 2688;
+const TREE_COUNT = 24;
 const TREE_VARIANT_SEED_STEP = 7;
 const TREE_VARIANT_SEED_OFFSET = 3;
-const TREE_BASE_X_STEP = 122;
+const TREE_BASE_X_STEP = 112;
 const TREE_BASE_X_GROUP_MOD = 3;
 const TREE_BASE_X_GROUP_CENTER = 1;
-const TREE_BASE_X_GROUP_OFFSET = 22;
+const TREE_BASE_X_GROUP_OFFSET = 28;
 const TREE_BOTTOM_OFFSET_BASE = 9;
 const TREE_BOTTOM_OFFSET_MOD = 2;
 const TREE_BOTTOM_OFFSET_STEP = 6;
@@ -35,6 +36,25 @@ const TREE_LINE = Array.from({ length: TREE_COUNT }, (_, i) => ({
   alpha: TREE_ALPHA_BASE + (i % TREE_ALPHA_MOD) * TREE_ALPHA_STEP,
 }));
 
+const FOREGROUND_DECOR: Array<{
+  variantSeed: number;
+  baseX: number;
+  bottomOffset: number;
+  drawH: number;
+  alpha: number;
+}> = [
+  { variantSeed: 0, baseX: 80, bottomOffset: 9, drawH: 56, alpha: 0.72 },
+  { variantSeed: 3, baseX: 335, bottomOffset: 11, drawH: 42, alpha: 0.7 },
+  { variantSeed: 5, baseX: 620, bottomOffset: 10, drawH: 58, alpha: 0.72 },
+  { variantSeed: 8, baseX: 875, bottomOffset: 12, drawH: 48, alpha: 0.68 },
+  { variantSeed: 11, baseX: 1140, bottomOffset: 9, drawH: 52, alpha: 0.7 },
+  { variantSeed: 2, baseX: 1395, bottomOffset: 11, drawH: 46, alpha: 0.68 },
+  { variantSeed: 6, baseX: 1660, bottomOffset: 9, drawH: 60, alpha: 0.72 },
+  { variantSeed: 9, baseX: 1915, bottomOffset: 12, drawH: 50, alpha: 0.68 },
+  { variantSeed: 4, baseX: 2185, bottomOffset: 10, drawH: 54, alpha: 0.7 },
+  { variantSeed: 10, baseX: 2465, bottomOffset: 11, drawH: 44, alpha: 0.68 },
+];
+
 type ForegroundPropSheet = "stoneTower" | "stoneTowerSmall" | "torii";
 
 const FOREGROUND_PROPS: Array<{
@@ -45,9 +65,16 @@ const FOREGROUND_PROPS: Array<{
   drawH: number;
   alpha: number;
 }> = [
-  { sheet: "stoneTowerSmall", variantSeed: 2, baseX: 210, bottomOffset: 12, drawH: 108, alpha: 0.9 },
-  { sheet: "torii", variantSeed: 4, baseX: 560, bottomOffset: 10, drawH: 154, alpha: 0.88 },
-  { sheet: "stoneTower", variantSeed: 8, baseX: 930, bottomOffset: 13, drawH: 118, alpha: 0.9 },
+  { sheet: "stoneTowerSmall", variantSeed: 2, baseX: 180, bottomOffset: 12, drawH: 92, alpha: 0.84 },
+  { sheet: "torii", variantSeed: 4, baseX: 410, bottomOffset: 9, drawH: 126, alpha: 0.8 },
+  { sheet: "stoneTower", variantSeed: 8, baseX: 690, bottomOffset: 14, drawH: 108, alpha: 0.86 },
+  { sheet: "stoneTowerSmall", variantSeed: 6, baseX: 920, bottomOffset: 12, drawH: 98, alpha: 0.82 },
+  { sheet: "torii", variantSeed: 10, baseX: 1195, bottomOffset: 8, drawH: 142, alpha: 0.78 },
+  { sheet: "stoneTower", variantSeed: 3, baseX: 1480, bottomOffset: 14, drawH: 118, alpha: 0.84 },
+  { sheet: "stoneTowerSmall", variantSeed: 1, baseX: 1710, bottomOffset: 12, drawH: 88, alpha: 0.8 },
+  { sheet: "torii", variantSeed: 7, baseX: 1955, bottomOffset: 9, drawH: 132, alpha: 0.78 },
+  { sheet: "stoneTower", variantSeed: 11, baseX: 2210, bottomOffset: 13, drawH: 112, alpha: 0.84 },
+  { sheet: "stoneTowerSmall", variantSeed: 4, baseX: 2440, bottomOffset: 12, drawH: 94, alpha: 0.8 },
 ];
 
 function drawRegion(
@@ -87,6 +114,19 @@ function drawTrees(context: CanvasRenderingContext2D, pass: number, offset: numb
   }
 }
 
+function drawDecor(context: CanvasRenderingContext2D, pass: number, offset: number) {
+  const image = FOREGROUND_SPRITES.image;
+  if (!image || FOREGROUND_SPRITES.decor.length === 0) return;
+
+  for (const decor of FOREGROUND_DECOR) {
+    const region = FOREGROUND_SPRITES.decor[decor.variantSeed % FOREGROUND_SPRITES.decor.length];
+    const x = decor.baseX + pass * NEAR_FOREGROUND_PATTERN_WIDTH - offset;
+    const y = GROUND_Y + decor.bottomOffset - decor.drawH;
+
+    drawRegion(context, image, region, x, y, decor.drawH, decor.alpha);
+  }
+}
+
 function drawProps(context: CanvasRenderingContext2D, pass: number, offset: number) {
   const propSheets = {
     stoneTower: STONE_TOWER_SPRITES,
@@ -117,6 +157,9 @@ export function drawNearForeground() {
 
   for (let pass = -1; pass <= 1; pass += 1) {
     drawTrees(context, pass, offset);
+  }
+  for (let pass = -1; pass <= 1; pass += 1) {
+    drawDecor(context, pass, offset);
   }
   for (let pass = -1; pass <= 1; pass += 1) {
     drawProps(context, pass, offset);

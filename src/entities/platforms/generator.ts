@@ -55,6 +55,7 @@ type SegmentSpawnResult = {
   difficulty: SegmentDifficulty;
   platforms: PlatformState[];
 };
+type PlatformSpriteKind = "normal" | "chain" | "wide";
 
 // --- Map generator state (reset on game restart) ---
 let lastLayer: PlatformLayer = "low";
@@ -146,8 +147,10 @@ function makePlatform(
   vx: number,
   isHover: boolean,
   isChain: boolean,
+  intendedSpriteKind?: PlatformSpriteKind,
 ): PlatformState {
-  const spriteKind = isChain ? "chain" : w >= WIDE_PLATFORM_MIN_WIDTH ? "wide" : "normal";
+  const spriteKind = intendedSpriteKind
+    ?? (isChain ? "chain" : w >= WIDE_PLATFORM_MIN_WIDTH ? "wide" : "normal");
   const spriteIndex = nearestSpriteIndex(spriteKind, w);
   const sprite = PLATFORM_SPRITES.regions[spriteIndex];
   const drawW = Math.round(sprite.sw * PLATFORM_SPRITES.drawScale);
@@ -408,8 +411,9 @@ function spawnBreatherSegment(): SegmentSpawnResult {
     : Math.random() < BREATHER_RANDOM_LAYER_CHANCE
       ? pickVariedLayer(lastLayer)
       : "low";
-  const y = layerY(targetLayer);
-  const platform = placePlatform(makePlatform(firstPlatformX(), y, platformWidth("wide"), platformVx(), false, false));
+  const spawnLayer = targetLayer === "low" ? "mid" : targetLayer;
+  const y = layerY(spawnLayer);
+  const platform = placePlatform(makePlatform(firstPlatformX(), y, platformWidth("wide"), platformVx(), false, false, "wide"));
   rememberLastPlatform(platform);
   maybeSpawnReward(platform, false);
   return { kind: "breather", difficulty: "easy", platforms: [platform] };

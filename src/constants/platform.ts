@@ -3,7 +3,7 @@ import { CRYSTAL_TYPES, PLATFORM_STYLE_VALUES } from "./ids";
 export const PLATFORM_CONFIG = {
   spawnOffsetX: 40,
   height: 12,
-  collisionSurfaceInsetY: 6,
+  collisionSurfaceInsetY: 0,
   baseSpeed: 1.4,
   randomSpeed: 0.9,
   speedScaleByElapsed: 0.02,
