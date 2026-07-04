@@ -1,6 +1,7 @@
 import { ctx } from "./context";
 import { CLOUD_SPRITES, WIDTH } from "../constants";
 import type { MoonState } from "../moon";
+import { isSkyElementVisible, resolveCloudVisibility } from "./skyVisibility";
 
 type CloudKind = "big" | "small";
 
@@ -108,8 +109,12 @@ export function drawClouds(options: { elapsed: number; moon: MoonState }) {
   if (!context) return;
 
   const bloodLerp = options.moon.bloodLerp;
+  const moonVisibility = resolveCloudVisibility(options.moon.coverProgress, CLOUDS.length);
 
-  for (const cloud of CLOUDS) {
+  for (let i = 0; i < CLOUDS.length; i += 1) {
+    if (!isSkyElementVisible(i, CLOUDS.length, moonVisibility.visibleCount)) continue;
+
+    const cloud = CLOUDS[i];
     const image = cloudImage(cloud.kind);
     if (!image) continue;
 
@@ -119,6 +124,6 @@ export function drawClouds(options: { elapsed: number; moon: MoonState }) {
     const span = WIDTH + drawW;
     const x = ((cloud.x - options.elapsed * cloud.speed) % span + span) % span - drawW;
 
-    drawTintedCloud(image, frame, x, cloud.y, drawW, drawH, cloud.alpha, bloodLerp);
+    drawTintedCloud(image, frame, x, cloud.y, drawW, drawH, cloud.alpha * moonVisibility.alphaScale, bloodLerp);
   }
 }

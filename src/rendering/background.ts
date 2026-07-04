@@ -11,6 +11,7 @@ import {
 import { drawMoon, getMoonSkyColors } from "../moon";
 import { drawClouds } from "./clouds";
 import { resolveGroundTileRenderPlan } from "./groundTiles";
+import { isSkyElementVisible, resolveStarVisibility } from "./skyVisibility";
 
 // Three-plane parallax speeds (pixels per second of elapsed time). Each plane
 // scrolls at a different rate so the scene has a true sense of depth.
@@ -37,7 +38,6 @@ const SKY_LOW_BAND_Y = 290;
 const SKY_UPPER_OVERLAY_HEIGHT = 220;
 const SKY_MID_OVERLAY_Y = 110;
 const SKY_MID_OVERLAY_HEIGHT = 180;
-const STAR_COVER_FADE_SCALE = 0.22;
 const STAR_TWINKLE_BASE = 0.5;
 const STAR_TWINKLE_AMPLITUDE = 0.5;
 const STAR_TWINKLE_SPEED = 2.8;
@@ -164,8 +164,12 @@ export function drawBackground() {
   const spriteImg = STAR_SPRITES.image;
   const bloodLerp = state.moon.bloodLerp;
   if (spriteImg && bloodLerp < 1) {
-    const starVisibility = (1 - bloodLerp) * (1 - state.moon.coverProgress * STAR_COVER_FADE_SCALE);
-    for (const s of STARS) {
+    const moonVisibility = resolveStarVisibility(state.moon.coverProgress, STARS.length);
+    const starVisibility = (1 - bloodLerp) * moonVisibility.alphaScale;
+    for (let i = 0; i < STARS.length; i += 1) {
+      if (!isSkyElementVisible(i, STARS.length, moonVisibility.visibleCount)) continue;
+
+      const s = STARS[i];
       const region = STAR_SPRITES.variants[s.variant];
       // Scale twinkling: 0 → full size, giving a "blink in and out" effect
       const twinkle = Math.max(
