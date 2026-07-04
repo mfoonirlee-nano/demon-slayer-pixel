@@ -1,5 +1,8 @@
 import { describe, expect, it } from "vitest";
-import { SKILL_IDS } from "../constants";
+import {
+  LINE_PROJECTILE_EFFECT_CONFIG,
+  SKILL_IDS,
+} from "../constants";
 import {
   implementedPlayerSkills,
   lineProjectileEffectSheetForLevel,
@@ -18,6 +21,8 @@ const LINE_PROJECTILE_EFFECT_FRAME_WIDTHS = [
   LINE_PROJECTILE_LEVEL_TWO_FRAME_W,
   LINE_PROJECTILE_LEVEL_THREE_FRAME_W,
 ];
+const LINE_PROJECTILE_EFFECT_FRAME_COUNT = 8;
+const LINE_PROJECTILE_EFFECT_LOOP_FROM_FRAME = 5;
 
 describe("player skill catalog copy", () => {
   it("uses the canonical display names for all implemented normal skills", () => {
@@ -66,13 +71,19 @@ describe("player skill catalog copy", () => {
     }
   });
 
-  it("maps line projectile levels to progressively longer effect sheets", () => {
+  it("maps line projectile levels to progressively longer 8-frame effect sheets", () => {
     const levelOne = lineProjectileEffectSheetForLevel(LINE_PROJECTILE_LEVEL_ONE);
     const levelTwo = lineProjectileEffectSheetForLevel(LINE_PROJECTILE_LEVEL_TWO);
     const levelThree = lineProjectileEffectSheetForLevel(LINE_PROJECTILE_LEVEL_THREE);
     const preloadedSources = playerSkillEffectSheets().map((sheet) => sheet.src);
 
     expect([levelOne.frameW, levelTwo.frameW, levelThree.frameW]).toEqual(LINE_PROJECTILE_EFFECT_FRAME_WIDTHS);
+    expect([levelOne.count, levelTwo.count, levelThree.count]).toEqual([
+      LINE_PROJECTILE_EFFECT_FRAME_COUNT,
+      LINE_PROJECTILE_EFFECT_FRAME_COUNT,
+      LINE_PROJECTILE_EFFECT_FRAME_COUNT,
+    ]);
+    expect(LINE_PROJECTILE_EFFECT_CONFIG.loopFromFrame).toBe(LINE_PROJECTILE_EFFECT_LOOP_FROM_FRAME);
     expect(preloadedSources).toEqual(expect.arrayContaining([
       levelOne.src,
       levelTwo.src,

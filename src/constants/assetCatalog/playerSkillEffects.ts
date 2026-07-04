@@ -5,7 +5,7 @@ export const LINE_PROJECTILE_EFFECT_SHEET: SpriteSheet = {
   src: "assets/sprites/skills/line_projectile/effect.png",
   frameW: 480,
   frameH: 160,
-  count: 5,
+  count: 8,
   image: null,
 };
 
@@ -13,7 +13,7 @@ export const LINE_PROJECTILE_EFFECT_LEVEL_TWO_SHEET: SpriteSheet = {
   src: "assets/sprites/skills/line_projectile/effect_lv2.png",
   frameW: 720,
   frameH: 160,
-  count: 5,
+  count: 8,
   image: null,
 };
 
@@ -21,7 +21,7 @@ export const LINE_PROJECTILE_EFFECT_LEVEL_THREE_SHEET: SpriteSheet = {
   src: "assets/sprites/skills/line_projectile/effect_lv3.png",
   frameW: 840,
   frameH: 160,
-  count: 5,
+  count: 8,
   image: null,
 };
 
@@ -35,8 +35,8 @@ export const LINE_PROJECTILE_EFFECT_CONFIG = {
   speed: 8,
   // frame animate speed in game-frames per anim-frame
   frameDuration: 5,
-  // last N frames to loop once the initial run ends
-  loopFromFrame: 1,
+  // loop the final three frames once the head-first reveal finishes
+  loopFromFrame: 5,
   // damage multiplier relative to player base+bonus attack
   damageMultiplier: 1.2,
   // frames between successive hits on the same target
