@@ -210,6 +210,17 @@ describe("enemy platform spawns", () => {
     expect(leaper.y + leaper.h).toBe(GROUND_Y);
   });
 
+  it("keeps regular casters on the ground even when a platform is available", () => {
+    resetState();
+    state.platforms.push(platform());
+
+    expect(spawnEnemyById("caster", "regular", "left")).toBe(true);
+
+    const caster = state.enemies[0];
+    expect(caster.y + caster.h).toBe(GROUND_Y);
+    expect(caster.onPlatform).toBeNull();
+  });
+
   it("ignores hover platforms when choosing regular enemy spawn platforms", () => {
     resetState();
     state.platforms.push(platform({ kind: "hover", hoverAmplitude: 18 }));

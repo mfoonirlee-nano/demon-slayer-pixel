@@ -84,7 +84,7 @@ function platformSpawnCandidate() {
 }
 
 function canUsePlatformSpawn(enemyId: EnemyId, source: EnemySpawnSource) {
-  return source === "regular" && PLATFORM_READY_ENEMY_IDS.includes(enemyId);
+  return source === "regular" && enemyId !== "caster" && PLATFORM_READY_ENEMY_IDS.includes(enemyId);
 }
 
 function enemyUsesPlatformPhysics(enemy: EnemyState) {

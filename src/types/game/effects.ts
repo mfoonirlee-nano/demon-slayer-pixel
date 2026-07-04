@@ -232,6 +232,7 @@ export type ProjectileState = {
   frame?: number;
   elapsed?: number;
   speed?: number;
+  trackingFrames?: number;
   turnRate?: number;
 };
 

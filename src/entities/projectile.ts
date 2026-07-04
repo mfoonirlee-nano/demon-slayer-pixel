@@ -12,6 +12,9 @@ const CASTER_WISP_DRAW = {
   frameDuration: 6,
 } as const;
 
+const FRAMES_PER_SECOND = 60;
+const CASTER_WISP_TRACKING_SECONDS = 5;
+const DEFAULT_CASTER_WISP_TRACKING_FRAMES = CASTER_WISP_TRACKING_SECONDS * FRAMES_PER_SECOND;
 const FULL_CIRCLE = Math.PI * 2;
 const PROJECTILE_VERTICAL_DESPAWN_MARGIN = 80;
 
@@ -41,18 +44,23 @@ function updateCasterWisp(projectile: ProjectileState) {
   const centerX = projectile.x + projectile.w / 2;
   const centerY = projectile.y + projectile.h / 2;
   const currentVy = projectile.vy ?? 0;
-  const speed = projectile.speed ?? Math.max(1, Math.hypot(projectile.vx, currentVy));
-  const turnRate = projectile.turnRate ?? 0;
-  const currentAngle = Math.atan2(currentVy, projectile.vx);
-  const targetAngle = Math.atan2(playerCenterY() - centerY, playerCenterX() - centerX);
-  const angleDelta = normalizeAngle(targetAngle - currentAngle);
-  const nextAngle = currentAngle + Math.max(-turnRate, Math.min(turnRate, angleDelta));
+  const elapsed = projectile.elapsed ?? 0;
+  const trackingFrames = projectile.trackingFrames ?? DEFAULT_CASTER_WISP_TRACKING_FRAMES;
+  if (elapsed < trackingFrames) {
+    const speed = projectile.speed ?? Math.max(1, Math.hypot(projectile.vx, currentVy));
+    const turnRate = projectile.turnRate ?? 0;
+    const currentAngle = Math.atan2(currentVy, projectile.vx);
+    const targetAngle = Math.atan2(playerCenterY() - centerY, playerCenterX() - centerX);
+    const angleDelta = normalizeAngle(targetAngle - currentAngle);
+    const nextAngle = currentAngle + Math.max(-turnRate, Math.min(turnRate, angleDelta));
 
-  projectile.vx = Math.cos(nextAngle) * speed;
-  projectile.vy = Math.sin(nextAngle) * speed;
+    projectile.vx = Math.cos(nextAngle) * speed;
+    projectile.vy = Math.sin(nextAngle) * speed;
+  }
+
   projectile.x += projectile.vx;
-  projectile.y += projectile.vy;
-  projectile.elapsed = (projectile.elapsed ?? 0) + 1;
+  projectile.y += projectile.vy ?? 0;
+  projectile.elapsed = elapsed + 1;
   projectile.frame = Math.floor(projectile.elapsed / CASTER_WISP_DRAW.frameDuration) % CASTER_WISP_SHEET.count;
   return true;
 }

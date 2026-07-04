@@ -14,6 +14,9 @@ import {
   isEliteEnemy,
 } from "./common";
 
+const FRAMES_PER_SECOND = 60;
+const WISP_TRACKING_SECONDS = 5;
+
 const CASTER_CONFIG = {
   minRange: 220,
   maxRange: 280,
@@ -41,21 +44,22 @@ const CASTER_CONFIG = {
   recoverFrameDuration: 11,
   wispCollisionW: 24,
   wispCollisionH: 22,
-  wispLifeFrames: 210,
-  awakenedWispLifeBonusFrames: 36,
+  wispLifeFrames: 600,
+  awakenedWispLifeBonusFrames: 60,
   wispMaxDamage: 14,
   wispBaseDamage: 4,
   wispDamageScale: 0.45,
-  wispBaseSpeed: 1.85,
-  wispSpeedScale: 0.09,
-  wispMaxSpeed: 2.85,
-  awakenedWispSpeedBonus: 0.12,
+  wispBaseSpeed: 2.45,
+  wispSpeedScale: 0.11,
+  wispMaxSpeed: 3.6,
+  awakenedWispSpeedBonus: 0.18,
   wispBaseTurnRate: 0.014,
   wispTurnRateScale: 0.006,
   wispMaxTurnRate: 0.052,
   awakenedWispTurnRateBonus: 0.012,
   eliteWispTurnRateBonus: 0.018,
   wispSpreadRadians: 0.16,
+  wispTrackingFrames: WISP_TRACKING_SECONDS * FRAMES_PER_SECOND,
   wispStartForwardRatio: 0.58,
   wispStartHeightRatio: 0.38,
   wispDoubleCastThreshold: 3,
@@ -206,6 +210,7 @@ function spawnCasterWisps(enemy: EnemyState) {
       frame: 0,
       elapsed: 0,
       speed,
+      trackingFrames: CASTER_CONFIG.wispTrackingFrames,
       turnRate: casterWispTurnRate(enemy),
     });
   }
