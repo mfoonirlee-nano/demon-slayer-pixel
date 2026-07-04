@@ -3,7 +3,7 @@ import { playSfx } from "../../game/audio";
 import { ENEMY_SHEETS, WIDTH } from "../../constants";
 import type { EnemyState } from "../../types/game-state";
 import type { EnemyArchetype, EnemySpawnContext } from "./common";
-import { drawEnemyFrame, enemyCenterX, enemyDrawScale, enemyFeetY, hasAwakenedGrowth } from "./common";
+import { drawEnemyFrame, enemyCenterX, enemyDrawScale, hasAwakenedGrowth } from "./common";
 
 const CHASER_CONFIG = {
   chargeBaseSpeed: 2.18,
