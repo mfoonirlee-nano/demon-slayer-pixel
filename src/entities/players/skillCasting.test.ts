@@ -127,10 +127,12 @@ describe("player skill casting", () => {
     }
 
     expect(state.lineProjectileEffects[0]).toMatchObject({
-      drawScale: 0.715,
+      drawScale: LINE_PROJECTILE_EFFECT_CONFIG.drawScale,
+      effectLevel: 3,
       damageMultiplier: 1.35,
     });
-    expect(state.lineProjectileEffects[0].drawScale).toBeGreaterThan(LINE_PROJECTILE_EFFECT_CONFIG.drawScale);
+    expect(state.lineProjectileEffects[0]).not.toHaveProperty("lengthScale");
+    expect(state.lineProjectileEffects[0]).not.toHaveProperty("hitCooldown");
 
     resetState();
     state.player.skillEnergy = state.player.skillEnergyMax;

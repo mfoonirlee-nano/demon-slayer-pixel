@@ -9,6 +9,22 @@ export const LINE_PROJECTILE_EFFECT_SHEET: SpriteSheet = {
   image: null,
 };
 
+export const LINE_PROJECTILE_EFFECT_LEVEL_TWO_SHEET: SpriteSheet = {
+  src: "assets/sprites/skills/line_projectile/effect_lv2.png",
+  frameW: 720,
+  frameH: 160,
+  count: 5,
+  image: null,
+};
+
+export const LINE_PROJECTILE_EFFECT_LEVEL_THREE_SHEET: SpriteSheet = {
+  src: "assets/sprites/skills/line_projectile/effect_lv3.png",
+  frameW: 840,
+  frameH: 160,
+  count: 5,
+  image: null,
+};
+
 export const LINE_PROJECTILE_EFFECT_CONFIG = {
   // draw scale relative to frame height
   drawScale: 0.625,

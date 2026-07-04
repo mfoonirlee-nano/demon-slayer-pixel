@@ -4,22 +4,25 @@ import { PLAYER_COMBAT, SKILL_IDS, WIDTH } from "../../constants";
 import type { CloseArcEffectState, LineProjectileEffectState } from "../../types/game-state";
 import { applySkillHitEquipmentRefund } from "../../systems/equipment";
 import { resolveBossHit, resolveEnemyHit } from "../../systems/combatResolution";
-import { CORE_PLAYER_SKILL_EFFECT_CONFIGS, CORE_PLAYER_SKILL_EFFECT_SHEETS } from "../../systems/skillCatalog";
+import {
+  CORE_PLAYER_SKILL_EFFECT_CONFIGS,
+  CORE_PLAYER_SKILL_EFFECT_SHEETS,
+  lineProjectileEffectSheetForLevel,
+} from "../../systems/skillCatalog";
 import { emitHitBurst, emitSlash } from "./bursts";
 
-const LINE_PROJECTILE_EFFECT_SHEET = CORE_PLAYER_SKILL_EFFECT_SHEETS[SKILL_IDS.lineProjectile];
 const LINE_PROJECTILE_EFFECT_CONFIG = CORE_PLAYER_SKILL_EFFECT_CONFIGS[SKILL_IDS.lineProjectile];
 const CLOSE_ARC_EFFECT_SHEET = CORE_PLAYER_SKILL_EFFECT_SHEETS[SKILL_IDS.closeArc];
 const CLOSE_ARC_EFFECT_CONFIG = CORE_PLAYER_SKILL_EFFECT_CONFIGS[SKILL_IDS.closeArc];
 const CLOSE_ARC_FADE_ALPHA_GAIN = 0.7;
 
 export function updateLineProjectileEffects() {
-  const sheet = LINE_PROJECTILE_EFFECT_SHEET;
   const p = state.player;
   const baseDamage = (p.baseAttack + p.attackBonus) * LINE_PROJECTILE_EFFECT_CONFIG.damageMultiplier;
 
   for (let i = state.lineProjectileEffects.length - 1; i >= 0; i -= 1) {
     const eff = state.lineProjectileEffects[i] as LineProjectileEffectState;
+    const sheet = lineProjectileEffectSheetForLevel(eff.effectLevel);
     const drawScale = eff.drawScale ?? LINE_PROJECTILE_EFFECT_CONFIG.drawScale;
     const drawW = sheet.frameW * drawScale;
     const drawH = sheet.frameH * drawScale;
@@ -169,9 +172,9 @@ export function updateCloseArcEffects() {
 
 export function drawLineProjectileEffects() {
   if (!ctx) return;
-  const sheet = LINE_PROJECTILE_EFFECT_SHEET;
-  if (!sheet.image) return;
   for (const e of state.lineProjectileEffects) {
+    const sheet = lineProjectileEffectSheetForLevel(e.effectLevel);
+    if (!sheet.image) continue;
     const drawScale = e.drawScale ?? LINE_PROJECTILE_EFFECT_CONFIG.drawScale;
     const drawH = sheet.frameH * drawScale;
     const drawW = sheet.frameW * drawScale;

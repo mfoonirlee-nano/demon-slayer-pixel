@@ -1,7 +1,6 @@
 import {
   CLOSE_ARC_EFFECT_CONFIG,
   GUARD_COUNTER_EFFECT_CONFIG,
-  LINE_PROJECTILE_EFFECT_CONFIG,
   SKILL_IDS,
 } from "../constants";
 import type { SkillId } from "../types/assets";
@@ -90,11 +89,6 @@ export const CORE_PLAYER_SKILL_IDS: CorePlayerSkillId[] = [
 export const CORE_PLAYER_SKILL_GROWTH: Record<CorePlayerSkillId, CoreSkillGrowthTuning> = {
   [SKILL_IDS.lineProjectile]: {
     damageMultiplier: { 1: 1, 2: 1.18, 3: 1.35 },
-    drawScale: {
-      1: LINE_PROJECTILE_EFFECT_CONFIG.drawScale,
-      2: 0.67,
-      3: 0.715,
-    },
   },
   [SKILL_IDS.closeArc]: {
     damageMultiplier: { 1: 1, 2: 1.18, 3: 1.35 },

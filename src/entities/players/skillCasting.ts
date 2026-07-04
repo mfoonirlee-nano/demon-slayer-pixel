@@ -15,6 +15,7 @@ import { corePlayerSkillGrowth, isGenericPlayerSkillId } from "../../systems/pla
 import {
   CORE_PLAYER_SKILL_EFFECT_CONFIGS,
   CORE_PLAYER_SKILL_EFFECT_SHEETS,
+  lineProjectileEffectSheetForLevel,
 } from "../../systems/skillCatalog";
 import { spawnPlayerSkillEffect } from "../particle";
 import { currentMoonTideConfig } from "./moonTide";
@@ -32,7 +33,6 @@ const PLAYER_SKILL_RELEASE_FRAMES: Record<SkillId, number> = {
   [SKILL_IDS.returningBlade]: 18,
   [SKILL_IDS.antiAirMulti]: 24,
 };
-const LINE_PROJECTILE_EFFECT_SHEET = CORE_PLAYER_SKILL_EFFECT_SHEETS[SKILL_IDS.lineProjectile];
 const LINE_PROJECTILE_EFFECT_CONFIG = CORE_PLAYER_SKILL_EFFECT_CONFIGS[SKILL_IDS.lineProjectile];
 const CLOSE_ARC_EFFECT_SHEET = CORE_PLAYER_SKILL_EFFECT_SHEETS[SKILL_IDS.closeArc];
 const CLOSE_ARC_EFFECT_CONFIG = CORE_PLAYER_SKILL_EFFECT_CONFIGS[SKILL_IDS.closeArc];
@@ -180,10 +180,11 @@ export function updateSkillCastRelease(): boolean {
         const cx = p.x + p.w / 2;
         const feetY = p.y + p.h;
         if (skill.id === SKILL_IDS.lineProjectile) {
-          const growth = corePlayerSkillGrowth(skill.id, state.player.skillLevels[skill.id]);
-          const drawScale = growth?.drawScale ?? LINE_PROJECTILE_EFFECT_CONFIG.drawScale;
-          const effectW = LINE_PROJECTILE_EFFECT_SHEET.frameW * drawScale;
-          const effectH = LINE_PROJECTILE_EFFECT_SHEET.frameH * drawScale;
+          const effectLevel = state.player.skillLevels[skill.id] ?? 1;
+          const effectSheet = lineProjectileEffectSheetForLevel(effectLevel);
+          const drawScale = LINE_PROJECTILE_EFFECT_CONFIG.drawScale;
+          const effectW = effectSheet.frameW * drawScale;
+          const effectH = effectSheet.frameH * drawScale;
           const skillDrawH = skill.frameH * skill.drawScale;
           const frontX = cx + p.facing * p.w / 2;
           state.lineProjectileEffects.push({
@@ -194,6 +195,7 @@ export function updateSkillCastRelease(): boolean {
             frame: 0,
             elapsed: 0,
             drawScale,
+            effectLevel,
             damageMultiplier: p.skillCastDamageMultiplier,
           });
           playSfx("playerSkillRelease", LINE_PROJECTILE_RELEASE_SFX_PITCH);

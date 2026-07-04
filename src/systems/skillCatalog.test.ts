@@ -1,8 +1,23 @@
 import { describe, expect, it } from "vitest";
 import { SKILL_IDS } from "../constants";
-import { implementedPlayerSkills } from "./skillCatalog";
+import {
+  implementedPlayerSkills,
+  lineProjectileEffectSheetForLevel,
+  playerSkillEffectSheets,
+} from "./skillCatalog";
 
 const BLOCKED_TECHNICAL_COPY = ["px", "帧", "判定", "半径", "宽高", "倍率", "系数", "Boss"];
+const LINE_PROJECTILE_LEVEL_ONE = 1;
+const LINE_PROJECTILE_LEVEL_TWO = 2;
+const LINE_PROJECTILE_LEVEL_THREE = 3;
+const LINE_PROJECTILE_LEVEL_ONE_FRAME_W = 480;
+const LINE_PROJECTILE_LEVEL_TWO_FRAME_W = 720;
+const LINE_PROJECTILE_LEVEL_THREE_FRAME_W = 840;
+const LINE_PROJECTILE_EFFECT_FRAME_WIDTHS = [
+  LINE_PROJECTILE_LEVEL_ONE_FRAME_W,
+  LINE_PROJECTILE_LEVEL_TWO_FRAME_W,
+  LINE_PROJECTILE_LEVEL_THREE_FRAME_W,
+];
 
 describe("player skill catalog copy", () => {
   it("uses the canonical display names for all implemented normal skills", () => {
@@ -49,5 +64,19 @@ describe("player skill catalog copy", () => {
     for (const blockedCopy of BLOCKED_TECHNICAL_COPY) {
       expect(exposedCopy).not.toContain(blockedCopy);
     }
+  });
+
+  it("maps line projectile levels to progressively longer effect sheets", () => {
+    const levelOne = lineProjectileEffectSheetForLevel(LINE_PROJECTILE_LEVEL_ONE);
+    const levelTwo = lineProjectileEffectSheetForLevel(LINE_PROJECTILE_LEVEL_TWO);
+    const levelThree = lineProjectileEffectSheetForLevel(LINE_PROJECTILE_LEVEL_THREE);
+    const preloadedSources = playerSkillEffectSheets().map((sheet) => sheet.src);
+
+    expect([levelOne.frameW, levelTwo.frameW, levelThree.frameW]).toEqual(LINE_PROJECTILE_EFFECT_FRAME_WIDTHS);
+    expect(preloadedSources).toEqual(expect.arrayContaining([
+      levelOne.src,
+      levelTwo.src,
+      levelThree.src,
+    ]));
   });
 });

@@ -4,6 +4,8 @@ import {
   GUARD_COUNTER_EFFECT_CONFIG,
   GUARD_COUNTER_EFFECT_SHEET,
   LINE_PROJECTILE_EFFECT_CONFIG,
+  LINE_PROJECTILE_EFFECT_LEVEL_THREE_SHEET,
+  LINE_PROJECTILE_EFFECT_LEVEL_TWO_SHEET,
   LINE_PROJECTILE_EFFECT_SHEET,
   PLAYER_SKILL_EFFECT_SHEETS,
   SKILL_IDS,
@@ -35,6 +37,12 @@ export const CORE_PLAYER_SKILL_EFFECT_SHEETS: Record<CorePlayerSkillId, SpriteSh
   [SKILL_IDS.lineProjectile]: LINE_PROJECTILE_EFFECT_SHEET,
   [SKILL_IDS.closeArc]: CLOSE_ARC_EFFECT_SHEET,
   [SKILL_IDS.guardCounter]: GUARD_COUNTER_EFFECT_SHEET,
+};
+
+export const LINE_PROJECTILE_EFFECT_SHEETS_BY_LEVEL: Record<SkillLevel, SpriteSheet> = {
+  1: LINE_PROJECTILE_EFFECT_SHEET,
+  2: LINE_PROJECTILE_EFFECT_LEVEL_TWO_SHEET,
+  3: LINE_PROJECTILE_EFFECT_LEVEL_THREE_SHEET,
 };
 
 export const CORE_PLAYER_SKILL_EFFECT_CONFIGS: CorePlayerSkillEffectConfig = {
@@ -90,6 +98,8 @@ export function playerSkillEffectSheet(skillId: SkillId): SpriteSheet | null {
 export function playerSkillEffectSheets(): SpriteSheet[] {
   return [
     ...Object.values(CORE_PLAYER_SKILL_EFFECT_SHEETS),
+    LINE_PROJECTILE_EFFECT_LEVEL_TWO_SHEET,
+    LINE_PROJECTILE_EFFECT_LEVEL_THREE_SHEET,
     ...Object.values(PLAYER_SKILL_EFFECT_SHEETS).filter(isSpriteSheet),
   ];
 }
@@ -100,6 +110,10 @@ export function ultimateSkillSheets(): SpriteSheet[] {
 
 export function genericPlayerSkillTuning(skillId: SkillId) {
   return isGenericPlayerSkillId(skillId) ? GENERIC_PLAYER_SKILL_TUNING[skillId] : null;
+}
+
+export function lineProjectileEffectSheetForLevel(level: SkillLevel | 0 | undefined): SpriteSheet {
+  return LINE_PROJECTILE_EFFECT_SHEETS_BY_LEVEL[(level || 1) as SkillLevel];
 }
 
 export function playerSkillIconSrc(skillId: SkillId) {

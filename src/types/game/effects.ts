@@ -4,6 +4,7 @@ import type {
   BossSkillEffectKind,
   MirrorShardKind,
   ProjectileKind,
+  SkillLevel,
 } from "./domain";
 import type { EnemyState } from "./entities";
 
@@ -285,6 +286,7 @@ export type LineProjectileEffectState = {
   frame: number;
   elapsed: number;
   drawScale: number;
+  effectLevel: SkillLevel;
   damageMultiplier: number;
   refundedSkillEnergy?: boolean;
 };
