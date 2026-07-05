@@ -55,6 +55,8 @@ const MAX_SKILL_LEVEL = 3;
 const UPGRADE_CHOICE_COUNT = 3;
 const MAX_UNLEARNED_CHOICE_COUNT = 2;
 const BOSS_ULTIMATE_UNLOCK_DROP_CHANCE = 0.5;
+const ULTIMATE_LEVEL_TWO_REQUIRED_MAXED_SKILLS = 1;
+const ULTIMATE_LEVEL_THREE_REQUIRED_MAXED_SKILLS = 3;
 
 const ENEMY_XP_BY_SHEET_INDEX: Partial<Record<number, number>> = {
   [CRAWLER_SHEET_INDEX]: 8,
@@ -253,7 +255,7 @@ function createUpgradeChoices(state: GameState): UpgradeChoiceState[] {
     }
   }
 
-  const ultimateChoice = hasLearnedUltimate(state) && state.player.ultimateLevel < MAX_SKILL_LEVEL
+  const ultimateChoice = canOfferUltimateUpgrade(state, nextUltimateLevel)
     ? createUltimateChoice(state, nextUltimateLevel)
     : null;
   const choices: UpgradeChoiceState[] = [];
@@ -285,6 +287,21 @@ function createUpgradeChoices(state: GameState): UpgradeChoiceState[] {
   }
 
   return choices;
+}
+
+function canOfferUltimateUpgrade(state: GameState, nextLevel: UltimateLevel) {
+  if (!hasLearnedUltimate(state) || state.player.ultimateLevel >= MAX_SKILL_LEVEL) return false;
+
+  const maxedSkillCount = levelThreeNormalSkillCount(state);
+  if (nextLevel === 2) return maxedSkillCount >= ULTIMATE_LEVEL_TWO_REQUIRED_MAXED_SKILLS;
+  if (nextLevel === MAX_SKILL_LEVEL) return maxedSkillCount >= ULTIMATE_LEVEL_THREE_REQUIRED_MAXED_SKILLS;
+  return false;
+}
+
+function levelThreeNormalSkillCount(state: GameState) {
+  return implementedSkillIds().filter((skillId) => (
+    (state.player.skillLevels[skillId] ?? 0) >= MAX_SKILL_LEVEL
+  )).length;
 }
 
 function createUltimateChoice(state: GameState, nextLevel: UltimateLevel): UpgradeChoiceState {

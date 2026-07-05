@@ -109,17 +109,50 @@ describe("run progression skills", () => {
     expect(hasLearnedUltimate(state)).toBe(true);
   });
 
-  it("offers ultimate upgrades after the boss drop teaches the ultimate", () => {
+  it("waits for one level 3 normal skill before offering ultimate level 2", () => {
     const state = createInitialState();
     state.player.ultimateLevel = 1;
 
     addRunXp(state, xpToNextLevel(1));
 
-    expect(state.pendingUpgradeChoices[1]).toMatchObject({
+    expect(state.pendingUpgradeChoices.some((choice) => choice.type === "upgradeUltimate")).toBe(false);
+
+    const readyState = createInitialState();
+    readyState.player.ultimateLevel = 1;
+    readyState.player.skillLevels[SKILL_IDS.lineProjectile] = MAX_TEST_SKILL_LEVEL;
+
+    addRunXp(readyState, xpToNextLevel(1));
+
+    expect(readyState.pendingUpgradeChoices).toContainEqual(expect.objectContaining({
       type: "upgradeUltimate",
       title: "终式精进",
       nextLevel: 2,
-    });
+    }));
+  });
+
+  it("waits for three level 3 normal skills before offering ultimate level 3", () => {
+    const state = createInitialState();
+    state.player.ultimateLevel = 2;
+    state.player.skillLevels[SKILL_IDS.lineProjectile] = MAX_TEST_SKILL_LEVEL;
+    state.player.skillLevels[SKILL_IDS.closeArc] = MAX_TEST_SKILL_LEVEL;
+
+    addRunXp(state, xpToNextLevel(1));
+
+    expect(state.pendingUpgradeChoices.some((choice) => choice.type === "upgradeUltimate")).toBe(false);
+
+    const readyState = createInitialState();
+    readyState.player.ultimateLevel = 2;
+    readyState.player.skillLevels[SKILL_IDS.lineProjectile] = MAX_TEST_SKILL_LEVEL;
+    readyState.player.skillLevels[SKILL_IDS.closeArc] = MAX_TEST_SKILL_LEVEL;
+    readyState.player.skillLevels[SKILL_IDS.guardCounter] = MAX_TEST_SKILL_LEVEL;
+
+    addRunXp(readyState, xpToNextLevel(1));
+
+    expect(readyState.pendingUpgradeChoices).toContainEqual(expect.objectContaining({
+      type: "upgradeUltimate",
+      title: "终式精进",
+      nextLevel: 3,
+    }));
   });
 
   it("learns a new skill at level 1 without replacing the full default loadout", () => {
