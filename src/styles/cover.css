@@ -1,7 +1,7 @@
 .start-screen {
   cursor: pointer;
   color: #f7f3e9;
-  background: #1e3691;
+  background: var(--game-bg-gradient);
   image-rendering: pixelated;
   image-rendering: crisp-edges;
 }
@@ -11,7 +11,7 @@
   inset: 0;
   overflow: hidden;
   pointer-events: none;
-  background: #1e3691;
+  background: var(--game-bg-gradient);
 }
 
 .cover-layer {

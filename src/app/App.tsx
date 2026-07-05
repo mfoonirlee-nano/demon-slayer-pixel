@@ -44,7 +44,7 @@ function GameCanvas({ active }: { active: boolean }) {
       width={WIDTH}
       height={HEIGHT}
       aria-label="Moonlit Tide Survivor"
-      className="pixel-canvas block h-auto w-[960px] max-w-full bg-[#0b1220] max-md:h-[100svh] max-md:w-screen max-md:max-w-none"
+      className="pixel-canvas block h-auto w-[960px] max-w-full max-md:h-[100svh] max-md:w-screen max-md:max-w-none"
     />
   );
 }
@@ -100,14 +100,14 @@ function AppShell() {
   }, [phase, requestStart]);
 
   return (
-    <main className="mx-auto flex min-h-screen w-full max-w-[1020px] flex-col items-center justify-center px-4 py-4 text-center max-md:max-w-none max-md:px-0 max-md:py-0">
+    <main className="app-shell mx-auto flex min-h-screen w-full max-w-[1020px] flex-col items-center justify-center px-4 py-4 text-center max-md:max-w-none max-md:px-0 max-md:py-0">
       {isPlaying ? (
         <>
           <h1 className="mb-4 text-base tracking-[1px] md:text-2xl max-md:hidden">月潮夜行</h1>
           <p className="mb-2 text-[10px] opacity-90 md:text-[13px] max-md:hidden">A/D 移动 · W/空格 跳跃 · J 攻击 · K 释放技能 · L 大招 · 1/2/3 切换技能 · ESC/P 暂停 · R 重开</p>
         </>
       ) : null}
-      <section className="relative w-fit max-w-full overflow-hidden border-4 border-[#3f5f8a] bg-black shadow-[0_16px_48px_rgba(0,0,0,0.5)] max-md:h-[100svh] max-md:w-screen max-md:border-0 max-md:shadow-none">
+      <section className="game-frame relative w-fit max-w-full overflow-hidden border-4 border-[#3f5f8a] shadow-[0_16px_48px_rgba(0,0,0,0.5)] max-md:h-[100svh] max-md:w-screen max-md:border-0 max-md:shadow-none">
         <GameCanvas active={isPlaying} />
         {isPlaying ? (
           <>

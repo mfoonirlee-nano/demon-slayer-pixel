@@ -1,10 +1,16 @@
 :root {
+  --game-bg-base: #030711;
+  --game-bg-top: #07101f;
+  --game-bg-mid: #0d1828;
+  --game-bg-low: #030812;
+  --game-bg-gradient:
+    radial-gradient(ellipse at 24% 16%, rgba(50, 106, 136, 0.22) 0%, transparent 36%),
+    radial-gradient(ellipse at 74% 18%, rgba(104, 24, 40, 0.18) 0%, transparent 32%),
+    linear-gradient(180deg, var(--game-bg-top) 0%, var(--game-bg-mid) 52%, var(--game-bg-low) 100%);
+  --game-frame-bg: linear-gradient(180deg, #050914 0%, #07111f 54%, #02040a 100%);
   color: #f7f3e9;
   font-family: "ZCOOL QingKe HuangYou", "Press Start 2P", "ZCOOL KuaiLe", monospace;
-  background:
-    radial-gradient(circle at 20% 25%, #223356 0%, transparent 35%),
-    radial-gradient(circle at 80% 20%, #332741 0%, transparent 30%),
-    linear-gradient(160deg, #0b0f19 0%, #131c2c 50%, #0b0f19 100%);
+  background: var(--game-bg-gradient);
 }
 
 * {
@@ -55,9 +61,22 @@ body,
 
 body {
   color: #f7f3e9;
+  background: var(--game-bg-gradient);
+  background-color: var(--game-bg-base);
+}
+
+.app-shell {
+  background: var(--game-bg-gradient);
+  background-color: var(--game-bg-base);
+}
+
+.game-frame {
+  background: var(--game-frame-bg);
+  background-color: var(--game-bg-base);
 }
 
 .pixel-canvas {
+  background: var(--game-frame-bg);
   image-rendering: pixelated;
   image-rendering: crisp-edges;
 }

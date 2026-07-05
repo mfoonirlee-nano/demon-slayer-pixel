@@ -33,7 +33,6 @@ const STAR_SCALE_RATIO = 0.6666666666666666;
 const STAR_TWINKLE_OFFSET_STEP = 11;
 const STAR_TWINKLE_OFFSET_MOD = 24;
 const SKY_TOP_BAND_HEIGHT = 170;
-const SKY_MID_BAND_HEIGHT = 120;
 const SKY_LOW_BAND_Y = 290;
 const SKY_UPPER_OVERLAY_HEIGHT = 220;
 const SKY_MID_OVERLAY_Y = 110;
@@ -146,12 +145,13 @@ export function drawBackground() {
   const scrollBackground = elapsed * PARALLAX_SPEED.background;
   const scrollMidground  = elapsed * PARALLAX_SPEED.midground;
 
-  ctx.fillStyle = nightTop;
-  ctx.fillRect(0, 0, WIDTH, SKY_TOP_BAND_HEIGHT);
-  ctx.fillStyle = nightMid;
-  ctx.fillRect(0, SKY_TOP_BAND_HEIGHT, WIDTH, SKY_MID_BAND_HEIGHT);
-  ctx.fillStyle = nightLow;
-  ctx.fillRect(0, SKY_LOW_BAND_Y, WIDTH, GROUND_Y - SKY_LOW_BAND_Y);
+  const skyGradient = ctx.createLinearGradient(0, 0, 0, GROUND_Y);
+  skyGradient.addColorStop(0, nightTop);
+  skyGradient.addColorStop(SKY_TOP_BAND_HEIGHT / GROUND_Y, nightMid);
+  skyGradient.addColorStop(SKY_LOW_BAND_Y / GROUND_Y, nightLow);
+  skyGradient.addColorStop(1, nightLow);
+  ctx.fillStyle = skyGradient;
+  ctx.fillRect(0, 0, WIDTH, GROUND_Y);
 
   ctx.fillStyle = upperOverlay;
   ctx.fillRect(0, 0, WIDTH, SKY_UPPER_OVERLAY_HEIGHT);
@@ -208,6 +208,6 @@ export function drawBackground() {
     }
   }
 
-  ctx.fillStyle = "#0b1424";
+  ctx.fillStyle = "#050b16";
   ctx.fillRect(0, GROUND_Y, WIDTH, HEIGHT - GROUND_Y);
 }

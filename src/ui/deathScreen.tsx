@@ -46,7 +46,7 @@ export function DeathScreen({ elapsed }: { elapsed: number }) {
   const row = Math.floor(frame / DEATH_SPRITE_COLUMNS);
 
   return (
-    <div className="death-screen absolute inset-0 z-50 flex flex-col items-center justify-center bg-black px-6 text-center text-white">
+    <div className="death-screen absolute inset-0 z-50 flex flex-col items-center justify-center px-6 text-center text-white">
       <div aria-hidden="true" className="death-sprite-frame">
         <img
           src="assets/sprites/ui/end.png"

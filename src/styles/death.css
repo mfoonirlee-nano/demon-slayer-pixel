@@ -1,12 +1,9 @@
-.death-screen {
-  image-rendering: pixelated;
-  image-rendering: crisp-edges;
-}
-
+.death-screen,
 .victory-screen {
   image-rendering: pixelated;
   image-rendering: crisp-edges;
-  background: linear-gradient(180deg, #02040a 0%, #071427 54%, #02040a 100%);
+  background: var(--game-bg-gradient);
+  background-color: var(--game-bg-base);
 }
 
 .victory-title {
