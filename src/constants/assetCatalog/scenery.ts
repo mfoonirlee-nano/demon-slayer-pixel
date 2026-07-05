@@ -395,7 +395,7 @@ export const PLATFORM_SPRITES: {
     { sx: 509, sy: 169, sw: 163, sh: 80, surfaceY: 8 },
     { sx: 28, sy: 290, sw: 77, sh: 52, surfaceY: 15 },
     { sx: 131, sy: 294, sw: 74, sh: 43, surfaceY: 7 },
-    { sx: 231, sy: 278, sw: 121, sh: 75, surfaceY: 14 },
+    { sx: 231, sy: 278, sw: 121, sh: 75, surfaceY: 27 },
     { sx: 378, sy: 271, sw: 155, sh: 90, surfaceY: 26 },
     { sx: 559, sy: 293, sw: 81, sh: 46, surfaceY: 6 },
     { sx: 666, sy: 297, sw: 48, sh: 37, surfaceY: 8 },
