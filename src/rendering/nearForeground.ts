@@ -2,12 +2,14 @@ import { state } from "../game/state";
 import { ctx } from "./context";
 import {
   GROUND_Y,
+  WIDTH,
   TREE_SPRITES,
   STONE_TOWER_SPRITES,
   STONE_TOWER_SMALL_SPRITES,
   TORII_SPRITES,
   FOREGROUND_SPRITES,
 } from "../constants";
+import { bossApproachGroundTransitionSeconds } from "../systems/runProgression";
 
 const NEAR_FOREGROUND_SPEED = 18;
 const NEAR_FOREGROUND_PATTERN_WIDTH = 2688;
@@ -27,6 +29,14 @@ const TREE_DRAW_H_STEP = 22;
 const TREE_ALPHA_BASE = 0.86;
 const TREE_ALPHA_MOD = 4;
 const TREE_ALPHA_STEP = 0.035;
+const BOSS_PRELUDE_TORII_VARIANT_SEED = 10;
+const BOSS_PRELUDE_TORII_BASE_DRAW_H = 142;
+const BOSS_PRELUDE_TORII_SCALE = 2;
+export const BOSS_PRELUDE_TORII_DRAW_H = BOSS_PRELUDE_TORII_BASE_DRAW_H * BOSS_PRELUDE_TORII_SCALE;
+const BOSS_PRELUDE_TORII_BOTTOM_OFFSET = 8;
+const BOSS_PRELUDE_TORII_ALPHA = 0.84;
+const BOSS_PRELUDE_TORII_START_PADDING = 48;
+const BOSS_PRELUDE_TORII_EXIT_PADDING = 48;
 
 const TREE_LINE = Array.from({ length: TREE_COUNT }, (_, i) => ({
   variantSeed: i * TREE_VARIANT_SEED_STEP + TREE_VARIANT_SEED_OFFSET,
@@ -55,7 +65,7 @@ const FOREGROUND_DECOR: Array<{
   { variantSeed: 10, baseX: 2465, bottomOffset: 11, drawH: 44, alpha: 0.68 },
 ];
 
-type ForegroundPropSheet = "stoneTower" | "stoneTowerSmall" | "torii";
+type ForegroundPropSheet = "stoneTower" | "stoneTowerSmall";
 
 const FOREGROUND_PROPS: Array<{
   sheet: ForegroundPropSheet;
@@ -66,16 +76,50 @@ const FOREGROUND_PROPS: Array<{
   alpha: number;
 }> = [
   { sheet: "stoneTowerSmall", variantSeed: 2, baseX: 180, bottomOffset: 12, drawH: 92, alpha: 0.84 },
-  { sheet: "torii", variantSeed: 4, baseX: 410, bottomOffset: 9, drawH: 126, alpha: 0.8 },
   { sheet: "stoneTower", variantSeed: 8, baseX: 690, bottomOffset: 14, drawH: 108, alpha: 0.86 },
   { sheet: "stoneTowerSmall", variantSeed: 6, baseX: 920, bottomOffset: 12, drawH: 98, alpha: 0.82 },
-  { sheet: "torii", variantSeed: 10, baseX: 1195, bottomOffset: 8, drawH: 142, alpha: 0.78 },
   { sheet: "stoneTower", variantSeed: 3, baseX: 1480, bottomOffset: 14, drawH: 118, alpha: 0.84 },
   { sheet: "stoneTowerSmall", variantSeed: 1, baseX: 1710, bottomOffset: 12, drawH: 88, alpha: 0.8 },
-  { sheet: "torii", variantSeed: 7, baseX: 1955, bottomOffset: 9, drawH: 132, alpha: 0.78 },
   { sheet: "stoneTower", variantSeed: 11, baseX: 2210, bottomOffset: 13, drawH: 112, alpha: 0.84 },
   { sheet: "stoneTowerSmall", variantSeed: 4, baseX: 2440, bottomOffset: 12, drawH: 94, alpha: 0.8 },
 ];
+
+export type BossPreludeToriiPlacement = {
+  variantIndex: number;
+  x: number;
+  y: number;
+  drawW: number;
+  drawH: number;
+  alpha: number;
+};
+
+function clamp01(value: number) {
+  return Math.min(1, Math.max(0, value));
+}
+
+export function resolveBossPreludeToriiPlacement(input: {
+  bossPreludeElapsed: number | null;
+  act: number;
+}): BossPreludeToriiPlacement | null {
+  if (input.bossPreludeElapsed === null || TORII_SPRITES.variants.length === 0) return null;
+
+  const variantIndex = BOSS_PRELUDE_TORII_VARIANT_SEED % TORII_SPRITES.variants.length;
+  const region = TORII_SPRITES.variants[variantIndex];
+  const drawH = BOSS_PRELUDE_TORII_DRAW_H;
+  const drawW = drawH * (region.sw / region.sh);
+  const transitionSeconds = bossApproachGroundTransitionSeconds(input.act);
+  const progress = transitionSeconds > 0 ? clamp01(input.bossPreludeElapsed / transitionSeconds) : 1;
+  const travelDistance = WIDTH + drawW + BOSS_PRELUDE_TORII_START_PADDING + BOSS_PRELUDE_TORII_EXIT_PADDING;
+
+  return {
+    variantIndex,
+    x: WIDTH + BOSS_PRELUDE_TORII_START_PADDING - travelDistance * progress,
+    y: GROUND_Y + BOSS_PRELUDE_TORII_BOTTOM_OFFSET - drawH,
+    drawW,
+    drawH,
+    alpha: BOSS_PRELUDE_TORII_ALPHA,
+  };
+}
 
 function drawRegion(
   context: CanvasRenderingContext2D,
@@ -131,7 +175,6 @@ function drawProps(context: CanvasRenderingContext2D, pass: number, offset: numb
   const propSheets = {
     stoneTower: STONE_TOWER_SPRITES,
     stoneTowerSmall: STONE_TOWER_SMALL_SPRITES,
-    torii: TORII_SPRITES,
   };
 
   for (const prop of FOREGROUND_PROPS) {
@@ -146,6 +189,20 @@ function drawProps(context: CanvasRenderingContext2D, pass: number, offset: numb
 
     drawRegion(context, image, region, x, y, drawH, prop.alpha);
   }
+}
+
+function drawBossPreludeTorii(context: CanvasRenderingContext2D) {
+  const image = TORII_SPRITES.image;
+  if (!image) return;
+
+  const placement = resolveBossPreludeToriiPlacement({
+    bossPreludeElapsed: state.enemyDirector.bossPrelude?.elapsed ?? null,
+    act: state.enemyDirector.act,
+  });
+  if (!placement) return;
+
+  const region = TORII_SPRITES.variants[placement.variantIndex];
+  drawRegion(context, image, region, placement.x, placement.y, placement.drawH, placement.alpha);
 }
 
 export function drawNearForeground() {
@@ -164,4 +221,5 @@ export function drawNearForeground() {
   for (let pass = -1; pass <= 1; pass += 1) {
     drawProps(context, pass, offset);
   }
+  drawBossPreludeTorii(context);
 }
