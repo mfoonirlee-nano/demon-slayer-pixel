@@ -99,6 +99,7 @@ export function createInitialPlayerState(): PlayerState {
     tempoGarbRecoverySkillGranted: false,
     tempoTalismanLastSkillId: null,
     spiderSilkSlowTimer: 0,
+    runStepDistance: 0,
     onPlatform: null,
     skillFlash: 0,
     isPlayer: true,

@@ -1,7 +1,7 @@
 import { state } from "../../game/state";
 import { PLAYER_COMBAT, PLAYER_DRAW, SKILL_FLASH, SKILL_IDS } from "../../constants";
 import type { Skill, SkillId } from "../../types/assets";
-import { playSfx } from "../../game/audio";
+import { playSfx, type GameSfx } from "../../game/audio";
 import { hasDebugInfiniteSkillCharge } from "../../game/debug";
 import {
   applySkillCastEquipmentEffects,
@@ -37,10 +37,28 @@ const LINE_PROJECTILE_EFFECT_CONFIG = CORE_PLAYER_SKILL_EFFECT_CONFIGS[SKILL_IDS
 const CLOSE_ARC_EFFECT_SHEET = CORE_PLAYER_SKILL_EFFECT_SHEETS[SKILL_IDS.closeArc];
 const CLOSE_ARC_EFFECT_CONFIG = CORE_PLAYER_SKILL_EFFECT_CONFIGS[SKILL_IDS.closeArc];
 const GUARD_COUNTER_EFFECT_CONFIG = CORE_PLAYER_SKILL_EFFECT_CONFIGS[SKILL_IDS.guardCounter];
-const LINE_PROJECTILE_RELEASE_SFX_PITCH = 0.96;
-const CLOSE_ARC_RELEASE_SFX_PITCH = 1.08;
-const GUARD_COUNTER_RELEASE_SFX_PITCH = 0.98;
-const GENERIC_SKILL_RELEASE_SFX_PITCH = 1.02;
+const PLAYER_SKILL_CAST_SFX_PITCH = {
+  [SKILL_IDS.lineProjectile]: 0.98,
+  [SKILL_IDS.closeArc]: 1.04,
+  [SKILL_IDS.guardCounter]: 0.92,
+  [SKILL_IDS.dashReposition]: 1.08,
+  [SKILL_IDS.vortexControl]: 0.86,
+  [SKILL_IDS.armorBreak]: 0.9,
+  [SKILL_IDS.antiAirMulti]: 1.12,
+  [SKILL_IDS.returningBlade]: 1.02,
+  [SKILL_IDS.verticalWave]: 0.96,
+} satisfies Record<SkillId, number>;
+const PLAYER_SKILL_RELEASE_SFX = {
+  [SKILL_IDS.lineProjectile]: "playerSkillLine",
+  [SKILL_IDS.closeArc]: "playerSkillArc",
+  [SKILL_IDS.guardCounter]: "playerSkillGuard",
+  [SKILL_IDS.dashReposition]: "playerSkillDash",
+  [SKILL_IDS.vortexControl]: "playerSkillVortex",
+  [SKILL_IDS.armorBreak]: "playerSkillArmorBreak",
+  [SKILL_IDS.antiAirMulti]: "playerSkillRain",
+  [SKILL_IDS.returningBlade]: "playerSkillReturningBlade",
+  [SKILL_IDS.verticalWave]: "playerSkillVerticalWave",
+} satisfies Record<SkillId, GameSfx>;
 
 export function playerSkillCastAnimFps(skill: Skill) {
   return skill.id === SKILL_IDS.antiAirMulti ? ANTI_AIR_MULTI_SKILL_ANIM_FPS : PLAYER_DRAW.skillAnimFps;
@@ -116,7 +134,7 @@ export function castSelectedSkill() {
     color: skill.color,
   });
 
-  playSfx("playerSkillCast");
+  playSfx("playerSkillCast", PLAYER_SKILL_CAST_SFX_PITCH[skill.id]);
 }
 
 export function castUltimateSkill() {
@@ -198,7 +216,7 @@ export function updateSkillCastRelease(): boolean {
             effectLevel,
             damageMultiplier: p.skillCastDamageMultiplier,
           });
-          playSfx("playerSkillRelease", LINE_PROJECTILE_RELEASE_SFX_PITCH);
+          playSfx(PLAYER_SKILL_RELEASE_SFX[skill.id]);
         } else if (skill.id === SKILL_IDS.closeArc) {
           const growth = corePlayerSkillGrowth(skill.id, state.player.skillLevels[skill.id]);
           const drawScale = growth?.drawScale ?? CLOSE_ARC_EFFECT_CONFIG.drawScale;
@@ -217,13 +235,13 @@ export function updateSkillCastRelease(): boolean {
             maxTravel: growth?.maxTravel ?? CLOSE_ARC_EFFECT_CONFIG.maxTravel,
             damageMultiplier: p.skillCastDamageMultiplier,
           });
-          playSfx("playerSkillRelease", CLOSE_ARC_RELEASE_SFX_PITCH);
+          playSfx(PLAYER_SKILL_RELEASE_SFX[skill.id]);
         } else if (skill.id === SKILL_IDS.guardCounter) {
           spawnGuardCounterEffect(p.skillCastDamageMultiplier);
-          playSfx("playerSkillRelease", GUARD_COUNTER_RELEASE_SFX_PITCH);
+          playSfx(PLAYER_SKILL_RELEASE_SFX[skill.id]);
         } else if (isGenericPlayerSkillId(skill.id)) {
           spawnPlayerSkillEffect(skill.id, p.skillCastDamageMultiplier);
-          playSfx("playerSkillRelease", GENERIC_SKILL_RELEASE_SFX_PITCH);
+          playSfx(PLAYER_SKILL_RELEASE_SFX[skill.id]);
         }
       }
     }

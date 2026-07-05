@@ -27,13 +27,23 @@ type ToneStep = {
 };
 
 export type GameSfx =
+  | "playerRunStep"
+  | "playerLand"
   | "playerAttackStart"
   | "playerAttackHit"
   | "playerBossHit"
   | "playerFallAttackStart"
   | "playerFallAttackImpact"
   | "playerSkillCast"
-  | "playerSkillRelease"
+  | "playerSkillLine"
+  | "playerSkillArc"
+  | "playerSkillGuard"
+  | "playerSkillDash"
+  | "playerSkillVortex"
+  | "playerSkillArmorBreak"
+  | "playerSkillRain"
+  | "playerSkillReturningBlade"
+  | "playerSkillVerticalWave"
   | "playerUltimateCast"
   | "playerUltimateImpact"
   | "playerCounter"
@@ -74,13 +84,23 @@ export type GameSfx =
   | "bossKill";
 
 const SFX_MIN_GAPS: Record<GameSfx, number> = {
+  playerRunStep: 0.13,
+  playerLand: 0.14,
   playerAttackStart: 0.04,
   playerAttackHit: 0.035,
   playerBossHit: 0.045,
   playerFallAttackStart: 0.08,
   playerFallAttackImpact: 0.08,
   playerSkillCast: 0.1,
-  playerSkillRelease: 0.12,
+  playerSkillLine: 0.12,
+  playerSkillArc: 0.1,
+  playerSkillGuard: 0.14,
+  playerSkillDash: 0.1,
+  playerSkillVortex: 0.18,
+  playerSkillArmorBreak: 0.14,
+  playerSkillRain: 0.16,
+  playerSkillReturningBlade: 0.12,
+  playerSkillVerticalWave: 0.14,
   playerUltimateCast: 0.2,
   playerUltimateImpact: 0.25,
   playerCounter: 0.08,
@@ -240,6 +260,18 @@ function clampAudioVolume(value: number) {
 
 export function playSfx(sfx: GameSfx, pitch = 1) {
   switch (sfx) {
+    case "playerRunStep":
+      playPattern(sfx, [
+        { frequency: 92, slideTo: 70, duration: 0.035, type: "triangle", volume: 0.018 },
+        { frequency: 540, slideTo: 690, duration: 0.026, type: "sine", volume: 0.014, delay: 0.012 },
+      ], SFX_MIN_GAPS.playerRunStep, pitch);
+      return;
+    case "playerLand":
+      playPattern(sfx, [
+        { frequency: 88, slideTo: 54, duration: 0.075, type: "triangle", volume: 0.036 },
+        { frequency: 260, slideTo: 180, duration: 0.045, type: "sine", volume: 0.02, delay: 0.018 },
+      ], SFX_MIN_GAPS.playerLand, pitch);
+      return;
     case "playerAttackStart":
       playPattern(sfx, [
         { frequency: 300, slideTo: 520, duration: 0.055, type: "triangle", volume: 0.045 },
@@ -272,15 +304,64 @@ export function playSfx(sfx: GameSfx, pitch = 1) {
       return;
     case "playerSkillCast":
       playPattern(sfx, [
-        { frequency: 620, slideTo: 760, duration: 0.11, type: "triangle", volume: 0.06 },
-        { frequency: 860, slideTo: 520, duration: 0.09, type: "sawtooth", volume: 0.045 },
+        { frequency: 520, slideTo: 760, duration: 0.11, type: "triangle", volume: 0.048 },
+        { frequency: 300, slideTo: 420, duration: 0.09, type: "sine", volume: 0.03, delay: 0.018 },
       ], SFX_MIN_GAPS.playerSkillCast, pitch);
       return;
-    case "playerSkillRelease":
+    case "playerSkillLine":
       playPattern(sfx, [
-        { frequency: 420, slideTo: 880, duration: 0.075, type: "triangle", volume: 0.045 },
-        { frequency: 260, slideTo: 180, duration: 0.06, type: "sine", volume: 0.025 },
-      ], SFX_MIN_GAPS.playerSkillRelease, pitch);
+        { frequency: 360, slideTo: 900, duration: 0.085, type: "triangle", volume: 0.05 },
+        { frequency: 180, slideTo: 120, duration: 0.08, type: "sine", volume: 0.032, delay: 0.018 },
+      ], SFX_MIN_GAPS.playerSkillLine, pitch);
+      return;
+    case "playerSkillArc":
+      playPattern(sfx, [
+        { frequency: 520, slideTo: 940, duration: 0.06, type: "triangle", volume: 0.048 },
+        { frequency: 210, slideTo: 150, duration: 0.045, type: "square", volume: 0.024, delay: 0.014 },
+      ], SFX_MIN_GAPS.playerSkillArc, pitch);
+      return;
+    case "playerSkillGuard":
+      playPattern(sfx, [
+        { frequency: 740, slideTo: 520, duration: 0.105, type: "sine", volume: 0.045 },
+        { frequency: 1040, duration: 0.045, type: "triangle", volume: 0.034, delay: 0.032 },
+      ], SFX_MIN_GAPS.playerSkillGuard, pitch);
+      return;
+    case "playerSkillDash":
+      playPattern(sfx, [
+        { frequency: 300, slideTo: 120, duration: 0.07, type: "sawtooth", volume: 0.044 },
+        { frequency: 760, slideTo: 1020, duration: 0.052, type: "triangle", volume: 0.034, delay: 0.018 },
+      ], SFX_MIN_GAPS.playerSkillDash, pitch);
+      return;
+    case "playerSkillVortex":
+      playPattern(sfx, [
+        { frequency: 170, slideTo: 300, duration: 0.14, type: "sine", volume: 0.044 },
+        { frequency: 420, slideTo: 260, duration: 0.12, type: "triangle", volume: 0.03, delay: 0.035 },
+      ], SFX_MIN_GAPS.playerSkillVortex, pitch);
+      return;
+    case "playerSkillArmorBreak":
+      playPattern(sfx, [
+        { frequency: 126, slideTo: 76, duration: 0.095, type: "square", volume: 0.052 },
+        { frequency: 620, slideTo: 880, duration: 0.055, type: "triangle", volume: 0.038, delay: 0.02 },
+      ], SFX_MIN_GAPS.playerSkillArmorBreak, pitch);
+      return;
+    case "playerSkillRain":
+      playPattern(sfx, [
+        { frequency: 860, slideTo: 620, duration: 0.04, type: "triangle", volume: 0.033 },
+        { frequency: 920, slideTo: 680, duration: 0.04, type: "triangle", volume: 0.03, delay: 0.035 },
+        { frequency: 720, slideTo: 480, duration: 0.05, type: "sine", volume: 0.024, delay: 0.07 },
+      ], SFX_MIN_GAPS.playerSkillRain, pitch);
+      return;
+    case "playerSkillReturningBlade":
+      playPattern(sfx, [
+        { frequency: 520, slideTo: 820, duration: 0.055, type: "triangle", volume: 0.04 },
+        { frequency: 820, slideTo: 460, duration: 0.07, type: "sine", volume: 0.034, delay: 0.048 },
+      ], SFX_MIN_GAPS.playerSkillReturningBlade, pitch);
+      return;
+    case "playerSkillVerticalWave":
+      playPattern(sfx, [
+        { frequency: 180, slideTo: 360, duration: 0.1, type: "sine", volume: 0.044 },
+        { frequency: 520, slideTo: 960, duration: 0.075, type: "triangle", volume: 0.036, delay: 0.026 },
+      ], SFX_MIN_GAPS.playerSkillVerticalWave, pitch);
       return;
     case "playerUltimateCast":
       playPattern(sfx, [

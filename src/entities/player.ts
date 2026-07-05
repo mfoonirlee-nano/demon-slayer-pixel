@@ -53,6 +53,13 @@ const GUARD_COUNTER_ENEMY_BURST_POWER = 1.5;
 const GUARD_COUNTER_BOSS_HIT_Y_RATIO = 0.4;
 const GUARD_COUNTER_EFFECT_CONFIG = CORE_PLAYER_SKILL_EFFECT_CONFIGS[SKILL_IDS.guardCounter];
 const GUARD_COUNTER_HIT_COLOR = playerSkillColor(SKILL_IDS.guardCounter);
+const PLAYER_RUN_STEP_DISTANCE = 34;
+const PLAYER_LAND_MIN_VELOCITY = 4.5;
+const PLAYER_LAND_PITCH_BASE = 0.86;
+const PLAYER_LAND_PITCH_SCALE = 0.035;
+const PLAYER_LAND_MAX_PITCH = 1.18;
+const PLAYER_RUN_STEP_RIGHT_PITCH = 1.02;
+const PLAYER_RUN_STEP_LEFT_PITCH = 0.98;
 
 export function triggerAttack() {
   const p = state.player;
@@ -269,6 +276,7 @@ export function updatePlayer() {
   tickEquipmentEffects(state);
   const movementStartX = p.x;
   const dashReposition = p.dashReposition;
+  const wasGrounded = onGround(p, p.onPlatform);
 
   if (!dashReposition && p.onPlatform && state.platforms.includes(p.onPlatform)) {
     p.x += p.onPlatform.vx;
@@ -313,6 +321,7 @@ export function updatePlayer() {
     p.x += p.vx;
   }
   p.y += p.vy;
+  const landingVelocity = p.vy;
   p.x = Math.max(0, Math.min(WIDTH - p.w, p.x));
   p.onPlatform = null;
 
@@ -343,6 +352,11 @@ export function updatePlayer() {
     triggerFallAttackImpact();
     p.fallAttackTimer = 0;
     p.fallAttackRecoveryTimer = FALL_ATTACK.recoveryFrames;
+  } else if (landed && !wasGrounded && landingVelocity >= PLAYER_LAND_MIN_VELOCITY) {
+    playSfx(
+      "playerLand",
+      Math.min(PLAYER_LAND_MAX_PITCH, PLAYER_LAND_PITCH_BASE + landingVelocity * PLAYER_LAND_PITCH_SCALE),
+    );
   }
 
   if (p.fallAttackRecoveryTimer > 0) {
@@ -367,6 +381,25 @@ export function updatePlayer() {
   }
 
   recordEquipmentMovement(state, p.x - movementStartX);
+  const horizontalMoveDistance = Math.abs(p.x - movementStartX);
+  const canPlayRunStep = !dashReposition
+    && onGround(p, p.onPlatform)
+    && (keys.has("a") || keys.has("d"))
+    && horizontalMoveDistance > PLAYER_COMBAT.movementIdleThreshold
+    && p.attackTimer <= 0
+    && p.fallAttackTimer <= 0
+    && p.fallAttackRecoveryTimer <= 0
+    && p.skillTimer <= 0
+    && p.ultimateCastTimer <= 0;
+  if (canPlayRunStep) {
+    p.runStepDistance += horizontalMoveDistance;
+    if (p.runStepDistance >= PLAYER_RUN_STEP_DISTANCE) {
+      p.runStepDistance %= PLAYER_RUN_STEP_DISTANCE;
+      playSfx("playerRunStep", p.facing === 1 ? PLAYER_RUN_STEP_RIGHT_PITCH : PLAYER_RUN_STEP_LEFT_PITCH);
+    }
+  } else {
+    p.runStepDistance = 0;
+  }
 
   if (!updateSkillCastRelease()) return;
 
