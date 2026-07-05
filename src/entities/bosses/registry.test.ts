@@ -42,4 +42,10 @@ describe("boss act registry", () => {
 
     expect(mistBone.castBottomPadding).toBe(0);
   });
+
+  it("keeps Mirror Dream's cast sprite bottom on the same feet line as movement", () => {
+    const mirrorDream = bossArchetypeForId(BOSS_ARCHETYPE_IDS.mirrorDream);
+
+    expect(mirrorDream.castBottomPadding).toBe(0);
+  });
 });

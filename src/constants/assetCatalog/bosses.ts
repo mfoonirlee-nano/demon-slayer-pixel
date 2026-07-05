@@ -521,7 +521,7 @@ export const MIRROR_DREAM_CONFIG = {
   drawH: 208,
   castDrawW: 228,
   castDrawH: 228,
-  castBottomPadding: 26,
+  castBottomPadding: 0,
   preferredDistance: 210,
   closeDistance: 138,
   steeringForce: 0.052,

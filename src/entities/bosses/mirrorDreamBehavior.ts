@@ -10,8 +10,9 @@ const RETREAT_PHASE_FORCE = 0.006;
 const STEERING_PHASE_FORCE = 0.005;
 const MOVE_COAST_DRAG = 0.84;
 const MAX_VELOCITY_PHASE_BONUS = 0.2;
-const MIN_SKILL_COOLDOWN = 150;
+const MIN_SKILL_COOLDOWN = 132;
 const SKILL_COOLDOWN_PHASE_REDUCTION = 18;
+const SKILL_COOLDOWN_LOW_HP_REDUCTION = 30;
 const CAST_SFX_PITCH = 1.12;
 const NIGHTMARE_HIGH_PHASE = 3;
 const NIGHTMARE_MID_PHASE = 2;
@@ -129,9 +130,11 @@ function shouldStartTrueImageShift(boss: LiveBoss) {
 }
 
 function mirrorDreamSkillCooldown(boss: LiveBoss) {
+  const hpRatio = boss.hpMax > 0 ? clamp(boss.hp / boss.hpMax, 0, 1) : 1;
+  const lowHpReduction = Math.round((1 - hpRatio) * SKILL_COOLDOWN_LOW_HP_REDUCTION);
   const baseCooldown = Math.max(
     MIN_SKILL_COOLDOWN,
-    MIRROR_DREAM_CONFIG.skillCooldown - boss.phase * SKILL_COOLDOWN_PHASE_REDUCTION,
+    MIRROR_DREAM_CONFIG.skillCooldown - boss.phase * SKILL_COOLDOWN_PHASE_REDUCTION - lowHpReduction,
   );
   return boss.skillMode === "mirrorTrueImageShift"
     ? baseCooldown + TRUE_IMAGE_SHIFT_COOLDOWN_BONUS
