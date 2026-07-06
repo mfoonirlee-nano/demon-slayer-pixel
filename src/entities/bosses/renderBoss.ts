@@ -10,6 +10,7 @@ import {
   BLOOD_MOON_SPIDER_MIST_CAST_SHEET,
   BOSS_SKILL1_CONFIG,
   DEAD_BELL_CONFIG,
+  FANG_GALE_BITE_SHEET,
   FANG_GALE_CONFIG,
   LANTERN_EMBER_CONFIG,
   LANTERN_EMBER_BUFF_CAST_SHEET,
@@ -89,6 +90,27 @@ export function drawBoss() {
       boss.castFacing,
     );
     drawDeadBellBeatCue(boss);
+    return;
+  }
+
+  if (boss.id === BOSS_ARCHETYPE_IDS.fangGale && boss.actionState === "dash") {
+    const dashDuration = boss.skillMode === "fangGaleStorm"
+      ? FANG_GALE_CONFIG.stormDashFrames
+      : FANG_GALE_CONFIG.dashFrames;
+    const frameDuration = Math.max(1, Math.ceil(dashDuration / FANG_GALE_BITE_SHEET.count));
+    const frame = Math.min(
+      FANG_GALE_BITE_SHEET.count - 1,
+      Math.floor(Math.min(boss.actionTimer, dashDuration - 1) / frameDuration),
+    );
+    drawSheetFrame(
+      FANG_GALE_BITE_SHEET,
+      frame,
+      centerX - archetype.castDrawW / 2,
+      feetY - archetype.castDrawH + archetype.castBottomPadding,
+      archetype.castDrawW,
+      archetype.castDrawH,
+      boss.facing,
+    );
     return;
   }
 

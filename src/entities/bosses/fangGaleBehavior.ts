@@ -10,15 +10,37 @@ import type { LiveBoss } from "./types";
 const STEERING_PHASE_FORCE = 0.01;
 const MAX_VELOCITY_PHASE_BONUS = 0.24;
 const CAST_SFX_PITCH = 1.08;
-const STORM_PHASE = 4;
-const STORM_RANDOM_CHANCE = 0.24;
 const WAVE_PHASE = 2;
-const WAVE_RANDOM_CHANCE = 0.66;
-const MIN_STORM_COOLDOWN = 210;
-const STORM_COOLDOWN_PHASE_REDUCTION = 10;
-const MIN_WAVE_COOLDOWN = 164;
-const MIN_DASH_COOLDOWN = 144;
-const SKILL_COOLDOWN_PHASE_REDUCTION = 12;
+const MIN_STORM_COOLDOWN = 188;
+const MIN_WAVE_COOLDOWN = 150;
+const MIN_DASH_COOLDOWN = 134;
+const STORM_PHASE_ONE_CHANCE = 0.12;
+const STORM_PHASE_TWO_CHANCE = 0.22;
+const STORM_PHASE_THREE_CHANCE = 0.34;
+const WAVE_PHASE_TWO_CHANCE = 0.44;
+const WAVE_PHASE_THREE_CHANCE = 0.66;
+const WAVE_PHASE_FOUR_CHANCE = 0.78;
+const COOLDOWN_PHASE_TWO_MULTIPLIER = 0.9;
+const COOLDOWN_PHASE_THREE_MULTIPLIER = 0.78;
+const COOLDOWN_PHASE_FOUR_MULTIPLIER = 0.68;
+const STORM_CHANCE_BY_PHASE = [
+  STORM_PHASE_ONE_CHANCE,
+  STORM_PHASE_TWO_CHANCE,
+  STORM_PHASE_THREE_CHANCE,
+  1,
+] as const;
+const WAVE_CHANCE_BY_PHASE = [
+  0,
+  WAVE_PHASE_TWO_CHANCE,
+  WAVE_PHASE_THREE_CHANCE,
+  WAVE_PHASE_FOUR_CHANCE,
+] as const;
+const COOLDOWN_MULTIPLIER_BY_PHASE = [
+  1,
+  COOLDOWN_PHASE_TWO_MULTIPLIER,
+  COOLDOWN_PHASE_THREE_MULTIPLIER,
+  COOLDOWN_PHASE_FOUR_MULTIPLIER,
+] as const;
 const STORM_WAVE_SFX_PITCH = 1.12;
 const DASH_PHASE_SPEED_BONUS = 0.28;
 const STORM_DASH_SFX_PITCH = 1.16;
@@ -112,19 +134,25 @@ function startFangCast(boss: LiveBoss) {
 
 function nextFangSkill(boss: LiveBoss): BossSkillMode {
   const roll = Math.random();
-  if (boss.awakened && (boss.phase >= STORM_PHASE || roll < STORM_RANDOM_CHANCE)) return "fangGaleStorm";
-  if (boss.phase >= WAVE_PHASE && roll < WAVE_RANDOM_CHANCE) return "fangGaleWave";
+  const phaseIndex = fangPhaseIndex(boss.phase);
+  if (boss.awakened && roll < STORM_CHANCE_BY_PHASE[phaseIndex]) return "fangGaleStorm";
+  if (boss.phase >= WAVE_PHASE && roll < WAVE_CHANCE_BY_PHASE[phaseIndex]) return "fangGaleWave";
   return "fangGaleDash";
 }
 
 function fangSkillCooldown(skillMode: BossSkillMode, phase: number) {
+  const multiplier = COOLDOWN_MULTIPLIER_BY_PHASE[fangPhaseIndex(phase)];
   if (skillMode === "fangGaleStorm") {
-    return Math.max(MIN_STORM_COOLDOWN, FANG_GALE_CONFIG.stormCooldown - phase * STORM_COOLDOWN_PHASE_REDUCTION);
+    return Math.max(MIN_STORM_COOLDOWN, Math.round(FANG_GALE_CONFIG.stormCooldown * multiplier));
   }
   if (skillMode === "fangGaleWave") {
-    return Math.max(MIN_WAVE_COOLDOWN, FANG_GALE_CONFIG.waveCooldown - phase * SKILL_COOLDOWN_PHASE_REDUCTION);
+    return Math.max(MIN_WAVE_COOLDOWN, Math.round(FANG_GALE_CONFIG.waveCooldown * multiplier));
   }
-  return Math.max(MIN_DASH_COOLDOWN, FANG_GALE_CONFIG.dashCooldown - phase * SKILL_COOLDOWN_PHASE_REDUCTION);
+  return Math.max(MIN_DASH_COOLDOWN, Math.round(FANG_GALE_CONFIG.dashCooldown * multiplier));
+}
+
+function fangPhaseIndex(phase: number) {
+  return Math.min(COOLDOWN_MULTIPLIER_BY_PHASE.length - 1, Math.max(0, phase - 1));
 }
 
 function spawnFangWavePattern(boss: LiveBoss) {

@@ -96,6 +96,14 @@ export const FANG_GALE_WINDUP_SHEET: SpriteSheet = {
   image: null,
 };
 
+export const FANG_GALE_BITE_SHEET: SpriteSheet = {
+  src: "assets/sprites/boss/fang-gale/fang_gale_bite.png",
+  frameW: 400,
+  frameH: 400,
+  count: 6,
+  image: null,
+};
+
 export const FANG_GALE_WAVE_SHEET: SpriteSheet = {
   src: "assets/sprites/boss/fang-gale/fang_gale_wave.png",
   frameW: 400,

@@ -138,6 +138,7 @@ const actors = [
   boss("fang-gale", "血月眷属 · 牙岚", "fang-gale", [
     sheet("move", "assets/sprites/boss/fang-gale/fang_gale_move.png", 350, 419, 4, { primary: true }),
     sheet("windup", "assets/sprites/boss/fang-gale/fang_gale_windup.png", 400, 400, 6),
+    sheet("bite", "assets/sprites/boss/fang-gale/fang_gale_bite.png", 400, 400, 6),
   ], ["assets/sprites/boss/fang-gale/fang_gale_wave.png"]),
   boss("lantern-ember", "血月眷属 · 灯烬", "lantern-ember", [
     sheet("move", "assets/sprites/boss/lantern-ember/lantern_ember_move.png", 350, 419, 4, { primary: true }),
