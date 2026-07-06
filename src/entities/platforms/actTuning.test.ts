@@ -9,15 +9,15 @@ const EARLY_EXPECTED_SPEED = 1.008;
 const MID_BOSS_KILLS = 2;
 const MID_ELAPSED_SECONDS = 120;
 const MID_RANDOM_SPEED = 0.45;
-const MID_EXPECTED_SPEED = 2.1096;
+const MID_EXPECTED_SPEED = 1.83312;
 
 const LATE_BOSS_KILLS = 4;
 const LATE_ELAPSED_SECONDS = 300;
 const LATE_RANDOM_SPEED = 0.9;
-const LATE_EXPECTED_SPEED = 3.2112;
+const LATE_EXPECTED_SPEED = 2.57616;
 
 describe("platformSpeedForRun", () => {
-  it("keeps platform scroll speed below the previous tuning curve", () => {
+  it("keeps the opening speed stable and slows mid-to-late speed growth", () => {
     expect(platformSpeedForRun(
       EARLY_BOSS_KILLS,
       EARLY_ELAPSED_SECONDS,
