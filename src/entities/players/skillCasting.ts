@@ -22,10 +22,12 @@ import { currentMoonTideConfig } from "./moonTide";
 
 const SKILL_ANIMATION_BASE_FPS = 60;
 const ANTI_AIR_MULTI_SKILL_ANIM_FPS = 8;
-const PLAYER_SKILL_RELEASE_FRAMES: Record<SkillId, number> = {
+const PLAYER_SKILL_RELEASE_CAST_FRAMES: Partial<Record<SkillId, number>> = {
+  [SKILL_IDS.lineProjectile]: 2,
+};
+const PLAYER_SKILL_RELEASE_FRAMES: Partial<Record<SkillId, number>> = {
   [SKILL_IDS.closeArc]: 8,
   [SKILL_IDS.dashReposition]: 6,
-  [SKILL_IDS.lineProjectile]: 12,
   [SKILL_IDS.guardCounter]: 11,
   [SKILL_IDS.verticalWave]: 12,
   [SKILL_IDS.vortexControl]: 18,
@@ -68,8 +70,17 @@ export function playerSkillCastFrames(skill: Skill) {
   return Math.ceil(skill.frameCount * SKILL_ANIMATION_BASE_FPS / playerSkillCastAnimFps(skill));
 }
 
+export function playerSkillReleaseCastFrame(skill: Skill) {
+  return PLAYER_SKILL_RELEASE_CAST_FRAMES[skill.id] ?? null;
+}
+
 export function playerSkillReleaseFrame(skill: Skill) {
-  return Math.min(playerSkillCastFrames(skill), PLAYER_SKILL_RELEASE_FRAMES[skill.id]);
+  const linkedCastFrame = playerSkillReleaseCastFrame(skill);
+  if (linkedCastFrame !== null) {
+    const releaseFrame = Math.ceil(linkedCastFrame * SKILL_ANIMATION_BASE_FPS / playerSkillCastAnimFps(skill));
+    return Math.min(playerSkillCastFrames(skill), releaseFrame);
+  }
+  return Math.min(playerSkillCastFrames(skill), PLAYER_SKILL_RELEASE_FRAMES[skill.id] ?? playerSkillCastFrames(skill));
 }
 
 export function playerSkillCastFrame(skill: Skill, remainingFrames: number) {

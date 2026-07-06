@@ -4,6 +4,7 @@ import {
 } from "../../constants";
 import { createBossEncounter } from "../bosses/encounter";
 import { resetState, state } from "../../game/state";
+import { lineProjectileEffectSheetForLevel } from "../../systems/skillCatalog";
 import type { SkillLevel } from "../../types/game-state";
 import { updateLineProjectileEffects } from "./coreSkillEffects";
 
@@ -61,5 +62,38 @@ describe("line projectile runtime", () => {
     });
 
     expect(levelThreeHits).toBeGreaterThan(levelOneHits);
+  });
+
+  it("loops only full-body dash frames after the dragon reveal finishes", () => {
+    const sheet = lineProjectileEffectSheetForLevel(1);
+    const loopLen = sheet.count - LINE_PROJECTILE_EFFECT_CONFIG.loopFromFrame;
+
+    state.lineProjectileEffects.push({
+      x: LINE_PROJECTILE_TEST_START_X,
+      y: LINE_PROJECTILE_TEST_Y,
+      vx: LINE_PROJECTILE_EFFECT_CONFIG.speed,
+      facing: 1,
+      frame: 0,
+      elapsed: 0,
+      drawScale: LINE_PROJECTILE_EFFECT_CONFIG.drawScale,
+      effectLevel: 1,
+      damageMultiplier: 1,
+    });
+
+    const sampledFrames = [state.lineProjectileEffects[0].frame];
+    const sampleCount = sheet.count + loopLen * 2;
+    const revealFrames = Array.from({ length: sheet.count }, (_, frame) => frame);
+    const loopFrames = Array.from(
+      { length: loopLen },
+      (_, frame) => LINE_PROJECTILE_EFFECT_CONFIG.loopFromFrame + frame,
+    );
+    for (let sample = 1; sample < sampleCount; sample += 1) {
+      for (let frame = 0; frame < LINE_PROJECTILE_EFFECT_CONFIG.frameDuration; frame += 1) {
+        updateLineProjectileEffects();
+      }
+      sampledFrames.push(state.lineProjectileEffects[0].frame);
+    }
+
+    expect(sampledFrames).toEqual([...revealFrames, ...loopFrames, ...loopFrames]);
   });
 });

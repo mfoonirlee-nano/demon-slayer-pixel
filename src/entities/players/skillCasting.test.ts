@@ -13,7 +13,9 @@ import type { SkillId } from "../../types/assets";
 import {
   castSelectedSkill,
   castUltimateSkill,
+  playerSkillCastFrame,
   playerSkillCastFrames,
+  playerSkillReleaseCastFrame,
   playerSkillReleaseFrame,
   triggerUltimateOpeningEffect,
   updateSkillCastRelease,
@@ -72,7 +74,7 @@ describe("player skill casting", () => {
     const releaseFrames: Record<SkillId, number> = {
       [SKILL_IDS.closeArc]: 8,
       [SKILL_IDS.dashReposition]: 6,
-      [SKILL_IDS.lineProjectile]: 12,
+      [SKILL_IDS.lineProjectile]: 10,
       [SKILL_IDS.guardCounter]: 11,
       [SKILL_IDS.verticalWave]: 12,
       [SKILL_IDS.vortexControl]: 18,
@@ -87,6 +89,30 @@ describe("player skill casting", () => {
       expect(playerSkillReleaseFrame(skill)).toBe(releaseFrame);
       expect(playerSkillReleaseFrame(skill)).toBeLessThanOrEqual(playerSkillCastFrames(skill));
     }
+  });
+
+  it("links line projectile release timing to the cast sprite frame", () => {
+    resetState();
+    state.player.skillEnergy = state.player.skillEnergyMax;
+    state.player.skillIndex = 0;
+    const lineProjectile = skillById(SKILL_IDS.lineProjectile);
+    const releaseFrame = playerSkillReleaseFrame(lineProjectile);
+    const castFrameAtRelease = playerSkillCastFrame(
+      lineProjectile,
+      playerSkillCastFrames(lineProjectile) - releaseFrame,
+    );
+
+    expect(playerSkillReleaseCastFrame(lineProjectile)).toBe(2);
+    expect(castFrameAtRelease).toBe(2);
+
+    castSelectedSkill();
+    for (let frame = 1; frame < releaseFrame; frame += 1) {
+      updateSkillCastRelease();
+      expect(state.lineProjectileEffects).toHaveLength(0);
+    }
+
+    updateSkillCastRelease();
+    expect(state.lineProjectileEffects).toHaveLength(1);
   });
 
   it("does not activate guard counter before its release frame", () => {
