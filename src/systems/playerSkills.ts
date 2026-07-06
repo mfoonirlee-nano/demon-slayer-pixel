@@ -86,6 +86,8 @@ export const CORE_PLAYER_SKILL_IDS: CorePlayerSkillId[] = [
   SKILL_IDS.guardCounter,
 ];
 
+export const GENERIC_SKILL_DAMAGE_ATTACK_BONUS_SCALE = 0.025;
+
 export const CORE_PLAYER_SKILL_GROWTH: Record<CorePlayerSkillId, CoreSkillGrowthTuning> = {
   [SKILL_IDS.lineProjectile]: {
     damageMultiplier: { 1: 1, 2: 1.18, 3: 1.35 },

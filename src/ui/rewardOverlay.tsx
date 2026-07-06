@@ -4,6 +4,12 @@ import type { GameSnapshot } from "../game/gameStore";
 import { EQUIPMENT_FAMILY_LABELS, EQUIPMENT_TIER_LABELS } from "../systems/equipment";
 import { playerSkillColor, playerSkillIconSrc } from "../systems/skillCatalog";
 import type { EquipmentChoiceState, UpgradeChoiceState, UpgradeChoiceType } from "../types/game-state";
+import {
+  equipmentRewardMetrics,
+  upgradeRewardMetrics,
+  type RewardChoiceMetric,
+  type RewardMetricTone,
+} from "./rewardChoiceDetails";
 import { EQUIPMENT_SLOT_LABELS, equipmentIconSrc, equipmentSlotBadgeSrc } from "./uiDisplay";
 import { getRewardOverlayLayout } from "./rewardOverlayLayout";
 import { UiSprite } from "./uiSprite";
@@ -12,6 +18,15 @@ const ULTIMATE_SKILL_ICON_SRC = "assets/sprites/skills/ultimate_skill/icon.png";
 
 const BOSS_ICON_BADGE_MIN_SIZE = 12;
 const BOSS_ICON_BADGE_SIZE_RATIO = 0.34;
+
+const REWARD_METRIC_TONE_COLORS: Record<RewardMetricTone, string> = {
+  damage: "#ffd46e",
+  defense: "#9be6ff",
+  resource: "#8fffd0",
+  range: "#c8efff",
+  speed: "#b7ff8f",
+  utility: "#e9d7ff",
+};
 
 const UPGRADE_CHOICE_STYLE: Record<UpgradeChoiceType, {
   accent: string;
@@ -59,6 +74,33 @@ function equipmentChoiceStatus(choice: EquipmentChoiceState, currentName: string
   }
   if (choice.reason === "replacement") return `替换：当前${EQUIPMENT_SLOT_LABELS[choice.slot]}「${currentName ?? "无"}」`;
   return `新装备：${EQUIPMENT_TIER_LABELS[choice.tier]}`;
+}
+
+function RewardMetricList({ metrics, accent }: { metrics: RewardChoiceMetric[]; accent: string }) {
+  if (metrics.length === 0) return null;
+
+  return (
+    <div className="mt-2 grid grid-cols-2 gap-1">
+      {metrics.map((metric) => (
+        <div
+          key={`${metric.label}-${metric.value}`}
+          className="min-w-0 rounded-sm border bg-[rgba(4,11,25,0.64)] px-1 py-[2px] text-center leading-none"
+          style={{ borderColor: "rgba(255,255,255,0.13)" }}
+        >
+          <div className="truncate text-[6px] text-[#7fc8e0]">{metric.label}</div>
+          <div
+            className="mt-[2px] truncate text-[7px] font-bold"
+            style={{
+              color: REWARD_METRIC_TONE_COLORS[metric.tone],
+              textShadow: `0 0 8px ${accent}55`,
+            }}
+          >
+            {metric.value}
+          </div>
+        </div>
+      ))}
+    </div>
+  );
 }
 
 export function RewardOverlay({ snapshot }: { snapshot: GameSnapshot }) {
@@ -159,6 +201,11 @@ export function RewardOverlay({ snapshot }: { snapshot: GameSnapshot }) {
               ? Math.max(BOSS_ICON_BADGE_MIN_SIZE, Math.round(layout.cardIcon.size * BOSS_ICON_BADGE_SIZE_RATIO))
               : 0;
             const equippedItem = item ? snapshot.equipment.equipped[item.slot] : null;
+            const metrics = item
+              ? equipmentRewardMetrics(item)
+              : upgrade
+                ? upgradeRewardMetrics(upgrade, snapshot.player)
+                : [];
             return (
               <button
                 key={choice.id}
@@ -254,7 +301,8 @@ export function RewardOverlay({ snapshot }: { snapshot: GameSnapshot }) {
                         <div className="mt-1 truncate text-center text-[8px] font-bold leading-none text-[#ffd46e]">
                           {EQUIPMENT_FAMILY_LABELS[item.family]} · {item.uiTags[item.uiTags.length - 1]}
                         </div>
-                        <div className="mt-2 line-clamp-3 text-center text-[8px] leading-[1.45] text-[#c8efff]">{item.summary}</div>
+                        <RewardMetricList metrics={metrics} accent={bossAccent} />
+                        <div className="mt-1 line-clamp-2 text-center text-[8px] leading-[1.4] text-[#c8efff]">{item.summary}</div>
                       </>
                     ) : upgrade && upgradeStyle ? (
                       <>
@@ -274,7 +322,8 @@ export function RewardOverlay({ snapshot }: { snapshot: GameSnapshot }) {
                         <div className="mt-1 text-center text-[8px] font-bold leading-none" style={{ color: upgradeAccent }}>
                           {levelTransition(upgrade)}
                         </div>
-                        <div className="mt-2 text-center text-[8px] leading-[1.5] text-[#c8efff]">{upgrade.description}</div>
+                        <RewardMetricList metrics={metrics} accent={upgradeAccent} />
+                        <div className="mt-1 line-clamp-2 text-center text-[8px] leading-[1.4] text-[#c8efff]">{upgrade.description}</div>
                       </>
                     ) : null}
                     {isBossReward && item ? (

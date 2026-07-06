@@ -4,6 +4,7 @@ import type { BossState, EnemyState, PlayerSkillEffectState, SkillLevel } from "
 import { clamp, hitbox, type RectLike } from "../../game/utils";
 import { applySkillHitEquipmentRefund } from "../../systems/equipment";
 import {
+  GENERIC_SKILL_DAMAGE_ATTACK_BONUS_SCALE,
   GENERIC_PLAYER_SKILL_TUNING,
   isGenericPlayerSkillId,
   rectFromCenter,
@@ -49,7 +50,6 @@ export const VORTEX_MIN_PULL_SCALE = 0.72;
 export const VORTEX_CORE_PULL_SCALE = 0.38;
 export const VORTEX_MIN_PULL_DELTA = 0.1;
 export const ARMOR_BREAK_FALLBACK_Y_RATIO = 0.54;
-export const GENERIC_SKILL_DAMAGE_ATTACK_BONUS_SCALE = 0.025;
 export const ARMOR_BREAK_PROJECTILE_SPEED = 8.5;
 export const ARMOR_BREAK_SPAWN_FORWARD_OFFSET = 28;
 export const ARMOR_BREAK_IMPACT_FRAME_START = 1;
