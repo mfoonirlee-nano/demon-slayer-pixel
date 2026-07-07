@@ -78,7 +78,7 @@ k = bossKills = act - 1
 | `duelist.png` | 双刃夜妖 | 已接入近战斩击状态机 | 作为 `duelist`，由 enemy director 控制近身压力和同时威胁数量 |
 | `brute_advance.png` | 站立持盾重妖 | 已接入盾牌耐久、盾击、破盾硬直和无盾横扫状态机 | 作为 `brute`，由 enemy director 控制正面阻挡压力和生成预算 |
 | `glider_hover.png` | 膜翼巡妖 | 已接入低空悬停/俯冲状态机，当前按 `elapsed >= 70s` 进入随机候选 | 作为 `glider`，目标设计中改为由 `tier 2` 和 `runEnemyOrder` 控制解锁并纳入预算 |
-| `binder_move.png` | 符咒长袍夜妖 | 已接入控场咒圈状态机 | 作为 `binder`，目标设计中改为由 `tier 4`、`runEnemyOrder` 和 profile 控制解锁与权重 |
+| `binder_move.png` | 符咒长袍夜妖 | 已接入身前法阵与贴附符纸状态机 | 作为 `binder`，目标设计中改为由 `tier 4`、`runEnemyOrder` 和 profile 控制解锁与权重 |
 | `burrower_move.png` | 铲爪土潜夜妖 | 已接入潜入、地面轨迹、钻出和恢复状态机，当前按 `elapsed >= 90s` 进入随机候选 | 作为 `burrower`，目标设计中改为由 `tier 3` 和 `runEnemyOrder` 控制解锁并纳入预算 |
 
 新增敌人面向原画师的形象说明见 [../art/enemies/README.md](../art/enemies/README.md)。仍未接入的新增敌人等待正式素材、前摇动画和命中特效准备好后再进入生成池。

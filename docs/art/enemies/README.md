@@ -41,7 +41,7 @@
 | `glider` | 膜翼巡妖 | 多状态素材已接入；低空俯冲行为已实现 | [glider.md](glider.md) |
 | `burrower` | 土潜夜妖 | 多状态素材已接入；潜入/钻出行为已实现 | [burrower.md](burrower.md) |
 | `splitter` | 裂影夜妖 | 多状态素材已接入；分裂和分裂体行为已实现 | [splitter.md](splitter.md) |
-| `binder` | 缚咒夜妖 | 多状态素材已接入；控场咒圈行为已实现 | [binder.md](binder.md) |
+| `binder` | 缚咒夜妖 | 多状态素材已接入；身前法阵与贴附符纸行为已实现 | [binder.md](binder.md) |
 | `warden` | 御阵夜妖 | 多状态素材已接入；光环支援行为已实现 | [warden.md](warden.md) |
 
 ## Readability Checklist
@@ -56,7 +56,7 @@
 - `glider` 必须靠低空翼膜和收翼俯冲读出飞行威胁。
 - `burrower` 潜行时仍有地面轨迹，不会凭空消失。
 - `splitter` 活着时就能看出身体中线裂缝。
-- `binder` 的威胁来自地面区域，而不是飞行弹幕。
+- `binder` 的威胁来自身前法阵释放的贴附符纸，符纸命中后的状态要比飞行轨迹本身更醒目。
 - `warden` 的光环来源明确，且同屏多个敌人时仍能被优先识别。
 - 所有前摇姿态都能在 `120px` 左右游戏内绘制高度下看清。
 - 特效不会遮挡玩家、平台边缘、Boss 血条或拾取物。

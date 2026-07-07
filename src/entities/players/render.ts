@@ -2,6 +2,7 @@ import { state } from "../../game/state";
 import { ctx } from "../../rendering/context";
 import {
   FALL_ATTACK,
+  BINDER_TALISMAN_SHEET,
   PLAYER_ANIMATION_STATES,
   PLAYER_COMBAT,
   PLAYER_DRAW,
@@ -17,7 +18,7 @@ import type {
   UltimatePlayerGhostAction,
   UltimatePlayerGhostSnapshot,
 } from "../../types/game-state";
-import { bindingZonePlayerMoveScale } from "../enemies/binder";
+import { binderTalismanAttachedTimer, bindingZonePlayerMoveScale } from "../enemies/binder";
 import { lanternAshZonePlayerMoveScale, spiderSilkSlowPlayerMoveScale } from "./movementModifiers";
 import { moonTideActive, moonTidePlayerAnimationFrameSpeed, recordMoonTidePlayerGhost } from "./moonTide";
 import { playerSkillCastFrame } from "./skillCasting";
@@ -30,6 +31,13 @@ const MOON_TIDE_OUTLINE_ALPHA_BASE = 0.14;
 const MOON_TIDE_OUTLINE_ALPHA_PER_LEVEL = 0.04;
 const ULTIMATE_SKILL_CAST_ANCHOR_Y = 0.83;
 const MOON_TIDE_OUTLINE_FILTER = "brightness(0) saturate(100%) invert(64%) sepia(88%) saturate(1320%) hue-rotate(166deg) brightness(103%) contrast(103%) drop-shadow(0 0 7px rgba(52, 196, 255, 0.82))";
+const PLAYER_BINDER_TALISMAN_ATTACHMENT = {
+  w: 24,
+  h: 32,
+  xOffsetRatio: 0.08,
+  yRatio: 0.44,
+  frameDuration: 10,
+} as const;
 
 const PLAYER_BINDING_SLOW_EFFECT = {
   filter: "sepia(0.38) saturate(1.55) hue-rotate(282deg) brightness(0.86)",
@@ -130,6 +138,27 @@ function drawBindingSlowEffect() {
   ctx.restore();
 }
 
+function drawBinderTalismanAttachment() {
+  if (!ctx || !BINDER_TALISMAN_SHEET.image || binderTalismanAttachedTimer() <= 0) return;
+
+  const p = state.player;
+  const frame = frameIndex(BINDER_TALISMAN_SHEET.count, PLAYER_BINDER_TALISMAN_ATTACHMENT.frameDuration, state.elapsed);
+  const drawX = p.x
+    + p.w / 2
+    + p.facing * p.w * PLAYER_BINDER_TALISMAN_ATTACHMENT.xOffsetRatio
+    - PLAYER_BINDER_TALISMAN_ATTACHMENT.w / 2;
+  const drawY = p.y + p.h * PLAYER_BINDER_TALISMAN_ATTACHMENT.yRatio;
+  drawSheetFrame(
+    BINDER_TALISMAN_SHEET,
+    frame,
+    drawX,
+    drawY,
+    PLAYER_BINDER_TALISMAN_ATTACHMENT.w,
+    PLAYER_BINDER_TALISMAN_ATTACHMENT.h,
+    p.facing,
+  );
+}
+
 function drawRenderSnapshot(snapshot: UltimatePlayerGhostSnapshot, currentSkill: Skill | null = null) {
   if (snapshot.source === "player" && snapshot.animationState) {
     drawSheetFrame(
@@ -219,6 +248,7 @@ export function drawPlayer() {
         p.facing,
       );
     });
+    drawBinderTalismanAttachment();
     if (isBindingSlowed) drawBindingSlowEffect();
     return;
   }
@@ -253,6 +283,7 @@ export function drawPlayer() {
       drawWithBindingSlowFilter(isBindingSlowed, () => {
         drawRenderSnapshot(snapshot, skill);
       });
+      drawBinderTalismanAttachment();
       if (isBindingSlowed) drawBindingSlowEffect();
       return;
     }
@@ -309,5 +340,6 @@ export function drawPlayer() {
     drawMoonTideOutline(snapshot);
     drawRenderSnapshot(snapshot);
   });
+  drawBinderTalismanAttachment();
   if (isBindingSlowed) drawBindingSlowEffect();
 }

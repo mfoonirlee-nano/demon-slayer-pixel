@@ -1,5 +1,6 @@
 import type { PlayerAnimationState, SkillId } from "../assets";
 import type {
+  BinderTalismanDebuff,
   BloodMoonEffectKind,
   BossSkillEffectKind,
   MirrorShardKind,
@@ -212,6 +213,9 @@ export type BindingZoneState = {
   radius: number;
   elite?: boolean;
   moveScale?: number;
+  facing: number;
+  debuffs: BinderTalismanDebuff[];
+  talismanReleased: boolean;
   life: number;
   maxLife: number;
   elapsed: number;
@@ -229,6 +233,7 @@ export type ProjectileState = {
   life: number;
   damage: number;
   ownerId?: number;
+  debuffs?: BinderTalismanDebuff[];
   frame?: number;
   elapsed?: number;
   speed?: number;

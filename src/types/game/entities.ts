@@ -134,6 +134,13 @@ export type PlayerState = {
   tempoGarbRecoverySkillGranted: boolean;
   tempoTalismanLastSkillId: SkillId | null;
   spiderSilkSlowTimer: number;
+  binderTalismanSlowTimer: number;
+  binderTalismanDamageTimer: number;
+  binderTalismanDamageTickTimer: number;
+  binderTalismanKeyScrambleTimer: number;
+  binderTalismanStunStatusTimer: number;
+  binderTalismanStunTimer: number;
+  binderTalismanStunCooldown: number;
   runStepDistance: number;
   onPlatform: PlatformState | null;
   skillFlash: number;

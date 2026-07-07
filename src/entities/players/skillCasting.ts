@@ -18,6 +18,7 @@ import {
   lineProjectileEffectSheetForLevel,
 } from "../../systems/skillCatalog";
 import { spawnPlayerSkillEffect } from "../particle";
+import { isBinderTalismanStunned } from "../enemies/binder";
 import { currentMoonTideConfig } from "./moonTide";
 
 const SKILL_ANIMATION_BASE_FPS = 60;
@@ -96,6 +97,8 @@ export function syncSkillCharges() {
 }
 
 export function castSelectedSkill() {
+  if (isBinderTalismanStunned()) return;
+
   const p = state.player;
   if (p.ultimateCastTimer > 0) return;
   if (p.skillTimer > 0) return;
@@ -149,6 +152,8 @@ export function castSelectedSkill() {
 }
 
 export function castUltimateSkill() {
+  if (isBinderTalismanStunned()) return;
+
   const p = state.player;
   if (
     state.gameOver

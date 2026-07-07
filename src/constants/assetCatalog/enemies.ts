@@ -311,27 +311,19 @@ export const BINDER_SHEETS: Record<BinderPhase, SpriteSheet> = {
   },
 };
 
-export const BINDER_ZONE_SHEET: SpriteSheet = {
-  src: "assets/sprites/enemies/binder/binder_zone.png",
+export const BINDER_MAGIC_CIRCLE_SHEET: SpriteSheet = {
+  src: "assets/sprites/enemies/binder/binder_magic_circle.png",
   frameW: 240,
   frameH: 120,
   count: 8,
   image: null,
 };
 
-export const BINDER_ZONE_BACK_SHEET: SpriteSheet = {
-  src: "assets/sprites/enemies/binder/binder_zone_back.png",
-  frameW: 240,
-  frameH: 120,
-  count: 8,
-  image: null,
-};
-
-export const BINDER_ZONE_FRONT_SHEET: SpriteSheet = {
-  src: "assets/sprites/enemies/binder/binder_zone_front.png",
-  frameW: 240,
-  frameH: 120,
-  count: 8,
+export const BINDER_TALISMAN_SHEET: SpriteSheet = {
+  src: "assets/sprites/enemies/binder/binder_talisman.png",
+  frameW: 64,
+  frameH: 64,
+  count: 4,
   image: null,
 };
 

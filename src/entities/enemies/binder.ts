@@ -4,15 +4,12 @@ import { playSfx } from "../../game/audio";
 import { hasDebugInfiniteHealth } from "../../game/debug";
 import {
   BINDER_SHEET_INDEX,
+  BINDER_MAGIC_CIRCLE_SHEET,
   BINDER_SHEETS,
-  BINDER_ZONE_BACK_SHEET,
-  BINDER_ZONE_FRONT_SHEET,
-  BINDER_ZONE_SHEET,
   ENEMY_SHEETS,
-  GROUND_Y,
 } from "../../constants";
 import { drawSheetFrame } from "../../rendering/graphics";
-import type { BinderAiPhase, BinderPhase, EnemyState } from "../../types/game-state";
+import type { BinderAiPhase, BinderPhase, BinderTalismanDebuff, EnemyState } from "../../types/game-state";
 import { frameIndex } from "../../game/utils";
 import type { EnemyArchetype, EnemySpawnContext } from "./common";
 import {
@@ -48,17 +45,26 @@ const BINDER_CONFIG = {
   blockedRetryFrames: 18,
   maxActiveBinders: 1,
   maxActiveZones: 1,
-  zoneLifeFrames: 150,
-  awakenedZoneLifeBonusFrames: 30,
-  eliteZoneLifeBonusFrames: 48,
+  maxActiveTalismans: 2,
+  zoneLifeFrames: 72,
+  awakenedZoneLifeBonusFrames: 10,
+  eliteZoneLifeBonusFrames: 18,
   zoneRadius: 76,
   awakenedZoneRadiusBonus: 8,
   eliteZoneRadiusBonus: 16,
-  zoneVerticalRadiusScale: 0.58,
-  zoneMoveScale: 0.45,
-  eliteZoneMoveScale: 0.28,
-  zoneDamageFirstFrame: 24,
-  zoneDamageIntervalFrames: 36,
+  zoneForwardOffset: 92,
+  zoneTalismanReleaseFrame: 14,
+  talismanStartYOffset: 42,
+  talismanCollisionW: 20,
+  talismanCollisionH: 28,
+  talismanLifeFrames: 160,
+  talismanSpeed: 4.15,
+  talismanTrackingFrames: 54,
+  talismanTurnRate: 0.058,
+  talismanSlowMoveScale: 0.45,
+  talismanDebuffFrames: 210,
+  talismanDamageFirstFrame: 24,
+  talismanDamageIntervalFrames: 36,
   zoneDamageInvincibleFrames: 10,
   zoneDamageBase: 2,
   zoneDamagePerMinute: 1.25,
@@ -67,8 +73,10 @@ const BINDER_CONFIG = {
   zoneLoopStartFrame: 1,
   zoneFadeFrames: 16,
   zoneAlpha: 0.88,
-  zoneFrontAlphaScale: 0.8,
   zoneDrawWidthScale: 2.52,
+  stunActiveFrames: 22,
+  stunCooldownMinFrames: 34,
+  stunCooldownJitterFrames: 48,
   drawScale: 1,
   hpMultiplier: 1.5,
   collisionScaleX: 0.92,
@@ -84,6 +92,7 @@ const ZONE_DAMAGE_SFX_PITCH = 0.82;
 const PLAYER_HURT_SFX_PITCH = 0.9;
 const CAST_START_SFX_PITCH = 0.86;
 const CAST_RELEASE_SFX_PITCH = 0.82;
+const FINAL_BINDER_DEBUFFS: BinderTalismanDebuff[] = ["slow", "damage", "keyScramble", "stun"];
 
 function difficultyK() {
   return state.elapsed / SECONDS_PER_MINUTE;
@@ -95,6 +104,10 @@ function randomFrameCount(min: number, jitter: number) {
 
 function playerCenterX() {
   return state.player.x + state.player.w / HALF_DIVISOR;
+}
+
+function playerCenterY() {
+  return state.player.y + state.player.h / HALF_DIVISOR;
 }
 
 function binderFacing(enemy: EnemyState, toward: number) {
@@ -135,21 +148,20 @@ function bindingZoneRadius(enemy: EnemyState) {
   return BINDER_CONFIG.zoneRadius;
 }
 
-function bindingZoneMoveScale(zone: { moveScale?: number }) {
-  return zone.moveScale ?? BINDER_CONFIG.zoneMoveScale;
+function bindingTalismanMoveScale() {
+  return state.player.binderTalismanSlowTimer > 0
+    ? BINDER_CONFIG.talismanSlowMoveScale
+    : 1;
 }
 
-function isPlayerInBindingZone(zone: { x: number; y: number; radius: number }) {
-  const player = state.player;
-  const footX = player.x + player.w / HALF_DIVISOR;
-  const footY = player.y + player.h;
-  const radiusY = zone.radius * BINDER_CONFIG.zoneVerticalRadiusScale;
-  const dx = (footX - zone.x) / zone.radius;
-  const dy = (footY - zone.y) / radiusY;
-  return dx * dx + dy * dy <= 1;
+function randomStunCooldown() {
+  return randomFrameCount(
+    BINDER_CONFIG.stunCooldownMinFrames,
+    BINDER_CONFIG.stunCooldownJitterFrames,
+  );
 }
 
-function applyBindingZoneDamage() {
+function applyBinderTalismanDamage() {
   if (hasDebugInfiniteHealth()) return;
 
   const player = state.player;
@@ -195,19 +207,75 @@ function initBinder(enemy: EnemyState, context: EnemySpawnContext) {
   enemy.binderCastSpawned = false;
 }
 
+function randomFinalDebuffs() {
+  const pool = [...FINAL_BINDER_DEBUFFS];
+  const firstIndex = Math.floor(Math.random() * pool.length);
+  const first = pool.splice(firstIndex, 1)[0]!;
+  const secondIndex = Math.floor(Math.random() * pool.length);
+  return [first, pool[secondIndex]!];
+}
+
+function binderTalismanDebuffs(enemy: EnemyState): BinderTalismanDebuff[] {
+  if (enemy.growthStage === "final") return randomFinalDebuffs();
+  if (hasAwakenedGrowth(enemy)) return ["keyScramble", "stun"];
+  return ["slow", "damage"];
+}
+
+function binderTalismanCount() {
+  let count = 0;
+  for (const projectile of state.projectiles) {
+    if (projectile.kind === "binderTalisman") count += 1;
+  }
+  return count;
+}
+
 function spawnBindingZone(enemy: EnemyState) {
   if (bindingZoneCount() >= BINDER_CONFIG.maxActiveZones) return;
+  if (binderTalismanCount() >= BINDER_CONFIG.maxActiveTalismans) return;
   const life = bindingZoneLife(enemy);
+  const facing = enemy.binderFacing ?? (enemy.vx >= 0 ? 1 : -1);
   state.bindingZones.push({
-    x: playerCenterX(),
-    y: state.player.onPlatform?.y ?? GROUND_Y,
+    x: enemyCenterX(enemy) + facing * BINDER_CONFIG.zoneForwardOffset,
+    y: enemyFeetY(enemy),
     radius: bindingZoneRadius(enemy),
     elite: isEliteEnemy(enemy),
-    moveScale: isEliteEnemy(enemy) ? BINDER_CONFIG.eliteZoneMoveScale : BINDER_CONFIG.zoneMoveScale,
+    facing,
+    debuffs: binderTalismanDebuffs(enemy),
+    talismanReleased: false,
     life,
     maxLife: life,
     elapsed: 0,
     frame: 0,
+  });
+}
+
+function spawnBinderTalisman(zone: { x: number; y: number; facing: number; debuffs: BinderTalismanDebuff[] }) {
+  if (binderTalismanCount() >= BINDER_CONFIG.maxActiveTalismans) return;
+
+  const startX = zone.x - BINDER_CONFIG.talismanCollisionW / HALF_DIVISOR;
+  const startY = zone.y - BINDER_CONFIG.talismanStartYOffset - BINDER_CONFIG.talismanCollisionH / HALF_DIVISOR;
+  const targetX = playerCenterX();
+  const targetY = playerCenterY();
+  const angle = Math.atan2(
+    targetY - (startY + BINDER_CONFIG.talismanCollisionH / HALF_DIVISOR),
+    targetX - (startX + BINDER_CONFIG.talismanCollisionW / HALF_DIVISOR),
+  );
+  state.projectiles.push({
+    kind: "binderTalisman",
+    x: startX,
+    y: startY,
+    w: BINDER_CONFIG.talismanCollisionW,
+    h: BINDER_CONFIG.talismanCollisionH,
+    vx: Math.cos(angle) * BINDER_CONFIG.talismanSpeed,
+    vy: Math.sin(angle) * BINDER_CONFIG.talismanSpeed,
+    life: BINDER_CONFIG.talismanLifeFrames,
+    damage: 0,
+    frame: 0,
+    elapsed: 0,
+    speed: BINDER_CONFIG.talismanSpeed,
+    trackingFrames: BINDER_CONFIG.talismanTrackingFrames,
+    turnRate: BINDER_CONFIG.talismanTurnRate,
+    debuffs: [...zone.debuffs],
   });
   playSfx("enemyCastRelease", CAST_RELEASE_SFX_PITCH);
 }
@@ -231,7 +299,10 @@ function updateBinderSeek(enemy: EnemyState, facing: number, distance: number) {
     && distance <= BINDER_CONFIG.maxRange
     && enemy.binderTimer <= 0
   ) {
-    if (bindingZoneCount() < BINDER_CONFIG.maxActiveZones) {
+    if (
+      bindingZoneCount() < BINDER_CONFIG.maxActiveZones
+      && binderTalismanCount() < BINDER_CONFIG.maxActiveTalismans
+    ) {
       enterBinderPhase(enemy, "windup");
       enemy.vx = 0;
     } else {
@@ -346,23 +417,109 @@ export function canSpawnBinder() {
   return binderActiveCount() < BINDER_CONFIG.maxActiveBinders;
 }
 
+export function isBinderTalismanStunned() {
+  return state.player.binderTalismanStunTimer > 0;
+}
+
+export function isBinderTalismanKeyScrambled() {
+  return state.player.binderTalismanKeyScrambleTimer > 0;
+}
+
+export function binderTalismanAttachedTimer() {
+  const player = state.player;
+  return Math.max(
+    player.binderTalismanSlowTimer,
+    player.binderTalismanDamageTimer,
+    player.binderTalismanKeyScrambleTimer,
+    player.binderTalismanStunStatusTimer,
+    player.binderTalismanStunTimer,
+  );
+}
+
+export function applyBinderTalismanDebuffs(debuffs: readonly BinderTalismanDebuff[]) {
+  const player = state.player;
+  if (debuffs.includes("slow")) {
+    player.binderTalismanSlowTimer = Math.max(
+      player.binderTalismanSlowTimer,
+      BINDER_CONFIG.talismanDebuffFrames,
+    );
+  }
+  if (debuffs.includes("damage")) {
+    player.binderTalismanDamageTimer = Math.max(
+      player.binderTalismanDamageTimer,
+      BINDER_CONFIG.talismanDebuffFrames,
+    );
+    if (player.binderTalismanDamageTickTimer <= 0) {
+      player.binderTalismanDamageTickTimer = BINDER_CONFIG.talismanDamageFirstFrame;
+    }
+  }
+  if (debuffs.includes("keyScramble")) {
+    player.binderTalismanKeyScrambleTimer = Math.max(
+      player.binderTalismanKeyScrambleTimer,
+      BINDER_CONFIG.talismanDebuffFrames,
+    );
+  }
+  if (debuffs.includes("stun")) {
+    player.binderTalismanStunStatusTimer = Math.max(
+      player.binderTalismanStunStatusTimer,
+      BINDER_CONFIG.talismanDebuffFrames,
+    );
+    if (player.binderTalismanStunTimer <= 0 && player.binderTalismanStunCooldown <= 0) {
+      player.binderTalismanStunCooldown = randomStunCooldown();
+    }
+  }
+}
+
+function updateBinderTalismanDebuffs() {
+  const player = state.player;
+  if (player.binderTalismanSlowTimer > 0) player.binderTalismanSlowTimer -= 1;
+  if (player.binderTalismanKeyScrambleTimer > 0) player.binderTalismanKeyScrambleTimer -= 1;
+
+  if (player.binderTalismanDamageTimer > 0) {
+    player.binderTalismanDamageTimer -= 1;
+    player.binderTalismanDamageTickTimer -= 1;
+    if (player.binderTalismanDamageTickTimer <= 0) {
+      applyBinderTalismanDamage();
+      player.binderTalismanDamageTickTimer = BINDER_CONFIG.talismanDamageIntervalFrames;
+    }
+  } else {
+    player.binderTalismanDamageTickTimer = 0;
+  }
+
+  if (player.binderTalismanStunTimer > 0) player.binderTalismanStunTimer -= 1;
+  if (player.binderTalismanStunStatusTimer > 0) {
+    player.binderTalismanStunStatusTimer -= 1;
+    if (player.binderTalismanStunTimer <= 0) {
+      player.binderTalismanStunCooldown -= 1;
+      if (player.binderTalismanStunCooldown <= 0) {
+        player.binderTalismanStunTimer = BINDER_CONFIG.stunActiveFrames;
+        player.binderTalismanStunCooldown = randomStunCooldown();
+      }
+    }
+  } else {
+    player.binderTalismanStunCooldown = 0;
+  }
+}
+
 export function updateBindingZones() {
+  updateBinderTalismanDebuffs();
+
   for (let index = state.bindingZones.length - 1; index >= 0; index -= 1) {
     const zone = state.bindingZones[index];
     zone.life -= 1;
     zone.elapsed += 1;
     if (
-      zone.elapsed >= BINDER_CONFIG.zoneDamageFirstFrame
-      && (zone.elapsed - BINDER_CONFIG.zoneDamageFirstFrame) % BINDER_CONFIG.zoneDamageIntervalFrames === 0
-      && isPlayerInBindingZone(zone)
+      !zone.talismanReleased
+      && zone.elapsed >= BINDER_CONFIG.zoneTalismanReleaseFrame
     ) {
-      applyBindingZoneDamage();
+      zone.talismanReleased = true;
+      spawnBinderTalisman(zone);
     }
     const rawFrame = Math.floor(zone.elapsed / BINDER_CONFIG.zoneFrameDuration);
     if (rawFrame < BINDER_CONFIG.zoneLoopStartFrame) {
       zone.frame = rawFrame;
     } else {
-      const loopCount = BINDER_ZONE_SHEET.count - BINDER_CONFIG.zoneLoopStartFrame;
+      const loopCount = BINDER_MAGIC_CIRCLE_SHEET.count - BINDER_CONFIG.zoneLoopStartFrame;
       zone.frame = BINDER_CONFIG.zoneLoopStartFrame
         + (rawFrame - BINDER_CONFIG.zoneLoopStartFrame) % loopCount;
     }
@@ -371,14 +528,10 @@ export function updateBindingZones() {
 }
 
 export function bindingZonePlayerMoveScale() {
-  for (const zone of state.bindingZones) {
-    if (isPlayerInBindingZone(zone)) return bindingZoneMoveScale(zone);
-  }
-
-  return 1;
+  return bindingTalismanMoveScale();
 }
 
-function drawBindingZoneLayer(sheet: typeof BINDER_ZONE_SHEET, alphaScale = 1) {
+function drawBindingZoneLayer(sheet: typeof BINDER_MAGIC_CIRCLE_SHEET, alphaScale = 1) {
   if (!ctx) return;
   for (const zone of state.bindingZones) {
     const drawW = Math.round(zone.radius * BINDER_CONFIG.zoneDrawWidthScale);
@@ -397,19 +550,20 @@ function drawBindingZoneLayer(sheet: typeof BINDER_ZONE_SHEET, alphaScale = 1) {
       zone.y - drawH / HALF_DIVISOR,
       drawW,
       drawH,
+      zone.facing,
     );
     ctx.restore();
   }
 }
 
 export function drawBindingZonesBack() {
-  drawBindingZoneLayer(BINDER_ZONE_BACK_SHEET);
+  drawBindingZoneLayer(BINDER_MAGIC_CIRCLE_SHEET);
 }
 
 export function drawBindingZonesFront() {
-  drawBindingZoneLayer(BINDER_ZONE_FRONT_SHEET, BINDER_CONFIG.zoneFrontAlphaScale);
+  // Magic-circle v2 is a single-layer effect; keep the front hook for runtime draw order.
 }
 
 export function drawBindingZones() {
-  drawBindingZoneLayer(BINDER_ZONE_SHEET);
+  drawBindingZoneLayer(BINDER_MAGIC_CIRCLE_SHEET);
 }

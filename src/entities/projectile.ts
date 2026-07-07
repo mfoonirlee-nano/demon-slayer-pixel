@@ -1,15 +1,21 @@
 import { state } from "../game/state";
 import { ctx } from "../rendering/context";
-import { WIDTH, HEIGHT, PROJECTILE_CONFIG, CASTER_WISP_SHEET } from "../constants";
+import { WIDTH, HEIGHT, PROJECTILE_CONFIG, CASTER_WISP_SHEET, BINDER_TALISMAN_SHEET } from "../constants";
 import type { ProjectileState } from "../types/game-state";
 import { hitbox } from "../game/utils";
 import { drawSheetFrame } from "../rendering/graphics";
 import { hurtPlayer } from "./player";
+import { applyBinderTalismanDebuffs } from "./enemies/binder";
 
 const CASTER_WISP_DRAW = {
   w: 38,
   h: 38,
   frameDuration: 6,
+} as const;
+const BINDER_TALISMAN_DRAW = {
+  w: 34,
+  h: 44,
+  frameDuration: 5,
 } as const;
 
 const FRAMES_PER_SECOND = 60;
@@ -40,7 +46,11 @@ function casterOwnerAlive(projectile: ProjectileState) {
 
 function updateCasterWisp(projectile: ProjectileState) {
   if (!casterOwnerAlive(projectile)) return false;
+  updateHomingProjectile(projectile, CASTER_WISP_DRAW.frameDuration, CASTER_WISP_SHEET.count);
+  return true;
+}
 
+function updateHomingProjectile(projectile: ProjectileState, frameDuration: number, frameCount: number) {
   const centerX = projectile.x + projectile.w / 2;
   const centerY = projectile.y + projectile.h / 2;
   const currentVy = projectile.vy ?? 0;
@@ -61,7 +71,11 @@ function updateCasterWisp(projectile: ProjectileState) {
   projectile.x += projectile.vx;
   projectile.y += projectile.vy ?? 0;
   projectile.elapsed = elapsed + 1;
-  projectile.frame = Math.floor(projectile.elapsed / CASTER_WISP_DRAW.frameDuration) % CASTER_WISP_SHEET.count;
+  projectile.frame = Math.floor(projectile.elapsed / frameDuration) % frameCount;
+}
+
+function updateBinderTalisman(projectile: ProjectileState) {
+  updateHomingProjectile(projectile, BINDER_TALISMAN_DRAW.frameDuration, BINDER_TALISMAN_SHEET.count);
   return true;
 }
 
@@ -78,8 +92,18 @@ function casterWispOutOfBounds(projectile: ProjectileState) {
     || drawY > HEIGHT;
 }
 
+function binderTalismanOutOfBounds(projectile: ProjectileState) {
+  const drawX = projectile.x + projectile.w / 2 - BINDER_TALISMAN_DRAW.w / 2;
+  const drawY = projectile.y + projectile.h / 2 - BINDER_TALISMAN_DRAW.h / 2;
+  return drawX + BINDER_TALISMAN_DRAW.w < 0
+    || drawX > WIDTH
+    || drawY + BINDER_TALISMAN_DRAW.h < 0
+    || drawY > HEIGHT;
+}
+
 function projectileOutOfBounds(projectile: ProjectileState) {
   if (projectile.kind === "casterWisp") return casterWispOutOfBounds(projectile);
+  if (projectile.kind === "binderTalisman") return binderTalismanOutOfBounds(projectile);
   return projectile.x < -PROJECTILE_CONFIG.despawnMargin
     || projectile.x > WIDTH + PROJECTILE_CONFIG.despawnMargin
     || projectile.y < -PROJECTILE_VERTICAL_DESPAWN_MARGIN
@@ -94,11 +118,18 @@ export function updateProjectiles() {
         state.projectiles.splice(i, 1);
         continue;
       }
+    } else if (p.kind === "binderTalisman") {
+      updateBinderTalisman(p);
     } else {
       updateBossProjectile(p);
     }
     p.life -= 1;
     if (hitbox(state.player, p)) {
+      if (p.kind === "binderTalisman") {
+        applyBinderTalismanDebuffs(p.debuffs ?? ["slow", "damage"]);
+        state.projectiles.splice(i, 1);
+        continue;
+      }
       hurtPlayer(p.damage, p.vx);
       state.projectiles.splice(i, 1);
       continue;
@@ -123,6 +154,21 @@ export function drawProjectiles() {
         CASTER_WISP_DRAW.w,
         CASTER_WISP_DRAW.h,
         p.vx >= 0 ? -1 : 1,
+      );
+      continue;
+    }
+
+    if (p.kind === "binderTalisman") {
+      const drawX = p.x + p.w / 2 - BINDER_TALISMAN_DRAW.w / 2;
+      const drawY = p.y + p.h / 2 - BINDER_TALISMAN_DRAW.h / 2;
+      drawSheetFrame(
+        BINDER_TALISMAN_SHEET,
+        p.frame ?? 0,
+        drawX,
+        drawY,
+        BINDER_TALISMAN_DRAW.w,
+        BINDER_TALISMAN_DRAW.h,
+        p.vx >= 0 ? 1 : -1,
       );
       continue;
     }

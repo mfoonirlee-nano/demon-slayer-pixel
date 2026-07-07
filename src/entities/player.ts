@@ -3,7 +3,11 @@ import { GRAVITY, GROUND_Y, WIDTH, BASIC_ATTACK, FALL_ATTACK, PLAYER_COMBAT, SKI
 import { onGround, hitbox, overlapHitPoint } from "../game/utils";
 import { playSfx } from "../game/audio";
 import { emitSlash, emitHitBurst, damageDashRepositionTravel, finishDashRepositionSkill } from "./particle";
-import { bindingZonePlayerMoveScale } from "./enemies/binder";
+import {
+  bindingZonePlayerMoveScale,
+  isBinderTalismanKeyScrambled,
+  isBinderTalismanStunned,
+} from "./enemies/binder";
 import { keys } from "../game/input";
 import { hasDebugInfiniteHealth } from "../game/debug";
 import {
@@ -61,7 +65,14 @@ const PLAYER_LAND_MAX_PITCH = 1.18;
 const PLAYER_RUN_STEP_RIGHT_PITCH = 1.02;
 const PLAYER_RUN_STEP_LEFT_PITCH = 0.98;
 
+function playerMovementKeyDown(key: "a" | "d") {
+  if (!isBinderTalismanKeyScrambled()) return keys.has(key);
+  return keys.has(key === "a" ? "d" : "a");
+}
+
 export function triggerAttack() {
+  if (isBinderTalismanStunned()) return;
+
   const p = state.player;
   if (
     p.attackTimer > 0
@@ -264,6 +275,8 @@ export function hurtPlayer(damage: number, sourceVx: number) {
 }
 
 export function tryJump() {
+  if (isBinderTalismanStunned()) return;
+
   const p = state.player;
   if (onGround(p, p.onPlatform)) {
     p.vy = -p.jump * moonTideJumpMultiplier();
@@ -290,13 +303,18 @@ export function updatePlayer() {
     * moonTideMoveSpeedMultiplier();
   let previousDashX = p.x;
   let previousDashY = p.y;
+  const stunned = isBinderTalismanStunned();
+  const movingLeft = playerMovementKeyDown("a");
+  const movingRight = playerMovementKeyDown("d");
   if (dashReposition) {
     p.vx = 0;
     p.facing = dashReposition.facing;
-  } else if (keys.has("a")) {
+  } else if (stunned) {
+    p.vx = 0;
+  } else if (movingLeft) {
     p.vx = -p.speed * moveScale;
     if (p.skillTimer <= 0 && p.ultimateCastTimer <= 0) p.facing = -1;
-  } else if (keys.has("d")) {
+  } else if (movingRight) {
     p.vx = p.speed * moveScale;
     if (p.skillTimer <= 0 && p.ultimateCastTimer <= 0) p.facing = 1;
   } else {
@@ -383,8 +401,9 @@ export function updatePlayer() {
   recordEquipmentMovement(state, p.x - movementStartX);
   const horizontalMoveDistance = Math.abs(p.x - movementStartX);
   const canPlayRunStep = !dashReposition
+    && !stunned
     && onGround(p, p.onPlatform)
-    && (keys.has("a") || keys.has("d"))
+    && (movingLeft || movingRight)
     && horizontalMoveDistance > PLAYER_COMBAT.movementIdleThreshold
     && p.attackTimer <= 0
     && p.fallAttackTimer <= 0

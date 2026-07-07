@@ -214,14 +214,13 @@ Binder 专属动作素材：
 | --- | ---: | ---: | ---: | --- | --- |
 | `enemies/binder/binder_move.png` | `1040x320` | 4 | `260x320` | `move` | 瘦高灰黑长袍、符纸和暗红咒线的后期控场敌人 |
 | `enemies/binder/binder_windup.png` | `1040x320` | 4 | `260x320` | `windup` | 拉紧咒线并指向地面，读出施法前摇 |
-| `enemies/binder/binder_cast.png` | `1040x320` | 4 | `260x320` | `cast` | 咒线甩向地面，在玩家当前位置生成减速咒圈 |
+| `enemies/binder/binder_cast.png` | `1040x320` | 4 | `260x320` | `cast` | 咒线甩向身前，在自身前方生成发射符纸的法阵 |
 | `enemies/binder/binder_recover.png` | `780x320` | 3 | `260x320` | `recover` | 咒线回收，符纸下落，给玩家反打窗口 |
 | `enemies/binder/binder_hit.png` | `780x320` | 3 | `260x320` | `hit` | 正式受击素材预留，v1 不改变通用受击状态机 |
-| `enemies/binder/binder_zone.png` | `1920x120` | 8 | `240x120` | `bindingZone` | 低矮暗红/紫色侧视地面咒圈源图；外环、符文、中心脉冲和短收束线逐帧变化，front 层只保留底部近端亮边，约 `150` 帧内使玩家水平移动速度乘以 `0.45`，并随局内时间低频造成伤害 |
-| `enemies/binder/binder_zone_back.png` | `1920x120` | 8 | `240x120` | `bindingZoneBack` | 咒圈上半/远端层，压低竖向亮度，先于角色和敌人绘制 |
-| `enemies/binder/binder_zone_front.png` | `1920x120` | 8 | `240x120` | `bindingZoneFront` | 只保留底部 16-17px 近端亮边，在前景层以较低不透明度绘制，避免穿过角色身体 |
+| `enemies/binder/binder_magic_circle.png` | `1920x120` | 8 | `240x120` | `bindingCircle` | 身前短时暗红/紫色侧视法阵，中心脉冲后释放符纸 |
+| `enemies/binder/binder_talisman.png` | `256x64` | 4 | `64x64` | `binderTalisman` | 飞行/贴附用旧黄符纸，带暗红咒线和紫色诅咒边 |
 
-Binder 运行时由 `BINDER_SHEETS`、`BINDER_ZONE_SHEET`、`BINDER_ZONE_BACK_SHEET` 和 `BINDER_ZONE_FRONT_SHEET` 暴露并预加载。普通刷怪在 `elapsed >= 90s` 后才会抽取 binder；同屏最多 `1` 个 binder，主咒圈最多 `1` 个。咒圈不禁用跳跃或攻击；玩家进入咒圈时会被减速、低频受到随局内时间提升的伤害，并叠加偏红紫的减速滤镜和束缚线反馈。
+Binder 运行时由 `BINDER_SHEETS`、`BINDER_MAGIC_CIRCLE_SHEET` 和 `BINDER_TALISMAN_SHEET` 暴露并预加载。普通刷怪在 `elapsed >= 90s` 后才会抽取 binder；同屏最多 `1` 个 binder，主法阵最多 `1` 个，飞行符纸最多 `2` 个。法阵生成在 binder 自身身前，随后符纸飞向玩家；符纸命中后贴在玩家身上并施加负面效果。普通状态施加减速和持续掉血；觉醒状态施加左右键位错乱和突发眩晕；终幕状态从四种效果中随机施加两种。
 
 Glider 专属动作素材：
 
@@ -295,7 +294,7 @@ Burrower 运行时由 `BURROWER_SHEETS` 暴露并预加载。普通刷怪在 `el
 | `ground/moon_shrine_to_forest_transition_base.png` | `600x150` | `150x150` | 神社石地到月林过渡主体层 |
 | `ground/moon_shrine_to_forest_transition_occlusion.png` | `600x150` | `150x150` | 神社石地到月林过渡遮挡层 |
 
-运行时绘制顺序为 `drawGroundTileBase()`、`drawBindingZonesBack()`、角色/敌人/技能主体、`drawGroundTileOcclusion()`、`drawBindingZonesFront()`，让咒圈与低矮地面遮挡保持前后穿插。地面 pattern 由 Boss 阶段驱动：普通战斗使用月林，Boss prelude 使用月林到神社石地过渡，Boss 战中保持神社石地，Boss 击败后使用神社石地到月林过渡。所有地面阶段都保持 `GROUND_TILE_SPRITES.scrollSpeed` 匀速滚动；Boss 战石地滚动从过渡完成位置继续，避免入场帧跳动。base 与 occlusion 共用同一横向偏移；两组过渡资源在 pattern 中显式按 `0→1→2→3` 帧序绘制，避免列号取模导致过渡帧错位。
+运行时绘制顺序为 `drawGroundTileBase()`、`drawBindingZonesBack()`、角色/敌人/技能主体、`drawGroundTileOcclusion()`、`drawBindingZonesFront()`，让低矮法阵/地面特效与地面遮挡保持前后穿插。地面 pattern 由 Boss 阶段驱动：普通战斗使用月林，Boss prelude 使用月林到神社石地过渡，Boss 战中保持神社石地，Boss 击败后使用神社石地到月林过渡。所有地面阶段都保持 `GROUND_TILE_SPRITES.scrollSpeed` 匀速滚动；Boss 战石地滚动从过渡完成位置继续，避免入场帧跳动。base 与 occlusion 共用同一横向偏移；两组过渡资源在 pattern 中显式按 `0→1→2→3` 帧序绘制，避免列号取模导致过渡帧错位。
 
 ## 资源更新流程
 
