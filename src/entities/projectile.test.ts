@@ -5,6 +5,7 @@ import { keys } from "../game/input";
 import type { ProjectileState } from "../types/game-state";
 import { spawnEnemyById, updateEnemies } from "./enemy";
 import { updateBindingZones } from "./enemies/binder";
+import { binderTalismanFrameEffect } from "./enemies/binderTalismanVisuals";
 import { updatePlayer } from "./player";
 import { updateProjectiles } from "./projectile";
 
@@ -45,6 +46,8 @@ const TEST_WISP_START_Y = 120;
 const TEST_BINDER_X = 180;
 const TEST_BINDER_FACING = 1;
 const TEST_BINDER_PLAYER_X_OFFSET = 240;
+const TEST_GUARD_COUNTER_HITS = 2;
+const TEST_GUARD_COUNTER_ACTIVE_FRAMES = 72;
 
 afterEach(() => {
   keys.clear();
@@ -116,6 +119,19 @@ function releaseBinderTalisman() {
   for (let frame = 0; frame < BINDER_CIRCLE_TALISMAN_RELEASE_FRAME; frame += 1) {
     updateBindingZones();
   }
+}
+
+function activateGuardCounter(hitsRemaining = TEST_GUARD_COUNTER_HITS) {
+  state.guardCounterEffect = {
+    elapsed: 0,
+    frame: 0,
+    hitsRemaining,
+    maxHits: hitsRemaining,
+    activeFrames: TEST_GUARD_COUNTER_ACTIVE_FRAMES,
+    counterPadding: 0,
+    damageMultiplier: 1,
+    barrierFlash: 0,
+  };
 }
 
 describe("caster wisps", () => {
@@ -261,6 +277,25 @@ describe("caster wisps", () => {
 });
 
 describe("binder talismans", () => {
+  it("uses distinct visual effects for binder talisman debuffs", () => {
+    const slow = binderTalismanFrameEffect(["slow"]);
+    const damage = binderTalismanFrameEffect(["damage"]);
+    const scramble = binderTalismanFrameEffect(["keyScramble"]);
+    const stun = binderTalismanFrameEffect(["stun"]);
+    const normalPair = binderTalismanFrameEffect(["slow", "damage"]);
+    const awakenedPair = binderTalismanFrameEffect(["keyScramble", "stun"]);
+
+    expect(slow).toBeDefined();
+    expect(damage).toBeDefined();
+    expect(scramble).toBeDefined();
+    expect(stun).toBeDefined();
+    expect(normalPair).toBeDefined();
+    expect(awakenedPair).toBeDefined();
+    expect(slow?.filter).not.toBe(damage?.filter);
+    expect(scramble?.filter).not.toBe(stun?.filter);
+    expect(normalPair?.filter).not.toBe(awakenedPair?.filter);
+  });
+
   it("spawns the magic circle in front of the binder and releases a normal talisman", () => {
     resetState();
     const binder = forceBinderCast();
@@ -333,6 +368,37 @@ describe("binder talismans", () => {
     }
 
     expect(state.player.hp).toBeLessThan(hpBeforeDot);
+  });
+
+  it("lets guard counter block binder talismans without spending hits", () => {
+    resetState();
+    activateGuardCounter();
+    const hitsBefore = state.guardCounterEffect?.hitsRemaining;
+    state.projectiles.push({
+      kind: "binderTalisman",
+      x: state.player.x,
+      y: state.player.y,
+      w: state.player.w,
+      h: state.player.h,
+      vx: 0,
+      vy: 0,
+      life: 30,
+      damage: 0,
+      frame: 0,
+      elapsed: 0,
+      speed: 0,
+      trackingFrames: 0,
+      turnRate: 0,
+      debuffs: ["slow", "damage"],
+    });
+
+    updateProjectiles();
+
+    expect(state.projectiles).toHaveLength(0);
+    expect(state.guardCounterEffect?.hitsRemaining).toBe(hitsBefore);
+    expect(state.guardCounterEffect?.barrierFlash).toBeGreaterThan(0);
+    expect(state.player.binderTalismanSlowTimer).toBe(0);
+    expect(state.player.binderTalismanDamageTimer).toBe(0);
   });
 
   it("reverses horizontal movement while key scramble is active", () => {

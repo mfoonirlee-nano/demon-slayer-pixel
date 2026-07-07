@@ -436,6 +436,18 @@ export function binderTalismanAttachedTimer() {
   );
 }
 
+export function activeBinderTalismanDebuffs() {
+  const player = state.player;
+  const debuffs: BinderTalismanDebuff[] = [];
+  if (player.binderTalismanSlowTimer > 0) debuffs.push("slow");
+  if (player.binderTalismanDamageTimer > 0) debuffs.push("damage");
+  if (player.binderTalismanKeyScrambleTimer > 0) debuffs.push("keyScramble");
+  if (player.binderTalismanStunStatusTimer > 0 || player.binderTalismanStunTimer > 0) {
+    debuffs.push("stun");
+  }
+  return debuffs;
+}
+
 export function applyBinderTalismanDebuffs(debuffs: readonly BinderTalismanDebuff[]) {
   const player = state.player;
   if (debuffs.includes("slow")) {

@@ -203,56 +203,89 @@ function triggerFallAttackImpact() {
   playSfx("playerFallAttackImpact");
 }
 
+type GuardCounterRect = {
+  x: number;
+  y: number;
+  w: number;
+  h: number;
+};
+
+function activeGuardCounterRect(): GuardCounterRect | null {
+  const p = state.player;
+  const counter = state.guardCounterEffect;
+  if (!counter || counter.hitsRemaining <= 0) return null;
+  const counterPadding = counter.counterPadding;
+  return {
+    x: p.x - counterPadding,
+    y: p.y - counterPadding,
+    w: p.w + counterPadding * 2,
+    h: p.h + counterPadding * 2,
+  };
+}
+
+function resolveGuardCounterResponse(
+  counterRect: GuardCounterRect,
+  consumeHit: boolean,
+  grantInvincibility: boolean,
+) {
+  const p = state.player;
+  const counter = state.guardCounterEffect;
+  if (!counter || counter.hitsRemaining <= 0) return false;
+
+  if (consumeHit) counter.hitsRemaining -= 1;
+  counter.barrierFlash = GUARD_COUNTER_EFFECT_CONFIG.barrierFlashFrames;
+  if (grantInvincibility) {
+    p.invincible = PLAYER_COMBAT.hurtInvincibleFrames;
+  }
+
+  const counterDamage = (p.baseAttack + p.attackBonus)
+    * GUARD_COUNTER_EFFECT_CONFIG.damageMultiplier
+    * counter.damageMultiplier;
+  for (let i = state.enemies.length - 1; i >= 0; i -= 1) {
+    const e = state.enemies[i];
+    if (!hitbox(counterRect, e)) continue;
+    const hitPoint = { x: e.x + e.w / 2, y: e.y + e.h / 2 };
+    const hit = resolveEnemyHit({
+      enemy: e,
+      enemyIndex: i,
+      hitRect: counterRect,
+      hitPoint,
+      damage: counterDamage,
+      reward: "enemy",
+    });
+    emitSlash(hit.hitX, hit.hitY, GUARD_COUNTER_HIT_COLOR, e.w);
+    emitHitBurst(hit.hitX, hit.hitY, GUARD_COUNTER_HIT_COLOR, GUARD_COUNTER_ENEMY_BURST_POWER);
+  }
+  if (state.boss && hitbox(counterRect, state.boss)) {
+    const boss = state.boss;
+    const hitPoint = { x: boss.x + boss.w / 2, y: boss.y + boss.h * GUARD_COUNTER_BOSS_HIT_Y_RATIO };
+    const hit = resolveBossHit({
+      boss,
+      hitRect: counterRect,
+      hitPoint,
+      damage: counterDamage,
+    });
+    emitSlash(hit.hitX, hit.hitY, GUARD_COUNTER_HIT_COLOR);
+    emitHitBurst(hit.hitX, hit.hitY, GUARD_COUNTER_HIT_COLOR, 2);
+  }
+
+  playSfx("playerCounter");
+  return true;
+}
+
+export function blockProjectileWithGuardCounter(projectile: GuardCounterRect) {
+  const counterRect = activeGuardCounterRect();
+  if (!counterRect || !hitbox(counterRect, projectile)) return false;
+  return resolveGuardCounterResponse(counterRect, false, false);
+}
+
 export function hurtPlayer(damage: number, sourceVx: number) {
   const p = state.player;
   if (hasDebugInfiniteHealth()) return;
   if (p.invincible > 0) return;
 
-  if (state.guardCounterEffect && state.guardCounterEffect.hitsRemaining > 0) {
-    const counter = state.guardCounterEffect;
-    const counterPadding = counter.counterPadding;
-    const counterRect = {
-      x: p.x - counterPadding,
-      y: p.y - counterPadding,
-      w: p.w + counterPadding * 2,
-      h: p.h + counterPadding * 2,
-    };
-    counter.hitsRemaining -= 1;
-    counter.barrierFlash = GUARD_COUNTER_EFFECT_CONFIG.barrierFlashFrames;
-    p.invincible = PLAYER_COMBAT.hurtInvincibleFrames;
-
-    const counterDamage = (p.baseAttack + p.attackBonus)
-      * GUARD_COUNTER_EFFECT_CONFIG.damageMultiplier
-      * counter.damageMultiplier;
-    for (let i = state.enemies.length - 1; i >= 0; i -= 1) {
-      const e = state.enemies[i];
-      if (!hitbox(counterRect, e)) continue;
-      const hitPoint = { x: e.x + e.w / 2, y: e.y + e.h / 2 };
-      const hit = resolveEnemyHit({
-        enemy: e,
-        enemyIndex: i,
-        hitRect: counterRect,
-        hitPoint,
-        damage: counterDamage,
-        reward: "enemy",
-      });
-      emitSlash(hit.hitX, hit.hitY, GUARD_COUNTER_HIT_COLOR, e.w);
-      emitHitBurst(hit.hitX, hit.hitY, GUARD_COUNTER_HIT_COLOR, GUARD_COUNTER_ENEMY_BURST_POWER);
-    }
-    if (state.boss && hitbox(counterRect, state.boss)) {
-      const boss = state.boss;
-      const hitPoint = { x: boss.x + boss.w / 2, y: boss.y + boss.h * GUARD_COUNTER_BOSS_HIT_Y_RATIO };
-      const hit = resolveBossHit({
-        boss,
-        hitRect: counterRect,
-        hitPoint,
-        damage: counterDamage,
-      });
-      emitSlash(hit.hitX, hit.hitY, GUARD_COUNTER_HIT_COLOR);
-      emitHitBurst(hit.hitX, hit.hitY, GUARD_COUNTER_HIT_COLOR, 2);
-    }
-
-    playSfx("playerCounter");
+  const counterRect = activeGuardCounterRect();
+  if (counterRect && resolveGuardCounterResponse(counterRect, true, true)) {
     return;
   }
 

@@ -4,8 +4,9 @@ import { WIDTH, HEIGHT, PROJECTILE_CONFIG, CASTER_WISP_SHEET, BINDER_TALISMAN_SH
 import type { ProjectileState } from "../types/game-state";
 import { hitbox } from "../game/utils";
 import { drawSheetFrame, type SpriteFrameEffect } from "../rendering/graphics";
-import { hurtPlayer } from "./player";
+import { blockProjectileWithGuardCounter, hurtPlayer } from "./player";
 import { applyBinderTalismanDebuffs } from "./enemies/binder";
+import { binderTalismanFrameEffect } from "./enemies/binderTalismanVisuals";
 
 const CASTER_WISP_DRAW = {
   w: 38,
@@ -150,6 +151,10 @@ export function updateProjectiles() {
       updateBossProjectile(p);
     }
     p.life -= 1;
+    if (p.kind === "binderTalisman" && blockProjectileWithGuardCounter(p)) {
+      state.projectiles.splice(i, 1);
+      continue;
+    }
     if (hitbox(state.player, p)) {
       if (p.kind === "binderTalisman") {
         applyBinderTalismanDebuffs(p.debuffs ?? ["slow", "damage"]);
@@ -196,6 +201,7 @@ export function drawProjectiles() {
         BINDER_TALISMAN_DRAW.w,
         BINDER_TALISMAN_DRAW.h,
         p.vx >= 0 ? 1 : -1,
+        binderTalismanFrameEffect(p.debuffs),
       );
       continue;
     }

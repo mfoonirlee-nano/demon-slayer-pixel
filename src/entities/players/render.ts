@@ -18,7 +18,12 @@ import type {
   UltimatePlayerGhostAction,
   UltimatePlayerGhostSnapshot,
 } from "../../types/game-state";
-import { binderTalismanAttachedTimer, bindingZonePlayerMoveScale } from "../enemies/binder";
+import {
+  activeBinderTalismanDebuffs,
+  binderTalismanAttachedTimer,
+  bindingZonePlayerMoveScale,
+} from "../enemies/binder";
+import { binderTalismanFrameEffect } from "../enemies/binderTalismanVisuals";
 import { lanternAshZonePlayerMoveScale, spiderSilkSlowPlayerMoveScale } from "./movementModifiers";
 import { moonTideActive, moonTidePlayerAnimationFrameSpeed, recordMoonTidePlayerGhost } from "./moonTide";
 import { playerSkillCastFrame } from "./skillCasting";
@@ -34,8 +39,8 @@ const MOON_TIDE_OUTLINE_FILTER = "brightness(0) saturate(100%) invert(64%) sepia
 const PLAYER_BINDER_TALISMAN_ATTACHMENT = {
   w: 24,
   h: 32,
-  xOffsetRatio: 0.08,
-  yRatio: 0.44,
+  backOffsetRatio: 0.24,
+  yRatio: 0.4,
   frameDuration: 10,
 } as const;
 
@@ -145,7 +150,7 @@ function drawBinderTalismanAttachment() {
   const frame = frameIndex(BINDER_TALISMAN_SHEET.count, PLAYER_BINDER_TALISMAN_ATTACHMENT.frameDuration, state.elapsed);
   const drawX = p.x
     + p.w / 2
-    + p.facing * p.w * PLAYER_BINDER_TALISMAN_ATTACHMENT.xOffsetRatio
+    - p.facing * p.w * PLAYER_BINDER_TALISMAN_ATTACHMENT.backOffsetRatio
     - PLAYER_BINDER_TALISMAN_ATTACHMENT.w / 2;
   const drawY = p.y + p.h * PLAYER_BINDER_TALISMAN_ATTACHMENT.yRatio;
   drawSheetFrame(
@@ -156,6 +161,7 @@ function drawBinderTalismanAttachment() {
     PLAYER_BINDER_TALISMAN_ATTACHMENT.w,
     PLAYER_BINDER_TALISMAN_ATTACHMENT.h,
     p.facing,
+    binderTalismanFrameEffect(activeBinderTalismanDebuffs()),
   );
 }
 
