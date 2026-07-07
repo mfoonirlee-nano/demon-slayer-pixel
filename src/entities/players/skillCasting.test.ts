@@ -23,6 +23,7 @@ import {
 } from "./skillCasting";
 
 const ULTIMATE_FREEZE_TEST_VELOCITY = 5;
+const CLOSE_ARC_LEVEL_TWO_SIZE_RATIO = 0.75;
 
 function skillById(skillId: SkillId) {
   const skill = playerSkillById(skillId);
@@ -197,7 +198,7 @@ describe("player skill casting", () => {
     }
 
     expect(state.closeArcEffects[0]).toMatchObject({
-      drawScale: 0.705,
+      drawScale: CLOSE_ARC_EFFECT_CONFIG.drawScale * CLOSE_ARC_LEVEL_TWO_SIZE_RATIO,
       maxTravel: 158,
       damageMultiplier: 1.18,
     });

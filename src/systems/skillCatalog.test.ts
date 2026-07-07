@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  CLOSE_ARC_BASIC_CRESCENT_SHEET,
   LINE_PROJECTILE_EFFECT_CONFIG,
   SKILL_IDS,
 } from "../constants";
@@ -89,5 +90,11 @@ describe("player skill catalog copy", () => {
       levelTwo.src,
       levelThree.src,
     ]));
+  });
+
+  it("preloads the close arc level three basic attack crescent sheet", () => {
+    const preloadedSources = playerSkillEffectSheets().map((sheet) => sheet.src);
+
+    expect(preloadedSources).toContain(CLOSE_ARC_BASIC_CRESCENT_SHEET.src);
   });
 });

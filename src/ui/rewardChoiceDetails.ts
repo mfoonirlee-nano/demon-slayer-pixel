@@ -1,4 +1,4 @@
-import { MOON_TIDE_ULTIMATE, PLAYER_COMBAT, SKILL_IDS } from "../constants";
+import { CLOSE_ARC_BASIC_CRESCENT_CONFIG, MOON_TIDE_ULTIMATE, PLAYER_COMBAT, SKILL_IDS } from "../constants";
 import { CORE_PLAYER_SKILL_EFFECT_CONFIGS } from "../systems/skillCatalog";
 import {
   BURST_BLADE_AWAKENED_SLASH_ATTACK_SCALE,
@@ -332,8 +332,20 @@ function skillTuningMetrics(
   if (!nextGrowth) return [];
 
   if (skillId === SKILL_IDS.closeArc) {
+    const maxDrawScale = CORE_PLAYER_SKILL_EFFECT_CONFIGS[SKILL_IDS.closeArc].drawScale;
     return compactMetrics([
       growthMetric("飞行距离", previousGrowth?.maxTravel, nextGrowth.maxTravel, (value) => `${value}px`, "range"),
+      growthMetric(
+        "效果尺寸",
+        previousGrowth?.drawScale,
+        nextGrowth.drawScale,
+        (value) => `${Math.round(value / maxDrawScale * PERCENT_MULTIPLIER)}%`,
+        "range",
+      ),
+      nextLevel >= CLOSE_ARC_BASIC_CRESCENT_CONFIG.requiredSkillLevel
+        && previousLevel < CLOSE_ARC_BASIC_CRESCENT_CONFIG.requiredSkillLevel
+        ? metric("普攻剑气", "解锁", "damage")
+        : null,
     ]);
   }
 

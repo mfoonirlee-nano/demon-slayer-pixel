@@ -52,7 +52,8 @@ export const CLOSE_ARC_EFFECT_SHEET: SpriteSheet = {
 };
 
 export const CLOSE_ARC_EFFECT_CONFIG = {
-  drawScale: 0.667,
+  // Maximum rendered size; level growth scales down from this value.
+  drawScale: 0.745,
   groundBaselineY: 365,
   visualBackOffset: 56,
   speed: 6,
@@ -61,6 +62,25 @@ export const CLOSE_ARC_EFFECT_CONFIG = {
   maxTravel: 140,
   damageMultiplier: 1.5,
   hitCooldown: 20,
+} as const;
+
+export const CLOSE_ARC_BASIC_CRESCENT_SHEET: SpriteSheet = {
+  src: "assets/sprites/skills/close_arc/basic_crescent.png",
+  frameW: 192,
+  frameH: 128,
+  count: 4,
+  image: null,
+};
+
+export const CLOSE_ARC_BASIC_CRESCENT_CONFIG = {
+  requiredSkillLevel: 3,
+  drawScale: 0.58,
+  frameDuration: 2,
+  life: 8,
+  rangeExtensionPlayerRatio: 0.25,
+  hitboxHeightScale: 1,
+  damageMultiplier: 0.5,
+  maxInstances: 8,
 } as const;
 
 export const GUARD_COUNTER_EFFECT_SHEET: SpriteSheet = {

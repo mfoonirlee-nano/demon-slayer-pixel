@@ -1,6 +1,7 @@
 import {
   CLOSE_ARC_EFFECT_CONFIG,
   CLOSE_ARC_EFFECT_SHEET,
+  CLOSE_ARC_BASIC_CRESCENT_SHEET,
   GUARD_COUNTER_EFFECT_CONFIG,
   GUARD_COUNTER_EFFECT_SHEET,
   LINE_PROJECTILE_EFFECT_CONFIG,
@@ -98,6 +99,7 @@ export function playerSkillEffectSheet(skillId: SkillId): SpriteSheet | null {
 export function playerSkillEffectSheets(): SpriteSheet[] {
   return [
     ...Object.values(CORE_PLAYER_SKILL_EFFECT_SHEETS),
+    CLOSE_ARC_BASIC_CRESCENT_SHEET,
     LINE_PROJECTILE_EFFECT_LEVEL_TWO_SHEET,
     LINE_PROJECTILE_EFFECT_LEVEL_THREE_SHEET,
     ...Object.values(PLAYER_SKILL_EFFECT_SHEETS).filter(isSpriteSheet),

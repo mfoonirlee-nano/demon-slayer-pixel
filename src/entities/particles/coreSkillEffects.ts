@@ -1,13 +1,25 @@
 import { state } from "../../game/state";
 import { ctx } from "../../rendering/context";
-import { PLAYER_COMBAT, SKILL_IDS, WIDTH } from "../../constants";
-import type { CloseArcEffectState, LineProjectileEffectState } from "../../types/game-state";
-import { applySkillHitEquipmentRefund } from "../../systems/equipment";
+import {
+  CLOSE_ARC_BASIC_CRESCENT_CONFIG,
+  CLOSE_ARC_BASIC_CRESCENT_SHEET,
+  PLAYER_COMBAT,
+  SKILL_IDS,
+  WIDTH,
+} from "../../constants";
+import type {
+  CloseArcBasicCrescentState,
+  CloseArcEffectState,
+  LineProjectileEffectState,
+} from "../../types/game-state";
+import { applySkillHitEquipmentRefund, recordBasicAttackHit } from "../../systems/equipment";
 import { resolveBossHit, resolveEnemyHit } from "../../systems/combatResolution";
+import { hitbox } from "../../game/utils";
 import {
   CORE_PLAYER_SKILL_EFFECT_CONFIGS,
   CORE_PLAYER_SKILL_EFFECT_SHEETS,
   lineProjectileEffectSheetForLevel,
+  playerSkillColor,
 } from "../../systems/skillCatalog";
 import { emitHitBurst, emitSlash } from "./bursts";
 
@@ -15,6 +27,17 @@ const LINE_PROJECTILE_EFFECT_CONFIG = CORE_PLAYER_SKILL_EFFECT_CONFIGS[SKILL_IDS
 const CLOSE_ARC_EFFECT_SHEET = CORE_PLAYER_SKILL_EFFECT_SHEETS[SKILL_IDS.closeArc];
 const CLOSE_ARC_EFFECT_CONFIG = CORE_PLAYER_SKILL_EFFECT_CONFIGS[SKILL_IDS.closeArc];
 const CLOSE_ARC_FADE_ALPHA_GAIN = 0.7;
+const CLOSE_ARC_BASIC_CRESCENT_HIT_COLOR = playerSkillColor(SKILL_IDS.closeArc);
+const CLOSE_ARC_BASIC_CRESCENT_ALPHA_FADE = 0.72;
+
+function closeArcBasicCrescentBox(effect: CloseArcBasicCrescentState) {
+  return {
+    x: effect.x - effect.w / 2,
+    y: effect.y - effect.h / 2,
+    w: effect.w,
+    h: effect.h,
+  };
+}
 
 export function updateLineProjectileEffects() {
   const p = state.player;
@@ -170,6 +193,58 @@ export function updateCloseArcEffects() {
   }
 }
 
+export function updateCloseArcBasicCrescentEffects() {
+  for (let i = state.closeArcBasicCrescents.length - 1; i >= 0; i -= 1) {
+    const effect = state.closeArcBasicCrescents[i] as CloseArcBasicCrescentState;
+    const box = closeArcBasicCrescentBox(effect);
+
+    effect.elapsed += 1;
+    effect.life -= 1;
+    effect.frame = Math.min(
+      CLOSE_ARC_BASIC_CRESCENT_SHEET.count - 1,
+      Math.floor(effect.elapsed / CLOSE_ARC_BASIC_CRESCENT_CONFIG.frameDuration),
+    );
+
+    for (let j = state.enemies.length - 1; j >= 0; j -= 1) {
+      const enemy = state.enemies[j];
+      if (enemy.hitCd > 0 || effect.hitEnemies.includes(enemy) || !hitbox(box, enemy)) continue;
+
+      effect.hitEnemies.push(enemy);
+      const hit = resolveEnemyHit({
+        enemy,
+        enemyIndex: j,
+        hitRect: box,
+        damage: effect.damage,
+        hitCooldown: PLAYER_COMBAT.attackEnemyHitCooldown,
+        reward: "attack",
+        afterDamage: () => recordBasicAttackHit(state, "enemy"),
+      });
+      emitSlash(hit.hitX, hit.hitY, CLOSE_ARC_BASIC_CRESCENT_HIT_COLOR, enemy.w);
+      emitHitBurst(hit.hitX, hit.hitY, PLAYER_COMBAT.effects.attackEnemyBurstColor, PLAYER_COMBAT.attackEnemyBurstPower);
+    }
+
+    if (
+      state.boss
+      && !effect.bossHit
+      && state.boss.hitCd <= 0
+      && hitbox(box, state.boss)
+    ) {
+      effect.bossHit = true;
+      const hit = resolveBossHit({
+        boss: state.boss,
+        hitRect: box,
+        damage: effect.damage,
+        hitCooldown: PLAYER_COMBAT.attackBossHitCooldown,
+        afterDamage: () => recordBasicAttackHit(state, "boss"),
+      });
+      emitSlash(hit.hitX, hit.hitY, CLOSE_ARC_BASIC_CRESCENT_HIT_COLOR);
+      emitHitBurst(hit.hitX, hit.hitY, PLAYER_COMBAT.effects.attackBossBurstColor, PLAYER_COMBAT.attackBossBurstPower);
+    }
+
+    if (effect.life <= 0) state.closeArcBasicCrescents.splice(i, 1);
+  }
+}
+
 export function drawLineProjectileEffects() {
   if (!ctx) return;
   for (const e of state.lineProjectileEffects) {
@@ -204,6 +279,25 @@ export function drawCloseArcEffects() {
     ctx.translate(e.x - e.facing * CLOSE_ARC_EFFECT_CONFIG.visualBackOffset, e.y + drawH / 2);
     ctx.scale(e.facing, 1);
     ctx.drawImage(sheet.image, sx, 0, sheet.frameW, sheet.frameH, -drawW / 2, -drawH / 2, drawW, drawH);
+    ctx.restore();
+  }
+}
+
+export function drawCloseArcBasicCrescentEffects() {
+  const sheet = CLOSE_ARC_BASIC_CRESCENT_SHEET;
+  const image = sheet.image;
+  if (!ctx || !image) return;
+
+  for (const effect of state.closeArcBasicCrescents) {
+    const drawW = sheet.frameW * effect.drawScale;
+    const drawH = sheet.frameH * effect.drawScale;
+    const sx = effect.frame * sheet.frameW;
+    const fadeT = 1 - Math.max(0, effect.life) / effect.maxLife;
+    ctx.save();
+    ctx.globalAlpha = 1 - fadeT * CLOSE_ARC_BASIC_CRESCENT_ALPHA_FADE;
+    ctx.translate(effect.x, effect.y);
+    ctx.scale(effect.facing, 1);
+    ctx.drawImage(image, sx, 0, sheet.frameW, sheet.frameH, -drawW / 2, -drawH / 2, drawW, drawH);
     ctx.restore();
   }
 }

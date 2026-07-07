@@ -314,6 +314,22 @@ export type CloseArcEffectState = {
   refundedSkillEnergy?: boolean;
 };
 
+export type CloseArcBasicCrescentState = {
+  x: number;
+  y: number;
+  w: number;
+  h: number;
+  facing: number;
+  frame: number;
+  elapsed: number;
+  life: number;
+  maxLife: number;
+  drawScale: number;
+  damage: number;
+  hitEnemies: EnemyState[];
+  bossHit: boolean;
+};
+
 export type GuardCounterEffectState = {
   elapsed: number;
   frame: number;

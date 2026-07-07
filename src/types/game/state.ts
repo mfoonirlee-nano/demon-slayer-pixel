@@ -21,6 +21,7 @@ import type {
   BindingZoneState,
   BloodMoonEffectState,
   BossSkill1EffectState,
+  CloseArcBasicCrescentState,
   CloseArcEffectState,
   DeadBellBladeState,
   DeadBellWaveState,
@@ -119,6 +120,7 @@ export type GameState = {
   hitBursts: HitBurstState[];
   lineProjectileEffects: LineProjectileEffectState[];
   closeArcEffects: CloseArcEffectState[];
+  closeArcBasicCrescents: CloseArcBasicCrescentState[];
   guardCounterEffect: GuardCounterEffectState | null;
   playerSkillEffects: PlayerSkillEffectState[];
   ultimateEffects: UltimateEffectState[];

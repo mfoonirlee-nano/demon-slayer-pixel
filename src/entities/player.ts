@@ -1,5 +1,14 @@
 import { state } from "../game/state";
-import { GRAVITY, GROUND_Y, WIDTH, BASIC_ATTACK, FALL_ATTACK, PLAYER_COMBAT, SKILL_IDS } from "../constants";
+import {
+  BASIC_ATTACK,
+  CLOSE_ARC_BASIC_CRESCENT_CONFIG,
+  FALL_ATTACK,
+  GRAVITY,
+  GROUND_Y,
+  PLAYER_COMBAT,
+  SKILL_IDS,
+  WIDTH,
+} from "../constants";
 import { onGround, hitbox, overlapHitPoint } from "../game/utils";
 import { playSfx } from "../game/audio";
 import { emitSlash, emitHitBurst, damageDashRepositionTravel, finishDashRepositionSkill } from "./particle";
@@ -98,6 +107,7 @@ export function triggerAttack() {
   beginBasicAttackEquipmentEffects(state);
   state.player.attackDuration = frames;
   state.player.attackTimer = frames;
+  spawnCloseArcBasicCrescent();
   playSfx("playerAttackStart");
 }
 
@@ -133,6 +143,37 @@ export function attackBox() {
     damage: getPlayerAttackDamage() * moonTideBasicDamageMultiplier() * equipmentBasicAttackDamageMultiplier(state),
     color: BASIC_ATTACK.color,
   };
+}
+
+function spawnCloseArcBasicCrescent() {
+  const p = state.player;
+  if ((p.skillLevels[SKILL_IDS.closeArc] ?? 0) < CLOSE_ARC_BASIC_CRESCENT_CONFIG.requiredSkillLevel) return;
+
+  const box = attackBox();
+  const rangeExtension = Math.max(1, p.h * CLOSE_ARC_BASIC_CRESCENT_CONFIG.rangeExtensionPlayerRatio);
+  const hitboxH = box.h * CLOSE_ARC_BASIC_CRESCENT_CONFIG.hitboxHeightScale;
+  const hitboxX = p.facing === 1
+    ? box.x + box.w
+    : box.x - rangeExtension;
+  state.closeArcBasicCrescents.push({
+    x: hitboxX + rangeExtension / 2,
+    y: box.y + box.h / 2,
+    w: rangeExtension,
+    h: hitboxH,
+    facing: p.facing,
+    frame: 0,
+    elapsed: 0,
+    life: CLOSE_ARC_BASIC_CRESCENT_CONFIG.life,
+    maxLife: CLOSE_ARC_BASIC_CRESCENT_CONFIG.life,
+    drawScale: CLOSE_ARC_BASIC_CRESCENT_CONFIG.drawScale,
+    damage: box.damage * CLOSE_ARC_BASIC_CRESCENT_CONFIG.damageMultiplier,
+    hitEnemies: [],
+    bossHit: false,
+  });
+
+  while (state.closeArcBasicCrescents.length > CLOSE_ARC_BASIC_CRESCENT_CONFIG.maxInstances) {
+    state.closeArcBasicCrescents.shift();
+  }
 }
 
 function fallAttackBox() {

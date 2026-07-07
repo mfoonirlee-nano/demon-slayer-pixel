@@ -87,6 +87,8 @@ export const CORE_PLAYER_SKILL_IDS: CorePlayerSkillId[] = [
 ];
 
 export const GENERIC_SKILL_DAMAGE_ATTACK_BONUS_SCALE = 0.025;
+const CLOSE_ARC_LEVEL_ONE_SIZE_RATIO = 0.5;
+const CLOSE_ARC_LEVEL_TWO_SIZE_RATIO = 0.75;
 
 export const CORE_PLAYER_SKILL_GROWTH: Record<CorePlayerSkillId, CoreSkillGrowthTuning> = {
   [SKILL_IDS.lineProjectile]: {
@@ -95,9 +97,9 @@ export const CORE_PLAYER_SKILL_GROWTH: Record<CorePlayerSkillId, CoreSkillGrowth
   [SKILL_IDS.closeArc]: {
     damageMultiplier: { 1: 1, 2: 1.18, 3: 1.35 },
     drawScale: {
-      1: CLOSE_ARC_EFFECT_CONFIG.drawScale,
-      2: 0.705,
-      3: 0.745,
+      1: CLOSE_ARC_EFFECT_CONFIG.drawScale * CLOSE_ARC_LEVEL_ONE_SIZE_RATIO,
+      2: CLOSE_ARC_EFFECT_CONFIG.drawScale * CLOSE_ARC_LEVEL_TWO_SIZE_RATIO,
+      3: CLOSE_ARC_EFFECT_CONFIG.drawScale,
     },
     maxTravel: {
       1: CLOSE_ARC_EFFECT_CONFIG.maxTravel,

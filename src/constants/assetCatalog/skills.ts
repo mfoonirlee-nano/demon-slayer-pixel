@@ -35,9 +35,9 @@ export const SKILLS: Skill[] = [
     implemented: true,
     iconSrc: "assets/sprites/skills/close_arc/icon.png",
     levelDescriptions: {
-      1: "挥出短距离宽潮刃，快速覆盖身前近身威胁。",
-      2: "潮刃伤害 +18%，飞得更远，近身解围范围更大。",
-      3: "潮刃伤害 +35%，距离和覆盖继续提升，清贴身敌人更稳。",
+      1: "挥出小型前方潮刃，快速处理贴身威胁。",
+      2: "潮刃伤害 +18%，月牙身形变大，飞得更远。",
+      3: "潮刃伤害 +35%，达到完整尺寸，并让普攻带出短促月牙剑气。",
     },
     src: "assets/sprites/skills/close_arc/skill.png",
     frameCount: 6,

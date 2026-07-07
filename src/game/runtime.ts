@@ -47,6 +47,7 @@ import {
   updateHitBursts,
   updateLineProjectileEffects,
   updateCloseArcEffects,
+  updateCloseArcBasicCrescentEffects,
   updateGuardCounterEffect,
   updatePlayerSkillEffects,
   updateUltimateEffects,
@@ -58,6 +59,7 @@ import {
   drawHitBursts,
   drawLineProjectileEffects,
   drawCloseArcEffects,
+  drawCloseArcBasicCrescentEffects,
   drawGuardCounterEffect,
   drawPlayerSkillEffects,
   drawUltimateEffects,
@@ -282,6 +284,7 @@ function loop(ts: number) {
       updateHitBursts();
       updateLineProjectileEffects();
       updateCloseArcEffects();
+      updateCloseArcBasicCrescentEffects();
       updateGuardCounterEffect();
       updatePlayerSkillEffects();
       updateUltimateEffects();
@@ -344,6 +347,7 @@ function loop(ts: number) {
   drawLineProjectileEffects();
   drawGroundTileOcclusion();
   drawCloseArcEffects();
+  drawCloseArcBasicCrescentEffects();
   drawPlayerSkillEffects();
   drawBindingZonesFront();
   drawHitBursts();
