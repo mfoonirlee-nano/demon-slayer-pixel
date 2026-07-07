@@ -1,6 +1,25 @@
 import { ensureAudio } from "./audio";
 
-const PREVENT_DEFAULT_KEYS = ["a", "d", "w", " ", "j", "k", "l", "1", "2", "3", "r", "p", "escape", "arrowleft", "arrowright", "arrowup"] as const;
+const PREVENT_DEFAULT_KEYS = [
+  "a",
+  "d",
+  "s",
+  "w",
+  " ",
+  "j",
+  "k",
+  "l",
+  "1",
+  "2",
+  "3",
+  "r",
+  "p",
+  "escape",
+  "arrowleft",
+  "arrowright",
+  "arrowdown",
+  "arrowup",
+] as const;
 const SKILL_SWITCH_KEYS = ["1", "2", "3"] as const;
 const SKILL_KEY_OFFSET = 1;
 

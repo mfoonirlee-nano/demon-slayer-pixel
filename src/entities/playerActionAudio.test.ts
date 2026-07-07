@@ -86,7 +86,7 @@ describe("player action audio", () => {
     expect(audioMock.playSfx).toHaveBeenCalledWith("playerJump");
   });
 
-  it("plays attack and fall attack action sfx", () => {
+  it("plays attack action sfx on the ground and in the air", () => {
     triggerAttack();
     expect(audioMock.playSfx).toHaveBeenCalledWith("playerAttackStart");
 
@@ -95,7 +95,19 @@ describe("player action audio", () => {
     state.player.y = GROUND_Y - state.player.h - AIR_ATTACK_TEST_HEIGHT;
 
     triggerAttack();
+    expect(audioMock.playSfx).toHaveBeenCalledWith("playerAttackStart");
+    expect(state.player.attackTimer).toBeGreaterThan(0);
+    expect(state.player.fallAttackTimer).toBe(0);
+  });
+
+  it("plays fall attack action sfx when attacking in the air with down held", () => {
+    state.player.y = GROUND_Y - state.player.h - AIR_ATTACK_TEST_HEIGHT;
+    keys.add("s");
+
+    triggerAttack();
     expect(audioMock.playSfx).toHaveBeenCalledWith("playerFallAttackStart");
+    expect(state.player.attackTimer).toBe(0);
+    expect(state.player.fallAttackTimer).toBeGreaterThan(0);
 
     audioMock.playSfx.mockClear();
     for (let frame = 0; frame < LANDING_TEST_FRAMES && state.player.fallAttackTimer > 0; frame += 1) {

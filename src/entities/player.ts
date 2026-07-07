@@ -70,6 +70,10 @@ function playerMovementKeyDown(key: "a" | "d") {
   return keys.has(key === "a" ? "d" : "a");
 }
 
+function playerFallAttackKeyDown() {
+  return keys.has("s") || keys.has("arrowdown");
+}
+
 export function triggerAttack() {
   if (isBinderTalismanStunned()) return;
 
@@ -82,7 +86,7 @@ export function triggerAttack() {
     || p.ultimateCastTimer > 0
   ) return;
 
-  if (!onGround(p, p.onPlatform)) {
+  if (!onGround(p, p.onPlatform) && playerFallAttackKeyDown()) {
     p.fallAttackTimer = 1;
     p.vy = Math.max(p.vy, FALL_ATTACK.startVelocity);
     p.onPlatform = null;
