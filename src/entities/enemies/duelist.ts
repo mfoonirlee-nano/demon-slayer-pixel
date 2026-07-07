@@ -11,12 +11,13 @@ import {
   enemyCenterX,
   enemyDrawScale,
   enemyFeetY,
+  enemyGrowthStage,
   hasAwakenedGrowth,
   isEliteEnemy,
 } from "./common";
 
 const DUELIST_CONFIG = {
-  triggerDistance: 124,
+  triggerDistance: 148,
   approachBaseSpeed: 0.86,
   approachRandomSpeed: 0.34,
   approachSpeedScaleByElapsed: 0.006,
@@ -27,14 +28,23 @@ const DUELIST_CONFIG = {
   slashSlideSpeed: 1.1,
   slashDamageMultiplier: 1.9,
   slashDamageBonus: 2,
+  spinFrames: 24,
+  spinActiveStartFrame: 4,
+  spinActiveEndFrame: 19,
+  spinSlideSpeed: 1.38,
+  finalSpinSlideSpeed: 1.52,
+  spinDamageMultiplier: 2.15,
+  spinDamageBonus: 3,
+  finalSpinReachBonus: 74,
+  finalSpinHeightBonus: 16,
   recoverMinFrames: 18,
   recoverFrameJitter: 9,
   awakenedRecoverMinFrames: 14,
   eliteRecoverMinFrames: 12,
   eliteWindupBonusFrames: 4,
   eliteSlashReachBonus: 24,
-  blockedRetryMinFrames: 6,
-  blockedRetryFrameJitter: 8,
+  blockedRetryMinFrames: 4,
+  blockedRetryFrameJitter: 6,
   hpMultiplier: 1.35,
   maxActiveDuelists: 3,
   maxActiveThreats: 1,
@@ -48,6 +58,10 @@ const SLASH_BOX_HEIGHT_SCALE = 0.94;
 const SLASH_BOX_REACH = 48;
 const SLASH_BOX_FORWARD_RATIO = 0.52;
 const SLASH_BOX_BACK_RATIO = 0.48;
+const SPIN_BOX_WIDTH_SCALE = 2.2;
+const SPIN_BOX_HEIGHT_SCALE = 1.16;
+const SPIN_BOX_REACH = 68;
+const SPIN_BOX_LIFT = 10;
 const SLASH_WARNING_SFX_PITCH = 1.16;
 const SLASH_START_SFX_PITCH = 1.08;
 
@@ -79,7 +93,11 @@ function duelistThreatCount() {
   for (const enemy of state.enemies) {
     if (
       isDuelist(enemy)
-      && (enemy.duelistPhase === "windup" || enemy.duelistPhase === "slash")
+      && (
+        enemy.duelistPhase === "windup"
+        || enemy.duelistPhase === "slash"
+        || enemy.duelistPhase === "spin"
+      )
     ) {
       count += 1;
     }
@@ -109,9 +127,14 @@ function duelistRecoverMinFrames(enemy: EnemyState) {
   return DUELIST_CONFIG.recoverMinFrames;
 }
 
+function duelistAttackPhase(enemy: EnemyState): DuelistPhase {
+  return hasAwakenedGrowth(enemy) ? "spin" : "slash";
+}
+
 function duelistPhaseDuration(enemy: EnemyState, phase: DuelistPhase) {
   if (phase === "windup") return duelistWindupFrames(enemy);
   if (phase === "slash") return DUELIST_CONFIG.slashFrames;
+  if (phase === "spin") return DUELIST_CONFIG.spinFrames;
   if (phase === "recover") return duelistRecoverMinFrames(enemy);
   return 1;
 }
@@ -131,6 +154,9 @@ function enterDuelistPhase(enemy: EnemyState, phase: DuelistPhase) {
     playSfx("enemyWarning", SLASH_WARNING_SFX_PITCH);
   } else if (phase === "slash") {
     enemy.duelistTimer = DUELIST_CONFIG.slashFrames;
+    playSfx("enemySlash", SLASH_START_SFX_PITCH);
+  } else if (phase === "spin") {
+    enemy.duelistTimer = DUELIST_CONFIG.spinFrames;
     playSfx("enemySlash", SLASH_START_SFX_PITCH);
   } else if (phase === "recover") {
     enemy.duelistTimer = randomFrameCount(
@@ -157,12 +183,36 @@ function duelistSlashBox(enemy: EnemyState) {
   };
 }
 
-function triggerDuelistSlashHit(enemy: EnemyState) {
-  const box = duelistSlashBox(enemy);
+function duelistSpinBox(enemy: EnemyState) {
+  const final = enemyGrowthStage(enemy) === "final";
+  const w = Math.round(
+    enemy.w * SPIN_BOX_WIDTH_SCALE
+    + SPIN_BOX_REACH
+    + (final ? DUELIST_CONFIG.finalSpinReachBonus : 0),
+  );
+  const h = Math.round(
+    enemy.h * SPIN_BOX_HEIGHT_SCALE
+    + (final ? DUELIST_CONFIG.finalSpinHeightBonus : 0),
+  );
+
+  return {
+    x: enemyCenterX(enemy) - w / HALF_DIVISOR,
+    y: enemyFeetY(enemy) - h - SPIN_BOX_LIFT,
+    w,
+    h,
+  };
+}
+
+function triggerDuelistAttackHit(enemy: EnemyState, phase: "slash" | "spin") {
+  const box = phase === "spin" ? duelistSpinBox(enemy) : duelistSlashBox(enemy);
   if (!hitbox(box, state.player)) return;
   enemy.duelistSlashHit = true;
   const facing = enemy.duelistFacing ?? (enemy.vx >= 0 ? 1 : -1);
-  hurtPlayer(enemy.damage * DUELIST_CONFIG.slashDamageMultiplier + DUELIST_CONFIG.slashDamageBonus, -facing);
+  const damageMultiplier = phase === "spin"
+    ? DUELIST_CONFIG.spinDamageMultiplier
+    : DUELIST_CONFIG.slashDamageMultiplier;
+  const damageBonus = phase === "spin" ? DUELIST_CONFIG.spinDamageBonus : DUELIST_CONFIG.slashDamageBonus;
+  hurtPlayer(enemy.damage * damageMultiplier + damageBonus, -facing);
 }
 
 function initDuelist(enemy: EnemyState, context: EnemySpawnContext) {
@@ -213,7 +263,7 @@ function updateDuelist(enemy: EnemyState) {
     enemy.duelistTimer -= 1;
     enemy.vx = 0;
     if (enemy.duelistTimer <= 0) {
-      enterDuelistPhase(enemy, "slash");
+      enterDuelistPhase(enemy, duelistAttackPhase(enemy));
       enemy.duelistFacing = facing;
     }
   } else if (phase === "slash") {
@@ -225,7 +275,24 @@ function updateDuelist(enemy: EnemyState) {
       && elapsed >= DUELIST_CONFIG.slashActiveStartFrame
       && elapsed <= DUELIST_CONFIG.slashActiveEndFrame
     ) {
-      triggerDuelistSlashHit(enemy);
+      triggerDuelistAttackHit(enemy, "slash");
+    }
+    if (enemy.duelistTimer <= 0) {
+      enterDuelistPhase(enemy, "recover");
+      enemy.vx = 0;
+    }
+  } else if (phase === "spin") {
+    const elapsed = DUELIST_CONFIG.spinFrames - enemy.duelistTimer;
+    enemy.duelistTimer -= 1;
+    enemy.vx = (enemy.duelistFacing ?? facing) * (
+      enemyGrowthStage(enemy) === "final" ? DUELIST_CONFIG.finalSpinSlideSpeed : DUELIST_CONFIG.spinSlideSpeed
+    );
+    if (
+      !enemy.duelistSlashHit
+      && elapsed >= DUELIST_CONFIG.spinActiveStartFrame
+      && elapsed <= DUELIST_CONFIG.spinActiveEndFrame
+    ) {
+      triggerDuelistAttackHit(enemy, "spin");
     }
     if (enemy.duelistTimer <= 0) {
       enterDuelistPhase(enemy, "recover");

@@ -186,6 +186,13 @@ export const DUELIST_SHEETS: Record<DuelistPhase, SpriteSheet> = {
     count: 5,
     image: null,
   },
+  spin: {
+    src: "assets/sprites/enemies/duelist/duelist_spin.png",
+    frameW: 320,
+    frameH: 360,
+    count: 6,
+    image: null,
+  },
   recover: {
     src: "assets/sprites/enemies/duelist/duelist_recover.png",
     frameW: 320,

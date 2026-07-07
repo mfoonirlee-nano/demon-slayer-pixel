@@ -7,7 +7,7 @@ export type PlatformLayer = "low" | "mid" | "high" | "top";
 export type ChaserPhase = "charge" | "reenter";
 export type CrawlerPhase = "move" | "windup" | "lunge" | "leap" | "recover";
 export type RunnerPhase = "approach" | "windup" | "dash" | "recover";
-export type DuelistPhase = "approach" | "windup" | "slash" | "recover";
+export type DuelistPhase = "approach" | "windup" | "slash" | "spin" | "recover";
 export type BrutePhase =
   | "advance"
   | "guard"
