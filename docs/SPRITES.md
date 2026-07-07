@@ -190,9 +190,10 @@ Duelist 专属动作素材：
 | `enemies/duelist/duelist.png` | `1280x360` | 4 | `320x360` | `approach` | 双刃低位推进，黑红破布和骨刃轮廓清晰 |
 | `enemies/duelist/duelist_windup.png` | `1280x360` | 4 | `320x360` | `windup` | 停步压低，双刃外展，暗红刃缘作为读招 |
 | `enemies/duelist/duelist_slash.png` | `1600x360` | 5 | `320x360` | `slash` | 短距离双刃斩击，关键帧弧形斩线已烘进图集 |
+| `enemies/duelist/duelist_spin.png` | `1920x360` | 6 | `320x360` | `spin` | 觉醒/最终空中旋转双刀斩，紫红环形刀轨烘进图集 |
 | `enemies/duelist/duelist_recover.png` | `960x360` | 3 | `320x360` | `recover` | 斩后收刀硬直，胸口和肩线暴露形成反打窗口 |
 
-Duelist 动作素材不提交 `*_source.png` 绿幕制作源图；运行时只加载以上透明 PNG。斩击读招、双刃弧线和恢复硬直姿态已烘进图集，运行时只负责状态切换和关键帧斩击盒。
+Duelist 动作素材不提交 `*_source.png` 绿幕制作源图；运行时只加载以上透明 PNG。斩击读招、双刃弧线、觉醒/最终旋转轨迹和恢复硬直姿态已烘进图集，运行时只负责状态切换和关键帧斩击盒。
 
 Brute 专属动作素材：
 
