@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  CLOSE_ARC_BASIC_CRESCENT_CONFIG,
   CLOSE_ARC_BASIC_CRESCENT_SHEET,
   LINE_PROJECTILE_EFFECT_CONFIG,
   SKILL_IDS,
@@ -24,6 +25,8 @@ const LINE_PROJECTILE_EFFECT_FRAME_WIDTHS = [
 ];
 const LINE_PROJECTILE_EFFECT_FRAME_COUNT = 8;
 const LINE_PROJECTILE_EFFECT_LOOP_FROM_FRAME = 5;
+const CLOSE_ARC_BASIC_CRESCENT_FRAME_COUNT = 2;
+const CLOSE_ARC_BASIC_CRESCENT_FRAME_DURATION = 4;
 
 describe("player skill catalog copy", () => {
   it("uses the canonical display names for all implemented normal skills", () => {
@@ -96,5 +99,7 @@ describe("player skill catalog copy", () => {
     const preloadedSources = playerSkillEffectSheets().map((sheet) => sheet.src);
 
     expect(preloadedSources).toContain(CLOSE_ARC_BASIC_CRESCENT_SHEET.src);
+    expect(CLOSE_ARC_BASIC_CRESCENT_SHEET.count).toBe(CLOSE_ARC_BASIC_CRESCENT_FRAME_COUNT);
+    expect(CLOSE_ARC_BASIC_CRESCENT_CONFIG.frameDuration).toBe(CLOSE_ARC_BASIC_CRESCENT_FRAME_DURATION);
   });
 });

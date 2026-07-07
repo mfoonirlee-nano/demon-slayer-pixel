@@ -68,14 +68,14 @@ export const CLOSE_ARC_BASIC_CRESCENT_SHEET: SpriteSheet = {
   src: "assets/sprites/skills/close_arc/basic_crescent.png",
   frameW: 192,
   frameH: 128,
-  count: 4,
+  count: 2,
   image: null,
 };
 
 export const CLOSE_ARC_BASIC_CRESCENT_CONFIG = {
   requiredSkillLevel: 3,
   drawScale: 0.58,
-  frameDuration: 2,
+  frameDuration: 4,
   life: 8,
   rangeExtensionPlayerRatio: 0.25,
   hitboxHeightScale: 1,
