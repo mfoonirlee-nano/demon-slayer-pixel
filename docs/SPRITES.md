@@ -217,9 +217,9 @@ Binder 专属动作素材：
 | `enemies/binder/binder_cast.png` | `1040x320` | 4 | `260x320` | `cast` | 咒线甩向地面，在玩家当前位置生成减速咒圈 |
 | `enemies/binder/binder_recover.png` | `780x320` | 3 | `260x320` | `recover` | 咒线回收，符纸下落，给玩家反打窗口 |
 | `enemies/binder/binder_hit.png` | `780x320` | 3 | `260x320` | `hit` | 正式受击素材预留，v1 不改变通用受击状态机 |
-| `enemies/binder/binder_zone.png` | `1920x120` | 8 | `240x120` | `bindingZone` | 完整暗红/紫色侧视地面咒圈源图；外环、符文、中心脉冲和短光束逐帧变化，约 `150` 帧内使玩家水平移动速度乘以 `0.45`，并随局内时间低频造成伤害 |
-| `enemies/binder/binder_zone_back.png` | `1920x120` | 8 | `240x120` | `bindingZoneBack` | 咒圈上半/远端层，先于角色绘制 |
-| `enemies/binder/binder_zone_front.png` | `1920x120` | 8 | `240x120` | `bindingZoneFront` | 咒圈下半/近端亮边层，在地面前景后以较低不透明度绘制 |
+| `enemies/binder/binder_zone.png` | `1920x120` | 8 | `240x120` | `bindingZone` | 低矮暗红/紫色侧视地面咒圈源图；外环、符文、中心脉冲和短收束线逐帧变化，front 层只保留底部近端亮边，约 `150` 帧内使玩家水平移动速度乘以 `0.45`，并随局内时间低频造成伤害 |
+| `enemies/binder/binder_zone_back.png` | `1920x120` | 8 | `240x120` | `bindingZoneBack` | 咒圈上半/远端层，压低竖向亮度，先于角色和敌人绘制 |
+| `enemies/binder/binder_zone_front.png` | `1920x120` | 8 | `240x120` | `bindingZoneFront` | 只保留底部 16-17px 近端亮边，在前景层以较低不透明度绘制，避免穿过角色身体 |
 
 Binder 运行时由 `BINDER_SHEETS`、`BINDER_ZONE_SHEET`、`BINDER_ZONE_BACK_SHEET` 和 `BINDER_ZONE_FRONT_SHEET` 暴露并预加载。普通刷怪在 `elapsed >= 90s` 后才会抽取 binder；同屏最多 `1` 个 binder，主咒圈最多 `1` 个。咒圈不禁用跳跃或攻击；玩家进入咒圈时会被减速、低频受到随局内时间提升的伤害，并叠加偏红紫的减速滤镜和束缚线反馈。
 
