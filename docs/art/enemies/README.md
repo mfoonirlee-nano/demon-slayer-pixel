@@ -34,7 +34,7 @@
 | `chaser` | 裸身追妖 | 素材已接入；基础追踪行为已实现 | [chaser.md](chaser.md) |
 | `crawler` | 伏地蛛妖 | 素材已接入；低伏前扑行为已实现 | [crawler.md](crawler.md) |
 | `runner` | 角突夜妖 | 素材已接入；前摇冲刺行为已实现 | [runner.md](runner.md) |
-| `caster` | 提灯咒妖 | 多状态素材已接入；远程幽火行为已实现 | [caster.md](caster.md) |
+| `caster` | 提灯咒妖 | 多状态素材已接入；普通/觉醒/终幕幽火行为已实现 | [caster.md](caster.md) |
 | `duelist` | 双刃裂妖 | 多状态素材已接入；近战斩击行为已实现 | [duelist.md](duelist.md) |
 | `brute` | 盾甲重妖 | 多状态素材已接入；持盾、盾击、破盾和破盾后横扫行为已实现 | [brute.md](brute.md) |
 | `leaper` | 裂足跳妖 | 多状态素材已接入；锁定落点跳跃行为已实现 | [leaper.md](leaper.md) |
