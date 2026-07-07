@@ -1,5 +1,6 @@
 import type { PlayerAnimationState, SkillId } from "../assets";
 import type {
+  ActBand,
   BinderTalismanDebuff,
   BloodMoonEffectKind,
   BossSkillEffectKind,
@@ -239,6 +240,8 @@ export type ProjectileState = {
   speed?: number;
   trackingFrames?: number;
   turnRate?: number;
+  wispStage?: ActBand;
+  frameDuration?: number;
 };
 
 export type ParticleState = {

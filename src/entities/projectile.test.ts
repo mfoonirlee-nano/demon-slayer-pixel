@@ -16,6 +16,25 @@ const TEST_WISP_SPEED = 3;
 const TEST_WISP_TURN_RATE = Math.PI / 2;
 const CASTER_CAST_FRAMES = 28;
 const CASTER_CAST_SPAWN_FRAME = 14;
+const CASTER_WINDUP_FRAMES = 36;
+const CASTER_RECOVER_FRAMES = 34;
+const CASTER_NORMAL_INTERVAL_FRAMES = 300;
+const CASTER_EMPOWERED_INTERVAL_FRAMES = 180;
+const CASTER_BASE_WISP_SPEED = 2.45;
+const CASTER_NORMAL_WISP_SPEED_MULTIPLIER = 1.1;
+const CASTER_AWAKENED_SPEED_FROM_NORMAL = 1.3;
+const CASTER_FINAL_SPEED_FROM_NORMAL = 1.5;
+const CASTER_AWAKENED_WISP_SPEED_MULTIPLIER = CASTER_NORMAL_WISP_SPEED_MULTIPLIER
+  * CASTER_AWAKENED_SPEED_FROM_NORMAL;
+const CASTER_FINAL_WISP_SPEED_MULTIPLIER = CASTER_NORMAL_WISP_SPEED_MULTIPLIER
+  * CASTER_FINAL_SPEED_FROM_NORMAL;
+const CASTER_BASE_WISP_DAMAGE = 4;
+const CASTER_AWAKENED_WISP_DAMAGE_MULTIPLIER = 1.2;
+const CASTER_FINAL_WISP_DAMAGE_MULTIPLIER = 1.5;
+const CASTER_NORMAL_WISP_FRAME_DURATION = 6;
+const CASTER_FINAL_WISP_FRAME_DURATION = 3;
+const CASTER_AWAKENED_SHOT_COUNT = 3;
+const CASTER_FINAL_SHOT_COUNT = 6;
 const BINDER_CAST_FRAMES = 24;
 const BINDER_CAST_SPAWN_FRAME = 10;
 const BINDER_CIRCLE_TALISMAN_RELEASE_FRAME = 14;
@@ -36,6 +55,26 @@ function spawnCasterOwner() {
   expect(spawnEnemyById("caster", "debug", "left")).toBe(true);
   const caster = state.enemies[0];
   caster.casterId = TEST_CASTER_ID;
+}
+
+function forceCasterCast(growthStage: "intro" | "awakened" | "final" = "intro") {
+  expect(spawnEnemyById("caster", "debug", "left", { growthStage })).toBe(true);
+  const caster = state.enemies[0];
+  caster.x = 180;
+  caster.y = GROUND_Y - caster.h;
+  state.player.x = 640;
+  state.player.y = GROUND_Y - state.player.h;
+  caster.casterPhase = "cast";
+  caster.casterTimer = CASTER_CAST_FRAMES - CASTER_CAST_SPAWN_FRAME;
+  caster.casterCastSpawned = false;
+  caster.casterFacing = 1;
+  updateEnemies();
+  return caster;
+}
+
+function expectProjectileSpeed(projectile: ProjectileState, speed: number) {
+  expect(projectile.speed ?? 0).toBeCloseTo(speed);
+  expect(Math.hypot(projectile.vx, projectile.vy ?? 0)).toBeCloseTo(speed);
 }
 
 function casterWisp(overrides: Partial<ProjectileState> = {}): ProjectileState {
@@ -111,18 +150,7 @@ describe("caster wisps", () => {
 
   it("spawns caster wisps fast enough to keep tracking for the full five seconds", () => {
     resetState();
-    state.player.x = 640;
-    state.player.y = GROUND_Y - state.player.h;
-    expect(spawnEnemyById("caster", "debug", "left")).toBe(true);
-    const caster = state.enemies[0];
-    caster.x = 180;
-    caster.y = GROUND_Y - caster.h;
-    caster.casterPhase = "cast";
-    caster.casterTimer = CASTER_CAST_FRAMES - CASTER_CAST_SPAWN_FRAME;
-    caster.casterCastSpawned = false;
-    caster.casterFacing = 1;
-
-    updateEnemies();
+    forceCasterCast();
 
     expect(state.projectiles).toHaveLength(1);
     const wisp = state.projectiles[0];
@@ -130,6 +158,105 @@ describe("caster wisps", () => {
     expect(wisp.life).toBeGreaterThan(CASTER_WISP_TRACKING_FRAMES);
     expect(wisp.speed ?? 0).toBeGreaterThan(TUNED_WISP_SPEED_FLOOR);
     expect(Math.hypot(wisp.vx, wisp.vy ?? 0)).toBeCloseTo(wisp.speed ?? 0);
+  });
+
+  it("fires one normal wisp at the faster base speed", () => {
+    resetState();
+    forceCasterCast("intro");
+
+    expect(state.projectiles).toHaveLength(1);
+    const wisp = state.projectiles[0];
+    expect(wisp.wispStage).toBe("intro");
+    expect(wisp.damage).toBeCloseTo(CASTER_BASE_WISP_DAMAGE);
+    expect(wisp.frameDuration).toBe(CASTER_NORMAL_WISP_FRAME_DURATION);
+    expectProjectileSpeed(
+      wisp,
+      CASTER_BASE_WISP_SPEED * CASTER_NORMAL_WISP_SPEED_MULTIPLIER,
+    );
+  });
+
+  it("fires three purple-red awakened wisps from different angles", () => {
+    resetState();
+    forceCasterCast("awakened");
+
+    expect(state.projectiles).toHaveLength(CASTER_AWAKENED_SHOT_COUNT);
+    expect(new Set(state.projectiles.map((wisp) => wisp.y))).toHaveLength(CASTER_AWAKENED_SHOT_COUNT);
+    for (const wisp of state.projectiles) {
+      expect(wisp.wispStage).toBe("awakened");
+      expect(wisp.damage).toBeCloseTo(
+        CASTER_BASE_WISP_DAMAGE * CASTER_AWAKENED_WISP_DAMAGE_MULTIPLIER,
+      );
+      expectProjectileSpeed(
+        wisp,
+        CASTER_BASE_WISP_SPEED * CASTER_AWAKENED_WISP_SPEED_MULTIPLIER,
+      );
+    }
+  });
+
+  it("fires six dark-red final wisps with faster sprite animation", () => {
+    resetState();
+    forceCasterCast("final");
+
+    expect(state.projectiles).toHaveLength(CASTER_FINAL_SHOT_COUNT);
+    expect(new Set(state.projectiles.map((wisp) => wisp.y)).size).toBeGreaterThan(1);
+    for (const wisp of state.projectiles) {
+      expect(wisp.wispStage).toBe("final");
+      expect(wisp.frameDuration).toBe(CASTER_FINAL_WISP_FRAME_DURATION);
+      expect(wisp.damage).toBeCloseTo(
+        CASTER_BASE_WISP_DAMAGE * CASTER_FINAL_WISP_DAMAGE_MULTIPLIER,
+      );
+      expectProjectileSpeed(
+        wisp,
+        CASTER_BASE_WISP_SPEED * CASTER_FINAL_WISP_SPEED_MULTIPLIER,
+      );
+    }
+  });
+
+  it("uses five-second normal casts and three-second empowered casts", () => {
+    resetState();
+    const caster = forceCasterCast("intro");
+    caster.casterPhase = "recover";
+    caster.casterTimer = 1;
+
+    updateEnemies();
+
+    expect(caster.casterPhase).toBe("seekRange");
+    expect(caster.casterTimer).toBe(
+      CASTER_NORMAL_INTERVAL_FRAMES
+      - CASTER_WINDUP_FRAMES
+      - CASTER_CAST_FRAMES
+      - CASTER_RECOVER_FRAMES,
+    );
+
+    resetState();
+    const awakenedCaster = forceCasterCast("awakened");
+    awakenedCaster.casterPhase = "recover";
+    awakenedCaster.casterTimer = 1;
+
+    updateEnemies();
+
+    expect(awakenedCaster.casterPhase).toBe("seekRange");
+    expect(awakenedCaster.casterTimer).toBe(
+      CASTER_EMPOWERED_INTERVAL_FRAMES
+      - CASTER_WINDUP_FRAMES
+      - CASTER_CAST_FRAMES
+      - CASTER_RECOVER_FRAMES,
+    );
+
+    resetState();
+    const finalCaster = forceCasterCast("final");
+    finalCaster.casterPhase = "recover";
+    finalCaster.casterTimer = 1;
+
+    updateEnemies();
+
+    expect(finalCaster.casterPhase).toBe("seekRange");
+    expect(finalCaster.casterTimer).toBe(
+      CASTER_EMPOWERED_INTERVAL_FRAMES
+      - CASTER_WINDUP_FRAMES
+      - CASTER_CAST_FRAMES
+      - CASTER_RECOVER_FRAMES,
+    );
   });
 });
 

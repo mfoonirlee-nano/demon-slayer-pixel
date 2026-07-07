@@ -3,7 +3,7 @@ import { ctx } from "../rendering/context";
 import { WIDTH, HEIGHT, PROJECTILE_CONFIG, CASTER_WISP_SHEET, BINDER_TALISMAN_SHEET } from "../constants";
 import type { ProjectileState } from "../types/game-state";
 import { hitbox } from "../game/utils";
-import { drawSheetFrame } from "../rendering/graphics";
+import { drawSheetFrame, type SpriteFrameEffect } from "../rendering/graphics";
 import { hurtPlayer } from "./player";
 import { applyBinderTalismanDebuffs } from "./enemies/binder";
 
@@ -12,6 +12,22 @@ const CASTER_WISP_DRAW = {
   h: 38,
   frameDuration: 6,
 } as const;
+const CASTER_WISP_FRAME_EFFECT: Record<"awakened" | "final", SpriteFrameEffect> = {
+  awakened: {
+    filter: "brightness(1.02) saturate(1.35) contrast(1.12)",
+    tint: {
+      color: "rgb(178, 28, 126)",
+      alpha: 0.44,
+    },
+  },
+  final: {
+    filter: "brightness(0.82) saturate(1.5) contrast(1.18)",
+    tint: {
+      color: "rgb(104, 8, 24)",
+      alpha: 0.58,
+    },
+  },
+};
 const BINDER_TALISMAN_DRAW = {
   w: 34,
   h: 44,
@@ -46,7 +62,11 @@ function casterOwnerAlive(projectile: ProjectileState) {
 
 function updateCasterWisp(projectile: ProjectileState) {
   if (!casterOwnerAlive(projectile)) return false;
-  updateHomingProjectile(projectile, CASTER_WISP_DRAW.frameDuration, CASTER_WISP_SHEET.count);
+  updateHomingProjectile(
+    projectile,
+    projectile.frameDuration ?? CASTER_WISP_DRAW.frameDuration,
+    CASTER_WISP_SHEET.count,
+  );
   return true;
 }
 
@@ -110,6 +130,12 @@ function projectileOutOfBounds(projectile: ProjectileState) {
     || projectile.y > HEIGHT + PROJECTILE_VERTICAL_DESPAWN_MARGIN;
 }
 
+function casterWispFrameEffect(projectile: ProjectileState) {
+  if (projectile.wispStage === "awakened") return CASTER_WISP_FRAME_EFFECT.awakened;
+  if (projectile.wispStage === "final") return CASTER_WISP_FRAME_EFFECT.final;
+  return undefined;
+}
+
 export function updateProjectiles() {
   for (let i = state.projectiles.length - 1; i >= 0; i -= 1) {
     const p = state.projectiles[i] as ProjectileState;
@@ -154,6 +180,7 @@ export function drawProjectiles() {
         CASTER_WISP_DRAW.w,
         CASTER_WISP_DRAW.h,
         p.vx >= 0 ? -1 : 1,
+        casterWispFrameEffect(p),
       );
       continue;
     }

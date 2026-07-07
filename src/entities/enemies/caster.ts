@@ -1,7 +1,7 @@
 import { state } from "../../game/state";
 import { playSfx } from "../../game/audio";
 import { CASTER_SHEET_INDEX, CASTER_SHEETS, ENEMY_SHEETS } from "../../constants";
-import type { CasterAiPhase, CasterPhase, EnemyState } from "../../types/game-state";
+import type { ActBand, CasterAiPhase, CasterPhase, EnemyState } from "../../types/game-state";
 import { frameIndex } from "../../game/utils";
 import type { EnemyArchetype, EnemySpawnContext } from "./common";
 import {
@@ -9,13 +9,15 @@ import {
   drawEnemySheetFrame,
   enemyCenterX,
   enemyDrawScale,
+  enemyGrowthStage,
   enemyFeetY,
-  hasAwakenedGrowth,
   isEliteEnemy,
 } from "./common";
 
 const FRAMES_PER_SECOND = 60;
 const WISP_TRACKING_SECONDS = 5;
+const NORMAL_FIRE_INTERVAL_FRAMES = 300;
+const EMPOWERED_FIRE_INTERVAL_FRAMES = 180;
 
 const CASTER_CONFIG = {
   minRange: 220,
@@ -33,10 +35,7 @@ const CASTER_CONFIG = {
   castFrames: 28,
   recoverFrames: 34,
   castSpawnFrame: 14,
-  seekCooldownMinFrames: 44,
-  seekCooldownJitterFrames: 28,
   blockedRetryFrames: 12,
-  maxActiveWisps: 2,
   drawScale: 1,
   moveAnimSpeed: 9,
   windupFrameDuration: 9,
@@ -49,21 +48,36 @@ const CASTER_CONFIG = {
   wispMaxDamage: 14,
   wispBaseDamage: 4,
   wispDamageScale: 0.45,
+  awakenedWispDamageMultiplier: 1.2,
+  finalWispDamageMultiplier: 1.5,
   wispBaseSpeed: 2.45,
   wispSpeedScale: 0.11,
   wispMaxSpeed: 3.6,
-  awakenedWispSpeedBonus: 0.18,
+  normalWispSpeedMultiplier: 1.1,
+  awakenedWispSpeedFromNormal: 1.3,
+  finalWispSpeedFromNormal: 1.5,
   wispBaseTurnRate: 0.014,
   wispTurnRateScale: 0.006,
   wispMaxTurnRate: 0.052,
   awakenedWispTurnRateBonus: 0.012,
   eliteWispTurnRateBonus: 0.018,
   wispSpreadRadians: 0.16,
+  wispFanForwardOffset: 10,
+  wispFanVerticalOffset: 22,
   wispTrackingFrames: WISP_TRACKING_SECONDS * FRAMES_PER_SECOND,
   wispStartForwardRatio: 0.58,
   wispStartHeightRatio: 0.38,
-  wispDoubleCastThreshold: 3,
-  wispDoubleCastPitch: 1.12,
+  normalShotCount: 1,
+  awakenedShotCount: 3,
+  finalShotCount: 6,
+  normalMaxActiveWisps: 3,
+  awakenedMaxActiveWisps: 15,
+  finalMaxActiveWisps: 30,
+  normalWispFrameDuration: 6,
+  finalWispFrameDuration: 3,
+  normalFireIntervalFrames: NORMAL_FIRE_INTERVAL_FRAMES,
+  awakenedFireIntervalFrames: EMPOWERED_FIRE_INTERVAL_FRAMES,
+  multiCastPitch: 1.12,
 } as const;
 
 const SECONDS_PER_MINUTE = 60;
@@ -71,12 +85,18 @@ const HALF_DIVISOR = 2;
 
 let nextCasterId = 1;
 
+type CasterWispProfile = {
+  stage: ActBand;
+  shotCount: number;
+  maxActiveWisps: number;
+  speedMultiplier: number;
+  damageMultiplier: number;
+  intervalFrames: number;
+  frameDuration: number;
+};
+
 function difficultyK() {
   return state.elapsed / SECONDS_PER_MINUTE;
-}
-
-function randomFrameCount(min: number, jitter: number) {
-  return min + Math.floor(Math.random() * jitter);
 }
 
 function playerCenterX() {
@@ -98,15 +118,72 @@ function casterSeekSpeed() {
     + Math.random() * CASTER_CONFIG.seekRandomSpeed;
 }
 
-function casterWispDamage() {
-  return Math.min(
+function casterWispProfile(enemy: EnemyState): CasterWispProfile {
+  const stage = enemyGrowthStage(enemy);
+  const normalSpeedMultiplier = CASTER_CONFIG.normalWispSpeedMultiplier;
+  if (stage === "final") {
+    return {
+      stage,
+      shotCount: CASTER_CONFIG.finalShotCount,
+      maxActiveWisps: CASTER_CONFIG.finalMaxActiveWisps,
+      speedMultiplier: normalSpeedMultiplier * CASTER_CONFIG.finalWispSpeedFromNormal,
+      damageMultiplier: CASTER_CONFIG.finalWispDamageMultiplier,
+      intervalFrames: CASTER_CONFIG.awakenedFireIntervalFrames,
+      frameDuration: CASTER_CONFIG.finalWispFrameDuration,
+    };
+  }
+
+  if (stage === "awakened") {
+    return {
+      stage,
+      shotCount: CASTER_CONFIG.awakenedShotCount,
+      maxActiveWisps: CASTER_CONFIG.awakenedMaxActiveWisps,
+      speedMultiplier: normalSpeedMultiplier * CASTER_CONFIG.awakenedWispSpeedFromNormal,
+      damageMultiplier: CASTER_CONFIG.awakenedWispDamageMultiplier,
+      intervalFrames: CASTER_CONFIG.awakenedFireIntervalFrames,
+      frameDuration: CASTER_CONFIG.normalWispFrameDuration,
+    };
+  }
+
+  return {
+    stage,
+    shotCount: CASTER_CONFIG.normalShotCount,
+    maxActiveWisps: CASTER_CONFIG.normalMaxActiveWisps,
+    speedMultiplier: normalSpeedMultiplier,
+    damageMultiplier: 1,
+    intervalFrames: CASTER_CONFIG.normalFireIntervalFrames,
+    frameDuration: CASTER_CONFIG.normalWispFrameDuration,
+  };
+}
+
+function casterPostAttackCooldownFrames(enemy: EnemyState) {
+  const profile = casterWispProfile(enemy);
+  const cooldownFrames = profile.intervalFrames
+    - CASTER_CONFIG.windupFrames
+    - CASTER_CONFIG.castFrames
+    - CASTER_CONFIG.recoverFrames;
+  return Math.max(CASTER_CONFIG.blockedRetryFrames, cooldownFrames);
+}
+
+function casterInitialCooldownFrames(enemy: EnemyState) {
+  const profile = casterWispProfile(enemy);
+  const cooldownFrames = profile.intervalFrames
+    - CASTER_CONFIG.windupFrames
+    - CASTER_CONFIG.castSpawnFrame;
+  return Math.max(CASTER_CONFIG.blockedRetryFrames, cooldownFrames);
+}
+
+function casterWispDamage(enemy: EnemyState) {
+  const baseDamage = Math.min(
     CASTER_CONFIG.wispMaxDamage,
     CASTER_CONFIG.wispBaseDamage + difficultyK() * CASTER_CONFIG.wispDamageScale,
   );
+  return baseDamage * casterWispProfile(enemy).damageMultiplier;
 }
 
 function casterWispLife(enemy: EnemyState) {
-  return CASTER_CONFIG.wispLifeFrames + (hasAwakenedGrowth(enemy) ? CASTER_CONFIG.awakenedWispLifeBonusFrames : 0);
+  return CASTER_CONFIG.wispLifeFrames
+    + (enemyGrowthStage(enemy) === "intro" ? 0 : CASTER_CONFIG.awakenedWispLifeBonusFrames);
 }
 
 function casterWispSpeed(enemy: EnemyState) {
@@ -114,13 +191,13 @@ function casterWispSpeed(enemy: EnemyState) {
     CASTER_CONFIG.wispMaxSpeed,
     CASTER_CONFIG.wispBaseSpeed + difficultyK() * CASTER_CONFIG.wispSpeedScale,
   );
-  return hasAwakenedGrowth(enemy) ? speed + CASTER_CONFIG.awakenedWispSpeedBonus : speed;
+  return speed * casterWispProfile(enemy).speedMultiplier;
 }
 
 function casterWispTurnRate(enemy: EnemyState) {
   const bonus = isEliteEnemy(enemy)
     ? CASTER_CONFIG.eliteWispTurnRateBonus
-    : hasAwakenedGrowth(enemy)
+    : enemyGrowthStage(enemy) !== "intro"
       ? CASTER_CONFIG.awakenedWispTurnRateBonus
       : 0;
   return Math.min(
@@ -149,19 +226,13 @@ function enterCasterPhase(enemy: EnemyState, phase: CasterAiPhase) {
   } else if (phase === "recover") {
     enemy.casterTimer = CASTER_CONFIG.recoverFrames;
   } else {
-    enemy.casterTimer = randomFrameCount(
-      CASTER_CONFIG.seekCooldownMinFrames,
-      CASTER_CONFIG.seekCooldownJitterFrames,
-    );
+    enemy.casterTimer = casterPostAttackCooldownFrames(enemy);
   }
 }
 
 function initCaster(enemy: EnemyState, context: EnemySpawnContext) {
   enemy.casterPhase = "seekRange";
-  enemy.casterTimer = randomFrameCount(
-    CASTER_CONFIG.seekCooldownMinFrames,
-    CASTER_CONFIG.seekCooldownJitterFrames,
-  );
+  enemy.casterTimer = casterInitialCooldownFrames(enemy);
   enemy.casterFacing = -context.side;
   enemy.casterBaseSpeed = context.speed;
   enemy.casterCastSpawned = false;
@@ -170,12 +241,12 @@ function initCaster(enemy: EnemyState, context: EnemySpawnContext) {
 }
 
 function spawnCasterWisps(enemy: EnemyState) {
+  const profile = casterWispProfile(enemy);
   const active = casterWispCount(enemy);
-  const available = CASTER_CONFIG.maxActiveWisps - active;
+  const available = profile.maxActiveWisps - active;
   if (available <= 0) return;
 
-  const shouldDoubleCast = isEliteEnemy(enemy) || difficultyK() >= CASTER_CONFIG.wispDoubleCastThreshold;
-  const shotCount = Math.min(available, shouldDoubleCast ? 2 : 1);
+  const shotCount = Math.min(available, profile.shotCount);
   const facing = enemy.casterFacing ?? (enemy.vx >= 0 ? 1 : -1);
   const startX = enemyCenterX(enemy)
     + facing * enemy.w * CASTER_CONFIG.wispStartForwardRatio
@@ -186,35 +257,43 @@ function spawnCasterWisps(enemy: EnemyState) {
   const targetX = playerCenterX();
   const targetY = playerCenterY();
   const speed = casterWispSpeed(enemy);
-  const baseAngle = Math.atan2(
-    targetY - (startY + CASTER_CONFIG.wispCollisionH / HALF_DIVISOR),
-    targetX - (startX + CASTER_CONFIG.wispCollisionW / HALF_DIVISOR),
-  );
+  const fanCenter = (shotCount - 1) / HALF_DIVISOR;
 
   for (let index = 0; index < shotCount; index += 1) {
+    const fanIndex = index - fanCenter;
+    const fanRatio = fanCenter === 0 ? 0 : fanIndex / fanCenter;
+    const shotStartX = startX
+      + facing * Math.abs(fanRatio) * CASTER_CONFIG.wispFanForwardOffset;
+    const shotStartY = startY + fanRatio * CASTER_CONFIG.wispFanVerticalOffset;
+    const baseAngle = Math.atan2(
+      targetY - (shotStartY + CASTER_CONFIG.wispCollisionH / HALF_DIVISOR),
+      targetX - (shotStartX + CASTER_CONFIG.wispCollisionW / HALF_DIVISOR),
+    );
     const spread = shotCount === 1
       ? 0
-      : (index === 0 ? -CASTER_CONFIG.wispSpreadRadians : CASTER_CONFIG.wispSpreadRadians);
+      : fanIndex * CASTER_CONFIG.wispSpreadRadians;
     const angle = baseAngle + spread;
     state.projectiles.push({
       kind: "casterWisp",
-      x: startX,
-      y: startY,
+      x: shotStartX,
+      y: shotStartY,
       w: CASTER_CONFIG.wispCollisionW,
       h: CASTER_CONFIG.wispCollisionH,
       vx: Math.cos(angle) * speed,
       vy: Math.sin(angle) * speed,
       life: casterWispLife(enemy),
-      damage: casterWispDamage(),
+      damage: casterWispDamage(enemy),
       ownerId: enemy.casterId,
       frame: 0,
       elapsed: 0,
       speed,
       trackingFrames: CASTER_CONFIG.wispTrackingFrames,
       turnRate: casterWispTurnRate(enemy),
+      wispStage: profile.stage,
+      frameDuration: profile.frameDuration,
     });
   }
-  playSfx("enemyCastRelease", shotCount > 1 ? CASTER_CONFIG.wispDoubleCastPitch : 1);
+  playSfx("enemyCastRelease", shotCount > 1 ? CASTER_CONFIG.multiCastPitch : 1);
 }
 
 function updateCasterSeek(enemy: EnemyState, facing: number, distance: number) {
@@ -236,7 +315,7 @@ function updateCasterSeek(enemy: EnemyState, facing: number, distance: number) {
     && distance <= CASTER_CONFIG.maxRange
     && enemy.casterTimer <= 0
   ) {
-    if (casterWispCount(enemy) < CASTER_CONFIG.maxActiveWisps) {
+    if (casterWispCount(enemy) < casterWispProfile(enemy).maxActiveWisps) {
       enterCasterPhase(enemy, "windup");
       enemy.vx = 0;
     } else {
