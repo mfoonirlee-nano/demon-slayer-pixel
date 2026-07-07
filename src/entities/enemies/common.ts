@@ -120,8 +120,20 @@ function eliteBruteProtectionScale(enemy: EnemyState) {
   return 1;
 }
 
-function damageBrute(enemy: EnemyState, damage: number, kind: EnemyDamageKind) {
+function bruteShieldFacesDamage(enemy: EnemyState, sourceX?: number) {
+  if (sourceX === undefined) return true;
+  const facing = enemy.bruteFacing ?? (enemy.vx >= 0 ? 1 : -1);
+  const sourceDirection = Math.sign(sourceX - enemyCenterX(enemy));
+  return sourceDirection === 0 || sourceDirection === facing;
+}
+
+function damageBrute(enemy: EnemyState, damage: number, kind: EnemyDamageKind, sourceX?: number) {
   if (enemy.bruteShieldBroken || (enemy.bruteShieldHp ?? 0) <= 0) {
+    enemy.hp -= damage;
+    return damage;
+  }
+
+  if (!bruteShieldFacesDamage(enemy, sourceX)) {
     enemy.hp -= damage;
     return damage;
   }
@@ -134,11 +146,9 @@ function damageBrute(enemy: EnemyState, damage: number, kind: EnemyDamageKind) {
 
   const shieldHp = enemy.bruteShieldHp ?? 0;
   const shieldDamage = Math.min(damage, shieldHp);
-  const bodyDamage = Math.max(0, damage - shieldHp);
   enemy.bruteShieldHp = shieldHp - shieldDamage;
   if (enemy.bruteShieldHp <= 0) breakBruteShield(enemy);
-  enemy.hp -= bodyDamage;
-  return shieldDamage + bodyDamage;
+  return shieldDamage;
 }
 
 export function damageEnemy(
@@ -146,6 +156,7 @@ export function damageEnemy(
   damage: number,
   hitCooldown?: number,
   kind: EnemyDamageKind = "normal",
+  sourceX?: number,
 ) {
   const scaledDamage = (enemy.armorBreakTimer ?? 0) > 0
     ? damage * (enemy.armorBreakMultiplier ?? 1)
@@ -154,7 +165,7 @@ export function damageEnemy(
     ? scaledDamage
     : scaledDamage * eliteBruteProtectionScale(enemy);
   const appliedDamage = enemy.sheetIndex === BRUTE_SHEET_INDEX
-    ? damageBrute(enemy, protectedDamage, kind)
+    ? damageBrute(enemy, protectedDamage, kind, sourceX)
     : protectedDamage;
   if (enemy.sheetIndex !== BRUTE_SHEET_INDEX) enemy.hp -= appliedDamage;
   if (hitCooldown !== undefined) enemy.hitCd = hitCooldown;
@@ -233,6 +244,19 @@ function enemyGrowthFrameEffect(enemy: EnemyState): SpriteFrameEffect | undefine
   return STAGE_FRAME_EFFECT[stage];
 }
 
+function mergeFrameEffects(
+  baseEffect: SpriteFrameEffect | undefined,
+  extraEffect: SpriteFrameEffect | undefined,
+): SpriteFrameEffect | undefined {
+  if (!baseEffect) return extraEffect;
+  if (!extraEffect) return baseEffect;
+  const filter = [baseEffect.filter, extraEffect.filter].filter(Boolean).join(" ");
+  return {
+    filter: filter || undefined,
+    tint: extraEffect.tint ?? baseEffect.tint,
+  };
+}
+
 export function drawEnemySheetFrame(
   enemy: EnemyState,
   sheet: SpriteSheet,
@@ -242,8 +266,18 @@ export function drawEnemySheetFrame(
   w: number,
   h: number,
   facing = 1,
+  effect?: SpriteFrameEffect,
 ) {
-  drawSheetFrame(sheet, frame, x, y, w, h, facing, enemyGrowthFrameEffect(enemy));
+  drawSheetFrame(
+    sheet,
+    frame,
+    x,
+    y,
+    w,
+    h,
+    facing,
+    mergeFrameEffects(enemyGrowthFrameEffect(enemy), effect),
+  );
 }
 
 export function drawEnemyFrame(

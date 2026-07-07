@@ -35,8 +35,9 @@ export function applyEnemyDamage(
   damage: number,
   hitCooldown?: number,
   damageKind: EnemyDamageKind = "normal",
+  sourceX?: number,
 ) {
-  return damageEnemy(enemy, damage, hitCooldown, damageKind);
+  return damageEnemy(enemy, damage, hitCooldown, damageKind, sourceX);
 }
 
 export function applyBossDamage(
@@ -75,7 +76,7 @@ export function resolveEnemyHit({
   afterDamage?: () => void;
 }): EnemyHitResolution {
   const { x: hitX, y: hitY } = hitPoint ?? overlapHitPoint(hitRect, enemy);
-  const appliedDamage = applyEnemyDamage(enemy, damage, hitCooldown, damageKind);
+  const appliedDamage = applyEnemyDamage(enemy, damage, hitCooldown, damageKind, hitX);
   afterDamage?.();
   return {
     hitX,

@@ -4,6 +4,7 @@ import { BRUTE_SHEET_INDEX, BRUTE_SHEETS, ENEMY_SHEETS } from "../../constants";
 import type { BrutePhase, EnemyState } from "../../types/game-state";
 import { hitbox } from "../../game/utils";
 import { hurtPlayer } from "../player";
+import type { SpriteFrameEffect } from "../../rendering/graphics";
 import type { EnemyArchetype, EnemySpawnContext } from "./common";
 import {
   BRUTE_SHIELD_BREAK_FRAMES,
@@ -65,6 +66,14 @@ const BRUTE_PHASE_DRAW_SCALE = {
   cleave: 1.25,
   brokenRecover: 1.45,
 } as const satisfies Record<BrutePhase, number>;
+
+const BRUTE_GUARD_FRAME_EFFECT: SpriteFrameEffect = {
+  filter: "brightness(0.9) saturate(1.45) hue-rotate(336deg) contrast(1.14)",
+  tint: {
+    color: "rgb(204, 35, 38)",
+    alpha: 0.34,
+  },
+};
 
 const HALF_DIVISOR = 2;
 const BASH_BOX_REACH = 52;
@@ -344,7 +353,17 @@ function drawBrute(enemy: EnemyState) {
   const drawH = Math.round(sheet.frameH * drawScale);
   const centerX = enemyCenterX(enemy);
   const feetY = enemyFeetY(enemy);
-  drawEnemySheetFrame(enemy, sheet, frame, centerX - drawW / HALF_DIVISOR, feetY - drawH, drawW, drawH, facing);
+  drawEnemySheetFrame(
+    enemy,
+    sheet,
+    frame,
+    centerX - drawW / HALF_DIVISOR,
+    feetY - drawH,
+    drawW,
+    drawH,
+    facing,
+    phase === "guard" ? BRUTE_GUARD_FRAME_EFFECT : undefined,
+  );
 }
 
 export const BRUTE_ARCHETYPE: EnemyArchetype = {
