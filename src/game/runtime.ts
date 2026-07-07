@@ -130,7 +130,17 @@ function restart() {
 
 function runCombatAction(action: () => void) {
   if (isPaused() || state.gameOver || !state.spritesReady) return;
+  if (state.player.ultimateCastTimer > 0) return;
   action();
+}
+
+function isUltimateCastFreezeActive() {
+  return state.player.ultimateCastTimer > 0;
+}
+
+function updateUltimateCastFreezeFrame() {
+  updatePlayer();
+  updateUltimateEffects();
 }
 
 export function chooseUpgradeReward(index: number) {
@@ -223,58 +233,62 @@ function loop(ts: number) {
   }
 
   if (!state.gameOver) {
-    state.elapsed += dt;
-    if (canAutoSpawnEntities()) {
-      const directorUpdate = updateEnemyDirector(state.enemyDirector, {
-        dt,
-        bossKills: state.bossKills,
-        elapsedSeconds: state.elapsed,
-        activeEnemies: state.enemies,
-        playerHp: state.player.hp,
-        playerMaxHp: state.player.maxHp,
-        bossActive: state.boss !== null,
-      });
-      for (const request of directorUpdate.spawnRequests) {
-        spawnEnemyById(request.enemyId, "regular", request.pattern, { elite: request.elite });
+    if (isUltimateCastFreezeActive()) {
+      updateUltimateCastFreezeFrame();
+    } else {
+      state.elapsed += dt;
+      if (canAutoSpawnEntities()) {
+        const directorUpdate = updateEnemyDirector(state.enemyDirector, {
+          dt,
+          bossKills: state.bossKills,
+          elapsedSeconds: state.elapsed,
+          activeEnemies: state.enemies,
+          playerHp: state.player.hp,
+          playerMaxHp: state.player.maxHp,
+          bossActive: state.boss !== null,
+        });
+        for (const request of directorUpdate.spawnRequests) {
+          spawnEnemyById(request.enemyId, "regular", request.pattern, { elite: request.elite });
+        }
+        if (!state.boss && directorUpdate.spawnBoss) {
+          spawnBoss();
+        }
       }
-      if (!state.boss && directorUpdate.spawnBoss) {
-        spawnBoss();
+
+      if (canAutoSpawnEntities()) state.platformSpawnTimer -= dt;
+      if (canAutoSpawnEntities() && state.platformSpawnTimer <= 0) {
+        spawnNextMapSegment();
+        state.platformSpawnTimer = nextMapSpawnInterval();
       }
-    }
 
-    if (canAutoSpawnEntities()) state.platformSpawnTimer -= dt;
-    if (canAutoSpawnEntities() && state.platformSpawnTimer <= 0) {
-      spawnNextMapSegment();
-      state.platformSpawnTimer = nextMapSpawnInterval();
+      updateBindingZones();
+      updatePlayer();
+      updatePlatforms(dt);
+      updateCrystals(dt);
+      updateChests(dt);
+      updateEnemies();
+      updateBoss();
+      updateBossSkill1Effects();
+      updateSpiderStringCageEffects();
+      updateDeadBellEffects();
+      updateMistBoneEffects();
+      updateMirrorDreamEffects();
+      updateFangGaleEffects();
+      updateLanternEmberEffects();
+      updateBloodMoonEffects();
+      updateProjectiles();
+      updateParticles();
+      updateSkillBursts();
+      updateHitBursts();
+      updateLineProjectileEffects();
+      updateCloseArcEffects();
+      updateGuardCounterEffect();
+      updatePlayerSkillEffects();
+      updateUltimateEffects();
+      updateUltimateTrails();
+      updateUltimateAfterimageSlashes();
+      updateUltimatePlayerGhosts();
     }
-
-    updateBindingZones();
-    updatePlayer();
-    updatePlatforms(dt);
-    updateCrystals(dt);
-    updateChests(dt);
-    updateEnemies();
-    updateBoss();
-    updateBossSkill1Effects();
-    updateSpiderStringCageEffects();
-    updateDeadBellEffects();
-    updateMistBoneEffects();
-    updateMirrorDreamEffects();
-    updateFangGaleEffects();
-    updateLanternEmberEffects();
-    updateBloodMoonEffects();
-    updateProjectiles();
-    updateParticles();
-    updateSkillBursts();
-    updateHitBursts();
-    updateLineProjectileEffects();
-    updateCloseArcEffects();
-    updateGuardCounterEffect();
-    updatePlayerSkillEffects();
-    updateUltimateEffects();
-    updateUltimateTrails();
-    updateUltimateAfterimageSlashes();
-    updateUltimatePlayerGhosts();
   }
 
   drawBackground();

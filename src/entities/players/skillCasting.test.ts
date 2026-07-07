@@ -10,6 +10,7 @@ import { applyDebugInfiniteUltimateCharge } from "../../game/debug";
 import { resetState, state } from "../../game/state";
 import { playerSkillById } from "../../systems/skillCatalog";
 import type { SkillId } from "../../types/assets";
+import { tryJump, updatePlayer } from "../player";
 import {
   castSelectedSkill,
   castUltimateSkill,
@@ -20,6 +21,8 @@ import {
   triggerUltimateOpeningEffect,
   updateSkillCastRelease,
 } from "./skillCasting";
+
+const ULTIMATE_FREEZE_TEST_VELOCITY = 5;
 
 function skillById(skillId: SkillId) {
   const skill = playerSkillById(skillId);
@@ -47,6 +50,28 @@ describe("player skill casting", () => {
 
     expect(state.player.ultimateCastTimer).toBeGreaterThan(0);
     expect(state.player.ultimateEnergy).toBe(0);
+  });
+
+  it("keeps the player position frozen while the ultimate cast animation plays", () => {
+    resetState();
+    state.player.ultimateLevel = 1;
+    state.player.ultimateEnergy = state.player.ultimateEnergyMax;
+    state.player.vx = 4;
+    state.player.vy = ULTIMATE_FREEZE_TEST_VELOCITY;
+    const startX = state.player.x;
+    const startY = state.player.y;
+
+    castUltimateSkill();
+    const castTimer = state.player.ultimateCastTimer;
+
+    tryJump();
+    expect(state.player.vy).toBe(ULTIMATE_FREEZE_TEST_VELOCITY);
+
+    updatePlayer();
+
+    expect(state.player.x).toBe(startX);
+    expect(state.player.y).toBe(startY);
+    expect(state.player.ultimateCastTimer).toBe(castTimer - 1);
   });
 
   it("lets debug ultimate charge make the ultimate castable", () => {

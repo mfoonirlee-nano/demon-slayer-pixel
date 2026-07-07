@@ -282,6 +282,7 @@ export function tryJump() {
   if (isBinderTalismanStunned()) return;
 
   const p = state.player;
+  if (p.ultimateCastTimer > 0) return;
   if (onGround(p, p.onPlatform)) {
     p.vy = -p.jump * moonTideJumpMultiplier();
     playSfx("playerJump");
@@ -290,6 +291,12 @@ export function tryJump() {
 
 export function updatePlayer() {
   const p = state.player;
+  if (p.ultimateCastTimer > 0) {
+    p.runStepDistance = 0;
+    updateUltimateCastAndTimer();
+    return;
+  }
+
   tickEquipmentEffects(state);
   const movementStartX = p.x;
   const dashReposition = p.dashReposition;
