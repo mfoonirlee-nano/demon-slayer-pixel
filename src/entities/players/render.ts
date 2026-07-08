@@ -3,6 +3,8 @@ import { ctx } from "../../rendering/context";
 import {
   FALL_ATTACK,
   BINDER_TALISMAN_SHEET,
+  BINDER_TALISMAN_KEY_SCRAMBLE_EFFECT_SHEET,
+  BINDER_TALISMAN_STUN_EFFECT_SHEET,
   PLAYER_ANIMATION_STATES,
   PLAYER_COMBAT,
   PLAYER_DRAW,
@@ -42,6 +44,12 @@ const PLAYER_BINDER_TALISMAN_ATTACHMENT = {
   backOffsetRatio: 0.24,
   centerYRatio: 0.55,
   frameDuration: 10,
+} as const;
+
+const PLAYER_BINDER_TALISMAN_STATUS_EFFECT = {
+  w: 80,
+  h: 80,
+  frameDuration: 6,
 } as const;
 
 const PLAYER_BINDING_SLOW_EFFECT = {
@@ -155,6 +163,7 @@ function drawBinderTalismanAttachment(target: BinderTalismanAttachmentTarget) {
   if (!ctx || !BINDER_TALISMAN_SHEET.image || binderTalismanAttachedTimer() <= 0) return;
 
   const frame = frameIndex(BINDER_TALISMAN_SHEET.count, PLAYER_BINDER_TALISMAN_ATTACHMENT.frameDuration, state.elapsed);
+  const debuffs = activeBinderTalismanDebuffs();
   const drawX = target.x
     + target.w / 2
     - target.facing * target.w * PLAYER_BINDER_TALISMAN_ATTACHMENT.backOffsetRatio
@@ -162,6 +171,8 @@ function drawBinderTalismanAttachment(target: BinderTalismanAttachmentTarget) {
   const drawY = target.y
     + target.h * PLAYER_BINDER_TALISMAN_ATTACHMENT.centerYRatio
     - PLAYER_BINDER_TALISMAN_ATTACHMENT.h / 2;
+  const centerX = drawX + PLAYER_BINDER_TALISMAN_ATTACHMENT.w / 2;
+  const centerY = drawY + PLAYER_BINDER_TALISMAN_ATTACHMENT.h / 2;
   drawSheetFrame(
     BINDER_TALISMAN_SHEET,
     frame,
@@ -170,7 +181,33 @@ function drawBinderTalismanAttachment(target: BinderTalismanAttachmentTarget) {
     PLAYER_BINDER_TALISMAN_ATTACHMENT.w,
     PLAYER_BINDER_TALISMAN_ATTACHMENT.h,
     target.facing,
-    binderTalismanFrameEffect(activeBinderTalismanDebuffs()),
+    binderTalismanFrameEffect(debuffs),
+  );
+
+  if (debuffs.includes("keyScramble")) {
+    drawBinderTalismanStatusEffect(BINDER_TALISMAN_KEY_SCRAMBLE_EFFECT_SHEET, centerX, centerY, target.facing);
+  }
+  if (debuffs.includes("stun")) {
+    drawBinderTalismanStatusEffect(BINDER_TALISMAN_STUN_EFFECT_SHEET, centerX, centerY, target.facing);
+  }
+}
+
+function drawBinderTalismanStatusEffect(
+  sheet: typeof BINDER_TALISMAN_KEY_SCRAMBLE_EFFECT_SHEET,
+  centerX: number,
+  centerY: number,
+  facing: number,
+) {
+  if (!sheet.image) return;
+  const frame = frameIndex(sheet.count, PLAYER_BINDER_TALISMAN_STATUS_EFFECT.frameDuration, state.elapsed);
+  drawSheetFrame(
+    sheet,
+    frame,
+    centerX - PLAYER_BINDER_TALISMAN_STATUS_EFFECT.w / 2,
+    centerY - PLAYER_BINDER_TALISMAN_STATUS_EFFECT.h / 2,
+    PLAYER_BINDER_TALISMAN_STATUS_EFFECT.w,
+    PLAYER_BINDER_TALISMAN_STATUS_EFFECT.h,
+    facing,
   );
 }
 

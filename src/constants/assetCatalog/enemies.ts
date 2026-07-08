@@ -334,6 +334,22 @@ export const BINDER_TALISMAN_SHEET: SpriteSheet = {
   image: null,
 };
 
+export const BINDER_TALISMAN_KEY_SCRAMBLE_EFFECT_SHEET: SpriteSheet = {
+  src: "assets/sprites/enemies/binder/binder_talisman_key_scramble_effect.png",
+  frameW: 80,
+  frameH: 80,
+  count: 6,
+  image: null,
+};
+
+export const BINDER_TALISMAN_STUN_EFFECT_SHEET: SpriteSheet = {
+  src: "assets/sprites/enemies/binder/binder_talisman_stun_effect.png",
+  frameW: 80,
+  frameH: 80,
+  count: 6,
+  image: null,
+};
+
 export const GLIDER_SHEET_INDEX = 7;
 
 const GLIDER_DIVE_SHEET: SpriteSheet = {

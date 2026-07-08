@@ -1,6 +1,8 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
   BINDER_TALISMAN_SHEET,
+  BINDER_TALISMAN_KEY_SCRAMBLE_EFFECT_SHEET,
+  BINDER_TALISMAN_STUN_EFFECT_SHEET,
   PLAYER_ANIMATION_STATES,
   PLAYER_DRAW,
   PLAYER_SHEETS,
@@ -48,11 +50,15 @@ describe("player render", () => {
     resetState();
     PLAYER_SHEETS[PLAYER_ANIMATION_STATES.idle].image = TEST_IMAGE;
     BINDER_TALISMAN_SHEET.image = TEST_IMAGE;
+    BINDER_TALISMAN_KEY_SCRAMBLE_EFFECT_SHEET.image = TEST_IMAGE;
+    BINDER_TALISMAN_STUN_EFFECT_SHEET.image = TEST_IMAGE;
   });
 
   afterEach(() => {
     PLAYER_SHEETS[PLAYER_ANIMATION_STATES.idle].image = null;
     BINDER_TALISMAN_SHEET.image = null;
+    BINDER_TALISMAN_KEY_SCRAMBLE_EFFECT_SHEET.image = null;
+    BINDER_TALISMAN_STUN_EFFECT_SHEET.image = null;
     setCanvas(null);
     vi.restoreAllMocks();
   });
@@ -82,5 +88,16 @@ describe("player render", () => {
     expect(talismanCenterY).toBeCloseTo(
       playerSpriteTop + idleSheet.drawH * BINDER_ATTACHMENT_CENTER_Y_RATIO,
     );
+    expect(context.translate.mock.calls[2]).toEqual(talismanTranslate);
+  });
+
+  it("draws stun attachment effects from the talisman center", () => {
+    const context = createMockContext();
+    installMockContext(context);
+    state.player.binderTalismanStunStatusTimer = 30;
+
+    drawPlayer();
+
+    expect(context.translate.mock.calls[2]).toEqual(context.translate.mock.calls[1]);
   });
 });

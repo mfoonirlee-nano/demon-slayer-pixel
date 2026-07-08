@@ -221,8 +221,10 @@ Binder 专属动作素材：
 | `enemies/binder/binder_hit.png` | `780x320` | 3 | `260x320` | `hit` | 正式受击素材预留，v1 不改变通用受击状态机 |
 | `enemies/binder/binder_magic_circle.png` | `1920x120` | 8 | `240x120` | `bindingCircle` | 身前短时暗红/紫色侧视法阵，中心脉冲后释放符纸 |
 | `enemies/binder/binder_talisman.png` | `256x64` | 4 | `64x64` | `binderTalisman` | 飞行/贴附用旧黄符纸，带暗红咒线和紫色诅咒边 |
+| `enemies/binder/binder_talisman_key_scramble_effect.png` | `480x80` | 6 | `80x80` | `binderTalismanKeyScrambleEffect` | 贴附后左右键反转的紫色箭头/咒纹反馈 |
+| `enemies/binder/binder_talisman_stun_effect.png` | `480x80` | 6 | `80x80` | `binderTalismanStunEffect` | 贴附后眩晕状态的金色星爆/电弧反馈 |
 
-Binder 运行时由 `BINDER_SHEETS`、`BINDER_MAGIC_CIRCLE_SHEET` 和 `BINDER_TALISMAN_SHEET` 暴露并预加载。普通刷怪在 `elapsed >= 90s` 后才会抽取 binder；同屏最多 `1` 个 binder，主法阵最多 `1` 个，飞行符纸最多 `2` 个。法阵生成在 binder 自身身前，随后符纸飞向玩家；符纸命中后贴在玩家身上并施加负面效果。普通状态施加减速和持续掉血；觉醒状态施加左右键位错乱和突发眩晕；终幕状态从四种效果中随机施加两种。
+Binder 运行时由 `BINDER_SHEETS`、`BINDER_MAGIC_CIRCLE_SHEET`、`BINDER_TALISMAN_SHEET`、`BINDER_TALISMAN_KEY_SCRAMBLE_EFFECT_SHEET` 和 `BINDER_TALISMAN_STUN_EFFECT_SHEET` 暴露并预加载。普通刷怪在 `elapsed >= 90s` 后才会抽取 binder；同屏最多 `1` 个 binder，主法阵最多 `1` 个，飞行符纸最多 `2` 个。法阵生成在 binder 自身身前，随后符纸飞向玩家；符纸命中后贴在玩家身上并施加负面效果。普通状态施加减速和持续掉血；觉醒状态施加左右键位错乱和突发眩晕；终幕状态从四种效果中随机施加两种。左右键位错乱和眩晕额外绘制附着在符纸中心的状态特效序列帧，强化读法但不改变控制数值。
 
 Glider 专属动作素材：
 
