@@ -1,8 +1,8 @@
 import { state } from "../../game/state";
 import { playSfx } from "../../game/audio";
-import { DUELIST_SHEET_INDEX, DUELIST_SHEETS, ENEMY_SHEETS } from "../../constants";
+import { DUELIST_SHEET_INDEX, DUELIST_SHEETS, ENEMY_SHEETS, GROUND_Y } from "../../constants";
 import type { DuelistPhase, EnemyState } from "../../types/game-state";
-import { hitbox } from "../../game/utils";
+import { clamp, hitbox, lerp } from "../../game/utils";
 import { hurtPlayer } from "../player";
 import type { EnemyArchetype, EnemySpawnContext } from "./common";
 import {
@@ -31,8 +31,7 @@ const DUELIST_CONFIG = {
   spinFrames: 24,
   spinActiveStartFrame: 4,
   spinActiveEndFrame: 19,
-  spinSlideSpeed: 1.38,
-  finalSpinSlideSpeed: 1.52,
+  spinArcHeight: 44,
   spinDamageMultiplier: 2.15,
   spinDamageBonus: 3,
   finalSpinReachBonus: 74,
@@ -146,24 +145,51 @@ function duelistPhaseFrame(enemy: EnemyState, phase: DuelistPhase) {
   return Math.min(sheet.count - 1, Math.floor(elapsed * sheet.count / duration));
 }
 
+function duelistGroundTop(enemy: EnemyState) {
+  return (enemy.onPlatform?.y ?? GROUND_Y) - enemy.h;
+}
+
+function clearDuelistSpinState(enemy: EnemyState) {
+  enemy.duelistSpinStartX = undefined;
+  enemy.duelistSpinStartY = undefined;
+  enemy.duelistSpinTargetX = undefined;
+  enemy.duelistSpinGroundY = undefined;
+}
+
+function duelistSpinTargetLeft(enemy: EnemyState) {
+  return playerCenterX() - enemy.w / HALF_DIVISOR;
+}
+
 function enterDuelistPhase(enemy: EnemyState, phase: DuelistPhase) {
   enemy.duelistPhase = phase;
   enemy.duelistSlashHit = false;
   if (phase === "windup") {
+    clearDuelistSpinState(enemy);
     enemy.duelistTimer = duelistWindupFrames(enemy);
     playSfx("enemyWarning", SLASH_WARNING_SFX_PITCH);
   } else if (phase === "slash") {
+    clearDuelistSpinState(enemy);
     enemy.duelistTimer = DUELIST_CONFIG.slashFrames;
     playSfx("enemySlash", SLASH_START_SFX_PITCH);
   } else if (phase === "spin") {
     enemy.duelistTimer = DUELIST_CONFIG.spinFrames;
+    enemy.duelistSpinStartX = enemy.x;
+    enemy.duelistSpinStartY = enemy.y;
+    enemy.duelistSpinTargetX = duelistSpinTargetLeft(enemy);
+    enemy.duelistSpinGroundY = duelistGroundTop(enemy);
+    enemy.vy = 0;
+    enemy.onPlatform = null;
     playSfx("enemySlash", SLASH_START_SFX_PITCH);
   } else if (phase === "recover") {
+    if (enemy.duelistSpinTargetX !== undefined) enemy.x = enemy.duelistSpinTargetX;
+    if (enemy.duelistSpinGroundY !== undefined) enemy.y = enemy.duelistSpinGroundY;
+    clearDuelistSpinState(enemy);
     enemy.duelistTimer = randomFrameCount(
       duelistRecoverMinFrames(enemy),
       DUELIST_CONFIG.recoverFrameJitter,
     );
   } else {
+    clearDuelistSpinState(enemy);
     enemy.duelistTimer = 0;
   }
 }
@@ -283,10 +309,17 @@ function updateDuelist(enemy: EnemyState) {
     }
   } else if (phase === "spin") {
     const elapsed = DUELIST_CONFIG.spinFrames - enemy.duelistTimer;
+    const progress = clamp(elapsed / DUELIST_CONFIG.spinFrames, 0, 1);
+    const startX = enemy.duelistSpinStartX ?? enemy.x;
+    const startY = enemy.duelistSpinStartY ?? enemy.y;
+    const targetX = enemy.duelistSpinTargetX ?? duelistSpinTargetLeft(enemy);
+    const groundY = enemy.duelistSpinGroundY ?? duelistGroundTop(enemy);
+
+    enemy.duelistFacing = duelistFacing(enemy, targetX + enemy.w / HALF_DIVISOR - enemyCenterX(enemy));
+    enemy.vx = (targetX - startX) / DUELIST_CONFIG.spinFrames;
+    enemy.x = lerp(startX, targetX, progress);
+    enemy.y = lerp(startY, groundY, progress) - Math.sin(progress * Math.PI) * DUELIST_CONFIG.spinArcHeight;
     enemy.duelistTimer -= 1;
-    enemy.vx = (enemy.duelistFacing ?? facing) * (
-      enemyGrowthStage(enemy) === "final" ? DUELIST_CONFIG.finalSpinSlideSpeed : DUELIST_CONFIG.spinSlideSpeed
-    );
     if (
       !enemy.duelistSlashHit
       && elapsed >= DUELIST_CONFIG.spinActiveStartFrame
@@ -298,6 +331,7 @@ function updateDuelist(enemy: EnemyState) {
       enterDuelistPhase(enemy, "recover");
       enemy.vx = 0;
     }
+    return;
   } else {
     enemy.duelistTimer -= 1;
     enemy.vx = 0;

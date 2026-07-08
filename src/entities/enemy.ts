@@ -89,6 +89,7 @@ function canUsePlatformSpawn(enemyId: EnemyId, source: EnemySpawnSource) {
 
 function enemyUsesPlatformPhysics(enemy: EnemyState) {
   if (enemy.id === "crawler" && enemy.crawlerPhase === "leap") return false;
+  if (enemy.id === "duelist" && enemy.duelistPhase === "spin") return false;
   return PLATFORM_READY_ENEMY_IDS.includes(enemy.id);
 }
 

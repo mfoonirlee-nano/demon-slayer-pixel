@@ -196,6 +196,10 @@ export type EnemyState = {
   duelistFacing?: number;
   duelistBaseSpeed?: number;
   duelistSlashHit?: boolean;
+  duelistSpinStartX?: number;
+  duelistSpinStartY?: number;
+  duelistSpinTargetX?: number;
+  duelistSpinGroundY?: number;
   brutePhase?: BrutePhase;
   bruteTimer?: number;
   bruteFacing?: number;
