@@ -26,8 +26,8 @@ const RUNNER_CONFIG = {
   dashBaseMaxSpeed: 7.8,
   dashSpeedScaleByGrowth: {
     intro: 1,
-    awakened: 1.18,
-    final: 1.32,
+    awakened: 1.25,
+    final: 1.5,
   },
   windupMinFrames: 14,
   windupFrameJitter: 5,
