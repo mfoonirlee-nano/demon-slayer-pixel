@@ -64,6 +64,7 @@ const CASTER_CONFIG = {
   wispSpreadRadians: 0.16,
   wispFanForwardOffset: 10,
   wispFanVerticalOffset: 22,
+  finalWispHexRadius: 42,
   wispTrackingFrames: WISP_TRACKING_SECONDS * FRAMES_PER_SECOND,
   wispStartForwardRatio: 0.58,
   wispStartHeightRatio: 0.38,
@@ -82,6 +83,7 @@ const CASTER_CONFIG = {
 
 const SECONDS_PER_MINUTE = 60;
 const HALF_DIVISOR = 2;
+const FULL_CIRCLE_RADIANS = Math.PI * 2;
 
 let nextCasterId = 1;
 
@@ -258,18 +260,29 @@ function spawnCasterWisps(enemy: EnemyState) {
   const targetY = playerCenterY();
   const speed = casterWispSpeed(enemy);
   const fanCenter = (shotCount - 1) / HALF_DIVISOR;
+  const hexCenterX = startX + CASTER_CONFIG.wispCollisionW / HALF_DIVISOR;
+  const hexCenterY = startY + CASTER_CONFIG.wispCollisionH / HALF_DIVISOR;
 
   for (let index = 0; index < shotCount; index += 1) {
     const fanIndex = index - fanCenter;
     const fanRatio = fanCenter === 0 ? 0 : fanIndex / fanCenter;
-    const shotStartX = startX
-      + facing * Math.abs(fanRatio) * CASTER_CONFIG.wispFanForwardOffset;
-    const shotStartY = startY + fanRatio * CASTER_CONFIG.wispFanVerticalOffset;
+    const hexAngle = -Math.PI / HALF_DIVISOR
+      + index * (FULL_CIRCLE_RADIANS / CASTER_CONFIG.finalShotCount);
+    const shotStartX = profile.stage === "final"
+      ? hexCenterX
+        + Math.cos(hexAngle) * CASTER_CONFIG.finalWispHexRadius
+        - CASTER_CONFIG.wispCollisionW / HALF_DIVISOR
+      : startX + facing * Math.abs(fanRatio) * CASTER_CONFIG.wispFanForwardOffset;
+    const shotStartY = profile.stage === "final"
+      ? hexCenterY
+        + Math.sin(hexAngle) * CASTER_CONFIG.finalWispHexRadius
+        - CASTER_CONFIG.wispCollisionH / HALF_DIVISOR
+      : startY + fanRatio * CASTER_CONFIG.wispFanVerticalOffset;
     const baseAngle = Math.atan2(
       targetY - (shotStartY + CASTER_CONFIG.wispCollisionH / HALF_DIVISOR),
       targetX - (shotStartX + CASTER_CONFIG.wispCollisionW / HALF_DIVISOR),
     );
-    const spread = shotCount === 1
+    const spread = shotCount === 1 || profile.stage === "final"
       ? 0
       : fanIndex * CASTER_CONFIG.wispSpreadRadians;
     const angle = baseAngle + spread;

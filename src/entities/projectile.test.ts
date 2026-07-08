@@ -32,10 +32,12 @@ const CASTER_FINAL_WISP_SPEED_MULTIPLIER = CASTER_NORMAL_WISP_SPEED_MULTIPLIER
 const CASTER_BASE_WISP_DAMAGE = 4;
 const CASTER_AWAKENED_WISP_DAMAGE_MULTIPLIER = 1.2;
 const CASTER_FINAL_WISP_DAMAGE_MULTIPLIER = 1.5;
+const CASTER_FINAL_WISP_HEX_RADIUS = 42;
 const CASTER_NORMAL_WISP_FRAME_DURATION = 6;
 const CASTER_FINAL_WISP_FRAME_DURATION = 3;
 const CASTER_AWAKENED_SHOT_COUNT = 3;
 const CASTER_FINAL_SHOT_COUNT = 6;
+const FULL_CIRCLE_RADIANS = Math.PI * 2;
 const BINDER_CAST_FRAMES = 24;
 const BINDER_CAST_SPAWN_FRAME = 10;
 const BINDER_CIRCLE_TALISMAN_RELEASE_FRAME = 14;
@@ -78,6 +80,20 @@ function forceCasterCast(growthStage: "intro" | "awakened" | "final" = "intro") 
 function expectProjectileSpeed(projectile: ProjectileState, speed: number) {
   expect(projectile.speed ?? 0).toBeCloseTo(speed);
   expect(Math.hypot(projectile.vx, projectile.vy ?? 0)).toBeCloseTo(speed);
+}
+
+function projectileCenter(projectile: ProjectileState) {
+  return {
+    x: projectile.x + projectile.w / 2,
+    y: projectile.y + projectile.h / 2,
+  };
+}
+
+function normalizeAngle(angle: number) {
+  let normalized = angle;
+  while (normalized > Math.PI) normalized -= FULL_CIRCLE_RADIANS;
+  while (normalized < -Math.PI) normalized += FULL_CIRCLE_RADIANS;
+  return normalized;
 }
 
 function casterWisp(overrides: Partial<ProjectileState> = {}): ProjectileState {
@@ -209,12 +225,17 @@ describe("caster wisps", () => {
     }
   });
 
-  it("fires six dark-red final wisps with faster sprite animation", () => {
+  it("fires six dark-red final wisps in a hexagon toward the player", () => {
     resetState();
     forceCasterCast("final");
 
     expect(state.projectiles).toHaveLength(CASTER_FINAL_SHOT_COUNT);
-    expect(new Set(state.projectiles.map((wisp) => wisp.y)).size).toBeGreaterThan(1);
+    const centers = state.projectiles.map(projectileCenter);
+    const centerX = centers.reduce((sum, center) => sum + center.x, 0) / centers.length;
+    const centerY = centers.reduce((sum, center) => sum + center.y, 0) / centers.length;
+    const playerCenterX = state.player.x + state.player.w / 2;
+    const playerCenterY = state.player.y + state.player.h / 2;
+
     for (const wisp of state.projectiles) {
       expect(wisp.wispStage).toBe("final");
       expect(wisp.frameDuration).toBe(CASTER_FINAL_WISP_FRAME_DURATION);
@@ -226,6 +247,22 @@ describe("caster wisps", () => {
         CASTER_BASE_WISP_SPEED * CASTER_FINAL_WISP_SPEED_MULTIPLIER,
       );
     }
+
+    centers.forEach((center, index) => {
+      const expectedAngle = -Math.PI / 2
+        + index * (FULL_CIRCLE_RADIANS / CASTER_FINAL_SHOT_COUNT);
+      expect(center.x).toBeCloseTo(
+        centerX + Math.cos(expectedAngle) * CASTER_FINAL_WISP_HEX_RADIUS,
+      );
+      expect(center.y).toBeCloseTo(
+        centerY + Math.sin(expectedAngle) * CASTER_FINAL_WISP_HEX_RADIUS,
+      );
+
+      const wisp = state.projectiles[index];
+      const targetAngle = Math.atan2(playerCenterY - center.y, playerCenterX - center.x);
+      const velocityAngle = Math.atan2(wisp.vy ?? 0, wisp.vx);
+      expect(normalizeAngle(velocityAngle - targetAngle)).toBeCloseTo(0);
+    });
   });
 
   it("uses five-second normal casts and three-second empowered casts", () => {
