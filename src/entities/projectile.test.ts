@@ -24,7 +24,7 @@ const CASTER_EMPOWERED_INTERVAL_FRAMES = 180;
 const CASTER_BASE_WISP_SPEED = 2.45;
 const CASTER_NORMAL_WISP_SPEED_MULTIPLIER = 1.1;
 const CASTER_AWAKENED_SPEED_FROM_NORMAL = 1.3;
-const CASTER_FINAL_SPEED_FROM_NORMAL = 1.5;
+const CASTER_FINAL_SPEED_FROM_NORMAL = 3;
 const CASTER_AWAKENED_WISP_SPEED_MULTIPLIER = CASTER_NORMAL_WISP_SPEED_MULTIPLIER
   * CASTER_AWAKENED_SPEED_FROM_NORMAL;
 const CASTER_FINAL_WISP_SPEED_MULTIPLIER = CASTER_NORMAL_WISP_SPEED_MULTIPLIER
@@ -225,7 +225,7 @@ describe("caster wisps", () => {
     }
   });
 
-  it("fires six dark-red final wisps in a hexagon toward the player", () => {
+  it("fires six doubled-speed dark-red final wisps in a hexagon toward the player", () => {
     resetState();
     forceCasterCast("final");
 

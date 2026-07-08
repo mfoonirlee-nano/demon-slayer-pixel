@@ -55,7 +55,7 @@ const CASTER_CONFIG = {
   wispMaxSpeed: 3.6,
   normalWispSpeedMultiplier: 1.1,
   awakenedWispSpeedFromNormal: 1.3,
-  finalWispSpeedFromNormal: 1.5,
+  finalWispSpeedFromNormal: 3,
   wispBaseTurnRate: 0.014,
   wispTurnRateScale: 0.006,
   wispMaxTurnRate: 0.052,
