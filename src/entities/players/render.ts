@@ -40,7 +40,7 @@ const PLAYER_BINDER_TALISMAN_ATTACHMENT = {
   w: 24,
   h: 32,
   backOffsetRatio: 0.24,
-  yRatio: 0.4,
+  centerYRatio: 0.55,
   frameDuration: 10,
 } as const;
 
@@ -143,16 +143,25 @@ function drawBindingSlowEffect() {
   ctx.restore();
 }
 
-function drawBinderTalismanAttachment() {
+type BinderTalismanAttachmentTarget = {
+  x: number;
+  y: number;
+  w: number;
+  h: number;
+  facing: number;
+};
+
+function drawBinderTalismanAttachment(target: BinderTalismanAttachmentTarget) {
   if (!ctx || !BINDER_TALISMAN_SHEET.image || binderTalismanAttachedTimer() <= 0) return;
 
-  const p = state.player;
   const frame = frameIndex(BINDER_TALISMAN_SHEET.count, PLAYER_BINDER_TALISMAN_ATTACHMENT.frameDuration, state.elapsed);
-  const drawX = p.x
-    + p.w / 2
-    - p.facing * p.w * PLAYER_BINDER_TALISMAN_ATTACHMENT.backOffsetRatio
+  const drawX = target.x
+    + target.w / 2
+    - target.facing * target.w * PLAYER_BINDER_TALISMAN_ATTACHMENT.backOffsetRatio
     - PLAYER_BINDER_TALISMAN_ATTACHMENT.w / 2;
-  const drawY = p.y + p.h * PLAYER_BINDER_TALISMAN_ATTACHMENT.yRatio;
+  const drawY = target.y
+    + target.h * PLAYER_BINDER_TALISMAN_ATTACHMENT.centerYRatio
+    - PLAYER_BINDER_TALISMAN_ATTACHMENT.h / 2;
   drawSheetFrame(
     BINDER_TALISMAN_SHEET,
     frame,
@@ -160,7 +169,7 @@ function drawBinderTalismanAttachment() {
     drawY,
     PLAYER_BINDER_TALISMAN_ATTACHMENT.w,
     PLAYER_BINDER_TALISMAN_ATTACHMENT.h,
-    p.facing,
+    target.facing,
     binderTalismanFrameEffect(activeBinderTalismanDebuffs()),
   );
 }
@@ -243,18 +252,25 @@ export function drawPlayer() {
     );
     const drawH = ULTIMATE_SKILL_SHEET.frameH * PLAYER_COMBAT.ultimateDrawScale;
     const drawW = ULTIMATE_SKILL_SHEET.frameW * PLAYER_COMBAT.ultimateDrawScale;
+    const target = {
+      x: refX - drawW / 2,
+      y: refY - drawH * ULTIMATE_SKILL_CAST_ANCHOR_Y,
+      w: drawW,
+      h: drawH,
+      facing: p.facing,
+    };
     drawWithBindingSlowFilter(isBindingSlowed, () => {
       drawSheetFrame(
         ULTIMATE_SKILL_SHEET,
         frame,
-        refX - drawW / 2,
-        refY - drawH * ULTIMATE_SKILL_CAST_ANCHOR_Y,
-        drawW,
-        drawH,
+        target.x,
+        target.y,
+        target.w,
+        target.h,
         p.facing,
       );
     });
-    drawBinderTalismanAttachment();
+    drawBinderTalismanAttachment(target);
     if (isBindingSlowed) drawBindingSlowEffect();
     return;
   }
@@ -289,7 +305,7 @@ export function drawPlayer() {
       drawWithBindingSlowFilter(isBindingSlowed, () => {
         drawRenderSnapshot(snapshot, skill);
       });
-      drawBinderTalismanAttachment();
+      drawBinderTalismanAttachment({ ...snapshot, facing: p.facing });
       if (isBindingSlowed) drawBindingSlowEffect();
       return;
     }
@@ -330,22 +346,22 @@ export function drawPlayer() {
       Math.floor(Math.max(0, elapsedAttack) * sheet.count / attackDuration),
     );
   }
+  const snapshot: UltimatePlayerGhostSnapshot = {
+    source: "player",
+    animationState: stateName,
+    action,
+    frame,
+    x: refX - drawW * anchorX,
+    y: refY - drawH * anchorY,
+    w: drawW,
+    h: drawH,
+    facing: p.facing * (flipX ? -1 : 1),
+  };
   drawWithBindingSlowFilter(isBindingSlowed, () => {
-    const snapshot: UltimatePlayerGhostSnapshot = {
-      source: "player",
-      animationState: stateName,
-      action,
-      frame,
-      x: refX - drawW * anchorX,
-      y: refY - drawH * anchorY,
-      w: drawW,
-      h: drawH,
-      facing: p.facing * (flipX ? -1 : 1),
-    };
     recordMoonTidePlayerGhost(snapshot);
     drawMoonTideOutline(snapshot);
     drawRenderSnapshot(snapshot);
   });
-  drawBinderTalismanAttachment();
+  drawBinderTalismanAttachment({ ...snapshot, facing: p.facing });
   if (isBindingSlowed) drawBindingSlowEffect();
 }
