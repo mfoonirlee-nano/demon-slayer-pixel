@@ -50,6 +50,7 @@ const PLAYER_BINDER_TALISMAN_STATUS_EFFECT = {
   w: 80,
   h: 80,
   frameDuration: 6,
+  keyScrambleHoverYOffset: 18,
 } as const;
 
 const PLAYER_BINDING_SLOW_EFFECT = {
@@ -185,7 +186,12 @@ function drawBinderTalismanAttachment(target: BinderTalismanAttachmentTarget) {
   );
 
   if (debuffs.includes("keyScramble")) {
-    drawBinderTalismanStatusEffect(BINDER_TALISMAN_KEY_SCRAMBLE_EFFECT_SHEET, centerX, centerY, target.facing);
+    drawBinderTalismanStatusEffect(
+      BINDER_TALISMAN_KEY_SCRAMBLE_EFFECT_SHEET,
+      target.x + target.w / 2,
+      target.y - PLAYER_BINDER_TALISMAN_STATUS_EFFECT.keyScrambleHoverYOffset,
+      1,
+    );
   }
   if (debuffs.includes("stun")) {
     drawBinderTalismanStatusEffect(BINDER_TALISMAN_STUN_EFFECT_SHEET, centerX, centerY, target.facing);

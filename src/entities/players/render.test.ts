@@ -19,6 +19,7 @@ type MockCanvasContext = CanvasRenderingContext2D & {
 
 const BINDER_ATTACHMENT_BACK_OFFSET_RATIO = 0.24;
 const BINDER_ATTACHMENT_CENTER_Y_RATIO = 0.55;
+const BINDER_KEY_SCRAMBLE_HOVER_Y_OFFSET = 18;
 const TEST_IMAGE = {} as HTMLImageElement;
 
 function createMockContext(): MockCanvasContext {
@@ -66,7 +67,7 @@ describe("player render", () => {
   it.each([
     { facing: 1, direction: -1 },
     { facing: -1, direction: 1 },
-  ])("draws binder talisman on the player's visual back when facing $facing", ({ facing, direction }) => {
+  ])("draws binder talisman on the visual back and key scramble above the head when facing $facing", ({ facing, direction }) => {
     const context = createMockContext();
     installMockContext(context);
     state.player.facing = facing;
@@ -88,7 +89,11 @@ describe("player render", () => {
     expect(talismanCenterY).toBeCloseTo(
       playerSpriteTop + idleSheet.drawH * BINDER_ATTACHMENT_CENTER_Y_RATIO,
     );
-    expect(context.translate.mock.calls[2]).toEqual(talismanTranslate);
+
+    const keyScrambleTranslate = context.translate.mock.calls[2];
+    expect(keyScrambleTranslate).toBeDefined();
+    expect(keyScrambleTranslate[0]).toBeCloseTo(playerCenterX);
+    expect(keyScrambleTranslate[1]).toBeCloseTo(playerSpriteTop - BINDER_KEY_SCRAMBLE_HOVER_Y_OFFSET);
   });
 
   it("draws stun attachment effects from the talisman center", () => {
