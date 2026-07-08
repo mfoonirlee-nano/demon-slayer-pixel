@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState, type CSSProperties } from "react";
 import { Provider } from "jotai";
 import {
   WIDTH,
@@ -14,6 +14,40 @@ import { GameHud } from "../ui/gameHud";
 import { TouchControls } from "../ui/touchControls";
 
 type AppPhase = "menu" | "playing";
+
+const MIN_VIEWPORT_SCALE = 0.1;
+
+function viewportGameScale() {
+  if (typeof window === "undefined") return 1;
+
+  const viewport = window.visualViewport;
+  const viewportWidth = viewport?.width ?? window.innerWidth;
+  const viewportHeight = viewport?.height ?? window.innerHeight;
+  return Math.max(
+    MIN_VIEWPORT_SCALE,
+    Math.min(viewportWidth / WIDTH, viewportHeight / HEIGHT),
+  );
+}
+
+function useViewportGameScale() {
+  const [scale, setScale] = useState(viewportGameScale);
+
+  useEffect(() => {
+    const updateScale = () => setScale(viewportGameScale());
+    const viewport = window.visualViewport;
+
+    updateScale();
+    window.addEventListener("resize", updateScale);
+    viewport?.addEventListener("resize", updateScale);
+
+    return () => {
+      window.removeEventListener("resize", updateScale);
+      viewport?.removeEventListener("resize", updateScale);
+    };
+  }, []);
+
+  return scale;
+}
 
 function GameCanvas({ active }: { active: boolean }) {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
@@ -44,7 +78,7 @@ function GameCanvas({ active }: { active: boolean }) {
       width={WIDTH}
       height={HEIGHT}
       aria-label="Moonlit Tide Survivor"
-      className="pixel-canvas block h-auto w-[960px] max-w-full max-md:h-[100svh] max-md:w-screen max-md:max-w-none"
+      className="pixel-canvas"
     />
   );
 }
@@ -53,7 +87,17 @@ function AppShell() {
   const [phase, setPhase] = useState<AppPhase>("menu");
   const [assetsReady, setAssetsReady] = useState(false);
   const [startQueued, setStartQueued] = useState(false);
+  const viewportScale = useViewportGameScale();
   const isPlaying = phase === "playing";
+  const viewportStyle = {
+    width: WIDTH * viewportScale,
+    height: HEIGHT * viewportScale,
+  } satisfies CSSProperties;
+  const frameStyle = {
+    width: WIDTH,
+    height: HEIGHT,
+    transform: `scale(${viewportScale})`,
+  } satisfies CSSProperties;
 
   useEffect(() => {
     let disposed = false;
@@ -100,25 +144,21 @@ function AppShell() {
   }, [phase, requestStart]);
 
   return (
-    <main className="app-shell mx-auto flex min-h-screen w-full max-w-[1020px] flex-col items-center justify-center px-4 py-4 text-center max-md:max-w-none max-md:px-0 max-md:py-0">
-      {isPlaying ? (
-        <>
-          <h1 className="mb-4 text-base tracking-[1px] md:text-2xl max-md:hidden">月潮夜行</h1>
-          <p className="mb-2 text-[10px] opacity-90 md:text-[13px] max-md:hidden">A/D 移动 · W/空格 跳跃 · J 攻击 · S/↓+J 下落攻击 · K 释放技能 · L 大招 · 1/2/3 切换技能 · ESC/P 暂停 · R 重开</p>
-        </>
-      ) : null}
-      <section className="game-frame relative w-fit max-w-full overflow-hidden border-4 border-[#3f5f8a] shadow-[0_16px_48px_rgba(0,0,0,0.5)] max-md:h-[100svh] max-md:w-screen max-md:border-0 max-md:shadow-none">
-        <GameCanvas active={isPlaying} />
-        {isPlaying ? (
-          <>
-            <GameHud />
-            <TouchControls />
-          </>
-        ) : null}
-        {phase === "menu" ? (
-          <StartScreen assetsReady={assetsReady} startQueued={startQueued} onStart={requestStart} />
-        ) : null}
-      </section>
+    <main className="app-shell game-shell">
+      <div className="game-viewport" style={viewportStyle}>
+        <section className="game-frame" style={frameStyle}>
+          <GameCanvas active={isPlaying} />
+          {isPlaying ? (
+            <>
+              <GameHud />
+              <TouchControls />
+            </>
+          ) : null}
+          {phase === "menu" ? (
+            <StartScreen assetsReady={assetsReady} startQueued={startQueued} onStart={requestStart} />
+          ) : null}
+        </section>
+      </div>
     </main>
   );
 }
