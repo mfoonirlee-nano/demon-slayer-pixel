@@ -20,6 +20,12 @@ export function skillLevel(state: GameState, skillId: SkillId): SkillLevel | 0 {
   return state.player.skillLevels[skillId] ?? 0;
 }
 
+export function setSkillLevel(state: GameState, skillId: SkillId, level: SkillLevel) {
+  if (state.player.skillLevels[skillId] === level) return false;
+  state.player.skillLevels[skillId] = level;
+  return true;
+}
+
 export function selectSkillSlot(state: GameState, index: number) {
   const nextIndex = Math.max(0, Math.min(SKILL_SLOT_COUNT - 1, index));
   if (!state.player.equippedSkillIds[nextIndex]) return;

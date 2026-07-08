@@ -69,10 +69,10 @@ import {
 } from "../entities/particle";
 import type { GameSnapshot } from "./gameStore";
 import type { SkillId } from "../types/assets";
-import type { EquipmentItemId, EquipmentSlot } from "../types/game-state";
+import type { EquipmentItemId, EquipmentSlot, SkillLevel } from "../types/game-state";
 import { applyUpgradeChoice } from "../systems/progression";
 import { chooseBossEquipment as chooseBossEquipmentReward, equipEquipment as equipEquipmentInState } from "../systems/equipment";
-import { equipSkillSlot as equipSkillSlotInState, SKILL_SLOT_COUNT } from "../systems/loadout";
+import { equipSkillSlot as equipSkillSlotInState, setSkillLevel as setSkillLevelInState, SKILL_SLOT_COUNT } from "../systems/loadout";
 import { updateEnemyDirector } from "../systems/enemyDirector";
 import { markSpritesReady } from "../systems/runLifecycle";
 
@@ -161,7 +161,7 @@ function equipDebugSkillSlot(slotIndex: number, skillId: SkillId) {
   if (slotIndex < 0 || slotIndex >= SKILL_SLOT_COUNT) return;
 
   if (!state.player.skillLevels[skillId]) {
-    state.player.skillLevels[skillId] = 1;
+    setSkillLevelInState(state, skillId, 1);
   }
 
   const duplicateSlot = state.player.equippedSkillIds.findIndex((equippedId, index) => (
@@ -174,6 +174,10 @@ function equipDebugSkillSlot(slotIndex: number, skillId: SkillId) {
   if (equipSkillSlotInState(state, slotIndex, skillId)) {
     state.player.skillIndex = slotIndex;
   }
+}
+
+function setDebugSkillLevel(skillId: SkillId, level: SkillLevel) {
+  setSkillLevelInState(state, skillId, level);
 }
 
 export function equipEquipment(slot: EquipmentSlot, itemId: EquipmentItemId | null) {
@@ -196,6 +200,7 @@ setDebugRuntimeActions({
   spawnPlatformSegment: spawnMapSegmentOfKind,
   spawnBoss,
   equipSkillSlot: equipDebugSkillSlot,
+  setSkillLevel: setDebugSkillLevel,
 });
 
 function drawLoadingState() {

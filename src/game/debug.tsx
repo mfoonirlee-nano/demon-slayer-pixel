@@ -17,7 +17,7 @@ import { BOSS_ARCHETYPES } from "../entities/bosses/registry";
 import { implementedPlayerSkills } from "../systems/skillCatalog";
 import type { SegmentKind } from "../entities/platform";
 import type { SkillId } from "../types/assets";
-import type { ActBand, BossArchetypeId, GameState } from "../types/game-state";
+import type { ActBand, BossArchetypeId, GameState, SkillLevel } from "../types/game-state";
 
 export type DebugEnemyKind =
   | "chaser"
@@ -43,6 +43,7 @@ type DebugRuntimeActions = {
   spawnPlatformSegment: (kind: SegmentKind) => void;
   spawnBoss: (id?: BossArchetypeId, options?: { awakened?: boolean }) => void;
   equipSkillSlot: (slotIndex: number, skillId: SkillId) => void;
+  setSkillLevel: (skillId: SkillId, level: SkillLevel) => void;
 };
 
 const CHASER_SHEET_INDEX = 0;
@@ -94,6 +95,8 @@ const DEBUG_SKILL_OPTIONS = implementedPlayerSkills().map((skill) => ({
 }));
 
 const DEBUG_SKILL_SLOT_OPTIONS = [0, 1, 2] as const;
+const MAX_DEBUG_SKILL_LEVEL: SkillLevel = 3;
+const DEBUG_SKILL_LEVEL_OPTIONS: SkillLevel[] = [1, 2, MAX_DEBUG_SKILL_LEVEL];
 
 const DEBUG_PLATFORM_OPTIONS: Array<{ kind: SegmentKind; label: string }> = [
   { kind: "safeBridge", label: "safeBridge" },
@@ -116,6 +119,7 @@ let runtimeActions: DebugRuntimeActions = {
   spawnPlatformSegment: () => {},
   spawnBoss: () => {},
   equipSkillSlot: () => {},
+  setSkillLevel: () => {},
 };
 
 let debugInfiniteHealth = true;
@@ -171,8 +175,15 @@ function spawnDebugBoss(bossId: BossArchetypeId, awakened: boolean) {
   runDebugAction(() => runtimeActions.spawnBoss(bossId, { awakened }));
 }
 
-function equipDebugSkill(slotIndex: number, skillId: SkillId) {
-  runDebugAction(() => runtimeActions.equipSkillSlot(slotIndex, skillId));
+function equipDebugSkill(slotIndex: number, skillId: SkillId, level: SkillLevel) {
+  runDebugAction(() => {
+    runtimeActions.equipSkillSlot(slotIndex, skillId);
+    runtimeActions.setSkillLevel(skillId, level);
+  });
+}
+
+function setDebugSkillLevel(skillId: SkillId, level: SkillLevel) {
+  runDebugAction(() => runtimeActions.setSkillLevel(skillId, level));
 }
 
 function setDebugInfiniteSkillCharge(enabled: boolean) {
@@ -205,6 +216,7 @@ export function DebugPanel() {
   const [platformKind, setPlatformKind] = useState<SegmentKind>("safeBridge");
   const [skillSlotIndex, setSkillSlotIndex] = useState<number>(0);
   const [skillId, setSkillId] = useState<SkillId>(DEBUG_SKILL_OPTIONS[0]?.id ?? "line_projectile");
+  const [skillLevel, setSkillLevelValue] = useState<SkillLevel>(1);
   const [infiniteHealth, setInfiniteHealth] = useState(hasDebugInfiniteHealth());
   const [infiniteSkillCharge, setInfiniteSkillCharge] = useState(hasDebugInfiniteSkillCharge());
   const [infiniteUltimateCharge, setInfiniteUltimateCharge] = useState(hasDebugInfiniteUltimateCharge());
@@ -305,7 +317,7 @@ export function DebugPanel() {
           onChange={(event) => {
             const nextSkillId = event.target.value as SkillId;
             setSkillId(nextSkillId);
-            equipDebugSkill(skillSlotIndex, nextSkillId);
+            equipDebugSkill(skillSlotIndex, nextSkillId, skillLevel);
           }}
         >
           {DEBUG_SKILL_OPTIONS.map((option) => (
@@ -313,6 +325,21 @@ export function DebugPanel() {
           ))}
         </select>
       </div>
+      <label className="mt-1 block text-[8px] text-[#9ed8ff]" htmlFor="debug-skill-level">Skill level</label>
+      <select
+        id="debug-skill-level"
+        className="mt-1 w-full rounded-[4px] border border-[#70d7ff44] bg-[#102033] px-1 py-1 text-[9px] text-[#f2fbff]"
+        value={skillLevel}
+        onChange={(event) => {
+          const nextLevel = Number(event.target.value) as SkillLevel;
+          setSkillLevelValue(nextLevel);
+          setDebugSkillLevel(skillId, nextLevel);
+        }}
+      >
+        {DEBUG_SKILL_LEVEL_OPTIONS.map((level) => (
+          <option key={level} value={level}>{level}</option>
+        ))}
+      </select>
       <label className="mt-2 block text-[8px] text-[#9ed8ff]" htmlFor="debug-enemy-kind">Enemy</label>
       <div className="mt-1 flex gap-1">
         <select
