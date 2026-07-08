@@ -9,6 +9,7 @@ import {
   enemyDrawScale,
   enemyCenterX,
   enemyFeetY,
+  enemyGrowthStage,
   hasAwakenedGrowth,
   isEliteEnemy,
 } from "./common";
@@ -22,7 +23,12 @@ const RUNNER_CONFIG = {
   approachSpeedScaleByElapsed: 0.006,
   dashBaseSpeed: 6.15,
   dashSpeedScaleByElapsed: 0.012,
-  dashMaxSpeed: 7.8,
+  dashBaseMaxSpeed: 7.8,
+  dashSpeedScaleByGrowth: {
+    intro: 1,
+    awakened: 1.18,
+    final: 1.32,
+  },
   windupMinFrames: 14,
   windupFrameJitter: 5,
   dashNormalMinBodyWidths: 2,
@@ -73,10 +79,11 @@ function runnerApproachBaseSpeed() {
 }
 
 function runnerDashSpeed(enemy: EnemyState) {
-  const speed = Math.min(
-    RUNNER_CONFIG.dashMaxSpeed,
+  const baseSpeed = Math.min(
+    RUNNER_CONFIG.dashBaseMaxSpeed,
     RUNNER_CONFIG.dashBaseSpeed + state.elapsed * RUNNER_CONFIG.dashSpeedScaleByElapsed,
   );
+  const speed = baseSpeed * RUNNER_CONFIG.dashSpeedScaleByGrowth[enemyGrowthStage(enemy)];
   return isEliteEnemy(enemy) ? speed * RUNNER_CONFIG.eliteDashSpeedScale : speed;
 }
 

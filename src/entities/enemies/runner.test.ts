@@ -13,6 +13,8 @@ const DASH_HOLD_FRAME_INDEX = 3;
 const DASH_LANDING_FRAME_INDEX = 4;
 const DASH_LONG_ELAPSED_FRAMES = 120;
 const INTRO_DASH_SPEED = 6.15;
+const AWAKENED_DASH_SPEED_SCALE = 1.18;
+const FINAL_DASH_SPEED_SCALE = 1.32;
 const INTRO_DASH_MIN_BODY_WIDTHS = 2;
 const INTRO_DASH_MAX_BODY_WIDTHS = 2.67;
 const AWAKENED_DASH_MIN_BODY_WIDTHS = 4;
@@ -56,10 +58,19 @@ describe("runner dash tuning", () => {
     expect(runnerDashAnimationFrame(DASH_LONG_ELAPSED_FRAMES, true)).toBe(DASH_LANDING_FRAME_INDEX);
   });
 
-  it("uses the faster intro dash speed", () => {
+  it("uses the intro dash speed as the baseline", () => {
     const runner = enterRunnerDash("intro");
 
     expect(Math.abs(runner.vx)).toBeCloseTo(INTRO_DASH_SPEED);
+  });
+
+  it("uses visibly faster dash speeds in awakened and final growth stages", () => {
+    const awakenedRunner = enterRunnerDash("awakened");
+    const finalRunner = enterRunnerDash("final");
+
+    expect(Math.abs(awakenedRunner.vx)).toBeCloseTo(INTRO_DASH_SPEED * AWAKENED_DASH_SPEED_SCALE);
+    expect(Math.abs(finalRunner.vx)).toBeCloseTo(INTRO_DASH_SPEED * FINAL_DASH_SPEED_SCALE);
+    expect(Math.abs(finalRunner.vx)).toBeGreaterThan(Math.abs(awakenedRunner.vx));
   });
 
   it("travels 2-2.67 visual body widths in the intro growth stage", () => {
