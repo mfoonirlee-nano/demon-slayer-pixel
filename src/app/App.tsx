@@ -89,11 +89,11 @@ function AppShell() {
   const [startQueued, setStartQueued] = useState(false);
   const viewportScale = useViewportGameScale();
   const isPlaying = phase === "playing";
-  const viewportStyle = {
+  const frameStyle = {
     width: WIDTH * viewportScale,
     height: HEIGHT * viewportScale,
   } satisfies CSSProperties;
-  const frameStyle = {
+  const overlayStyle = {
     width: WIDTH,
     height: HEIGHT,
     transform: `scale(${viewportScale})`,
@@ -145,9 +145,9 @@ function AppShell() {
 
   return (
     <main className="app-shell game-shell">
-      <div className="game-viewport" style={viewportStyle}>
-        <section className="game-frame" style={frameStyle}>
-          <GameCanvas active={isPlaying} />
+      <section className="game-frame" style={frameStyle}>
+        <GameCanvas active={isPlaying} />
+        <div className="game-overlay" style={overlayStyle}>
           {isPlaying ? (
             <>
               <GameHud />
@@ -157,8 +157,8 @@ function AppShell() {
           {phase === "menu" ? (
             <StartScreen assetsReady={assetsReady} startQueued={startQueued} onStart={requestStart} />
           ) : null}
-        </section>
-      </div>
+        </div>
+      </section>
     </main>
   );
 }

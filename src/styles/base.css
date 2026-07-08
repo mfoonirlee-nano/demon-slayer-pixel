@@ -85,19 +85,24 @@ body {
   justify-content: center;
 }
 
-.game-viewport {
+.game-frame {
   position: relative;
   flex: none;
+  overflow: hidden;
+  background: var(--game-frame-bg);
+  background-color: var(--game-bg-base);
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
 }
 
-.game-frame {
+.game-overlay {
   position: absolute;
   top: 0;
   left: 0;
   overflow: hidden;
-  background: var(--game-frame-bg);
-  background-color: var(--game-bg-base);
   transform-origin: top left;
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
 }
 
 .pixel-canvas {
