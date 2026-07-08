@@ -5,7 +5,9 @@ import {
   FALL_ATTACK,
   GRAVITY,
   GROUND_Y,
+  PLAYER_ANIMATION_STATES,
   PLAYER_COMBAT,
+  PLAYER_SHEETS,
   SKILL_IDS,
   WIDTH,
 } from "../constants";
@@ -73,6 +75,8 @@ const PLAYER_LAND_PITCH_SCALE = 0.035;
 const PLAYER_LAND_MAX_PITCH = 1.18;
 const PLAYER_RUN_STEP_RIGHT_PITCH = 1.02;
 const PLAYER_RUN_STEP_LEFT_PITCH = 0.98;
+const CLOSE_ARC_BASIC_CRESCENT_ATTACK_FRAME = { start: 3, end: 5 } as const;
+const BASIC_ATTACK_ANIMATION_FRAME_COUNT = PLAYER_SHEETS[PLAYER_ANIMATION_STATES.attack].count;
 
 function playerMovementKeyDown(key: "a" | "d") {
   if (!isBinderTalismanKeyScrambled()) return keys.has(key);
@@ -107,7 +111,6 @@ export function triggerAttack() {
   beginBasicAttackEquipmentEffects(state);
   state.player.attackDuration = frames;
   state.player.attackTimer = frames;
-  spawnCloseArcBasicCrescent();
   playSfx("playerAttackStart");
 }
 
@@ -145,8 +148,9 @@ export function attackBox() {
   };
 }
 
-function spawnCloseArcBasicCrescent() {
+function spawnCloseArcBasicCrescent(life: number) {
   const p = state.player;
+  if (p.equippedSkillIds[p.skillIndex] !== SKILL_IDS.closeArc) return;
   if ((p.skillLevels[SKILL_IDS.closeArc] ?? 0) < CLOSE_ARC_BASIC_CRESCENT_CONFIG.requiredSkillLevel) return;
 
   const box = attackBox();
@@ -163,8 +167,8 @@ function spawnCloseArcBasicCrescent() {
     facing: p.facing,
     frame: 0,
     elapsed: 0,
-    life: CLOSE_ARC_BASIC_CRESCENT_CONFIG.life,
-    maxLife: CLOSE_ARC_BASIC_CRESCENT_CONFIG.life,
+    life,
+    maxLife: life,
     drawScale: CLOSE_ARC_BASIC_CRESCENT_CONFIG.drawScale,
     damage: box.damage * CLOSE_ARC_BASIC_CRESCENT_CONFIG.damageMultiplier,
     hitEnemies: [],
@@ -174,6 +178,23 @@ function spawnCloseArcBasicCrescent() {
   while (state.closeArcBasicCrescents.length > CLOSE_ARC_BASIC_CRESCENT_CONFIG.maxInstances) {
     state.closeArcBasicCrescents.shift();
   }
+}
+
+function attackAnimationFrameStartElapsed(frameIndex: number, attackDuration: number) {
+  return Math.max(1, Math.ceil(frameIndex * Math.max(1, attackDuration) / BASIC_ATTACK_ANIMATION_FRAME_COUNT));
+}
+
+function maybeSpawnCloseArcBasicCrescent() {
+  const p = state.player;
+  const elapsedAttack = p.attackDuration - p.attackTimer;
+  const startElapsed = attackAnimationFrameStartElapsed(
+    CLOSE_ARC_BASIC_CRESCENT_ATTACK_FRAME.start,
+    p.attackDuration,
+  );
+  if (elapsedAttack !== startElapsed) return;
+
+  const endElapsed = attackAnimationFrameStartElapsed(CLOSE_ARC_BASIC_CRESCENT_ATTACK_FRAME.end, p.attackDuration);
+  spawnCloseArcBasicCrescent(Math.max(1, endElapsed - elapsedAttack + 1));
 }
 
 function fallAttackBox() {
@@ -513,6 +534,7 @@ export function updatePlayer() {
 
   if (p.attackTimer > 0) {
     p.attackTimer -= 1;
+    maybeSpawnCloseArcBasicCrescent();
     const box = attackBox();
 
     for (let i = state.enemies.length - 1; i >= 0; i -= 1) {
