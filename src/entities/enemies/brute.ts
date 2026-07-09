@@ -10,6 +10,7 @@ import {
   BRUTE_SHIELD_BREAK_FRAMES,
   drawEnemyFrame,
   drawEnemySheetFrame,
+  enemyAttackDamage,
   enemyCenterX,
   enemyDrawScale,
   enemyFeetY,
@@ -223,7 +224,7 @@ function triggerBruteAttackHit(
   const box = bruteAttackBox(enemy, reach, widthScale, heightScale, heightPad);
   const facing = enemy.bruteFacing ?? (enemy.vx >= 0 ? 1 : -1);
   if (!hitbox(box, state.player)) return;
-  hurtPlayer(enemy.damage * damageMultiplier + damageBonus, -facing);
+  hurtPlayer(enemyAttackDamage(enemy, enemy.damage * damageMultiplier + damageBonus), -facing);
 }
 
 function initBrute(enemy: EnemyState, context: EnemySpawnContext) {

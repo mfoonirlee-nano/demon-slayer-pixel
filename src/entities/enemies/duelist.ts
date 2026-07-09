@@ -8,6 +8,7 @@ import type { EnemyArchetype, EnemySpawnContext } from "./common";
 import {
   drawEnemyFrame,
   drawEnemySheetFrame,
+  enemyAttackDamage,
   enemyCenterX,
   enemyDrawScale,
   enemyFeetY,
@@ -240,7 +241,7 @@ function triggerDuelistAttackHit(enemy: EnemyState, phase: "slash" | "spin") {
     ? DUELIST_CONFIG.spinDamageMultiplier
     : DUELIST_CONFIG.slashDamageMultiplier;
   const damageBonus = phase === "spin" ? DUELIST_CONFIG.spinDamageBonus : DUELIST_CONFIG.slashDamageBonus;
-  hurtPlayer(enemy.damage * damageMultiplier + damageBonus, -facing);
+  hurtPlayer(enemyAttackDamage(enemy, enemy.damage * damageMultiplier + damageBonus), -facing);
 }
 
 function initDuelist(enemy: EnemyState, context: EnemySpawnContext) {

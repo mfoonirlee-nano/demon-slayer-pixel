@@ -243,6 +243,8 @@ export type EnemyState = {
   wardenFacing?: number;
   wardenBaseSpeed?: number;
   wardenBuffedFrames?: number;
+  wardenAttackDamageScale?: number;
+  wardenDamageImmune?: boolean;
   burrowerPhase?: BurrowerPhase;
   burrowerTimer?: number;
   burrowerPhaseDuration?: number;

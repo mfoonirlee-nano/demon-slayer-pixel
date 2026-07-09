@@ -15,6 +15,7 @@ import type { EnemyArchetype, EnemySpawnContext } from "./common";
 import {
   drawEnemyFrame,
   drawEnemySheetFrame,
+  enemyAttackDamage,
   enemyCenterX,
   enemyDrawScale,
   enemyFeetY,
@@ -221,7 +222,7 @@ function triggerLeaperImpactHit(enemy: EnemyState) {
   if (!hitbox(leaperImpactBox(enemy), state.player)) return;
   const facing = enemy.leaperFacing ?? (enemy.vx >= 0 ? 1 : -1);
   hurtPlayer(
-    enemy.damage * LEAPER_CONFIG.impactDamageMultiplier + LEAPER_CONFIG.impactDamageBonus,
+    enemyAttackDamage(enemy, enemy.damage * LEAPER_CONFIG.impactDamageMultiplier + LEAPER_CONFIG.impactDamageBonus),
     -facing,
   );
 }

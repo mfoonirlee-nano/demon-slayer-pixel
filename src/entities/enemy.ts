@@ -11,7 +11,7 @@ import {
 import type { ActBand, EnemyId, EnemySpawnSource, EnemyState, PlatformState, SpawnPattern } from "../types/game-state";
 import { hitbox } from "../game/utils";
 import { hurtPlayer } from "./player";
-import { createEnemyState, drawEnemyEliteMarker } from "./enemies/common";
+import { createEnemyState, drawEnemyEliteMarker, enemyAttackDamage } from "./enemies/common";
 import { canSpawnBrute, isBruteSheet } from "./enemies/brute";
 import { canSpawnBinder, isBinderSheet } from "./enemies/binder";
 import { canSpawnDuelist, isDuelistSheet } from "./enemies/duelist";
@@ -292,8 +292,8 @@ export function updateEnemies() {
     const archetype = enemyArchetypeForSheet(enemy.sheetIndex);
     if (!archetype.contactDamageDisabled?.(enemy) && hitbox(state.player, enemy)) {
       const damage = lanternBuffed
-        ? enemy.damage * LANTERN_EMBER_CONFIG.buffDamageScale
-        : enemy.damage;
+        ? enemyAttackDamage(enemy, enemy.damage * LANTERN_EMBER_CONFIG.buffDamageScale)
+        : enemyAttackDamage(enemy, enemy.damage);
       hurtPlayer(damage, enemy.vx);
     }
 

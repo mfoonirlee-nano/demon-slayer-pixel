@@ -73,6 +73,7 @@ import {
   TORII_SPRITES,
   TREE_SPRITES,
   WARDEN_AURA_EFFECT_SHEET,
+  WARDEN_BLOOD_MOON_BUFF_SHEET,
   WARDEN_SHEETS,
 } from "../constants";
 import {
@@ -112,6 +113,7 @@ export function spriteImageLoadTargets(): ImageLoadTarget[] {
       ...Object.values(SPLITTER_SHEETS),
       ...Object.values(WARDEN_SHEETS),
       WARDEN_AURA_EFFECT_SHEET,
+      WARDEN_BLOOD_MOON_BUFF_SHEET,
       ...Object.values(BURROWER_SHEETS),
       BOSS_SHEET,
       BOSS_SKILL1_SHEET,

@@ -1,16 +1,32 @@
 import { describe, expect, it, beforeEach } from "vitest";
-import { WARDEN_SHEET_INDEX } from "../../constants";
+import { WARDEN_BLOOD_MOON_BUFF_SHEET, WARDEN_SHEET_INDEX } from "../../constants";
 import { state, resetState } from "../../game/state";
 import type { BossState, EnemyState } from "../../types/game-state";
 import { updateEnemies } from "../enemy";
-import { createEnemyState, type EnemySpawnContext } from "./common";
+import { createEnemyState, damageEnemy, type EnemySpawnContext } from "./common";
 import { applyWardenAuraBuffs, WARDEN_ARCHETYPE } from "./warden";
 
 const VALID_SUPPORT_RANGE = 260;
 const OTHER_WARDEN_X = 350;
-const BUFFED_SUMMON_X = 361.2;
+const BUFFED_SUMMON_X = 361.5;
+const NORMAL_AURA_EDGE_DISTANCE = 295;
+const AWAKENED_AURA_EDGE_DISTANCE = 590;
+const FINAL_AURA_DISTANCE = 900;
+const NORMAL_AURA_ATTACK_SCALE = 1.15;
+const AWAKENED_AURA_ATTACK_SCALE = 1.3;
+const FINAL_AURA_ATTACK_SCALE = 1.5;
 const HIT_INTERRUPTION_HOLD_FRAMES = 12;
 const PLAYER_HP_AFTER_WEAK_CONTACT_DAMAGE = 92;
+const PLAYER_HP_AFTER_BUFFED_CONTACT_DAMAGE = 95.4;
+const SUPPORT_POSITION_PADDING = 20;
+const BUFFED_CONTACT_DAMAGE = 4;
+const FINAL_IMMUNITY_TEST_DAMAGE = 20;
+const FINAL_IMMUNITY_TEST_HIT_COOLDOWN = 3;
+const FINAL_IMMUNITY_TEST_HP = 10;
+const FINAL_AURA_SPEED_EXTRA_X = 4;
+const BLOOD_MOON_BUFF_SRC = "assets/sprites/enemies/warden/warden_blood_moon_buff.png";
+const BLOOD_MOON_BUFF_FRAME_SIZE = 72;
+const BLOOD_MOON_BUFF_FRAME_COUNT = 6;
 
 function spawnContext(overrides: Partial<EnemySpawnContext> = {}): EnemySpawnContext {
   return {
@@ -80,6 +96,13 @@ describe("warden support attack loop", () => {
     state.player.invincible = 0;
   });
 
+  it("exposes the blood moon buff effect sheet for preloading", () => {
+    expect(WARDEN_BLOOD_MOON_BUFF_SHEET.src).toBe(BLOOD_MOON_BUFF_SRC);
+    expect(WARDEN_BLOOD_MOON_BUFF_SHEET.frameW).toBe(BLOOD_MOON_BUFF_FRAME_SIZE);
+    expect(WARDEN_BLOOD_MOON_BUFF_SHEET.frameH).toBe(BLOOD_MOON_BUFF_FRAME_SIZE);
+    expect(WARDEN_BLOOD_MOON_BUFF_SHEET.count).toBe(BLOOD_MOON_BUFF_FRAME_COUNT);
+  });
+
   it("enters aura when in support range with a non-warden target nearby", () => {
     const wardenEnemy = warden({ wardenPhase: "move", wardenTimer: 0 });
     setPlayerAtRangeFrom(wardenEnemy, VALID_SUPPORT_RANGE);
@@ -118,9 +141,75 @@ describe("warden support attack loop", () => {
 
     expect(summonedEnemy.wardenBuffedFrames).toBe(2);
     expect(summonedEnemy.x).toBeCloseTo(BUFFED_SUMMON_X);
+    expect(summonedEnemy.wardenAttackDamageScale).toBe(NORMAL_AURA_ATTACK_SCALE);
+    expect(summonedEnemy.wardenDamageImmune).toBe(false);
     expect(otherWarden.wardenBuffedFrames).toBe(0);
     expect(otherWarden.x).toBe(OTHER_WARDEN_X);
     expect(state.boss?.x).toBe(OTHER_WARDEN_X);
+  });
+
+  it("uses a 300px normal aura range and a 600px awakened aura range", () => {
+    const introWarden = warden({ wardenPhase: "aura" });
+    const introAlly = enemy({ x: introWarden.x + NORMAL_AURA_EDGE_DISTANCE, y: 400, vx: 0 });
+    state.enemies.push(introWarden, introAlly);
+
+    applyWardenAuraBuffs();
+
+    expect(introAlly.wardenBuffedFrames).toBe(2);
+    expect(introAlly.wardenAttackDamageScale).toBe(NORMAL_AURA_ATTACK_SCALE);
+
+    resetState();
+
+    const awakenedWarden = warden({ growthStage: "awakened", wardenPhase: "aura" });
+    const awakenedAlly = enemy({ x: awakenedWarden.x + AWAKENED_AURA_EDGE_DISTANCE, y: 400, vx: 0 });
+    state.enemies.push(awakenedWarden, awakenedAlly);
+
+    applyWardenAuraBuffs();
+
+    expect(awakenedAlly.wardenBuffedFrames).toBe(2);
+    expect(awakenedAlly.wardenAttackDamageScale).toBe(AWAKENED_AURA_ATTACK_SCALE);
+  });
+
+  it("buffs enemy contact damage without permanently changing base damage", () => {
+    const wardenEnemy = warden({
+      x: state.player.x + state.player.w / 2 - VALID_SUPPORT_RANGE - SUPPORT_POSITION_PADDING,
+      wardenPhase: "aura",
+    });
+    const buffedEnemy = enemy({
+      x: state.player.x,
+      y: state.player.y,
+      w: state.player.w,
+      h: state.player.h,
+      vx: 0,
+      damage: BUFFED_CONTACT_DAMAGE,
+    });
+    state.enemies.push(wardenEnemy, buffedEnemy);
+
+    updateEnemies();
+
+    expect(state.player.hp).toBeCloseTo(PLAYER_HP_AFTER_BUFFED_CONTACT_DAMAGE);
+    expect(buffedEnemy.damage).toBe(BUFFED_CONTACT_DAMAGE);
+  });
+
+  it("makes final aura global and prevents affected enemies from taking damage", () => {
+    const finalWarden = warden({ growthStage: "final", wardenPhase: "aura" });
+    const distantEnemy = enemy({ x: finalWarden.x + FINAL_AURA_DISTANCE, y: 400, vx: 8, hp: FINAL_IMMUNITY_TEST_HP });
+    state.enemies.push(finalWarden, distantEnemy);
+
+    applyWardenAuraBuffs();
+    const appliedDamage = damageEnemy(
+      distantEnemy,
+      FINAL_IMMUNITY_TEST_DAMAGE,
+      FINAL_IMMUNITY_TEST_HIT_COOLDOWN,
+      "armorBreak",
+    );
+
+    expect(distantEnemy.wardenBuffedFrames).toBe(2);
+    expect(distantEnemy.x).toBe(finalWarden.x + FINAL_AURA_DISTANCE + FINAL_AURA_SPEED_EXTRA_X);
+    expect(distantEnemy.wardenAttackDamageScale).toBe(FINAL_AURA_ATTACK_SCALE);
+    expect(distantEnemy.wardenDamageImmune).toBe(true);
+    expect(appliedDamage).toBe(0);
+    expect(distantEnemy.hp).toBe(FINAL_IMMUNITY_TEST_HP);
   });
 
   it("pauses aura for a 14-frame hit interruption window", () => {

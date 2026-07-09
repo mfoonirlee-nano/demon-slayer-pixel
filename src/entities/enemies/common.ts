@@ -158,6 +158,8 @@ export function damageEnemy(
   kind: EnemyDamageKind = "normal",
   sourceX?: number,
 ) {
+  if (enemy.wardenDamageImmune) return 0;
+
   const scaledDamage = (enemy.armorBreakTimer ?? 0) > 0
     ? damage * (enemy.armorBreakMultiplier ?? 1)
     : damage;
@@ -170,6 +172,10 @@ export function damageEnemy(
   if (enemy.sheetIndex !== BRUTE_SHEET_INDEX) enemy.hp -= appliedDamage;
   if (hitCooldown !== undefined) enemy.hitCd = hitCooldown;
   return appliedDamage;
+}
+
+export function enemyAttackDamage(enemy: EnemyState, damage: number) {
+  return damage * (enemy.wardenAttackDamageScale ?? 1);
 }
 
 export function commonEnemySpeed() {

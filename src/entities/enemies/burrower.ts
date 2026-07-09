@@ -15,6 +15,7 @@ import type { EnemyArchetype, EnemySpawnContext } from "./common";
 import {
   drawEnemyFrame,
   drawEnemySheetFrame,
+  enemyAttackDamage,
   enemyCenterX,
   enemyDrawScale,
   enemyFeetY,
@@ -233,7 +234,7 @@ function triggerBurrowerEmergeHit(enemy: EnemyState) {
   if (!hitbox(burrowerEmergeBox(enemy), state.player)) return;
   const facing = enemy.burrowerFacing ?? (enemy.vx >= 0 ? 1 : -1);
   hurtPlayer(
-    enemy.damage * BURROWER_CONFIG.impactDamageMultiplier + BURROWER_CONFIG.impactDamageBonus,
+    enemyAttackDamage(enemy, enemy.damage * BURROWER_CONFIG.impactDamageMultiplier + BURROWER_CONFIG.impactDamageBonus),
     -facing,
   );
 }

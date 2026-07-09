@@ -486,6 +486,14 @@ export const WARDEN_AURA_EFFECT_SHEET: SpriteSheet = {
   image: null,
 };
 
+export const WARDEN_BLOOD_MOON_BUFF_SHEET: SpriteSheet = {
+  src: "assets/sprites/enemies/warden/warden_blood_moon_buff.png",
+  frameW: 72,
+  frameH: 72,
+  count: 6,
+  image: null,
+};
+
 export const BURROWER_SHEET_INDEX = 11;
 export const BURROWER_UNLOCK_SECONDS = 90;
 

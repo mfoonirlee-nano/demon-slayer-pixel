@@ -9,6 +9,7 @@ import type { EnemyArchetype, EnemySpawnContext } from "./common";
 import {
   drawEnemyFrame,
   drawEnemySheetFrame,
+  enemyAttackDamage,
   enemyCenterX,
   enemyDrawScale,
   enemyFeetY,
@@ -277,7 +278,10 @@ function triggerCrawlerLungeHit(enemy: EnemyState) {
   if (!hitbox(box, state.player)) return;
   enemy.crawlerLungeHit = true;
   const facing = enemy.crawlerFacing ?? (enemy.vx >= 0 ? 1 : -1);
-  hurtPlayer(enemy.damage * CRAWLER_CONFIG.lungeDamageMultiplier + CRAWLER_CONFIG.lungeDamageBonus, facing);
+  hurtPlayer(
+    enemyAttackDamage(enemy, enemy.damage * CRAWLER_CONFIG.lungeDamageMultiplier + CRAWLER_CONFIG.lungeDamageBonus),
+    facing,
+  );
 }
 
 function crawlerLeapBox(enemy: EnemyState) {
@@ -296,7 +300,10 @@ function triggerCrawlerLeapHit(enemy: EnemyState) {
   if (!hitbox(box, state.player)) return;
   enemy.crawlerLungeHit = true;
   const facing = enemy.crawlerFacing ?? (enemy.vx >= 0 ? 1 : -1);
-  hurtPlayer(enemy.damage * CRAWLER_CONFIG.leapDamageMultiplier + CRAWLER_CONFIG.leapDamageBonus, facing);
+  hurtPlayer(
+    enemyAttackDamage(enemy, enemy.damage * CRAWLER_CONFIG.leapDamageMultiplier + CRAWLER_CONFIG.leapDamageBonus),
+    facing,
+  );
 }
 
 function initCrawler(enemy: EnemyState, context: EnemySpawnContext) {

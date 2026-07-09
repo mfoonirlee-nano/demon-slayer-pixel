@@ -7,6 +7,7 @@ import type { EnemyArchetype, EnemySpawnContext } from "./common";
 import {
   drawEnemyFrame,
   drawEnemySheetFrame,
+  enemyAttackDamage,
   enemyCenterX,
   enemyDrawScale,
   enemyGrowthStage,
@@ -180,7 +181,7 @@ function casterWispDamage(enemy: EnemyState) {
     CASTER_CONFIG.wispMaxDamage,
     CASTER_CONFIG.wispBaseDamage + difficultyK() * CASTER_CONFIG.wispDamageScale,
   );
-  return baseDamage * casterWispProfile(enemy).damageMultiplier;
+  return enemyAttackDamage(enemy, baseDamage * casterWispProfile(enemy).damageMultiplier);
 }
 
 function casterWispLife(enemy: EnemyState) {

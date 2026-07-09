@@ -269,9 +269,10 @@ Warden 专属动作素材：
 | `enemies/warden/warden_move.png` | `1280x360` | 4 | `320x360` | `move` | 稳重缓慢的后排 reposition，背架和提灯保持高轮廓 |
 | `enemies/warden/warden_aura.png` | `1280x360` | 4 | `320x360` | `aura` | 双手抬起维持仪式，背架与灯芯出现低饱和金绿读法 |
 | `enemies/warden/warden_aura_effect.png` | `1920x120` | 8 | `240x120` | `auraEffect` | 低透明金绿仪式环技能序列帧，由运行时按 warden 脚底绘制 |
+| `enemies/warden/warden_blood_moon_buff.png` | `432x72` | 6 | `72x72` | `buffEffect` | 被光环强化的敌人头顶出现小型血月序列帧 |
 | `enemies/warden/warden_hit.png` | `960x360` | 3 | `320x360` | `hit` | 被击中时阵架倾斜、铃杖下落，光环短暂失效 |
 
-Warden 运行时由 `WARDEN_SHEETS` 和 `WARDEN_AURA_EFFECT_SHEET` 暴露并预加载。普通刷怪在 `elapsed >= 120s` 后才会抽取 warden；同屏最多 `1` 个。`warden` 不发射投射物，主要威胁是给半径约 `180px` 内其他敌人提供 `+12%` 移速光环；被击中进入 `hit` 时会中断光环。光环本体使用独立技能效果序列帧，被强化敌人的脚下小标记仍由运行时低透明绘制，不影响 Boss。
+Warden 运行时由 `WARDEN_SHEETS`、`WARDEN_AURA_EFFECT_SHEET` 和 `WARDEN_BLOOD_MOON_BUFF_SHEET` 暴露并预加载。普通刷怪在 `elapsed >= 120s` 后才会抽取 warden；同屏最多 `1` 个。`warden` 不发射投射物，主要威胁是分阶段强化其他敌人：普通半径约 `300px`，提供 `+15%` 移速与攻击力；觉醒半径约 `600px`，提供 `+30%` 移速与攻击力；最终阶段全战场生效，使其他敌人免伤并获得 `+50%` 移速与攻击力。被击中进入 `hit` 时会中断光环。光环本体使用独立技能效果序列帧，被强化敌人的头顶小血月标记使用独立序列帧绘制，不影响 Boss。
 
 Burrower 专属动作素材：
 
@@ -303,7 +304,7 @@ Burrower 运行时由 `BURROWER_SHEETS` 暴露并预加载。普通刷怪在 `el
 ## 资源更新流程
 
 1. 生成或编辑图片内容时，使用 Image Gen skill (`imagegen`)，优先输出为透明 PNG。
-2. 内置 `imagegen` 返回时，先检查 `image_generation_call.result`；也可以使用当前 imagegen 工具/开发者输出明确给出的 `~/.codex/generated_images/...` 精确文件路径。将该 base64 或精确路径对应的文件保存为源图，不要去 `~/.codex/generated_images/` 或其他目录里查找最新生成产物。
+2. 内置 `imagegen` 返回时，先检查 `image_generation_call.result`；也可以使用当前 imagegen 工具/开发者输出明确给出的 `~/.codex/generated_images/...` 精确文件路径。当前规范或用户明确允许时，可以扫描 `~/.codex/generated_images/` 下的当前会话目录定位生成产物。将对应文件保存为源图后再处理。
 3. 如果使用绿幕源图，先保存 `*_source.png`，再通过确定性后处理抠成运行时透明资源。
 4. 对横向序列帧，确保总宽度等于 `frameW * count`，总高度等于 `frameH`。
 5. 替换已有运行时素材时，如果切片规格不变，只需要覆盖 PNG。

@@ -109,7 +109,10 @@ const actors = [
     sheet("move", "assets/sprites/enemies/warden/warden_move.png", 320, 360, 4, { primary: true }),
     sheet("aura", "assets/sprites/enemies/warden/warden_aura.png", 320, 360, 4),
     sheet("hit", "assets/sprites/enemies/warden/warden_hit.png", 320, 360, 3),
-  ], ["assets/sprites/enemies/warden/warden_aura_effect.png"]),
+  ], [
+    "assets/sprites/enemies/warden/warden_aura_effect.png",
+    "assets/sprites/enemies/warden/warden_blood_moon_buff.png",
+  ]),
   enemy("burrower", "土潜夜妖", "burrower", [
     sheet("move", "assets/sprites/enemies/burrower/burrower_move.png", 314, 180, 6, { primary: true }),
     sheet("sink", "assets/sprites/enemies/burrower/burrower_sink.png", 314, 180, 4),
