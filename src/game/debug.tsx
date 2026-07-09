@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   BINDER_SHEET_INDEX,
   BRUTE_SHEET_INDEX,
@@ -15,6 +15,7 @@ import {
 } from "../constants";
 import { BOSS_ARCHETYPES } from "../entities/bosses/registry";
 import { implementedPlayerSkills } from "../systems/skillCatalog";
+import { canvas } from "../rendering/context";
 import type { SegmentKind } from "../entities/platform";
 import type { SkillId } from "../types/assets";
 import type { ActBand, BossArchetypeId, GameState, SkillLevel } from "../types/game-state";
@@ -126,6 +127,11 @@ let debugInfiniteHealth = true;
 let debugInfiniteSkillCharge = true;
 let debugInfiniteUltimateCharge = false;
 
+type GameWindowSize = {
+  width: number;
+  height: number;
+};
+
 export const isDebugMode = typeof window !== "undefined"
   && new URLSearchParams(window.location.search).get("debug") === "1";
 
@@ -207,6 +213,51 @@ function setDebugInfiniteHealth(enabled: boolean) {
   runtimeActions.publish();
 }
 
+function gameCanvasElement() {
+  return canvas ?? document.getElementById("game");
+}
+
+function readGameWindowSize(): GameWindowSize | null {
+  if (typeof document === "undefined") return null;
+
+  const gameCanvas = gameCanvasElement();
+  if (!(gameCanvas instanceof HTMLCanvasElement)) return null;
+
+  const rect = gameCanvas.getBoundingClientRect();
+  return {
+    width: Math.round(rect.width),
+    height: Math.round(rect.height),
+  };
+}
+
+function useGameWindowSize() {
+  const [size, setSize] = useState<GameWindowSize | null>(readGameWindowSize);
+
+  useEffect(() => {
+    if (!isDebugMode) return;
+
+    const updateSize = () => setSize(readGameWindowSize());
+    const viewport = window.visualViewport;
+    const gameCanvas = gameCanvasElement();
+    const resizeObserver = gameCanvas && typeof ResizeObserver !== "undefined"
+      ? new ResizeObserver(updateSize)
+      : null;
+
+    updateSize();
+    window.addEventListener("resize", updateSize);
+    viewport?.addEventListener("resize", updateSize);
+    if (gameCanvas) resizeObserver?.observe(gameCanvas);
+
+    return () => {
+      window.removeEventListener("resize", updateSize);
+      viewport?.removeEventListener("resize", updateSize);
+      resizeObserver?.disconnect();
+    };
+  }, []);
+
+  return size;
+}
+
 export function DebugPanel() {
   const [collapsed, setCollapsed] = useState(false);
   const [enemyKind, setEnemyKind] = useState<DebugEnemyKind>("chaser");
@@ -220,6 +271,7 @@ export function DebugPanel() {
   const [infiniteHealth, setInfiniteHealth] = useState(hasDebugInfiniteHealth());
   const [infiniteSkillCharge, setInfiniteSkillCharge] = useState(hasDebugInfiniteSkillCharge());
   const [infiniteUltimateCharge, setInfiniteUltimateCharge] = useState(hasDebugInfiniteUltimateCharge());
+  const gameWindowSize = useGameWindowSize();
 
   if (!isDebugMode) return null;
 
@@ -255,6 +307,12 @@ export function DebugPanel() {
   return (
     <div className={panelClassName}>
       {panelHeader}
+      <div className="mb-2 flex items-center justify-between rounded-[4px] border border-[#70d7ff33] bg-[#10203388] px-2 py-1 text-[8px]">
+        <span className="text-[#9ed8ff]">Game window</span>
+        <span className="font-bold tabular-nums text-[#e7f8ff]">
+          {gameWindowSize ? `${gameWindowSize.width}x${gameWindowSize.height}` : "unknown"}
+        </span>
+      </div>
       <label className="mb-2 flex items-center gap-2 text-[8px] text-[#c3efff]" htmlFor="debug-infinite-health">
         <input
           id="debug-infinite-health"
