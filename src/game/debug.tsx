@@ -382,22 +382,22 @@ export function DebugPanel() {
             <option key={option.id} value={option.id}>{option.label}</option>
           ))}
         </select>
+        <select
+          id="debug-skill-level"
+          aria-label="Skill level"
+          className="w-[42px] rounded-[4px] border border-[#70d7ff44] bg-[#102033] px-1 py-1 text-[9px] text-[#f2fbff]"
+          value={skillLevel}
+          onChange={(event) => {
+            const nextLevel = Number(event.target.value) as SkillLevel;
+            setSkillLevelValue(nextLevel);
+            setDebugSkillLevel(skillId, nextLevel);
+          }}
+        >
+          {DEBUG_SKILL_LEVEL_OPTIONS.map((level) => (
+            <option key={level} value={level}>{level}</option>
+          ))}
+        </select>
       </div>
-      <label className="mt-1 block text-[8px] text-[#9ed8ff]" htmlFor="debug-skill-level">Skill level</label>
-      <select
-        id="debug-skill-level"
-        className="mt-1 w-full rounded-[4px] border border-[#70d7ff44] bg-[#102033] px-1 py-1 text-[9px] text-[#f2fbff]"
-        value={skillLevel}
-        onChange={(event) => {
-          const nextLevel = Number(event.target.value) as SkillLevel;
-          setSkillLevelValue(nextLevel);
-          setDebugSkillLevel(skillId, nextLevel);
-        }}
-      >
-        {DEBUG_SKILL_LEVEL_OPTIONS.map((level) => (
-          <option key={level} value={level}>{level}</option>
-        ))}
-      </select>
       <label className="mt-2 block text-[8px] text-[#9ed8ff]" htmlFor="debug-enemy-kind">Enemy</label>
       <div className="mt-1 flex gap-1">
         <select
