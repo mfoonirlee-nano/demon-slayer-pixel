@@ -11,7 +11,12 @@ import {
 import type { ActBand, EnemyId, EnemySpawnSource, EnemyState, PlatformState, SpawnPattern } from "../types/game-state";
 import { hitbox } from "../game/utils";
 import { hurtPlayer } from "./player";
-import { createEnemyState, drawEnemyEliteMarker, enemyAttackDamage } from "./enemies/common";
+import {
+  createEnemyState,
+  drawEnemyEliteMarker,
+  enemyAttackDamage,
+  enemyCollisionSize,
+} from "./enemies/common";
 import { canSpawnBrute, isBruteSheet } from "./enemies/brute";
 import { canSpawnBinder, isBinderSheet } from "./enemies/binder";
 import { canSpawnDuelist, isDuelistSheet } from "./enemies/duelist";
@@ -35,14 +40,28 @@ import {
 } from "../systems/enemyDirector";
 import { BOSS_ARCHETYPE_IDS } from "./bosses/registry";
 import { actBandForAct } from "../systems/runProgression";
+import {
+  drawNearForegroundOccluder,
+  resolveNearForegroundOccluders,
+  type NearForegroundOccluder,
+} from "../rendering/nearForeground";
 
 type SpawnEnemyOptions = {
   elite?: boolean;
   growthStage?: ActBand;
 };
 
+type EnemySpawnSize = {
+  w: number;
+  h: number;
+};
+
 const PLATFORM_SPAWN_MAX_DISTANCE = 260;
 const PLATFORM_SPAWN_CENTER_RATIO = 0.35;
+const BACKGROUND_OCCLUDER_SPAWN_START_ACT = 4;
+const BACKGROUND_OCCLUDER_SPAWN_CHANCE_PER_ACT = 0.045;
+const BACKGROUND_OCCLUDER_SPAWN_MAX_CHANCE = 0.45;
+const BACKGROUND_OCCLUDER_COVER_FRAMES = 36;
 const PLATFORM_READY_ENEMY_IDS: readonly EnemyId[] = [
   "chaser",
   "crawler",
@@ -85,6 +104,72 @@ function platformSpawnCandidate() {
 
 function canUsePlatformSpawn(enemyId: EnemyId, source: EnemySpawnSource) {
   return source === "regular" && enemyId !== "caster" && PLATFORM_READY_ENEMY_IDS.includes(enemyId);
+}
+
+function backgroundOccluderSpawnChance() {
+  const unlockedActs = state.enemyDirector.act - BACKGROUND_OCCLUDER_SPAWN_START_ACT + 1;
+  if (unlockedActs <= 0) return 0;
+  return Math.min(
+    BACKGROUND_OCCLUDER_SPAWN_MAX_CHANCE,
+    unlockedActs * BACKGROUND_OCCLUDER_SPAWN_CHANCE_PER_ACT,
+  );
+}
+
+function occluderCenterX(occluder: NearForegroundOccluder) {
+  return occluder.x + occluder.drawW / 2;
+}
+
+function playerCenterX() {
+  return state.player.x + state.player.w / 2;
+}
+
+function isVisibleOccluder(occluder: NearForegroundOccluder) {
+  return occluder.x < WIDTH && occluder.x + occluder.drawW > 0;
+}
+
+function occluderClearsPlayer(occluder: NearForegroundOccluder, size: EnemySpawnSize) {
+  const minCenterDistance = (size.w + state.player.w) / 2;
+  return Math.abs(occluderCenterX(occluder) - playerCenterX()) >= minCenterDistance;
+}
+
+function occluderFitsEnemy(occluder: NearForegroundOccluder, size: EnemySpawnSize) {
+  const centerX = occluderCenterX(occluder);
+  return isVisibleOccluder(occluder)
+    && occluder.drawW > size.w
+    && occluder.drawH > size.h
+    && centerX >= size.w / 2
+    && centerX <= WIDTH - size.w / 2
+    && occluderClearsPlayer(occluder, size);
+}
+
+function pickBackgroundOccluderSpawn(size: EnemySpawnSize, source: EnemySpawnSource) {
+  if (source !== "regular") return null;
+
+  const chance = backgroundOccluderSpawnChance();
+  if (chance <= 0 || Math.random() >= chance) return null;
+
+  const candidates = resolveNearForegroundOccluders({
+    elapsed: state.elapsed,
+    bossPreludeElapsed: state.enemyDirector.bossPrelude?.elapsed ?? null,
+    act: state.enemyDirector.act,
+  }).filter((occluder) => occluderFitsEnemy(occluder, size));
+  if (candidates.length === 0) return null;
+
+  return candidates[Math.floor(Math.random() * candidates.length)];
+}
+
+function sideForBackgroundOccluder(occluder: NearForegroundOccluder) {
+  return occluderCenterX(occluder) < playerCenterX() ? -1 : 1;
+}
+
+function placeEnemyBehindBackgroundOccluder(enemy: EnemyState, occluder: NearForegroundOccluder) {
+  enemy.x = occluderCenterX(occluder) - enemy.w / 2;
+  enemy.y = GROUND_Y - enemy.h;
+  enemy.vy = 0;
+  enemy.onPlatform = null;
+  enemy.spawnOccluder = { ...occluder };
+  enemy.spawnOccluderFrames = BACKGROUND_OCCLUDER_COVER_FRAMES;
+  enemy.spawnOccluderStartedAt = state.elapsed;
 }
 
 function enemyUsesPlatformPhysics(enemy: EnemyState) {
@@ -162,6 +247,9 @@ function createSpawnedEnemy(
 ): EnemyState {
   const config = enemyArchetypeById(enemyId);
   const archetype = enemyArchetypeForSheet(config.sheetIndex);
+  const size = enemyCollisionSize(config.sheetIndex, archetype);
+  const backgroundOccluder = pickBackgroundOccluderSpawn(size, spawnSource);
+  const spawnSide = backgroundOccluder ? sideForBackgroundOccluder(backgroundOccluder) : side;
   const growthStage = options.growthStage ?? actBandForAct(state.enemyDirector.act);
   const statBossKills = spawnSource === "debug" && options.growthStage
     ? DEBUG_BOSS_KILLS_BY_GROWTH_STAGE[options.growthStage]
@@ -174,14 +262,16 @@ function createSpawnedEnemy(
     spawnCost: enemySpawnCost(enemyId, elite),
     growthStage,
     elite,
-    side,
+    side: spawnSide,
     sheetIndex: config.sheetIndex,
     speed: stats.speed,
     damage: stats.damage,
     baseHp: stats.hp / (archetype.hpMultiplier ?? 1),
   };
   const enemy = createEnemyState(spawnContext, archetype);
-  if (canUsePlatformSpawn(enemyId, spawnSource)) {
+  if (backgroundOccluder) {
+    placeEnemyBehindBackgroundOccluder(enemy, backgroundOccluder);
+  } else if (canUsePlatformSpawn(enemyId, spawnSource)) {
     const platform = platformSpawnCandidate();
     if (platform) placeEnemyOnPlatform(enemy, platform);
   }
@@ -263,6 +353,9 @@ export function updateEnemies() {
     const enemy = state.enemies[i];
     const lanternBuffed = (enemy.lanternBuffTimer ?? 0) > 0;
     enemy.hitCd -= 1;
+    if ((enemy.spawnOccluderFrames ?? 0) > 0) {
+      enemy.spawnOccluderFrames = Math.max(0, (enemy.spawnOccluderFrames ?? 0) - 1);
+    }
     if ((enemy.armorBreakTimer ?? 0) > 0) {
       enemy.armorBreakTimer = Math.max(0, (enemy.armorBreakTimer ?? 0) - 1);
     }
@@ -307,4 +400,10 @@ export function drawEnemy(enemy: EnemyState) {
   const archetype = enemyArchetypeForSheet(enemy.sheetIndex);
   archetype.draw(enemy);
   drawEnemyEliteMarker(enemy, archetype);
+  if (enemy.spawnOccluder && (enemy.spawnOccluderFrames ?? 0) > 0) {
+    drawNearForegroundOccluder(
+      enemy.spawnOccluder,
+      Math.max(0, state.elapsed - (enemy.spawnOccluderStartedAt ?? state.elapsed)),
+    );
+  }
 }

@@ -4,10 +4,13 @@ import { GROUND_Y, WIDTH } from "../constants";
 import { bossApproachGroundTransitionSeconds } from "../systems/runProgression";
 import {
   BOSS_PRELUDE_TORII_DRAW_H,
+  resolveNearForegroundOccluders,
   resolveBossPreludeToriiPlacement,
 } from "./nearForeground";
 
 const ACT_ONE = 1;
+const START_ELAPSED = 0;
+const MIN_POSITIVE_SIZE = 0;
 const EXPECTED_DOUBLE_TORII_DRAW_H = 284;
 const EXPECTED_TORII_BOTTOM_OFFSET = 8;
 
@@ -51,5 +54,18 @@ describe("boss prelude torii placement", () => {
     expect(middle.x).toBeGreaterThan(0);
     expect(middle.x + middle.drawW).toBeLessThan(WIDTH);
     expect(end.x + end.drawW).toBeLessThanOrEqual(0);
+  });
+
+  it("resolves near foreground occluders for spawn placement", () => {
+    const occluders = resolveNearForegroundOccluders({
+      elapsed: START_ELAPSED,
+      bossPreludeElapsed: null,
+      act: ACT_ONE,
+    });
+
+    expect(occluders.length).toBeGreaterThan(0);
+    expect(occluders.every((occluder) => occluder.drawW > MIN_POSITIVE_SIZE)).toBe(true);
+    expect(occluders.every((occluder) => occluder.drawH > MIN_POSITIVE_SIZE)).toBe(true);
+    expect(occluders.some((occluder) => occluder.x < WIDTH && occluder.x + occluder.drawW > 0)).toBe(true);
   });
 });

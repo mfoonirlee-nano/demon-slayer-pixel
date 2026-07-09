@@ -1,6 +1,7 @@
-import { describe, expect, it } from "vitest";
-import { GROUND_Y, WIDTH } from "../constants";
+import { afterEach, describe, expect, it, vi } from "vitest";
+import { ENEMY_CONFIG, GROUND_Y, WIDTH } from "../constants";
 import { resetState, state } from "../game/state";
+import { resolveNearForegroundOccluders } from "../rendering/nearForeground";
 import { enemySpawnCost } from "../systems/enemyDirector";
 import type { PlatformState } from "../types/game-state";
 import { spawnEnemyById, updateEnemies } from "./enemy";
@@ -19,6 +20,13 @@ const OFFSCREEN_PLATFORM_X = WIDTH + OFFSCREEN_PLATFORM_X_OFFSET;
 const TEST_PLATFORM_Y = GROUND_Y - TEST_PLATFORM_Y_OFFSET_FROM_GROUND;
 const TEST_PLATFORM_WIDTH = 180;
 const PLATFORM_SPAWN_CENTER_RATIO = 0.35;
+const BACKGROUND_OCCLUDER_TEST_ACT = 9;
+const INTRO_OCCLUDER_TEST_ACT = 1;
+const OCCLUDER_TEST_ELAPSED = 0;
+const FIRST_RANDOM_VALUE = 0;
+const HALF_DIVISOR = 2;
+const BACKGROUND_OCCLUDER_COVER_FRAMES = 36;
+const BACKGROUND_OCCLUDER_COVER_FRAMES_AFTER_UPDATE = 35;
 
 const CHASER_TEST_BASE_SPEED = 2;
 const CHASER_NEAR_SPEED_SCALE = 1.5;
@@ -44,6 +52,18 @@ function platform(overrides: Partial<PlatformState> = {}): PlatformState {
     ...overrides,
   };
 }
+
+function occluderCenterX(occluder: { x: number; drawW: number }) {
+  return occluder.x + occluder.drawW / HALF_DIVISOR;
+}
+
+function playerCenterX() {
+  return state.player.x + state.player.w / HALF_DIVISOR;
+}
+
+afterEach(() => {
+  vi.restoreAllMocks();
+});
 
 describe("leaper damage", () => {
   it("applies contact damage when the leaper body overlaps the player", () => {
@@ -249,5 +269,63 @@ describe("enemy platform spawns", () => {
     expect(runner.y).toBeGreaterThan(originalY);
     expect(runner.vy ?? 0).toBeGreaterThan(0);
     expect(runner.onPlatform).toBeNull();
+  });
+});
+
+describe("enemy background occluder spawns", () => {
+  it("lets late regular enemies emerge from visible occluders larger than their body", () => {
+    resetState();
+    state.enemyDirector.act = BACKGROUND_OCCLUDER_TEST_ACT;
+    state.elapsed = OCCLUDER_TEST_ELAPSED;
+    vi.spyOn(Math, "random").mockReturnValue(FIRST_RANDOM_VALUE);
+
+    expect(spawnEnemyById("runner", "regular", "left")).toBe(true);
+
+    const runner = state.enemies[0];
+    const expectedOccluder = resolveNearForegroundOccluders({
+      elapsed: state.elapsed,
+      bossPreludeElapsed: null,
+      act: state.enemyDirector.act,
+    }).find((occluder) => (
+      occluder.x < WIDTH
+      && occluder.x + occluder.drawW > 0
+      && occluder.drawW > runner.w
+      && occluder.drawH > runner.h
+      && occluderCenterX(occluder) >= runner.w / HALF_DIVISOR
+      && occluderCenterX(occluder) <= WIDTH - runner.w / HALF_DIVISOR
+      && Math.abs(occluderCenterX(occluder) - playerCenterX()) >= (runner.w + state.player.w) / HALF_DIVISOR
+    ));
+
+    if (!expectedOccluder) throw new Error("expected at least one fitting occluder");
+
+    expect(runner.onPlatform).toBeNull();
+    expect(runner.spawnOccluder).toEqual(expectedOccluder);
+    expect(runner.spawnOccluderFrames).toBe(BACKGROUND_OCCLUDER_COVER_FRAMES);
+    expect(runner.spawnOccluderStartedAt).toBe(OCCLUDER_TEST_ELAPSED);
+    expect(runner.y + runner.h).toBe(GROUND_Y);
+    expect(runner.x + runner.w / HALF_DIVISOR).toBeCloseTo(occluderCenterX(expectedOccluder));
+    expect(expectedOccluder.drawW).toBeGreaterThan(runner.w);
+    expect(expectedOccluder.drawH).toBeGreaterThan(runner.h);
+
+    updateEnemies();
+
+    expect(runner.spawnOccluderFrames).toBe(BACKGROUND_OCCLUDER_COVER_FRAMES_AFTER_UPDATE);
+  });
+
+  it("keeps early regular enemies on the normal ground entry", () => {
+    resetState();
+    state.enemyDirector.act = INTRO_OCCLUDER_TEST_ACT;
+    state.elapsed = OCCLUDER_TEST_ELAPSED;
+    vi.spyOn(Math, "random").mockReturnValue(FIRST_RANDOM_VALUE);
+
+    expect(spawnEnemyById("runner", "regular", "left")).toBe(true);
+
+    const runner = state.enemies[0];
+    expect(runner.x).toBe(ENEMY_CONFIG.spawnOffsetLeft);
+    expect(runner.y + runner.h).toBe(GROUND_Y);
+    expect(runner.onPlatform).toBeNull();
+    expect(runner.spawnOccluder).toBeUndefined();
+    expect(runner.spawnOccluderFrames).toBeUndefined();
+    expect(runner.spawnOccluderStartedAt).toBeUndefined();
   });
 });

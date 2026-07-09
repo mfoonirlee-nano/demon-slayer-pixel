@@ -10,6 +10,7 @@ import {
   FOREGROUND_SPRITES,
 } from "../constants";
 import { bossApproachGroundTransitionSeconds } from "../systems/runProgression";
+import type { EnemySpawnOccluderState, EnemySpawnOccluderSource } from "../types/game-state";
 
 const NEAR_FOREGROUND_SPEED = 18;
 const NEAR_FOREGROUND_PATTERN_WIDTH = 2688;
@@ -37,6 +38,8 @@ const BOSS_PRELUDE_TORII_BOTTOM_OFFSET = 8;
 const BOSS_PRELUDE_TORII_ALPHA = 0.84;
 const BOSS_PRELUDE_TORII_START_PADDING = 48;
 const BOSS_PRELUDE_TORII_EXIT_PADDING = 48;
+const NEAR_FOREGROUND_PASS_MIN = -1;
+const NEAR_FOREGROUND_PASS_MAX = 1;
 
 const TREE_LINE = Array.from({ length: TREE_COUNT }, (_, i) => ({
   variantSeed: i * TREE_VARIANT_SEED_STEP + TREE_VARIANT_SEED_OFFSET,
@@ -93,6 +96,8 @@ export type BossPreludeToriiPlacement = {
   alpha: number;
 };
 
+export type NearForegroundOccluder = EnemySpawnOccluderState;
+
 function clamp01(value: number) {
   return Math.min(1, Math.max(0, value));
 }
@@ -136,6 +141,172 @@ function drawRegion(
   context.globalAlpha = alpha;
   context.drawImage(image, region.sx, region.sy, region.sw, region.sh, x, y, drawW, drawH);
   context.restore();
+}
+
+function nearForegroundOffset(elapsed: number) {
+  const scroll = elapsed * NEAR_FOREGROUND_SPEED;
+  return ((scroll % NEAR_FOREGROUND_PATTERN_WIDTH) + NEAR_FOREGROUND_PATTERN_WIDTH) % NEAR_FOREGROUND_PATTERN_WIDTH;
+}
+
+function pushOccluder(
+  occluders: NearForegroundOccluder[],
+  source: EnemySpawnOccluderSource,
+  region: { sw: number; sh: number },
+  variantIndex: number,
+  x: number,
+  y: number,
+  drawH: number,
+  alpha: number,
+  sheetIndex?: number,
+) {
+  occluders.push({
+    source,
+    sheetIndex,
+    variantIndex,
+    x,
+    y,
+    drawW: drawH * (region.sw / region.sh),
+    drawH,
+    alpha,
+  });
+}
+
+function pushTreeOccluders(occluders: NearForegroundOccluder[], pass: number, offset: number) {
+  const variants = TREE_SPRITES.sheets.flatMap((sheet, sheetIndex) =>
+    sheet.variants.map((region, variantIndex) => ({ sheetIndex, variantIndex, region })),
+  );
+  if (variants.length === 0) return;
+
+  for (const tree of TREE_LINE) {
+    const entry = variants[tree.variantSeed % variants.length];
+    const x = tree.baseX + pass * NEAR_FOREGROUND_PATTERN_WIDTH - offset;
+    const y = GROUND_Y + tree.bottomOffset - tree.drawH;
+    pushOccluder(
+      occluders,
+      "tree",
+      entry.region,
+      entry.variantIndex,
+      x,
+      y,
+      tree.drawH,
+      tree.alpha,
+      entry.sheetIndex,
+    );
+  }
+}
+
+function pushDecorOccluders(occluders: NearForegroundOccluder[], pass: number, offset: number) {
+  if (FOREGROUND_SPRITES.decor.length === 0) return;
+
+  for (const decor of FOREGROUND_DECOR) {
+    const variantIndex = decor.variantSeed % FOREGROUND_SPRITES.decor.length;
+    const region = FOREGROUND_SPRITES.decor[variantIndex];
+    const x = decor.baseX + pass * NEAR_FOREGROUND_PATTERN_WIDTH - offset;
+    const y = GROUND_Y + decor.bottomOffset - decor.drawH;
+    pushOccluder(occluders, "decor", region, variantIndex, x, y, decor.drawH, decor.alpha);
+  }
+}
+
+function pushPropOccluders(occluders: NearForegroundOccluder[], pass: number, offset: number) {
+  const propSheets = {
+    stoneTower: STONE_TOWER_SPRITES,
+    stoneTowerSmall: STONE_TOWER_SMALL_SPRITES,
+  };
+
+  for (const prop of FOREGROUND_PROPS) {
+    const sheet = propSheets[prop.sheet];
+    if (sheet.variants.length === 0) continue;
+
+    const variantIndex = prop.variantSeed % sheet.variants.length;
+    const region = sheet.variants[variantIndex];
+    const x = prop.baseX + pass * NEAR_FOREGROUND_PATTERN_WIDTH - offset;
+    const y = GROUND_Y + prop.bottomOffset - prop.drawH;
+    pushOccluder(occluders, prop.sheet, region, variantIndex, x, y, prop.drawH, prop.alpha);
+  }
+}
+
+export function resolveNearForegroundOccluders(input: {
+  elapsed: number;
+  bossPreludeElapsed: number | null;
+  act: number;
+}): NearForegroundOccluder[] {
+  const offset = nearForegroundOffset(input.elapsed);
+  const occluders: NearForegroundOccluder[] = [];
+
+  for (let pass = NEAR_FOREGROUND_PASS_MIN; pass <= NEAR_FOREGROUND_PASS_MAX; pass += 1) {
+    pushTreeOccluders(occluders, pass, offset);
+  }
+  for (let pass = NEAR_FOREGROUND_PASS_MIN; pass <= NEAR_FOREGROUND_PASS_MAX; pass += 1) {
+    pushDecorOccluders(occluders, pass, offset);
+  }
+  for (let pass = NEAR_FOREGROUND_PASS_MIN; pass <= NEAR_FOREGROUND_PASS_MAX; pass += 1) {
+    pushPropOccluders(occluders, pass, offset);
+  }
+
+  const torii = resolveBossPreludeToriiPlacement({
+    bossPreludeElapsed: input.bossPreludeElapsed,
+    act: input.act,
+  });
+  if (torii) {
+    occluders.push({
+      source: "torii",
+      variantIndex: torii.variantIndex,
+      x: torii.x,
+      y: torii.y,
+      drawW: torii.drawW,
+      drawH: torii.drawH,
+      alpha: torii.alpha,
+    });
+  }
+
+  return occluders;
+}
+
+function occluderImageAndRegion(occluder: EnemySpawnOccluderState) {
+  if (occluder.source === "tree") {
+    const sheet = TREE_SPRITES.sheets[occluder.sheetIndex ?? 0];
+    return { image: sheet?.image ?? null, region: sheet?.variants[occluder.variantIndex] };
+  }
+  if (occluder.source === "decor") {
+    return {
+      image: FOREGROUND_SPRITES.image,
+      region: FOREGROUND_SPRITES.decor[occluder.variantIndex],
+    };
+  }
+  if (occluder.source === "stoneTower") {
+    return {
+      image: STONE_TOWER_SPRITES.image,
+      region: STONE_TOWER_SPRITES.variants[occluder.variantIndex],
+    };
+  }
+  if (occluder.source === "stoneTowerSmall") {
+    return {
+      image: STONE_TOWER_SMALL_SPRITES.image,
+      region: STONE_TOWER_SMALL_SPRITES.variants[occluder.variantIndex],
+    };
+  }
+  return {
+    image: TORII_SPRITES.image,
+    region: TORII_SPRITES.variants[occluder.variantIndex],
+  };
+}
+
+export function drawNearForegroundOccluder(occluder: EnemySpawnOccluderState, elapsedDelta = 0) {
+  const context = ctx;
+  if (!context) return;
+
+  const { image, region } = occluderImageAndRegion(occluder);
+  if (!image || !region) return;
+
+  drawRegion(
+    context,
+    image,
+    region,
+    occluder.x - elapsedDelta * NEAR_FOREGROUND_SPEED,
+    occluder.y,
+    occluder.drawH,
+    occluder.alpha,
+  );
 }
 
 function drawTrees(context: CanvasRenderingContext2D, pass: number, offset: number) {
@@ -209,16 +380,15 @@ export function drawNearForeground() {
   const context = ctx;
   if (!context) return;
 
-  const scroll = state.elapsed * NEAR_FOREGROUND_SPEED;
-  const offset = ((scroll % NEAR_FOREGROUND_PATTERN_WIDTH) + NEAR_FOREGROUND_PATTERN_WIDTH) % NEAR_FOREGROUND_PATTERN_WIDTH;
+  const offset = nearForegroundOffset(state.elapsed);
 
-  for (let pass = -1; pass <= 1; pass += 1) {
+  for (let pass = NEAR_FOREGROUND_PASS_MIN; pass <= NEAR_FOREGROUND_PASS_MAX; pass += 1) {
     drawTrees(context, pass, offset);
   }
-  for (let pass = -1; pass <= 1; pass += 1) {
+  for (let pass = NEAR_FOREGROUND_PASS_MIN; pass <= NEAR_FOREGROUND_PASS_MAX; pass += 1) {
     drawDecor(context, pass, offset);
   }
-  for (let pass = -1; pass <= 1; pass += 1) {
+  for (let pass = NEAR_FOREGROUND_PASS_MIN; pass <= NEAR_FOREGROUND_PASS_MAX; pass += 1) {
     drawProps(context, pass, offset);
   }
   drawBossPreludeTorii(context);

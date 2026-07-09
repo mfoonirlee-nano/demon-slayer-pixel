@@ -42,6 +42,19 @@ export type PlatformState = {
   baseY: number;
 };
 
+export type EnemySpawnOccluderSource = "tree" | "decor" | "stoneTower" | "stoneTowerSmall" | "torii";
+
+export type EnemySpawnOccluderState = {
+  source: EnemySpawnOccluderSource;
+  sheetIndex?: number;
+  variantIndex: number;
+  x: number;
+  y: number;
+  drawW: number;
+  drawH: number;
+  alpha: number;
+};
+
 export type ChestState = {
   platform: PlatformState;
   offsetX: number;
@@ -245,6 +258,9 @@ export type EnemyState = {
   wardenBuffedFrames?: number;
   wardenAttackDamageScale?: number;
   wardenDamageImmune?: boolean;
+  spawnOccluder?: EnemySpawnOccluderState;
+  spawnOccluderFrames?: number;
+  spawnOccluderStartedAt?: number;
   burrowerPhase?: BurrowerPhase;
   burrowerTimer?: number;
   burrowerPhaseDuration?: number;
