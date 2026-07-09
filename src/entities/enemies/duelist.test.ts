@@ -8,7 +8,8 @@ const NORMAL_ATTACK_DESIRE_DISTANCE = 140;
 const SPIN_FINAL_ONLY_DISTANCE = 120;
 const ACTIVE_SPIN_TIMER = 14;
 const TEST_DUELIST_CENTER_X = 260;
-const ATTACK_TRANSITION_PLAYER_OFFSET = 40;
+const CLOSE_ATTACK_TRANSITION_PLAYER_OFFSET = 40;
+const FAR_ATTACK_TRANSITION_PLAYER_OFFSET = 110;
 const SPIN_ARC_TARGET_OFFSET = 110;
 const SPIN_ARC_SAMPLE_FRAMES = 8;
 const SPIN_COMPLETION_GUARD_FRAMES = 30;
@@ -35,11 +36,11 @@ function spawnDuelist(growthStage: ActBand = "intro") {
   return state.enemies[0];
 }
 
-function enterDuelistAttack(growthStage: ActBand) {
+function enterDuelistAttack(growthStage: ActBand, offset = CLOSE_ATTACK_TRANSITION_PLAYER_OFFSET) {
   resetState();
   const duelist = spawnDuelist(growthStage);
   moveEnemyCenterX(duelist, TEST_DUELIST_CENTER_X);
-  setPlayerCenterX(enemyCenterX(duelist) + ATTACK_TRANSITION_PLAYER_OFFSET);
+  setPlayerCenterX(enemyCenterX(duelist) + offset);
   duelist.duelistPhase = "windup";
   duelist.duelistTimer = 1;
   duelist.duelistFacing = 1;
@@ -117,10 +118,15 @@ describe("duelist tuning", () => {
     expect(duelist.duelistPhase).toBe("windup");
   });
 
-  it("turns awakened and final windups into spin attacks", () => {
+  it("uses direct slashes for close windup attacks", () => {
     expect(enterDuelistAttack("intro").duelistPhase).toBe("slash");
-    expect(enterDuelistAttack("awakened").duelistPhase).toBe("spin");
-    expect(enterDuelistAttack("final").duelistPhase).toBe("spin");
+    expect(enterDuelistAttack("awakened").duelistPhase).toBe("slash");
+    expect(enterDuelistAttack("final").duelistPhase).toBe("slash");
+  });
+
+  it("turns longer awakened and final windups into spin attacks", () => {
+    expect(enterDuelistAttack("awakened", FAR_ATTACK_TRANSITION_PLAYER_OFFSET).duelistPhase).toBe("spin");
+    expect(enterDuelistAttack("final", FAR_ATTACK_TRANSITION_PLAYER_OFFSET).duelistPhase).toBe("spin");
   });
 
   it("gives final spin attacks a larger hit range than awakened spin attacks", () => {

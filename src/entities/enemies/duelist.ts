@@ -34,6 +34,7 @@ const DUELIST_CONFIG = {
   spinArcHeight: 44,
   spinDamageMultiplier: 2.15,
   spinDamageBonus: 3,
+  spinMinDistance: 88,
   finalSpinReachBonus: 74,
   finalSpinHeightBonus: 16,
   recoverMinFrames: 18,
@@ -126,8 +127,9 @@ function duelistRecoverMinFrames(enemy: EnemyState) {
   return DUELIST_CONFIG.recoverMinFrames;
 }
 
-function duelistAttackPhase(enemy: EnemyState): DuelistPhase {
-  return hasAwakenedGrowth(enemy) ? "spin" : "slash";
+function duelistAttackPhase(enemy: EnemyState, targetDistance: number): DuelistPhase {
+  if (!hasAwakenedGrowth(enemy)) return "slash";
+  return targetDistance >= DUELIST_CONFIG.spinMinDistance ? "spin" : "slash";
 }
 
 function duelistPhaseDuration(enemy: EnemyState, phase: DuelistPhase) {
@@ -289,7 +291,7 @@ function updateDuelist(enemy: EnemyState) {
     enemy.duelistTimer -= 1;
     enemy.vx = 0;
     if (enemy.duelistTimer <= 0) {
-      enterDuelistPhase(enemy, duelistAttackPhase(enemy));
+      enterDuelistPhase(enemy, duelistAttackPhase(enemy, Math.abs(toward)));
       enemy.duelistFacing = facing;
     }
   } else if (phase === "slash") {
