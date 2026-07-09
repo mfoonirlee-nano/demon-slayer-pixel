@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState, type CSSProperties } from "react";
+import { useCallback, useEffect, useLayoutEffect, useRef, useState, type CSSProperties } from "react";
 import { Provider } from "jotai";
 import {
   WIDTH,
@@ -16,6 +16,7 @@ import { TouchControls } from "../ui/touchControls";
 type AppPhase = "menu" | "playing";
 
 const MIN_VIEWPORT_SCALE = 0.1;
+const MAX_CANVAS_BACKING_SCALE = 4;
 
 function viewportGameScale() {
   if (typeof window === "undefined") return 1;
@@ -27,6 +28,25 @@ function viewportGameScale() {
     MIN_VIEWPORT_SCALE,
     Math.min(viewportWidth / WIDTH, viewportHeight / HEIGHT),
   );
+}
+
+function viewportDevicePixelRatio() {
+  if (typeof window === "undefined") return 1;
+  return window.devicePixelRatio || 1;
+}
+
+function canvasBackingScale(viewportScale: number) {
+  return Math.max(
+    1,
+    Math.min(MAX_CANVAS_BACKING_SCALE, viewportScale * viewportDevicePixelRatio()),
+  );
+}
+
+function applyCanvasBackingScale(canvas: HTMLCanvasElement, backingScale: number) {
+  const backingWidth = Math.round(WIDTH * backingScale);
+  const backingHeight = Math.round(HEIGHT * backingScale);
+  if (canvas.width !== backingWidth) canvas.width = backingWidth;
+  if (canvas.height !== backingHeight) canvas.height = backingHeight;
 }
 
 function useViewportGameScale() {
@@ -49,14 +69,22 @@ function useViewportGameScale() {
   return scale;
 }
 
-function GameCanvas({ active }: { active: boolean }) {
+function GameCanvas({ active, backingScale }: { active: boolean; backingScale: number }) {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
+
+  useLayoutEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+
+    applyCanvasBackingScale(canvas, backingScale);
+    setCanvas(canvas, backingScale);
+  }, [backingScale]);
 
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
 
-    setCanvas(canvas);
+    setCanvas(canvas, backingScale);
     if (!active) {
       return () => {
         setCanvas(null);
@@ -75,8 +103,6 @@ function GameCanvas({ active }: { active: boolean }) {
     <canvas
       ref={canvasRef}
       id="game"
-      width={WIDTH}
-      height={HEIGHT}
       aria-label="Moonlit Tide Survivor"
       className="pixel-canvas"
     />
@@ -88,6 +114,7 @@ function AppShell() {
   const [assetsReady, setAssetsReady] = useState(false);
   const [startQueued, setStartQueued] = useState(false);
   const viewportScale = useViewportGameScale();
+  const backingScale = canvasBackingScale(viewportScale);
   const isPlaying = phase === "playing";
   const frameStyle = {
     width: WIDTH * viewportScale,
@@ -146,7 +173,7 @@ function AppShell() {
   return (
     <main className="app-shell game-shell">
       <section className="game-frame" style={frameStyle}>
-        <GameCanvas active={isPlaying} />
+        <GameCanvas active={isPlaying} backingScale={backingScale} />
         <div className="game-overlay" style={overlayStyle}>
           {isPlaying ? (
             <>
