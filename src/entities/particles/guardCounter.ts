@@ -70,8 +70,15 @@ export function drawGuardCounterEffect() {
   const rippleAlpha = GUARD_COUNTER_EFFECT_CONFIG.rippleAlphaMin + remainingRatio * GUARD_COUNTER_EFFECT_CONFIG.rippleAlphaRange;
   const rippleW = GUARD_COUNTER_EFFECT_CONFIG.rippleWidth + pulse * GUARD_COUNTER_EFFECT_CONFIG.ripplePulseWidth;
   const rippleH = GUARD_COUNTER_EFFECT_CONFIG.rippleHeight + pulse * GUARD_COUNTER_EFFECT_CONFIG.ripplePulseHeight;
+  const auraAlpha = GUARD_COUNTER_EFFECT_CONFIG.auraAlphaMin + remainingRatio * GUARD_COUNTER_EFFECT_CONFIG.auraAlphaRange;
+  const auraW = rippleW * GUARD_COUNTER_EFFECT_CONFIG.auraWidthScale;
+  const auraH = rippleH * GUARD_COUNTER_EFFECT_CONFIG.auraHeightScale;
   ctx.save();
   ctx.globalCompositeOperation = "lighter";
+  ctx.fillStyle = `rgba(80,205,255,${auraAlpha})`;
+  ctx.beginPath();
+  ctx.ellipse(cx, feetY - GUARD_COUNTER_EFFECT_CONFIG.rippleYOffset, auraW / 2, auraH / 2, 0, 0, FULL_CIRCLE_RADIANS);
+  ctx.fill();
   ctx.strokeStyle = `rgba(155,230,255,${rippleAlpha})`;
   ctx.lineWidth = 2;
   ctx.beginPath();

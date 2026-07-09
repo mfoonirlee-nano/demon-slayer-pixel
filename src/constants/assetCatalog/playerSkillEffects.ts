@@ -92,16 +92,20 @@ export const GUARD_COUNTER_EFFECT_SHEET: SpriteSheet = {
 };
 
 export const GUARD_COUNTER_EFFECT_CONFIG = {
-  drawScale: 0.72,
+  drawScale: 0.48,
   centerYOffset: 72,
   frameDuration: 6,
   startupFrames: 36,
   barrierFlashFrames: 18,
   barrierFrameDuration: 3,
-  barrierDrawScale: 0.58,
+  barrierDrawScale: 0.39,
   barrierCenterYOffset: 62,
   barrierAlphaMin: 0.35,
   barrierAlphaMax: 0.82,
+  auraAlphaMin: 0.06,
+  auraAlphaRange: 0.08,
+  auraWidthScale: 1.35,
+  auraHeightScale: 1.45,
   rippleWidth: 76,
   rippleHeight: 14,
   ripplePulseSpeed: 0.16,
