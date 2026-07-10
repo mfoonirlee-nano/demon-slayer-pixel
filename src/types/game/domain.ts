@@ -17,6 +17,7 @@ export type BrutePhase =
   | "brokenAdvance"
   | "cleave"
   | "brokenRecover";
+export type BruteFireballPhase = "launch" | "roll" | "explode";
 export type CasterPhase = "move" | "windup" | "cast" | "recover" | "hit";
 export type CasterAiPhase = "seekRange" | "windup" | "cast" | "recover";
 export type BinderPhase = "move" | "windup" | "cast" | "recover" | "hit";

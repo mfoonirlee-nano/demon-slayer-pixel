@@ -207,8 +207,11 @@ Brute 专属动作素材：
 | `enemies/brute/brute_broken_advance.png` | `1920x360` | 6 | `320x360` | `brokenAdvance` | 无盾沉重推进，轮廓明显变窄 |
 | `enemies/brute/brute_cleave.png` | `1600x360` | 5 | `320x360` | `cleave` | 破盾后慢速横扫，挥臂弧线烘入图集 |
 | `enemies/brute/brute_broken_recover.png` | `960x360` | 3 | `320x360` | `brokenRecover` | 无盾攻击后硬直，胸腹持续暴露 |
+| `enemies/brute/brute_fireball_launch.png` | `384x96` | 4 | `96x96` | `launch` | 盾缘点燃、喷出火舌并凝成右向火球 |
+| `enemies/brute/brute_fireball_roll.png` | `576x96` | 6 | `96x96` | `roll` | 暗红橙金火球贴地自转，可无缝循环 |
+| `enemies/brute/brute_fireball_explosion.png` | `1120x160` | 7 | `160x160` | `explode` | 地面火星扩张到峰值爆焰后收缩熄灭，第三帧判定伤害 |
 
-Brute 运行时由 `BRUTE_SHEETS` 暴露并预加载。完整盾牌先承受普通攻击、普通技能和大招伤害，盾牌归零后进入 `shieldBreak -> brokenRecover -> brokenAdvance`；`armor_break` 命中完整盾牌时直接触发破盾，但这一击不打本体。以上运行时只加载透明 PNG，不提交 `*_source.png` 绿幕制作源图。
+Brute 运行时由 `BRUTE_SHEETS` 与 `BRUTE_FIREBALL_*_SHEET` 暴露并预加载。完整盾牌先承受普通攻击、普通技能和大招伤害，盾牌归零后进入 `shieldBreak -> brokenRecover -> brokenAdvance`；`armor_break` 命中完整盾牌时直接触发破盾，但这一击不打本体。觉醒/终幕火球复用盾击第三帧释放门，运行时按 `launch -> roll -> explode` 推进；滚动阶段不造成接触伤害，爆炸只在关键帧结算一次。以上运行时只加载透明 PNG，不提交 `*_source.png` 绿幕制作源图。
 
 Binder 专属动作素材：
 

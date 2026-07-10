@@ -21,6 +21,8 @@ import type {
   BindingZoneState,
   BloodMoonEffectState,
   BossSkill1EffectState,
+  BruteFireballState,
+  BruteGuardReflectionState,
   CloseArcBasicCrescentState,
   CloseArcEffectState,
   DeadBellBladeState,
@@ -113,6 +115,8 @@ export type GameState = {
   enemies: EnemyState[];
   particles: ParticleState[];
   projectiles: ProjectileState[];
+  bruteFireballs: BruteFireballState[];
+  bruteGuardReflections: BruteGuardReflectionState[];
   bindingZones: BindingZoneState[];
   platforms: PlatformState[];
   chests: ChestState[];

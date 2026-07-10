@@ -552,7 +552,7 @@ export function updatePlayer() {
           afterDamage: () => {
             recordBasicAttackHit(state, "enemy");
             triggerMoonTideAfterimageHit(hitPoint.x, hitPoint.y, e.w, (damage) => {
-              applyEnemyDamage(e, damage, PLAYER_COMBAT.attackEnemyHitCooldown);
+              applyEnemyDamage(e, damage, PLAYER_COMBAT.attackEnemyHitCooldown, "normal", hitPoint.x);
             });
           },
         });

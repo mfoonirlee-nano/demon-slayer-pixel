@@ -141,7 +141,13 @@ function bruteShieldFacesDamage(enemy: EnemyState, sourceX?: number) {
   return sourceDirection === 0 || sourceDirection === facing;
 }
 
-function damageBrute(enemy: EnemyState, damage: number, kind: EnemyDamageKind, sourceX?: number) {
+function damageBrute(
+  enemy: EnemyState,
+  damage: number,
+  kind: EnemyDamageKind,
+  sourceX?: number,
+  reflectToPlayer = false,
+) {
   if (enemy.bruteShieldBroken || (enemy.bruteShieldHp ?? 0) <= 0) {
     enemy.hp -= damage;
     return damage;
@@ -166,6 +172,17 @@ function damageBrute(enemy: EnemyState, damage: number, kind: EnemyDamageKind, s
   } else if (shieldDamage > 0) {
     playSfx("enemyShieldGuard");
   }
+  if (
+    reflectToPlayer
+    && enemyGrowthStage(enemy) === "final"
+    && enemy.brutePhase === "guard"
+    && shieldDamage > 0
+  ) {
+    state.bruteGuardReflections.push({
+      absorbedDamage: shieldDamage,
+      facing: enemy.bruteFacing ?? (enemy.vx >= 0 ? 1 : -1),
+    });
+  }
   return shieldDamage;
 }
 
@@ -175,6 +192,7 @@ export function damageEnemy(
   hitCooldown?: number,
   kind: EnemyDamageKind = "normal",
   sourceX?: number,
+  reflectToPlayer = false,
 ) {
   if (enemy.wardenDamageImmune) return 0;
 
@@ -186,7 +204,7 @@ export function damageEnemy(
     ? scaledDamage
     : scaledDamage * eliteBruteProtectionScale(enemy);
   const appliedDamage = enemy.sheetIndex === BRUTE_SHEET_INDEX
-    ? damageBrute(enemy, protectedDamage, kind, sourceX)
+    ? damageBrute(enemy, protectedDamage, kind, sourceX, reflectToPlayer)
     : protectedDamage;
   if (enemy.sheetIndex !== BRUTE_SHEET_INDEX) enemy.hp -= appliedDamage;
   if (hitCooldown !== undefined) enemy.hitCd = hitCooldown;

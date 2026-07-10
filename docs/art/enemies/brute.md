@@ -4,8 +4,8 @@
 
 - 设定状态：已切换为站立厚重近战敌人，核心机制是前置盾牌防御物；盾牌被打掉后防御下降并露出反打窗口。
 - 素材状态：`assets/art/brute-concept.png` 是新原画基准；运行时图集已替换为 `320x360` 站立持盾/破盾动作。
-- 玩法状态：当前代码实现 `advance -> guard -> shieldBash -> recover`，破盾后切换为 `shieldBreak -> brokenRecover -> brokenAdvance -> cleave`。
-- 代码入口：`src/entities/enemies/brute.ts`；资源入口：`src/constants/assets.ts` 的 `BRUTE_SHEET_INDEX` / `BRUTE_SHEETS`。
+- 玩法状态：当前代码实现 `advance -> guard -> shieldBash -> recover`，破盾后切换为 `shieldBreak -> brokenRecover -> brokenAdvance -> cleave`；觉醒盾击会释放地滚火球，终幕盾击释放一近一远两枚火球，终幕举盾还能反弹部分正面盾伤。
+- 代码入口：`src/entities/enemies/brute.ts`、`src/entities/enemies/bruteFireballEffects.ts`；资源入口：`src/constants/assets.ts` 的 `BRUTE_SHEET_INDEX`、`BRUTE_SHEETS` 与 `BRUTE_FIREBALL_*_SHEET`。
 
 ## Role
 
@@ -17,7 +17,7 @@
 | --- | --- | --- |
 | `advance` | 直立小步推进，盾牌始终挡在身体前侧 | 读出“正面硬、移动慢”的压力 |
 | `guard` | 进入距离后举盾停顿 `24-34` 帧，盾面裂纹或暗红符钉逐帧变亮 | 给玩家读招，同时提示盾牌是可破目标 |
-| `shieldBash` | 盾牌未破时短距离盾击或肩撞，只触发一次近战命中盒 | 让完整盾牌状态有正面威胁 |
+| `shieldBash` | 盾牌未破时短距离盾击或肩撞，只触发一次近战命中盒；觉醒/终幕在同一关键帧追加地滚火球 | 让完整盾牌状态有正面威胁，并用固定近距落点限制走位 |
 | `shieldBreak` | 盾牌耐久归零时进入 `28-40` 帧破盾硬直，碎片飞出并暴露胸腹 | 奖励持续输出，明确防御下降 |
 | `cleave` | 破盾后改用慢速拳击、骨槌或前臂横扫，前摇更明显 | 保留近战威胁，但不再拥有正面防御优势 |
 | `recover` / `brokenRecover` | 攻击后停顿；破盾后恢复帧更低、防线更空 | 露出稳定反打窗口 |
@@ -32,6 +32,9 @@
 | 盾牌耐久 | 本体生命的 `200%` | 独立防御物，破坏后不再恢复 |
 | 完整盾牌规则 | 普通攻击、普通技能和大招都先扣盾牌，溢出才进本体 | 让盾牌读成耐打防御层 |
 | `armor_break` 规则 | `断浪·裂甲` 命中完整盾牌时直接破盾，但这一击不打本体 | 让破甲技成为明确反制 |
+| 觉醒火球 | 盾击关键帧释放 `1` 枚，约前方 `230px` 爆炸 | 增加短程地面落点压力，不改成追踪远程单位 |
+| 终幕火球 | 同时释放近球 `150px` / 远球 `340px`，滚速分别为 `2.8` / `4.2` | 两个爆点错时落下，形成高伤害近远选择题 |
+| 终幕反伤 | 仅 `guard` 正面实际盾损的 `25%`，每次结算最多 `12`；背击、破甲、破盾和非玩家伤害不反弹 | 惩罚正面贪刀，同时保留绕背与破甲答案 |
 | 破盾后防御 | 不再拥有盾牌耐久 | 让“打掉盾牌”在手感上立即变快 |
 | 同屏上限 | `2` | 避免高血单位堆场 |
 | 同时攻击 | `1` | 避免多个盾击叠加不可读 |
@@ -63,6 +66,7 @@
 | 移动 | 盾牌在前，脚步短而重；不要贴地爬行 |
 | 举盾前摇 | 盾面抬高并盖住头胸，裂纹或符钉变亮 |
 | 盾击 | 盾牌向前压出半个身位，身体重心跟上 |
+| 火球喷发 | 第三帧盾缘点燃并喷出火舌，火球落地后持续自转，爆炸第三帧才生效 |
 | 盾牌受击 | 盾面局部裂开、碎屑掉落，本体不要大幅后仰 |
 | 破盾 | 盾牌断成几块飞出，brute 短暂暴露胸腹并停顿 |
 | 破盾后攻击 | 用拳、骨槌或残盾臂横扫，前摇比盾击更夸张 |
@@ -80,12 +84,16 @@
 | `brokenAdvance` | `assets/sprites/enemies/brute/brute_broken_advance.png` | 6 帧，`320x360` |
 | `cleave` | `assets/sprites/enemies/brute/brute_cleave.png` | 5 帧，`320x360` |
 | `brokenRecover` | `assets/sprites/enemies/brute/brute_broken_recover.png` | 3 帧，`320x360` |
+| 火球喷发 | `assets/sprites/enemies/brute/brute_fireball_launch.png` | 4 帧，`96x96` |
+| 火球滚动 | `assets/sprites/enemies/brute/brute_fireball_roll.png` | 6 帧，`96x96` |
+| 火球爆炸 | `assets/sprites/enemies/brute/brute_fireball_explosion.png` | 7 帧，`160x160` |
 
-以上图集均为透明 PNG，底部锚定并朝右；盾裂、碎片和横扫读法全部烘入 sprite。
+以上图集均为透明 PNG 并朝右。角色动作以脚底锚定，火球喷发以空中中心锚定，滚动和爆炸以地表锚定；盾裂、碎片、横扫和火焰读法全部烘入 sprite。
 
 ## Avoid
 
 - 不要低伏、钻地、露土包或用铲爪，否则会和 `burrower` 混淆。
 - 不要四足甲虫化；旧版低矮甲壳只作为废弃方向参考。
 - 不要给它高速冲刺，否则会和 `runner` 混淆。
+- 火球只能做短程、固定落点的地滚爆区；不要追踪、跨屏直射或做成弹幕，否则会和 `caster` 混淆。
 - 不要让暗红盾光太亮，避免抢过玩家技能和奖励可读性。

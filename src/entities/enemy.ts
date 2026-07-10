@@ -17,7 +17,7 @@ import {
   enemyAttackDamage,
   enemyCollisionSize,
 } from "./enemies/common";
-import { canSpawnBrute, isBruteSheet } from "./enemies/brute";
+import { canSpawnBrute, isBruteSheet, updateBruteGuardReflections } from "./enemies/brute";
 import { canSpawnBinder, isBinderSheet } from "./enemies/binder";
 import { canSpawnDuelist, isDuelistSheet } from "./enemies/duelist";
 import { canSpawnGlider, isGliderSheet } from "./enemies/glider";
@@ -393,6 +393,7 @@ export function updateEnemies() {
   }
 
   applyWardenAuraBuffs();
+  updateBruteGuardReflections();
 
   for (let i = state.enemies.length - 1; i >= 0; i -= 1) {
     const enemy = state.enemies[i];

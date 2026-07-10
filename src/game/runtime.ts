@@ -26,6 +26,10 @@ import { drawNearForeground } from "../rendering/nearForeground";
 import { updatePlayer, drawPlayer, triggerAttack, castSelectedSkill, castUltimateSkill, selectSkill, tryJump } from "../entities/player";
 import { spawnEnemyById, spawnEnemyBySheetIndex, updateEnemies, drawEnemy } from "../entities/enemy";
 import { updateBindingZones, drawBindingZonesBack, drawBindingZonesFront } from "../entities/enemies/binder";
+import {
+  drawBruteFireballEffects,
+  updateBruteFireballEffects,
+} from "../entities/enemies/bruteFireballEffects";
 import { drawWardenAuraIndicators } from "../entities/enemies/warden";
 import { spawnBoss, updateBoss, drawBoss, updateBossSkill1Effects, drawBossSkill1Effects, updateSpiderStringCageEffects, drawSpiderStringCageEffects, updateDeadBellEffects, drawDeadBellEffects, updateMistBoneEffects, drawMistBoneEffects, updateMirrorDreamEffects, drawMirrorDreamEffects, updateFangGaleEffects, drawFangGaleEffects, updateLanternEmberEffects, drawLanternEmberEffects, updateBloodMoonEffects, drawBloodMoonEffects } from "../entities/boss";
 import {
@@ -274,6 +278,7 @@ function loop(ts: number) {
       updateCrystals(dt);
       updateChests(dt);
       updateEnemies();
+      updateBruteFireballEffects();
       updateBoss();
       updateBossSkill1Effects();
       updateSpiderStringCageEffects();
@@ -356,6 +361,7 @@ function loop(ts: number) {
   drawPlayerSkillEffects();
   drawBindingZonesFront();
   drawHitBursts();
+  drawBruteFireballEffects();
   drawProjectiles();
   drawParticles();
 

@@ -4,6 +4,7 @@ import { BRUTE_SHEET_INDEX, BRUTE_SHEETS, ENEMY_SHEETS } from "../../constants";
 import type { BrutePhase, EnemyState } from "../../types/game-state";
 import { hitbox } from "../../game/utils";
 import { hurtPlayer } from "../player";
+import { spawnBruteFireballs } from "./bruteFireballEffects";
 import type { SpriteFrameEffect } from "../../rendering/graphics";
 import type { EnemyArchetype, EnemySpawnContext } from "./common";
 import {
@@ -55,6 +56,8 @@ const BRUTE_CONFIG = {
   collisionScaleY: 0.94,
   advanceAnimSpeed: 9,
   brokenAdvanceAnimSpeed: 9,
+  finalGuardReflectRatio: 0.25,
+  finalGuardReflectMaxDamage: 12,
 } as const;
 
 const BRUTE_PHASE_DRAW_SCALE = {
@@ -199,6 +202,18 @@ function enterBrutePhase(enemy: EnemyState, phase: BrutePhase) {
   }
 }
 
+export function updateBruteGuardReflections() {
+  const pending = state.bruteGuardReflections.splice(0);
+  for (const reflection of pending) {
+    const reflectedDamage = Math.min(
+      BRUTE_CONFIG.finalGuardReflectMaxDamage,
+      reflection.absorbedDamage * BRUTE_CONFIG.finalGuardReflectRatio,
+    );
+    hurtPlayer(reflectedDamage, -reflection.facing);
+  }
+  state.bruteGuardReflections.length = 0;
+}
+
 function bruteAttackBox(enemy: EnemyState, reach: number, widthScale: number, heightScale: number, heightPad = 0) {
   const facing = enemy.bruteFacing ?? (enemy.vx >= 0 ? 1 : -1);
   const w = Math.round(enemy.w * widthScale + reach);
@@ -282,6 +297,7 @@ function updateBrute(enemy: EnemyState) {
         BRUTE_CONFIG.shieldBashDamageBonus,
         BASH_BOX_HEIGHT_PAD,
       );
+      spawnBruteFireballs(enemy);
     }
     if (enemy.bruteTimer <= 0) {
       enterBrutePhase(enemy, "recover");

@@ -4,11 +4,12 @@ import type {
   BinderTalismanDebuff,
   BloodMoonEffectKind,
   BossSkillEffectKind,
+  BruteFireballPhase,
   MirrorShardKind,
   ProjectileKind,
   SkillLevel,
 } from "./domain";
-import type { EnemyState } from "./entities";
+import type { EnemyState, PlatformState } from "./entities";
 
 export type BossSkill1EffectState = {
   kind?: BossSkillEffectKind;
@@ -242,6 +243,31 @@ export type ProjectileState = {
   turnRate?: number;
   wispStage?: ActBand;
   frameDuration?: number;
+};
+
+export type BruteFireballState = {
+  phase: BruteFireballPhase;
+  x: number;
+  y: number;
+  w: number;
+  h: number;
+  vx: number;
+  vy: number;
+  rollSpeed: number;
+  facing: number;
+  surface: PlatformState | null;
+  groundY: number;
+  targetX: number;
+  elapsed: number;
+  frame: number;
+  damage: number;
+  explosionRadius: number;
+  damageResolved: boolean;
+};
+
+export type BruteGuardReflectionState = {
+  absorbedDamage: number;
+  facing: number;
 };
 
 export type ParticleState = {

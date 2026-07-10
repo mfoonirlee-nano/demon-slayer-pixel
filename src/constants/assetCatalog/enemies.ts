@@ -257,6 +257,30 @@ export const BRUTE_SHEETS: Record<BrutePhase, SpriteSheet> = {
   },
 };
 
+export const BRUTE_FIREBALL_LAUNCH_SHEET: SpriteSheet = {
+  src: "assets/sprites/enemies/brute/brute_fireball_launch.png",
+  frameW: 96,
+  frameH: 96,
+  count: 4,
+  image: null,
+};
+
+export const BRUTE_FIREBALL_ROLL_SHEET: SpriteSheet = {
+  src: "assets/sprites/enemies/brute/brute_fireball_roll.png",
+  frameW: 96,
+  frameH: 96,
+  count: 6,
+  image: null,
+};
+
+export const BRUTE_FIREBALL_EXPLOSION_SHEET: SpriteSheet = {
+  src: "assets/sprites/enemies/brute/brute_fireball_explosion.png",
+  frameW: 160,
+  frameH: 160,
+  count: 7,
+  image: null,
+};
+
 export const RUNNER_SHEET_INDEX = 2;
 
 export const RUNNER_SHEETS: Record<RunnerPhase, SpriteSheet> = {

@@ -37,7 +37,7 @@ export function applyEnemyDamage(
   damageKind: EnemyDamageKind = "normal",
   sourceX?: number,
 ) {
-  return damageEnemy(enemy, damage, hitCooldown, damageKind, sourceX);
+  return damageEnemy(enemy, damage, hitCooldown, damageKind, sourceX, true);
 }
 
 export function applyBossDamage(

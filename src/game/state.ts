@@ -138,6 +138,8 @@ export function createInitialState(): GameState {
     enemies: [],
     particles: [],
     projectiles: [],
+    bruteFireballs: [],
+    bruteGuardReflections: [],
     bindingZones: [],
     platforms: [],
     chests: [],
@@ -211,6 +213,8 @@ export function resetState() {
   resetCollection(state.bloodMoonEffects, next.bloodMoonEffects);
   state.guardCounterEffect = next.guardCounterEffect;
   resetCollection(state.projectiles, next.projectiles);
+  resetCollection(state.bruteFireballs, next.bruteFireballs);
+  resetCollection(state.bruteGuardReflections, next.bruteGuardReflections);
   resetCollection(state.bindingZones, next.bindingZones);
   state.elapsed = next.elapsed;
   state.bossKills = next.bossKills;

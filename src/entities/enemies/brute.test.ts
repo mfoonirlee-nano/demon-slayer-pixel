@@ -1,15 +1,48 @@
 import { describe, expect, it, beforeEach } from "vitest";
+import { GROUND_Y } from "../../constants";
 import { resetState, state } from "../../game/state";
-import { spawnEnemyById } from "../enemy";
+import type { ActBand } from "../../types/game-state";
+import { spawnEnemyById, updateEnemies } from "../enemy";
+import { applyEnemyDamage } from "../../systems/combatResolution";
 import { damageEnemy } from "./common";
 
 const SHIELD_TEST_DAMAGE = 30;
+const HIGH_SHIELD_TEST_DAMAGE = 60;
 const LOW_SHIELD_HP = 12;
 const SHIELD_HIT_SOURCE_OFFSET = 12;
+const FINAL_REFLECT_RATIO = 0.25;
+const FINAL_REFLECT_CAP = 12;
+const TEST_BRUTE_X = 520;
+const TEST_PLAYER_X = 40;
+const TEST_GUARD_FRAMES = 20;
+const TEST_COUNTER_ACTIVE_FRAMES = 72;
 
-function spawnBrute() {
-  expect(spawnEnemyById("brute", "debug", "left")).toBe(true);
+function spawnBrute(growthStage: ActBand = "intro") {
+  expect(spawnEnemyById("brute", "debug", "left", { growthStage })).toBe(true);
   return state.enemies[0];
+}
+
+function guardWithShield(brute: ReturnType<typeof spawnBrute>) {
+  brute.x = TEST_BRUTE_X;
+  brute.y = GROUND_Y - brute.h;
+  brute.bruteFacing = 1;
+  brute.brutePhase = "guard";
+  brute.bruteTimer = TEST_GUARD_FRAMES;
+  state.player.x = TEST_PLAYER_X;
+  state.player.y = GROUND_Y - state.player.h;
+}
+
+function activateGuardCounter() {
+  state.guardCounterEffect = {
+    elapsed: 0,
+    frame: 0,
+    hitsRemaining: 1,
+    maxHits: 1,
+    activeFrames: TEST_COUNTER_ACTIVE_FRAMES,
+    counterPadding: 0,
+    damageMultiplier: 1,
+    barrierFlash: 0,
+  };
 }
 
 function frontSourceX(brute: ReturnType<typeof spawnBrute>) {
@@ -52,7 +85,7 @@ describe("brute shield", () => {
     const hpBefore = brute.hp;
     brute.bruteShieldHp = LOW_SHIELD_HP;
 
-    damageEnemy(brute, SHIELD_TEST_DAMAGE, undefined, "normal", frontSourceX(brute));
+    applyEnemyDamage(brute, SHIELD_TEST_DAMAGE, undefined, "normal", frontSourceX(brute));
 
     expect(brute.hp).toBe(hpBefore);
     expect(brute.bruteShieldHp).toBe(0);
@@ -82,5 +115,132 @@ describe("brute shield", () => {
     expect(brute.bruteShieldHp).toBe(0);
     expect(brute.bruteShieldBroken).toBe(true);
     expect(brute.brutePhase).toBe("shieldBreak");
+  });
+
+  it("reflects a share of frontal shield damage during final guard", () => {
+    const brute = spawnBrute("final");
+    guardWithShield(brute);
+    const hpBefore = state.player.hp;
+
+    applyEnemyDamage(brute, SHIELD_TEST_DAMAGE, undefined, "normal", frontSourceX(brute));
+    updateEnemies();
+
+    expect(state.player.hp).toBeCloseTo(
+      hpBefore - Math.min(FINAL_REFLECT_CAP, SHIELD_TEST_DAMAGE * FINAL_REFLECT_RATIO),
+    );
+  });
+
+  it("caps reflected guard damage", () => {
+    const brute = spawnBrute("final");
+    guardWithShield(brute);
+    const hpBefore = state.player.hp;
+
+    applyEnemyDamage(brute, HIGH_SHIELD_TEST_DAMAGE, undefined, "normal", frontSourceX(brute));
+    updateEnemies();
+
+    expect(state.player.hp).toBe(hpBefore - FINAL_REFLECT_CAP);
+  });
+
+  it("does not reflect shield damage before the final stage", () => {
+    const brute = spawnBrute("awakened");
+    guardWithShield(brute);
+    const hpBefore = state.player.hp;
+
+    applyEnemyDamage(brute, SHIELD_TEST_DAMAGE, undefined, "normal", frontSourceX(brute));
+    updateEnemies();
+
+    expect(state.player.hp).toBe(hpBefore);
+  });
+
+  it("does not reflect final-stage damage outside guard or from behind", () => {
+    const brute = spawnBrute("final");
+    guardWithShield(brute);
+    const hpBefore = state.player.hp;
+
+    applyEnemyDamage(brute, SHIELD_TEST_DAMAGE, undefined, "normal", backSourceX(brute));
+    updateEnemies();
+    expect(state.player.hp).toBe(hpBefore);
+
+    brute.brutePhase = "advance";
+    applyEnemyDamage(brute, SHIELD_TEST_DAMAGE, undefined, "normal", frontSourceX(brute));
+    updateEnemies();
+    expect(state.player.hp).toBe(hpBefore);
+  });
+
+  it("does not reflect armor break damage", () => {
+    const brute = spawnBrute("final");
+    guardWithShield(brute);
+    const hpBefore = state.player.hp;
+
+    applyEnemyDamage(brute, SHIELD_TEST_DAMAGE, undefined, "armorBreak", frontSourceX(brute));
+    updateEnemies();
+
+    expect(state.player.hp).toBe(hpBefore);
+    expect(brute.bruteShieldBroken).toBe(true);
+  });
+
+  it("does not reflect the normal hit that breaks the shield", () => {
+    const brute = spawnBrute("final");
+    guardWithShield(brute);
+    brute.bruteShieldHp = LOW_SHIELD_HP;
+    const hpBefore = state.player.hp;
+
+    applyEnemyDamage(brute, SHIELD_TEST_DAMAGE, undefined, "normal", frontSourceX(brute));
+    updateEnemies();
+
+    expect(state.player.hp).toBe(hpBefore);
+    expect(brute.bruteShieldBroken).toBe(true);
+  });
+
+  it("still settles earlier guard reflection when a later hit breaks the shield", () => {
+    const brute = spawnBrute("final");
+    guardWithShield(brute);
+    brute.bruteShieldHp = SHIELD_TEST_DAMAGE + LOW_SHIELD_HP;
+    const hpBefore = state.player.hp;
+
+    applyEnemyDamage(brute, SHIELD_TEST_DAMAGE, undefined, "normal", frontSourceX(brute));
+    applyEnemyDamage(brute, SHIELD_TEST_DAMAGE, undefined, "normal", frontSourceX(brute));
+    updateEnemies();
+
+    expect(brute.bruteShieldBroken).toBe(true);
+    expect(state.player.hp).toBeCloseTo(
+      hpBefore - SHIELD_TEST_DAMAGE * FINAL_REFLECT_RATIO,
+    );
+  });
+
+  it("does not reflect non-player damage absorbed by the final guard", () => {
+    const brute = spawnBrute("final");
+    guardWithShield(brute);
+    const hpBefore = state.player.hp;
+
+    damageEnemy(brute, SHIELD_TEST_DAMAGE, undefined, "normal", frontSourceX(brute));
+    updateEnemies();
+
+    expect(state.player.hp).toBe(hpBefore);
+  });
+
+  it("lets guard counter block reflection without queuing recursive reflection", () => {
+    const brute = spawnBrute("final");
+    guardWithShield(brute);
+    brute.x = state.player.x;
+    brute.y = state.player.y;
+    activateGuardCounter();
+    const hpBefore = state.player.hp;
+
+    applyEnemyDamage(brute, SHIELD_TEST_DAMAGE, undefined, "normal", frontSourceX(brute));
+    updateEnemies();
+
+    expect(state.player.hp).toBe(hpBefore);
+    expect(state.bruteGuardReflections).toHaveLength(0);
+    expect(state.guardCounterEffect?.hitsRemaining).toBe(0);
+    expect(state.guardCounterEffect?.barrierFlash ?? 0).toBeGreaterThan(0);
+
+    brute.x = TEST_BRUTE_X;
+    brute.y = GROUND_Y - brute.h;
+    state.player.invincible = 0;
+    updateEnemies();
+
+    expect(state.player.hp).toBe(hpBefore);
+    expect(state.bruteGuardReflections).toHaveLength(0);
   });
 });
