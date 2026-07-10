@@ -124,7 +124,8 @@ function leaperSkyTopY(enemy: EnemyState) {
 }
 
 function leaperSupportTop(enemy: EnemyState) {
-  return (enemy.onPlatform?.y ?? GROUND_Y) - enemy.h;
+  if (enemy.onPlatform) return enemy.onPlatform.y - enemy.h;
+  return Math.min(enemy.y, GROUND_Y - enemy.h);
 }
 
 function leaperLandingPlatform() {
@@ -161,6 +162,8 @@ function seedLeaperLanding(enemy: EnemyState) {
 function syncLeaperLandingPlatform(enemy: EnemyState) {
   const platform = enemy.leaperLandingPlatform;
   if (!platform) return;
+  // Keep the locked point platform-relative while it moves; if it despawns mid-attack,
+  // preserve the horizontal lock but fall back to ground so the leaper cannot land in midair.
   if (!state.platforms.includes(platform)) {
     enemy.leaperLandingPlatform = null;
     enemy.leaperLandingPlatformOffsetX = undefined;
@@ -222,7 +225,7 @@ function enterLeaperPhase(enemy: EnemyState, phase: LeaperPhase) {
   enemy.leaperImpactHit = false;
 
   if (phase === "windup") {
-    enemy.leaperSpikesReleased = false;
+    enemy.hasReleasedLeaperSpikes = false;
     enemy.leaperTimer = randomFrameCount(
       leaperWindupMinFrames(enemy),
       LEAPER_CONFIG.windupFrameJitter,
@@ -238,7 +241,7 @@ function enterLeaperPhase(enemy: EnemyState, phase: LeaperPhase) {
     enemy.leaperPhaseDuration = leaperLeapFrames(enemy);
     enemy.leaperLeapStartX = enemy.x;
     enemy.leaperLeapStartY = enemy.y;
-    enemy.leaperSpikesReleased = false;
+    enemy.hasReleasedLeaperSpikes = false;
     playSfx("enemyLeap", LEAP_SFX_PITCH);
   } else if (phase === "skyRise") {
     if (enemy.leaperLandingX === undefined || enemy.leaperLandingY === undefined) {
@@ -268,7 +271,7 @@ function enterLeaperPhase(enemy: EnemyState, phase: LeaperPhase) {
     enemy.leaperPhaseDuration = LEAPER_CONFIG.impactFrames;
     syncLeaperLandingPlatform(enemy);
     enemy.x = enemy.leaperLandingX ?? enemy.x;
-    enemy.y = enemy.leaperLandingY ?? leaperSupportTop(enemy);
+    enemy.y = enemy.leaperLandingY ?? GROUND_Y - enemy.h;
     enemy.onPlatform = enemy.leaperLandingPlatform ?? null;
     if (hasFinalGrowth(enemy)) emitFinalLeaperImpactRocks(enemy);
     playSfx("enemyImpact");
@@ -332,7 +335,7 @@ function initLeaper(enemy: EnemyState, context: EnemySpawnContext) {
   enemy.leaperPhaseDuration = 0;
   enemy.leaperFacing = -context.side;
   enemy.leaperBaseSpeed = context.speed;
-  enemy.leaperSpikesReleased = false;
+  enemy.hasReleasedLeaperSpikes = false;
   enemy.leaperImpactHit = false;
   clearLeaperLanding(enemy);
 }
@@ -343,7 +346,7 @@ function updateLeaper(enemy: EnemyState) {
   enemy.leaperPhaseDuration ??= 0;
   enemy.leaperFacing ??= enemy.vx >= 0 ? 1 : -1;
   enemy.leaperBaseSpeed ??= LEAPER_CONFIG.stalkBaseSpeed;
-  enemy.leaperSpikesReleased ??= false;
+  enemy.hasReleasedLeaperSpikes ??= false;
   enemy.leaperImpactHit ??= false;
 
   syncLeaperLandingPlatform(enemy);
@@ -402,7 +405,7 @@ function updateLeaper(enemy: EnemyState) {
     enemy.y = lerp(startY, landingY, t) - Math.sin(t * Math.PI) * LEAPER_CONFIG.leapArcHeight;
     if (
       enemy.growthStage === "awakened"
-      && !enemy.leaperSpikesReleased
+      && !enemy.hasReleasedLeaperSpikes
       && t >= LEAPER_CONFIG.awakenedSpikeReleaseProgress
     ) {
       releaseAwakenedLeaperSpikes(enemy);
@@ -470,7 +473,7 @@ function updateLeaper(enemy: EnemyState) {
   if (phase === "impact") {
     enemy.vx = 0;
     enemy.x = enemy.leaperLandingX ?? enemy.x;
-    enemy.y = enemy.leaperLandingY ?? leaperSupportTop(enemy);
+    enemy.y = enemy.leaperLandingY ?? GROUND_Y - enemy.h;
     if (!enemy.leaperImpactHit) triggerLeaperImpactHit(enemy);
     enemy.leaperTimer -= 1;
     if (enemy.leaperTimer <= 0) {

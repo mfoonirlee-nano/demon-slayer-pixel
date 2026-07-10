@@ -37,7 +37,13 @@ type FillRectCall = {
   h: number;
 };
 
+type EllipseCall = {
+  radiusX: number;
+  radiusY: number;
+};
+
 let fillRects: FillRectCall[] = [];
+let ellipses: EllipseCall[] = [];
 
 function platform(): PlatformState {
   return {
@@ -75,7 +81,14 @@ function installCanvasContext() {
     save() {},
     restore() {},
     beginPath() {},
-    ellipse() {},
+    ellipse(
+      _x: number,
+      _y: number,
+      radiusX: number,
+      radiusY: number,
+    ) {
+      ellipses.push({ radiusX, radiusY });
+    },
     stroke() {},
     fillRect(x: number, y: number, w: number, h: number) {
       fillRects.push({ x, y, w, h });
@@ -151,6 +164,27 @@ describe("leaper platform attacks", () => {
 
     expect(leaper.onPlatform).toBeNull();
     expect(leaper.y + leaper.h).toBeGreaterThan(targetPlatform.y);
+    expect(leaper.y + leaper.h).toBeLessThan(GROUND_Y);
+  });
+
+  it("draws the landing warning as wide as the impact area", () => {
+    resetState();
+    fillRects = [];
+    ellipses = [];
+    installCanvasContext();
+
+    expect(spawnEnemyById("leaper", "debug", "left", { growthStage: "awakened" })).toBe(true);
+    const leaper = state.enemies[0];
+    leaper.leaperPhase = "windup";
+    leaper.leaperTimer = 10;
+    leaper.leaperPhaseDuration = 20;
+    leaper.leaperLandingX = TEST_PLATFORM_X;
+    leaper.leaperLandingY = TEST_PLATFORM_Y - leaper.h;
+
+    LEAPER_ARCHETYPE.draw(leaper);
+
+    expect(ellipses).toHaveLength(1);
+    expect(ellipses[0].radiusX).toBeGreaterThan(leaper.w);
   });
 });
 
@@ -250,6 +284,7 @@ describe("final leaper sky slam", () => {
   it("draws paired vertical warning lines while waiting offscreen", () => {
     resetState();
     fillRects = [];
+    ellipses = [];
     installCanvasContext();
 
     expect(spawnEnemyById("leaper", "debug", "left", { growthStage: "final" })).toBe(true);

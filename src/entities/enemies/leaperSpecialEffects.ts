@@ -14,7 +14,6 @@ type ImpactBox = {
 
 const HALF_DIVISOR = 2;
 const FULL_CIRCLE = Math.PI * 2;
-const WARNING_RADIUS_X = 44;
 const WARNING_RADIUS_Y = 7;
 const WARNING_WINDUP_ALPHA_BASE = 0.2;
 const WARNING_WINDUP_ALPHA_SCALE = 0.28;
@@ -63,7 +62,7 @@ const FINAL_IMPACT_ROCKS = {
 } as const;
 
 export function releaseAwakenedLeaperSpikes(enemy: EnemyState) {
-  enemy.leaperSpikesReleased = true;
+  enemy.hasReleasedLeaperSpikes = true;
   const facing = enemy.leaperFacing ?? 1;
   const originX = enemyCenterX(enemy) - facing * enemy.w * AWAKENED_SPIKES.backOffsetRatio;
   const originY = enemy.y + enemy.h * AWAKENED_SPIKES.heightRatio;
@@ -114,7 +113,7 @@ export function emitFinalLeaperImpactRocks(enemy: EnemyState) {
   }
 }
 
-function drawLandingWarning(enemy: EnemyState, phase: LeaperPhase) {
+function drawLandingWarning(enemy: EnemyState, phase: LeaperPhase, impactBox: ImpactBox) {
   if (!ctx || enemy.leaperLandingX === undefined) return;
   if (phase !== "windup" && phase !== "leap" && phase !== "impact") return;
 
@@ -134,7 +133,7 @@ function drawLandingWarning(enemy: EnemyState, phase: LeaperPhase) {
   ctx.fillStyle = "rgba(86, 31, 29, 1)";
   ctx.lineWidth = 2;
   ctx.beginPath();
-  ctx.ellipse(x, y, WARNING_RADIUS_X, WARNING_RADIUS_Y, 0, 0, FULL_CIRCLE);
+  ctx.ellipse(x, y, impactBox.w / HALF_DIVISOR, WARNING_RADIUS_Y, 0, 0, FULL_CIRCLE);
   ctx.stroke();
   ctx.fillRect(x + WARNING_CRACK_LEFT_X, y - 1, WARNING_CRACK_LEFT_W, WARNING_CRACK_H);
   ctx.fillRect(x + WARNING_CRACK_RIGHT_X, y - WARNING_CRACK_H, WARNING_CRACK_RIGHT_W, WARNING_CRACK_H);
@@ -186,5 +185,5 @@ function drawSkyWarning(enemy: EnemyState, phase: LeaperPhase, impactBox: Impact
 
 export function drawLeaperAttackWarnings(enemy: EnemyState, phase: LeaperPhase, impactBox: ImpactBox) {
   drawSkyWarning(enemy, phase, impactBox);
-  drawLandingWarning(enemy, phase);
+  drawLandingWarning(enemy, phase, impactBox);
 }

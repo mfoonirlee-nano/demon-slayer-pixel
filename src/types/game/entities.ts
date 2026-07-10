@@ -247,7 +247,7 @@ export type EnemyState = {
   leaperLandingPlatformOffsetX?: number;
   leaperLeapStartX?: number;
   leaperLeapStartY?: number;
-  leaperSpikesReleased?: boolean;
+  hasReleasedLeaperSpikes?: boolean;
   leaperImpactHit?: boolean;
   splitterPhase?: SplitterPhase;
   splitterTimer?: number;
