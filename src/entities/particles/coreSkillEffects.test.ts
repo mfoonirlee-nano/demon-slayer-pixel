@@ -64,7 +64,7 @@ describe("line projectile runtime", () => {
     expect(levelThreeHits).toBeGreaterThan(levelOneHits);
   });
 
-  it("loops only full-body dash frames after the dragon reveal finishes", () => {
+  it("loops only max-length dash frames after the dragon growth finishes", () => {
     const sheet = lineProjectileEffectSheetForLevel(1);
     const loopLen = sheet.count - LINE_PROJECTILE_EFFECT_CONFIG.loopFromFrame;
 

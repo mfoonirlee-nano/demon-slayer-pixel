@@ -35,7 +35,7 @@ export const LINE_PROJECTILE_EFFECT_CONFIG = {
   speed: 8,
   // frame animate speed in game-frames per anim-frame
   frameDuration: 5,
-  // loop the final three frames once the head-first reveal finishes
+  // loop the final three frames once the full-dragon length growth finishes
   loopFromFrame: 5,
   // damage multiplier relative to player base+bonus attack
   damageMultiplier: 1.2,
