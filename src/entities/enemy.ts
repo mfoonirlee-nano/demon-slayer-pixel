@@ -73,6 +73,10 @@ const PLATFORM_READY_ENEMY_IDS: readonly EnemyId[] = [
   "binder",
   "warden",
 ];
+const PLATFORM_PHYSICS_ENEMY_IDS: readonly EnemyId[] = [
+  ...PLATFORM_READY_ENEMY_IDS,
+  "leaper",
+];
 const DEBUG_BOSS_KILLS_BY_GROWTH_STAGE: Record<ActBand, number> = {
   intro: 0,
   awakened: 6,
@@ -175,7 +179,18 @@ function placeEnemyBehindBackgroundOccluder(enemy: EnemyState, occluder: NearFor
 function enemyUsesPlatformPhysics(enemy: EnemyState) {
   if (enemy.id === "crawler" && enemy.crawlerPhase === "leap") return false;
   if (enemy.id === "duelist" && enemy.duelistPhase === "spin") return false;
-  return PLATFORM_READY_ENEMY_IDS.includes(enemy.id);
+  if (
+    enemy.id === "leaper"
+    && (
+      enemy.leaperPhase === "leap"
+      || enemy.leaperPhase === "skyRise"
+      || enemy.leaperPhase === "skyWait"
+      || enemy.leaperPhase === "skyFall"
+    )
+  ) {
+    return false;
+  }
+  return PLATFORM_PHYSICS_ENEMY_IDS.includes(enemy.id);
 }
 
 function clampEnemyCenterToPlatform(centerX: number, enemy: EnemyState, platform: PlatformState) {

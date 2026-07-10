@@ -34,6 +34,14 @@ const BINDER_TALISMAN_DRAW = {
   h: 44,
   frameDuration: 5,
 } as const;
+const LEAPER_SPIKE_DRAW = {
+  length: 24,
+  width: 8,
+  outlineWidth: 2,
+  fill: "#cbb99a",
+  highlight: "#f0dfbd",
+  outline: "#4b3030",
+} as const;
 
 const FRAMES_PER_SECOND = 60;
 const CASTER_WISP_TRACKING_SECONDS = 5;
@@ -100,8 +108,9 @@ function updateBinderTalisman(projectile: ProjectileState) {
   return true;
 }
 
-function updateBossProjectile(projectile: ProjectileState) {
+function updateLinearProjectile(projectile: ProjectileState) {
   projectile.x += projectile.vx;
+  projectile.y += projectile.vy ?? 0;
 }
 
 function casterWispOutOfBounds(projectile: ProjectileState) {
@@ -148,7 +157,7 @@ export function updateProjectiles() {
     } else if (p.kind === "binderTalisman") {
       updateBinderTalisman(p);
     } else {
-      updateBossProjectile(p);
+      updateLinearProjectile(p);
     }
     p.life -= 1;
     if (p.kind === "binderTalisman" && blockProjectileWithGuardCounter(p)) {
@@ -203,6 +212,31 @@ export function drawProjectiles() {
         p.vx >= 0 ? 1 : -1,
         binderTalismanFrameEffect(p.debuffs),
       );
+      continue;
+    }
+
+    if (p.kind === "leaperSpike") {
+      const centerX = p.x + p.w / 2;
+      const centerY = p.y + p.h / 2;
+      const angle = Math.atan2(p.vy ?? 0, p.vx);
+      const halfLength = LEAPER_SPIKE_DRAW.length / 2;
+      const halfWidth = LEAPER_SPIKE_DRAW.width / 2;
+      ctx.save();
+      ctx.translate(centerX, centerY);
+      ctx.rotate(angle);
+      ctx.fillStyle = LEAPER_SPIKE_DRAW.fill;
+      ctx.strokeStyle = LEAPER_SPIKE_DRAW.outline;
+      ctx.lineWidth = LEAPER_SPIKE_DRAW.outlineWidth;
+      ctx.beginPath();
+      ctx.moveTo(-halfLength, -halfWidth);
+      ctx.lineTo(halfLength, 0);
+      ctx.lineTo(-halfLength, halfWidth);
+      ctx.closePath();
+      ctx.fill();
+      ctx.stroke();
+      ctx.fillStyle = LEAPER_SPIKE_DRAW.highlight;
+      ctx.fillRect(-halfLength / 2, -1, halfLength, 2);
+      ctx.restore();
       continue;
     }
 

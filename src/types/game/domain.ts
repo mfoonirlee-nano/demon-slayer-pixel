@@ -23,7 +23,15 @@ export type BinderPhase = "move" | "windup" | "cast" | "recover" | "hit";
 export type BinderAiPhase = "seekRange" | "windup" | "cast" | "recover";
 export type BinderTalismanDebuff = "slow" | "damage" | "keyScramble" | "stun";
 export type GliderPhase = "hover" | "windup" | "dive" | "pass" | "recover";
-export type LeaperPhase = "stalk" | "windup" | "leap" | "impact" | "recover";
+export type LeaperPhase =
+  | "stalk"
+  | "windup"
+  | "leap"
+  | "skyRise"
+  | "skyWait"
+  | "skyFall"
+  | "impact"
+  | "recover";
 export type SplitterPhase = "move" | "attack" | "hit" | "split" | "birth";
 export type WardenPhase = "move" | "aura" | "hit";
 export type BurrowerPhase = "move" | "sink" | "burrow" | "emerge" | "recover";
@@ -112,7 +120,7 @@ export type BossSkillMode =
   | "bloodMoonLanternBell"
   | "bloodMoonSixfold"
   | "bloodMoonManyFaces";
-export type ProjectileKind = "bossBone" | "casterWisp" | "binderTalisman";
+export type ProjectileKind = "bossBone" | "casterWisp" | "binderTalisman" | "leaperSpike";
 export type MirrorShardKind = "shard" | "nightmare";
 export type SkillLevel = 1 | 2 | 3;
 export type UltimateLevel = 0 | 1 | 2 | 3;

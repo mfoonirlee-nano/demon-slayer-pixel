@@ -383,6 +383,14 @@ export const GLIDER_SHEETS: Record<GliderPhase, SpriteSheet> = {
 export const LEAPER_SHEET_INDEX = 8;
 export const LEAPER_UNLOCK_SECONDS = 35;
 
+const LEAPER_LEAP_SHEET: SpriteSheet = {
+  src: "assets/sprites/enemies/leaper/leaper_leap.png",
+  frameW: 320,
+  frameH: 320,
+  count: 5,
+  image: null,
+};
+
 export const LEAPER_SHEETS: Record<LeaperPhase, SpriteSheet> = {
   stalk: ENEMY_SHEETS[LEAPER_SHEET_INDEX],
   windup: {
@@ -392,13 +400,10 @@ export const LEAPER_SHEETS: Record<LeaperPhase, SpriteSheet> = {
     count: 4,
     image: null,
   },
-  leap: {
-    src: "assets/sprites/enemies/leaper/leaper_leap.png",
-    frameW: 320,
-    frameH: 320,
-    count: 5,
-    image: null,
-  },
+  leap: LEAPER_LEAP_SHEET,
+  skyRise: LEAPER_LEAP_SHEET,
+  skyWait: LEAPER_LEAP_SHEET,
+  skyFall: LEAPER_LEAP_SHEET,
   impact: {
     src: "assets/sprites/enemies/leaper/leaper_impact.png",
     frameW: 320,

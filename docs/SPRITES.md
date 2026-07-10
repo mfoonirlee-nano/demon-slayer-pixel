@@ -243,11 +243,11 @@ Leaper 专属动作素材：
 | --- | ---: | ---: | ---: | --- | --- |
 | `enemies/leaper/leaper_stalk.png` | `1920x320` | 6 | `320x320` | `stalk` | 低伏跟踪循环，长反折腿和分裂钩足是主要轮廓 |
 | `enemies/leaper/leaper_windup.png` | `1280x320` | 4 | `320x320` | `windup` | 压低蓄力，膝盖和脚爪赤红裂纹作为起跳读招 |
-| `enemies/leaper/leaper_leap.png` | `1600x320` | 5 | `320x320` | `leap` | 固定落点的抛物线跳跃姿态，腿部拉伸和收束读出空中轨迹 |
+| `enemies/leaper/leaper_leap.png` | `1600x320` | 5 | `320x320` | `leap` / `skyRise` / `skyFall` | 固定落点的抛物线跳跃姿态；终幕复用该图集升出屏幕并沿预警线坠落 |
 | `enemies/leaper/leaper_impact.png` | `1280x320` | 4 | `320x320` | `impact` | 落地深蹲，低矮尘土半环和红褐裂纹已烘进图集 |
 | `enemies/leaper/leaper_recover.png` | `960x320` | 3 | `320x320` | `recover` | 拔出脚爪并重新压低，形成落地后的反打窗口 |
 
-Leaper 运行时由 `LEAPER_SHEETS` 暴露并预加载。普通刷怪在 `elapsed >= 35s` 后才会抽取 leaper，作为第 2 幕解锁的当前时间近似；同屏最多 `2` 个 leaper，同时处于 `windup` / `leap` / `impact` 锁定落点状态的 leaper 最多 `1` 个。落点预警是运行时绘制的低调红褐地面标记，落地尘土和裂纹已烘入 `impact` 图集。
+Leaper 运行时由 `LEAPER_SHEETS` 暴露并预加载。普通刷怪在 `elapsed >= 35s` 后才会抽取 leaper，作为第 2 幕解锁的当前时间近似；同屏最多 `2` 个 leaper，同时处于锁定落点、空中或重击阶段的 leaper 最多 `1` 个。三种成长阶段都能锁定玩家所在平台。觉醒跳跃会生成一轮运行时骨刺投射物；终幕复用 `leap` 图集完成离屏升降，`skyWait` 隐藏本体，并用运行时红线和旋转飞石增强预警与落地反馈。现有 PNG 的尺寸、帧数、透明边界和锚点均未改变。
 
 Splitter 专属动作素材：
 

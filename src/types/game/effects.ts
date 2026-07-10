@@ -245,6 +245,7 @@ export type ProjectileState = {
 };
 
 export type ParticleState = {
+  kind?: "leaperRock";
   x: number;
   y: number;
   vx: number;
@@ -253,6 +254,9 @@ export type ParticleState = {
   color: string;
   size?: number;
   fade?: number;
+  gravity?: number;
+  rotation?: number;
+  angularVelocity?: number;
 };
 
 export type SparkState = {

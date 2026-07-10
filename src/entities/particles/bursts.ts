@@ -7,6 +7,8 @@ import { skillById } from "../../systems/loadout";
 const FULL_CIRCLE_RADIANS = Math.PI * 2;
 const DEFAULT_HIT_BURST_COLOR = "#9feaff";
 const SLASH_VERTICAL_SPREAD_SCALE = 0.6;
+const ROCK_OUTLINE_COLOR = "#2a1b1b";
+const ROCK_INSET = 1;
 
 export function emitSlash(x: number, y: number, color: string, spread: number = PARTICLE_CONFIG.slashDefaultSpread) {
   for (let i = 0; i < PARTICLE_CONFIG.slashCount; i += 1) {
@@ -50,10 +52,12 @@ export function emitHitBurst(x: number, y: number, color = DEFAULT_HIT_BURST_COL
 export function updateParticles() {
   for (let i = state.particles.length - 1; i >= 0; i -= 1) {
     const p = state.particles[i] as ParticleState;
+    p.vy += p.gravity ?? 0;
     p.x += p.vx;
     p.y += p.vy;
     p.vx *= p.fade || PARTICLE_CONFIG.velocityFade;
     p.vy *= p.fade || PARTICLE_CONFIG.velocityFade;
+    p.rotation = (p.rotation ?? 0) + (p.angularVelocity ?? 0);
     if (p.size) p.size *= PARTICLE_CONFIG.sizeFade;
     p.life -= 1;
     if (p.life <= 0) state.particles.splice(i, 1);
@@ -137,8 +141,25 @@ export function drawHitBursts() {
 export function drawParticles() {
   if (!ctx) return;
   for (const p of state.particles) {
-    ctx.fillStyle = p.color;
     const size = p.size || PARTICLE_CONFIG.defaultSize;
+    if (p.kind === "leaperRock") {
+      ctx.save();
+      ctx.translate(p.x + size / 2, p.y + size / 2);
+      ctx.rotate(p.rotation ?? 0);
+      ctx.fillStyle = ROCK_OUTLINE_COLOR;
+      ctx.fillRect(-size / 2, -size / 2, size, size);
+      ctx.fillStyle = p.color;
+      ctx.fillRect(
+        -size / 2 + ROCK_INSET,
+        -size / 2 + ROCK_INSET,
+        Math.max(1, size - ROCK_INSET * 2),
+        Math.max(1, size - ROCK_INSET * 2),
+      );
+      ctx.restore();
+      continue;
+    }
+
+    ctx.fillStyle = p.color;
     ctx.fillRect(p.x, p.y, size, size);
   }
 }
