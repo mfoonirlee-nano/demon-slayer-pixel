@@ -1,3 +1,8 @@
+import { hasEnemySfxSample, playEnemySfxSample, preloadEnemySfxSamples } from "./audioSamples";
+import type { GameSfx } from "./audioTypes";
+
+export type { GameSfx } from "./audioTypes";
+
 const AUDIO_CONFIG = {
   defaultToneDuration: 0.08,
   defaultToneVolume: 0.03,
@@ -5,6 +10,8 @@ const AUDIO_CONFIG = {
   minFrequency: 24,
 };
 const DEFAULT_PATTERN_MIN_GAP = 0.03;
+const AUDIO_SAMPLE_MIN_GAP = 0.12;
+const AUDIO_SAMPLE_VOLUME = 0.16;
 const AUDIO_VOLUME_STORAGE_KEY = "moonlit-tide-audio-volume";
 const DEFAULT_AUDIO_VOLUME_SETTINGS = {
   master: 1,
@@ -25,63 +32,6 @@ type ToneStep = {
   delay?: number;
   slideTo?: number;
 };
-
-export type GameSfx =
-  | "playerRunStep"
-  | "playerLand"
-  | "playerAttackStart"
-  | "playerAttackHit"
-  | "playerBossHit"
-  | "playerFallAttackStart"
-  | "playerFallAttackImpact"
-  | "playerSkillCast"
-  | "playerSkillLine"
-  | "playerSkillArc"
-  | "playerSkillGuard"
-  | "playerSkillDash"
-  | "playerSkillVortex"
-  | "playerSkillArmorBreak"
-  | "playerSkillRain"
-  | "playerSkillReturningBlade"
-  | "playerSkillVerticalWave"
-  | "playerUltimateCast"
-  | "playerUltimateImpact"
-  | "playerCounter"
-  | "playerJump"
-  | "playerHurt"
-  | "playerDeath"
-  | "enemyDefeat"
-  | "enemyWarning"
-  | "enemyLunge"
-  | "enemyDash"
-  | "enemySlash"
-  | "enemyCastStart"
-  | "enemyCastRelease"
-  | "enemyShieldGuard"
-  | "enemyShieldBash"
-  | "enemyShieldBreak"
-  | "enemyCleave"
-  | "enemyDive"
-  | "enemyLeap"
-  | "enemyImpact"
-  | "enemySplit"
-  | "enemyBirth"
-  | "enemyAura"
-  | "enemyBurrow"
-  | "enemyEmerge"
-  | "enemyHitReact"
-  | "bossSpawn"
-  | "bossPhaseShift"
-  | "bossCast"
-  | "bossProjectile"
-  | "bossSummon"
-  | "bossWave"
-  | "bossBlade"
-  | "bossMirror"
-  | "bossFire"
-  | "bossBuff"
-  | "bossUltimate"
-  | "bossKill";
 
 const SFX_MIN_GAPS: Record<GameSfx, number> = {
   playerRunStep: 0.13,
@@ -114,6 +64,9 @@ const SFX_MIN_GAPS: Record<GameSfx, number> = {
   enemySlash: 0.08,
   enemyCastStart: 0.14,
   enemyCastRelease: 0.1,
+  enemyTalismanCastStart: 0.16,
+  enemyTalismanCastRelease: 0.12,
+  enemyCurseTick: 0.18,
   enemyShieldGuard: 0.16,
   enemyShieldBash: 0.14,
   enemyShieldBreak: 0.2,
@@ -126,7 +79,8 @@ const SFX_MIN_GAPS: Record<GameSfx, number> = {
   enemyAura: 0.3,
   enemyBurrow: 0.14,
   enemyEmerge: 0.14,
-  enemyHitReact: 0.08,
+  enemyHurt: 0.08,
+  bossHurt: 0.08,
   bossSpawn: 1,
   bossPhaseShift: 0.4,
   bossCast: 0.18,
@@ -158,6 +112,7 @@ export function ensureAudio() {
   if (audioCtx.state === "suspended") {
     void audioCtx.resume();
   }
+  preloadEnemySfxSamples(audioCtx);
 }
 
 export function getAudioVolumeSettings(): AudioVolumeSettings {
@@ -207,12 +162,17 @@ function randomFrequency(range: { base: number; spread: number }) {
   return range.base + Math.random() * range.spread;
 }
 
-function playPattern(sfx: GameSfx, steps: ToneStep[], minGap = DEFAULT_PATTERN_MIN_GAP, pitch = 1) {
-  if (!audioCtx) return;
+function claimSfxPlayback(sfx: GameSfx, minGap: number) {
+  if (!audioCtx) return false;
   const now = audioCtx.currentTime;
   const lastPlayed = lastSfxAt.get(sfx) ?? -Infinity;
-  if (now - lastPlayed < minGap) return;
+  if (now - lastPlayed < minGap) return false;
   lastSfxAt.set(sfx, now);
+  return true;
+}
+
+function playPattern(sfx: GameSfx, steps: ToneStep[], minGap = DEFAULT_PATTERN_MIN_GAP, pitch = 1) {
+  if (!claimSfxPlayback(sfx, minGap)) return;
 
   for (const step of steps) {
     playTone(
@@ -259,6 +219,14 @@ function clampAudioVolume(value: number) {
 }
 
 export function playSfx(sfx: GameSfx, pitch = 1) {
+  if (audioCtx && hasEnemySfxSample(sfx)) {
+    const minGap = Math.max(AUDIO_SAMPLE_MIN_GAP, SFX_MIN_GAPS[sfx]);
+    if (!claimSfxPlayback(sfx, minGap)) return;
+    const volume = AUDIO_SAMPLE_VOLUME * audioVolumeSettings.master * audioVolumeSettings.sfx;
+    playEnemySfxSample(audioCtx, sfx, pitch, volume);
+    return;
+  }
+
   switch (sfx) {
     case "playerRunStep":
       playPattern(sfx, [
@@ -439,6 +407,24 @@ export function playSfx(sfx: GameSfx, pitch = 1) {
         { frequency: 780, duration: 0.045, type: "triangle", volume: 0.025 },
       ], SFX_MIN_GAPS.enemyCastRelease, pitch);
       return;
+    case "enemyTalismanCastStart":
+      playPattern(sfx, [
+        { frequency: 180, slideTo: 240, duration: 0.13, type: "sine", volume: 0.032 },
+        { frequency: 680, slideTo: 520, duration: 0.06, type: "triangle", volume: 0.018, delay: 0.04 },
+      ], SFX_MIN_GAPS.enemyTalismanCastStart, pitch);
+      return;
+    case "enemyTalismanCastRelease":
+      playPattern(sfx, [
+        { frequency: 720, slideTo: 380, duration: 0.07, type: "triangle", volume: 0.035 },
+        { frequency: 210, slideTo: 150, duration: 0.09, type: "sine", volume: 0.024, delay: 0.015 },
+      ], SFX_MIN_GAPS.enemyTalismanCastRelease, pitch);
+      return;
+    case "enemyCurseTick":
+      playPattern(sfx, [
+        { frequency: 230, slideTo: 170, duration: 0.08, type: "triangle", volume: 0.03 },
+        { frequency: 540, duration: 0.035, type: "sine", volume: 0.018, delay: 0.012 },
+      ], SFX_MIN_GAPS.enemyCurseTick, pitch);
+      return;
     case "enemyShieldGuard":
       playPattern(sfx, [
         { frequency: 110, slideTo: 135, duration: 0.11, type: "square", volume: 0.04 },
@@ -506,10 +492,16 @@ export function playSfx(sfx: GameSfx, pitch = 1) {
         { frequency: 300, duration: 0.055, type: "square", volume: 0.027, delay: 0.02 },
       ], SFX_MIN_GAPS.enemyEmerge, pitch);
       return;
-    case "enemyHitReact":
+    case "enemyHurt":
       playPattern(sfx, [
         { frequency: 300, slideTo: 180, duration: 0.045, type: "square", volume: 0.02 },
-      ], SFX_MIN_GAPS.enemyHitReact, pitch);
+      ], SFX_MIN_GAPS.enemyHurt, pitch);
+      return;
+    case "bossHurt":
+      playPattern(sfx, [
+        { frequency: 150, slideTo: 105, duration: 0.075, type: "sawtooth", volume: 0.04 },
+        { frequency: 330, slideTo: 240, duration: 0.045, type: "triangle", volume: 0.022, delay: 0.01 },
+      ], SFX_MIN_GAPS.bossHurt, pitch);
       return;
     case "bossSpawn":
       playPattern(sfx, [

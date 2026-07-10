@@ -23,7 +23,6 @@ import {
 } from "./common";
 
 const HALF_DIVISOR = 2;
-const HIT_REACT_SFX_PITCH = 0.84;
 const AURA_RING_PULSE_BASE = 0.55;
 const AURA_RING_PULSE_SCALE = 0.12;
 const AURA_RING_PULSE_SPEED = 5.8;
@@ -167,7 +166,6 @@ function enterWardenPhase(enemy: EnemyState, phase: WardenPhase) {
     playSfx("enemyAura");
   } else if (phase === "hit") {
     enemy.wardenTimer = WARDEN_CONFIG.hitFrames;
-    playSfx("enemyHitReact", HIT_REACT_SFX_PITCH);
   } else {
     enemy.wardenTimer = randomFrameCount(
       WARDEN_CONFIG.moveCooldownMinFrames,
