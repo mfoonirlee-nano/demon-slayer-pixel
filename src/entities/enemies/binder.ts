@@ -169,7 +169,7 @@ function applyBinderTalismanDamage() {
 
   player.hp = Math.max(0, player.hp - bindingZoneDamage());
   player.invincible = BINDER_CONFIG.zoneDamageInvincibleFrames;
-  playSfx("enemyImpact", ZONE_DAMAGE_SFX_PITCH);
+  playSfx("enemyCurseTick", ZONE_DAMAGE_SFX_PITCH);
   if (player.hp <= 0) {
     playSfx("playerDeath");
     endRun(state);
@@ -183,7 +183,7 @@ function enterBinderPhase(enemy: EnemyState, phase: BinderAiPhase) {
   enemy.binderCastSpawned = false;
   if (phase === "windup") {
     enemy.binderTimer = BINDER_CONFIG.windupFrames;
-    playSfx("enemyCastStart", CAST_START_SFX_PITCH);
+    playSfx("enemyTalismanCastStart", CAST_START_SFX_PITCH);
   } else if (phase === "cast") {
     enemy.binderTimer = BINDER_CONFIG.castFrames;
   } else if (phase === "recover") {
@@ -277,7 +277,7 @@ function spawnBinderTalisman(zone: { x: number; y: number; facing: number; debuf
     turnRate: BINDER_CONFIG.talismanTurnRate,
     debuffs: [...zone.debuffs],
   });
-  playSfx("enemyCastRelease", CAST_RELEASE_SFX_PITCH);
+  playSfx("enemyTalismanCastRelease", CAST_RELEASE_SFX_PITCH);
 }
 
 function updateBinderSeek(enemy: EnemyState, facing: number, distance: number) {

@@ -20,6 +20,20 @@ const ELITE_BRUTE_PROTECTION_DAMAGE_SCALE = 0.86;
 const MARKER_RING_HEIGHT = 8;
 const MARKER_RING_Y_OFFSET = 2;
 const MARKER_RING_WIDTH_SCALE = 0.38;
+const ENEMY_HURT_SFX_PITCH = {
+  chaser: 1.06,
+  crawler: 0.94,
+  runner: 1.12,
+  duelist: 1.02,
+  caster: 1.08,
+  leaper: 0.9,
+  glider: 1.14,
+  splitter: 1.04,
+  brute: 0.72,
+  burrower: 0.82,
+  binder: 0.96,
+  warden: 0.84,
+} satisfies Record<EnemyId, number>;
 const STAGE_FRAME_EFFECT: Record<Exclude<ActBand, "intro">, SpriteFrameEffect> = {
   awakened: {
     filter: "brightness(0.94) saturate(1.12) contrast(1.08)",
@@ -147,7 +161,11 @@ function damageBrute(enemy: EnemyState, damage: number, kind: EnemyDamageKind, s
   const shieldHp = enemy.bruteShieldHp ?? 0;
   const shieldDamage = Math.min(damage, shieldHp);
   enemy.bruteShieldHp = shieldHp - shieldDamage;
-  if (enemy.bruteShieldHp <= 0) breakBruteShield(enemy);
+  if (enemy.bruteShieldHp <= 0) {
+    breakBruteShield(enemy);
+  } else if (shieldDamage > 0) {
+    playSfx("enemyShieldGuard");
+  }
   return shieldDamage;
 }
 
@@ -160,6 +178,7 @@ export function damageEnemy(
 ) {
   if (enemy.wardenDamageImmune) return 0;
 
+  const hpBeforeDamage = enemy.hp;
   const scaledDamage = (enemy.armorBreakTimer ?? 0) > 0
     ? damage * (enemy.armorBreakMultiplier ?? 1)
     : damage;
@@ -171,6 +190,9 @@ export function damageEnemy(
     : protectedDamage;
   if (enemy.sheetIndex !== BRUTE_SHEET_INDEX) enemy.hp -= appliedDamage;
   if (hitCooldown !== undefined) enemy.hitCd = hitCooldown;
+  if (enemy.hp < hpBeforeDamage && enemy.hp > 0) {
+    playSfx("enemyHurt", ENEMY_HURT_SFX_PITCH[enemy.id]);
+  }
   return appliedDamage;
 }
 
