@@ -108,7 +108,7 @@
 
 ## Music and Audio Content
 
-音乐方向已经有完整 prompt，但 runtime 当前只有简单 tone SFX。接入顺序建议：
+音乐方向已经有完整 prompt；runtime 已接入首批 23 个敌人 WAV，并保留 tone 回退。后续接入顺序建议：
 
 1. Start Screen、Act 1、Spider String 三首先验证音色。
 2. 补 Boss intro sting、victory（终幕通关）、game over、low health warning。
@@ -116,7 +116,7 @@
 4. 蚀醒段建议复用基础幕主题的变奏（变速 / 加层 / 调式变化），呼应「蚀醒形态复用基础精灵」的成本策略。
 5. 所有 BGM 导入前先确认 loop seam，无爆音和断点。
 
-音频实现前不要把 prompt 文档当作已接入素材。
+BGM 与尚未生成的玩家/Boss 采样仍不能把 prompt 文档当作已接入素材。
 
 ## First Buildable Milestone
 

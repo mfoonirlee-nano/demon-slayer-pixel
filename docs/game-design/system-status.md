@@ -38,7 +38,7 @@
 | Pause overlay | 暂停面板、技能说明、关键数值已实现 | 统一 overlay 规范、输入规则和移动端布局 | 部分实现 | P3 | `src/App.tsx` |
 | Death overlay | 死亡动画、生存时间、`R` 重开已实现 | 增加主要死亡原因和简短复盘提示 | 部分实现 | P3 | `src/App.tsx` |
 | 移动端触控 | 移动、跳跃、攻击、技能、大招、暂停按钮已实现 | 增加选择 overlay 的触屏输入规范 | 部分实现 | P3 | `src/App.tsx`、`src/input.ts` |
-| 音效 | Web Audio 简单 tone 用于攻击、命中、受伤、拾取、Boss 等事件 | 完整 SFX 清单、音量层级、BGM 和 Boss 音乐接入 | 部分实现 | P4 | `src/audio.ts`、`docs/music-direction.md` |
+| 音效 | 23 个敌人 WAV 已覆盖攻击、灯焰/纸符施法、诅咒伤害、受伤和特殊动作；Web Audio tone 作为回退，主音量/音效音量已接入 | 继续补玩家/Boss 采样、BGM 和 Boss 音乐 | 部分实现 | P4 | `src/game/audio.ts`、`src/game/audioSamples.ts`、`docs/music-direction.md` |
 | 美术素材 | 玩家、技能、多个敌人、当前 Boss、地图、UI 素材已接入 | 未实现敌人和 Boss 继续按 art brief 制作，禁止临时图形占位 | 部分实现 | P3 | `assets/sprites/`、`docs/art/README.md`、`docs/SPRITES.md` |
 | 平衡验收 | 当前主要靠人工试玩和文档公式 | 建立首 Boss 时间、升级频率、死亡原因、Boss 击杀率等验收指标 | 目标设计，未实现 | P0 | [balance-acceptance.md](balance-acceptance.md) |
 

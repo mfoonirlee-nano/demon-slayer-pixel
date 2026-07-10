@@ -5,7 +5,14 @@
 - 游戏是 2D 像素横版生存战，核心场景是夜色山林、鸟居、血月、平台移动和高频战斗。
 - 玩家攻击气质来自原创“月潮流”剑术：清亮、流动、带白色浪尖和蓝色卷线的英雄感。
 - 敌人与 Boss 是原创夜妖变体。音乐也应保持原创，不直接模仿任何现成动漫、电影或游戏配乐。
-- 当前 `src/audio.ts` 只有简单音调音效；本文先准备 BGM、Boss 音乐和短音乐反馈的生成 prompt，不直接改运行时代码。
+- 当前 `src/game/audio.ts` 已接入首批敌人采样音效，并保留简单音调作为加载失败回退；本文继续聚焦 BGM、Boss 音乐和短音乐反馈的生成 prompt。
+
+## Enemy SFX Runtime
+
+- `npm run generate:sfx` 会用固定 seed 生成 `assets/audio/sfx/enemies/` 下的 23 个原创短音效，格式统一为 48 kHz、16-bit、mono WAV。
+- 音效覆盖攻击前摇、冲刺/斩击、灯焰与纸符施法、诅咒伤害、盾击/破盾、俯冲/落地、分裂/出生、光环、潜地/钻出、受伤和击败。
+- `src/game/audioSamples.ts` 负责样本路径、预载、解码与播放；现有 `playSfx(sfx, pitch)` 调用点和全局防连发间隔保持不变。
+- 样本尚未加载或解码失败时，运行时自动使用 `src/game/audio.ts` 内的振荡器音型，不阻塞开局。
 
 ## Core Direction
 
@@ -240,7 +247,8 @@ Duration: 4 seconds, seamless micro-loop. Mood: urgent but restrained. No vocals
 
 ## Generation Workflow
 
-1. 先生成 `Start Screen`、`Act 1`、`Spider String` 三首，验证整体音色是否贴合游戏。
-2. 每个 prompt 至少生成 3 个版本，筛掉不能自然循环、音效空间太满、旋律过像现成动画配乐的版本。
-3. 确认可用后，再批量生成 Act 2/3/4 与其他 Boss 主题。
-4. 导入游戏前优先裁剪成 `ogg` 或 `mp3` 循环段，并检查 loop seam 是否有爆音或断点。
+1. 修改敌人音效配方后运行 `npm run generate:sfx`，再检查格式、峰值、削波和重复生成哈希。
+2. BGM 先生成 `Start Screen`、`Act 1`、`Spider String` 三首，验证整体音色是否贴合游戏。
+3. 每个 BGM prompt 至少生成 3 个版本，筛掉不能自然循环、音效空间太满、旋律过像现成动画配乐的版本。
+4. 确认可用后，再批量生成 Act 2/3/4 与其他 Boss 主题。
+5. BGM 导入游戏前优先裁剪成 `ogg` 或 `mp3` 循环段，并检查 loop seam 是否有爆音或断点。
