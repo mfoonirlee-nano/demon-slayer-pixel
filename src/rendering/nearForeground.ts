@@ -11,6 +11,7 @@ import {
 } from "../constants";
 import { bossApproachGroundTransitionSeconds } from "../systems/runProgression";
 import type { EnemySpawnOccluderState, EnemySpawnOccluderSource } from "../types/game-state";
+import { drawActLandmarks } from "./actLandmarks";
 
 const NEAR_FOREGROUND_SPEED = 18;
 const NEAR_FOREGROUND_PATTERN_WIDTH = 2688;
@@ -385,6 +386,10 @@ export function drawNearForeground() {
   for (let pass = NEAR_FOREGROUND_PASS_MIN; pass <= NEAR_FOREGROUND_PASS_MAX; pass += 1) {
     drawTrees(context, pass, offset);
   }
+  drawActLandmarks(context, {
+    act: state.enemyDirector.act,
+    elapsed: state.elapsed,
+  });
   for (let pass = NEAR_FOREGROUND_PASS_MIN; pass <= NEAR_FOREGROUND_PASS_MAX; pass += 1) {
     drawDecor(context, pass, offset);
   }

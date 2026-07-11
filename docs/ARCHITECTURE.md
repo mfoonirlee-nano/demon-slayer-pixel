@@ -47,7 +47,8 @@
 - `src/game/input.ts`: 处理键盘输入和移动端虚拟按键逻辑。
 - `src/rendering/background.ts`: 绘制天空、星星、月亮、云层、山脉和地面底色。
 - `src/rendering/clouds.ts`: 绘制大云/小云精灵，支持夜晚灰色滤镜和血月红色染色。
-- `src/rendering/nearForeground.ts`: 绘制近景树线、石塔和鸟居，使用独立视差速度。
+- `src/rendering/actLandmarks.ts`: 按当前幕解析并绘制 Boss 专属中景地标，不参与碰撞或出生遮挡。
+- `src/rendering/nearForeground.ts`: 编排近景树线、逐幕 Boss 地标、石塔和鸟居，使用独立视差速度。
 - `src/moon/`: 管理月亮状态、血月插值、天空配色和月亮渲染。
 - `src/game/audio.ts`: 使用 Web Audio 播放敌人与玩家采样音效，并在加载失败时回退到振荡器音型。
 - `src/game/utils.ts`: 通用工具函数。
@@ -78,7 +79,7 @@
 Canvas 每帧大致按以下顺序绘制：
 
 1. 背景：天空、月亮、星星、云、山脉、地面底色。
-2. 近景背景：树线、石塔、鸟居。
+2. 近景背景：树线、当前幕 Boss 地标、石塔、鸟居。
 3. 地图与奖励：平台、水晶、宝箱。
 4. 玩家技能闪屏。
 5. 玩家、技能效果、敌人、Boss、Boss 技能、投射物、粒子。

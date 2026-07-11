@@ -22,6 +22,7 @@
 - `assets/sprites/enemies/`: 小怪、Boss、Boss 技能和 Boss 技能效果。
 - `assets/sprites/skills/`: 每个技能一个目录，目录内放 `skill.png`、`effect.png` 和已有的 `icon.png`。
 - `assets/sprites/background/`: 天空、山脉、石塔、鸟居等背景/近景素材。
+- `assets/sprites/scenery/boss-landmarks/`: 第 1-13 幕按 Boss 特征区分的中景地标。
 - `assets/sprites/cloud/`: 大云和小云图集。
 - `assets/sprites/tree/`: 树木图集。
 - `assets/sprites/ground/`: 草地和石地瓦片。
@@ -29,6 +30,26 @@
 - `assets/sprites/ui/`: 状态条、开始/暂停/结束界面、大招能量球等 UI 素材。
 
 ## 关键运行时规格
+
+### 逐幕 Boss 地标
+
+`scenery/boss-landmarks/` 保存 13 张互不复用的 `256x256` RGBA 单图，四边保留透明 gutter，底部可见 bbox 作为地面锚点。`ACT_LANDMARK_SPRITES` 以 `act` 为主键记录 Boss、形态、URL、绘制高度和 alpha，并由 `spriteImageLoadTargets()` 预加载；`drawActLandmarks()` 只选择当前 `enemyDirector.act` 的素材，在树线之后、通用杂物之前绘制，不加入敌人出生遮挡物或碰撞数据。基础幕绘制高 `136px` / alpha `0.84`，蚀醒幕为 `154px` / `0.9`，终幕为 `184px` / `0.96`。
+
+| 幕 | Boss / 形态 | 文件 |
+| ---: | --- | --- |
+| 1 | 蛛弦 / 基础 | `act-01-spider-string.png` |
+| 2 | 雾骨 / 基础 | `act-02-mist-bone.png` |
+| 3 | 镜魇 / 基础 | `act-03-mirror-dream.png` |
+| 4 | 牙岚 / 基础 | `act-04-fang-gale.png` |
+| 5 | 灯烬 / 基础 | `act-05-lantern-ember.png` |
+| 6 | 枯铃 / 基础 | `act-06-dead-bell.png` |
+| 7 | 蛛弦 / 蚀醒 | `act-07-spider-string-awakened.png` |
+| 8 | 雾骨 / 蚀醒 | `act-08-mist-bone-awakened.png` |
+| 9 | 镜魇 / 蚀醒 | `act-09-mirror-dream-awakened.png` |
+| 10 | 牙岚 / 蚀醒 | `act-10-fang-gale-awakened.png` |
+| 11 | 灯烬 / 蚀醒 | `act-11-lantern-ember-awakened.png` |
+| 12 | 枯铃 / 蚀醒 | `act-12-dead-bell-awakened.png` |
+| 13 | 万相血月 / 终幕 | `act-13-blood-moon-many-faces.png` |
 
 ### UI 素材
 
