@@ -121,7 +121,12 @@ export type BossSkillMode =
   | "bloodMoonLanternBell"
   | "bloodMoonSixfold"
   | "bloodMoonManyFaces";
-export type ProjectileKind = "bossBone" | "casterWisp" | "binderTalisman" | "leaperSpike";
+export type ProjectileKind =
+  | "bossBone"
+  | "casterWisp"
+  | "binderTalisman"
+  | "leaperSpike"
+  | "gliderSonicBlade";
 export type MirrorShardKind = "shard" | "nightmare";
 export type SkillLevel = 1 | 2 | 3;
 export type UltimateLevel = 0 | 1 | 2 | 3;

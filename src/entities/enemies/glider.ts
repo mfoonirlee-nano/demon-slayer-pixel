@@ -7,9 +7,11 @@ import type { EnemyArchetype, EnemySpawnContext } from "./common";
 import {
   drawEnemyFrame,
   drawEnemySheetFrame,
+  enemyAttackDamage,
   enemyCenterX,
   enemyDrawScale,
   enemyFeetY,
+  enemyGrowthStage,
   hasAwakenedGrowth,
 } from "./common";
 
@@ -23,14 +25,18 @@ const GLIDER_CONFIG = {
   hoverRandomSpeed: 0.32,
   hoverSpeedScaleByElapsed: 0.005,
   hoverMaxSpeed: 1.75,
+  awakenedCruiseSpeedScale: 1.2,
   retreatScale: 0.58,
   driftScale: 0.18,
   hoverYOffsetFromPlayer: 42,
   hoverBobAmplitude: 11,
   hoverBobHz: 0.65,
   hoverYSteer: 0.06,
+  hoverMaxVerticalStep: 0.55,
   windupYSteer: 0.035,
+  windupMaxVerticalStep: 0.35,
   recoverYSteer: 0.075,
+  recoverMaxVerticalStep: 0.85,
   minTopY: 62,
   minGroundClearance: 70,
   diveGroundClearance: 12,
@@ -61,6 +67,22 @@ const GLIDER_CONFIG = {
   collisionScaleX: 1.25,
   collisionScaleY: 0.62,
   hoverAnimSpeed: 7,
+  sonicInitialCooldownFrames: 21,
+  sonicCooldownFrames: 84,
+  sonicBlade: {
+    collisionW: 72,
+    collisionH: 24,
+    speed: 5.8,
+    lifeFrames: 120,
+    damageMultiplier: 0.75,
+    finalSizeScale: 1.5,
+    finalSpeedScale: 1.35,
+    startForwardRatio: 0.45,
+    startHeightRatio: 0.72,
+    spriteFrame: 3,
+    sfxPitch: 1.18,
+    finalSfxPitch: 1.28,
+  },
   windupSfxPitch: 1.28,
 } as const;
 
@@ -100,6 +122,11 @@ function gliderDiveSpeed(enemy: EnemyState) {
   return hasAwakenedGrowth(enemy) ? speed * GLIDER_CONFIG.awakenedDiveSpeedScale : speed;
 }
 
+function gliderCruiseSpeed(enemy: EnemyState) {
+  const speed = enemy.gliderBaseSpeed ?? GLIDER_CONFIG.hoverBaseSpeed;
+  return hasAwakenedGrowth(enemy) ? speed * GLIDER_CONFIG.awakenedCruiseSpeedScale : speed;
+}
+
 function gliderMaxHoverTopY(enemy: EnemyState) {
   return GROUND_Y - enemy.h - GLIDER_CONFIG.minGroundClearance;
 }
@@ -117,8 +144,9 @@ function gliderHoverTopY(enemy: EnemyState) {
   );
 }
 
-function moveTowardHoverY(enemy: EnemyState, steer: number) {
-  enemy.y += (gliderHoverTopY(enemy) - enemy.y) * steer;
+function moveTowardHoverY(enemy: EnemyState, steer: number, maxStep: number) {
+  const step = (gliderHoverTopY(enemy) - enemy.y) * steer;
+  enemy.y += clamp(step, -maxStep, maxStep);
 }
 
 function gliderPressureCount() {
@@ -227,14 +255,21 @@ function initGlider(enemy: EnemyState, context: EnemySpawnContext) {
   enemy.gliderFacing = -context.side;
   enemy.gliderBaseSpeed = context.speed;
   enemy.gliderDiveVy = 0;
+  enemy.gliderSonicCooldown = hasAwakenedGrowth(enemy)
+    ? GLIDER_CONFIG.sonicInitialCooldownFrames
+    : 0;
   enemy.y = gliderHoverTopY(enemy);
 }
 
 function updateGliderHover(enemy: EnemyState, facing: number, distance: number) {
-  const speed = enemy.gliderBaseSpeed ?? GLIDER_CONFIG.hoverBaseSpeed;
+  const speed = gliderCruiseSpeed(enemy);
   enemy.gliderTimer = Math.max(0, (enemy.gliderTimer ?? 0) - 1);
   enemy.gliderFacing = facing;
-  moveTowardHoverY(enemy, GLIDER_CONFIG.hoverYSteer);
+  moveTowardHoverY(
+    enemy,
+    GLIDER_CONFIG.hoverYSteer,
+    GLIDER_CONFIG.hoverMaxVerticalStep,
+  );
 
   if (distance > GLIDER_CONFIG.preferredDistance + GLIDER_CONFIG.rangeSlack) {
     enemy.vx = facing * speed;
@@ -242,6 +277,38 @@ function updateGliderHover(enemy: EnemyState, facing: number, distance: number) 
     enemy.vx = -facing * speed * GLIDER_CONFIG.retreatScale;
   } else {
     enemy.vx = facing * speed * GLIDER_CONFIG.driftScale;
+  }
+
+  if (hasAwakenedGrowth(enemy) && (enemy.gliderSonicCooldown ?? 0) <= 0) {
+    const final = enemyGrowthStage(enemy) === "final";
+    const sizeScale = final ? GLIDER_CONFIG.sonicBlade.finalSizeScale : 1;
+    const w = GLIDER_CONFIG.sonicBlade.collisionW * sizeScale;
+    const h = GLIDER_CONFIG.sonicBlade.collisionH * sizeScale;
+    const centerX = enemyCenterX(enemy)
+      + facing * enemy.w * GLIDER_CONFIG.sonicBlade.startForwardRatio;
+    const centerY = enemy.y + enemy.h * GLIDER_CONFIG.sonicBlade.startHeightRatio;
+    const speed = GLIDER_CONFIG.sonicBlade.speed
+      * (final ? GLIDER_CONFIG.sonicBlade.finalSpeedScale : 1);
+    state.projectiles.push({
+      kind: "gliderSonicBlade",
+      x: centerX - w / HALF_DIVISOR,
+      y: centerY - h / HALF_DIVISOR,
+      w,
+      h,
+      vx: facing * speed,
+      vy: 0,
+      life: GLIDER_CONFIG.sonicBlade.lifeFrames,
+      damage: enemyAttackDamage(
+        enemy,
+        enemy.damage * GLIDER_CONFIG.sonicBlade.damageMultiplier,
+      ),
+      frame: GLIDER_CONFIG.sonicBlade.spriteFrame,
+    });
+    playSfx(
+      "enemyCastRelease",
+      final ? GLIDER_CONFIG.sonicBlade.finalSfxPitch : GLIDER_CONFIG.sonicBlade.sfxPitch,
+    );
+    enemy.gliderSonicCooldown = GLIDER_CONFIG.sonicCooldownFrames;
   }
 
   if (distance <= GLIDER_CONFIG.triggerDistance && enemy.gliderTimer <= 0) {
@@ -260,6 +327,12 @@ function updateGlider(enemy: EnemyState) {
   enemy.gliderFacing ??= enemy.vx >= 0 ? 1 : -1;
   enemy.gliderBaseSpeed ??= gliderHoverSpeed();
   enemy.gliderDiveVy ??= 0;
+  enemy.gliderSonicCooldown ??= hasAwakenedGrowth(enemy)
+    ? GLIDER_CONFIG.sonicInitialCooldownFrames
+    : 0;
+  if (hasAwakenedGrowth(enemy)) {
+    enemy.gliderSonicCooldown = Math.max(0, enemy.gliderSonicCooldown - 1);
+  }
 
   const toward = playerCenterX() - enemyCenterX(enemy);
   const facing = gliderFacing(enemy, toward);
@@ -271,7 +344,11 @@ function updateGlider(enemy: EnemyState) {
   } else if (phase === "windup") {
     enemy.gliderFacing = facing;
     enemy.vx = 0;
-    moveTowardHoverY(enemy, GLIDER_CONFIG.windupYSteer);
+    moveTowardHoverY(
+      enemy,
+      GLIDER_CONFIG.windupYSteer,
+      GLIDER_CONFIG.windupMaxVerticalStep,
+    );
     enemy.gliderTimer -= 1;
     if (enemy.gliderTimer <= 0) {
       enemy.gliderFacing = facing;
@@ -294,8 +371,12 @@ function updateGlider(enemy: EnemyState) {
     }
   } else {
     enemy.gliderTimer -= 1;
-    enemy.vx = (enemy.gliderFacing ?? facing) * (enemy.gliderBaseSpeed ?? GLIDER_CONFIG.hoverBaseSpeed) * GLIDER_CONFIG.recoverSpeedScale;
-    moveTowardHoverY(enemy, GLIDER_CONFIG.recoverYSteer);
+    enemy.vx = (enemy.gliderFacing ?? facing) * gliderCruiseSpeed(enemy) * GLIDER_CONFIG.recoverSpeedScale;
+    moveTowardHoverY(
+      enemy,
+      GLIDER_CONFIG.recoverYSteer,
+      GLIDER_CONFIG.recoverMaxVerticalStep,
+    );
     if (enemy.gliderTimer <= 0) {
       enterGliderPhase(enemy, "hover");
     }

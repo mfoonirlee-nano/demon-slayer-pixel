@@ -233,12 +233,12 @@ Glider 专属动作素材：
 
 | 路径 | 总尺寸 | 帧数 | 单帧 | 运行时状态 | 备注 |
 | --- | ---: | ---: | ---: | --- | --- |
-| `enemies/glider/glider_hover.png` | `2160x240` | 6 | `360x240` | `hover` | 低空翼膜拍动循环，第一帧与末帧为相邻低翼姿态 |
+| `enemies/glider/glider_hover.png` | `2160x240` | 6 | `360x240` | `hover` | 低空翼膜拍动循环；可见内容已按固定底部中心锚点放大，体量与其它状态一致 |
 | `enemies/glider/glider_windup.png` | `1440x240` | 4 | `360x240` | `windup` | 收翼停顿，眼点和翼膜裂缝烘入暗橙红前摇读招 |
 | `enemies/glider/glider_dive.png` | `1800x240` | 5 | `360x240` | `dive` / `pass` | 窄身爪前伸俯冲，少量风痕烘入图集；`pass` 复用末帧掠过姿态 |
 | `enemies/glider/glider_recover.png` | `1080x240` | 3 | `360x240` | `recover` | 掠过后翼膜重新打开，身体上抬形成反击窗口 |
 
-Glider 运行时由 `GLIDER_SHEETS` 暴露并预加载。普通刷怪在 `elapsed >= 70s` 后才会抽取 glider，作为第 4 幕解锁的当前时间近似；同屏最多 `2` 个 glider，同时处于 `windup` / `dive` / `pass` 压力状态的 glider 最多 `1` 个。Glider 不创建投射物，俯冲预警只依赖 windup 图集内的眼点和翼膜裂缝。
+Glider 运行时由 `GLIDER_SHEETS` 暴露并预加载。普通刷怪在 `elapsed >= 70s` 后才会抽取 glider，作为第 4 幕解锁的当前时间近似；同屏最多 `2` 个 glider，同时处于 `windup` / `dive` / `pass` 压力状态的 glider 最多 `1` 个。普通状态只使用俯冲；觉醒和终幕状态会在悬停拍翼时发射单枚横向音波刃，复用已预加载的 `DEAD_BELL_BLADE_SHEET` 并施加紫色效果，终幕版本更大、更快。俯冲预警仍只依赖 windup 图集内的眼点和翼膜裂缝。
 
 Leaper 专属动作素材：
 

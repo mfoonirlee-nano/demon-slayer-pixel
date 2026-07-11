@@ -1,6 +1,13 @@
 import { state } from "../game/state";
 import { ctx } from "../rendering/context";
-import { WIDTH, HEIGHT, PROJECTILE_CONFIG, CASTER_WISP_SHEET, BINDER_TALISMAN_SHEET } from "../constants";
+import {
+  WIDTH,
+  HEIGHT,
+  PROJECTILE_CONFIG,
+  CASTER_WISP_SHEET,
+  BINDER_TALISMAN_SHEET,
+  DEAD_BELL_BLADE_SHEET,
+} from "../constants";
 import type { ProjectileState } from "../types/game-state";
 import { hitbox } from "../game/utils";
 import { drawSheetFrame, type SpriteFrameEffect } from "../rendering/graphics";
@@ -41,6 +48,16 @@ const LEAPER_SPIKE_DRAW = {
   fill: "#cbb99a",
   highlight: "#f0dfbd",
   outline: "#4b3030",
+} as const;
+const GLIDER_SONIC_BLADE_DRAW = {
+  widthScale: 1.33,
+  effect: {
+    filter: "hue-rotate(245deg) saturate(0.82) brightness(0.88)",
+    tint: {
+      color: "rgb(112, 54, 146)",
+      alpha: 0.36,
+    },
+  },
 } as const;
 
 const FRAMES_PER_SECOND = 60;
@@ -247,6 +264,24 @@ export function drawProjectiles() {
       ctx.fillStyle = LEAPER_SPIKE_DRAW.highlight;
       ctx.fillRect(-halfLength / 2, -1, halfLength, 2);
       ctx.restore();
+      continue;
+    }
+
+    if (p.kind === "gliderSonicBlade") {
+      const drawW = p.w * GLIDER_SONIC_BLADE_DRAW.widthScale;
+      const drawH = drawW * DEAD_BELL_BLADE_SHEET.frameH / DEAD_BELL_BLADE_SHEET.frameW;
+      const drawX = p.x + p.w / 2 - drawW / 2;
+      const drawY = p.y + p.h / 2 - drawH / 2;
+      drawSheetFrame(
+        DEAD_BELL_BLADE_SHEET,
+        p.frame ?? 0,
+        drawX,
+        drawY,
+        drawW,
+        drawH,
+        p.vx >= 0 ? 1 : -1,
+        GLIDER_SONIC_BLADE_DRAW.effect,
+      );
       continue;
     }
 

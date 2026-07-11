@@ -236,6 +236,7 @@ export type EnemyState = {
   gliderFacing?: number;
   gliderBaseSpeed?: number;
   gliderDiveVy?: number;
+  gliderSonicCooldown?: number;
   leaperPhase?: LeaperPhase;
   leaperTimer?: number;
   leaperPhaseDuration?: number;
