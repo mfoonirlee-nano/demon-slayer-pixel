@@ -1,10 +1,12 @@
 import { describe, expect, it } from "vitest";
 import { UI_SPRITES } from "../constants";
 import {
+  HUD_CURRENT_SKILL_FRAME_TOP,
   HUD_HP_METER_FRAME,
   HUD_HP_METER_PLACEMENT,
   HUD_SKILL_METER_FRAME,
   HUD_SKILL_METER_PLACEMENT,
+  HUD_ULTIMATE_FRAME_TOP,
 } from "./gameHudLayout";
 
 const HP_RIGHT_CAP_TOP = -4;
@@ -25,9 +27,18 @@ describe("game HUD layout", () => {
     expect(fillCenterY).toBe(HUD_SKILL_METER_FRAME.height / 2);
   });
 
-  it("places player meters tight against their left ability frames", () => {
-    expect(HUD_HP_METER_PLACEMENT).toEqual({ left: 68, top: 15 });
-    expect(HUD_SKILL_METER_PLACEMENT).toEqual({ left: 92, top: 39 });
+  it("centers player meter tracks on their ability frames", () => {
+    const hpFillCenterY = HUD_HP_METER_PLACEMENT.top
+      + (HUD_HP_METER_FRAME.fillTop + HUD_HP_METER_FRAME.height - HUD_HP_METER_FRAME.fillBottom) / 2;
+    const skillFillCenterY = HUD_SKILL_METER_PLACEMENT.top
+      + (HUD_SKILL_METER_FRAME.fillTop + HUD_SKILL_METER_FRAME.height - HUD_SKILL_METER_FRAME.fillBottom) / 2;
+
+    expect({
+      hp: HUD_HP_METER_PLACEMENT.left,
+      skill: HUD_SKILL_METER_PLACEMENT.left,
+    }).toEqual({ hp: 68, skill: 92 });
+    expect(hpFillCenterY).toBe(HUD_ULTIMATE_FRAME_TOP + UI_SPRITES.ultimateFrame.displayH / 2);
+    expect(skillFillCenterY).toBe(HUD_CURRENT_SKILL_FRAME_TOP + UI_SPRITES.currentSkillFrame.displayH / 2);
   });
 
   it("keeps the right cap artwork tall enough for the upper corner flourish", () => {

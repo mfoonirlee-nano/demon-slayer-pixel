@@ -11,10 +11,12 @@ import { VictoryScreen } from "./victoryScreen";
 import { getSkill, romanLevel, skillIconSrc } from "./uiDisplay";
 import { UiSprite, uiSpriteDisplaySize } from "./uiSprite";
 import {
+  HUD_CURRENT_SKILL_FRAME_TOP,
   HUD_HP_METER_FRAME,
   HUD_HP_METER_PLACEMENT,
   HUD_SKILL_METER_FRAME,
   HUD_SKILL_METER_PLACEMENT,
+  HUD_ULTIMATE_FRAME_TOP,
   type HudMeterFrame,
   type HudMeterPlacement,
 } from "./gameHudLayout";
@@ -240,7 +242,13 @@ export function GameHud() {
       <div className="pointer-events-none absolute left-2 top-2 z-10 hidden text-white md:block">
         <div className="player-hud">
           <div className="player-hud-abilities">
-            <UiSprite id="ultimateFrame" width={72} height={72} className="player-hud-ultimate-frame flex items-center justify-center">
+            <UiSprite
+              id="ultimateFrame"
+              width={72}
+              height={72}
+              className="player-hud-ultimate-frame flex items-center justify-center"
+              style={{ top: HUD_ULTIMATE_FRAME_TOP }}
+            >
               <UltimateOrb
                 value={player.ultimateEnergy}
                 max={player.ultimateEnergyMax}
@@ -249,7 +257,13 @@ export function GameHud() {
                 activePercent={ultimateActivePercent}
               />
             </UiSprite>
-            <UiSprite id="currentSkillFrame" width={36} height={36} className="player-hud-current-skill">
+            <UiSprite
+              id="currentSkillFrame"
+              width={36}
+              height={36}
+              className="player-hud-current-skill"
+              style={{ top: HUD_CURRENT_SKILL_FRAME_TOP }}
+            >
               {activeSkillId && activeSkill ? (
                 <>
                   <img src={skillIconSrc(activeSkillId)} alt="" draggable={false} />

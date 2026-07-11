@@ -17,6 +17,9 @@ export type HudMeterPlacement = {
   top: number;
 };
 
+export const HUD_ULTIMATE_FRAME_TOP = 0;
+export const HUD_CURRENT_SKILL_FRAME_TOP = 36;
+
 export const HUD_HP_METER_FRAME: HudMeterFrame = {
   left: "hudHpBarLeft",
   mid: "hudHpBarMid",
@@ -31,7 +34,7 @@ export const HUD_HP_METER_FRAME: HudMeterFrame = {
 
 export const HUD_HP_METER_PLACEMENT: HudMeterPlacement = {
   left: 68,
-  top: 15,
+  top: 23,
 };
 
 export const HUD_SKILL_METER_FRAME: HudMeterFrame = {
@@ -48,5 +51,5 @@ export const HUD_SKILL_METER_FRAME: HudMeterFrame = {
 
 export const HUD_SKILL_METER_PLACEMENT: HudMeterPlacement = {
   left: 92,
-  top: 39,
+  top: 45,
 };

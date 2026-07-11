@@ -16,14 +16,12 @@
 .player-hud-ultimate-frame {
   position: absolute;
   left: 0;
-  top: 0;
   z-index: 2;
 }
 
 .player-hud-current-skill {
   position: absolute;
   left: 60px;
-  top: 36px;
   z-index: 4;
   display: grid;
   place-items: center;
