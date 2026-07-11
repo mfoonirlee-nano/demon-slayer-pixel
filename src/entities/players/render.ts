@@ -12,7 +12,7 @@ import {
   SKILL_IDS,
 } from "../../constants";
 import { frameIndex, onGround } from "../../game/utils";
-import { drawSheetFrame, drawSkillFrame } from "../../rendering/graphics";
+import { drawSheetFrame, drawSkillFrame, type SpriteFrameEffect } from "../../rendering/graphics";
 import { selectedSkill } from "../../systems/loadout";
 import { playerSkillById, ULTIMATE_SKILL_ASSETS } from "../../systems/skillCatalog";
 import type { Skill } from "../../types/assets";
@@ -37,7 +37,9 @@ const MOON_TIDE_OUTLINE_MAX_LEVEL = 3;
 const MOON_TIDE_OUTLINE_ALPHA_BASE = 0.14;
 const MOON_TIDE_OUTLINE_ALPHA_PER_LEVEL = 0.04;
 const ULTIMATE_SKILL_CAST_ANCHOR_Y = 0.83;
-const MOON_TIDE_OUTLINE_FILTER = "brightness(0) saturate(100%) invert(64%) sepia(88%) saturate(1320%) hue-rotate(166deg) brightness(103%) contrast(103%) drop-shadow(0 0 7px rgba(52, 196, 255, 0.82))";
+const MOON_TIDE_OUTLINE_EFFECT = {
+  filter: "brightness(0) saturate(100%) invert(64%) sepia(88%) saturate(1320%) hue-rotate(166deg) brightness(103%) contrast(103%) drop-shadow(0 0 7px rgba(52, 196, 255, 0.82))",
+} as const satisfies SpriteFrameEffect;
 const PLAYER_BINDER_TALISMAN_ATTACHMENT = {
   w: 24,
   h: 32,
@@ -217,7 +219,11 @@ function drawBinderTalismanStatusEffect(
   );
 }
 
-function drawRenderSnapshot(snapshot: UltimatePlayerGhostSnapshot, currentSkill: Skill | null = null) {
+function drawRenderSnapshot(
+  snapshot: UltimatePlayerGhostSnapshot,
+  currentSkill: Skill | null = null,
+  effect?: SpriteFrameEffect,
+) {
   if (snapshot.source === "player" && snapshot.animationState) {
     drawSheetFrame(
       PLAYER_SHEETS[snapshot.animationState],
@@ -227,6 +233,7 @@ function drawRenderSnapshot(snapshot: UltimatePlayerGhostSnapshot, currentSkill:
       snapshot.w,
       snapshot.h,
       snapshot.facing,
+      effect,
     );
     return;
   }
@@ -234,7 +241,7 @@ function drawRenderSnapshot(snapshot: UltimatePlayerGhostSnapshot, currentSkill:
   if (snapshot.source !== "skill" || !snapshot.skillId) return;
   const skill = currentSkill ?? playerSkillById(snapshot.skillId);
   if (!skill) return;
-  drawSkillFrame(skill, snapshot.frame, snapshot.x, snapshot.y, snapshot.w, snapshot.h, snapshot.facing);
+  drawSkillFrame(skill, snapshot.frame, snapshot.x, snapshot.y, snapshot.w, snapshot.h, snapshot.facing, effect);
 }
 
 function drawMoonTideOutline(snapshot: UltimatePlayerGhostSnapshot, currentSkill: Skill | null = null) {
@@ -255,8 +262,7 @@ function drawMoonTideOutline(snapshot: UltimatePlayerGhostSnapshot, currentSkill
   ctx.save();
   ctx.globalAlpha = MOON_TIDE_OUTLINE_ALPHA_BASE + level * MOON_TIDE_OUTLINE_ALPHA_PER_LEVEL;
   ctx.globalCompositeOperation = "lighter";
-  ctx.filter = MOON_TIDE_OUTLINE_FILTER;
-  drawRenderSnapshot(outline, currentSkill);
+  drawRenderSnapshot(outline, currentSkill, MOON_TIDE_OUTLINE_EFFECT);
   ctx.restore();
 }
 

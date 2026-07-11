@@ -1,7 +1,7 @@
 import { state } from "../../game/state";
 import { ctx } from "../../rendering/context";
 import { HIT_BURST_CONFIG, HIT_BURST_VISUAL, PARTICLE_CONFIG, SKILL_BURST_VISUAL } from "../../constants";
-import type { HitBurstState, ParticleState, SkillBurstState } from "../../types/game-state";
+import type { HitBurstState, ParticleState, SkillBurstState, SparkState } from "../../types/game-state";
 import { skillById } from "../../systems/loadout";
 
 const FULL_CIRCLE_RADIANS = Math.PI * 2;
@@ -9,48 +9,144 @@ const DEFAULT_HIT_BURST_COLOR = "#9feaff";
 const SLASH_VERTICAL_SPREAD_SCALE = 0.6;
 const ROCK_OUTLINE_COLOR = "#2a1b1b";
 const ROCK_INSET = 1;
+let nextParticleReplacementIndex = 0;
+let nextHitBurstReplacementIndex = 0;
+const recycledParticles: ParticleState[] = [];
+const recycledHitBursts: HitBurstState[] = [];
+const activeSparkCounts = new WeakMap<HitBurstState, number>();
+
+function writableParticle() {
+  if (state.particles.length < PARTICLE_CONFIG.maxActive) {
+    if (state.particles.length === 0) nextParticleReplacementIndex = 0;
+    const particle = recycledParticles.pop()
+      ?? { x: 0, y: 0, vx: 0, vy: 0, life: 0, color: "" };
+    state.particles.push(particle);
+    return particle;
+  }
+
+  const index = nextParticleReplacementIndex % state.particles.length;
+  nextParticleReplacementIndex = (index + 1) % PARTICLE_CONFIG.maxActive;
+  return state.particles[index];
+}
+
+function resetParticle(particle: ParticleState, next: ParticleState) {
+  particle.kind = next.kind;
+  particle.x = next.x;
+  particle.y = next.y;
+  particle.vx = next.vx;
+  particle.vy = next.vy;
+  particle.life = next.life;
+  particle.color = next.color;
+  particle.size = next.size;
+  particle.fade = next.fade;
+  particle.gravity = next.gravity;
+  particle.rotation = next.rotation;
+  particle.angularVelocity = next.angularVelocity;
+}
+
+function recycleParticleAt(index: number) {
+  const particle = state.particles[index] as ParticleState;
+  const last = state.particles.pop();
+  if (index < state.particles.length && last) state.particles[index] = last;
+  if (recycledParticles.length < PARTICLE_CONFIG.maxActive) recycledParticles.push(particle);
+  nextParticleReplacementIndex = state.particles.length === 0
+    ? 0
+    : nextParticleReplacementIndex % state.particles.length;
+}
+
+function resetSlashParticle(particle: ParticleState, x: number, y: number, color: string, spread: number) {
+  particle.kind = undefined;
+  particle.x = x + (Math.random() - 0.5) * spread;
+  particle.y = y + (Math.random() - 0.5) * spread * SLASH_VERTICAL_SPREAD_SCALE;
+  particle.vx = (Math.random() - 0.5) * PARTICLE_CONFIG.slashVelocity;
+  particle.vy = (Math.random() - 0.5) * PARTICLE_CONFIG.slashVelocity;
+  particle.life = PARTICLE_CONFIG.slashLifeBase + Math.random() * PARTICLE_CONFIG.slashLifeVariance;
+  particle.color = color;
+  particle.size = undefined;
+  particle.fade = undefined;
+  particle.gravity = undefined;
+  particle.rotation = undefined;
+  particle.angularVelocity = undefined;
+}
+
+function writableHitBurst() {
+  if (state.hitBursts.length < HIT_BURST_CONFIG.maxActive) {
+    if (state.hitBursts.length === 0) nextHitBurstReplacementIndex = 0;
+    const burst = recycledHitBursts.pop() ?? {
+      x: 0,
+      y: 0,
+      life: 0,
+      maxLife: 0,
+      radius: 0,
+      grow: 0,
+      color: "",
+      sparks: [],
+    };
+    state.hitBursts.push(burst);
+    return burst;
+  }
+
+  const index = nextHitBurstReplacementIndex % state.hitBursts.length;
+  nextHitBurstReplacementIndex = (index + 1) % HIT_BURST_CONFIG.maxActive;
+  return state.hitBursts[index];
+}
+
+function recycleHitBurstAt(index: number) {
+  const burst = state.hitBursts[index] as HitBurstState;
+  const last = state.hitBursts.pop();
+  if (index < state.hitBursts.length && last) state.hitBursts[index] = last;
+  if (recycledHitBursts.length < HIT_BURST_CONFIG.maxActive) recycledHitBursts.push(burst);
+  nextHitBurstReplacementIndex = state.hitBursts.length === 0
+    ? 0
+    : nextHitBurstReplacementIndex % state.hitBursts.length;
+}
+
+function resetSpark(spark: SparkState, index: number, count: number, power: number) {
+  spark.ang = (FULL_CIRCLE_RADIANS * index) / count
+    + (Math.random() - 0.5) * HIT_BURST_CONFIG.sparkAngleJitter;
+  spark.dist = HIT_BURST_CONFIG.sparkDistBase + Math.random() * HIT_BURST_CONFIG.sparkDistVariance;
+  spark.speed = HIT_BURST_CONFIG.sparkSpeedBase
+    + Math.random() * HIT_BURST_CONFIG.sparkSpeedVariance
+    + power * HIT_BURST_CONFIG.sparkSpeedPowerScale;
+  spark.size = HIT_BURST_CONFIG.sparkSizeBase + Math.random() * HIT_BURST_CONFIG.sparkSizeVariance;
+}
 
 export function emitSlash(x: number, y: number, color: string, spread: number = PARTICLE_CONFIG.slashDefaultSpread) {
   for (let i = 0; i < PARTICLE_CONFIG.slashCount; i += 1) {
-    state.particles.push({
-      x: x + (Math.random() - 0.5) * spread,
-      y: y + (Math.random() - 0.5) * spread * SLASH_VERTICAL_SPREAD_SCALE,
-      vx: (Math.random() - 0.5) * PARTICLE_CONFIG.slashVelocity,
-      vy: (Math.random() - 0.5) * PARTICLE_CONFIG.slashVelocity,
-      life: PARTICLE_CONFIG.slashLifeBase + Math.random() * PARTICLE_CONFIG.slashLifeVariance,
-      color,
-    });
+    resetSlashParticle(writableParticle(), x, y, color, spread);
   }
+}
+
+export function emitParticle(particle: ParticleState) {
+  if (state.particles.length < PARTICLE_CONFIG.maxActive && recycledParticles.length === 0) {
+    state.particles.push(particle);
+    return;
+  }
+  resetParticle(writableParticle(), particle);
 }
 
 export function emitHitBurst(x: number, y: number, color = DEFAULT_HIT_BURST_COLOR, power = 1) {
   const life = Math.floor(HIT_BURST_CONFIG.baseLife + HIT_BURST_CONFIG.lifeScale * power);
   const sparkCount = Math.floor(HIT_BURST_CONFIG.baseSparks + HIT_BURST_CONFIG.sparkScale * power);
-  state.hitBursts.push({
-    x,
-    y,
-    life,
-    maxLife: life,
-    radius: HIT_BURST_CONFIG.baseRadius + HIT_BURST_CONFIG.radiusScale * power,
-    grow: HIT_BURST_CONFIG.baseGrow + HIT_BURST_CONFIG.growScale * power,
-    color,
-    sparks: Array.from({ length: sparkCount }, (_, i) => {
-      const ang = (FULL_CIRCLE_RADIANS * i) / sparkCount + (Math.random() - 0.5) * HIT_BURST_CONFIG.sparkAngleJitter;
-      return {
-        ang,
-        dist: HIT_BURST_CONFIG.sparkDistBase + Math.random() * HIT_BURST_CONFIG.sparkDistVariance,
-        speed:
-          HIT_BURST_CONFIG.sparkSpeedBase +
-          Math.random() * HIT_BURST_CONFIG.sparkSpeedVariance +
-          power * HIT_BURST_CONFIG.sparkSpeedPowerScale,
-        size: HIT_BURST_CONFIG.sparkSizeBase + Math.random() * HIT_BURST_CONFIG.sparkSizeVariance,
-      };
-    }),
-  });
+  const burst = writableHitBurst();
+  burst.x = x;
+  burst.y = y;
+  burst.life = life;
+  burst.maxLife = life;
+  burst.radius = HIT_BURST_CONFIG.baseRadius + HIT_BURST_CONFIG.radiusScale * power;
+  burst.grow = HIT_BURST_CONFIG.baseGrow + HIT_BURST_CONFIG.growScale * power;
+  burst.color = color;
+  for (let index = 0; index < sparkCount; index += 1) {
+    const spark = burst.sparks[index] ?? { ang: 0, dist: 0, speed: 0, size: 0 };
+    resetSpark(spark, index, sparkCount, power);
+    burst.sparks[index] = spark;
+  }
+  activeSparkCounts.set(burst, sparkCount);
 }
 
 export function updateParticles() {
-  for (let i = state.particles.length - 1; i >= 0; i -= 1) {
+  while (state.particles.length > PARTICLE_CONFIG.maxActive) recycleParticleAt(0);
+  for (let i = 0; i < state.particles.length;) {
     const p = state.particles[i] as ParticleState;
     p.vy += p.gravity ?? 0;
     p.x += p.vx;
@@ -60,7 +156,11 @@ export function updateParticles() {
     p.rotation = (p.rotation ?? 0) + (p.angularVelocity ?? 0);
     if (p.size) p.size *= PARTICLE_CONFIG.sizeFade;
     p.life -= 1;
-    if (p.life <= 0) state.particles.splice(i, 1);
+    if (p.life <= 0) {
+      recycleParticleAt(i);
+      continue;
+    }
+    i += 1;
   }
 }
 
@@ -73,15 +173,22 @@ export function updateSkillBursts() {
 }
 
 export function updateHitBursts() {
-  for (let i = state.hitBursts.length - 1; i >= 0; i -= 1) {
+  while (state.hitBursts.length > HIT_BURST_CONFIG.maxActive) recycleHitBurstAt(0);
+  for (let i = 0; i < state.hitBursts.length;) {
     const b = state.hitBursts[i] as HitBurstState;
     b.life -= 1;
     b.radius += b.grow;
-    for (const s of b.sparks) {
+    const sparkCount = activeSparkCounts.get(b) ?? b.sparks.length;
+    for (let sparkIndex = 0; sparkIndex < sparkCount; sparkIndex += 1) {
+      const s = b.sparks[sparkIndex] as SparkState;
       s.dist += s.speed;
       s.size *= PARTICLE_CONFIG.sizeFade;
     }
-    if (b.life <= 0) state.hitBursts.splice(i, 1);
+    if (b.life <= 0) {
+      recycleHitBurstAt(i);
+      continue;
+    }
+    i += 1;
   }
 }
 
@@ -128,7 +235,9 @@ export function drawHitBursts() {
     ctx.beginPath();
     ctx.arc(b.x, b.y, Math.max(HIT_BURST_CONFIG.minInnerRadius, b.radius - HIT_BURST_CONFIG.radiusScale), 0, FULL_CIRCLE_RADIANS);
     ctx.stroke();
-    for (const s of b.sparks) {
+    const sparkCount = activeSparkCounts.get(b) ?? b.sparks.length;
+    for (let sparkIndex = 0; sparkIndex < sparkCount; sparkIndex += 1) {
+      const s = b.sparks[sparkIndex] as SparkState;
       const px = b.x + Math.cos(s.ang) * s.dist;
       const py = b.y + Math.sin(s.ang) * s.dist;
       ctx.fillStyle = `rgba(${HIT_BURST_VISUAL.sparkColorRgb},${a})`;

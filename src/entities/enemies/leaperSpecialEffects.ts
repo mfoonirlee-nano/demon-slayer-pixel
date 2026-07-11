@@ -3,6 +3,7 @@ import { state } from "../../game/state";
 import { clamp } from "../../game/utils";
 import { ctx } from "../../rendering/context";
 import type { EnemyState, LeaperPhase } from "../../types/game-state";
+import { emitParticle } from "../particles/bursts";
 import { enemyAttackDamage, enemyCenterX, enemyFeetY } from "./common";
 
 type ImpactBox = {
@@ -96,7 +97,7 @@ export function emitFinalLeaperImpactRocks(enemy: EnemyState) {
     const angle = -Math.PI + progress * Math.PI;
     const speed = FINAL_IMPACT_ROCKS.speedBase + Math.random() * FINAL_IMPACT_ROCKS.speedVariance;
     const size = FINAL_IMPACT_ROCKS.sizeBase + Math.random() * FINAL_IMPACT_ROCKS.sizeVariance;
-    state.particles.push({
+    emitParticle({
       kind: "leaperRock",
       x: originX + (Math.random() - 0.5) * FINAL_IMPACT_ROCKS.horizontalSpread - size / HALF_DIVISOR,
       y: originY - size,

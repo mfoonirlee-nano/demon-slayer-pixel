@@ -52,6 +52,19 @@ const STAGE_FRAME_EFFECT: Record<Exclude<ActBand, "intro">, SpriteFrameEffect> =
 };
 const ELITE_MARKER_COLOR = "rgba(235, 64, 70, 0.72)";
 const ELITE_MARKER_FILL = "rgba(235, 64, 70, 0.18)";
+const eliteBruteProtectorCache: {
+  elapsed: number;
+  enemyCount: number;
+  firstEnemy: EnemyState | undefined;
+  lastEnemy: EnemyState | undefined;
+  protectors: EnemyState[];
+} = {
+  elapsed: Number.NaN,
+  enemyCount: -1,
+  firstEnemy: undefined,
+  lastEnemy: undefined,
+  protectors: [],
+};
 
 export type EnemySpawnContext = {
   enemyId: EnemyId;
@@ -115,11 +128,30 @@ export function isEliteEnemy(enemy: EnemyState) {
 }
 
 function eliteBruteProtectionScale(enemy: EnemyState) {
-  for (const protector of state.enemies) {
+  const enemies = state.enemies;
+  const firstEnemy = enemies[0];
+  const lastEnemy = enemies[enemies.length - 1];
+  // Enemy id/elite are fixed after spawn; elapsed plus roster edges invalidate the per-frame index.
+  if (
+    eliteBruteProtectorCache.elapsed !== state.elapsed
+    || eliteBruteProtectorCache.enemyCount !== enemies.length
+    || eliteBruteProtectorCache.firstEnemy !== firstEnemy
+    || eliteBruteProtectorCache.lastEnemy !== lastEnemy
+  ) {
+    eliteBruteProtectorCache.elapsed = state.elapsed;
+    eliteBruteProtectorCache.enemyCount = enemies.length;
+    eliteBruteProtectorCache.firstEnemy = firstEnemy;
+    eliteBruteProtectorCache.lastEnemy = lastEnemy;
+    eliteBruteProtectorCache.protectors = enemies.filter((candidate) => (
+      candidate.id === "brute" && isEliteEnemy(candidate)
+    ));
+  }
+
+  for (const protector of eliteBruteProtectorCache.protectors) {
     if (
       protector === enemy
-      || protector.id !== "brute"
       || !isEliteEnemy(protector)
+      || protector.hp <= 0
       || protector.bruteShieldBroken
       || (protector.bruteShieldHp ?? 0) <= 0
     ) {

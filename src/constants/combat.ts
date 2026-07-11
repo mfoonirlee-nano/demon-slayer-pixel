@@ -245,6 +245,7 @@ export const PROJECTILE_CONFIG = {
 } as const;
 
 export const PARTICLE_CONFIG = {
+  maxActive: 384,
   slashCount: 12,
   slashVelocity: 7,
   slashLifeBase: 20,
@@ -256,6 +257,7 @@ export const PARTICLE_CONFIG = {
 } as const;
 
 export const HIT_BURST_CONFIG = {
+  maxActive: 32,
   baseLife: 10,
   lifeScale: 8,
   baseRadius: 8,

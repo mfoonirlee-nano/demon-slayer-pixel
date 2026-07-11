@@ -64,13 +64,21 @@ function normalizeAngle(angle: number) {
   return normalized;
 }
 
-function casterOwnerAlive(projectile: ProjectileState) {
-  if (projectile.ownerId === undefined) return false;
-  return state.enemies.some((enemy) => enemy.casterId === projectile.ownerId);
+function liveCasterIds() {
+  const ids = new Set<number>();
+  for (const enemy of state.enemies) {
+    if (enemy.casterId !== undefined) ids.add(enemy.casterId);
+  }
+  return ids;
 }
 
-function updateCasterWisp(projectile: ProjectileState) {
-  if (!casterOwnerAlive(projectile)) return false;
+function casterOwnerAlive(projectile: ProjectileState, casterIds: ReadonlySet<number>) {
+  if (projectile.ownerId === undefined) return false;
+  return casterIds.has(projectile.ownerId);
+}
+
+function updateCasterWisp(projectile: ProjectileState, casterIds: ReadonlySet<number>) {
+  if (!casterOwnerAlive(projectile, casterIds)) return false;
   updateHomingProjectile(
     projectile,
     projectile.frameDuration ?? CASTER_WISP_DRAW.frameDuration,
@@ -147,10 +155,12 @@ function casterWispFrameEffect(projectile: ProjectileState) {
 }
 
 export function updateProjectiles() {
+  let casterIds: ReadonlySet<number> | null = null;
   for (let i = state.projectiles.length - 1; i >= 0; i -= 1) {
     const p = state.projectiles[i] as ProjectileState;
     if (p.kind === "casterWisp") {
-      if (!updateCasterWisp(p)) {
+      casterIds ??= liveCasterIds();
+      if (!updateCasterWisp(p, casterIds)) {
         state.projectiles.splice(i, 1);
         continue;
       }

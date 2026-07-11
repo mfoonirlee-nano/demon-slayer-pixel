@@ -50,6 +50,7 @@ const TEST_BINDER_FACING = 1;
 const TEST_BINDER_PLAYER_X_OFFSET = 240;
 const TEST_GUARD_COUNTER_HITS = 2;
 const TEST_GUARD_COUNTER_ACTIVE_FRAMES = 72;
+const AWAKENED_WISP_STRESS_VOLLEYS = 5;
 
 afterEach(() => {
   keys.clear();
@@ -178,6 +179,25 @@ describe("caster wisps", () => {
     expect(wisp.vy ?? 0).toBeCloseTo(0);
     expect(wisp.x).toBeCloseTo(TEST_WISP_START_X + TEST_WISP_SPEED);
     expect(wisp.y).toBeCloseTo(TEST_WISP_START_Y);
+  });
+
+  it("indexes caster owners once per frame instead of scanning enemies for every wisp", () => {
+    resetState();
+    spawnCasterOwner();
+    const enemyScan = vi.spyOn(state.enemies, "some");
+    state.projectiles.push(
+      ...Array.from({
+        length: CASTER_AWAKENED_SHOT_COUNT * AWAKENED_WISP_STRESS_VOLLEYS,
+      }, () => casterWisp()),
+      casterWisp({ ownerId: TEST_CASTER_ID + 1 }),
+    );
+
+    updateProjectiles();
+
+    expect(enemyScan).not.toHaveBeenCalled();
+    expect(state.projectiles).toHaveLength(
+      CASTER_AWAKENED_SHOT_COUNT * AWAKENED_WISP_STRESS_VOLLEYS,
+    );
   });
 
   it("spawns caster wisps fast enough to keep tracking for the full five seconds", () => {

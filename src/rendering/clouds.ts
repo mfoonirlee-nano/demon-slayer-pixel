@@ -33,9 +33,10 @@ const SPRITE_LAYOUT: Record<CloudKind, { cols: number; rows: number }> = {
 
 const NIGHT_TINT = { r: 92, g: 96, b: 108, a: 0.42 };
 const BLOOD_TINT = { r: 142, g: 32, b: 42, alphaBoost: 0.28 };
-
-const scratch = document.createElement("canvas");
-const scratchCtx = scratch.getContext("2d");
+const BLOOD_TINT_CACHE_STEPS = 32;
+const CLOUD_ALPHA_CACHE_STEPS = 32;
+const MAX_CACHED_CLOUD_FRAMES_PER_IMAGE = 160;
+const cloudFrameCache = new WeakMap<HTMLImageElement, Map<string, HTMLCanvasElement>>();
 
 function cloudImage(kind: CloudKind): HTMLImageElement | null {
   return kind === "big" ? CLOUD_SPRITES.big.image : CLOUD_SPRITES.small.image;
@@ -64,6 +65,72 @@ function tintColor(bloodLerp: number): string {
   return `rgba(${r}, ${g}, ${b}, ${a})`;
 }
 
+function quantizedBloodLerp(bloodLerp: number) {
+  return Math.round(bloodLerp * BLOOD_TINT_CACHE_STEPS) / BLOOD_TINT_CACHE_STEPS;
+}
+
+function quantizedCloudAlpha(alpha: number) {
+  return Math.round(alpha * CLOUD_ALPHA_CACHE_STEPS) / CLOUD_ALPHA_CACHE_STEPS;
+}
+
+function cachedCloudFrame(
+  image: HTMLImageElement,
+  source: { sx: number; sy: number; sw: number; sh: number },
+  width: number,
+  height: number,
+  alpha: number,
+  bloodLerp: number,
+) {
+  if (typeof document === "undefined") return null;
+
+  const drawW = Math.max(1, Math.ceil(width));
+  const drawH = Math.max(1, Math.ceil(height));
+  const quantizedLerp = quantizedBloodLerp(bloodLerp);
+  const quantizedAlpha = quantizedCloudAlpha(alpha);
+  const key = `${source.sx}:${source.sy}:${source.sw}:${source.sh}:${drawW}:${drawH}:${quantizedAlpha}:${quantizedLerp}`;
+  let imageFrames = cloudFrameCache.get(image);
+  if (!imageFrames) {
+    imageFrames = new Map();
+    cloudFrameCache.set(image, imageFrames);
+  }
+  const cached = imageFrames.get(key);
+  if (cached) return cached;
+
+  const canvas = document.createElement("canvas");
+  canvas.width = drawW;
+  canvas.height = drawH;
+  const canvasCtx = canvas.getContext("2d");
+  if (!canvasCtx) return null;
+
+  canvasCtx.save();
+  canvasCtx.globalAlpha = quantizedAlpha;
+  canvasCtx.filter = quantizedLerp > 0
+    ? "grayscale(0.65) brightness(0.58) contrast(1.08)"
+    : "grayscale(1) brightness(0.54) contrast(0.95)";
+  canvasCtx.drawImage(
+    image,
+    source.sx,
+    source.sy,
+    source.sw,
+    source.sh,
+    0,
+    0,
+    drawW,
+    drawH,
+  );
+  canvasCtx.filter = "none";
+  canvasCtx.globalCompositeOperation = "source-atop";
+  canvasCtx.fillStyle = tintColor(quantizedLerp);
+  canvasCtx.fillRect(0, 0, drawW, drawH);
+  canvasCtx.restore();
+  if (imageFrames.size >= MAX_CACHED_CLOUD_FRAMES_PER_IMAGE) {
+    const oldestKey = imageFrames.keys().next().value;
+    if (oldestKey !== undefined) imageFrames.delete(oldestKey);
+  }
+  imageFrames.set(key, canvas);
+  return canvas;
+}
+
 function drawTintedCloud(
   image: HTMLImageElement,
   source: { sx: number; sy: number; sw: number; sh: number },
@@ -74,34 +141,17 @@ function drawTintedCloud(
   alpha: number,
   bloodLerp: number,
 ) {
-  if (!ctx || !scratchCtx) return;
+  if (!ctx) return;
 
-  scratch.width = Math.max(1, Math.ceil(width));
-  scratch.height = Math.max(1, Math.ceil(height));
-  scratchCtx.clearRect(0, 0, scratch.width, scratch.height);
-  scratchCtx.save();
-  scratchCtx.globalAlpha = alpha;
-  scratchCtx.filter = bloodLerp > 0
-    ? "grayscale(0.65) brightness(0.58) contrast(1.08)"
-    : "grayscale(1) brightness(0.54) contrast(0.95)";
-  scratchCtx.drawImage(
-    image,
-    source.sx,
-    source.sy,
-    source.sw,
-    source.sh,
-    0,
-    0,
-    scratch.width,
-    scratch.height,
-  );
-  scratchCtx.filter = "none";
-  scratchCtx.globalCompositeOperation = "source-atop";
-  scratchCtx.fillStyle = tintColor(bloodLerp);
-  scratchCtx.fillRect(0, 0, scratch.width, scratch.height);
-  scratchCtx.restore();
-
-  ctx.drawImage(scratch, x, y, scratch.width, scratch.height);
+  const cloudFrame = cachedCloudFrame(image, source, width, height, alpha, bloodLerp);
+  ctx.save();
+  if (cloudFrame) {
+    ctx.drawImage(cloudFrame, x, y, cloudFrame.width, cloudFrame.height);
+  } else {
+    ctx.globalAlpha = alpha;
+    ctx.drawImage(image, source.sx, source.sy, source.sw, source.sh, x, y, width, height);
+  }
+  ctx.restore();
 }
 
 export function drawClouds(options: { elapsed: number; moon: MoonState }) {

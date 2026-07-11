@@ -1,7 +1,7 @@
 import { describe, expect, it, beforeEach } from "vitest";
 import { GROUND_Y } from "../../constants";
 import { resetState, state } from "../../game/state";
-import type { ActBand } from "../../types/game-state";
+import type { ActBand, EnemyState } from "../../types/game-state";
 import { spawnEnemyById, updateEnemies } from "../enemy";
 import { applyEnemyDamage } from "../../systems/combatResolution";
 import { damageEnemy } from "./common";
@@ -16,6 +16,9 @@ const TEST_BRUTE_X = 520;
 const TEST_PLAYER_X = 40;
 const TEST_GUARD_FRAMES = 20;
 const TEST_COUNTER_ACTIVE_FRAMES = 72;
+const ELITE_PROTECTION_DAMAGE_SCALE = 0.86;
+const CROWDED_ENEMY_COUNT = 16;
+const ELITE_PROTECTION_ALLY_OFFSET = 100;
 
 function spawnBrute(growthStage: ActBand = "intro") {
   expect(spawnEnemyById("brute", "debug", "left", { growthStage })).toBe(true);
@@ -242,5 +245,47 @@ describe("brute shield", () => {
 
     expect(state.player.hp).toBe(hpBefore);
     expect(state.bruteGuardReflections).toHaveLength(0);
+  });
+});
+
+describe("elite brute protection", () => {
+  beforeEach(() => {
+    resetState();
+  });
+
+  it("reduces damage for a nearby ally only while the elite shield is active", () => {
+    const brute = spawnBrute();
+    brute.elite = true;
+    brute.x = 300;
+    expect(spawnEnemyById("chaser", "debug", "left")).toBe(true);
+    const ally = state.enemies[1];
+    ally.x = brute.x + ELITE_PROTECTION_ALLY_OFFSET;
+
+    expect(damageEnemy(ally, SHIELD_TEST_DAMAGE)).toBeCloseTo(
+      SHIELD_TEST_DAMAGE * ELITE_PROTECTION_DAMAGE_SCALE,
+    );
+
+    brute.bruteShieldBroken = true;
+    expect(damageEnemy(ally, SHIELD_TEST_DAMAGE)).toBeCloseTo(SHIELD_TEST_DAMAGE);
+  });
+
+  it("indexes elite protectors once for a crowded same-frame damage batch", () => {
+    for (let index = 0; index < CROWDED_ENEMY_COUNT; index += 1) {
+      expect(spawnEnemyById("chaser", "debug", "left")).toBe(true);
+    }
+    let enemyIdReads = 0;
+    for (const enemy of state.enemies) {
+      Object.defineProperty(enemy, "id", {
+        configurable: true,
+        get: () => {
+          enemyIdReads += 1;
+          return "chaser" satisfies EnemyState["id"];
+        },
+      });
+    }
+
+    for (const enemy of state.enemies) damageEnemy(enemy, 0);
+
+    expect(enemyIdReads).toBeLessThanOrEqual(CROWDED_ENEMY_COUNT * 2);
   });
 });

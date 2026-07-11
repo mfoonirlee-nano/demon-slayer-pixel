@@ -1,7 +1,7 @@
 import { state } from "../../game/state";
 import { ctx } from "../../rendering/context";
 import { PLAYER_COMBAT, PLAYER_SHEETS } from "../../constants";
-import { drawSheetFrame, drawSkillFrame } from "../../rendering/graphics";
+import { drawSheetFrame, drawSkillFrame, type SpriteFrameEffect } from "../../rendering/graphics";
 import type {
   UltimateAfterimageSlashState,
   UltimatePlayerGhostState,
@@ -12,7 +12,9 @@ import { playerSkillById, ULTIMATE_SKILL_ASSETS } from "../../systems/skillCatal
 const FULL_CIRCLE_RADIANS = Math.PI * 2;
 const ULTIMATE_SKILL_EFFECT_SHEET = ULTIMATE_SKILL_ASSETS.effect;
 
-const PLAYER_GHOST_FILTER = "brightness(0) saturate(100%) invert(60%) sepia(92%) saturate(1600%) hue-rotate(172deg) brightness(103%) contrast(102%) drop-shadow(0 0 3px rgba(42, 178, 255, 0.72))";
+const PLAYER_GHOST_FRAME_EFFECT = {
+  filter: "brightness(0) saturate(100%) invert(60%) sepia(92%) saturate(1600%) hue-rotate(172deg) brightness(103%) contrast(102%) drop-shadow(0 0 3px rgba(42, 178, 255, 0.72))",
+} as const satisfies SpriteFrameEffect;
 const PLAYER_GHOST_ALPHA_BASE = 0.18;
 const PLAYER_GHOST_ALPHA_SCALE = 0.44;
 const PLAYER_GHOST_ALPHA_MAX = 0.6;
@@ -204,7 +206,8 @@ export function drawUltimatePlayerGhosts() {
 
   ctx.save();
   ctx.globalCompositeOperation = "source-over";
-  ctx.filter = PLAYER_GHOST_FILTER;
+  const canCacheGhostFrames = typeof document !== "undefined";
+  if (!canCacheGhostFrames) ctx.filter = PLAYER_GHOST_FRAME_EFFECT.filter ?? "none";
   for (const ghost of state.ultimatePlayerGhosts) {
     const lifeRatio = ghost.life / ghost.maxLife;
     const alpha = Math.min(
@@ -213,12 +216,12 @@ export function drawUltimatePlayerGhosts() {
     );
 
     ctx.globalAlpha = alpha;
-    drawUltimatePlayerGhost(ghost);
+    drawUltimatePlayerGhost(ghost, canCacheGhostFrames ? PLAYER_GHOST_FRAME_EFFECT : undefined);
   }
   ctx.restore();
 }
 
-function drawUltimatePlayerGhost(ghost: UltimatePlayerGhostState) {
+function drawUltimatePlayerGhost(ghost: UltimatePlayerGhostState, effect?: SpriteFrameEffect) {
   const drawX = ghost.x - ghost.facing * PLAYER_GHOST_OFFSET_X[ghost.action];
   if (ghost.source === "player" && ghost.animationState) {
     drawSheetFrame(
@@ -229,6 +232,7 @@ function drawUltimatePlayerGhost(ghost: UltimatePlayerGhostState) {
       ghost.w,
       ghost.h,
       ghost.facing,
+      effect,
     );
     return;
   }
@@ -236,5 +240,5 @@ function drawUltimatePlayerGhost(ghost: UltimatePlayerGhostState) {
   if (ghost.source !== "skill" || !ghost.skillId) return;
   const skill = playerSkillById(ghost.skillId);
   if (!skill) return;
-  drawSkillFrame(skill, ghost.frame, drawX, ghost.y, ghost.w, ghost.h, ghost.facing);
+  drawSkillFrame(skill, ghost.frame, drawX, ghost.y, ghost.w, ghost.h, ghost.facing, effect);
 }

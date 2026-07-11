@@ -144,8 +144,15 @@ function isUltimateCastFreezeActive() {
   return state.player.ultimateCastTimer > 0;
 }
 
-function updateUltimateCastFreezeFrame() {
+export function updateUltimateCastFreezeFrame() {
   updatePlayer();
+  // Gameplay remains frozen, but old visual bursts must not stay at peak density for the full cast.
+  updateParticles();
+  updateSkillBursts();
+  updateHitBursts();
+  updateUltimateTrails();
+  updateUltimateAfterimageSlashes();
+  updateUltimatePlayerGhosts();
   updateUltimateEffects();
 }
 
