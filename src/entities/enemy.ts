@@ -58,6 +58,8 @@ type EnemySpawnSize = {
 
 const PLATFORM_SPAWN_MAX_DISTANCE = 260;
 const PLATFORM_SPAWN_CENTER_RATIO = 0.35;
+const SPAWN_BODY_PADDING = 6;
+const SPAWN_PLACEMENT_ATTEMPTS = 10;
 const BACKGROUND_OCCLUDER_SPAWN_START_ACT = 4;
 const BACKGROUND_OCCLUDER_SPAWN_CHANCE_PER_ACT = 0.045;
 const BACKGROUND_OCCLUDER_SPAWN_MAX_CHANCE = 0.45;
@@ -176,6 +178,37 @@ function placeEnemyBehindBackgroundOccluder(enemy: EnemyState, occluder: NearFor
   enemy.spawnOccluderStartedAt = state.elapsed;
 }
 
+function spawnBody(enemy: EnemyState) {
+  return {
+    x: enemy.x - SPAWN_BODY_PADDING,
+    y: enemy.y,
+    w: enemy.w + SPAWN_BODY_PADDING * 2,
+    h: enemy.h,
+  };
+}
+
+function enemySpawnBodyIsClear(enemy: EnemyState) {
+  const body = spawnBody(enemy);
+  return state.enemies.every((existingEnemy) => !hitbox(body, existingEnemy));
+}
+
+function placeEnemyOnGround(enemy: EnemyState, side: number) {
+  const baseX = side === 1 ? WIDTH + ENEMY_CONFIG.spawnOffsetRight : ENEMY_CONFIG.spawnOffsetLeft;
+  const step = enemy.w + SPAWN_BODY_PADDING;
+  enemy.y = GROUND_Y - enemy.h;
+  enemy.vy = 0;
+  enemy.onPlatform = null;
+  delete enemy.spawnOccluder;
+  delete enemy.spawnOccluderFrames;
+  delete enemy.spawnOccluderStartedAt;
+
+  for (let attempt = 0; attempt < SPAWN_PLACEMENT_ATTEMPTS; attempt += 1) {
+    enemy.x = baseX + side * step * attempt;
+    if (enemySpawnBodyIsClear(enemy)) return true;
+  }
+  return false;
+}
+
 function enemyUsesPlatformPhysics(enemy: EnemyState) {
   if (enemy.id === "crawler" && enemy.crawlerPhase === "leap") return false;
   if (enemy.id === "duelist" && enemy.duelistPhase === "spin") return false;
@@ -200,16 +233,31 @@ function clampEnemyCenterToPlatform(centerX: number, enemy: EnemyState, platform
   return Math.min(maxCenterX, Math.max(minCenterX, centerX));
 }
 
-function placeEnemyOnPlatform(enemy: EnemyState, platform: PlatformState) {
-  const centerX = clampEnemyCenterToPlatform(
-    platform.x + platform.w * PLATFORM_SPAWN_CENTER_RATIO,
-    enemy,
-    platform,
-  );
+function placeEnemyAtPlatformCenter(enemy: EnemyState, platform: PlatformState, centerX: number) {
   enemy.x = centerX - enemy.w / 2;
   enemy.y = platform.y - enemy.h;
   enemy.vy = 0;
   enemy.onPlatform = platform;
+}
+
+function placeEnemyOnPlatform(enemy: EnemyState, platform: PlatformState) {
+  const baseCenterX = clampEnemyCenterToPlatform(
+    platform.x + platform.w * PLATFORM_SPAWN_CENTER_RATIO,
+    enemy,
+    platform,
+  );
+  const step = enemy.w + SPAWN_BODY_PADDING;
+  placeEnemyAtPlatformCenter(enemy, platform, baseCenterX);
+  if (enemySpawnBodyIsClear(enemy)) return true;
+
+  for (let attempt = 1; attempt < SPAWN_PLACEMENT_ATTEMPTS; attempt += 1) {
+    const direction = attempt % 2 === 1 ? 1 : -1;
+    const distance = Math.ceil(attempt / 2) * step;
+    const centerX = clampEnemyCenterToPlatform(baseCenterX + direction * distance, enemy, platform);
+    placeEnemyAtPlatformCenter(enemy, platform, centerX);
+    if (enemySpawnBodyIsClear(enemy)) return true;
+  }
+  return false;
 }
 
 function enemyOverlapsPlatform(enemy: EnemyState, platform: PlatformState) {
@@ -286,9 +334,12 @@ function createSpawnedEnemy(
   const enemy = createEnemyState(spawnContext, archetype);
   if (backgroundOccluder) {
     placeEnemyBehindBackgroundOccluder(enemy, backgroundOccluder);
+    if (!enemySpawnBodyIsClear(enemy)) placeEnemyOnGround(enemy, spawnSide);
   } else if (canUsePlatformSpawn(enemyId, spawnSource)) {
     const platform = platformSpawnCandidate();
-    if (platform) placeEnemyOnPlatform(enemy, platform);
+    if (!platform || !placeEnemyOnPlatform(enemy, platform)) placeEnemyOnGround(enemy, spawnSide);
+  } else {
+    placeEnemyOnGround(enemy, spawnSide);
   }
   archetype.init?.(enemy, spawnContext);
   return enemy;

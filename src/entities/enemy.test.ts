@@ -1,6 +1,7 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { ENEMY_CONFIG, GROUND_Y, WIDTH } from "../constants";
 import { resetState, state } from "../game/state";
+import { hitbox } from "../game/utils";
 import { resolveNearForegroundOccluders } from "../rendering/nearForeground";
 import { enemySpawnCost } from "../systems/enemyDirector";
 import type { PlatformState } from "../types/game-state";
@@ -27,6 +28,7 @@ const FIRST_RANDOM_VALUE = 0;
 const HALF_DIVISOR = 2;
 const BACKGROUND_OCCLUDER_COVER_FRAMES = 36;
 const BACKGROUND_OCCLUDER_COVER_FRAMES_AFTER_UPDATE = 35;
+const SECOND_SPAWN_INDEX = 1;
 
 const CHASER_TEST_BASE_SPEED = 2;
 const CHASER_NEAR_SPEED_SCALE = 1.5;
@@ -269,6 +271,34 @@ describe("enemy platform spawns", () => {
     expect(runner.y).toBeGreaterThan(originalY);
     expect(runner.vy ?? 0).toBeGreaterThan(0);
     expect(runner.onPlatform).toBeNull();
+  });
+});
+
+describe("enemy spawn spacing", () => {
+  it("keeps consecutive ground spawns from overlapping on the same side", () => {
+    resetState();
+
+    expect(spawnEnemyById("runner", "regular", "left")).toBe(true);
+    expect(spawnEnemyById("runner", "regular", "left")).toBe(true);
+
+    const firstRunner = state.enemies[0];
+    const secondRunner = state.enemies[SECOND_SPAWN_INDEX];
+    expect(hitbox(firstRunner, secondRunner)).toBe(false);
+    expect(secondRunner.x).toBeLessThan(firstRunner.x);
+  });
+
+  it("keeps consecutive platform spawns from overlapping before they enter play", () => {
+    resetState();
+    state.platforms.push(platform());
+
+    expect(spawnEnemyById("runner", "regular", "left")).toBe(true);
+    expect(spawnEnemyById("runner", "regular", "left")).toBe(true);
+
+    const firstRunner = state.enemies[0];
+    const secondRunner = state.enemies[SECOND_SPAWN_INDEX];
+    expect(firstRunner.onPlatform).toBe(state.platforms[0]);
+    expect(secondRunner.onPlatform).toBe(state.platforms[0]);
+    expect(hitbox(firstRunner, secondRunner)).toBe(false);
   });
 });
 
