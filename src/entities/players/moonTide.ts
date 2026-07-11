@@ -1,4 +1,5 @@
 import { state } from "../../game/state";
+import { playSfx } from "../../game/audio";
 import { BASIC_ATTACK, PLAYER_COMBAT } from "../../constants";
 import { moonTideUltimateConfig } from "../../systems/progression";
 import { emitHitBurst } from "../particle";
@@ -188,6 +189,7 @@ export function triggerMoonTideAfterimageHit(
   const p = state.player;
   const damage = (state.player.baseAttack + state.player.attackBonus) * config.afterimageDamageMultiplier;
   applyDamage(damage);
+  playSfx("playerUltimateAfterimage");
 
   const life = PLAYER_COMBAT.ultimateAfterimageLife;
   const slashW = Math.max(AFTERIMAGE_MIN_SLASH_W, Math.min(AFTERIMAGE_MAX_SLASH_W, targetSpread * AFTERIMAGE_SLASH_W_SCALE));

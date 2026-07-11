@@ -15,6 +15,12 @@ import {
   triggerMoonTideAfterimageHit,
 } from "./moonTide";
 
+const audioMock = vi.hoisted(() => ({
+  playSfx: vi.fn(),
+}));
+
+vi.mock("../../game/audio", () => audioMock);
+
 const LEVEL_ONE_GHOST_CAP = 3;
 const LEVEL_THREE_GHOST_CAP = 5;
 const EXPECTED_TRAIL_CAP = Math.ceil(
@@ -94,6 +100,7 @@ describe("moon tide player ghosts", () => {
   beforeEach(() => {
     resetState();
     keys.clear();
+    audioMock.playSfx.mockClear();
   });
 
   afterEach(() => {
@@ -303,6 +310,20 @@ describe("moon tide player ghosts", () => {
 
     expect(applyDamage).toHaveBeenCalledTimes(AFTERIMAGE_STRESS_HITS);
     expect(state.ultimateAfterimageSlashes).toHaveLength(EXPECTED_AFTERIMAGE_SLASH_CAP);
+  });
+
+  it("plays the afterimage cue when moon tide adds a hit", () => {
+    state.player.ultimateLevel = 3;
+    state.player.ultimateTimer = 120;
+
+    expect(triggerMoonTideAfterimageHit(
+      AFTERIMAGE_HIT_X,
+      AFTERIMAGE_HIT_Y,
+      AFTERIMAGE_TARGET_SPREAD,
+      vi.fn(),
+    )).toBe(true);
+
+    expect(audioMock.playSfx).toHaveBeenCalledWith("playerUltimateAfterimage");
   });
 
   it("applies the moon tide movement multiplier during the active buff", () => {

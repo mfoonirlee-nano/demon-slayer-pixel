@@ -1,6 +1,7 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
+import type { GameSfx } from "./audioTypes";
 
-const EXPECTED_ENEMY_SAMPLE_COUNT = 23;
+const EXPECTED_SAMPLE_COUNT = 52;
 const EXPECTED_OSCILLATOR_COUNT = 3;
 const ENCODED_AUDIO_BYTE_LENGTH = 8;
 const EXPECTED_SAMPLE_VOLUME = 0.16;
@@ -59,7 +60,7 @@ describe("audio fallback", () => {
     const { ensureAudio, playSfx } = await import("./audio");
     ensureAudio();
 
-    expect(fetchMock).toHaveBeenCalledTimes(EXPECTED_ENEMY_SAMPLE_COUNT);
+    expect(fetchMock).toHaveBeenCalledTimes(EXPECTED_SAMPLE_COUNT);
 
     playSfx("enemyHurt");
     playSfx("enemyHurt");
@@ -107,9 +108,9 @@ describe("audio fallback", () => {
     });
 
     const { ensureAudio, playSfx } = await import("./audio");
-    const { hasEnemySfxSample } = await import("./audioSamples");
+    const { hasSfxSample } = await import("./audioSamples");
     ensureAudio();
-    await vi.waitFor(() => expect(hasEnemySfxSample("enemyHurt")).toBe(true));
+    await vi.waitFor(() => expect(hasSfxSample("enemyHurt")).toBe(true));
 
     playSfx("enemyHurt");
     playSfx("enemyHurt");
@@ -121,5 +122,35 @@ describe("audio fallback", () => {
     playSfx("enemyHurt");
 
     expect(contexts[0]!.createBufferSource).toHaveBeenCalledTimes(2);
+  });
+
+  it("keeps an oscillator fallback for every player sample before decoding", async () => {
+    const createOscillator = vi.fn(oscillatorNode);
+    class FakeAudioContext {
+      state = "running";
+      currentTime = 1;
+      destination = {};
+      resume = vi.fn();
+      createOscillator = createOscillator;
+      createGain = vi.fn(gainNode);
+    }
+    vi.stubGlobal("fetch", vi.fn(() => new Promise<Response>(() => undefined)));
+    vi.stubGlobal("window", {
+      AudioContext: FakeAudioContext,
+      localStorage: {
+        getItem: vi.fn(() => null),
+        setItem: vi.fn(),
+      },
+    });
+
+    const { ensureAudio, playSfx } = await import("./audio");
+    const { PLAYER_SFX_SAMPLE_URLS } = await import("./audioSamples");
+    ensureAudio();
+
+    for (const sfx of Object.keys(PLAYER_SFX_SAMPLE_URLS) as GameSfx[]) {
+      createOscillator.mockClear();
+      playSfx(sfx);
+      expect(createOscillator, `${sfx} should keep a fallback tone`).toHaveBeenCalled();
+    }
   });
 });

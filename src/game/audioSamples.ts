@@ -1,5 +1,126 @@
 import type { GameSfx } from "./audioTypes";
 
+type PlayerSfx = Extract<GameSfx, `player${string}`>;
+
+export const PLAYER_SFX_SAMPLE_URLS = {
+  playerRunStep: new URL(
+    "../../assets/audio/sfx/players/playerRunStep.wav",
+    import.meta.url,
+  ).href,
+  playerLand: new URL(
+    "../../assets/audio/sfx/players/playerLand.wav",
+    import.meta.url,
+  ).href,
+  playerAttackStart: new URL(
+    "../../assets/audio/sfx/players/playerAttackStart.wav",
+    import.meta.url,
+  ).href,
+  playerAttackHit: new URL(
+    "../../assets/audio/sfx/players/playerAttackHit.wav",
+    import.meta.url,
+  ).href,
+  playerBossHit: new URL(
+    "../../assets/audio/sfx/players/playerBossHit.wav",
+    import.meta.url,
+  ).href,
+  playerFallAttackStart: new URL(
+    "../../assets/audio/sfx/players/playerFallAttackStart.wav",
+    import.meta.url,
+  ).href,
+  playerFallAttackImpact: new URL(
+    "../../assets/audio/sfx/players/playerFallAttackImpact.wav",
+    import.meta.url,
+  ).href,
+  playerSkillCast: new URL(
+    "../../assets/audio/sfx/players/playerSkillCast.wav",
+    import.meta.url,
+  ).href,
+  playerSkillLine: new URL(
+    "../../assets/audio/sfx/players/playerSkillLine.wav",
+    import.meta.url,
+  ).href,
+  playerSkillArc: new URL(
+    "../../assets/audio/sfx/players/playerSkillArc.wav",
+    import.meta.url,
+  ).href,
+  playerSkillGuard: new URL(
+    "../../assets/audio/sfx/players/playerSkillGuard.wav",
+    import.meta.url,
+  ).href,
+  playerSkillDash: new URL(
+    "../../assets/audio/sfx/players/playerSkillDash.wav",
+    import.meta.url,
+  ).href,
+  playerSkillVortex: new URL(
+    "../../assets/audio/sfx/players/playerSkillVortex.wav",
+    import.meta.url,
+  ).href,
+  playerSkillArmorBreak: new URL(
+    "../../assets/audio/sfx/players/playerSkillArmorBreak.wav",
+    import.meta.url,
+  ).href,
+  playerSkillArmorBreakImpact: new URL(
+    "../../assets/audio/sfx/players/playerSkillArmorBreakImpact.wav",
+    import.meta.url,
+  ).href,
+  playerSkillRain: new URL(
+    "../../assets/audio/sfx/players/playerSkillRain.wav",
+    import.meta.url,
+  ).href,
+  playerSkillReturningBlade: new URL(
+    "../../assets/audio/sfx/players/playerSkillReturningBlade.wav",
+    import.meta.url,
+  ).href,
+  playerSkillReturningBladeCatch: new URL(
+    "../../assets/audio/sfx/players/playerSkillReturningBladeCatch.wav",
+    import.meta.url,
+  ).href,
+  playerSkillReturningBladeTurn: new URL(
+    "../../assets/audio/sfx/players/playerSkillReturningBladeTurn.wav",
+    import.meta.url,
+  ).href,
+  playerSkillVerticalWave: new URL(
+    "../../assets/audio/sfx/players/playerSkillVerticalWave.wav",
+    import.meta.url,
+  ).href,
+  playerUltimateCast: new URL(
+    "../../assets/audio/sfx/players/playerUltimateCast.wav",
+    import.meta.url,
+  ).href,
+  playerUltimateImpact: new URL(
+    "../../assets/audio/sfx/players/playerUltimateImpact.wav",
+    import.meta.url,
+  ).href,
+  playerUltimateAfterimage: new URL(
+    "../../assets/audio/sfx/players/playerUltimateAfterimage.wav",
+    import.meta.url,
+  ).href,
+  playerUltimateEnd: new URL(
+    "../../assets/audio/sfx/players/playerUltimateEnd.wav",
+    import.meta.url,
+  ).href,
+  playerCounter: new URL(
+    "../../assets/audio/sfx/players/playerCounter.wav",
+    import.meta.url,
+  ).href,
+  playerStatusStun: new URL(
+    "../../assets/audio/sfx/players/playerStatusStun.wav",
+    import.meta.url,
+  ).href,
+  playerJump: new URL(
+    "../../assets/audio/sfx/players/playerJump.wav",
+    import.meta.url,
+  ).href,
+  playerHurt: new URL(
+    "../../assets/audio/sfx/players/playerHurt.wav",
+    import.meta.url,
+  ).href,
+  playerDeath: new URL(
+    "../../assets/audio/sfx/players/playerDeath.wav",
+    import.meta.url,
+  ).href,
+} satisfies Record<PlayerSfx, string>;
+
 export const ENEMY_SFX_SAMPLE_URLS = {
   enemyDefeat: new URL(
     "../../assets/audio/sfx/enemies/enemyDefeat.wav",
@@ -97,10 +218,14 @@ export const ENEMY_SFX_SAMPLE_URLS = {
 
 const audioSampleBuffers = new Map<GameSfx, AudioBuffer>();
 let audioSampleLoadTask: Promise<void> | null = null;
+const SFX_SAMPLE_URLS = {
+  ...ENEMY_SFX_SAMPLE_URLS,
+  ...PLAYER_SFX_SAMPLE_URLS,
+} satisfies Partial<Record<GameSfx, string>>;
 
-export function preloadEnemySfxSamples(context: AudioContext) {
+export function preloadSfxSamples(context: AudioContext) {
   if (audioSampleLoadTask) return;
-  const entries = Object.entries(ENEMY_SFX_SAMPLE_URLS) as Array<[GameSfx, string]>;
+  const entries = Object.entries(SFX_SAMPLE_URLS) as Array<[GameSfx, string]>;
   audioSampleLoadTask = Promise.all(entries.map(async ([sfx, url]) => {
     try {
       const response = await fetch(url);
@@ -113,11 +238,11 @@ export function preloadEnemySfxSamples(context: AudioContext) {
   })).then(() => undefined);
 }
 
-export function hasEnemySfxSample(sfx: GameSfx) {
+export function hasSfxSample(sfx: GameSfx) {
   return audioSampleBuffers.has(sfx);
 }
 
-export function playEnemySfxSample(
+export function playSfxSample(
   context: AudioContext,
   sfx: GameSfx,
   pitch: number,

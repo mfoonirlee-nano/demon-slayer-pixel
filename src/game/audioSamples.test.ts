@@ -1,9 +1,10 @@
 import { afterAll, describe, expect, it, vi } from "vitest";
 import {
   ENEMY_SFX_SAMPLE_URLS,
-  hasEnemySfxSample,
-  playEnemySfxSample,
-  preloadEnemySfxSamples,
+  PLAYER_SFX_SAMPLE_URLS,
+  hasSfxSample,
+  playSfxSample,
+  preloadSfxSamples,
 } from "./audioSamples";
 
 const EXPECTED_ENEMY_SFX = [
@@ -31,12 +32,43 @@ const EXPECTED_ENEMY_SFX = [
   "enemyTalismanCastStart",
   "enemyWarning",
 ] as const;
+const EXPECTED_PLAYER_SFX = [
+  "playerAttackHit",
+  "playerAttackStart",
+  "playerBossHit",
+  "playerCounter",
+  "playerDeath",
+  "playerFallAttackImpact",
+  "playerFallAttackStart",
+  "playerHurt",
+  "playerJump",
+  "playerLand",
+  "playerRunStep",
+  "playerSkillArc",
+  "playerSkillArmorBreak",
+  "playerSkillArmorBreakImpact",
+  "playerSkillCast",
+  "playerSkillDash",
+  "playerSkillGuard",
+  "playerSkillLine",
+  "playerSkillRain",
+  "playerSkillReturningBlade",
+  "playerSkillReturningBladeCatch",
+  "playerSkillReturningBladeTurn",
+  "playerSkillVerticalWave",
+  "playerSkillVortex",
+  "playerStatusStun",
+  "playerUltimateCast",
+  "playerUltimateAfterimage",
+  "playerUltimateEnd",
+  "playerUltimateImpact",
+] as const;
 const TEST_CONTEXT_TIME = 3;
 const TEST_PITCH = 0.84;
 const TEST_VOLUME = 0.2;
 const ENCODED_AUDIO_BYTE_LENGTH = 8;
 
-describe("enemy audio samples", () => {
+describe("audio samples", () => {
   afterAll(() => {
     vi.unstubAllGlobals();
   });
@@ -48,7 +80,7 @@ describe("enemy audio samples", () => {
     }
   });
 
-  it("decodes samples and plays them through pitch and volume controls", async () => {
+  it("decodes enemy and player samples and plays them through pitch and volume controls", async () => {
     const decodedBuffer = {} as AudioBuffer;
     const source = {
       buffer: null as AudioBuffer | null,
@@ -73,13 +105,17 @@ describe("enemy audio samples", () => {
     });
     vi.stubGlobal("fetch", fetchMock);
 
-    preloadEnemySfxSamples(context);
-    await vi.waitFor(() => expect(hasEnemySfxSample("enemyHurt")).toBe(true));
+    preloadSfxSamples(context);
+    await vi.waitFor(() => {
+      expect(hasSfxSample("enemyHurt")).toBe(true);
+      expect(hasSfxSample("playerSkillLine")).toBe(true);
+    });
 
-    expect(fetchMock).toHaveBeenCalledTimes(EXPECTED_ENEMY_SFX.length);
-    expect(context.decodeAudioData).toHaveBeenCalledTimes(EXPECTED_ENEMY_SFX.length);
+    const expectedSampleCount = EXPECTED_ENEMY_SFX.length + EXPECTED_PLAYER_SFX.length;
+    expect(fetchMock).toHaveBeenCalledTimes(expectedSampleCount);
+    expect(context.decodeAudioData).toHaveBeenCalledTimes(expectedSampleCount);
 
-    playEnemySfxSample(context, "enemyHurt", TEST_PITCH, TEST_VOLUME);
+    playSfxSample(context, "playerSkillLine", TEST_PITCH, TEST_VOLUME);
 
     expect(source.buffer).toBe(decodedBuffer);
     expect(source.playbackRate.value).toBe(TEST_PITCH);
@@ -87,5 +123,14 @@ describe("enemy audio samples", () => {
     expect(source.connect).toHaveBeenCalledWith(gain);
     expect(gain.connect).toHaveBeenCalledWith(context.destination);
     expect(source.start).toHaveBeenCalledOnce();
+  });
+});
+
+describe("player audio samples", () => {
+  it("maps every player action sound to a WAV asset", () => {
+    expect(Object.keys(PLAYER_SFX_SAMPLE_URLS).sort()).toEqual([...EXPECTED_PLAYER_SFX].sort());
+    for (const url of Object.values(PLAYER_SFX_SAMPLE_URLS)) {
+      expect(url).toMatch(/\.wav$/);
+    }
   });
 });

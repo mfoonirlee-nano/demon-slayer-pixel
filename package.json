@@ -12,7 +12,7 @@
     "lint:lines": "node scripts/check-file-lines.mjs",
     "build": "tsc --noEmit && vite build",
     "preview": "vite preview",
-    "generate:sfx": "node scripts/generate-enemy-sfx.mjs",
+    "generate:sfx": "node scripts/generate-sfx.mjs",
     "compress": "node scripts/compress-assets.js",
     "clean:dist-assets": "node scripts/clean-dist-assets.js",
     "prepare": "husky"

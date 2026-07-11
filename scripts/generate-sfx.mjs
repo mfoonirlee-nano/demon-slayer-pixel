@@ -6,6 +6,7 @@ import path from "node:path";
 import process from "node:process";
 import { createEnemySfxSpecs } from "./enemy-sfx-recipes.mjs";
 import { encodeMonoPcm16Wav, measureAndValidatePcm } from "./enemy-sfx-wav.mjs";
+import { createPlayerSfxSpecs } from "./player-sfx-recipes.mjs";
 
 const SAMPLE_RATE = 48_000;
 const BITS_PER_SAMPLE = 16;
@@ -14,18 +15,19 @@ const PEAK_LIMIT_RATIO = 0.89;
 const PEAK_LIMIT = Math.floor(PCM_MAX * PEAK_LIMIT_RATIO);
 const TWO_PI = Math.PI * 2;
 const BASE_SEED = 0x4d4f4f4e;
-const EXPECTED_SOUND_COUNT = 23;
+const EXPECTED_SOUND_COUNT = 52;
 const START_FADE_SECONDS = 0.001;
 const END_FADE_SECONDS = 0.012;
 const MIN_PEAK_SPREAD_DB = 4;
 const CAST_RELEASE_RMS_ADVANTAGE_DB = 2;
-const IMPACT_RMS_ADVANTAGE_OVER_AURA_DB = 3;
-const OUTPUT_DIRECTORY = path.join(process.cwd(), "assets/audio/sfx/enemies");
+const IMPACT_RMS_ADVANTAGE_DB = 3;
+const PLAYER_HIT_RMS_ADVANTAGE_DB = 1;
+const OUTPUT_DIRECTORY = path.join(process.cwd(), "assets/audio/sfx");
 
 const rise = (power) => (progress) => Math.pow(progress, power);
 const swell = (progress) => Math.sin(Math.PI * progress);
 
-const SOUND_SPECS = createEnemySfxSpecs({
+const RECIPE_TOOLS = {
   mixBlade,
   mixBreath,
   mixCrackedBell,
@@ -41,7 +43,11 @@ const SOUND_SPECS = createEnemySfxSpecs({
   rise,
   sound,
   swell,
-});
+};
+const SOUND_SPECS = [
+  ...createEnemySfxSpecs(RECIPE_TOOLS),
+  ...createPlayerSfxSpecs(RECIPE_TOOLS),
+];
 
 function sound(name, duration, peakDb, render) {
   return { name, duration, peakDb, render };
@@ -454,7 +460,7 @@ function finalizeSamples(samples, peakDb) {
 function validateSpecs() {
   const names = new Set(SOUND_SPECS.map(({ name }) => name));
   if (SOUND_SPECS.length !== EXPECTED_SOUND_COUNT || names.size !== SOUND_SPECS.length) {
-    throw new Error(`Expected exactly ${EXPECTED_SOUND_COUNT} unique enemy sound specifications`);
+    throw new Error(`Expected exactly ${EXPECTED_SOUND_COUNT} unique sound specifications`);
   }
 }
 
@@ -471,7 +477,11 @@ function validateMixBalance(metrics) {
     "enemyTalismanCastStart",
     CAST_RELEASE_RMS_ADVANTAGE_DB,
   );
-  validateRmsAdvantage(metrics, "enemyImpact", "enemyAura", IMPACT_RMS_ADVANTAGE_OVER_AURA_DB);
+  validateRmsAdvantage(metrics, "enemyImpact", "enemyAura", IMPACT_RMS_ADVANTAGE_DB);
+  validateRmsAdvantage(metrics, "playerAttackHit", "playerAttackStart", PLAYER_HIT_RMS_ADVANTAGE_DB);
+  validateRmsAdvantage(metrics, "playerFallAttackImpact", "playerFallAttackStart", IMPACT_RMS_ADVANTAGE_DB);
+  validateRmsAdvantage(metrics, "playerSkillArmorBreakImpact", "playerSkillArmorBreak", CAST_RELEASE_RMS_ADVANTAGE_DB);
+  validateRmsAdvantage(metrics, "playerUltimateImpact", "playerUltimateCast", CAST_RELEASE_RMS_ADVANTAGE_DB);
 }
 
 function validateRmsAdvantage(metrics, louderName, quieterName, minimumDb) {
@@ -558,7 +568,9 @@ function renderAll() {
     const metrics = measureAndValidatePcm(spec.name, pcm, PCM_MAX, PEAK_LIMIT);
     metricsByName.set(spec.name, metrics);
     const wav = encodeMonoPcm16Wav(pcm, SAMPLE_RATE);
-    const outputPath = path.join(OUTPUT_DIRECTORY, `${spec.name}.wav`);
+    const actorDirectory = spec.name.startsWith("player") ? "players" : "enemies";
+    const outputPath = path.join(OUTPUT_DIRECTORY, actorDirectory, `${spec.name}.wav`);
+    mkdirSync(path.dirname(outputPath), { recursive: true });
     writeFileSync(outputPath, wav);
     totalBytes += wav.length;
     const hash = createHash("sha256").update(wav).digest("hex").slice(0, 12);

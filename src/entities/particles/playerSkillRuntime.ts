@@ -1,4 +1,5 @@
 import { state } from "../../game/state";
+import { playSfx } from "../../game/audio";
 import { ctx } from "../../rendering/context";
 import { PLAYER_COMBAT } from "../../constants";
 import type { EnemyState, PlayerSkillEffectState } from "../../types/game-state";
@@ -112,6 +113,7 @@ function triggerArmorBreakImpact(effect: PlayerSkillEffectState, collision: Armo
   effect.frame = ARMOR_BREAK_IMPACT_FRAME_START;
   effect.life = armorBreakImpactLife(effect);
   effect.maxLife = effect.life;
+  playSfx("playerSkillArmorBreakImpact");
 
   if (collision.type === "enemy") {
     effect.hitEnemies.push(collision.enemy);
@@ -246,6 +248,7 @@ function updateReturningBladeEffect(effect: PlayerSkillEffectState) {
     const distance = Math.hypot(dx, dy);
     if (distance <= RETURNING_BLADE_SPEED) {
       effect.life = 0;
+      playSfx("playerSkillReturningBladeCatch");
       return;
     }
     effect.vx = dx / distance * RETURNING_BLADE_SPEED;
@@ -290,6 +293,7 @@ function updateReturningBladeEffect(effect: PlayerSkillEffectState) {
       effect.phase = "return";
       effect.returnHitEnemies ??= [];
       effect.bossCooldown = undefined;
+      playSfx("playerSkillReturningBladeTurn");
     }
   }
 }

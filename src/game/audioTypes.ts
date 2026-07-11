@@ -13,12 +13,18 @@ export type GameSfx =
   | "playerSkillDash"
   | "playerSkillVortex"
   | "playerSkillArmorBreak"
+  | "playerSkillArmorBreakImpact"
   | "playerSkillRain"
   | "playerSkillReturningBlade"
+  | "playerSkillReturningBladeCatch"
+  | "playerSkillReturningBladeTurn"
   | "playerSkillVerticalWave"
   | "playerUltimateCast"
   | "playerUltimateImpact"
+  | "playerUltimateAfterimage"
+  | "playerUltimateEnd"
   | "playerCounter"
+  | "playerStatusStun"
   | "playerJump"
   | "playerHurt"
   | "playerDeath"
@@ -58,3 +64,12 @@ export type GameSfx =
   | "bossBuff"
   | "bossUltimate"
   | "bossKill";
+
+export type ToneStep = {
+  frequency: number;
+  duration: number;
+  type?: OscillatorType;
+  volume?: number;
+  delay?: number;
+  slideTo?: number;
+};

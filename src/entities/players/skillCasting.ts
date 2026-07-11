@@ -299,6 +299,9 @@ export function updateUltimateCastAndTimer() {
     }
   } else if (p.ultimateTimer > 0) {
     p.ultimateTimer -= 1;
-    if (p.ultimateTimer <= 0) p.ultimateEffectSpawned = false;
+    if (p.ultimateTimer <= 0) {
+      p.ultimateEffectSpawned = false;
+      playSfx("playerUltimateEnd");
+    }
   }
 }

@@ -506,6 +506,7 @@ function updateBinderTalismanDebuffs() {
       if (player.binderTalismanStunCooldown <= 0) {
         player.binderTalismanStunTimer = BINDER_CONFIG.stunActiveFrames;
         player.binderTalismanStunCooldown = randomStunCooldown();
+        playSfx("playerStatusStun");
       }
     }
   } else {

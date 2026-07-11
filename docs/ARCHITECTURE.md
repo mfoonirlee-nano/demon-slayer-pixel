@@ -49,7 +49,7 @@
 - `src/rendering/clouds.ts`: 绘制大云/小云精灵，支持夜晚灰色滤镜和血月红色染色。
 - `src/rendering/nearForeground.ts`: 绘制近景树线、石塔和鸟居，使用独立视差速度。
 - `src/moon/`: 管理月亮状态、血月插值、天空配色和月亮渲染。
-- `src/game/audio.ts`: 使用 Web Audio 播放攻击、拾取和命中反馈音。
+- `src/game/audio.ts`: 使用 Web Audio 播放敌人与玩家采样音效，并在加载失败时回退到振荡器音型。
 - `src/game/utils.ts`: 通用工具函数。
 - `src/entities/`:
   - `player.ts`: 玩家控制、重力、碰撞检测、技能释放逻辑。

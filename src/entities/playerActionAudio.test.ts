@@ -5,13 +5,16 @@ import { resetState, state } from "../game/state";
 import type { GameSfx } from "../game/audio";
 import type { SkillId } from "../types/assets";
 import { implementedPlayerSkillIds, playerSkillById } from "../systems/skillCatalog";
-import { hurtPlayer, triggerAttack, tryJump, updatePlayer } from "./player";
+import { createBossEncounter } from "./bosses/encounter";
+import { spawnEnemyById } from "./enemy";
+import { attackBox, hurtPlayer, triggerAttack, tryJump, updatePlayer } from "./player";
 import {
   castSelectedSkill,
   castUltimateSkill,
   playerSkillReleaseFrame,
   triggerUltimateOpeningEffect,
   updateSkillCastRelease,
+  updateUltimateCastAndTimer,
 } from "./players/skillCasting";
 
 const audioMock = vi.hoisted(() => ({
@@ -100,6 +103,32 @@ describe("player action audio", () => {
     expect(state.player.fallAttackTimer).toBe(0);
   });
 
+  it("plays the enemy hit cue when a basic attack connects", () => {
+    expect(spawnEnemyById("chaser", "debug", "right")).toBe(true);
+    const box = attackBox();
+    const enemy = state.enemies[0]!;
+    enemy.x = box.x;
+    enemy.y = box.y;
+
+    triggerAttack();
+    updatePlayer();
+
+    expect(audioMock.playSfx).toHaveBeenCalledWith("playerAttackHit");
+  });
+
+  it("plays the boss hit cue when a basic attack connects", () => {
+    const box = attackBox();
+    state.boss = createBossEncounter({ bossKills: 0, elapsedSeconds: 0 });
+    state.boss.x = box.x;
+    state.boss.y = box.y;
+    state.boss.entering = false;
+
+    triggerAttack();
+    updatePlayer();
+
+    expect(audioMock.playSfx).toHaveBeenCalledWith("playerBossHit");
+  });
+
   it("plays fall attack action sfx when attacking in the air with down held", () => {
     state.player.y = GROUND_Y - state.player.h - AIR_ATTACK_TEST_HEIGHT;
     keys.add("s");
@@ -127,6 +156,16 @@ describe("player action audio", () => {
     audioMock.playSfx.mockClear();
     triggerUltimateOpeningEffect();
     expect(audioMock.playSfx).toHaveBeenCalledWith("playerUltimateImpact");
+  });
+
+  it("plays the ultimate end cue when moon tide expires", () => {
+    state.player.ultimateTimer = 2;
+
+    updateUltimateCastAndTimer();
+    expect(audioMock.playSfx).not.toHaveBeenCalledWith("playerUltimateEnd");
+
+    updateUltimateCastAndTimer();
+    expect(audioMock.playSfx).toHaveBeenCalledWith("playerUltimateEnd");
   });
 
   it("plays hurt, death, and counter response sfx", () => {

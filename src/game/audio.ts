@@ -1,5 +1,6 @@
-import { hasEnemySfxSample, playEnemySfxSample, preloadEnemySfxSamples } from "./audioSamples";
-import type { GameSfx } from "./audioTypes";
+import { hasSfxSample, playSfxSample, preloadSfxSamples } from "./audioSamples";
+import type { GameSfx, ToneStep } from "./audioTypes";
+import { playerDynamicSfxPattern } from "./playerAudioPatterns";
 
 export type { GameSfx } from "./audioTypes";
 
@@ -24,15 +25,6 @@ type AudioWindow = Window & typeof globalThis & {
 
 export type AudioVolumeSettings = typeof DEFAULT_AUDIO_VOLUME_SETTINGS;
 
-type ToneStep = {
-  frequency: number;
-  duration: number;
-  type?: OscillatorType;
-  volume?: number;
-  delay?: number;
-  slideTo?: number;
-};
-
 const SFX_MIN_GAPS: Record<GameSfx, number> = {
   playerRunStep: 0.13,
   playerLand: 0.14,
@@ -48,12 +40,18 @@ const SFX_MIN_GAPS: Record<GameSfx, number> = {
   playerSkillDash: 0.1,
   playerSkillVortex: 0.18,
   playerSkillArmorBreak: 0.14,
+  playerSkillArmorBreakImpact: 0.14,
   playerSkillRain: 0.16,
   playerSkillReturningBlade: 0.12,
+  playerSkillReturningBladeCatch: 0.12,
+  playerSkillReturningBladeTurn: 0.12,
   playerSkillVerticalWave: 0.14,
   playerUltimateCast: 0.2,
   playerUltimateImpact: 0.25,
+  playerUltimateAfterimage: 0.12,
+  playerUltimateEnd: 0.4,
   playerCounter: 0.08,
+  playerStatusStun: 0.3,
   playerJump: 0.06,
   playerHurt: 0.12,
   playerDeath: 1,
@@ -112,7 +110,7 @@ export function ensureAudio() {
   if (audioCtx.state === "suspended") {
     void audioCtx.resume();
   }
-  preloadEnemySfxSamples(audioCtx);
+  preloadSfxSamples(audioCtx);
 }
 
 export function getAudioVolumeSettings(): AudioVolumeSettings {
@@ -219,11 +217,17 @@ function clampAudioVolume(value: number) {
 }
 
 export function playSfx(sfx: GameSfx, pitch = 1) {
-  if (audioCtx && hasEnemySfxSample(sfx)) {
+  if (audioCtx && hasSfxSample(sfx)) {
     const minGap = Math.max(AUDIO_SAMPLE_MIN_GAP, SFX_MIN_GAPS[sfx]);
     if (!claimSfxPlayback(sfx, minGap)) return;
     const volume = AUDIO_SAMPLE_VOLUME * audioVolumeSettings.master * audioVolumeSettings.sfx;
-    playEnemySfxSample(audioCtx, sfx, pitch, volume);
+    playSfxSample(audioCtx, sfx, pitch, volume);
+    return;
+  }
+
+  const dynamicPlayerPattern = playerDynamicSfxPattern(sfx);
+  if (dynamicPlayerPattern) {
+    playPattern(sfx, dynamicPlayerPattern, SFX_MIN_GAPS[sfx], pitch);
     return;
   }
 

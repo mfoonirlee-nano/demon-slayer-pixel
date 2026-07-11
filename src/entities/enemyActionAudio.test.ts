@@ -19,6 +19,7 @@ const RUNNER_DASH_GUARD_FRAMES = 30;
 const CASTER_RELEASE_GUARD_FRAMES = 80;
 const BINDER_RELEASE_GUARD_FRAMES = 100;
 const BINDER_CURSE_TICK_GUARD_FRAMES = 30;
+const BINDER_STUN_GUARD_FRAMES = 100;
 const BODY_DAMAGE = 1;
 const SHIELD_DAMAGE = 2;
 const LOW_SHIELD_HP = 1;
@@ -144,6 +145,21 @@ describe("enemy action audio", () => {
     updateBindingZones();
 
     expectNoSfx("enemyCurseTick");
+  });
+
+  it("dispatches player stun audio when a stun talisman takes effect", () => {
+    applyBinderTalismanDebuffs(["stun"]);
+
+    for (
+      let frame = 0;
+      state.player.binderTalismanStunTimer <= 0 && frame < BINDER_STUN_GUARD_FRAMES;
+      frame += 1
+    ) {
+      updateBindingZones();
+    }
+
+    expect(state.player.binderTalismanStunTimer).toBeGreaterThan(0);
+    expectSfx("playerStatusStun");
   });
 
   it("dispatches enemy hurt audio for non-fatal body damage", () => {
