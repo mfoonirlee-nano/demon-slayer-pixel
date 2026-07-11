@@ -45,9 +45,7 @@
 }
 
 .death-sprite-frame {
-  width: 272px;
-  height: 203px;
-  flex: 0 0 203px;
+  flex: none;
   overflow: hidden;
   position: relative;
 }
