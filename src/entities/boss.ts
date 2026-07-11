@@ -41,7 +41,6 @@ export function updateBoss() {
 
   boss.hitCd -= 1;
   boss.aiTimer -= 1;
-  boss.jumpCd -= 1;
   boss.skillCd -= 1;
   boss.actionTimer += 1;
   if ((boss.armorBreakTimer ?? 0) > 0) {

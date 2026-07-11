@@ -47,7 +47,6 @@ export function createBossEncounter(input: BossEncounterInput): LiveBossState {
     phase: 1,
     hitCd: 0,
     aiTimer: 0,
-    jumpCd: 0,
     animSeed: input.animSeed ?? Math.floor(Math.random() * BOSS_CONFIG.animSeedMax),
     actionState: "move",
     actionTimer: 0,

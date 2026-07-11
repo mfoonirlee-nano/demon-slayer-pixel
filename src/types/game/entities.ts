@@ -293,7 +293,6 @@ export type BossState = {
   phase: number;
   hitCd: number;
   aiTimer: number;
-  jumpCd: number;
   animSeed: number;
   actionState: BossActionState;
   actionTimer: number;

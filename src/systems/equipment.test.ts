@@ -101,7 +101,6 @@ function makeBoss(overrides: Partial<NonNullable<GameState["boss"]>> = {}): NonN
     phase: 1,
     hitCd: 0,
     aiTimer: 0,
-    jumpCd: 0,
     animSeed: 0,
     actionState: "move",
     actionTimer: 0,

@@ -1,13 +1,77 @@
-import { describe, expect, it, vi } from "vitest";
-import { BOSS_SKILL1_CONFIG, GROUND_Y, SPIDER_STRING_CAGE_CONFIG, WIDTH } from "../../constants";
+import { describe, expect, it } from "vitest";
+import { BOSS_CONFIG, BOSS_SKILL1_CONFIG, GROUND_Y, SPIDER_STRING_CAGE_CONFIG, WIDTH } from "../../constants";
 import { resetState, state } from "../../game/state";
 import type { EnemyState } from "../../types/game-state";
+import { updateBoss } from "../boss";
 import { createBossEncounter } from "./encounter";
 import { BOSS_ARCHETYPE_IDS } from "./registry";
 import { updateSpiderStringCageEffects } from "./spiderStringCageEffects";
 import { updateSpiderStringBoss } from "./spiderStringBehavior";
 
 describe("spider string boss behavior", () => {
+  it("lunges toward the player for a limited window, then backs away", () => {
+    const boss = readySpiderForMovement();
+
+    updateBoss();
+    expect(boss.actionState).toBe("windup");
+    expect(boss.vx).toBe(0);
+
+    advanceBossFrames(BOSS_CONFIG.rushWindupFrames);
+    expect(boss.actionState).toBe("dash");
+    expect(boss.vx).toBeGreaterThan(0);
+
+    const xBeforeRush = boss.x;
+    advanceBossFrames(BOSS_CONFIG.rushFrames);
+    expect(boss.x).toBeGreaterThan(xBeforeRush);
+    expect(boss.actionState).toBe("recover");
+
+    const xBeforeRetreat = boss.x;
+    updateBoss();
+    expect(boss.x).toBeLessThan(xBeforeRetreat);
+    expect(boss.vx).toBeLessThan(0);
+  });
+
+  it("waits after retreating before starting another attack", () => {
+    const boss = readySpiderForMovement();
+
+    updateBoss();
+    advanceBossFrames(BOSS_CONFIG.rushWindupFrames + BOSS_CONFIG.rushFrames);
+    advanceBossFrames(BOSS_CONFIG.retreatFrames);
+
+    const restingX = boss.x;
+    expect(boss.actionState).toBe("recover");
+    expect(boss.vx).toBe(0);
+
+    boss.skillCd = 0;
+    boss.aiTimer = 0;
+    advanceBossFrames(BOSS_CONFIG.breathingFrames - 1);
+    expect(boss.actionState).toBe("recover");
+    expect(boss.x).toBe(restingX);
+    expect(state.enemies).toEqual([]);
+
+    updateBoss();
+    expect(boss.actionState).toBe("move");
+    updateBoss();
+    expect(boss.actionState).toBe("cast");
+  });
+
+  it("commits to the direction chosen during the rush windup", () => {
+    const boss = readySpiderForMovement();
+
+    updateBoss();
+    advanceBossFrames(BOSS_CONFIG.rushWindupFrames);
+    expect(boss.actionState).toBe("dash");
+    expect(boss.facing).toBe(1);
+
+    state.player.x = 0;
+    const xBeforeDash = boss.x;
+    updateBoss();
+
+    expect(boss.actionState).toBe("dash");
+    expect(boss.facing).toBe(1);
+    expect(boss.x).toBeGreaterThan(xBeforeDash);
+  });
+
   it("starts the sprite-backed spider string cast when the skill is ready", () => {
     resetState();
     const boss = createBossEncounter({
@@ -85,7 +149,6 @@ describe("spider string boss behavior", () => {
     resetState();
     const boss = startAwakenedPhaseThreeCage();
     boss.aiTimer = 0;
-    boss.jumpCd = 0;
     boss.vx = 4;
     state.player.x = boss.x;
     state.player.y = boss.y;
@@ -150,11 +213,8 @@ describe("spider string boss behavior", () => {
     boss.aiTimer = 0;
     boss.skillCd = 999;
 
-    const randomSpy = vi.spyOn(Math, "random").mockReturnValue(0);
-
     updateSpiderStringBoss(boss);
 
-    randomSpy.mockRestore();
     expect(state.projectiles).toEqual([]);
   });
 
@@ -206,6 +266,27 @@ describe("spider string boss behavior", () => {
     expect(state.player.spiderSilkSlowTimer).toBe(0);
   });
 });
+
+function readySpiderForMovement() {
+  resetState();
+  const boss = createBossEncounter({
+    id: BOSS_ARCHETYPE_IDS.spiderString,
+    bossKills: 0,
+    elapsedSeconds: 0,
+    animSeed: 0,
+  });
+  boss.entering = false;
+  boss.x = 200;
+  boss.skillCd = 999;
+  boss.aiTimer = 999;
+  state.player.x = 600;
+  state.boss = boss;
+  return boss;
+}
+
+function advanceBossFrames(frames: number) {
+  for (let i = 0; i < frames; i += 1) updateBoss();
+}
 
 function startAwakenedPhaseThreeCage() {
   const boss = createBossEncounter({
