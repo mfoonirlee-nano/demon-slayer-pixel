@@ -7,6 +7,7 @@ import {
   STAR_SPRITES,
   MOUNTAIN_SPRITES,
   GROUND_TILE_SPRITES,
+  type GroundTileRegion,
 } from "../constants";
 import { drawMoon, getMoonSkyColors } from "../moon";
 import { drawClouds } from "./clouds";
@@ -64,6 +65,33 @@ const STARS = Array.from({ length: STAR_COUNT }, (_, i) => ({
 
 type GroundTileLayer = "base" | "occlusion";
 
+function drawGroundRegion(
+  image: HTMLImageElement,
+  region: GroundTileRegion,
+  x: number,
+  row: number,
+  alpha = 1,
+) {
+  if (!ctx) return;
+  const blended = alpha < 1;
+  if (blended) {
+    ctx.save();
+    ctx.globalAlpha *= alpha;
+  }
+  ctx.drawImage(
+    image,
+    region.sx,
+    region.sy,
+    region.sw,
+    region.sh,
+    x,
+    GROUND_Y + GROUND_TILE_SPRITES.drawOffsetY + row * GROUND_TILE_SPRITES.tileSize - region.surfaceY,
+    region.sw,
+    region.sh,
+  );
+  if (blended) ctx.restore();
+}
+
 function drawGroundTileLayer(layer: GroundTileLayer) {
   if (!ctx) return;
 
@@ -104,18 +132,20 @@ function drawGroundTileLayer(layer: GroundTileLayer) {
       const variantIndex = col + row * Math.ceil(WIDTH / tileSize) + renderPlan.variantOffset;
       const regionIndex = patternEntry.regionIndex ?? variantIndex % regions.length;
       const region = regions[regionIndex % regions.length];
+      drawGroundRegion(image, region, x, row);
 
-      ctx.drawImage(
-        image,
-        region.sx,
-        region.sy,
-        region.sw,
-        region.sh,
-        x,
-        GROUND_Y + GROUND_TILE_SPRITES.drawOffsetY + row * tileSize - region.surfaceY,
-        region.sw,
-        region.sh,
-      );
+      const blend = patternEntry.blend;
+      if (blend) {
+        const blendSet = GROUND_TILE_SPRITES.sets[blend.set];
+        const blendImage = layer === "occlusion" ? blendSet.occlusionImage : blendSet.image;
+        const blendRegions = layer === "occlusion"
+          ? blendSet.occlusionRegions ?? blendSet.regions
+          : blendSet.regions;
+        if (blendImage) {
+          const blendRegion = blendRegions[variantIndex % blendRegions.length];
+          drawGroundRegion(blendImage, blendRegion, x, row, blend.alpha);
+        }
+      }
       x += tileSize;
       col += 1;
     }

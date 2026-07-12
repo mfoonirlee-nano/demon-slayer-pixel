@@ -1,11 +1,15 @@
 type SpriteRegion = { sx: number; sy: number; sw: number; sh: number };
 type PlatformSpriteRegion = SpriteRegion & { surfaceY: number };
-type GroundTileRegion = SpriteRegion & { surfaceY: number };
+export type GroundTileRegion = SpriteRegion & { surfaceY: number };
 export type GroundTileSetKey = "forest" | "forestToShrine" | "shrine" | "shrineToForest";
 export type GroundTilePatternKey = GroundTileSetKey;
 export type GroundTilePatternEntry = {
   set: GroundTileSetKey;
   regionIndex?: number;
+  blend?: {
+    set: GroundTileSetKey;
+    alpha: number;
+  };
 };
 type GroundTileSet = {
   src: string;
@@ -23,6 +27,9 @@ const GROUND_TILE_TRANSITION_SCROLL_TILES = (
 );
 const GROUND_TILE_SIZE = 150;
 const GROUND_TILE_SCROLL_SPEED = 48;
+const GROUND_TILE_EARLY_STONE_BLEND_ALPHA = 0.2;
+const GROUND_TILE_MID_STONE_BLEND_ALPHA = 0.5;
+const GROUND_TILE_LATE_STONE_BLEND_ALPHA = 0.85;
 const GROUND_TILE_TRANSITION_SECONDS = (
   GROUND_TILE_TRANSITION_SCROLL_TILES * GROUND_TILE_SIZE / GROUND_TILE_SCROLL_SPEED
 );
@@ -243,9 +250,21 @@ export const GROUND_TILE_SPRITES: {
     forestToShrine: [
       ...repeatedGroundTiles("forest", GROUND_TILE_VISIBLE_BUFFER_TILES),
       { set: "forestToShrine", regionIndex: 0 },
-      { set: "forestToShrine", regionIndex: 1 },
-      { set: "forestToShrine", regionIndex: 2 },
-      { set: "forestToShrine", regionIndex: 3 },
+      {
+        set: "forestToShrine",
+        regionIndex: 1,
+        blend: { set: "shrine", alpha: GROUND_TILE_EARLY_STONE_BLEND_ALPHA },
+      },
+      {
+        set: "forestToShrine",
+        regionIndex: 2,
+        blend: { set: "shrine", alpha: GROUND_TILE_MID_STONE_BLEND_ALPHA },
+      },
+      {
+        set: "forestToShrine",
+        regionIndex: 3,
+        blend: { set: "shrine", alpha: GROUND_TILE_LATE_STONE_BLEND_ALPHA },
+      },
       ...repeatedGroundTiles("shrine", GROUND_TILE_VISIBLE_BUFFER_TILES),
     ],
     shrine: [
