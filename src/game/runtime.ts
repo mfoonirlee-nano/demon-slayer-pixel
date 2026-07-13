@@ -314,7 +314,6 @@ function loop(ts: number) {
   drawBackground();
   drawNearForeground();
   drawGroundTileBase();
-  drawPlatforms();
   drawCrystals();
   drawChests();
   drawBindingZonesBack();
@@ -347,6 +346,7 @@ function loop(ts: number) {
 
   drawUltimatePlayerGhosts();
   drawPlayer();
+  drawPlatforms();
   drawGuardCounterEffect();
   drawSkillBursts();
   drawUltimateAfterimageSlashes();
