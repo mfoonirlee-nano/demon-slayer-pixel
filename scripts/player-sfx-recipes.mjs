@@ -25,10 +25,11 @@ export function createPlayerSfxSpecs({
   swell,
 }) {
   return [
-    sound("playerRunStep", 0.18, -9, (samples, rng) => {
-      mixBreath(samples, rng, { duration: 0.11, gain: 0.16, lowCutoff: 260, cutoff: 1_450, endCutoff: 2_100, contour: swell });
-      mixWood(samples, rng, { start: 0.015, duration: 0.09, frequency: 420, gain: 0.24 });
-      mixDryPluck(samples, rng, { start: 0.035, duration: 0.11, frequency: 760, gain: 0.07 });
+    sound("playerRunStep", 0.18, -8, (samples, rng) => {
+      mixTaiko(samples, rng, { duration: 0.1, frequency: 72, gain: 0.14 });
+      mixNoise(samples, rng, { duration: 0.1, gain: 0.34, color: "low", cutoff: 560, decay: 2.8 });
+      mixNoise(samples, rng, { start: 0.008, duration: 0.13, gain: 0.2, color: "band", lowCutoff: 720, cutoff: 5_200, endLowCutoff: 1_100, endCutoff: 2_900, decay: 2.2 });
+      mixPaper(samples, rng, { start: 0.012, duration: 0.11, gain: 0.12 });
     }),
     sound("playerLand", 0.3, -4.8, (samples, rng) => {
       mixTaiko(samples, rng, { duration: 0.23, frequency: 96, gain: 0.46 });
@@ -36,10 +37,11 @@ export function createPlayerSfxSpecs({
       mixWood(samples, rng, { start: 0.018, duration: 0.13, frequency: 230, gain: 0.33 });
       mixBreath(samples, rng, { start: 0.045, duration: 0.18, gain: 0.12, lowCutoff: 420, cutoff: 2_400 });
     }),
-    sound("playerAttackStart", 0.29, -6.5, (samples, rng) => {
-      mixBlade(samples, rng, { duration: 0.24, baseFrequency: 470, gain: 0.74 });
-      mixBreath(samples, rng, { duration: 0.23, gain: 0.2, lowCutoff: 560, cutoff: 2_600, endLowCutoff: 1_200, endCutoff: 4_500, contour: swell });
-      mixDryPluck(samples, rng, { start: 0.045, duration: 0.16, frequency: 740, gain: 0.1 });
+    sound("playerAttackStart", 0.31, -6.5, (samples, rng) => {
+      mixNoise(samples, rng, { duration: 0.27, gain: 0.58, color: "band", lowCutoff: 520, cutoff: 2_600, endLowCutoff: 1_700, endCutoff: 7_200, contour: swell });
+      mixBlade(samples, rng, { start: 0.008, duration: 0.25, baseFrequency: 860, gain: 0.48 });
+      mixDullIron(samples, rng, { start: 0.035, duration: 0.2, baseFrequency: 1_180, gain: 0.1 });
+      mixNoise(samples, rng, { start: 0.02, duration: 0.055, gain: 0.18, color: "band", lowCutoff: 2_600, cutoff: 8_600, decay: 3.4 });
     }),
     sound("playerAttackHit", 0.25, -1.05, (samples, rng) => {
       mixTaiko(samples, rng, { duration: 0.19, frequency: 106, gain: 0.4 });

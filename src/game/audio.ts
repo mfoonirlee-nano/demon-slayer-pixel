@@ -234,8 +234,8 @@ export function playSfx(sfx: GameSfx, pitch = 1) {
   switch (sfx) {
     case "playerRunStep":
       playPattern(sfx, [
-        { frequency: 92, slideTo: 70, duration: 0.035, type: "triangle", volume: 0.018 },
-        { frequency: 540, slideTo: 690, duration: 0.026, type: "sine", volume: 0.014, delay: 0.012 },
+        { frequency: 118, slideTo: 68, duration: 0.04, type: "triangle", volume: 0.022 },
+        { frequency: 176, slideTo: 105, duration: 0.022, type: "sine", volume: 0.012, delay: 0.006 },
       ], SFX_MIN_GAPS.playerRunStep, pitch);
       return;
     case "playerLand":
@@ -246,7 +246,8 @@ export function playSfx(sfx: GameSfx, pitch = 1) {
       return;
     case "playerAttackStart":
       playPattern(sfx, [
-        { frequency: 300, slideTo: 520, duration: 0.055, type: "triangle", volume: 0.045 },
+        { frequency: 780, slideTo: 2_100, duration: 0.065, type: "sawtooth", volume: 0.032 },
+        { frequency: 2_100, slideTo: 960, duration: 0.045, type: "triangle", volume: 0.02, delay: 0.012 },
       ], SFX_MIN_GAPS.playerAttackStart, pitch);
       return;
     case "playerAttackHit":
