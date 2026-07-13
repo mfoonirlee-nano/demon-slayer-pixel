@@ -43,8 +43,8 @@ const GHOST_SNAP_EPSILON = 0.1;
 const ULTIMATE_ORB_DEFAULT_SIZE = 44;
 const ULTIMATE_GLOW_BASE_OPACITY = 0.24;
 const ULTIMATE_GLOW_OPACITY_SCALE = 0.82;
-const ULTIMATE_CHARGE_LAST_FRAME = 7;
-const ULTIMATE_CHARGE_FRAME_COUNT = 8;
+const ULTIMATE_CHARGE_LAST_STAGE = 7;
+const ULTIMATE_CHARGE_STAGE_COUNT = 8;
 const ULTIMATE_PERCENT_SCALE = 100;
 const ULTIMATE_DECAY_FULL_ANGLE = 360;
 const ULTIMATE_DECAY_MIN_ANGLE = 8;
@@ -72,6 +72,11 @@ function useGhostValue(value: number) {
   }, [value]);
 
   return ghost;
+}
+
+export function ultimateChargeStage(value: number, max: number) {
+  const percent = clampMeterPercent(value, max) / HUD_UI.meterPercentMax;
+  return Math.min(ULTIMATE_CHARGE_LAST_STAGE, Math.floor(percent * ULTIMATE_CHARGE_STAGE_COUNT));
 }
 
 function GhostBar({ value, max, ghostValue, color, ghostColor }: {
@@ -148,7 +153,7 @@ function HudMeter({ value, max, ghostValue, color, ghostColor, text, width, fram
   );
 }
 
-function UltimateOrb({ value, max, ready, size = ULTIMATE_ORB_DEFAULT_SIZE, activePercent = 0 }: {
+export function UltimateOrb({ value, max, ready, size = ULTIMATE_ORB_DEFAULT_SIZE, activePercent = 0 }: {
   value: number;
   max: number;
   ready: boolean;
@@ -157,10 +162,11 @@ function UltimateOrb({ value, max, ready, size = ULTIMATE_ORB_DEFAULT_SIZE, acti
 }) {
   const percent = clampMeterPercent(value, max) / HUD_UI.meterPercentMax;
   const active = activePercent > 0;
+  const isCharging = !ready && !active && percent > 0;
   const activeClamped = Math.max(0, Math.min(1, activePercent));
   const glowOpacity = percent <= 0 ? 0 : Math.min(1, ULTIMATE_GLOW_BASE_OPACITY + percent * ULTIMATE_GLOW_OPACITY_SCALE);
-  const chargeFrame = Math.min(ULTIMATE_CHARGE_LAST_FRAME, Math.floor(percent * ULTIMATE_CHARGE_FRAME_COUNT));
-  const chargeFramePosition = chargeFrame / ULTIMATE_CHARGE_LAST_FRAME * ULTIMATE_PERCENT_SCALE;
+  const chargeStage = ultimateChargeStage(value, max);
+  const chargeStagePosition = chargeStage / ULTIMATE_CHARGE_LAST_STAGE * ULTIMATE_PERCENT_SCALE;
   const decayAngle = Math.max(ULTIMATE_DECAY_MIN_ANGLE, activeClamped * ULTIMATE_DECAY_FULL_ANGLE);
 
   return (
@@ -192,8 +198,12 @@ function UltimateOrb({ value, max, ready, size = ULTIMATE_ORB_DEFAULT_SIZE, acti
         className="ultimate-orb-sprite-stage"
       >
         <div
-          className={`ultimate-orb-sprite ${ready ? "ultimate-orb-sprite-animated" : ""}`}
-          style={ready ? undefined : { backgroundPosition: `${chargeFramePosition}% 0` }}
+          className={`ultimate-orb-sprite ${
+            ready ? "ultimate-orb-sprite-animated" : isCharging ? "ultimate-orb-sprite-charging" : ""
+          }`}
+          style={ready ? undefined : {
+            "--ultimate-charge-stage-y": `${chargeStagePosition}%`,
+          } as CSSProperties}
         />
       </div>
       <div className="ultimate-orb-moon-glow" style={{ opacity: glowOpacity }} />
