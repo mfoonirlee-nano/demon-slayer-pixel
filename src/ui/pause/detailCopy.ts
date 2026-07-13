@@ -1,6 +1,7 @@
 import type { GameSnapshot } from "../../game/gameStore";
 import { EQUIPMENT_ITEMS } from "../../systems/equipment";
-import type { EquipmentItemId, EquipmentItemState, EquipmentSlot } from "../../types/game-state";
+import { EQUIPMENT_PRIMARY_STAT_LABELS } from "../../systems/equipmentCatalog";
+import type { EquipmentItemId, EquipmentItemState } from "../../types/game-state";
 import {
   EQUIPMENT_SLOT_LABELS,
   getSkill,
@@ -35,12 +36,6 @@ export function equipmentDetailCopy(
     body: item ? equipmentItemDetailBody(item) : "当前槽位未装备。",
   };
 }
-
-const EQUIPMENT_PRIMARY_STAT_LABELS: Record<EquipmentSlot, string> = {
-  blade: "攻击力",
-  garb: "最大生命",
-  talisman: "技能能量上限",
-};
 
 function equipmentItemDetailBody(item: EquipmentItemState) {
   return `基础属性：${EQUIPMENT_PRIMARY_STAT_LABELS[item.slot]} +${item.primaryStatBonus}。专属机制：${item.summary}`;

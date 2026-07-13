@@ -1,5 +1,6 @@
 import { CLOSE_ARC_BASIC_CRESCENT_CONFIG, MOON_TIDE_ULTIMATE, PLAYER_COMBAT, SKILL_IDS } from "../constants";
 import { CORE_PLAYER_SKILL_EFFECT_CONFIGS } from "../systems/skillCatalog";
+import { EQUIPMENT_PRIMARY_STAT_LABELS } from "../systems/equipmentCatalog";
 import {
   BURST_BLADE_AWAKENED_SLASH_ATTACK_SCALE,
   BURST_BLADE_BOSS_DAMAGE_MULTIPLIER,
@@ -104,6 +105,11 @@ const FRAMES_PER_SECOND = 60;
 const PERCENT_MULTIPLIER = 100;
 const MAX_REWARD_LEVEL = 3;
 const EQUIPMENT_TIER_ORDER: EquipmentTier[] = ["common", "fine", "awakened"];
+const EQUIPMENT_PRIMARY_STAT_TONES = {
+  blade: "damage",
+  garb: "defense",
+  talisman: "resource",
+} as const satisfies Record<EquipmentChoiceState["slot"], RewardMetricTone>;
 
 export function upgradeRewardMetrics(
   choice: UpgradeChoiceState,
@@ -126,11 +132,16 @@ export function upgradeRewardMetrics(
 }
 
 export function equipmentRewardMetrics(choice: EquipmentChoiceState): RewardChoiceMetric[] {
-  const primaryStat = equipmentPrimaryStatMetric(choice);
+  return compactMetrics([
+    equipmentPrimaryStatMetric(choice),
+    ...equipmentEffectMetrics(choice),
+  ]);
+}
+
+function equipmentEffectMetrics(choice: EquipmentChoiceState): RewardChoiceMetric[] {
   switch (choice.id) {
     case "flow_blade":
       return compactMetrics([
-        primaryStat,
         tierTableMetric(choice, "蓄势命中", FLOW_BLADE_HITS_REQUIRED, (value) => `${value}次`, "utility"),
         tierTableMetric(choice, "技能伤害", FLOW_BLADE_SKILL_DAMAGE_MULTIPLIER, formatMultiplierDelta, "damage"),
         tierAtLeast(choice.tier, "fine") ? metric("命中返能", `+${FLOW_BLADE_SKILL_REFUND}`, "resource") : null,
@@ -138,7 +149,6 @@ export function equipmentRewardMetrics(choice: EquipmentChoiceState): RewardChoi
       ]);
     case "flow_garb":
       return compactMetrics([
-        primaryStat,
         metric("技能后移速", formatMultiplierDelta(FLOW_GARB_SPEED_MULTIPLIER), "speed"),
         metric("持续", formatFrames(FLOW_GARB_TIMER_FRAMES), "utility"),
         tierAtLeast(choice.tier, "fine") ? metric("受伤", formatMultiplierDelta(FLOW_GARB_DAMAGE_MULTIPLIER), "defense") : null,
@@ -146,14 +156,12 @@ export function equipmentRewardMetrics(choice: EquipmentChoiceState): RewardChoi
       ]);
     case "flow_talisman":
       return compactMetrics([
-        primaryStat,
         tierTableMetric(choice, "命中要求", FLOW_TALISMAN_HIT_THRESHOLD, (value) => `${value}目标`, "utility"),
         tierTableMetric(choice, "技能能量", FLOW_TALISMAN_REFUND, (value) => `+${value}`, "resource"),
         tierAtLeast(choice.tier, "awakened") ? metric("终能", `+${FLOW_TALISMAN_ULTIMATE_GAIN}`, "resource") : null,
       ]);
     case "burst_blade":
       return compactMetrics([
-        primaryStat,
         metric("Boss血线", `<=${formatPercent(BURST_BLADE_BOSS_HP_RATIO)}`, "utility"),
         tierTableMetric(choice, "Boss伤害", BURST_BLADE_BOSS_DAMAGE_MULTIPLIER, formatMultiplierDelta, "damage"),
         tierAtLeast(choice.tier, "fine")
@@ -165,7 +173,6 @@ export function equipmentRewardMetrics(choice: EquipmentChoiceState): RewardChoi
       ]);
     case "burst_garb":
       return compactMetrics([
-        primaryStat,
         metric("致命保护", "保留1 HP", "defense"),
         metric("无敌", formatFrames(BURST_GARB_INVINCIBLE_FRAMES), "defense"),
         tierAtLeast(choice.tier, "fine") ? metric("移速", formatMultiplierDelta(BURST_GARB_SPEED_MULTIPLIER), "speed") : null,
@@ -173,7 +180,6 @@ export function equipmentRewardMetrics(choice: EquipmentChoiceState): RewardChoi
       ]);
     case "burst_talisman":
       return compactMetrics([
-        primaryStat,
         tierTableMetric(choice, "Boss终能", BURST_TALISMAN_ULTIMATE_GAIN, (value) => `+${value}`, "resource"),
         metric("冷却", formatFrames(BURST_TALISMAN_COOLDOWN), "utility"),
         tierAtLeast(choice.tier, "fine")
@@ -185,7 +191,6 @@ export function equipmentRewardMetrics(choice: EquipmentChoiceState): RewardChoi
       ]);
     case "shadowstep_blade":
       return compactMetrics([
-        primaryStat,
         metric("蓄势距离", `${SHADOWSTEP_DISTANCE_REQUIRED}px`, "utility"),
         tierTableMetric(choice, "普攻范围", SHADOWSTEP_BLADE_REACH_BONUS, (value) => `+${value}`, "range"),
         tierAtLeast(choice.tier, "fine")
@@ -197,7 +202,6 @@ export function equipmentRewardMetrics(choice: EquipmentChoiceState): RewardChoi
       ]);
     case "shadowstep_garb":
       return compactMetrics([
-        primaryStat,
         tierTableMetric(choice, "接触伤害", SHADOWSTEP_GARB_DAMAGE_MULTIPLIER, formatMultiplierDelta, "defense"),
         metric("移动判定", `${SHADOWSTEP_GARB_MOVING_FRAMES}帧`, "utility"),
         tierAtLeast(choice.tier, "fine")
@@ -209,7 +213,6 @@ export function equipmentRewardMetrics(choice: EquipmentChoiceState): RewardChoi
       ]);
     case "shadowstep_talisman":
       return compactMetrics([
-        primaryStat,
         metric("触发半径", `${SHADOWSTEP_TALISMAN_RADIUS}px`, "range"),
         tierTableMetric(choice, "技能能量", SHADOWSTEP_TALISMAN_SKILL_GAIN, (value) => `+${value}`, "resource"),
         metric("冷却", formatFrames(SHADOWSTEP_TALISMAN_COOLDOWN), "utility"),
@@ -219,7 +222,6 @@ export function equipmentRewardMetrics(choice: EquipmentChoiceState): RewardChoi
       ]);
     case "hunt_blade":
       return compactMetrics([
-        primaryStat,
         metric("连杀要求", `${HUNT_BLADE_KILLS_REQUIRED}个`, "utility"),
         tierTableMetric(choice, "普攻范围", HUNT_BLADE_REACH_BONUS, (value) => `+${value}`, "range"),
         tierTableMetric(choice, "普攻伤害", HUNT_BLADE_DAMAGE_MULTIPLIER, formatMultiplierDelta, "damage"),
@@ -227,7 +229,6 @@ export function equipmentRewardMetrics(choice: EquipmentChoiceState): RewardChoi
       ]);
     case "hunt_garb":
       return compactMetrics([
-        primaryStat,
         tierTableMetric(choice, "击杀移速", HUNT_GARB_SPEED_MULTIPLIER, formatMultiplierDelta, "speed"),
         metric("持续", formatFrames(HUNT_GARB_TIMER_FRAMES), "utility"),
         metric("连杀窗口", formatFrames(HUNT_KILL_WINDOW), "utility"),
@@ -237,7 +238,6 @@ export function equipmentRewardMetrics(choice: EquipmentChoiceState): RewardChoi
       ]);
     case "hunt_talisman":
       return compactMetrics([
-        primaryStat,
         metric("连杀要求", `${HUNT_TALISMAN_KILLS_REQUIRED}个`, "utility"),
         tierTableMetric(choice, "技能能量", HUNT_TALISMAN_SKILL_GAIN, (value) => `+${value}`, "resource"),
         tierTableMetric(choice, "终能", HUNT_TALISMAN_ULTIMATE_GAIN, (value) => `+${value}`, "resource"),
@@ -245,7 +245,6 @@ export function equipmentRewardMetrics(choice: EquipmentChoiceState): RewardChoi
       ]);
     case "risk_blade":
       return compactMetrics([
-        primaryStat,
         metric("低血线", `<=${formatPercent(LOW_HP_RATIO)}`, "utility"),
         tierTableMetric(choice, "普攻伤害", RISK_BLADE_BASIC_DAMAGE_MULTIPLIER, formatMultiplierDelta, "damage"),
         tierAtLeast(choice.tier, "fine")
@@ -257,7 +256,6 @@ export function equipmentRewardMetrics(choice: EquipmentChoiceState): RewardChoi
       ]);
     case "risk_garb":
       return compactMetrics([
-        primaryStat,
         metric("低血线", `<=${formatPercent(LOW_HP_RATIO)}`, "utility"),
         tierTableMetric(choice, "受伤", RISK_GARB_DAMAGE_MULTIPLIER, formatMultiplierDelta, "defense"),
         tierAtLeast(choice.tier, "fine")
@@ -269,7 +267,6 @@ export function equipmentRewardMetrics(choice: EquipmentChoiceState): RewardChoi
       ]);
     case "risk_talisman":
       return compactMetrics([
-        primaryStat,
         metric("低血线", `<=${formatPercent(LOW_HP_RATIO)}`, "utility"),
         tierTableMetric(choice, "技能能量", RISK_TALISMAN_SKILL_GAIN, (value) => `+${value}`, "resource"),
         tierAtLeast(choice.tier, "awakened") ? metric("至少", "1格技能", "resource") : null,
@@ -277,7 +274,6 @@ export function equipmentRewardMetrics(choice: EquipmentChoiceState): RewardChoi
       ]);
     case "tempo_blade":
       return compactMetrics([
-        primaryStat,
         tierTableMetric(choice, "普攻间隔", TEMPO_BLADE_ATTACK_FRAME_MULTIPLIER, formatMultiplierDelta, "speed"),
         tierTableMetric(choice, "单击伤害", TEMPO_BLADE_DAMAGE_MULTIPLIER, formatMultiplierDelta, "damage"),
         tierAtLeast(choice.tier, "awakened")
@@ -286,7 +282,6 @@ export function equipmentRewardMetrics(choice: EquipmentChoiceState): RewardChoi
       ]);
     case "tempo_garb":
       return compactMetrics([
-        primaryStat,
         tierTableMetric(choice, "受伤击退", TEMPO_GARB_KNOCKBACK_MULTIPLIER, formatMultiplierDelta, "defense"),
         tierAtLeast(choice.tier, "fine") ? metric("受伤移速", formatMultiplierDelta(TEMPO_GARB_SPEED_MULTIPLIER), "speed") : null,
         tierAtLeast(choice.tier, "fine") ? metric("持续", formatFrames(TEMPO_GARB_RECOVERY_TIMER_FRAMES), "utility") : null,
@@ -294,7 +289,6 @@ export function equipmentRewardMetrics(choice: EquipmentChoiceState): RewardChoi
       ]);
     case "tempo_talisman":
       return compactMetrics([
-        primaryStat,
         metric("技能消耗", skillCostTransition(choice), "resource"),
         tierTableMetric(choice, "终能获取", TEMPO_TALISMAN_ULTIMATE_GAIN_MULTIPLIER, formatMultiplierDelta, "resource"),
         tierAtLeast(choice.tier, "awakened") ? metric("换招返能", `+${TEMPO_TALISMAN_AWAKENED_REFUND}`, "resource") : null,
@@ -306,14 +300,13 @@ export function equipmentRewardMetrics(choice: EquipmentChoiceState): RewardChoi
 
 function equipmentPrimaryStatMetric(choice: EquipmentChoiceState) {
   const bonuses = EQUIPMENT_PRIMARY_STAT_BONUSES[choice.slot];
-  switch (choice.slot) {
-    case "blade":
-      return tierTableMetric(choice, "攻击力", bonuses, (value) => `+${value}`, "damage");
-    case "garb":
-      return tierTableMetric(choice, "最大生命", bonuses, (value) => `+${value}`, "defense");
-    case "talisman":
-      return tierTableMetric(choice, "技能能量上限", bonuses, (value) => `+${value}`, "resource");
-  }
+  return tierTableMetric(
+    choice,
+    EQUIPMENT_PRIMARY_STAT_LABELS[choice.slot],
+    bonuses,
+    (value) => `+${value}`,
+    EQUIPMENT_PRIMARY_STAT_TONES[choice.slot],
+  );
 }
 
 function skillDamageMetrics(

@@ -35,6 +35,12 @@ export const EQUIPMENT_TIER_LABELS: Record<EquipmentTier, string> = {
   awakened: "觉醒",
 };
 
+export const EQUIPMENT_PRIMARY_STAT_LABELS: Record<EquipmentSlot, string> = {
+  blade: "攻击力",
+  garb: "最大生命",
+  talisman: "技能能量上限",
+};
+
 const EQUIPMENT_BASE_ITEMS: Record<EquipmentItemId, EquipmentBaseItem> = {
   flow_blade: { id: "flow_blade", name: "流水刃", slot: "blade", family: "flow" },
   flow_garb: { id: "flow_garb", name: "涟波衣", slot: "garb", family: "flow" },
