@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import { RUNNER_SHEET_INDEX, SKILL_IDS } from "../constants";
 import { createInitialState } from "../game/state";
 import type { EnemyState } from "../types/game-state";
+import { equipEquipment } from "./equipment";
 import {
   addRunXp,
   applyUpgradeChoice,
@@ -199,6 +200,24 @@ describe("run progression skills", () => {
 
     expect(state.player.runLevel).toBe(2);
     expect(state.pendingUpgradeChoices).toEqual([]);
+  });
+
+  it("keeps all equipped primary stat bonuses after level growth", () => {
+    const state = createInitialState();
+    state.equipmentInventory.push(
+      { id: "flow_blade", tier: "fine" },
+      { id: "flow_garb", tier: "fine" },
+      { id: "flow_talisman", tier: "fine" },
+    );
+    expect(equipEquipment(state, "blade", "flow_blade")).toBe(true);
+    expect(equipEquipment(state, "garb", "flow_garb")).toBe(true);
+    expect(equipEquipment(state, "talisman", "flow_talisman")).toBe(true);
+
+    addRunXp(state, xpToNextLevel(1));
+
+    expect(state.player).toMatchObject({
+      runLevel: 2, baseAttack: 22, maxHp: 138, skillEnergyMax: 120, maxSkillCharges: 4,
+    });
   });
 
   it("only gives the elite XP bonus to regular elite enemies", () => {

@@ -33,7 +33,8 @@ import {
   corePlayerSkillGrowth,
   isGenericPlayerSkillId,
 } from "./playerSkills";
-import { syncSkillChargesForEquipment } from "./equipment";
+import { syncSkillChargesForEquipment } from "./equipmentResources";
+import { equipmentStatBonuses } from "./equipmentStats";
 
 const BASE_XP = 650;
 const XP_LINEAR = 45;
@@ -211,9 +212,10 @@ function applyLevelStatGrowth(state: GameState) {
   const oldSkillEnergyMax = player.skillEnergyMax;
   const skillEnergyRatio = oldSkillEnergyMax > 0 ? player.skillEnergy / oldSkillEnergyMax : 0;
   player.runLevel += 1;
-  player.baseAttack = baseAttackForLevel(player.runLevel);
-  player.maxHp = maxHpForLevel(player.runLevel);
-  player.skillEnergyMax = maxSkillEnergyForLevel(player.runLevel);
+  const equipmentBonuses = equipmentStatBonuses(state);
+  player.baseAttack = baseAttackForLevel(player.runLevel) + equipmentBonuses.attack;
+  player.maxHp = maxHpForLevel(player.runLevel) + equipmentBonuses.maxHp;
+  player.skillEnergyMax = maxSkillEnergyForLevel(player.runLevel) + equipmentBonuses.skillEnergyMax;
   player.maxSkillCharges = maxSkillChargesForEnergy(player.skillEnergyMax);
   player.skillEnergy = Math.min(player.skillEnergyMax, Math.round(skillEnergyRatio * player.skillEnergyMax));
   syncSkillChargesForEquipment(state);

@@ -1,6 +1,6 @@
 import type { GameSnapshot } from "../../game/gameStore";
 import { EQUIPMENT_ITEMS } from "../../systems/equipment";
-import type { EquipmentItemId } from "../../types/game-state";
+import type { EquipmentItemId, EquipmentItemState, EquipmentSlot } from "../../types/game-state";
 import {
   EQUIPMENT_SLOT_LABELS,
   getSkill,
@@ -24,7 +24,7 @@ export function equipmentDetailCopy(
     return {
       kicker: `${EQUIPMENT_SLOT_LABELS[item.slot]} · ${item.uiTags.join(" · ")} · ${equipped ? "已装备" : unlocked ? "可装备" : "未解锁"}`,
       title: item.name,
-      body: item.summary,
+      body: equipmentItemDetailBody(item),
     };
   }
 
@@ -32,8 +32,18 @@ export function equipmentDetailCopy(
   return {
     kicker: `${EQUIPMENT_SLOT_LABELS[target.slot]} · ${item?.uiTags.join(" · ") ?? "未装备"}`,
     title: item?.name ?? "空槽",
-    body: item?.summary ?? "当前槽位未装备。",
+    body: item ? equipmentItemDetailBody(item) : "当前槽位未装备。",
   };
+}
+
+const EQUIPMENT_PRIMARY_STAT_LABELS: Record<EquipmentSlot, string> = {
+  blade: "攻击力",
+  garb: "最大生命",
+  talisman: "技能能量上限",
+};
+
+function equipmentItemDetailBody(item: EquipmentItemState) {
+  return `基础属性：${EQUIPMENT_PRIMARY_STAT_LABELS[item.slot]} +${item.primaryStatBonus}。专属机制：${item.summary}`;
 }
 
 export function skillDetailCopy(target: SkillDetailTarget, player: GameSnapshot["player"]): PauseDetailCopy {

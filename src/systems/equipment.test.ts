@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { SKILL_IDS } from "../constants";
+import { PLAYER_DEFAULTS, SKILL_IDS } from "../constants";
 import { createInitialState } from "../game/state";
 import { endRun } from "./runLifecycle";
 import type {
@@ -46,6 +46,11 @@ import {
 const FAMILIES: EquipmentFamily[] = ["flow", "burst", "shadowstep", "hunt", "risk", "tempo"];
 const SLOTS: EquipmentSlot[] = ["blade", "garb", "talisman"];
 const TIERS: EquipmentTier[] = ["common", "fine", "awakened"];
+const PRIMARY_STAT_BONUSES: Record<EquipmentSlot, Record<EquipmentTier, number>> = {
+  blade: { common: 2, fine: 4, awakened: 6 },
+  garb: { common: 10, fine: 20, awakened: 30 },
+  talisman: { common: 10, fine: 20, awakened: 30 },
+};
 const EXPECTED_EQUIPMENT_CHOICE_COUNT = 18;
 const BOSS_REWARD_CHOICE_COUNT = 3;
 const ULTIMATE_TEST_GAIN = 40;
@@ -152,6 +157,7 @@ describe("equipment system", () => {
     for (const itemId of EQUIPMENT_CHOICE_IDS) {
       for (const tier of TIERS) {
         const item = equipmentItem(itemId, tier);
+        expect(item?.primaryStatBonus).toBe(PRIMARY_STAT_BONUSES[item?.slot ?? "blade"][tier]);
         expect(item?.summary.length).toBeGreaterThan(0);
         expect(item?.uiTags.length).toBeGreaterThan(0);
         expect(item?.tier).toBe(tier);
@@ -276,14 +282,45 @@ describe("equipment system", () => {
     expect(state.player.flowBladeSurgeReady).toBe(false);
   });
 
-  it("clears run equipment on death", () => {
+  it("recomputes primary stats across equip, replacement, tier upgrade, unequip, and endRun", () => {
     const state = createInitialState();
-    addAndEquip(state, "flow_blade", "fine");
+    state.equipmentInventory.push(
+      { id: "flow_blade", tier: "common" },
+      { id: "risk_garb", tier: "awakened" },
+      { id: "flow_garb", tier: "common" },
+      { id: "risk_talisman", tier: "awakened" },
+      { id: "flow_talisman", tier: "common" },
+    );
+    expect(equipEquipment(state, "blade", "flow_blade")).toBe(true);
+    expect(equipEquipment(state, "garb", "risk_garb")).toBe(true);
+    expect(equipEquipment(state, "talisman", "risk_talisman")).toBe(true);
+    expect(state.player).toMatchObject({ baseAttack: 18, maxHp: 130, skillEnergyMax: 120, maxSkillCharges: 4 });
+
+    state.player.hp = 130;
+    state.player.skillEnergy = 120;
+    state.player.skillCharges = 4;
+    expect(equipEquipment(state, "garb", "flow_garb")).toBe(true);
+    expect(equipEquipment(state, "talisman", "flow_talisman")).toBe(true);
+    expect(state.player).toMatchObject({
+      hp: 110, maxHp: 110, skillEnergy: 100, skillEnergyMax: 100, skillCharges: 3, maxSkillCharges: 3,
+    });
+
+    state.pendingEquipmentChoices = [choice("flow_blade", "fine", "common")];
+    expect(chooseBossEquipment(state, 0)).toBe(true);
+    expect(state.player.baseAttack).toBe(PLAYER_DEFAULTS.baseAttack + PRIMARY_STAT_BONUSES.blade.fine);
+    expect(equipEquipment(state, "blade", null)).toBe(true);
+    expect(state.player.baseAttack).toBe(PLAYER_DEFAULTS.baseAttack);
+    expect(equipEquipment(state, "blade", "flow_blade")).toBe(true);
+    expect(state.player.baseAttack).toBe(PLAYER_DEFAULTS.baseAttack + PRIMARY_STAT_BONUSES.blade.fine);
 
     endRun(state);
 
     expect(state.equipmentInventory).toEqual([]);
     expect(state.equippedEquipment).toEqual({ blade: null, garb: null, talisman: null });
+    expect(state.player).toMatchObject({
+      baseAttack: 16, hp: 100, maxHp: 100, skillEnergy: 90, skillEnergyMax: 90,
+      skillCharges: 3, maxSkillCharges: 3,
+    });
   });
 
   it("applies flow blade fine surge refund after three basic hits", () => {
