@@ -40,6 +40,7 @@ import {
   updatePlatforms,
   updateCrystals,
   updateChests,
+  drawPlatformOcclusion,
   drawPlatforms,
   drawCrystals,
   drawChests,
@@ -314,6 +315,7 @@ function loop(ts: number) {
   drawBackground();
   drawNearForeground();
   drawGroundTileBase();
+  drawPlatforms();
   drawCrystals();
   drawChests();
   drawBindingZonesBack();
@@ -346,7 +348,7 @@ function loop(ts: number) {
 
   drawUltimatePlayerGhosts();
   drawPlayer();
-  drawPlatforms();
+  drawPlatformOcclusion();
   drawGuardCounterEffect();
   drawSkillBursts();
   drawUltimateAfterimageSlashes();

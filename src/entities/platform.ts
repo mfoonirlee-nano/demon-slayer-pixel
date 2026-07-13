@@ -5,7 +5,7 @@ export {
   spawnMapSegmentOfKind,
   spawnNextMapSegment,
 } from "./platforms/generator";
-export { drawPlatforms, updatePlatforms } from "./platforms/runtime";
+export { drawPlatformOcclusion, drawPlatforms, updatePlatforms } from "./platforms/runtime";
 export {
   drawChests,
   drawCrystals,

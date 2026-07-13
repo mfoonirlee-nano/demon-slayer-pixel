@@ -1,6 +1,7 @@
 import { state } from "../../game/state";
 import { ctx } from "../../rendering/context";
 import { HOVER_CONFIG, PLATFORM_CONFIG, PLATFORM_SPRITES } from "../../constants";
+import type { PlatformState } from "../../types/game-state";
 
 const HOVER_GLOW_EDGE_INSET = 4;
 
@@ -18,6 +19,16 @@ export function updatePlatforms(dt: number) {
 
 // --- Draw ---
 
+function platformDrawPlacement(platform: PlatformState) {
+  const sprite = PLATFORM_SPRITES.regions[platform.spriteIndex] ?? PLATFORM_SPRITES.regions[0];
+  const drawW = Math.round(sprite.sw * PLATFORM_SPRITES.drawScale);
+  const drawH = Math.round(sprite.sh * PLATFORM_SPRITES.drawScale);
+  const drawX = Math.round(platform.x);
+  const visualSurfaceY = platform.y - PLATFORM_CONFIG.collisionSurfaceInsetY;
+  const drawY = Math.round(visualSurfaceY - sprite.surfaceY * PLATFORM_SPRITES.drawScale);
+  return { sprite, drawW, drawH, drawX, drawY, visualSurfaceY };
+}
+
 export function drawPlatforms() {
   if (!ctx) return;
   const image = PLATFORM_SPRITES.image;
@@ -25,12 +36,7 @@ export function drawPlatforms() {
   ctx.imageSmoothingEnabled = false;
 
   for (const p of state.platforms) {
-    const sprite = PLATFORM_SPRITES.regions[p.spriteIndex] ?? PLATFORM_SPRITES.regions[0];
-    const drawW = Math.round(sprite.sw * PLATFORM_SPRITES.drawScale);
-    const drawH = Math.round(sprite.sh * PLATFORM_SPRITES.drawScale);
-    const drawX = Math.round(p.x);
-    const visualSurfaceY = p.y - PLATFORM_CONFIG.collisionSurfaceInsetY;
-    const drawY = Math.round(visualSurfaceY - sprite.surfaceY * PLATFORM_SPRITES.drawScale);
+    const { sprite, drawW, drawH, drawX, drawY, visualSurfaceY } = platformDrawPlacement(p);
     ctx.drawImage(
       image,
       sprite.sx,
@@ -48,5 +54,30 @@ export function drawPlatforms() {
       ctx.fillStyle = "rgba(140,210,255,0.18)";
       ctx.fillRect(p.x + HOVER_GLOW_EDGE_INSET / 2, visualSurfaceY, p.w - HOVER_GLOW_EDGE_INSET, 2);
     }
+  }
+}
+
+export function drawPlatformOcclusion() {
+  if (!ctx) return;
+  const image = PLATFORM_SPRITES.image;
+  if (!image) return;
+  ctx.imageSmoothingEnabled = false;
+
+  for (const platform of state.platforms) {
+    const { sprite, drawW, drawH, drawX, drawY } = platformDrawPlacement(platform);
+    const sourceH = sprite.sh - sprite.surfaceY;
+    const surfaceOffsetY = Math.round(sprite.surfaceY * PLATFORM_SPRITES.drawScale);
+    const frontH = drawH - surfaceOffsetY;
+    ctx.drawImage(
+      image,
+      sprite.sx,
+      sprite.sy + sprite.surfaceY,
+      sprite.sw,
+      sourceH,
+      drawX,
+      drawY + surfaceOffsetY,
+      drawW,
+      frontH,
+    );
   }
 }
