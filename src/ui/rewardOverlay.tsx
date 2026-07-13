@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { type CSSProperties, useEffect, useState } from "react";
 import { chooseBossEquipment, chooseUpgradeReward } from "../game/runtime";
 import type { GameSnapshot } from "../game/gameStore";
 import { EQUIPMENT_FAMILY_LABELS, EQUIPMENT_TIER_LABELS } from "../systems/equipment";
@@ -15,6 +15,10 @@ import { getRewardOverlayLayout } from "./rewardOverlayLayout";
 import { UiSprite } from "./uiSprite";
 
 const ULTIMATE_SKILL_ICON_SRC = "assets/sprites/skills/ultimate_skill/icon.png";
+
+export const REWARD_OVERLAY_BACKDROP_CLASS = "reward-overlay-backdrop";
+export const REWARD_OVERLAY_PANEL_CLASS = "reward-overlay-panel";
+export const REWARD_OVERLAY_CARD_CLASS = "reward-overlay-card";
 
 const BOSS_ICON_BADGE_MIN_SIZE = 12;
 const BOSS_ICON_BADGE_SIZE_RATIO = 0.34;
@@ -161,8 +165,13 @@ export function RewardOverlay({ snapshot }: { snapshot: GameSnapshot }) {
   }, [choiceCount, isBossReward, selectedChoiceIndex]);
 
   return (
-    <div className="absolute inset-0 z-40 flex items-center justify-center bg-[rgba(4,7,16,0.78)] px-4 text-white">
-      <div className="relative" style={{ width: layout.overlayW, height: layout.overlayH }}>
+    <div
+      className={`${REWARD_OVERLAY_BACKDROP_CLASS} absolute inset-0 z-40 flex items-center justify-center bg-[rgba(4,7,16,0.78)] px-4 text-white`}
+    >
+      <div
+        className={`${REWARD_OVERLAY_PANEL_CLASS} relative`}
+        style={{ width: layout.overlayW, height: layout.overlayH }}
+      >
         <UiSprite
           id={layout.panelSprite}
           width={layout.panelDisplaySize.w}
@@ -209,8 +218,12 @@ export function RewardOverlay({ snapshot }: { snapshot: GameSnapshot }) {
             return (
               <button
                 key={choice.id}
-                className="relative border-0 bg-transparent p-0 text-left"
-                style={{ width: layout.cardBoxW, height: layout.cardBoxH }}
+                className={`${REWARD_OVERLAY_CARD_CLASS} relative border-0 bg-transparent p-0 text-left`}
+                style={{
+                  "--reward-card-index": index,
+                  width: layout.cardBoxW,
+                  height: layout.cardBoxH,
+                } as CSSProperties}
                 onClick={() => {
                   if (isBossReward) chooseBossEquipment(index);
                   else chooseUpgradeReward(index);

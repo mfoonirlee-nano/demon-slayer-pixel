@@ -1,0 +1,62 @@
+.reward-overlay-backdrop {
+  animation: reward-backdrop-in 180ms ease-out both;
+}
+
+.reward-overlay-panel {
+  transform-origin: center;
+  animation: reward-panel-in 260ms cubic-bezier(0.2, 0.9, 0.22, 1.18) both;
+}
+
+.reward-overlay-card {
+  animation: reward-card-in 180ms ease-out both;
+  animation-delay: calc(var(--reward-card-index, 0) * 45ms + 120ms);
+}
+
+@keyframes reward-backdrop-in {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes reward-panel-in {
+  from {
+    opacity: 0;
+    filter: drop-shadow(0 0 0 rgba(38, 213, 255, 0));
+    transform: translateY(10px) scale(0.96);
+  }
+
+  68% {
+    filter: drop-shadow(0 0 18px rgba(38, 213, 255, 0.22));
+  }
+
+  to {
+    opacity: 1;
+    filter: drop-shadow(0 0 10px rgba(38, 213, 255, 0.1));
+    transform: none;
+  }
+}
+
+@keyframes reward-card-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px) scale(0.98);
+  }
+
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .reward-overlay-backdrop,
+  .reward-overlay-panel,
+  .reward-overlay-card {
+    animation-duration: 1ms;
+    animation-delay: 0ms;
+  }
+}
