@@ -33,7 +33,7 @@
 
 ### 逐幕 Boss 地标
 
-`scenery/boss-landmarks/` 保存 13 张互不复用的 `256x256` RGBA 单图，四边保留透明 gutter，底部可见 bbox 作为地面锚点。`ACT_LANDMARK_SPRITES` 以 `act` 为主键记录 Boss、形态、URL、绘制高度和 alpha，并由 `spriteImageLoadTargets()` 预加载；`drawActLandmarks()` 只选择当前 `enemyDirector.act` 的素材，在树线之后、通用杂物之前绘制，不加入敌人出生遮挡物或碰撞数据。基础幕绘制高 `136px` / alpha `0.84`，蚀醒幕为 `154px` / `0.9`，终幕为 `184px` / `0.96`。
+`scenery/boss-landmarks/` 保存 13 张互不复用的 `256x256` RGBA 单图，四边保留透明 gutter，底部可见 bbox 作为地面锚点。`ACT_LANDMARK_SPRITES` 以 `act` 为主键记录 Boss、形态、URL、绘制高度和 alpha，并由 `spriteImageLoadTargets()` 预加载；`drawActLandmarks()` 只选择当前 `enemyDirector.act` 的素材，在树线之后、通用杂物之前绘制，不加入敌人出生遮挡物或碰撞数据。每幕地标从右侧屏外开始，以普通近景速度单次移入并从左侧移出，Boss 战期间也继续移动。基础幕绘制高 `136px` / alpha `0.84`，蚀醒幕为 `154px` / `0.9`，终幕为 `184px` / `0.96`，全部保持小于 `256px` 原图尺寸，避免上采样模糊。
 
 | 幕 | Boss / 形态 | 文件 |
 | ---: | --- | --- |

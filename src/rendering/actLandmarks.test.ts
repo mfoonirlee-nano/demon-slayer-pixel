@@ -8,31 +8,62 @@ const LANDMARK_SOURCE_SIZE = 256;
 const LANDMARK_VISIBLE_BOTTOM = 252;
 const LANDMARK_BOTTOM_OFFSET = 6;
 const EXPECTED_VISIBLE_BOTTOM_Y = GROUND_Y + LANDMARK_BOTTOM_OFFSET;
-const START_ELAPSED = 0;
-const MID_SCROLL_ELAPSED = 50;
-const LATE_SCROLL_ELAPSED = 95;
+const OFFSCREEN_START_ELAPSED = 0;
+const EARLY_VISIBLE_ELAPSED = 20;
+const LATE_VISIBLE_ELAPSED = 40;
+const OFFSCREEN_EXIT_ELAPSED = 90;
+const MUCH_LATER_ELAPSED = 180;
+const MAX_LANDMARK_DRAW_SIZE = 184;
 const ACTS = Array.from({ length: FINAL_ACT }, (_, index) => index + 1);
-const ELAPSED_SAMPLES = [START_ELAPSED, MID_SCROLL_ELAPSED, LATE_SCROLL_ELAPSED];
 
 describe("act landmark placements", () => {
-  it.each(ACTS)("keeps the Act %i landmark visible while the scenery scrolls", (act) => {
-    for (const elapsed of ELAPSED_SAMPLES) {
-      const placements = resolveActLandmarkPlacements({ act, elapsed });
+  it.each(ACTS)("moves the Act %i landmark through the viewport once without enlarging it", (act) => {
+    const start = resolveActLandmarkPlacements({
+      act,
+      elapsedSinceActStart: OFFSCREEN_START_ELAPSED,
+    });
+    const early = resolveActLandmarkPlacements({
+      act,
+      elapsedSinceActStart: EARLY_VISIBLE_ELAPSED,
+    });
+    const late = resolveActLandmarkPlacements({
+      act,
+      elapsedSinceActStart: LATE_VISIBLE_ELAPSED,
+    });
+    const exit = resolveActLandmarkPlacements({
+      act,
+      elapsedSinceActStart: OFFSCREEN_EXIT_ELAPSED,
+    });
+    const muchLater = resolveActLandmarkPlacements({
+      act,
+      elapsedSinceActStart: MUCH_LATER_ELAPSED,
+    });
 
-      expect(placements.length).toBeGreaterThan(0);
-      expect(placements.every((placement) => placement.sprite.act === act)).toBe(true);
-      expect(placements.some((placement) => (
-        placement.x < WIDTH && placement.x + placement.drawW > 0
-      ))).toBe(true);
-      expect(placements.every((placement) => (
-        placement.y + placement.drawH * LANDMARK_VISIBLE_BOTTOM / LANDMARK_SOURCE_SIZE
-      ) === EXPECTED_VISIBLE_BOTTOM_Y)).toBe(true);
-    }
+    expect(start).toEqual([]);
+    expect(early).toHaveLength(1);
+    expect(late).toHaveLength(1);
+    expect(early[0].sprite.act).toBe(act);
+    expect(early[0].x).toBeLessThan(WIDTH);
+    expect(early[0].x + early[0].drawW).toBeGreaterThan(0);
+    expect(late[0].x).toBeLessThan(early[0].x);
+    expect(early[0].drawW).toBeLessThanOrEqual(MAX_LANDMARK_DRAW_SIZE);
+    expect(early[0].drawH).toBeLessThanOrEqual(MAX_LANDMARK_DRAW_SIZE);
+    expect(
+      early[0].y + early[0].drawH * LANDMARK_VISIBLE_BOTTOM / LANDMARK_SOURCE_SIZE,
+    ).toBe(EXPECTED_VISIBLE_BOTTOM_Y);
+    expect(exit).toEqual([]);
+    expect(muchLater).toEqual([]);
   });
 
   it("does not reuse the base landmark for an awakened act", () => {
-    const base = resolveActLandmarkPlacements({ act: 1, elapsed: 0 });
-    const awakened = resolveActLandmarkPlacements({ act: 7, elapsed: 0 });
+    const base = resolveActLandmarkPlacements({
+      act: 1,
+      elapsedSinceActStart: EARLY_VISIBLE_ELAPSED,
+    });
+    const awakened = resolveActLandmarkPlacements({
+      act: 7,
+      elapsedSinceActStart: EARLY_VISIBLE_ELAPSED,
+    });
 
     expect(base[0]?.sprite.bossId).toBe(awakened[0]?.sprite.bossId);
     expect(base[0]?.sprite.src).not.toBe(awakened[0]?.sprite.src);

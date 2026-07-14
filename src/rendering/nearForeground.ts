@@ -2,6 +2,7 @@ import { state } from "../game/state";
 import { ctx } from "./context";
 import {
   GROUND_Y,
+  NEAR_FOREGROUND_SCROLL_SPEED,
   WIDTH,
   TREE_SPRITES,
   STONE_TOWER_SPRITES,
@@ -13,7 +14,6 @@ import { bossApproachGroundTransitionSeconds } from "../systems/runProgression";
 import type { EnemySpawnOccluderState, EnemySpawnOccluderSource } from "../types/game-state";
 import { drawActLandmarks } from "./actLandmarks";
 
-const NEAR_FOREGROUND_SPEED = 18;
 const NEAR_FOREGROUND_PATTERN_WIDTH = 2688;
 const TREE_COUNT = 24;
 const TREE_VARIANT_SEED_STEP = 7;
@@ -145,7 +145,7 @@ function drawRegion(
 }
 
 function nearForegroundOffset(elapsed: number) {
-  const scroll = elapsed * NEAR_FOREGROUND_SPEED;
+  const scroll = elapsed * NEAR_FOREGROUND_SCROLL_SPEED;
   return ((scroll % NEAR_FOREGROUND_PATTERN_WIDTH) + NEAR_FOREGROUND_PATTERN_WIDTH) % NEAR_FOREGROUND_PATTERN_WIDTH;
 }
 
@@ -303,7 +303,7 @@ export function drawNearForegroundOccluder(occluder: EnemySpawnOccluderState, el
     context,
     image,
     region,
-    occluder.x - elapsedDelta * NEAR_FOREGROUND_SPEED,
+    occluder.x - elapsedDelta * NEAR_FOREGROUND_SCROLL_SPEED,
     occluder.y,
     occluder.drawH,
     occluder.alpha,
@@ -386,9 +386,10 @@ export function drawNearForeground() {
   for (let pass = NEAR_FOREGROUND_PASS_MIN; pass <= NEAR_FOREGROUND_PASS_MAX; pass += 1) {
     drawTrees(context, pass, offset);
   }
+  // Director elapsedInAct pauses during a Boss fight; the anchored world clock keeps scenery moving.
   drawActLandmarks(context, {
     act: state.enemyDirector.act,
-    elapsed: state.elapsed,
+    elapsedSinceActStart: state.elapsed - state.enemyDirector.actStartedAt,
   });
   for (let pass = NEAR_FOREGROUND_PASS_MIN; pass <= NEAR_FOREGROUND_PASS_MAX; pass += 1) {
     drawDecor(context, pass, offset);
