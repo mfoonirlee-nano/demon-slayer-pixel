@@ -4,8 +4,10 @@ import {
   BINDER_TALISMAN_KEY_SCRAMBLE_EFFECT_SHEET,
   BINDER_TALISMAN_STUN_EFFECT_SHEET,
   PLAYER_ANIMATION_STATES,
+  PLAYER_COMBAT,
   PLAYER_DRAW,
   PLAYER_SHEETS,
+  ULTIMATE_SKILL_SHEET,
 } from "../../constants";
 import { resetState, state } from "../../game/state";
 import { setCanvas } from "../../rendering/context";
@@ -20,6 +22,7 @@ type MockCanvasContext = CanvasRenderingContext2D & {
 const BINDER_ATTACHMENT_BACK_OFFSET_RATIO = 0.24;
 const BINDER_ATTACHMENT_CENTER_Y_RATIO = 0.55;
 const BINDER_KEY_SCRAMBLE_HOVER_Y_OFFSET = 18;
+const EXPECTED_ULTIMATE_CAST_FRAME_DURATION = 5;
 const TEST_IMAGE = {} as HTMLImageElement;
 
 function createMockContext(): MockCanvasContext {
@@ -53,6 +56,7 @@ describe("player render", () => {
     BINDER_TALISMAN_SHEET.image = TEST_IMAGE;
     BINDER_TALISMAN_KEY_SCRAMBLE_EFFECT_SHEET.image = TEST_IMAGE;
     BINDER_TALISMAN_STUN_EFFECT_SHEET.image = TEST_IMAGE;
+    ULTIMATE_SKILL_SHEET.image = TEST_IMAGE;
   });
 
   afterEach(() => {
@@ -60,6 +64,7 @@ describe("player render", () => {
     BINDER_TALISMAN_SHEET.image = null;
     BINDER_TALISMAN_KEY_SCRAMBLE_EFFECT_SHEET.image = null;
     BINDER_TALISMAN_STUN_EFFECT_SHEET.image = null;
+    ULTIMATE_SKILL_SHEET.image = null;
     setCanvas(null);
     vi.restoreAllMocks();
   });
@@ -104,5 +109,24 @@ describe("player render", () => {
     drawPlayer();
 
     expect(context.translate.mock.calls[2]).toEqual(context.translate.mock.calls[1]);
+  });
+
+  it("holds each ultimate cast sprite for five game frames before advancing", () => {
+    const context = createMockContext();
+    installMockContext(context);
+    expect(PLAYER_COMBAT.ultimateCastFrames).toBe(
+      ULTIMATE_SKILL_SHEET.count * EXPECTED_ULTIMATE_CAST_FRAME_DURATION,
+    );
+
+    state.player.ultimateCastTimer = PLAYER_COMBAT.ultimateCastFrames
+      - EXPECTED_ULTIMATE_CAST_FRAME_DURATION
+      + 1;
+    drawPlayer();
+    expect(context.drawImage.mock.calls[0]?.[1]).toBe(0);
+
+    context.drawImage.mockClear();
+    state.player.ultimateCastTimer -= 1;
+    drawPlayer();
+    expect(context.drawImage.mock.calls[0]?.[1]).toBe(ULTIMATE_SKILL_SHEET.frameW);
   });
 });

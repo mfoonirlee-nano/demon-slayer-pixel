@@ -5,7 +5,7 @@ import {
   LINE_PROJECTILE_EFFECT_CONFIG,
   SKILL_IDS,
 } from "../../constants";
-import { updateGuardCounterEffect } from "../particle";
+import { updateGuardCounterEffect, updateUltimateEffects } from "../particle";
 import { applyDebugInfiniteUltimateCharge } from "../../game/debug";
 import { resetState, state } from "../../game/state";
 import { playerSkillById } from "../../systems/skillCatalog";
@@ -94,6 +94,31 @@ describe("player skill casting", () => {
     triggerUltimateOpeningEffect();
 
     expect(state.ultimateEffects).toHaveLength(1);
+  });
+
+  it("keeps the ultimate foot aura active through the final moon tide frame", () => {
+    resetState();
+    state.player.ultimateLevel = 1;
+    state.player.ultimateEnergy = state.player.ultimateEnergyMax;
+
+    castUltimateSkill();
+    while (state.player.ultimateCastTimer > 0) {
+      updatePlayer();
+      updateUltimateEffects();
+    }
+    while (state.player.ultimateTimer > 1) {
+      updatePlayer();
+      updateUltimateEffects();
+    }
+
+    expect(state.player.ultimateTimer).toBe(1);
+    expect(state.ultimateEffects).toHaveLength(1);
+
+    updatePlayer();
+    updateUltimateEffects();
+
+    expect(state.player.ultimateTimer).toBe(0);
+    expect(state.ultimateEffects).toHaveLength(0);
   });
 
   it("uses release frames that preserve each skill wind-up tier", () => {

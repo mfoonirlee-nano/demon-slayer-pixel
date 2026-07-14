@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { PLATFORM_SPRITES, PLAYER_ANIMATION_STATES, PLAYER_SHEETS } from "../constants";
+import { PLATFORM_SPRITES, PLAYER_ANIMATION_STATES, PLAYER_COMBAT, PLAYER_SHEETS } from "../constants";
 import { setCanvas } from "../rendering/context";
 import { resetState, state } from "./state";
 import { startGame, stopGame, updateUltimateCastFreezeFrame } from "./runtime";
@@ -27,6 +27,11 @@ type MockCanvasContext = CanvasRenderingContext2D & {
 const PLAYER_IMAGE = {} as HTMLImageElement;
 const PLATFORM_IMAGE = {} as HTMLImageElement;
 const TEST_FRAME_TIME = 16;
+const ULTIMATE_FREEZE_SKILL_TIMER = 7;
+const ULTIMATE_FREEZE_VELOCITY_X = 4;
+const ULTIMATE_FREEZE_VELOCITY_Y = 5;
+const ULTIMATE_FREEZE_ELAPSED = 42;
+const ULTIMATE_FREEZE_PLATFORM_SPAWN_TIMER = 3;
 
 function createMockContext(): MockCanvasContext {
   return {
@@ -111,6 +116,28 @@ describe("game runtime", () => {
     expect(state.ultimateTrails).toHaveLength(0);
     expect(state.ultimateAfterimageSlashes).toHaveLength(0);
     expect(state.ultimatePlayerGhosts).toHaveLength(0);
+  });
+
+  it("advances the ultimate cast while gameplay timers and player physics stay frozen", () => {
+    state.player.ultimateCastTimer = PLAYER_COMBAT.ultimateCastFrames;
+    state.player.skillTimer = ULTIMATE_FREEZE_SKILL_TIMER;
+    state.player.vx = ULTIMATE_FREEZE_VELOCITY_X;
+    state.player.vy = ULTIMATE_FREEZE_VELOCITY_Y;
+    state.elapsed = ULTIMATE_FREEZE_ELAPSED;
+    state.platformSpawnTimer = ULTIMATE_FREEZE_PLATFORM_SPAWN_TIMER;
+    const startX = state.player.x;
+    const startY = state.player.y;
+
+    updateUltimateCastFreezeFrame();
+
+    expect(state.player.ultimateCastTimer).toBe(PLAYER_COMBAT.ultimateCastFrames - 1);
+    expect(state.player.skillTimer).toBe(ULTIMATE_FREEZE_SKILL_TIMER);
+    expect(state.player.x).toBe(startX);
+    expect(state.player.y).toBe(startY);
+    expect(state.player.vx).toBe(ULTIMATE_FREEZE_VELOCITY_X);
+    expect(state.player.vy).toBe(ULTIMATE_FREEZE_VELOCITY_Y);
+    expect(state.elapsed).toBe(ULTIMATE_FREEZE_ELAPSED);
+    expect(state.platformSpawnTimer).toBe(ULTIMATE_FREEZE_PLATFORM_SPAWN_TIMER);
   });
 
   it("draws the platform base behind the player and its front face in front", () => {

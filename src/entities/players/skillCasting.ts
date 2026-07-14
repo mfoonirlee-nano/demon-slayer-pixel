@@ -180,7 +180,10 @@ export function triggerUltimateOpeningEffect() {
   const p = state.player;
   const cx = p.x + p.w / 2;
   const cy = p.y + p.h - PLAYER_COMBAT.ultimateEffectYOffset;
-  const life = Math.max(PLAYER_COMBAT.ultimateEffectLife, currentMoonTideConfig().durationFrames);
+  const life = Math.max(
+    PLAYER_COMBAT.ultimateEffectLife,
+    p.ultimateCastTimer + currentMoonTideConfig().durationFrames + 1,
+  );
 
   playSfx("playerUltimateImpact");
 
