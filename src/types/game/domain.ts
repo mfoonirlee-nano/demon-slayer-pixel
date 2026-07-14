@@ -160,7 +160,7 @@ export type EquipmentItemState = {
   slot: EquipmentSlot;
   family: EquipmentFamily;
   tier: EquipmentTier;
-  primaryStatBonus: number;
+  primaryStatBonusRatio: number;
   summary: string;
   uiTags: string[];
   requiresUltimate?: boolean;

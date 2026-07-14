@@ -212,11 +212,12 @@ describe("run progression skills", () => {
     expect(equipEquipment(state, "blade", "flow_blade")).toBe(true);
     expect(equipEquipment(state, "garb", "flow_garb")).toBe(true);
     expect(equipEquipment(state, "talisman", "flow_talisman")).toBe(true);
+    expect(state.player).toMatchObject({ baseAttack: 20, maxHp: 120, skillEnergyMax: 110 });
 
     addRunXp(state, xpToNextLevel(1));
 
     expect(state.player).toMatchObject({
-      runLevel: 2, baseAttack: 22, maxHp: 138, skillEnergyMax: 120, maxSkillCharges: 4,
+      runLevel: 2, baseAttack: 23, maxHp: 142, skillEnergyMax: 122, maxSkillCharges: 4,
     });
   });
 

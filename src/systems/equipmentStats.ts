@@ -1,8 +1,13 @@
-import { PLAYER_COMBAT } from "../constants";
 import type { EquipmentSlot, GameState } from "../types/game-state";
+import { EQUIPMENT_PRIMARY_STAT_BONUS_RATIOS } from "../constants";
 import { syncSkillChargesForEquipment } from "./equipmentResources";
 import { equipmentInventoryTier } from "./equipmentState";
-import { EQUIPMENT_PRIMARY_STAT_BONUSES } from "./equipmentTuning";
+import {
+  baseAttackForLevel,
+  maxHpForLevel,
+  maxSkillChargesForEnergy,
+  maxSkillEnergyForLevel,
+} from "./playerStatGrowth";
 
 export type EquipmentStatBonuses = {
   attack: number;
@@ -11,31 +16,36 @@ export type EquipmentStatBonuses = {
 };
 
 export function equipmentStatBonuses(state: GameState): EquipmentStatBonuses {
+  const level = state.player.runLevel;
   return {
-    attack: equippedSlotBonus(state, "blade"),
-    maxHp: equippedSlotBonus(state, "garb"),
-    skillEnergyMax: equippedSlotBonus(state, "talisman"),
+    attack: percentageBonus(baseAttackForLevel(level), equippedSlotBonusRatio(state, "blade")),
+    maxHp: percentageBonus(maxHpForLevel(level), equippedSlotBonusRatio(state, "garb")),
+    skillEnergyMax: percentageBonus(
+      maxSkillEnergyForLevel(level),
+      equippedSlotBonusRatio(state, "talisman"),
+    ),
   };
 }
 
-export function applyEquipmentStatChange(state: GameState, previous: EquipmentStatBonuses) {
+export function applyEquipmentStatChange(state: GameState) {
   const next = equipmentStatBonuses(state);
   const player = state.player;
-  player.baseAttack += next.attack - previous.attack;
-  player.maxHp += next.maxHp - previous.maxHp;
-  player.skillEnergyMax += next.skillEnergyMax - previous.skillEnergyMax;
+  player.baseAttack = baseAttackForLevel(player.runLevel) + next.attack;
+  player.maxHp = maxHpForLevel(player.runLevel) + next.maxHp;
+  player.skillEnergyMax = maxSkillEnergyForLevel(player.runLevel) + next.skillEnergyMax;
   player.hp = Math.min(player.hp, player.maxHp);
   player.skillEnergy = Math.min(player.skillEnergy, player.skillEnergyMax);
-  player.maxSkillCharges = Math.max(
-    0,
-    Math.floor(player.skillEnergyMax / PLAYER_COMBAT.skillCastEnergyCost),
-  );
+  player.maxSkillCharges = maxSkillChargesForEnergy(player.skillEnergyMax);
   syncSkillChargesForEquipment(state);
 }
 
-function equippedSlotBonus(state: GameState, slot: EquipmentSlot) {
+function equippedSlotBonusRatio(state: GameState, slot: EquipmentSlot) {
   const itemId = state.equippedEquipment[slot];
   if (!itemId) return 0;
   const tier = equipmentInventoryTier(state, itemId) ?? "common";
-  return EQUIPMENT_PRIMARY_STAT_BONUSES[slot][tier];
+  return EQUIPMENT_PRIMARY_STAT_BONUS_RATIOS[itemId][tier];
+}
+
+function percentageBonus(baseValue: number, ratio: number) {
+  return Math.round(baseValue * (1 + ratio)) - baseValue;
 }

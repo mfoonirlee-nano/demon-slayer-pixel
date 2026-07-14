@@ -1,12 +1,11 @@
 import type { GameState } from "../types/game-state";
-import { applyEquipmentStatChange, equipmentStatBonuses } from "./equipmentStats";
+import { applyEquipmentStatChange } from "./equipmentStats";
 
 export function markSpritesReady(state: GameState) {
   state.spritesReady = true;
 }
 
 export function endRun(state: GameState) {
-  const previousBonuses = equipmentStatBonuses(state);
   state.gameOver = true;
   state.runCleared = false;
   state.pendingEquipmentChoices = [];
@@ -17,7 +16,7 @@ export function endRun(state: GameState) {
     garb: null,
     talisman: null,
   };
-  applyEquipmentStatChange(state, previousBonuses);
+  applyEquipmentStatChange(state);
   state.pendingVictoryAfterEquipment = false;
 }
 

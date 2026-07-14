@@ -8,6 +8,7 @@ import {
   romanLevel,
 } from "../uiDisplay";
 import { playerSkillDescription } from "../../systems/skillCatalog";
+import { formatSignedPercent } from "../../utils";
 import type { EquipmentDetailTarget, PauseDetailCopy, SkillDetailTarget } from "./types";
 
 export function equipmentDetailCopy(
@@ -38,7 +39,8 @@ export function equipmentDetailCopy(
 }
 
 function equipmentItemDetailBody(item: EquipmentItemState) {
-  return `基础属性：${EQUIPMENT_PRIMARY_STAT_LABELS[item.slot]} +${item.primaryStatBonus}。专属机制：${item.summary}`;
+  const primaryStatPercent = formatSignedPercent(item.primaryStatBonusRatio);
+  return `基础属性：${EQUIPMENT_PRIMARY_STAT_LABELS[item.slot]} ${primaryStatPercent}。专属机制：${item.summary}`;
 }
 
 export function skillDetailCopy(target: SkillDetailTarget, player: GameSnapshot["player"]): PauseDetailCopy {

@@ -8,8 +8,6 @@ import {
   GLIDER_SHEET_INDEX,
   LEAPER_SHEET_INDEX,
   MOON_TIDE_ULTIMATE,
-  PLAYER_COMBAT,
-  PLAYER_DEFAULTS,
   RUNNER_SHEET_INDEX,
   SKILL_IDS,
   SPLITTER_SHEET_INDEX,
@@ -35,15 +33,23 @@ import {
 } from "./playerSkills";
 import { syncSkillChargesForEquipment } from "./equipmentResources";
 import { equipmentStatBonuses } from "./equipmentStats";
+import {
+  baseAttackForLevel,
+  maxHpForLevel,
+  maxSkillChargesForEnergy,
+  maxSkillEnergyForLevel,
+} from "./playerStatGrowth";
+
+export {
+  baseAttackForLevel,
+  maxHpForLevel,
+  maxSkillChargesForEnergy,
+  maxSkillEnergyForLevel,
+} from "./playerStatGrowth";
 
 const BASE_XP = 650;
 const XP_LINEAR = 45;
 const XP_CURVE = 5;
-const ATTACK_LINEAR = 1.2;
-const ATTACK_CURVE = 1.6;
-const HP_LINEAR = 10;
-const HP_CURVE = 8;
-const SKILL_ENERGY_LINEAR = 10;
 const MIN_LEVEL_HEAL = 10;
 const LEVEL_HEAL_RATIO = 0.8;
 const XP_CURVE_EXPONENT = 1.6;
@@ -89,30 +95,6 @@ export const INITIAL_EQUIPPED_SKILL_IDS: [SkillId | null, SkillId | null, SkillI
 
 export function xpToNextLevel(level: number) {
   return Math.floor(BASE_XP + XP_LINEAR * level + XP_CURVE * level ** XP_CURVE_EXPONENT);
-}
-
-export function baseAttackForLevel(level: number) {
-  return Math.floor(
-    PLAYER_DEFAULTS.baseAttack
-    + ATTACK_LINEAR * (level - 1)
-    + ATTACK_CURVE * Math.sqrt(level - 1),
-  );
-}
-
-export function maxHpForLevel(level: number) {
-  return Math.floor(
-    PLAYER_DEFAULTS.maxHp
-    + HP_LINEAR * (level - 1)
-    + HP_CURVE * Math.sqrt(level - 1),
-  );
-}
-
-export function maxSkillEnergyForLevel(level: number) {
-  return PLAYER_DEFAULTS.maxSkillEnergy + SKILL_ENERGY_LINEAR * (level - 1);
-}
-
-export function maxSkillChargesForEnergy(skillEnergyMax: number) {
-  return Math.max(0, Math.floor(skillEnergyMax / PLAYER_COMBAT.skillCastEnergyCost));
 }
 
 export function hasLearnedUltimate(state: GameState) {

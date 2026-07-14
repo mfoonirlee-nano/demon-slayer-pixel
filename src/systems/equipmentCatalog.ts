@@ -5,7 +5,7 @@ import type {
   EquipmentSlot,
   EquipmentTier,
 } from "../types/game-state";
-import { EQUIPMENT_PRIMARY_STAT_BONUSES } from "./equipmentTuning";
+import { EQUIPMENT_PRIMARY_STAT_BONUS_RATIOS } from "../constants";
 
 type EquipmentBaseItem = {
   id: EquipmentItemId;
@@ -236,11 +236,11 @@ export const EQUIPMENT_IDS_BY_SLOT: Record<EquipmentSlot, EquipmentItemId[]> = {
 export function equipmentItemForTier(itemId: EquipmentItemId, tier: EquipmentTier): EquipmentItemState {
   const base = EQUIPMENT_BASE_ITEMS[itemId];
   const effect = EQUIPMENT_TIER_EFFECTS[itemId][tier];
-  const primaryStatBonus = EQUIPMENT_PRIMARY_STAT_BONUSES[base.slot][tier];
+  const primaryStatBonusRatio = EQUIPMENT_PRIMARY_STAT_BONUS_RATIOS[itemId][tier];
   return {
     ...base,
     tier,
-    primaryStatBonus,
+    primaryStatBonusRatio,
     summary: effect.summary,
     uiTags: [EQUIPMENT_TIER_LABELS[tier], effect.tag],
     requiresUltimate: effect.requiresUltimate,

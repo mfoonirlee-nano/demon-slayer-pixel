@@ -120,7 +120,7 @@ baseAttack(level) = Math.floor(16 + 1.2 * (level - 1) + 1.6 * Math.sqrt(level - 
 totalAttack = baseAttack + attackBonus;
 ```
 
-等级成长提高 `baseAttack`，水晶、宝箱或装备类奖励继续影响 `attackBonus`。两者分工不要混淆。
+等级成长给出攻击裸值，刃器百分比据此派生 `baseAttack`；水晶和宝箱继续单独影响 `attackBonus`，不参与刃器百分比计算。
 
 ### 最大生命
 

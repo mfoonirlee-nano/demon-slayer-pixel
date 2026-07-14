@@ -54,9 +54,9 @@ function makeEquipment(itemId: EquipmentItemId, tier: EquipmentTier): GameSnapsh
 
 describe("pause equipment detail copy", () => {
   it.each([
-    ["flow_blade", "common", "item", "攻击力 +2"],
-    ["flow_garb", "fine", "slot", "最大生命 +20"],
-    ["flow_talisman", "awakened", "item", "技能能量上限 +30"],
+    ["flow_blade", "common", "item", "攻击力 +12%"],
+    ["flow_garb", "fine", "slot", "最大生命 +20%"],
+    ["flow_talisman", "awakened", "item", "技能能量上限 +35%"],
   ] as const)("shows the %s primary stat and keeps its unique effect", (itemId, tier, targetType, expectedStat) => {
     const equipment = makeEquipment(itemId, tier);
     const item = equipment.inventory[0];

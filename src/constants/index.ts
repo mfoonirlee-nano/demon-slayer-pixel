@@ -3,6 +3,8 @@ export * from "./ids";
 export * from "./assets";
 export * from "./bossTuning";
 export * from "./combat";
+export * from "./equipment";
+export * from "./progression";
 export * from "./runtime";
 export * from "./platform";
 export * from "./visual";

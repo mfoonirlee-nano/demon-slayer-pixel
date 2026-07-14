@@ -85,7 +85,7 @@ import {
   hasEquipment,
   tierAtLeast,
 } from "./equipmentState";
-import { applyEquipmentStatChange, equipmentStatBonuses } from "./equipmentStats";
+import { applyEquipmentStatChange } from "./equipmentStats";
 
 export {
   EQUIPMENT_CHOICE_IDS,
@@ -118,19 +118,17 @@ type BossLike = {
 
 export function equipEquipment(state: GameState, slot: EquipmentSlot, itemId: EquipmentItemId | null) {
   if (itemId === null) {
-    const previousBonuses = equipmentStatBonuses(state);
     state.equippedEquipment[slot] = null;
     resetSlotRuntimeState(state, slot);
-    applyEquipmentStatChange(state, previousBonuses);
+    applyEquipmentStatChange(state);
     return true;
   }
 
   const item = equipmentItem(itemId, equipmentInventoryTier(state, itemId) ?? "common");
   if (!item || item.slot !== slot || !hasEquipment(state, itemId)) return false;
-  const previousBonuses = equipmentStatBonuses(state);
   if (state.equippedEquipment[slot] !== itemId) resetSlotRuntimeState(state, slot);
   state.equippedEquipment[slot] = itemId;
-  applyEquipmentStatChange(state, previousBonuses);
+  applyEquipmentStatChange(state);
   return true;
 }
 
@@ -138,12 +136,11 @@ export function chooseBossEquipment(state: GameState, index: number) {
   const choice = state.pendingEquipmentChoices[index];
   if (!choice) return false;
 
-  const previousBonuses = equipmentStatBonuses(state);
   addEquipmentToInventory(state, choice.id, choice.tier);
   resetSlotRuntimeState(state, choice.slot);
   state.equippedEquipment[choice.slot] = choice.id;
   state.pendingEquipmentChoices = [];
-  applyEquipmentStatChange(state, previousBonuses);
+  applyEquipmentStatChange(state);
 
   if (state.pendingVictoryAfterEquipment) {
     state.pendingVictoryAfterEquipment = false;

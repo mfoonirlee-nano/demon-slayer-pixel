@@ -35,14 +35,14 @@ function metricValue(metrics: RewardChoiceMetric[], label: string) {
 
 describe("reward choice details", () => {
   it.each([
-    ["flow_blade", "common", null, "new", { label: "攻击力", value: "+2" }],
-    ["flow_garb", "fine", "common", "tierUpgrade", { label: "最大生命", value: "+10 -> +20" }],
+    ["flow_blade", "common", null, "new", { label: "攻击力", value: "+12%" }],
+    ["flow_garb", "fine", "common", "tierUpgrade", { label: "最大生命", value: "+10% -> +20%" }],
     [
       "flow_talisman",
       "awakened",
       "fine",
       "tierUpgrade",
-      { label: "技能能量上限", value: "+20 -> +30" },
+      { label: "技能能量上限", value: "+22% -> +35%" },
     ],
   ] as const)(
     "shows the %s primary stat first for a %s reward",
@@ -59,11 +59,12 @@ describe("reward choice details", () => {
       const metrics = equipmentRewardMetrics(choice);
 
       expect(metrics.length, itemId).toBeGreaterThan(0);
-      expect(metrics[0], itemId).toMatchObject({
-        blade: { label: "攻击力", value: "+6" },
-        garb: { label: "最大生命", value: "+30" },
-        talisman: { label: "技能能量上限", value: "+30" },
+      expect(metrics[0]?.label, itemId).toBe({
+        blade: "攻击力",
+        garb: "最大生命",
+        talisman: "技能能量上限",
       }[choice.slot]);
+      expect(metrics[0]?.value, itemId).toMatch(/^\+\d+%$/);
       expect(
         metrics.some((metric) => /\d|%|->/.test(metric.value)),
         itemId,

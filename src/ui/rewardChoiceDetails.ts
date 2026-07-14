@@ -1,4 +1,10 @@
-import { CLOSE_ARC_BASIC_CRESCENT_CONFIG, MOON_TIDE_ULTIMATE, PLAYER_COMBAT, SKILL_IDS } from "../constants";
+import {
+  CLOSE_ARC_BASIC_CRESCENT_CONFIG,
+  EQUIPMENT_PRIMARY_STAT_BONUS_RATIOS,
+  MOON_TIDE_ULTIMATE,
+  PLAYER_COMBAT,
+  SKILL_IDS,
+} from "../constants";
 import { CORE_PLAYER_SKILL_EFFECT_CONFIGS } from "../systems/skillCatalog";
 import { EQUIPMENT_PRIMARY_STAT_LABELS } from "../systems/equipmentCatalog";
 import {
@@ -13,7 +19,6 @@ import {
   BURST_TALISMAN_RETAIN_RATIO,
   BURST_TALISMAN_SKILL_BOSS_ULTIMATE_GAIN,
   BURST_TALISMAN_ULTIMATE_GAIN,
-  EQUIPMENT_PRIMARY_STAT_BONUSES,
   FLOW_BLADE_HITS_REQUIRED,
   FLOW_BLADE_SKILL_DAMAGE_MULTIPLIER,
   FLOW_BLADE_SKILL_REFUND,
@@ -84,6 +89,7 @@ import type {
   UltimateLevel,
   UpgradeChoiceState,
 } from "../types/game-state";
+import { formatSignedPercent } from "../utils";
 
 export type RewardMetricTone = "damage" | "defense" | "resource" | "range" | "speed" | "utility";
 
@@ -299,12 +305,12 @@ function equipmentEffectMetrics(choice: EquipmentChoiceState): RewardChoiceMetri
 }
 
 function equipmentPrimaryStatMetric(choice: EquipmentChoiceState) {
-  const bonuses = EQUIPMENT_PRIMARY_STAT_BONUSES[choice.slot];
+  const bonuses = EQUIPMENT_PRIMARY_STAT_BONUS_RATIOS[choice.id];
   return tierTableMetric(
     choice,
     EQUIPMENT_PRIMARY_STAT_LABELS[choice.slot],
     bonuses,
-    (value) => `+${value}`,
+    formatSignedPercent,
     EQUIPMENT_PRIMARY_STAT_TONES[choice.slot],
   );
 }
@@ -508,12 +514,6 @@ function numberTransition(previousValue: number | null, nextValue: number) {
 
 function formatMultiplierDelta(multiplier: number) {
   return formatSignedPercent(multiplier - 1);
-}
-
-function formatSignedPercent(value: number) {
-  const percent = Math.round(value * PERCENT_MULTIPLIER);
-  if (percent === 0) return "0%";
-  return percent > 0 ? `+${percent}%` : `${percent}%`;
 }
 
 function formatPercent(value: number) {

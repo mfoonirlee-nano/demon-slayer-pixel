@@ -2,11 +2,6 @@ import type { EquipmentSlot, EquipmentTier } from "../types/game-state";
 
 export const EQUIPMENT_SLOTS: EquipmentSlot[] = ["blade", "garb", "talisman"];
 export const EQUIPMENT_TIER_ORDER: EquipmentTier[] = ["common", "fine", "awakened"];
-export const EQUIPMENT_PRIMARY_STAT_BONUSES: Record<EquipmentSlot, Record<EquipmentTier, number>> = {
-  blade: { common: 2, fine: 4, awakened: 6 },
-  garb: { common: 10, fine: 20, awakened: 30 },
-  talisman: { common: 10, fine: 20, awakened: 30 },
-};
 export const BOSS_EQUIPMENT_CHOICE_COUNT = 3;
 export const LOW_HP_RATIO = 0.35;
 export const NO_CANDIDATE_HEAL_RATIO = 0.2;

@@ -46,11 +46,6 @@ import {
 const FAMILIES: EquipmentFamily[] = ["flow", "burst", "shadowstep", "hunt", "risk", "tempo"];
 const SLOTS: EquipmentSlot[] = ["blade", "garb", "talisman"];
 const TIERS: EquipmentTier[] = ["common", "fine", "awakened"];
-const PRIMARY_STAT_BONUSES: Record<EquipmentSlot, Record<EquipmentTier, number>> = {
-  blade: { common: 2, fine: 4, awakened: 6 },
-  garb: { common: 10, fine: 20, awakened: 30 },
-  talisman: { common: 10, fine: 20, awakened: 30 },
-};
 const EXPECTED_EQUIPMENT_CHOICE_COUNT = 18;
 const BOSS_REWARD_CHOICE_COUNT = 3;
 const ULTIMATE_TEST_GAIN = 40;
@@ -69,6 +64,8 @@ const TEMPO_GARB_RECOVERY_TEST_FRAMES = 150;
 const AWAKENED_TEMPO_TALISMAN_SKILL_COST = 24;
 const PAIR_FLOW_RESONANCE_HIT_COUNT = 3;
 const HUNT_RESONANCE_KILL_COUNT = 2;
+const BURST_GARB_COMMON_MAX_HP = 112;
+const FLOW_BLADE_FINE_ATTACK = 20;
 
 function choice(
   itemId: EquipmentItemId,
@@ -145,7 +142,7 @@ function makeEnemy(overrides: Partial<EnemyState> = {}): EnemyState {
 }
 
 describe("equipment system", () => {
-  it("defines all six families with one item in each slot and all tiers", () => {
+  it("defines all six families with one item in each slot and distinct percentage curves", () => {
     expect(EQUIPMENT_CHOICE_IDS).toHaveLength(EXPECTED_EQUIPMENT_CHOICE_COUNT);
     expect(new Set(EQUIPMENT_CHOICE_IDS).size).toBe(EXPECTED_EQUIPMENT_CHOICE_COUNT);
 
@@ -155,12 +152,24 @@ describe("equipment system", () => {
     }
 
     for (const itemId of EQUIPMENT_CHOICE_IDS) {
+      const curve = TIERS.map((tier) => equipmentItem(itemId, tier)?.primaryStatBonusRatio);
       for (const tier of TIERS) {
         const item = equipmentItem(itemId, tier);
-        expect(item?.primaryStatBonus).toBe(PRIMARY_STAT_BONUSES[item?.slot ?? "blade"][tier]);
+        expect(item?.primaryStatBonusRatio).toBeGreaterThan(0);
+        expect(item?.primaryStatBonusRatio).toBeLessThan(1);
         expect(item?.summary.length).toBeGreaterThan(0);
         expect(item?.uiTags.length).toBeGreaterThan(0);
         expect(item?.tier).toBe(tier);
+      }
+      expect(curve[0]).toBeLessThan(curve[1] ?? 0);
+      expect(curve[1]).toBeLessThan(curve[2] ?? 0);
+    }
+
+    for (const slot of SLOTS) {
+      for (const tier of TIERS) {
+        const ratios = EQUIPMENT_CHOICE_IDS.filter((id) => EQUIPMENT_ITEMS[id].slot === slot)
+          .map((id) => equipmentItem(id, tier)?.primaryStatBonusRatio);
+        expect(new Set(ratios).size).toBe(FAMILIES.length);
       }
     }
   });
@@ -288,30 +297,36 @@ describe("equipment system", () => {
       { id: "flow_blade", tier: "common" },
       { id: "risk_garb", tier: "awakened" },
       { id: "flow_garb", tier: "common" },
+      { id: "burst_garb", tier: "common" },
       { id: "risk_talisman", tier: "awakened" },
       { id: "flow_talisman", tier: "common" },
     );
     expect(equipEquipment(state, "blade", "flow_blade")).toBe(true);
     expect(equipEquipment(state, "garb", "risk_garb")).toBe(true);
     expect(equipEquipment(state, "talisman", "risk_talisman")).toBe(true);
-    expect(state.player).toMatchObject({ baseAttack: 18, maxHp: 130, skillEnergyMax: 120, maxSkillCharges: 4 });
+    expect(state.player).toMatchObject({ baseAttack: 18, maxHp: 133, skillEnergyMax: 124, maxSkillCharges: 4 });
 
-    state.player.hp = 130;
-    state.player.skillEnergy = 120;
+    state.player.hp = 133;
+    state.player.skillEnergy = 124;
     state.player.skillCharges = 4;
     expect(equipEquipment(state, "garb", "flow_garb")).toBe(true);
     expect(equipEquipment(state, "talisman", "flow_talisman")).toBe(true);
     expect(state.player).toMatchObject({
       hp: 110, maxHp: 110, skillEnergy: 100, skillEnergyMax: 100, skillCharges: 3, maxSkillCharges: 3,
     });
+    expect(equipEquipment(state, "garb", "burst_garb")).toBe(true);
+    expect(state.player.maxHp).toBe(BURST_GARB_COMMON_MAX_HP);
+    expect(equipEquipment(state, "garb", "flow_garb")).toBe(true);
+    expect(equipEquipment(state, "garb", "burst_garb")).toBe(true);
+    expect(state.player.maxHp).toBe(BURST_GARB_COMMON_MAX_HP);
 
     state.pendingEquipmentChoices = [choice("flow_blade", "fine", "common")];
     expect(chooseBossEquipment(state, 0)).toBe(true);
-    expect(state.player.baseAttack).toBe(PLAYER_DEFAULTS.baseAttack + PRIMARY_STAT_BONUSES.blade.fine);
+    expect(state.player.baseAttack).toBe(FLOW_BLADE_FINE_ATTACK);
     expect(equipEquipment(state, "blade", null)).toBe(true);
     expect(state.player.baseAttack).toBe(PLAYER_DEFAULTS.baseAttack);
     expect(equipEquipment(state, "blade", "flow_blade")).toBe(true);
-    expect(state.player.baseAttack).toBe(PLAYER_DEFAULTS.baseAttack + PRIMARY_STAT_BONUSES.blade.fine);
+    expect(state.player.baseAttack).toBe(FLOW_BLADE_FINE_ATTACK);
 
     endRun(state);
 
