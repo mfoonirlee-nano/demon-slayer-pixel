@@ -48,7 +48,7 @@ const REWARD_LAYOUTS: Record<RewardOverlayKind, RewardLayoutConfig> = {
     cardContentSource: {
       bottom: 84,
       insetX: 28,
-      top: 104,
+      top: 96,
     },
     cardIconSource: {
       iconSize: 44,

@@ -6,6 +6,8 @@ const BOSS_SOURCE_CARD_HEIGHT = 389;
 const BOSS_MIN_TEXT_INSET_X = 18;
 const BOSS_MIN_TEXT_TOP = 56;
 const BOSS_MIN_TEXT_BOTTOM = 48;
+// Badge, title, family, four metrics, summary, and status need 170px with compact spacing.
+const BOSS_MIN_CONTENT_HEIGHT = 170;
 const CARD_BODY_QUARTER_DIVISOR = 4;
 const CARD_ICON_SLOT_SOURCE_CENTER_Y = 50;
 const CARD_ICON_CENTER_TOLERANCE = 1;
@@ -26,12 +28,14 @@ describe("reward overlay layout", () => {
     expect(layout.cardBoxH).toBeLessThan(BOSS_SOURCE_CARD_HEIGHT);
   });
 
-  it("places boss equipment text away from the card border", () => {
+  it("reserves enough safe space for boss equipment text", () => {
     const layout = getRewardOverlayLayout("bossEquipment", CHOICE_COUNT);
+    const textHeight = layout.cardBoxH - layout.cardContent.top - layout.cardContent.bottom;
 
     expect(layout.cardContent.insetX).toBeGreaterThanOrEqual(BOSS_MIN_TEXT_INSET_X);
     expect(layout.cardContent.top).toBeGreaterThanOrEqual(BOSS_MIN_TEXT_TOP);
     expect(layout.cardContent.bottom).toBeGreaterThanOrEqual(BOSS_MIN_TEXT_BOTTOM);
+    expect(textHeight).toBeGreaterThanOrEqual(BOSS_MIN_CONTENT_HEIGHT);
     expect(layout.cardContent.top + layout.cardContent.bottom).toBeLessThan(layout.cardBoxH);
   });
 

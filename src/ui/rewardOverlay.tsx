@@ -84,7 +84,7 @@ function RewardMetricList({ metrics, accent }: { metrics: RewardChoiceMetric[]; 
   if (metrics.length === 0) return null;
 
   return (
-    <div className="mt-2 grid grid-cols-2 gap-1">
+    <div className="mt-1 grid grid-cols-2 gap-1">
       {metrics.map((metric) => (
         <div
           key={`${metric.label}-${metric.value}`}
