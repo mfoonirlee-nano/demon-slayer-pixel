@@ -35,7 +35,8 @@ const PLAYER_SKILL_RELEASE_SFX = {
   [SKILL_IDS.returningBlade]: "playerSkillReturningBlade",
   [SKILL_IDS.verticalWave]: "playerSkillVerticalWave",
 } satisfies Record<SkillId, GameSfx>;
-const RUN_STEP_TEST_FRAMES = 12;
+const BASE_RUN_STEP_INTERVAL_UPDATES = 16;
+const RUN_STEP_EXPECTED_CONTACTS = 2;
 const RUN_STEP_RIGHT_PITCH = 1.02;
 const LANDING_TEST_HEIGHT = 80;
 const LANDING_TEST_FRAMES = 20;
@@ -58,14 +59,23 @@ describe("player action audio", () => {
     audioMock.playSfx.mockClear();
   });
 
-  it("plays footstep sfx while the player runs on the ground", () => {
+  it("spaces footstep sfx at the base run cadence", () => {
     keys.add("d");
 
-    for (let frame = 0; frame < RUN_STEP_TEST_FRAMES; frame += 1) {
+    for (let update = 1; update < BASE_RUN_STEP_INTERVAL_UPDATES; update += 1) {
       updatePlayer();
     }
 
-    expect(audioMock.playSfx).toHaveBeenCalledWith("playerRunStep", RUN_STEP_RIGHT_PITCH);
+    expect(audioMock.playSfx).not.toHaveBeenCalled();
+    updatePlayer();
+    expect(audioMock.playSfx).toHaveBeenNthCalledWith(1, "playerRunStep", RUN_STEP_RIGHT_PITCH);
+
+    for (let update = 0; update < BASE_RUN_STEP_INTERVAL_UPDATES; update += 1) {
+      updatePlayer();
+    }
+
+    expect(audioMock.playSfx).toHaveBeenCalledTimes(RUN_STEP_EXPECTED_CONTACTS);
+    expect(audioMock.playSfx).toHaveBeenNthCalledWith(2, "playerRunStep", RUN_STEP_RIGHT_PITCH);
   });
 
   it("plays landing sfx for a normal aerial landing", () => {

@@ -25,11 +25,11 @@ export function createPlayerSfxSpecs({
   swell,
 }) {
   return [
-    sound("playerRunStep", 0.18, -8, (samples, rng) => {
-      mixTaiko(samples, rng, { duration: 0.1, frequency: 72, gain: 0.14 });
-      mixNoise(samples, rng, { duration: 0.1, gain: 0.34, color: "low", cutoff: 560, decay: 2.8 });
-      mixNoise(samples, rng, { start: 0.008, duration: 0.13, gain: 0.2, color: "band", lowCutoff: 720, cutoff: 5_200, endLowCutoff: 1_100, endCutoff: 2_900, decay: 2.2 });
-      mixPaper(samples, rng, { start: 0.012, duration: 0.11, gain: 0.12 });
+    sound("playerRunStep", 0.14, -8, (samples, rng) => {
+      mixOscillator(samples, { duration: 0.055, frequency: 105, endFrequency: 72, gain: 0.06, wave: "triangle", attack: 0.001, release: 0.025, decay: 4 });
+      mixNoise(samples, rng, { duration: 0.065, gain: 0.42, color: "low", cutoff: 380, endCutoff: 240, attack: 0.001, release: 0.025, decay: 4.8 });
+      mixNoise(samples, rng, { start: 0.007, duration: 0.085, gain: 0.28, color: "band", lowCutoff: 190, cutoff: 1_650, endLowCutoff: 340, endCutoff: 1_050, attack: 0.001, release: 0.028, decay: 4.2 });
+      mixNoise(samples, rng, { start: 0.035, duration: 0.07, gain: 0.11, color: "band", lowCutoff: 680, cutoff: 2_800, endLowCutoff: 960, endCutoff: 1_750, attack: 0.002, release: 0.03, decay: 3.6 });
     }),
     sound("playerLand", 0.3, -4.8, (samples, rng) => {
       mixTaiko(samples, rng, { duration: 0.23, frequency: 96, gain: 0.46 });
