@@ -9,10 +9,10 @@ import {
   HUD_ULTIMATE_FRAME_TOP,
 } from "./gameHudLayout";
 
-const HP_RIGHT_CAP_TOP = -4;
+const HP_RIGHT_CAP_TOP = -3;
 const HP_RIGHT_CAP_DISPLAY_W = 25;
 const HP_RIGHT_CAP_DISPLAY_H = 24;
-const SKILL_RIGHT_CAP_TOP = -4;
+const SKILL_RIGHT_CAP_TOP = -3;
 const SKILL_RIGHT_CAP_DISPLAY_W = 31;
 const SKILL_RIGHT_CAP_DISPLAY_H = 25;
 
@@ -41,7 +41,7 @@ describe("game HUD layout", () => {
     expect(skillFillCenterY).toBe(HUD_CURRENT_SKILL_FRAME_TOP + UI_SPRITES.currentSkillFrame.displayH / 2);
   });
 
-  it("keeps the right cap artwork tall enough for the upper corner flourish", () => {
+  it("aligns the taller right cap artwork with the middle frame segments", () => {
     expect(HUD_HP_METER_FRAME.rightTop).toBe(HP_RIGHT_CAP_TOP);
     expect(UI_SPRITES.hudHpBarRight.displayW).toBe(HP_RIGHT_CAP_DISPLAY_W);
     expect(UI_SPRITES.hudHpBarRight.displayH).toBe(HP_RIGHT_CAP_DISPLAY_H);
