@@ -212,7 +212,7 @@ Duelist 专属动作素材：
 
 | 路径 | 总尺寸 | 帧数 | 单帧 | 运行时状态 | 备注 |
 | --- | ---: | ---: | ---: | --- | --- |
-| `enemies/duelist/duelist.png` | `1280x360` | 4 | `320x360` | `approach` | 双刃低位推进，黑红破布和骨刃轮廓清晰 |
+| `enemies/duelist/duelist.png` | `1280x360` | 4 | `320x360` | `approach` | 双刃低位推进，左右步交替且首尾连续，黑红破布和骨刃轮廓清晰 |
 | `enemies/duelist/duelist_windup.png` | `1280x360` | 4 | `320x360` | `windup` | 停步压低，双刃外展，暗红刃缘作为读招 |
 | `enemies/duelist/duelist_slash.png` | `1600x360` | 5 | `320x360` | `slash` | 短距离双刃斩击，关键帧弧形斩线已烘进图集 |
 | `enemies/duelist/duelist_spin.png` | `1920x360` | 6 | `320x360` | `spin` | 觉醒/最终空中旋转双刀斩，紫红环形刀轨烘进图集 |
