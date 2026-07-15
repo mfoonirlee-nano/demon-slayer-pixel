@@ -140,7 +140,7 @@ describe("game runtime", () => {
     expect(state.platformSpawnTimer).toBe(ULTIMATE_FREEZE_PLATFORM_SPAWN_TIMER);
   });
 
-  it("draws the platform base behind the player and its front face in front", () => {
+  it("moves the platform in front of the player only after landing", () => {
     const frameQueue: { callback?: FrameRequestCallback } = {};
     vi.stubGlobal("requestAnimationFrame", vi.fn((callback: FrameRequestCallback) => {
       frameQueue.callback = callback;
@@ -155,7 +155,7 @@ describe("game runtime", () => {
 
     startGame();
     const sprite = PLATFORM_SPRITES.regions[0];
-    state.platforms = [{
+    const platform = {
       x: state.player.x,
       y: state.player.y + state.player.h,
       baseY: state.player.y + state.player.h,
@@ -169,19 +169,37 @@ describe("game runtime", () => {
       trim: 0,
       notch: 0,
       hoverAmplitude: 0,
-    }];
+    } as const;
+    state.platforms = [platform];
     state.gameOver = true;
 
     expect(frameQueue.callback).toBeDefined();
-    frameQueue.callback?.(TEST_FRAME_TIME);
 
-    const drawnImages = context.drawImage.mock.calls.map(([image]) => image);
-    const playerDrawIndex = drawnImages.indexOf(PLAYER_IMAGE);
-    const platformDrawIndices = drawnImages.flatMap((image, index) => (
-      image === PLATFORM_IMAGE ? [index] : []
-    ));
-    expect(platformDrawIndices).toHaveLength(2);
-    expect(platformDrawIndices[0]).toBeLessThan(playerDrawIndex);
-    expect(platformDrawIndices[1]).toBeGreaterThan(playerDrawIndex);
+    const drawFrame = () => {
+      context.drawImage.mockClear();
+      frameQueue.callback?.(TEST_FRAME_TIME);
+      const playerDrawIndex = context.drawImage.mock.calls.findIndex(
+        ([image]) => image === PLAYER_IMAGE,
+      );
+      const platformDraws = context.drawImage.mock.calls
+        .map((call, index) => ({ call, index }))
+        .filter(({ call }) => call[0] === PLATFORM_IMAGE);
+      expect(platformDraws).toHaveLength(1);
+      const [, sourceX, sourceY, sourceWidth, sourceHeight] = platformDraws[0].call;
+      expect([sourceX, sourceY, sourceWidth, sourceHeight]).toEqual([
+        sprite.sx,
+        sprite.sy,
+        sprite.sw,
+        sprite.sh,
+      ]);
+      return { platformDrawIndex: platformDraws[0].index, playerDrawIndex };
+    };
+
+    const beforeLanding = drawFrame();
+    expect(beforeLanding.platformDrawIndex).toBeLessThan(beforeLanding.playerDrawIndex);
+
+    state.player.onPlatform = platform;
+    const afterLanding = drawFrame();
+    expect(afterLanding.platformDrawIndex).toBeGreaterThan(afterLanding.playerDrawIndex);
   });
 });

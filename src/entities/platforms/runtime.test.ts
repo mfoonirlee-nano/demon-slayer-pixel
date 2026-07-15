@@ -77,29 +77,48 @@ describe("platform rendering", () => {
     },
   );
 
-  it("draws only the platform front below the player collision surface in the occlusion pass", () => {
+  it("draws only the supporting platform in full in the occlusion pass", () => {
     const context = createMockContext();
     setCanvas({ getContext: () => context } as unknown as HTMLCanvasElement);
     const sprite = setTestPlatform(ROW_THREE_COLUMN_THREE_INDEX);
+    const supportingPlatform = state.platforms[0];
+    const otherSprite = PLATFORM_SPRITES.regions[ROW_FOUR_LAST_INDEX];
+    state.platforms.push({
+      ...supportingPlatform,
+      x: TEST_PLATFORM_X + supportingPlatform.w,
+      w: Math.round(otherSprite.sw * PLATFORM_SPRITES.drawScale),
+      spriteIndex: ROW_FOUR_LAST_INDEX,
+    });
+    state.player.onPlatform = supportingPlatform;
 
     drawPlatformOcclusion();
 
-    const surfaceOffsetY = Math.round(sprite.surfaceY * PLATFORM_SPRITES.drawScale);
     const fullDrawY = Math.round(
       TEST_PLATFORM_Y
         - EXPECTED_VISUAL_SURFACE_INSET
         - sprite.surfaceY * PLATFORM_SPRITES.drawScale,
     );
+    expect(context.drawImage).toHaveBeenCalledTimes(1);
     expect(context.drawImage).toHaveBeenCalledWith(
       TEST_IMAGE,
       sprite.sx,
-      sprite.sy + sprite.surfaceY,
+      sprite.sy,
       sprite.sw,
-      sprite.sh - sprite.surfaceY,
+      sprite.sh,
       TEST_PLATFORM_X,
-      fullDrawY + surfaceOffsetY,
+      fullDrawY,
       Math.round(sprite.sw * PLATFORM_SPRITES.drawScale),
-      Math.round(sprite.sh * PLATFORM_SPRITES.drawScale) - surfaceOffsetY,
+      Math.round(sprite.sh * PLATFORM_SPRITES.drawScale),
     );
+  });
+
+  it("keeps the platform behind the player before the player lands on it", () => {
+    const context = createMockContext();
+    setCanvas({ getContext: () => context } as unknown as HTMLCanvasElement);
+    setTestPlatform(ROW_THREE_COLUMN_THREE_INDEX);
+
+    drawPlatformOcclusion();
+
+    expect(context.drawImage).not.toHaveBeenCalled();
   });
 });

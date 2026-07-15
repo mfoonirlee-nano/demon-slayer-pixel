@@ -29,6 +29,36 @@ function platformDrawPlacement(platform: PlatformState) {
   return { sprite, drawW, drawH, drawX, drawY, visualSurfaceY };
 }
 
+function drawPlatformSprite(
+  context: CanvasRenderingContext2D,
+  image: HTMLImageElement,
+  platform: PlatformState,
+) {
+  const { sprite, drawW, drawH, drawX, drawY, visualSurfaceY } = platformDrawPlacement(platform);
+  context.drawImage(
+    image,
+    sprite.sx,
+    sprite.sy,
+    sprite.sw,
+    sprite.sh,
+    drawX,
+    drawY,
+    drawW,
+    drawH,
+  );
+
+  // Hover indicator: faint glow strip on top edge
+  if (platform.kind === "hover") {
+    context.fillStyle = "rgba(140,210,255,0.18)";
+    context.fillRect(
+      platform.x + HOVER_GLOW_EDGE_INSET / 2,
+      visualSurfaceY,
+      platform.w - HOVER_GLOW_EDGE_INSET,
+      2,
+    );
+  }
+}
+
 export function drawPlatforms() {
   if (!ctx) return;
   const image = PLATFORM_SPRITES.image;
@@ -36,24 +66,8 @@ export function drawPlatforms() {
   ctx.imageSmoothingEnabled = false;
 
   for (const p of state.platforms) {
-    const { sprite, drawW, drawH, drawX, drawY, visualSurfaceY } = platformDrawPlacement(p);
-    ctx.drawImage(
-      image,
-      sprite.sx,
-      sprite.sy,
-      sprite.sw,
-      sprite.sh,
-      drawX,
-      drawY,
-      drawW,
-      drawH,
-    );
-
-    // Hover indicator: faint glow strip on top edge
-    if (p.kind === "hover") {
-      ctx.fillStyle = "rgba(140,210,255,0.18)";
-      ctx.fillRect(p.x + HOVER_GLOW_EDGE_INSET / 2, visualSurfaceY, p.w - HOVER_GLOW_EDGE_INSET, 2);
-    }
+    if (p === state.player.onPlatform) continue;
+    drawPlatformSprite(ctx, image, p);
   }
 }
 
@@ -63,21 +77,7 @@ export function drawPlatformOcclusion() {
   if (!image) return;
   ctx.imageSmoothingEnabled = false;
 
-  for (const platform of state.platforms) {
-    const { sprite, drawW, drawH, drawX, drawY } = platformDrawPlacement(platform);
-    const sourceH = sprite.sh - sprite.surfaceY;
-    const surfaceOffsetY = Math.round(sprite.surfaceY * PLATFORM_SPRITES.drawScale);
-    const frontH = drawH - surfaceOffsetY;
-    ctx.drawImage(
-      image,
-      sprite.sx,
-      sprite.sy + sprite.surfaceY,
-      sprite.sw,
-      sourceH,
-      drawX,
-      drawY + surfaceOffsetY,
-      drawW,
-      frontH,
-    );
-  }
+  const platform = state.player.onPlatform;
+  if (!platform || !state.platforms.includes(platform)) return;
+  drawPlatformSprite(ctx, image, platform);
 }
