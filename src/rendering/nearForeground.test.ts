@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { GROUND_Y, TREE_SPRITES, WIDTH } from "../constants";
+import { GROUND_Y, TORII_SPRITES, TREE_SPRITES, WIDTH } from "../constants";
 import { bossApproachGroundTransitionSeconds } from "../systems/runProgression";
 import {
   BOSS_PRELUDE_TORII_DRAW_H,
@@ -31,6 +31,21 @@ describe("near foreground placement", () => {
     expect(BOSS_PRELUDE_TORII_DRAW_H).toBe(EXPECTED_DOUBLE_TORII_DRAW_H);
     expect(placement?.drawH).toBe(BOSS_PRELUDE_TORII_DRAW_H);
     expect(placement?.y).toBe(GROUND_Y + EXPECTED_TORII_BOTTOM_OFFSET - BOSS_PRELUDE_TORII_DRAW_H);
+  });
+
+  it("uses an opaque native-resolution source for the boss prelude torii", () => {
+    const placement = resolveBossPreludeToriiPlacement({
+      bossPreludeElapsed: 0,
+      act: ACT_ONE,
+    });
+
+    if (!placement) throw new Error("expected torii placement during boss prelude");
+
+    const region = TORII_SPRITES.variants[placement.variantIndex];
+
+    expect(placement.alpha).toBe(1);
+    expect(region.sw).toBeGreaterThanOrEqual(placement.drawW);
+    expect(region.sh).toBeGreaterThanOrEqual(placement.drawH);
   });
 
   it("moves the torii across the screen before the boss spawns", () => {

@@ -2,15 +2,21 @@ import { describe, expect, it } from "vitest";
 
 import { TORII_SPRITES } from "./scenery";
 
-const BOTTOM_ROW_START_INDEX = 8;
-
 describe("torii sprite regions", () => {
-  it("keeps each bottom-row torii inside its own six-pixel gutter", () => {
-    expect(TORII_SPRITES.variants.slice(BOTTOM_ROW_START_INDEX)).toEqual([
-      { sx: 56, sy: 693, sw: 314, sh: 265 },
-      { sx: 435, sy: 715, sw: 283, sh: 243 },
-      { sx: 761, sy: 719, sw: 310, sh: 239 },
-      { sx: 1102, sy: 693, sw: 399, sh: 265 },
+  it("maps all twelve high-definition torii variants in the 3072x2048 atlas", () => {
+    expect(TORII_SPRITES.variants).toEqual([
+      { sx: 146, sy: 148, sw: 542, sh: 528 },
+      { sx: 866, sy: 128, sw: 602, sh: 548 },
+      { sx: 1638, sy: 132, sw: 532, sh: 544 },
+      { sx: 2332, sy: 154, sw: 590, sh: 522 },
+      { sx: 144, sy: 802, sw: 572, sh: 456 },
+      { sx: 932, sy: 812, sw: 432, sh: 446 },
+      { sx: 1636, sy: 920, sw: 480, sh: 338 },
+      { sx: 2360, sy: 772, sw: 544, sh: 486 },
+      { sx: 112, sy: 1386, sw: 628, sh: 530 },
+      { sx: 870, sy: 1430, sw: 566, sh: 486 },
+      { sx: 1522, sy: 1438, sw: 620, sh: 478 },
+      { sx: 2204, sy: 1386, sw: 798, sh: 530 },
     ]);
   });
 
