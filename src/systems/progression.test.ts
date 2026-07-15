@@ -8,13 +8,11 @@ import {
   applyUpgradeChoice,
   enemyXp,
   hasLearnedUltimate,
-  maybeDropBossUltimateUnlock,
   skillDamageMultiplier,
   xpToNextLevel,
 } from "./progression";
 
 const LINE_PROJECTILE_LEVEL_TWO_DAMAGE_MULTIPLIER = 1.18;
-const BOSS_DROP_FAIL_ROLL = 0.99;
 const RUNNER_XP = 10;
 const ELITE_RUNNER_XP = 15;
 const UPGRADE_CHOICE_COUNT = 3;
@@ -39,7 +37,7 @@ describe("run progression skills", () => {
     expect(hasLearnedUltimate(state)).toBe(false);
   });
 
-  it("always offers the ultimate unlock before it is learned while keeping a learned skill upgrade", () => {
+  it("offers and learns the ultimate through character level-up choices", () => {
     const state = createInitialState();
 
     addRunXp(state, xpToNextLevel(1));
@@ -60,6 +58,10 @@ describe("run progression skills", () => {
       nextLevel: 2,
     });
     expect(state.pendingUpgradeChoices.filter((choice) => choice.type === "unlockSkill")).toHaveLength(1);
+
+    expect(applyUpgradeChoice(state, 0)).toBe(true);
+    expect(state.player.ultimateLevel).toBe(1);
+    expect(hasLearnedUltimate(state)).toBe(true);
   });
 
   it("limits unlearned normal skill options to two", () => {
@@ -88,26 +90,6 @@ describe("run progression skills", () => {
       choice.type === "unlockSkill" || choice.title === "习得终式"
     )).length;
     expect(unlearnedChoiceCount).toBeLessThanOrEqual(MAX_UNLEARNED_CHOICE_COUNT);
-  });
-
-  it("can drop the ultimate unlock from a boss kill and learn it as level 1", () => {
-    const state = createInitialState();
-
-    expect(maybeDropBossUltimateUnlock(state, () => BOSS_DROP_FAIL_ROLL)).toBe(false);
-    expect(state.pendingUpgradeChoices).toEqual([]);
-
-    expect(maybeDropBossUltimateUnlock(state, () => 0)).toBe(true);
-    expect(state.pendingUpgradeChoices[0]).toMatchObject({
-      type: "upgradeUltimate",
-      title: "习得终式",
-      name: "终式·月潮无间 I",
-      nextLevel: 1,
-    });
-
-    expect(applyUpgradeChoice(state, 0)).toBe(true);
-
-    expect(state.player.ultimateLevel).toBe(1);
-    expect(hasLearnedUltimate(state)).toBe(true);
   });
 
   it("waits for one level 3 normal skill before offering ultimate level 2", () => {

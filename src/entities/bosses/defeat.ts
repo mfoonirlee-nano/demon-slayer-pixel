@@ -8,7 +8,7 @@ import {
   queueBossEquipmentChoices,
   recordBossDefeatEquipmentEffects,
 } from "../../systems/equipment";
-import { addRunXp, bossXp, maybeDropBossUltimateUnlock } from "../../systems/progression";
+import { addRunXp, bossXp } from "../../systems/progression";
 import { advanceEnemyDirectorToAct } from "../../systems/enemyDirector";
 import { clearRun } from "../../systems/runLifecycle";
 import { BOSS_ARCHETYPE_IDS } from "./registry";
@@ -35,7 +35,6 @@ export function defeatBoss() {
   recordBossCoverKill();
   gainBossKillEnergy();
   addRunXp(state, bossXp(state.bossKills));
-  if (!clearsRun) maybeDropBossUltimateUnlock(state);
   recordBossDefeatEquipmentEffects(state);
   if (clearsRun) {
     state.pendingUpgradeChoices = [];

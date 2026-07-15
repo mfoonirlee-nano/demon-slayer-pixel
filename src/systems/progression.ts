@@ -61,7 +61,6 @@ const BOSS_XP_PER_KILL = 25;
 const MAX_SKILL_LEVEL = 3;
 const UPGRADE_CHOICE_COUNT = 3;
 const MAX_UNLEARNED_CHOICE_COUNT = 2;
-const BOSS_ULTIMATE_UNLOCK_DROP_CHANCE = 0.5;
 const ULTIMATE_LEVEL_TWO_REQUIRED_MAXED_SKILLS = 1;
 const ULTIMATE_LEVEL_THREE_REQUIRED_MAXED_SKILLS = 3;
 
@@ -157,18 +156,6 @@ export function applyUpgradeChoice(state: GameState, index: number) {
 
   state.pendingUpgradeChoices = [];
   processPendingLevelUps(state);
-  return true;
-}
-
-export function maybeDropBossUltimateUnlock(state: GameState, random = Math.random) {
-  if (hasLearnedUltimate(state)) return false;
-  if (state.pendingUpgradeChoices.some((choice) => choice.type === "upgradeUltimate")) return false;
-  if (random() >= BOSS_ULTIMATE_UNLOCK_DROP_CHANCE) return false;
-
-  state.pendingUpgradeChoices = [
-    createUltimateChoice(state, 1),
-    ...state.pendingUpgradeChoices,
-  ].slice(0, UPGRADE_CHOICE_COUNT);
   return true;
 }
 

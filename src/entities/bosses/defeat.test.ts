@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from "vitest";
+import { describe, expect, it } from "vitest";
 import { getStateSnapshot, resetState, state } from "../../game/state";
 import { EQUIPMENT_CHOICE_IDS, chooseBossEquipment } from "../../systems/equipment";
 import { spawnBoss } from "../boss";
@@ -28,22 +28,16 @@ describe("boss defeat progression", () => {
     expect(state.pendingEquipmentChoices).toHaveLength(BOSS_REWARD_CHOICE_COUNT);
   });
 
-  it("can drop the ultimate unlock after a non-final boss", () => {
+  it("does not create an ultimate reward after a boss defeat", () => {
     resetState();
     spawnBoss(BOSS_ARCHETYPE_IDS.spiderString);
     if (!state.boss) throw new Error("Boss did not spawn");
     state.boss.hp = 0;
-    const randomSpy = vi.spyOn(Math, "random").mockReturnValue(0);
 
     expect(defeatBoss()).toBe(true);
 
-    randomSpy.mockRestore();
     expect(state.pendingEquipmentChoices).toHaveLength(BOSS_REWARD_CHOICE_COUNT);
-    expect(state.pendingUpgradeChoices[0]).toMatchObject({
-      type: "upgradeUltimate",
-      title: "习得终式",
-      nextLevel: 1,
-    });
+    expect(state.pendingUpgradeChoices).toEqual([]);
     expect(getStateSnapshot().activeOverlay).toBe("bossEquipment");
   });
 
