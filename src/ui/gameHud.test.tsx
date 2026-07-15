@@ -1,7 +1,7 @@
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
 
-import { UltimateOrb, ultimateChargeStage } from "./gameHud";
+import { GameHud, UltimateOrb, ultimateChargeStage } from "./gameHud";
 
 const ENERGY_MAX = 100;
 const BELOW_FIRST_STAGE = 12.49;
@@ -68,5 +68,16 @@ describe("ultimate orb animation state", () => {
 
     expect(markup).toContain("ultimate-orb-sprite-animated");
     expect(markup).not.toContain("ultimate-orb-sprite-charging");
+  });
+});
+
+describe("player resource meter transitions", () => {
+  it("marks health and skill fills with a fast reduced-motion-safe width transition", () => {
+    const markup = renderToStaticMarkup(<GameHud />);
+
+    expect(markup.match(/player-hud-meter-value/g)).toHaveLength(2);
+    expect(markup.match(/transition-\[width\]/g)).toHaveLength(2);
+    expect(markup.match(/duration-100/g)).toHaveLength(2);
+    expect(markup.match(/motion-reduce:transition-none/g)).toHaveLength(2);
   });
 });

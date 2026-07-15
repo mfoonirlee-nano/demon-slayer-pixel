@@ -79,16 +79,24 @@ export function ultimateChargeStage(value: number, max: number) {
   return Math.min(ULTIMATE_CHARGE_LAST_STAGE, Math.floor(percent * ULTIMATE_CHARGE_STAGE_COUNT));
 }
 
-function GhostBar({ value, max, ghostValue, color, ghostColor }: {
+function GhostBar({ value, max, ghostValue, color, ghostColor, shouldSmoothValue = false }: {
   value: number; max: number; ghostValue: number;
   color: string; ghostColor: string;
+  shouldSmoothValue?: boolean;
 }) {
   const percent = clampMeterPercent(value, max);
   const ghostPercent = clampMeterPercent(ghostValue, max);
   return (
     <>
       <div className="absolute inset-y-0 left-0 h-full" style={{ width: `${ghostPercent}%`, background: ghostColor }} />
-      <div className="absolute inset-y-0 left-0 h-full" style={{ width: `${percent}%`, background: color }} />
+      <div
+        className={`absolute inset-y-0 left-0 h-full ${
+          shouldSmoothValue
+            ? "player-hud-meter-value transition-[width] duration-100 ease-out motion-reduce:transition-none"
+            : ""
+        }`}
+        style={{ width: `${percent}%`, background: color }}
+      />
     </>
   );
 }
@@ -135,7 +143,14 @@ function HudMeter({ value, max, ghostValue, color, ghostColor, text, width, fram
           bottom: frame.fillBottom,
         }}
       >
-        <GhostBar value={value} max={max} ghostValue={ghostValue} color={color} ghostColor={ghostColor} />
+        <GhostBar
+          value={value}
+          max={max}
+          ghostValue={ghostValue}
+          color={color}
+          ghostColor={ghostColor}
+          shouldSmoothValue
+        />
         {markerPercents.length > 0 ? (
           <div className="player-hud-meter-cost-marks" aria-hidden="true">
             {markerPercents.map((percent) => (
