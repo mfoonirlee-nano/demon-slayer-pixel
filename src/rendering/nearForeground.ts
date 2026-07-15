@@ -149,6 +149,11 @@ function nearForegroundOffset(elapsed: number) {
   return ((scroll % NEAR_FOREGROUND_PATTERN_WIDTH) + NEAR_FOREGROUND_PATTERN_WIDTH) % NEAR_FOREGROUND_PATTERN_WIDTH;
 }
 
+function treeDrawHeight(preferredDrawH: number, region: { sh: number }) {
+  // Tree frames vary in size; upscaling the smaller frames makes their details blurry.
+  return Math.min(preferredDrawH, region.sh);
+}
+
 function pushOccluder(
   occluders: NearForegroundOccluder[],
   source: EnemySpawnOccluderSource,
@@ -180,8 +185,9 @@ function pushTreeOccluders(occluders: NearForegroundOccluder[], pass: number, of
 
   for (const tree of TREE_LINE) {
     const entry = variants[tree.variantSeed % variants.length];
+    const drawH = treeDrawHeight(tree.drawH, entry.region);
     const x = tree.baseX + pass * NEAR_FOREGROUND_PATTERN_WIDTH - offset;
-    const y = GROUND_Y + tree.bottomOffset - tree.drawH;
+    const y = GROUND_Y + tree.bottomOffset - drawH;
     pushOccluder(
       occluders,
       "tree",
@@ -189,7 +195,7 @@ function pushTreeOccluders(occluders: NearForegroundOccluder[], pass: number, of
       entry.variantIndex,
       x,
       y,
-      tree.drawH,
+      drawH,
       tree.alpha,
       entry.sheetIndex,
     );
@@ -322,7 +328,7 @@ function drawTrees(context: CanvasRenderingContext2D, pass: number, offset: numb
     if (!image) continue;
 
     const { region } = entry;
-    const drawH = tree.drawH;
+    const drawH = treeDrawHeight(tree.drawH, region);
     const x = tree.baseX + pass * NEAR_FOREGROUND_PATTERN_WIDTH - offset;
     const y = GROUND_Y + tree.bottomOffset - drawH;
 

@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { GROUND_Y, WIDTH } from "../constants";
+import { GROUND_Y, TREE_SPRITES, WIDTH } from "../constants";
 import { bossApproachGroundTransitionSeconds } from "../systems/runProgression";
 import {
   BOSS_PRELUDE_TORII_DRAW_H,
@@ -14,7 +14,7 @@ const MIN_POSITIVE_SIZE = 0;
 const EXPECTED_DOUBLE_TORII_DRAW_H = 284;
 const EXPECTED_TORII_BOTTOM_OFFSET = 8;
 
-describe("boss prelude torii placement", () => {
+describe("near foreground placement", () => {
   it("does not draw the torii outside the boss prelude", () => {
     expect(resolveBossPreludeToriiPlacement({
       bossPreludeElapsed: null,
@@ -67,5 +67,23 @@ describe("boss prelude torii placement", () => {
     expect(occluders.every((occluder) => occluder.drawW > MIN_POSITIVE_SIZE)).toBe(true);
     expect(occluders.every((occluder) => occluder.drawH > MIN_POSITIVE_SIZE)).toBe(true);
     expect(occluders.some((occluder) => occluder.x < WIDTH && occluder.x + occluder.drawW > 0)).toBe(true);
+  });
+
+  it("does not upscale tree sprites beyond their source regions", () => {
+    const treeOccluders = resolveNearForegroundOccluders({
+      elapsed: START_ELAPSED,
+      bossPreludeElapsed: null,
+      act: ACT_ONE,
+    }).filter((occluder) => occluder.source === "tree");
+
+    expect(treeOccluders.length).toBeGreaterThan(0);
+    for (const occluder of treeOccluders) {
+      const sheet = TREE_SPRITES.sheets[occluder.sheetIndex ?? 0];
+      const region = sheet?.variants[occluder.variantIndex];
+      if (!region) throw new Error("expected a source region for every tree occluder");
+
+      expect(occluder.drawH).toBeLessThanOrEqual(region.sh);
+      expect(occluder.drawW).toBeLessThanOrEqual(region.sw);
+    }
   });
 });
