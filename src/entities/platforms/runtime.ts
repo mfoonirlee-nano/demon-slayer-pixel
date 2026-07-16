@@ -1,6 +1,12 @@
 import { state } from "../../game/state";
 import { ctx } from "../../rendering/context";
-import { HOVER_CONFIG, PLATFORM_CONFIG, PLATFORM_SPRITES } from "../../constants";
+import {
+  ACT_PLATFORM_SPRITES,
+  HOVER_CONFIG,
+  PLATFORM_CONFIG,
+  PLATFORM_SPRITES,
+} from "../../constants";
+import type { PlatformSpriteSheet } from "../../constants";
 import type { PlatformState } from "../../types/game-state";
 
 const HOVER_GLOW_EDGE_INSET = 4;
@@ -19,24 +25,31 @@ export function updatePlatforms(dt: number) {
 
 // --- Draw ---
 
+function platformSpriteSheet(platform: PlatformState): PlatformSpriteSheet {
+  return platform.spriteAct === null
+    ? PLATFORM_SPRITES
+    : ACT_PLATFORM_SPRITES[platform.spriteAct] ?? PLATFORM_SPRITES;
+}
+
 function platformDrawPlacement(platform: PlatformState) {
-  const sprite = PLATFORM_SPRITES.regions[platform.spriteIndex] ?? PLATFORM_SPRITES.regions[0];
-  const drawW = Math.round(sprite.sw * PLATFORM_SPRITES.drawScale);
-  const drawH = Math.round(sprite.sh * PLATFORM_SPRITES.drawScale);
+  const sheet = platformSpriteSheet(platform);
+  const sprite = sheet.regions[platform.spriteIndex] ?? sheet.regions[0];
+  const drawW = Math.round(sprite.sw * sheet.drawScale);
+  const drawH = Math.round(sprite.sh * sheet.drawScale);
   const drawX = Math.round(platform.x);
   const visualSurfaceY = platform.y - PLATFORM_CONFIG.collisionSurfaceInsetY;
-  const drawY = Math.round(visualSurfaceY - sprite.surfaceY * PLATFORM_SPRITES.drawScale);
-  return { sprite, drawW, drawH, drawX, drawY, visualSurfaceY };
+  const drawY = Math.round(visualSurfaceY - sprite.surfaceY * sheet.drawScale);
+  return { sheet, sprite, drawW, drawH, drawX, drawY, visualSurfaceY };
 }
 
 function drawPlatformSprite(
   context: CanvasRenderingContext2D,
-  image: HTMLImageElement,
   platform: PlatformState,
 ) {
-  const { sprite, drawW, drawH, drawX, drawY, visualSurfaceY } = platformDrawPlacement(platform);
+  const { sheet, sprite, drawW, drawH, drawX, drawY, visualSurfaceY } = platformDrawPlacement(platform);
+  if (!sheet.image) return;
   context.drawImage(
-    image,
+    sheet.image,
     sprite.sx,
     sprite.sy,
     sprite.sw,
@@ -61,23 +74,19 @@ function drawPlatformSprite(
 
 export function drawPlatforms() {
   if (!ctx) return;
-  const image = PLATFORM_SPRITES.image;
-  if (!image) return;
   ctx.imageSmoothingEnabled = false;
 
   for (const p of state.platforms) {
     if (p === state.player.onPlatform) continue;
-    drawPlatformSprite(ctx, image, p);
+    drawPlatformSprite(ctx, p);
   }
 }
 
 export function drawPlatformOcclusion() {
   if (!ctx) return;
-  const image = PLATFORM_SPRITES.image;
-  if (!image) return;
   ctx.imageSmoothingEnabled = false;
 
   const platform = state.player.onPlatform;
   if (!platform || !state.platforms.includes(platform)) return;
-  drawPlatformSprite(ctx, image, platform);
+  drawPlatformSprite(ctx, platform);
 }

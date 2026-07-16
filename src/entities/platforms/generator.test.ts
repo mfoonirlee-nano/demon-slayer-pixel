@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { PLATFORM_SPRITES } from "../../constants";
+import { ACT_PLATFORM_SPRITES, PLATFORM_SPRITES } from "../../constants";
 import { resetState, state } from "../../game/state";
 import { resetMapGenerator, spawnMapSegmentOfKind } from "./generator";
 import { yToLayer } from "./helpers";
@@ -20,6 +20,10 @@ describe("platform segment generator", () => {
 
     expect(state.platforms).toHaveLength(1);
     expect(yToLayer(state.platforms[0].baseY)).toBe("mid");
-    expect(PLATFORM_SPRITES.wide).toContain(state.platforms[0].spriteIndex);
+    const platform = state.platforms[0];
+    const sheet = platform.spriteAct === null
+      ? PLATFORM_SPRITES
+      : ACT_PLATFORM_SPRITES[platform.spriteAct];
+    expect(sheet?.wide).toContain(platform.spriteIndex);
   });
 });

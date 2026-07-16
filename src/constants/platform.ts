@@ -13,6 +13,7 @@ export const PLATFORM_CONFIG = {
   notchBase: 1,
   notchVariants: 3,
   crystalSpawnChance: 0.45,
+  themedSpriteChance: 0.4,
   phaseSpeed: 3,
   despawnMargin: 20,
 } as const;

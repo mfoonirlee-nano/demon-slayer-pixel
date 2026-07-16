@@ -40,6 +40,7 @@ function setTestPlatform(spriteIndex: number) {
     style: "stone",
     kind: "normal",
     spriteIndex,
+    spriteAct: null,
     trim: 0,
     notch: 0,
     hoverAmplitude: 0,

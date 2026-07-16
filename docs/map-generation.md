@@ -11,7 +11,7 @@
 - 保持随机性，但避免连续重复和不可达跳跃。
 - 用片段制造节奏：喘息、上升、下降、折返、悬浮平台、冒险奖励。
 - 难度随时间增加，同时用张力值防止高压片段连续出现。
-- 平台视觉由 `assets/sprites/platform/platform.png` 提供，逻辑宽度会贴近所选 sprite 的实际宽度。
+- 平台视觉由通用图集 `assets/sprites/platform/platform.png` 与当前幕的 Boss 主题图集共同提供，逻辑宽度会贴近所选 sprite 的实际宽度。
 
 ## 触发机制
 
@@ -114,12 +114,15 @@ Boss 存在时会额外增加 `0.25s`，避免 Boss 战和极端地形同时过�
 - `reward`
 - `reachability`
 - `segment`
+- `themedSpriteChance`
 
-旧平台尺寸、层级、悬浮、道具视觉参数仍保留在同一个常量文件中。平台贴图区域、普通/链式/宽平台候选池在 `src/constants/assets.ts` 的 `PLATFORM_SPRITES` 中维护。
+旧平台尺寸、层级、悬浮、道具视觉参数仍保留在同一个常量文件中。通用平台贴图区域和候选池由 `PLATFORM_SPRITES` 维护，13 幕主题图集由 `ACT_PLATFORM_SPRITES` 维护；每幕图集各提供 `chain`、`normal`、`wide` 一个切片。
 
 ## 平台与奖励绘制
 
-平台逻辑仍保留 `x/y/w/h/vx/baseY/kind` 等碰撞字段，但绘制时会根据 `spriteIndex` 从平台图集中取对应区域：
+平台逻辑仍保留 `x/y/w/h/vx/baseY/kind` 等碰撞字段。生成时根据 `enemyDirector.act` 取得当前幕主题池：`40%` 从主题池选图，`60%` 保留通用池；`spriteAct` 会把所选图集身份保存在平台状态上，绘制时再与 `spriteIndex` 一起解析实际区域。已经生成的平台不会在推进下一幕时突然换皮。
+
+主题池以逐幕 Boss 地标为视觉母题：第 1-6 幕使用蛛丝、枯骨、碎镜、尖牙、灯烬和裂铃；第 7-12 幕沿用同 Boss 材质语法并强化血色、密度或关键物件；第 13 幕使用统一的黑红血月祭坛语法。每张主题图集都提供：
 
 - `chain`：较窄的踏脚石平台，主要用于连续跳跃和高风险奖励。
 - `normal`：常规平台。

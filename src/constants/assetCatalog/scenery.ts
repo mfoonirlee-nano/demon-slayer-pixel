@@ -1,5 +1,14 @@
 type SpriteRegion = { sx: number; sy: number; sw: number; sh: number };
-type PlatformSpriteRegion = SpriteRegion & { surfaceY: number };
+export type PlatformSpriteRegion = SpriteRegion & { surfaceY: number };
+export type PlatformSpriteSheet = {
+  src: string;
+  image: HTMLImageElement | null;
+  drawScale: number;
+  regions: PlatformSpriteRegion[];
+  chain: number[];
+  normal: number[];
+  wide: number[];
+};
 export type GroundTileRegion = SpriteRegion & { surfaceY: number };
 export type GroundTileSetKey = "forest" | "forestToShrine" | "shrine" | "shrineToForest";
 export type GroundTilePatternKey = GroundTileSetKey;
@@ -387,15 +396,7 @@ const PLATFORM_VARIANT_GROUPS = {
   },
 } as const;
 
-export const PLATFORM_SPRITES: {
-  src: string;
-  image: HTMLImageElement | null;
-  drawScale: number;
-  regions: PlatformSpriteRegion[];
-  chain: number[];
-  normal: number[];
-  wide: number[];
-} = {
+export const PLATFORM_SPRITES: PlatformSpriteSheet = {
   src: "assets/sprites/platform/platform.png",
   image: null,
   drawScale: 0.75,

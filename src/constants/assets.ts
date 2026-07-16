@@ -6,3 +6,4 @@ export * from "./assetCatalog/bosses";
 export * from "./assetCatalog/spiderStringUltimate";
 export * from "./assetCatalog/scenery";
 export * from "./assetCatalog/actLandmarks";
+export * from "./assetCatalog/actPlatforms";

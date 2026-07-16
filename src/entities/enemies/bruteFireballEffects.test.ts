@@ -38,6 +38,7 @@ function testPlatform(): PlatformState {
     style: "stone",
     kind: "normal",
     spriteIndex: 0,
+    spriteAct: null,
     trim: 0,
     notch: 0,
     hoverAmplitude: 0,

@@ -8,7 +8,6 @@ import {
   CHAIN_CONFIG,
   HOVER_CONFIG,
   MAP_GENERATION_CONFIG,
-  PLATFORM_SPRITES,
 } from "../../constants";
 import type {
   PlatformState,
@@ -16,6 +15,7 @@ import type {
   PlatformLayer,
 } from "../../types/game-state";
 import { platformSpeedForRun, segmentWeightsForAct, type SegmentKind } from "./actTuning";
+import { selectPlatformSpriteForAct, type PlatformSpriteKind } from "./actPlatformSprites";
 import { spawnChestOnPlatform, spawnCrystalOnPlatform } from "./collectibles";
 import {
   clamp,
@@ -24,7 +24,6 @@ import {
   layerBelow,
   layerY,
   lerp,
-  nearestSpriteIndex,
   platformWidth,
   randomBetween,
   weightedPick,
@@ -55,8 +54,6 @@ type SegmentSpawnResult = {
   difficulty: SegmentDifficulty;
   platforms: PlatformState[];
 };
-type PlatformSpriteKind = "normal" | "chain" | "wide";
-
 // --- Map generator state (reset on game restart) ---
 let lastLayer: PlatformLayer = "low";
 let sameLayerStreak = 0;
@@ -151,9 +148,9 @@ function makePlatform(
 ): PlatformState {
   const spriteKind = intendedSpriteKind
     ?? (isChain ? "chain" : w >= WIDE_PLATFORM_MIN_WIDTH ? "wide" : "normal");
-  const spriteIndex = nearestSpriteIndex(spriteKind, w);
-  const sprite = PLATFORM_SPRITES.regions[spriteIndex];
-  const drawW = Math.round(sprite.sw * PLATFORM_SPRITES.drawScale);
+  const spriteRef = selectPlatformSpriteForAct(state.enemyDirector.act, spriteKind, w);
+  const sprite = spriteRef.sheet.regions[spriteRef.regionIndex];
+  const drawW = Math.round(sprite.sw * spriteRef.sheet.drawScale);
 
   return {
     x,
@@ -165,7 +162,8 @@ function makePlatform(
     phase: Math.random() * FULL_CIRCLE_RADIANS,
     style: randomStyle(),
     kind: isChain ? "chain" : isHover ? "hover" : "normal",
-    spriteIndex,
+    spriteIndex: spriteRef.regionIndex,
+    spriteAct: spriteRef.spriteAct,
     hoverAmplitude: isHover ? HOVER_CONFIG.amplitude : 0,
     trim: PLATFORM_CONFIG.trimBase + Math.floor(Math.random() * PLATFORM_CONFIG.trimVariants),
     notch: Math.random() < PLATFORM_CONFIG.notchChance

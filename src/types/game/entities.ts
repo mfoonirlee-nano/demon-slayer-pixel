@@ -36,6 +36,7 @@ export type PlatformState = {
   style: PlatformStyle;
   kind: PlatformKind;
   spriteIndex: number;
+  spriteAct: number | null;
   trim: number;
   notch: number;
   hoverAmplitude: number;

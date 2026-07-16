@@ -1,5 +1,6 @@
 import {
   ACT_LANDMARK_SPRITES,
+  ACT_PLATFORM_SPRITES,
   BINDER_SHEETS,
   BINDER_MAGIC_CIRCLE_SHEET,
   BINDER_TALISMAN_KEY_SCRAMBLE_EFFECT_SHEET,
@@ -180,6 +181,7 @@ export function spriteImageLoadTargets(): ImageLoadTarget[] {
       ...ACT_LANDMARK_SPRITES,
       ...Object.values(GROUND_TILE_SPRITES.sets),
       PLATFORM_SPRITES,
+      ...Object.values(ACT_PLATFORM_SPRITES),
       ...playerSkillEffectSheets(),
       ...ultimateSkillSheets(),
       ...allPlayerSkills(),
