@@ -1,9 +1,10 @@
 import {
   ACT_PLATFORM_SPRITES,
-  PLATFORM_CONFIG,
+  MAP_GENERATION_CONFIG,
   PLATFORM_SPRITES,
   type PlatformSpriteSheet,
 } from "../../constants";
+import { nearestSpriteIndex } from "./helpers";
 
 export type PlatformSpriteKind = "normal" | "chain" | "wide";
 
@@ -45,13 +46,14 @@ export function selectPlatformSpriteForAct(
 ): PlatformSpriteRef {
   const pool = platformSpritePoolForAct(act, kind);
   const candidates = pool.themed.length > 0
-    && Math.random() < PLATFORM_CONFIG.themedSpriteChance
+    && Math.random() < MAP_GENERATION_CONFIG.themedSpriteChance
     ? pool.themed
     : pool.common;
+  const sheet = candidates[0].sheet;
 
-  return candidates.reduce((best, current) => {
-    const bestWidth = best.sheet.regions[best.regionIndex].sw * best.sheet.drawScale;
-    const currentWidth = current.sheet.regions[current.regionIndex].sw * current.sheet.drawScale;
-    return Math.abs(currentWidth - width) < Math.abs(bestWidth - width) ? current : best;
-  }, candidates[0]);
+  return {
+    sheet,
+    regionIndex: nearestSpriteIndex(sheet, kind, width),
+    spriteAct: candidates[0].spriteAct,
+  };
 }

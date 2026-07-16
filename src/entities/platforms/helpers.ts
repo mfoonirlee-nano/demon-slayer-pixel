@@ -1,4 +1,5 @@
 import { PLATFORM_LAYERS, PLATFORM_SPRITES } from "../../constants";
+import type { PlatformSpriteSheet } from "../../constants";
 import type { PlatformLayer } from "../../types/game-state";
 
 export function layerY(layer: PlatformLayer): number {
@@ -62,11 +63,15 @@ function randomSpriteIndex(kind: "normal" | "chain" | "wide"): number {
   return pool[Math.floor(Math.random() * pool.length)];
 }
 
-export function nearestSpriteIndex(kind: "normal" | "chain" | "wide", width: number): number {
-  const pool = PLATFORM_SPRITES[kind];
+export function nearestSpriteIndex(
+  sheet: PlatformSpriteSheet,
+  kind: "normal" | "chain" | "wide",
+  width: number,
+): number {
+  const pool = sheet[kind];
   return pool.reduce((best, current) => {
-    const bestDelta = Math.abs(PLATFORM_SPRITES.regions[best].sw * PLATFORM_SPRITES.drawScale - width);
-    const currentDelta = Math.abs(PLATFORM_SPRITES.regions[current].sw * PLATFORM_SPRITES.drawScale - width);
+    const bestDelta = Math.abs(sheet.regions[best].sw * sheet.drawScale - width);
+    const currentDelta = Math.abs(sheet.regions[current].sw * sheet.drawScale - width);
     return currentDelta < bestDelta ? current : best;
   }, pool[0]);
 }

@@ -13,7 +13,6 @@ export const PLATFORM_CONFIG = {
   notchBase: 1,
   notchVariants: 3,
   crystalSpawnChance: 0.45,
-  themedSpriteChance: 0.4,
   phaseSpeed: 3,
   despawnMargin: 20,
 } as const;
@@ -85,6 +84,7 @@ export const CHEST_CONFIG = {
 
 export const MAP_GENERATION_CONFIG = {
   difficultyRampSeconds: 120,
+  themedSpriteChance: 0.4,
   spawnInterval: {
     earlyBase: 2.4,
     lateBase: 1.45,
