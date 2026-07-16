@@ -74,6 +74,7 @@ const FINAL_SAMPLE_WAVES = 6;
 const AWAKENED_ACT_BOSS_KILLS = 6;
 const MIN_RANDOM_ROLL = 0;
 const RUNNER_DESIGN_MAX_ACTIVE = 3;
+const CHASER_BASE_RUN_SPEED = 2.86;
 
 function compressedSeconds(seconds: number) {
   return Math.round(seconds * ACT_TIMING_SCALE);
@@ -164,6 +165,12 @@ describe("act progression", () => {
     expect(awakenedStats.hp).toBeGreaterThan(threatOnlyHp);
     expect(awakenedStats.damage).toBeGreaterThan(perKillDamage);
     expect(awakenedStats.speed).toBeGreaterThan(perKillSpeed);
+  });
+
+  it("uses the thirty-percent-faster chaser base run speed", () => {
+    const chaserStats = enemySpawnStats("chaser", NO_BOSS_KILLS, 0, () => MIN_RANDOM_ROLL);
+
+    expect(chaserStats.speed).toBeCloseTo(CHASER_BASE_RUN_SPEED);
   });
 
   it("lets final-act enemy damage grow beyond the old base cap", () => {

@@ -56,7 +56,7 @@ export const ENEMY_ARCHETYPES: Record<EnemyId, EnemyArchetypeConfig> = {
     damageBase: 3,
     damagePerBossKill: 0.35,
     damageCap: 12,
-    speedBase: 2.2,
+    speedBase: 2.86,
     speedPerBossKill: 0.12,
     randomSpeed: 0.25,
   },
