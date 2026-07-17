@@ -29,7 +29,7 @@ export const HUD_HP_METER_FRAME: HudMeterFrame = {
   fillBottom: 1,
   fillInsetLeft: 15,
   fillInsetRight: 7,
-  rightTop: -3,
+  rightTop: -4,
 };
 
 export const HUD_HP_METER_PLACEMENT: HudMeterPlacement = {
@@ -46,7 +46,7 @@ export const HUD_SKILL_METER_FRAME: HudMeterFrame = {
   fillBottom: 5,
   fillInsetLeft: 15,
   fillInsetRight: 7,
-  rightTop: -3,
+  rightTop: -4,
 };
 
 export const HUD_SKILL_METER_PLACEMENT: HudMeterPlacement = {
