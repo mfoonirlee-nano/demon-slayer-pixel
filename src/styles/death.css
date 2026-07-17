@@ -2,6 +2,13 @@
 .victory-screen {
   image-rendering: pixelated;
   image-rendering: crisp-edges;
+}
+
+.death-screen {
+  background: #000;
+}
+
+.victory-screen {
   background: var(--game-bg-gradient);
   background-color: var(--game-bg-base);
 }
