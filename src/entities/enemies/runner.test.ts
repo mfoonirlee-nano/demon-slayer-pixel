@@ -22,6 +22,7 @@ const AWAKENED_DASH_MAX_BODY_WIDTHS = 4.67;
 const BODY_WIDTH_TOLERANCE = 0.05;
 const AIRBORNE_DASH_CLEARANCE = 1;
 const LANDING_RECOVER_GUARD_FRAMES = 10;
+const TEST_RUNNER_DAMAGE = 9;
 const DASH_THIRD_FRAME_ELAPSED_FRAMES = DASH_ANIM_FRAME_DURATION_FRAMES * DASH_THIRD_FRAME_INDEX;
 const DASH_HOLD_FRAME_ELAPSED_FRAMES = DASH_ANIM_FRAME_DURATION_FRAMES * DASH_HOLD_FRAME_INDEX;
 
@@ -46,6 +47,11 @@ function enterRunnerDash(growthStage: ActBand) {
 function dashDistanceInBodyWidths(runner: EnemyState) {
   const visualBodyWidth = runner.w / ENEMY_CONFIG.collisionScaleX;
   return Math.abs((runner.runnerTimer ?? 0) * runner.vx) / visualBodyWidth;
+}
+
+function overlapRunnerWithPlayer(runner: EnemyState) {
+  runner.x = state.player.x + state.player.w / 2 - runner.w / 2;
+  runner.y = GROUND_Y - runner.h;
 }
 
 describe("runner dash tuning", () => {
@@ -112,5 +118,44 @@ describe("runner dash tuning", () => {
     }
 
     expect(runner.runnerPhase).toBe("recover");
+  });
+
+  it("only applies body contact damage during active dash movement", () => {
+    resetState();
+    expect(spawnEnemyById("runner", "debug", "left", { growthStage: "intro" })).toBe(true);
+
+    const runner = state.enemies[0];
+    runner.damage = TEST_RUNNER_DAMAGE;
+    runner.runnerPhase = "windup";
+    runner.runnerTimer = 2;
+    runner.vx = 0;
+    overlapRunnerWithPlayer(runner);
+
+    const hpBeforeDash = state.player.hp;
+    updateEnemies();
+
+    expect(state.player.hp).toBe(hpBeforeDash);
+
+    runner.runnerPhase = "dash";
+    runner.runnerTimer = 2;
+    runner.runnerDashLandingTimer = 0;
+    runner.runnerFacing = 1;
+    overlapRunnerWithPlayer(runner);
+
+    updateEnemies();
+
+    expect(state.player.hp).toBe(hpBeforeDash - TEST_RUNNER_DAMAGE);
+
+    state.player.invincible = 0;
+    runner.runnerPhase = "dash";
+    runner.runnerTimer = 0;
+    runner.runnerDashLandingTimer = 2;
+    runner.vx = 0;
+    overlapRunnerWithPlayer(runner);
+
+    const hpAfterDash = state.player.hp;
+    updateEnemies();
+
+    expect(state.player.hp).toBe(hpAfterDash);
   });
 });

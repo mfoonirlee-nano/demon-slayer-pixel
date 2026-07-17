@@ -47,7 +47,7 @@ const CASTER_CONFIG = {
   wispLifeFrames: 600,
   awakenedWispLifeBonusFrames: 60,
   wispMaxDamage: 14,
-  wispBaseDamage: 4,
+  wispBaseDamage: 7,
   wispDamageScale: 0.45,
   awakenedWispDamageMultiplier: 1.2,
   finalWispDamageMultiplier: 1.5,

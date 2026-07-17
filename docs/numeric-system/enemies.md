@@ -8,7 +8,7 @@
 
 ## Current State
 
-当前普通敌人已经拆出多个运行时 archetype。生成时仍从 `ENEMY_SHEETS` 中随机选择 sheet，并通过 `enemyArchetypeForSheet()` 映射到对应行为；基础生命和接触伤害仍主要按 `elapsed` 统一成长。
+当前普通敌人已经拆出多个运行时 archetype，并通过 `enemyArchetypeForSheet()` 映射到对应行为；基础生命、伤害和速度统一从 `enemySpawnStats()` 读取，长期成长轴为 `bossKills -> act`，`elapsed` 只参与幕内威胁微调。
 
 已接入的运行时行为：
 
@@ -27,7 +27,6 @@
 
 当前仍未实现：
 
-- 没有 `bossKills`、`act` 或统一 `threatScalar`。
 - 没有按幕常规敌人池、轮换池或生成预算。
 - 幕数生成池、终幕池预算和 Boss 召唤池仍未统一读取 `enemyDirectorConfig`。
 - Boss 召唤仍调用普通 `spawnEnemy()`，尚未读取 Boss archetype 的召唤池配置。
@@ -60,14 +59,14 @@ max(0.38, 1.2 - elapsed * 0.012)
 
 | 项 | 当前公式或值 |
 | --- | --- |
-| 基础生命 | `16 + elapsed * 0.3`，再乘 archetype `hpMultiplier` |
-| 接触伤害 | `min(20, 3 + elapsed * 0.1)` |
-| 基础速度 | 默认 `0.72 + random(0..1.08) + elapsed / 60`；专属 archetype 可覆盖 |
-| 最大绝对速度 | `3.2` |
-| 追踪转向力 | `0.03` |
+| 本体生命 | `round((hpBase + bossKills * hpPerBossKill) * threatScalar * actHpScale)` |
+| 基础伤害 | `min(damageCap * actCapScale, (damageBase + bossKills * damagePerBossKill) * actDamageScale)` |
+| 基础速度 | `(speedBase + bossKills * speedPerBossKill + random(0..randomSpeed)) * actSpeedScale`；专属状态机可覆盖移动方式 |
+| 数值注册表 | `src/systems/enemyDirectorConfig.ts` 的 `ENEMY_ARCHETYPES` |
+| 运行时计算 | `src/systems/enemyDirectorRules.ts` 的 `enemySpawnStats()` |
 | 离屏销毁边距 | `120` |
 
-接触伤害约 `170s` 后达到上限 `20`。
+开局一级普攻对各本体形成 `1 / 2 / 3 / 4 / 5` 击耐久层；完整 HP、伤害、cap 与特殊招式例外见 [enemy-archetypes.md#numeric-baseline](enemy-archetypes.md#numeric-baseline)。archetype 内部的 `hpMultiplier` 会在生成入口被反向补偿，只用于旧状态构造适配，不是最终本体生命倍率。
 
 碰撞体尺寸：
 
@@ -88,11 +87,11 @@ h = drawH * 0.78
 
 当前 archetype 摘要：
 
-| Archetype | 生命倍率 | 生成限制 | 行为摘要 |
+| Archetype | 内部生命适配倍率 | 生成限制 | 行为摘要 |
 | --- | ---: | --- | --- |
 | `chaser` | `1` | 无专属限制 | 基础追踪玩家横向位置 |
 | `crawler` | `0.65` | 同时前扑最多 `2` | 触发距离内前摇后低伏前扑 |
-| `runner` | `0.75` | 同时冲刺最多 `2` | 进入距离后前摇并高速冲刺 |
+| `runner` | `0.75` | 同时冲刺最多 `2` | 进入距离后前摇并高速冲刺；只有实际移动的冲刺帧造成接触伤害 |
 | `duelist` | `1.35` | 同场最多 `3`，同时攻击威胁最多 `1` | 近身前摇后短距离斩击 |
 | `brute` | `3.25` | 同场最多 `2`，同时攻击最多 `1`，火球最多 `4` | 盾牌耐久为本体生命 `200%`；觉醒/终幕盾击追加 `1/2` 枚固定落点地滚爆球；终幕 `guard` 反弹 `25%` 正面盾伤，单次上限 `12`；`armor_break` 直接破盾，破盾后改用无盾横扫 |
 | `caster` | `1` | 每个 caster 幽火最多普通 `3` / 觉醒 `15` / 终幕 `30` | 保持距离，前摇后发射追踪幽火；普通 `1` 发，觉醒 `3` 发紫红幽火，终幕 `6` 发暗红幽火且动画更快 |

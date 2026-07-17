@@ -14,6 +14,8 @@ const TARGET_SHIFT = 260;
 const LIMITED_CORRECTION_MAX_STEP = 20;
 const EXPECTED_BLOCKED_RETRY_FRAMES = 2;
 const SPIN_LUNGE_FRAME_COUNT = 8;
+const TEST_CRAWLER_DAMAGE = 6;
+const EXPECTED_INTRO_LUNGE_HP = 90.3;
 
 function enterIntroCrawlerLunge() {
   resetState();
@@ -98,6 +100,16 @@ describe("crawler lunge tuning", () => {
 
     expect(crawler.crawlerPhase).toBe("lunge");
     expect(crawler.crawlerLeapTargetX).toBeUndefined();
+  });
+
+  it("makes the readable intro lunge deal a perceptible hit", () => {
+    const { crawler } = enterIntroCrawlerLunge();
+    crawler.damage = TEST_CRAWLER_DAMAGE;
+    setPlayerCenterX(enemyCenterX(crawler) + crawler.w / 2);
+
+    updateEnemies();
+
+    expect(state.player.hp).toBeCloseTo(EXPECTED_INTRO_LUNGE_HP);
   });
 
   it("uses an aerial leap for awakened and final crawlers", () => {

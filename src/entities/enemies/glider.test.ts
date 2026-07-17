@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { resetState, state } from "../../game/state";
+import { maxHpForLevel } from "../../systems/playerStatGrowth";
 import type { ActBand, GliderPhase, ProjectileState } from "../../types/game-state";
 import { spawnEnemyById, updateEnemies } from "../enemy";
 import { updateProjectiles } from "../projectile";
@@ -12,6 +13,9 @@ const SONIC_RELEASE_GUARD_FRAMES = 180;
 const SONIC_HIT_GUARD_FRAMES = 120;
 const FRAMES_PER_SECOND = 60;
 const DIVE_SPEED_MIN_MULTIPLIER = 3;
+const AWAKENED_PLAYER_LEVEL = 7;
+const MIN_SONIC_BLADE_DAMAGE_RATIO = 0.08;
+const MAX_SONIC_BLADE_DAMAGE_RATIO = 0.1;
 
 function setPlayerCenterX(centerX: number) {
   state.player.x = centerX - state.player.w / 2;
@@ -135,6 +139,14 @@ describe("glider sonic blades", () => {
     expect(finalBlade.w).toBeGreaterThan(awakenedBlade.w);
     expect(finalBlade.h).toBeGreaterThan(awakenedBlade.h);
     expect(projectileSpeed(finalBlade)).toBeGreaterThan(projectileSpeed(awakenedBlade));
+  });
+
+  it("makes an awakened sonic blade register against same-stage max health", () => {
+    const sonicBlade = releaseSonicBlade("awakened");
+    const damageRatio = sonicBlade.damage / maxHpForLevel(AWAKENED_PLAYER_LEVEL);
+
+    expect(damageRatio).toBeGreaterThanOrEqual(MIN_SONIC_BLADE_DAMAGE_RATIO);
+    expect(damageRatio).toBeLessThanOrEqual(MAX_SONIC_BLADE_DAMAGE_RATIO);
   });
 
   it("damages the player when a sonic blade connects", () => {

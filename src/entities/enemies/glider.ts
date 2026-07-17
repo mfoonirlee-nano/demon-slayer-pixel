@@ -74,7 +74,7 @@ const GLIDER_CONFIG = {
     collisionH: 24,
     speed: 5.8,
     lifeFrames: 120,
-    damageMultiplier: 0.75,
+    damageMultiplier: 1.25,
     finalSizeScale: 1.5,
     finalSpeedScale: 1.35,
     startForwardRatio: 0.45,

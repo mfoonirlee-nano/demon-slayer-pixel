@@ -300,6 +300,7 @@ export const RUNNER_ARCHETYPE: EnemyArchetype = {
   speed: () => runnerApproachBaseSpeed() + state.elapsed * RUNNER_CONFIG.approachSpeedScaleByElapsed,
   hpMultiplier: RUNNER_CONFIG.hpMultiplier,
   drawScale: RUNNER_CONFIG.drawScale,
+  contactDamageDisabled: (enemy) => enemy.runnerPhase !== "dash" || enemy.vx === 0,
   init: initRunner,
   update: updateRunner,
   draw: drawRunner,
