@@ -9,6 +9,9 @@ import {
   STONE_TOWER_SMALL_SPRITES,
   TORII_SPRITES,
   FOREGROUND_SPRITES,
+  ACT_OCCLUDER_BOTTOM_GUTTER,
+  ACT_OCCLUDER_SPRITES,
+  type ActOccluderKind,
 } from "../constants";
 import { bossApproachGroundTransitionSeconds } from "../systems/runProgression";
 import type { EnemySpawnOccluderState, EnemySpawnOccluderSource } from "../types/game-state";
@@ -41,6 +44,16 @@ const BOSS_PRELUDE_TORII_START_PADDING = 48;
 const BOSS_PRELUDE_TORII_EXIT_PADDING = 48;
 const NEAR_FOREGROUND_PASS_MIN = -1;
 const NEAR_FOREGROUND_PASS_MAX = 1;
+
+const ACT_OCCLUDER_PLACEMENTS: Array<{
+  kind: ActOccluderKind;
+  baseX: number;
+  bottomOffset: number;
+}> = [
+  { kind: "themed", baseX: 360, bottomOffset: 10 },
+  { kind: "generic", baseX: 1325, bottomOffset: 11 },
+  { kind: "themed", baseX: 2260, bottomOffset: 9 },
+];
 
 const TREE_LINE = Array.from({ length: TREE_COUNT }, (_, i) => ({
   variantSeed: i * TREE_VARIANT_SEED_STEP + TREE_VARIANT_SEED_OFFSET,
@@ -99,8 +112,35 @@ export type BossPreludeToriiPlacement = {
 
 export type NearForegroundOccluder = EnemySpawnOccluderState;
 
+export type SpawnOccluderReveal = {
+  x: number;
+  y: number;
+  w: number;
+  h: number;
+  direction: number;
+  progress: number;
+};
+
+export type SpawnOccluderClip = {
+  x: number;
+  y: number;
+  w: number;
+  h: number;
+};
+
 function clamp01(value: number) {
   return Math.min(1, Math.max(0, value));
+}
+
+export function resolveSpawnOccluderClip(reveal: SpawnOccluderReveal): SpawnOccluderClip {
+  const progress = clamp01(reveal.progress);
+  const remainingW = reveal.w * (1 - progress);
+  return {
+    x: reveal.direction >= 0 ? reveal.x : reveal.x + reveal.w - remainingW,
+    y: reveal.y,
+    w: remainingW,
+    h: reveal.h,
+  };
 }
 
 export function resolveBossPreludeToriiPlacement(input: {
@@ -202,6 +242,38 @@ function pushTreeOccluders(occluders: NearForegroundOccluder[], pass: number, of
   }
 }
 
+function pushActPropOccluders(
+  occluders: NearForegroundOccluder[],
+  act: number,
+  pass: number,
+  offset: number,
+) {
+  const entries = ACT_OCCLUDER_SPRITES.map((sprite, sheetIndex) => ({ sprite, sheetIndex }));
+
+  for (const placement of ACT_OCCLUDER_PLACEMENTS) {
+    const entry = entries.find(({ sprite }) => (
+      sprite.kind === placement.kind && sprite.acts.includes(act)
+    ));
+    if (!entry) continue;
+
+    const { sprite, sheetIndex } = entry;
+    const x = placement.baseX + pass * NEAR_FOREGROUND_PATTERN_WIDTH - offset;
+    const bottomGutterDrawH = sprite.drawH * ACT_OCCLUDER_BOTTOM_GUTTER / sprite.sourceH;
+    const y = GROUND_Y + placement.bottomOffset - sprite.drawH + bottomGutterDrawH;
+    pushOccluder(
+      occluders,
+      "actProp",
+      { sw: sprite.sourceW, sh: sprite.sourceH },
+      0,
+      x,
+      y,
+      sprite.drawH,
+      sprite.alpha,
+      sheetIndex,
+    );
+  }
+}
+
 function pushDecorOccluders(occluders: NearForegroundOccluder[], pass: number, offset: number) {
   if (FOREGROUND_SPRITES.decor.length === 0) return;
 
@@ -242,6 +314,9 @@ export function resolveNearForegroundOccluders(input: {
 
   for (let pass = NEAR_FOREGROUND_PASS_MIN; pass <= NEAR_FOREGROUND_PASS_MAX; pass += 1) {
     pushTreeOccluders(occluders, pass, offset);
+  }
+  for (let pass = NEAR_FOREGROUND_PASS_MIN; pass <= NEAR_FOREGROUND_PASS_MAX; pass += 1) {
+    pushActPropOccluders(occluders, input.act, pass, offset);
   }
   for (let pass = NEAR_FOREGROUND_PASS_MIN; pass <= NEAR_FOREGROUND_PASS_MAX; pass += 1) {
     pushDecorOccluders(occluders, pass, offset);
@@ -292,18 +367,42 @@ function occluderImageAndRegion(occluder: EnemySpawnOccluderState) {
       region: STONE_TOWER_SMALL_SPRITES.variants[occluder.variantIndex],
     };
   }
+  if (occluder.source === "actProp") {
+    const sprite = ACT_OCCLUDER_SPRITES[occluder.sheetIndex ?? 0];
+    return {
+      image: sprite?.image ?? null,
+      region: sprite && {
+        sx: 0,
+        sy: 0,
+        sw: sprite.sourceW,
+        sh: sprite.sourceH,
+      },
+    };
+  }
   return {
     image: TORII_SPRITES.image,
     region: TORII_SPRITES.variants[occluder.variantIndex],
   };
 }
 
-export function drawNearForegroundOccluder(occluder: EnemySpawnOccluderState, elapsedDelta = 0) {
+export function drawNearForegroundOccluder(
+  occluder: EnemySpawnOccluderState,
+  elapsedDelta = 0,
+  reveal?: SpawnOccluderReveal,
+) {
   const context = ctx;
   if (!context) return;
 
   const { image, region } = occluderImageAndRegion(occluder);
   if (!image || !region) return;
+
+  const clip = reveal ? resolveSpawnOccluderClip(reveal) : null;
+  if (clip) {
+    context.save();
+    context.beginPath();
+    context.rect(clip.x, clip.y, clip.w, clip.h);
+    context.clip();
+  }
 
   drawRegion(
     context,
@@ -314,6 +413,7 @@ export function drawNearForegroundOccluder(occluder: EnemySpawnOccluderState, el
     occluder.drawH,
     occluder.alpha,
   );
+  if (clip) context.restore();
 }
 
 function drawTrees(context: CanvasRenderingContext2D, pass: number, offset: number) {
@@ -333,6 +433,22 @@ function drawTrees(context: CanvasRenderingContext2D, pass: number, offset: numb
     const y = GROUND_Y + tree.bottomOffset - drawH;
 
     drawRegion(context, image, region, x, y, drawH, tree.alpha);
+  }
+}
+
+function drawActProps(
+  context: CanvasRenderingContext2D,
+  act: number,
+  pass: number,
+  offset: number,
+) {
+  const occluders: NearForegroundOccluder[] = [];
+  pushActPropOccluders(occluders, act, pass, offset);
+
+  for (const occluder of occluders) {
+    const { image, region } = occluderImageAndRegion(occluder);
+    if (!image || !region) continue;
+    drawRegion(context, image, region, occluder.x, occluder.y, occluder.drawH, occluder.alpha);
   }
 }
 
@@ -391,6 +507,9 @@ export function drawNearForeground() {
 
   for (let pass = NEAR_FOREGROUND_PASS_MIN; pass <= NEAR_FOREGROUND_PASS_MAX; pass += 1) {
     drawTrees(context, pass, offset);
+  }
+  for (let pass = NEAR_FOREGROUND_PASS_MIN; pass <= NEAR_FOREGROUND_PASS_MAX; pass += 1) {
+    drawActProps(context, state.enemyDirector.act, pass, offset);
   }
   // Director elapsedInAct pauses during a Boss fight; the anchored world clock keeps scenery moving.
   drawActLandmarks(context, {

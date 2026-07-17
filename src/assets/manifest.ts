@@ -1,5 +1,6 @@
 import {
   ACT_LANDMARK_SPRITES,
+  ACT_OCCLUDER_SPRITES,
   ACT_PLATFORM_SPRITES,
   BINDER_SHEETS,
   BINDER_MAGIC_CIRCLE_SHEET,
@@ -179,6 +180,7 @@ export function spriteImageLoadTargets(): ImageLoadTarget[] {
       MOUNTAIN_SPRITES,
       FOREGROUND_SPRITES,
       ...ACT_LANDMARK_SPRITES,
+      ...ACT_OCCLUDER_SPRITES,
       ...Object.values(GROUND_TILE_SPRITES.sets),
       PLATFORM_SPRITES,
       ...Object.values(ACT_PLATFORM_SPRITES),

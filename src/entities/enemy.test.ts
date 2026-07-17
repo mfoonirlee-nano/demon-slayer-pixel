@@ -1,11 +1,17 @@
-import { afterEach, describe, expect, it, vi } from "vitest";
-import { ENEMY_CONFIG, GROUND_Y, WIDTH } from "../constants";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { ENEMY_BACKGROUND_SPAWN, ENEMY_CONFIG, GROUND_Y, WIDTH } from "../constants";
 import { resetState, state } from "../game/state";
 import { hitbox } from "../game/utils";
 import { resolveNearForegroundOccluders } from "../rendering/nearForeground";
 import { enemySpawnCost } from "../systems/enemyDirector";
 import type { PlatformState } from "../types/game-state";
-import { spawnEnemyById, updateEnemies } from "./enemy";
+import { enemyVisualSize } from "./enemies/common";
+import { enemyArchetypeForSheet } from "./enemies/registry";
+import {
+  backgroundOccluderSpawnChanceForAct,
+  spawnEnemyById,
+  updateEnemies,
+} from "./enemy";
 
 const TEST_LEAPER_DAMAGE = 10;
 const EXPECTED_CONTACT_HP = 90;
@@ -23,11 +29,10 @@ const TEST_PLATFORM_WIDTH = 180;
 const PLATFORM_SPAWN_CENTER_RATIO = 0.35;
 const BACKGROUND_OCCLUDER_TEST_ACT = 9;
 const INTRO_OCCLUDER_TEST_ACT = 1;
+const FINAL_ACT = 13;
 const OCCLUDER_TEST_ELAPSED = 0;
 const FIRST_RANDOM_VALUE = 0;
 const HALF_DIVISOR = 2;
-const BACKGROUND_OCCLUDER_COVER_FRAMES = 36;
-const BACKGROUND_OCCLUDER_COVER_FRAMES_AFTER_UPDATE = 35;
 const SECOND_SPAWN_INDEX = 1;
 
 const CHASER_TEST_BASE_SPEED = 2;
@@ -35,6 +40,8 @@ const CHASER_NEAR_SPEED_SCALE = 1.5;
 const CHASER_NEAR_SPEED = CHASER_TEST_BASE_SPEED * CHASER_NEAR_SPEED_SCALE;
 const CHASER_FAR_PLAYER_OFFSET = 260;
 const CHASER_NEAR_PLAYER_OFFSET = 120;
+const PLAYER_OVERLAP_ACT_PROP_X = 400;
+const RANGED_RETREAT_PLAYER_X = 300;
 
 function platform(overrides: Partial<PlatformState> = {}): PlatformState {
   return {
@@ -58,10 +65,6 @@ function platform(overrides: Partial<PlatformState> = {}): PlatformState {
 
 function occluderCenterX(occluder: { x: number; drawW: number }) {
   return occluder.x + occluder.drawW / HALF_DIVISOR;
-}
-
-function playerCenterX() {
-  return state.player.x + state.player.w / HALF_DIVISOR;
 }
 
 afterEach(() => {
@@ -175,6 +178,10 @@ describe("enemy growth spawns", () => {
 });
 
 describe("enemy platform spawns", () => {
+  beforeEach(() => {
+    vi.spyOn(Math, "random").mockReturnValue(ENEMY_BACKGROUND_SPAWN.maxChance);
+  });
+
   it("places regular platform-ready enemies on right offscreen platforms when available", () => {
     resetState();
     state.platforms.push(platform());
@@ -276,6 +283,10 @@ describe("enemy platform spawns", () => {
 });
 
 describe("enemy spawn spacing", () => {
+  beforeEach(() => {
+    vi.spyOn(Math, "random").mockReturnValue(ENEMY_BACKGROUND_SPAWN.maxChance);
+  });
+
   it("keeps consecutive ground spawns from overlapping on the same side", () => {
     resetState();
 
@@ -304,6 +315,25 @@ describe("enemy spawn spacing", () => {
 });
 
 describe("enemy background occluder spawns", () => {
+  it("ramps early cover spawns into the standard chance and caps the final act", () => {
+    for (let act = 1; act < ENEMY_BACKGROUND_SPAWN.standardStartAct; act += 1) {
+      expect(backgroundOccluderSpawnChanceForAct(act)).toBeCloseTo(
+        act * ENEMY_BACKGROUND_SPAWN.earlyChancePerAct,
+      );
+    }
+
+    expect(backgroundOccluderSpawnChanceForAct(ENEMY_BACKGROUND_SPAWN.standardStartAct)).toBe(
+      ENEMY_BACKGROUND_SPAWN.standardChancePerAct,
+    );
+    expect(backgroundOccluderSpawnChanceForAct(FINAL_ACT)).toBeCloseTo(
+      ENEMY_BACKGROUND_SPAWN.maxChance,
+    );
+    expect(backgroundOccluderSpawnChanceForAct(Number.MAX_SAFE_INTEGER)).toBe(
+      ENEMY_BACKGROUND_SPAWN.maxChance,
+    );
+    expect(backgroundOccluderSpawnChanceForAct(-1)).toBe(0);
+  });
+
   it("lets late regular enemies emerge from visible occluders larger than their body", () => {
     resetState();
     state.enemyDirector.act = BACKGROUND_OCCLUDER_TEST_ACT;
@@ -313,37 +343,50 @@ describe("enemy background occluder spawns", () => {
     expect(spawnEnemyById("runner", "regular", "left")).toBe(true);
 
     const runner = state.enemies[0];
-    const expectedOccluder = resolveNearForegroundOccluders({
+    const coverSize = enemyVisualSize(
+      runner.sheetIndex,
+      enemyArchetypeForSheet(runner.sheetIndex),
+    );
+    const fittingOccluders = resolveNearForegroundOccluders({
       elapsed: state.elapsed,
       bossPreludeElapsed: null,
       act: state.enemyDirector.act,
-    }).find((occluder) => (
+    }).filter((occluder) => (
       occluder.x < WIDTH
       && occluder.x + occluder.drawW > 0
-      && occluder.drawW > runner.w
-      && occluder.drawH > runner.h
-      && occluderCenterX(occluder) >= runner.w / HALF_DIVISOR
-      && occluderCenterX(occluder) <= WIDTH - runner.w / HALF_DIVISOR
-      && Math.abs(occluderCenterX(occluder) - playerCenterX()) >= (runner.w + state.player.w) / HALF_DIVISOR
+      && occluder.drawW > coverSize.w
+      && occluder.drawH > coverSize.h
+      && occluderCenterX(occluder) >= coverSize.w / HALF_DIVISOR
+      && occluderCenterX(occluder) <= WIDTH - coverSize.w / HALF_DIVISOR
+      && (
+        occluder.x + occluder.drawW <= state.player.x
+        || occluder.x >= state.player.x + state.player.w
+      )
     ));
+    const expectedOccluder = fittingOccluders.find((occluder) => occluder.source === "actProp")
+      ?? fittingOccluders[0];
 
     if (!expectedOccluder) throw new Error("expected at least one fitting occluder");
 
     expect(runner.onPlatform).toBeNull();
     expect(runner.spawnOccluder).toEqual(expectedOccluder);
-    expect(runner.spawnOccluderFrames).toBe(BACKGROUND_OCCLUDER_COVER_FRAMES);
+    expect(runner.spawnOccluderFrames).toBe(ENEMY_BACKGROUND_SPAWN.coverFrames + 1);
     expect(runner.spawnOccluderStartedAt).toBe(OCCLUDER_TEST_ELAPSED);
     expect(runner.y + runner.h).toBe(GROUND_Y);
     expect(runner.x + runner.w / HALF_DIVISOR).toBeCloseTo(occluderCenterX(expectedOccluder));
-    expect(expectedOccluder.drawW).toBeGreaterThan(runner.w);
-    expect(expectedOccluder.drawH).toBeGreaterThan(runner.h);
+    expect(expectedOccluder.drawW).toBeGreaterThan(coverSize.w);
+    expect(expectedOccluder.drawH).toBeGreaterThan(coverSize.h);
+    expect(
+      expectedOccluder.x + expectedOccluder.drawW <= state.player.x
+      || expectedOccluder.x >= state.player.x + state.player.w,
+    ).toBe(true);
 
     updateEnemies();
 
-    expect(runner.spawnOccluderFrames).toBe(BACKGROUND_OCCLUDER_COVER_FRAMES_AFTER_UPDATE);
+    expect(runner.spawnOccluderFrames).toBe(ENEMY_BACKGROUND_SPAWN.coverFrames);
   });
 
-  it("keeps early regular enemies on the normal ground entry", () => {
+  it("lets early regular enemies emerge from act scenery", () => {
     resetState();
     state.enemyDirector.act = INTRO_OCCLUDER_TEST_ACT;
     state.elapsed = OCCLUDER_TEST_ELAPSED;
@@ -352,11 +395,76 @@ describe("enemy background occluder spawns", () => {
     expect(spawnEnemyById("runner", "regular", "left")).toBe(true);
 
     const runner = state.enemies[0];
-    expect(runner.x).toBe(ENEMY_CONFIG.spawnOffsetLeft);
     expect(runner.y + runner.h).toBe(GROUND_Y);
     expect(runner.onPlatform).toBeNull();
-    expect(runner.spawnOccluder).toBeUndefined();
-    expect(runner.spawnOccluderFrames).toBeUndefined();
-    expect(runner.spawnOccluderStartedAt).toBeUndefined();
+    expect(runner.spawnOccluder?.source).toBe("actProp");
+    expect(runner.spawnOccluderFrames).toBe(ENEMY_BACKGROUND_SPAWN.coverFrames + 1);
+    expect(runner.spawnOccluderStartedAt).toBe(OCCLUDER_TEST_ELAPSED);
+    expect(runner.x).not.toBe(ENEMY_CONFIG.spawnOffsetLeft);
+  });
+
+  it("keeps airborne enemies on their dedicated entry path", () => {
+    resetState();
+    state.enemyDirector.act = BACKGROUND_OCCLUDER_TEST_ACT;
+    state.elapsed = OCCLUDER_TEST_ELAPSED;
+    vi.spyOn(Math, "random").mockReturnValue(FIRST_RANDOM_VALUE);
+
+    expect(spawnEnemyById("glider", "regular", "left")).toBe(true);
+
+    const glider = state.enemies[0];
+    expect(glider.spawnOccluder).toBeUndefined();
+    expect(glider.spawnOccluderFrames).toBeUndefined();
+    expect(glider.spawnOccluderStartedAt).toBeUndefined();
+  });
+
+  it.each(["leaper", "burrower"] as const)(
+    "lets the ground-starting %s use act scenery",
+    (enemyId) => {
+      resetState();
+      state.enemyDirector.act = BACKGROUND_OCCLUDER_TEST_ACT;
+      state.elapsed = OCCLUDER_TEST_ELAPSED;
+      vi.spyOn(Math, "random").mockReturnValue(FIRST_RANDOM_VALUE);
+
+      expect(spawnEnemyById(enemyId, "regular", "left")).toBe(true);
+      expect(state.enemies[0].spawnOccluder?.source).toBe("actProp");
+    },
+  );
+
+  it("does not redraw a wide spawn prop over the player", () => {
+    resetState();
+    state.enemyDirector.act = BACKGROUND_OCCLUDER_TEST_ACT;
+    state.elapsed = OCCLUDER_TEST_ELAPSED;
+    state.player.x = PLAYER_OVERLAP_ACT_PROP_X;
+    vi.spyOn(Math, "random").mockReturnValue(FIRST_RANDOM_VALUE);
+
+    expect(spawnEnemyById("runner", "regular", "left")).toBe(true);
+
+    const occluder = state.enemies[0].spawnOccluder;
+    if (!occluder) throw new Error("expected a clear background occluder");
+    expect(
+      occluder.x + occluder.drawW <= state.player.x
+      || occluder.x >= state.player.x + state.player.w,
+    ).toBe(true);
+  });
+
+  it("captures the first actual retreat direction for the reveal", () => {
+    resetState();
+    state.enemyDirector.act = AWAKENED_ACT;
+    state.elapsed = OCCLUDER_TEST_ELAPSED;
+    state.player.x = RANGED_RETREAT_PLAYER_X;
+    vi.spyOn(Math, "random").mockReturnValue(FIRST_RANDOM_VALUE);
+
+    expect(spawnEnemyById("caster", "regular", "left")).toBe(true);
+
+    const caster = state.enemies[0];
+    expect(caster.spawnOccluder?.source).toBe("actProp");
+    expect(caster.spawnOccluderDirectionPending).toBe(true);
+    expect(caster.spawnOccluderDirection).toBe(-1);
+
+    updateEnemies();
+
+    expect(caster.vx).toBeGreaterThan(0);
+    expect(caster.spawnOccluderDirection).toBe(1);
+    expect(caster.spawnOccluderDirectionPending).toBe(false);
   });
 });

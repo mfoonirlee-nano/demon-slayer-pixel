@@ -43,7 +43,13 @@ export type PlatformState = {
   baseY: number;
 };
 
-export type EnemySpawnOccluderSource = "tree" | "decor" | "stoneTower" | "stoneTowerSmall" | "torii";
+export type EnemySpawnOccluderSource =
+  | "tree"
+  | "decor"
+  | "stoneTower"
+  | "stoneTowerSmall"
+  | "torii"
+  | "actProp";
 
 export type EnemySpawnOccluderState = {
   source: EnemySpawnOccluderSource;
@@ -267,6 +273,8 @@ export type EnemyState = {
   spawnOccluder?: EnemySpawnOccluderState;
   spawnOccluderFrames?: number;
   spawnOccluderStartedAt?: number;
+  spawnOccluderDirection?: number;
+  spawnOccluderDirectionPending?: boolean;
   burrowerPhase?: BurrowerPhase;
   burrowerTimer?: number;
   burrowerPhaseDuration?: number;

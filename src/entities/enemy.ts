@@ -5,6 +5,7 @@ import {
   GROUND_Y,
   ENEMY_SHEETS,
   ENEMY_CONFIG,
+  ENEMY_BACKGROUND_SPAWN,
   LANTERN_EMBER_CONFIG,
   PLAYER_COMBAT,
 } from "../constants";
@@ -15,7 +16,7 @@ import {
   createEnemyState,
   drawEnemyEliteMarker,
   enemyAttackDamage,
-  enemyCollisionSize,
+  enemyVisualSize,
 } from "./enemies/common";
 import { canSpawnBrute, isBruteSheet, updateBruteGuardReflections } from "./enemies/brute";
 import { canSpawnBinder, isBinderSheet } from "./enemies/binder";
@@ -44,6 +45,7 @@ import {
   drawNearForegroundOccluder,
   resolveNearForegroundOccluders,
   type NearForegroundOccluder,
+  type SpawnOccluderReveal,
 } from "../rendering/nearForeground";
 
 type SpawnEnemyOptions = {
@@ -60,11 +62,7 @@ const PLATFORM_SPAWN_MAX_DISTANCE = 260;
 const PLATFORM_SPAWN_CENTER_RATIO = 0.35;
 const SPAWN_BODY_PADDING = 6;
 const SPAWN_PLACEMENT_ATTEMPTS = 10;
-const BACKGROUND_OCCLUDER_SPAWN_START_ACT = 4;
-const BACKGROUND_OCCLUDER_SPAWN_CHANCE_PER_ACT = 0.045;
-const BACKGROUND_OCCLUDER_SPAWN_MAX_CHANCE = 0.45;
-const BACKGROUND_OCCLUDER_COVER_FRAMES = 36;
-const PLATFORM_READY_ENEMY_IDS: readonly EnemyId[] = [
+const GROUNDED_ENTRY_ENEMY_IDS: readonly EnemyId[] = [
   "chaser",
   "crawler",
   "runner",
@@ -75,8 +73,13 @@ const PLATFORM_READY_ENEMY_IDS: readonly EnemyId[] = [
   "binder",
   "warden",
 ];
+const BACKGROUND_OCCLUDER_ENTRY_ENEMY_IDS: readonly EnemyId[] = [
+  ...GROUNDED_ENTRY_ENEMY_IDS,
+  "leaper",
+  "burrower",
+];
 const PLATFORM_PHYSICS_ENEMY_IDS: readonly EnemyId[] = [
-  ...PLATFORM_READY_ENEMY_IDS,
+  ...GROUNDED_ENTRY_ENEMY_IDS,
   "leaper",
 ];
 const DEBUG_BOSS_KILLS_BY_GROWTH_STAGE: Record<ActBand, number> = {
@@ -109,15 +112,21 @@ function platformSpawnCandidate() {
 }
 
 function canUsePlatformSpawn(enemyId: EnemyId, source: EnemySpawnSource) {
-  return source === "regular" && enemyId !== "caster" && PLATFORM_READY_ENEMY_IDS.includes(enemyId);
+  return source === "regular" && enemyId !== "caster" && GROUNDED_ENTRY_ENEMY_IDS.includes(enemyId);
 }
 
-function backgroundOccluderSpawnChance() {
-  const unlockedActs = state.enemyDirector.act - BACKGROUND_OCCLUDER_SPAWN_START_ACT + 1;
-  if (unlockedActs <= 0) return 0;
+function canUseBackgroundOccluderSpawn(enemyId: EnemyId, source: EnemySpawnSource) {
+  return source === "regular" && BACKGROUND_OCCLUDER_ENTRY_ENEMY_IDS.includes(enemyId);
+}
+
+export function backgroundOccluderSpawnChanceForAct(act: number) {
+  const unlockedActs = act - ENEMY_BACKGROUND_SPAWN.standardStartAct + 1;
+  if (unlockedActs <= 0) {
+    return Math.max(0, act) * ENEMY_BACKGROUND_SPAWN.earlyChancePerAct;
+  }
   return Math.min(
-    BACKGROUND_OCCLUDER_SPAWN_MAX_CHANCE,
-    unlockedActs * BACKGROUND_OCCLUDER_SPAWN_CHANCE_PER_ACT,
+    ENEMY_BACKGROUND_SPAWN.maxChance,
+    unlockedActs * ENEMY_BACKGROUND_SPAWN.standardChancePerAct,
   );
 }
 
@@ -133,9 +142,10 @@ function isVisibleOccluder(occluder: NearForegroundOccluder) {
   return occluder.x < WIDTH && occluder.x + occluder.drawW > 0;
 }
 
-function occluderClearsPlayer(occluder: NearForegroundOccluder, size: EnemySpawnSize) {
-  const minCenterDistance = (size.w + state.player.w) / 2;
-  return Math.abs(occluderCenterX(occluder) - playerCenterX()) >= minCenterDistance;
+function occluderClearsPlayer(occluder: NearForegroundOccluder) {
+  const playerLeft = state.player.x;
+  const playerRight = state.player.x + state.player.w;
+  return occluder.x + occluder.drawW <= playerLeft || occluder.x >= playerRight;
 }
 
 function occluderFitsEnemy(occluder: NearForegroundOccluder, size: EnemySpawnSize) {
@@ -145,13 +155,17 @@ function occluderFitsEnemy(occluder: NearForegroundOccluder, size: EnemySpawnSiz
     && occluder.drawH > size.h
     && centerX >= size.w / 2
     && centerX <= WIDTH - size.w / 2
-    && occluderClearsPlayer(occluder, size);
+    && occluderClearsPlayer(occluder);
 }
 
-function pickBackgroundOccluderSpawn(size: EnemySpawnSize, source: EnemySpawnSource) {
-  if (source !== "regular") return null;
+function pickBackgroundOccluderSpawn(
+  enemyId: EnemyId,
+  size: EnemySpawnSize,
+  source: EnemySpawnSource,
+) {
+  if (!canUseBackgroundOccluderSpawn(enemyId, source)) return null;
 
-  const chance = backgroundOccluderSpawnChance();
+  const chance = backgroundOccluderSpawnChanceForAct(state.enemyDirector.act);
   if (chance <= 0 || Math.random() >= chance) return null;
 
   const candidates = resolveNearForegroundOccluders({
@@ -161,7 +175,9 @@ function pickBackgroundOccluderSpawn(size: EnemySpawnSize, source: EnemySpawnSou
   }).filter((occluder) => occluderFitsEnemy(occluder, size));
   if (candidates.length === 0) return null;
 
-  return candidates[Math.floor(Math.random() * candidates.length)];
+  const actPropCandidates = candidates.filter((occluder) => occluder.source === "actProp");
+  const spawnCandidates = actPropCandidates.length > 0 ? actPropCandidates : candidates;
+  return spawnCandidates[Math.floor(Math.random() * spawnCandidates.length)];
 }
 
 function sideForBackgroundOccluder(occluder: NearForegroundOccluder) {
@@ -174,8 +190,11 @@ function placeEnemyBehindBackgroundOccluder(enemy: EnemyState, occluder: NearFor
   enemy.vy = 0;
   enemy.onPlatform = null;
   enemy.spawnOccluder = { ...occluder };
-  enemy.spawnOccluderFrames = BACKGROUND_OCCLUDER_COVER_FRAMES;
+  // Regular spawn requests run before updateEnemies(), so the extra count preserves every reveal frame.
+  enemy.spawnOccluderFrames = ENEMY_BACKGROUND_SPAWN.coverFrames + 1;
   enemy.spawnOccluderStartedAt = state.elapsed;
+  enemy.spawnOccluderDirection = occluderCenterX(occluder) < playerCenterX() ? 1 : -1;
+  enemy.spawnOccluderDirectionPending = true;
 }
 
 function spawnBody(enemy: EnemyState) {
@@ -201,6 +220,8 @@ function placeEnemyOnGround(enemy: EnemyState, side: number) {
   delete enemy.spawnOccluder;
   delete enemy.spawnOccluderFrames;
   delete enemy.spawnOccluderStartedAt;
+  delete enemy.spawnOccluderDirection;
+  delete enemy.spawnOccluderDirectionPending;
 
   for (let attempt = 0; attempt < SPAWN_PLACEMENT_ATTEMPTS; attempt += 1) {
     enemy.x = baseX + side * step * attempt;
@@ -310,8 +331,8 @@ function createSpawnedEnemy(
 ): EnemyState {
   const config = enemyArchetypeById(enemyId);
   const archetype = enemyArchetypeForSheet(config.sheetIndex);
-  const size = enemyCollisionSize(config.sheetIndex, archetype);
-  const backgroundOccluder = pickBackgroundOccluderSpawn(size, spawnSource);
+  const coverSize = enemyVisualSize(config.sheetIndex, archetype);
+  const backgroundOccluder = pickBackgroundOccluderSpawn(enemyId, coverSize, spawnSource);
   const spawnSide = backgroundOccluder ? sideForBackgroundOccluder(backgroundOccluder) : side;
   const growthStage = options.growthStage ?? actBandForAct(state.enemyDirector.act);
   const statBossKills = spawnSource === "debug" && options.growthStage
@@ -430,6 +451,10 @@ export function updateEnemies() {
     const usesPlatformPhysics = enemyUsesPlatformPhysics(enemy);
     const prevBottom = usesPlatformPhysics ? prepareEnemyPlatformPhysics(enemy) : 0;
     archetype.update(enemy);
+    if (enemy.spawnOccluderDirectionPending) {
+      if (enemy.vx !== 0) enemy.spawnOccluderDirection = Math.sign(enemy.vx);
+      enemy.spawnOccluderDirectionPending = false;
+    }
     if (archetype.shouldRemove?.(enemy)) {
       state.enemies.splice(i, 1);
       continue;
@@ -463,6 +488,28 @@ export function updateEnemies() {
   }
 }
 
+function spawnOccluderRevealForEnemy(
+  enemy: EnemyState,
+  archetype: ReturnType<typeof enemyArchetypeForSheet>,
+): SpawnOccluderReveal {
+  const visualSize = enemyVisualSize(enemy.sheetIndex, archetype);
+  const revealW = Math.round(visualSize.w * ENEMY_BACKGROUND_SPAWN.revealBoundsScale);
+  const revealH = Math.round(visualSize.h * ENEMY_BACKGROUND_SPAWN.revealBoundsScale);
+  const remainingFrames = Math.min(
+    ENEMY_BACKGROUND_SPAWN.coverFrames,
+    enemy.spawnOccluderFrames ?? 0,
+  );
+
+  return {
+    x: enemy.x + enemy.w / 2 - revealW / 2,
+    y: enemy.y + enemy.h - revealH,
+    w: revealW,
+    h: revealH,
+    direction: enemy.spawnOccluderDirection ?? (enemy.vx >= 0 ? 1 : -1),
+    progress: 1 - remainingFrames / ENEMY_BACKGROUND_SPAWN.coverFrames,
+  };
+}
+
 export function drawEnemy(enemy: EnemyState) {
   const archetype = enemyArchetypeForSheet(enemy.sheetIndex);
   archetype.draw(enemy);
@@ -471,6 +518,7 @@ export function drawEnemy(enemy: EnemyState) {
     drawNearForegroundOccluder(
       enemy.spawnOccluder,
       Math.max(0, state.elapsed - (enemy.spawnOccluderStartedAt ?? state.elapsed)),
+      spawnOccluderRevealForEnemy(enemy, archetype),
     );
   }
 }

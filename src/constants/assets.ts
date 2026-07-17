@@ -7,3 +7,4 @@ export * from "./assetCatalog/spiderStringUltimate";
 export * from "./assetCatalog/scenery";
 export * from "./assetCatalog/actLandmarks";
 export * from "./assetCatalog/actPlatforms";
+export * from "./assetCatalog/actOccluders";

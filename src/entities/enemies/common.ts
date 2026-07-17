@@ -266,14 +266,20 @@ export function enemyDrawScale(archetype: EnemyArchetype) {
   return ENEMY_DRAW_SCALE * (archetype.drawScale ?? 1);
 }
 
-export function enemyCollisionSize(sheetIndex: number, archetype: EnemyArchetype) {
+export function enemyVisualSize(sheetIndex: number, archetype: EnemyArchetype) {
   const sheet = ENEMY_SHEETS[sheetIndex % ENEMY_SHEETS.length] || ENEMY_SHEETS[0];
   const drawScale = enemyDrawScale(archetype);
-  const drawW = Math.round(sheet.frameW * drawScale);
-  const drawH = Math.round(sheet.frameH * drawScale);
   return {
-    w: Math.round(drawW * ENEMY_CONFIG.collisionScaleX * (archetype.collisionScaleX ?? 1)),
-    h: Math.round(drawH * ENEMY_CONFIG.collisionScaleY * (archetype.collisionScaleY ?? 1)),
+    w: Math.round(sheet.frameW * drawScale),
+    h: Math.round(sheet.frameH * drawScale),
+  };
+}
+
+export function enemyCollisionSize(sheetIndex: number, archetype: EnemyArchetype) {
+  const visualSize = enemyVisualSize(sheetIndex, archetype);
+  return {
+    w: Math.round(visualSize.w * ENEMY_CONFIG.collisionScaleX * (archetype.collisionScaleX ?? 1)),
+    h: Math.round(visualSize.h * ENEMY_CONFIG.collisionScaleY * (archetype.collisionScaleY ?? 1)),
   };
 }
 

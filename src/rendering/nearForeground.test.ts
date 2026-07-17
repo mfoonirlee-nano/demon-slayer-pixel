@@ -1,11 +1,18 @@
 import { describe, expect, it } from "vitest";
 
-import { GROUND_Y, TORII_SPRITES, TREE_SPRITES, WIDTH } from "../constants";
+import {
+  ACT_OCCLUDER_SPRITES,
+  GROUND_Y,
+  TORII_SPRITES,
+  TREE_SPRITES,
+  WIDTH,
+} from "../constants";
 import { bossApproachGroundTransitionSeconds } from "../systems/runProgression";
 import {
   BOSS_PRELUDE_TORII_DRAW_H,
   resolveNearForegroundOccluders,
   resolveBossPreludeToriiPlacement,
+  resolveSpawnOccluderClip,
 } from "./nearForeground";
 
 const ACT_ONE = 1;
@@ -13,6 +20,15 @@ const START_ELAPSED = 0;
 const MIN_POSITIVE_SIZE = 0;
 const EXPECTED_DOUBLE_TORII_DRAW_H = 284;
 const EXPECTED_TORII_BOTTOM_OFFSET = 8;
+const FINAL_ACT = 13;
+const ACTS = Array.from({ length: FINAL_ACT }, (_, index) => index + 1);
+const MAX_GROUNDED_ENEMY_DRAW_WIDTH = 142;
+const MAX_GROUNDED_ENEMY_DRAW_HEIGHT = 160;
+const REVEAL_X = 100;
+const REVEAL_Y = 200;
+const REVEAL_WIDTH = 80;
+const REVEAL_HEIGHT = 120;
+const HALF_REVEAL_WIDTH = REVEAL_WIDTH / 2;
 
 describe("near foreground placement", () => {
   it("does not draw the torii outside the boss prelude", () => {
@@ -100,5 +116,64 @@ describe("near foreground placement", () => {
       expect(occluder.drawH).toBeLessThanOrEqual(region.sh);
       expect(occluder.drawW).toBeLessThanOrEqual(region.sw);
     }
+  });
+
+  it.each(ACTS)("adds drawable themed and generic enemy cover in Act %i", (act) => {
+    const actProps = resolveNearForegroundOccluders({
+      elapsed: START_ELAPSED,
+      bossPreludeElapsed: null,
+      act,
+    }).filter((occluder) => occluder.source === "actProp");
+
+    const sprites = actProps.map((occluder) => (
+      ACT_OCCLUDER_SPRITES[occluder.sheetIndex ?? 0]
+    ));
+
+    expect(sprites.some((sprite) => sprite.kind === "themed" && sprite.acts.includes(act))).toBe(true);
+    expect(sprites.some((sprite) => sprite.kind === "generic")).toBe(true);
+    expect(actProps.some((occluder) => (
+      occluder.x < WIDTH && occluder.x + occluder.drawW > 0
+    ))).toBe(true);
+    expect(actProps.every((occluder) => occluder.drawW > MAX_GROUNDED_ENEMY_DRAW_WIDTH)).toBe(true);
+    expect(actProps.every((occluder) => occluder.drawH > MAX_GROUNDED_ENEMY_DRAW_HEIGHT)).toBe(true);
+    expect(actProps.every((occluder) => occluder.alpha === 1)).toBe(true);
+  });
+
+  it("reveals a covered enemy from its direction of travel", () => {
+    const baseReveal = {
+      x: REVEAL_X,
+      y: REVEAL_Y,
+      w: REVEAL_WIDTH,
+      h: REVEAL_HEIGHT,
+      progress: 0.5,
+    };
+
+    expect(resolveSpawnOccluderClip({ ...baseReveal, direction: 1 })).toEqual({
+      x: REVEAL_X,
+      y: REVEAL_Y,
+      w: HALF_REVEAL_WIDTH,
+      h: REVEAL_HEIGHT,
+    });
+    expect(resolveSpawnOccluderClip({ ...baseReveal, direction: -1 })).toEqual({
+      x: REVEAL_X + HALF_REVEAL_WIDTH,
+      y: REVEAL_Y,
+      w: HALF_REVEAL_WIDTH,
+      h: REVEAL_HEIGHT,
+    });
+    expect(resolveSpawnOccluderClip({
+      ...baseReveal,
+      direction: 1,
+      progress: 0,
+    })).toEqual({
+      x: REVEAL_X,
+      y: REVEAL_Y,
+      w: REVEAL_WIDTH,
+      h: REVEAL_HEIGHT,
+    });
+    expect(resolveSpawnOccluderClip({
+      ...baseReveal,
+      direction: 1,
+      progress: 1,
+    }).w).toBe(0);
   });
 });
