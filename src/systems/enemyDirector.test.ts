@@ -56,6 +56,15 @@ const ACT_EIGHT_MIN_WAVES = 5;
 const ACT_EIGHT_UNCOMPRESSED_MIN_ELAPSED = 75;
 const ACT_EIGHT_UNCOMPRESSED_MAX_ELAPSED = 120;
 const TEST_RUN_SEED = 1234;
+const FIRST_ACT_BASELINE_FAILURE_SEED = 3975;
+const FIRST_ACT_FREQUENCY_EDGE_SEED = 76;
+const FIRST_ACT_PACING_SEEDS = [
+  FIRST_ACT_FREQUENCY_EDGE_SEED,
+  TEST_RUN_SEED,
+  FIRST_ACT_BASELINE_FAILURE_SEED,
+];
+const FIRST_ACT_FREQUENCY_CHECKPOINT_SECONDS = 30;
+const FIRST_ACT_MIN_SPAWNS_BY_CHECKPOINT = 28;
 const TUTORIAL_ENEMY_COUNT = 3;
 const FULL_ENEMY_ROSTER_SIZE = 12;
 const FINAL_POOL_SIZE = 9;
@@ -116,6 +125,29 @@ function runDirectorUntilPrelude(director: ReturnType<typeof createEnemyDirector
     spawnCount,
     wavesCleared: director.wavesCleared,
   };
+}
+
+function runDirectorUntilElapsed(
+  director: ReturnType<typeof createEnemyDirectorState>,
+  bossKills: number,
+  targetElapsed: number,
+) {
+  let spawnCount = 0;
+
+  while (director.elapsedInAct < targetElapsed) {
+    const update = updateEnemyDirector(director, {
+      dt: DIRECTOR_STEP_SECONDS,
+      bossKills,
+      elapsedSeconds: director.elapsedInAct,
+      activeEnemies: [],
+      playerHp: ACT_ONE_PLAYER_HP,
+      playerMaxHp: ACT_ONE_PLAYER_MAX_HP,
+      bossActive: false,
+    });
+    spawnCount += update.spawnRequests.length;
+  }
+
+  return spawnCount;
 }
 
 describe("act progression", () => {
@@ -207,6 +239,17 @@ describe("act progression", () => {
     expect(actEightResult.elapsedInAct).toBeLessThanOrEqual(ACT_EIGHT_MIN_ELAPSED + DIRECTOR_STEP_SECONDS);
     expect(actEightResult.wavesCleared).toBeGreaterThanOrEqual(ACT_EIGHT_MIN_WAVES);
     expect(actEightResult.spawnCount).toBeGreaterThan(ACT_EIGHT_MIN_WAVES);
+  });
+
+  it("offers at least 28 first-act spawns during the first 30 seconds", () => {
+    for (const seed of FIRST_ACT_PACING_SEEDS) {
+      const spawnCount = runDirectorUntilElapsed(
+        createEnemyDirectorState(seed),
+        NO_BOSS_KILLS,
+        FIRST_ACT_FREQUENCY_CHECKPOINT_SECONDS,
+      );
+      expect(spawnCount).toBeGreaterThanOrEqual(FIRST_ACT_MIN_SPAWNS_BY_CHECKPOINT);
+    }
   });
 });
 

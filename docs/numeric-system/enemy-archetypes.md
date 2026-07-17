@@ -220,7 +220,7 @@ waveBudget = maxActiveSpawnCost * waveBudgetRatio
 
 | 幕 | Max active spawn cost |
 | ---: | ---: |
-| 1 | `6` |
+| 1 | `8` |
 | 2 | `7` |
 | 3 | `8` |
 | 4 | `9` |
@@ -396,6 +396,7 @@ type WaveEntry = {
 - `delayAfterPrevious` 从前一个 entry 成功生成后开始计时；如果当前 entry 因预算不足延迟，后续 entry 不会提前排队。
 - `count > 1` 默认只给低复杂敌人；高复杂敌人默认 `count = 1`。`splitter` 可在 `swarm` 语境下作为例外。
 - 如果 `activeSpawnCost + entry.spawnCost > maxActiveSpawnCost`，entry 持续延迟，不跳过。只有 Boss 最长时间兜底可以取消剩余常规 entry。
+- 第 1 幕的波次准备、entry 间隔和 breather 计时按 `1.25x` 推进；Boss gate、prelude 和后续幕仍按实际时间推进。
 - 当前波所有 entry 成功投放完并进入 `breather` 时，`wavesCleared += 1`；不要求波内敌人全灭。
 - 玩家清怪很快时，可以在最短约 `0.9s` 喘息后提前进入下一波；否则按波次压力给约 `1.6-3.4s` 喘息，并可按剩余场上压力延长。
 

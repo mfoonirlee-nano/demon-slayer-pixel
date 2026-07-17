@@ -92,7 +92,7 @@ const REGULAR_POOL_SIZE_BY_ACT: Partial<Record<number, number>> = {
 };
 
 const MAX_ACTIVE_SPAWN_COST_BY_ACT: Partial<Record<number, number>> = {
-  1: 6,
+  1: 8,
   2: 7,
   3: 8,
   4: 9,

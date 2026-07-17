@@ -232,7 +232,7 @@ xpToNextLevel(level) = Math.floor(650 + 45 * level + 5 * level ** 1.6);
 | Lv30 → Lv31 | 3154 |
 | Lv50 → Lv51 | 5514 |
 
-当前曲线按现有 enemy director 的 13 幕结构校准：完整清掉每幕的普通刷怪、Boss 前奏增援和 Boss 后，至少能推进 1 个局内等级；首幕不再因为 85 XP 的旧需求连续升级。
+当前曲线按现有 enemy director 的 13 幕结构校准：第 1 幕在 Boss 入场前提供至少 `700 XP` 的普通敌人供给，满清时足够从 Lv1 升到 Lv2；完整清掉后续每幕的普通刷怪、Boss 前奏增援和 Boss 后，至少能推进 1 个局内等级。这里约束的是可获得的经验供给，实际升级时间仍取决于玩家清怪效率。
 
 ## XP Sources
 

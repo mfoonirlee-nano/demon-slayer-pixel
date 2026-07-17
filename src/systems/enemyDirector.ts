@@ -67,7 +67,9 @@ const WAVE_SEED_ACT_SALT = 1009;
 const WAVE_SEED_CLEAR_SALT = 9176;
 const WAVE_SEED_RECENT_SALT = 37;
 const TIER_ONE_COMPLEXITY = 1;
+const FIRST_ACT = 1;
 const FINAL_ACT = 13;
+const FIRST_ACT_SPAWN_TIMER_MULTIPLIER = 1.25;
 const PRESSURE_PINCER_CHANCE = 0.35;
 const REINFORCE_CLUSTER_CHANCE = 0.45;
 const DOUBLE_OPENER_CHANCE = 0.45;
@@ -122,6 +124,10 @@ function maxEliteEntriesForAct(act: number) {
   if (act === FINAL_ACT) return 2;
   if (act >= AWAKENED_FIRST_ACT && act <= AWAKENED_LAST_ACT) return 1;
   return 0;
+}
+
+function spawnTimerDelta(act: number, dt: number) {
+  return dt * (act === FIRST_ACT ? FIRST_ACT_SPAWN_TIMER_MULTIPLIER : 1);
 }
 
 function desiredEliteEntriesForWave(act: number, rng: () => number) {
@@ -539,17 +545,18 @@ export function updateEnemyDirector(
   const lowHealth = input.playerMaxHp > 0 && input.playerHp / input.playerMaxHp < LOW_HEALTH_RATIO;
   if (!director.wave) startWave(director, lowHealth);
   if (!director.wave) return { spawnRequests, spawnBoss: false };
+  const waveDt = spawnTimerDelta(director.act, input.dt);
 
   if (director.wave.phase === "prepare") {
-    director.wave.timer = Math.max(0, director.wave.timer - input.dt);
+    director.wave.timer = Math.max(0, director.wave.timer - waveDt);
     if (director.wave.timer <= 0) {
       director.wave.phase = "spawning";
       director.wave.timer = director.wave.entries[0]?.delayAfterPrevious ?? 0;
     }
   } else if (director.wave.phase === "spawning") {
-    updateSpawningWave(director, input.dt, input.activeEnemies, spawnRequests, lowHealth);
+    updateSpawningWave(director, waveDt, input.activeEnemies, spawnRequests, lowHealth);
   } else {
-    director.wave.timer = Math.max(0, director.wave.timer - input.dt);
+    director.wave.timer = Math.max(0, director.wave.timer - waveDt);
     if (director.wave.timer <= 0) startWave(director, lowHealth);
   }
 
