@@ -1,62 +1,35 @@
-Behavioral guidelines to reduce common LLM coding mistakes. Merge with project-specific instructions as needed.
+# Repository Agent Instructions
 
-**Tradeoff:** These guidelines bias toward caution over speed. For trivial tasks, use judgment.
+Use these rules for work in this repository. Keep instructions and tool use lean: state each requirement once and preserve only constraints that affect the outcome.
 
-## 1. Think Before Coding
+## 1. Scope and Autonomy
 
-**Don't assume. Don't hide confusion. Surface tradeoffs.**
+- For requests to answer, explain, review, diagnose, or plan, inspect the relevant material and report the result. Edit files only when the request also asks for a change.
+- For requests to change, build, or fix, make the requested in-scope local edits and run relevant non-destructive validation without asking first.
+- Ask before external writes, destructive actions, purchases, or a material expansion of scope.
+- When ambiguity is low-risk and reversible, state the assumption and proceed. Ask when a choice would materially change the result, scope, or safety.
+- Surface a simpler approach or an important tradeoff when it would change the implementation decision.
 
-Before implementing:
-- State your assumptions explicitly. If uncertain, ask.
-- If multiple interpretations exist, present them - don't pick silently.
-- If a simpler approach exists, say so. Push back when warranted.
-- If something is unclear, stop. Name what's confusing. Ask.
+## 2. Minimal, Surgical Changes
 
-## 2. Simplicity First
+- Implement the minimum code that solves the request.
+- Exclude unrequested features, single-use abstractions, speculative configurability, and handling for impossible scenarios.
+- Match the existing style. Leave unrelated code, comments, formatting, and pre-existing dead code unchanged.
+- Remove only imports, variables, functions, or files made unused by your changes.
+- Every changed line must trace directly to the request.
 
-**Minimum code that solves the problem. Nothing speculative.**
+## 3. Outcome and Verification
 
-- No features beyond what was asked.
-- No abstractions for single-use code.
-- No "flexibility" or "configurability" that wasn't requested.
-- No error handling for impossible scenarios.
-- If you write 200 lines and it could be 50, rewrite it.
+- Define verifiable success criteria before editing.
+- For a bug, reproduce it with a focused test when practical. For a refactor, establish passing checks before and after. Add feature tests at a stable seam when one exists.
+- For multi-step work, give a short plan in the form `step -> verification`.
+- Run the narrowest relevant checks during implementation and the appropriate broader checks at the end. Continue until they pass or report a concrete blocker.
+- Report the validation evidence; do not claim success without it.
 
-Ask yourself: "Would a senior engineer say this is overcomplicated?" If yes, simplify.
+## 4. Communication
 
-## 3. Surgical Changes
-
-**Touch only what you must. Clean up only your own mess.**
-
-When editing existing code:
-- Don't "improve" adjacent code, comments, or formatting.
-- Don't refactor things that aren't broken.
-- Match existing style, even if you'd do it differently.
-- If you notice unrelated dead code, mention it - don't delete it.
-
-When your changes create orphans:
-- Remove imports/variables/functions that YOUR changes made unused.
-- Don't remove pre-existing dead code unless asked.
-
-The test: Every changed line should trace directly to the user's request.
-
-## 4. Goal-Driven Execution
-
-**Define success criteria. Loop until verified.**
-
-Transform tasks into verifiable goals:
-- "Add validation" → "Write tests for invalid inputs, then make them pass"
-- "Fix the bug" → "Write a test that reproduces it, then make it pass"
-- "Refactor X" → "Ensure tests pass before and after"
-
-For multi-step tasks, state a brief plan:
-```
-1. [Step] → verify: [check]
-2. [Step] → verify: [check]
-3. [Step] → verify: [check]
-```
-
-Strong success criteria let you loop independently. Weak criteria ("make it work") require constant clarification.
+- Lead with the conclusion or current outcome. Include supporting evidence, material caveats, and the next action when one exists.
+- State each assumption or tradeoff once. Keep progress updates concise and omit repetition, generic reassurance, and optional background.
 
 ## 5. Runtime Restrictions
 
@@ -66,12 +39,8 @@ Strong success criteria let you loop independently. Weak criteria ("make it work
 
 ## 6. Asset Generation
 
-- All generated image assets must be created with the `imagegen` skill/tool. Do not hand-roll raster assets with scripts or code-native drawing as a substitute for image generation.
-- Do not assume `imagegen` wrote files to disk. For built-in imagegen, trusted artifact sources are `image_generation_call.result` PNG base64, or an exact `~/.codex/generated_images/...` file path explicitly provided by the current imagegen tool/developer output. Decode or copy that exact artifact into `tmp/imagegen/` or the target workspace path before post-processing. Do not scan `~/.codex/generated_images/` to infer the latest output.
-- Treat generated image dimensions, mode, and transparency as untrusted. Before replacing an asset, validate exact width/height, alpha channel, transparent edges, and any runtime bbox expected by the existing asset.
-- Deterministic post-processing is allowed only for file handling, transparency recovery, cropping, scaling, compression, and validation. Do not use scripts to invent or repaint the image content.
-- Use the Image Gen CLI fallback only when explicitly needed and after checking the environment supports it; missing `OPENAI_API_KEY` means the built-in tool output must be used instead of pretending the CLI path worked.
-
----
-
-**These guidelines are working if:** fewer unnecessary changes in diffs, fewer rewrites due to overcomplication, and clarifying questions come before implementation rather than after mistakes.
+- Create all generated image assets with the `imagegen` skill/tool. Scripts or code-native drawing are not substitutes for image generation.
+- Trusted built-in imagegen artifacts are limited to PNG base64 from `image_generation_call.result` or an exact `~/.codex/generated_images/...` path provided by the current tool/developer output. Decode or copy that exact artifact into `tmp/imagegen/` or the target workspace path before post-processing. Never scan generated-image folders to infer the latest output.
+- Treat generated dimensions, mode, and transparency as untrusted. Before replacing an asset, validate exact width and height, alpha channel, transparent edges, and any runtime bounding box expected by the existing asset.
+- Limit deterministic post-processing to file handling, transparency recovery, cropping, scaling, compression, and validation. Do not use scripts to invent or repaint image content.
+- Use the Image Gen CLI fallback only when explicitly needed and `OPENAI_API_KEY` is available. Without the key, use the built-in tool output.
