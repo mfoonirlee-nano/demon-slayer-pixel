@@ -11,6 +11,8 @@ const PEAK_LIMIT = Math.floor(PCM_MAX * 0.89);
 const PCM_SAMPLE_COUNT = 8;
 const WAV_HEADER_BYTES = 44;
 const SAMPLE_RATE = 48_000;
+const PLAYER_ATTACK_TAIL_START_SECONDS = 0.16;
+const PLAYER_ATTACK_MAX_TAIL_ENERGY_RATIO = 0.1;
 const PLAYER_SFX_DIRECTORY = path.join(process.cwd(), "assets/audio/sfx/players");
 const EXPECTED_PLAYER_SFX_FILES = [
   "playerAttackHit.wav",
@@ -53,6 +55,20 @@ function decodePcm16(wav) {
   return pcm;
 }
 
+function measureEnergyRatioAfter(pcm, startSeconds) {
+  const tailStart = Math.floor(startSeconds * SAMPLE_RATE);
+  let totalEnergy = 0;
+  let tailEnergy = 0;
+
+  for (let index = 0; index < pcm.length; index += 1) {
+    const energy = pcm[index] * pcm[index];
+    totalEnergy += energy;
+    if (index >= tailStart) tailEnergy += energy;
+  }
+
+  return tailEnergy / totalEnergy;
+}
+
 describe("SFX WAV validation", () => {
   it("rejects silent and non-finite PCM", () => {
     expect(() => measureAndValidatePcm(
@@ -87,5 +103,13 @@ describe("SFX WAV validation", () => {
       const metrics = measureAndValidatePcm(file, decodePcm16(wav), PCM_MAX, PEAK_LIMIT);
       expect(metrics.rmsDb).toBeGreaterThan(-35);
     }
+  });
+
+  it("keeps the basic attack cue front-loaded like a sword swing", () => {
+    const wav = readFileSync(path.join(PLAYER_SFX_DIRECTORY, "playerAttackStart.wav"));
+    const pcm = decodePcm16(wav);
+    const tailEnergyRatio = measureEnergyRatioAfter(pcm, PLAYER_ATTACK_TAIL_START_SECONDS);
+
+    expect(tailEnergyRatio).toBeLessThanOrEqual(PLAYER_ATTACK_MAX_TAIL_ENERGY_RATIO);
   });
 });

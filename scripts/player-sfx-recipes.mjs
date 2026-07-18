@@ -37,11 +37,9 @@ export function createPlayerSfxSpecs({
       mixWood(samples, rng, { start: 0.018, duration: 0.13, frequency: 230, gain: 0.33 });
       mixBreath(samples, rng, { start: 0.045, duration: 0.18, gain: 0.12, lowCutoff: 420, cutoff: 2_400 });
     }),
-    sound("playerAttackStart", 0.31, -6.5, (samples, rng) => {
-      mixNoise(samples, rng, { duration: 0.27, gain: 0.58, color: "band", lowCutoff: 520, cutoff: 2_600, endLowCutoff: 1_700, endCutoff: 7_200, contour: swell });
-      mixBlade(samples, rng, { start: 0.008, duration: 0.25, baseFrequency: 860, gain: 0.48 });
-      mixDullIron(samples, rng, { start: 0.035, duration: 0.2, baseFrequency: 1_180, gain: 0.1 });
-      mixNoise(samples, rng, { start: 0.02, duration: 0.055, gain: 0.18, color: "band", lowCutoff: 2_600, cutoff: 8_600, decay: 3.4 });
+    sound("playerAttackStart", 0.19, -6.5, (samples, rng) => {
+      mixBlade(samples, rng, { start: 0.002, duration: 0.165, baseFrequency: 900, gain: 0.64 });
+      mixNoise(samples, rng, { duration: 0.038, gain: 0.12, color: "band", lowCutoff: 2_400, cutoff: 8_800, attack: 0.001, release: 0.012, decay: 4.2 });
     }),
     sound("playerAttackHit", 0.25, -1.05, (samples, rng) => {
       mixTaiko(samples, rng, { duration: 0.19, frequency: 106, gain: 0.4 });
