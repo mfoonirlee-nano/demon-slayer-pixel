@@ -1,6 +1,13 @@
 import { describe, expect, it } from "vitest";
 
-import { ACT_LANDMARK_SPRITES, ACT_OCCLUDER_SPRITES } from "../constants";
+import {
+  ACT_LANDMARK_SPRITES,
+  ACT_OCCLUDER_SPRITES,
+  MIST_BONE_ATTACK_SHEET,
+  MIST_BONE_CAGE_CAST_SHEET,
+  MIST_BONE_DART_SHEET,
+  MIST_BONE_LINE_CAST_SHEET,
+} from "../constants";
 import { spriteImageLoadTargets } from "./manifest";
 
 describe("sprite manifest", () => {
@@ -17,6 +24,20 @@ describe("sprite manifest", () => {
 
     for (const occluder of ACT_OCCLUDER_SPRITES) {
       expect(loadedSources.filter((src) => src === occluder.src)).toHaveLength(1);
+    }
+  });
+
+  it("preloads every Mist Bone action asset exactly once", () => {
+    const loadedSources = spriteImageLoadTargets().map((target) => target.src);
+    const mistBoneActions = [
+      MIST_BONE_ATTACK_SHEET,
+      MIST_BONE_LINE_CAST_SHEET,
+      MIST_BONE_CAGE_CAST_SHEET,
+      MIST_BONE_DART_SHEET,
+    ];
+
+    for (const action of mistBoneActions) {
+      expect(loadedSources.filter((src) => src === action.src)).toHaveLength(1);
     }
   });
 });

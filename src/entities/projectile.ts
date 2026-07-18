@@ -7,6 +7,8 @@ import {
   CASTER_WISP_SHEET,
   BINDER_TALISMAN_SHEET,
   DEAD_BELL_BLADE_SHEET,
+  MIST_BONE_CONFIG,
+  MIST_BONE_DART_SHEET,
 } from "../constants";
 import type { ProjectileState } from "../types/game-state";
 import { hitbox } from "../game/utils";
@@ -59,6 +61,14 @@ const GLIDER_SONIC_BLADE_DRAW = {
     },
   },
 } as const;
+const MIST_BONE_DART_FRAME_ORDER = [
+  0,
+  1,
+  2,
+  MIST_BONE_DART_SHEET.count - 1,
+  2,
+  1,
+] as const;
 
 const FRAMES_PER_SECOND = 60;
 const CASTER_WISP_TRACKING_SECONDS = 5;
@@ -133,6 +143,14 @@ function updateBinderTalisman(projectile: ProjectileState) {
   return true;
 }
 
+function updateMistBoneDart(projectile: ProjectileState) {
+  updateLinearProjectile(projectile);
+  projectile.elapsed = (projectile.elapsed ?? 0) + 1;
+  const orderIndex = Math.floor(projectile.elapsed / MIST_BONE_CONFIG.dartFrameDuration)
+    % MIST_BONE_DART_FRAME_ORDER.length;
+  projectile.frame = MIST_BONE_DART_FRAME_ORDER[orderIndex];
+}
+
 function updateLinearProjectile(projectile: ProjectileState) {
   projectile.x += projectile.vx;
   projectile.y += projectile.vy ?? 0;
@@ -183,6 +201,8 @@ export function updateProjectiles() {
       }
     } else if (p.kind === "binderTalisman") {
       updateBinderTalisman(p);
+    } else if (p.kind === "bossBone") {
+      updateMistBoneDart(p);
     } else {
       updateLinearProjectile(p);
     }
@@ -242,6 +262,27 @@ export function drawProjectiles() {
       continue;
     }
 
+    if (p.kind === "bossBone") {
+      const centerX = p.x + p.w / 2;
+      const centerY = p.y + p.h / 2;
+      const facing = p.vx >= 0 ? 1 : -1;
+      const angle = Math.atan2(p.vy ?? 0, Math.abs(p.vx));
+      ctx.save();
+      ctx.translate(centerX, centerY);
+      ctx.scale(facing, 1);
+      ctx.rotate(angle);
+      drawSheetFrame(
+        MIST_BONE_DART_SHEET,
+        p.frame ?? 0,
+        -MIST_BONE_CONFIG.dartDrawW / 2,
+        -MIST_BONE_CONFIG.dartDrawH / 2,
+        MIST_BONE_CONFIG.dartDrawW,
+        MIST_BONE_CONFIG.dartDrawH,
+      );
+      ctx.restore();
+      continue;
+    }
+
     if (p.kind === "leaperSpike") {
       const centerX = p.x + p.w / 2;
       const centerY = p.y + p.h / 2;
@@ -285,14 +326,11 @@ export function drawProjectiles() {
       continue;
     }
 
-    const primaryColor = p.kind === "bossBone" ? "#d7d2c2" : PROJECTILE_CONFIG.primaryColor;
-    const highlightColor = p.kind === "bossBone" ? "#f4f0de" : PROJECTILE_CONFIG.highlightColor;
-    const outlineColor = p.kind === "bossBone" ? "#4e5966" : PROJECTILE_CONFIG.primaryColor;
-    ctx.fillStyle = outlineColor;
+    ctx.fillStyle = PROJECTILE_CONFIG.primaryColor;
     ctx.fillRect(p.x, p.y, p.w, p.h);
-    ctx.fillStyle = primaryColor;
+    ctx.fillStyle = PROJECTILE_CONFIG.primaryColor;
     ctx.fillRect(p.x + 1, p.y + 1, Math.max(1, p.w - 2), Math.max(1, p.h - 2));
-    ctx.fillStyle = highlightColor;
+    ctx.fillStyle = PROJECTILE_CONFIG.highlightColor;
     ctx.fillRect(p.x + PROJECTILE_CONFIG.highlightOffset, p.y + PROJECTILE_CONFIG.highlightOffset, PROJECTILE_CONFIG.highlightSize, PROJECTILE_CONFIG.highlightSize);
   }
 }

@@ -16,7 +16,10 @@ import {
   LANTERN_EMBER_BUFF_CAST_SHEET,
   LANTERN_EMBER_FIRELINE_CAST_SHEET,
   LANTERN_EMBER_SUMMON_SHEET,
+  MIST_BONE_ATTACK_SHEET,
+  MIST_BONE_CAGE_CAST_SHEET,
   MIST_BONE_CONFIG,
+  MIST_BONE_LINE_CAST_SHEET,
   MIRROR_DREAM_CONFIG,
   SPIDER_STRING_CAGE_CONFIG,
   SPIDER_STRING_ULTIMATE_CAST_SHEET,
@@ -93,6 +96,26 @@ export function drawBoss() {
     return;
   }
 
+  if (boss.id === BOSS_ARCHETYPE_IDS.mistBone && boss.actionState === "attack") {
+    const frame = Math.min(
+      MIST_BONE_ATTACK_SHEET.count - 1,
+      Math.floor(
+        Math.min(boss.actionTimer, MIST_BONE_CONFIG.attackDuration - 1)
+          / MIST_BONE_CONFIG.attackFrameDuration,
+      ),
+    );
+    drawSheetFrame(
+      MIST_BONE_ATTACK_SHEET,
+      frame,
+      centerX - archetype.castDrawW / 2,
+      feetY - archetype.castDrawH + archetype.castBottomPadding,
+      archetype.castDrawW,
+      archetype.castDrawH,
+      boss.castFacing,
+    );
+    return;
+  }
+
   if (boss.id === BOSS_ARCHETYPE_IDS.fangGale && boss.actionState === "dash") {
     const dashDuration = boss.skillMode === "fangGaleStorm"
       ? FANG_GALE_CONFIG.stormDashFrames
@@ -158,6 +181,11 @@ function bossCastSheet(boss: LiveBoss) {
   if (boss.id === BOSS_ARCHETYPE_IDS.bloodMoon) return bloodMoonCastSheet(boss);
   if (boss.id === BOSS_ARCHETYPE_IDS.spiderString && boss.skillMode === "spiderStringCage") {
     return SPIDER_STRING_ULTIMATE_CAST_SHEET;
+  }
+  if (boss.id === BOSS_ARCHETYPE_IDS.mistBone) {
+    if (boss.skillMode === "mistBoneLine") return MIST_BONE_LINE_CAST_SHEET;
+    if (boss.skillMode === "mistBoneCage") return MIST_BONE_CAGE_CAST_SHEET;
+    return archetype.sheets.cast;
   }
   if (boss.id !== BOSS_ARCHETYPE_IDS.lanternEmber) return archetype.sheets.cast;
   if (boss.skillMode === "lanternFireline") return LANTERN_EMBER_FIRELINE_CAST_SHEET;

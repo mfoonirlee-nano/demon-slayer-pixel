@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { GROUND_Y } from "../constants";
+import { GROUND_Y, MIST_BONE_CONFIG, MIST_BONE_DART_SHEET } from "../constants";
 import { resetState, state } from "../game/state";
 import { keys } from "../game/input";
 import type { ProjectileState } from "../types/game-state";
@@ -150,6 +150,47 @@ function activateGuardCounter(hitsRemaining = TEST_GUARD_COUNTER_HITS) {
     barrierFlash: 0,
   };
 }
+
+describe("Mist Bone darts", () => {
+  it("moves linearly and follows the sprite ping-pong cadence", () => {
+    resetState();
+    const dart: ProjectileState = {
+      kind: "bossBone",
+      x: 0,
+      y: 0,
+      w: MIST_BONE_CONFIG.dartHitW,
+      h: MIST_BONE_CONFIG.dartHitH,
+      vx: MIST_BONE_CONFIG.dartSpeed,
+      vy: MIST_BONE_CONFIG.dartVy,
+      life: MIST_BONE_CONFIG.dartLife,
+      damage: 0,
+      frame: 0,
+      elapsed: 0,
+    };
+    const expectedFrames = [0, 1, 2, MIST_BONE_DART_SHEET.count - 1, 2, 1];
+    const sampledFrames = [dart.frame];
+    state.projectiles.push(dart);
+
+    for (let sample = 1; sample < expectedFrames.length; sample += 1) {
+      for (let frame = 0; frame < MIST_BONE_CONFIG.dartFrameDuration; frame += 1) {
+        updateProjectiles();
+      }
+      sampledFrames.push(dart.frame);
+    }
+
+    expect(sampledFrames).toEqual(expectedFrames);
+    expect(dart.x).toBeCloseTo(
+      MIST_BONE_CONFIG.dartSpeed
+        * MIST_BONE_CONFIG.dartFrameDuration
+        * (expectedFrames.length - 1),
+    );
+    expect(dart.y).toBeCloseTo(
+      MIST_BONE_CONFIG.dartVy
+        * MIST_BONE_CONFIG.dartFrameDuration
+        * (expectedFrames.length - 1),
+    );
+  });
+});
 
 describe("caster wisps", () => {
   it("turns toward the player during the first five seconds", () => {

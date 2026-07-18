@@ -163,6 +163,13 @@
 | `boss/spider-string/boss_skill1_effect.png` | `2400x350` | 6 | `400x350` | `BOSS_SKILL1_EFFECT_SHEET` |
 | `boss/spider-string/boss_ultimate_cast.png` | `3200x400` | 8 | `400x400` | `SPIDER_STRING_ULTIMATE_CAST_SHEET` |
 | `boss/spider-string/boss_ultimate_web.png` | `3840x220` | 8 | `480x220` | `SPIDER_STRING_ULTIMATE_WEB_SHEET` |
+| `boss/mist-bone/mist_bone_move.png` | `1400x419` | 4 | `350x419` | `MIST_BONE_SHEET` |
+| `boss/mist-bone/mist_bone_attack.png` | `2400x400` | 6 | `400x400` | `MIST_BONE_ATTACK_SHEET` |
+| `boss/mist-bone/mist_bone_cast.png` | `2400x400` | 6 | `400x400` | `MIST_BONE_CAST_SHEET` |
+| `boss/mist-bone/mist_bone_line_cast.png` | `2400x400` | 6 | `400x400` | `MIST_BONE_LINE_CAST_SHEET` |
+| `boss/mist-bone/mist_bone_cage_cast.png` | `2400x400` | 6 | `400x400` | `MIST_BONE_CAGE_CAST_SHEET` |
+| `boss/mist-bone/mist_bone_spikes.png` | `2400x350` | 6 | `400x350` | `MIST_BONE_SPIKES_SHEET` |
+| `boss/mist-bone/mist_bone_dart.png` | `640x96` | 4 | `160x96` | `MIST_BONE_DART_SHEET` |
 | `boss/dead_bell/dead_bell.png` | `1400x419` | 4 | `350x419` | `DEAD_BELL_SHEET` |
 | `boss/dead_bell/dead_bell_cast.png` | `2400x400` | 6 | `400x400` | `DEAD_BELL_CAST_SHEET` |
 | `boss/dead_bell/dead_bell_wave.png` | `2400x350` | 6 | `400x350` | `DEAD_BELL_WAVE_SHEET` |
@@ -202,6 +209,8 @@
 | `boss/blood-moon-many-faces/blood_moon_many_faces_effect.png` | `5760x420` | 12 | `480x420` | `BLOOD_MOON_MANY_FACES_EFFECT_SHEET` |
 
 Boss 当前普通运行时轮换为 `蛛弦 -> 雾骨 -> 镜魇 -> 牙岚 -> 灯烬 -> 枯铃`，`bossKills >= 12` 后进入终幕 `万相血月`。`蛛弦` 使用 `spider-string/` 下的本体、蛛丝弹施法/特效、千丝牢笼施法和蛛网线特效图集；`镜魇` 使用 `mirror-dream/` 下的本体、共用施法、月镜碎片、假身留影和镜中噩梦图集；`牙岚` 使用 `fang-gale/` 下的本体移动、蓄力、扑咬冲刺和风牙裂波图集；`灯烬` 使用 `lantern-ember/` 下的本体、三张施法、召唤牵引、贴地火线、强化连线、蚀醒火线网格、灰烬减速区和死亡预留图集；`枯铃` 使用 `dead_bell/` 下的本体、摇铃施法、声波环和横向音刃图集。`mirror_shard.png` 用于可左右边界折返一次的反射弹；`mirror_afterimage.png` 用于不造成接触伤害的假身；`mirror_nightmare.png` 用于镜影破碎后朝玩家方向发射的碎光。`灯烬` 的蚀醒形态复用基础本体，运行时增加移动火线网格和灰烬减速区；当前击败流程仍沿用全局 Boss 即时结算，`lantern_ember_death.png` 和 `blood_moon_death.png` 作为后续死亡状态机素材预留。`万相血月` 使用 `blood-moon-many-faces/` 下的换相、恢复、五招施法和五招特效图集；击败后停止 Boss 重生，胜利结算 UI 尚未接入。以上 Boss 素材不提交 `*_source.png` 绿幕制作源图；运行时只加载透明 PNG。
+
+雾骨额外使用独立的雾骨钉普攻、单点埋骨、成列压地和蚀醒合围施法图集；普攻在第 4 帧从手部高度斜向下释放独立的 4 帧骨钉飞行循环。三种地刺施法共享原有伤害与预警时序，但用不同本体轮廓提前区分单点、横排和由外向内合围。
 
 Crawler 专属动作素材：
 

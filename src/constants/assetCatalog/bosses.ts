@@ -1,5 +1,7 @@
 import type { SpriteSheet } from "../../types/assets";
 
+export * from "./mistBone";
+
 export const BOSS_SHEET: SpriteSheet = {
   src: "assets/sprites/boss/spider-string/boss.png",
   frameW: 350,
@@ -18,30 +20,6 @@ export const BOSS_SKILL1_SHEET: SpriteSheet = {
 
 export const BOSS_SKILL1_EFFECT_SHEET: SpriteSheet = {
   src: "assets/sprites/boss/spider-string/boss_skill1_effect.png",
-  frameW: 400,
-  frameH: 350,
-  count: 6,
-  image: null,
-};
-
-export const MIST_BONE_SHEET: SpriteSheet = {
-  src: "assets/sprites/boss/mist-bone/mist_bone_move.png",
-  frameW: 350,
-  frameH: 419,
-  count: 4,
-  image: null,
-};
-
-export const MIST_BONE_CAST_SHEET: SpriteSheet = {
-  src: "assets/sprites/boss/mist-bone/mist_bone_cast.png",
-  frameW: 400,
-  frameH: 400,
-  count: 6,
-  image: null,
-};
-
-export const MIST_BONE_SPIKES_SHEET: SpriteSheet = {
-  src: "assets/sprites/boss/mist-bone/mist_bone_spikes.png",
   frameW: 400,
   frameH: 350,
   count: 6,

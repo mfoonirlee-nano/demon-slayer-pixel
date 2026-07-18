@@ -10,11 +10,10 @@ const RETREAT_PHASE_FORCE = 0.006;
 const STEERING_PHASE_FORCE = 0.004;
 const MOVE_COAST_DRAG = 0.86;
 const MAX_VELOCITY_PHASE_BONUS = 0.18;
+const ATTACK_SFX_PITCH = 1.06;
+const DART_SFX_PITCH = 1.08;
 const CAST_SFX_PITCH = 0.92;
-const CAGE_PHASE = 4;
-const CAGE_RANDOM_CHANCE = 0.28;
 const LINE_PHASE = 2;
-const LINE_RANDOM_CHANCE = 0.72;
 const COOLDOWN_PHASE_REDUCTION = 12;
 const CAGE_MIN_COOLDOWN = 176;
 const CAGE_COOLDOWN_BONUS = 32;
@@ -22,8 +21,19 @@ const LINE_MIN_COOLDOWN = 156;
 const SPIKE_MIN_COOLDOWN = 142;
 const SPIKE_COOLDOWN_BONUS = 18;
 const PATTERN_SFX_PITCH = 0.82;
+const BASE_PATTERN_SEQUENCE = ["mistBoneLine", "mistBoneSpike"] as const satisfies readonly BossSkillMode[];
+const AWAKENED_PATTERN_SEQUENCE = [
+  "mistBoneCage",
+  "mistBoneSpike",
+  "mistBoneLine",
+] as const satisfies readonly BossSkillMode[];
 
 export function updateMistBoneBoss(boss: LiveBoss) {
+  if (boss.actionState === "attack") {
+    updateMistBoneAttack(boss);
+    return;
+  }
+
   if (boss.recoveryTimer > 0) {
     boss.recoveryTimer -= 1;
     boss.vx *= MIST_BONE_CONFIG.drag;
@@ -58,8 +68,77 @@ export function updateMistBoneBoss(boss: LiveBoss) {
     return;
   }
 
+  if (shouldStartMistBoneAttack(boss)) {
+    startMistBoneAttack(boss);
+    return;
+  }
+
   moveMistBoneBoss(boss);
   damagePlayerOnContact(boss);
+}
+
+function updateMistBoneAttack(boss: LiveBoss) {
+  boss.vx = 0;
+  const shotCount = Math.min(MIST_BONE_CONFIG.attackMaxShots, Math.max(1, boss.phase));
+  const shotsFired = boss.comboStep ?? 0;
+  const nextReleaseFrame = MIST_BONE_CONFIG.attackReleaseFrame
+    + shotsFired * MIST_BONE_CONFIG.attackShotInterval;
+
+  if (shotsFired < shotCount && boss.actionTimer >= nextReleaseFrame) {
+    spawnMistBoneDart(boss);
+    boss.comboStep = shotsFired + 1;
+  }
+
+  if (boss.actionTimer >= MIST_BONE_CONFIG.attackDuration) {
+    boss.actionState = "move";
+    boss.actionTimer = 0;
+    boss.comboStep = undefined;
+  }
+}
+
+function shouldStartMistBoneAttack(boss: LiveBoss) {
+  if (boss.aiTimer > 0) return false;
+  const playerCenter = state.player.x + state.player.w / 2;
+  const bossCenter = boss.x + boss.w / 2;
+  const distance = Math.abs(playerCenter - bossCenter);
+  return distance >= MIST_BONE_CONFIG.attackMinDistance
+    && distance <= MIST_BONE_CONFIG.attackMaxDistance;
+}
+
+function startMistBoneAttack(boss: LiveBoss) {
+  const toPlayer = state.player.x + state.player.w / 2 - (boss.x + boss.w / 2);
+  boss.castFacing = toPlayer >= 0 ? 1 : -1;
+  boss.facing = boss.castFacing;
+  boss.actionState = "attack";
+  boss.actionTimer = 0;
+  boss.comboStep = 0;
+  boss.aiTimer = Math.max(
+    MIST_BONE_CONFIG.attackMinCooldown,
+    MIST_BONE_CONFIG.attackCooldown
+      - Math.max(0, boss.phase - 1) * MIST_BONE_CONFIG.attackCooldownPhaseReduction,
+  );
+  boss.vx = 0;
+  playSfx("bossCast", ATTACK_SFX_PITCH);
+}
+
+function spawnMistBoneDart(boss: LiveBoss) {
+  const centerX = boss.x + boss.w / 2
+    + boss.castFacing * MIST_BONE_CONFIG.dartSpawnOffsetX;
+  const centerY = boss.y + boss.h * MIST_BONE_CONFIG.dartSpawnYScale;
+  state.projectiles.push({
+    kind: "bossBone",
+    x: centerX - MIST_BONE_CONFIG.dartHitW / 2,
+    y: centerY - MIST_BONE_CONFIG.dartHitH / 2,
+    w: MIST_BONE_CONFIG.dartHitW,
+    h: MIST_BONE_CONFIG.dartHitH,
+    vx: boss.castFacing * (MIST_BONE_CONFIG.dartSpeed + boss.phase * MIST_BONE_CONFIG.dartSpeedPhase),
+    vy: MIST_BONE_CONFIG.dartVy,
+    life: MIST_BONE_CONFIG.dartLife,
+    damage: MIST_BONE_CONFIG.dartDamageBase + boss.phase * MIST_BONE_CONFIG.dartDamagePhase,
+    frame: 0,
+    elapsed: 0,
+  });
+  playSfx("bossProjectile", DART_SFX_PITCH);
 }
 
 function moveMistBoneBoss(boss: LiveBoss) {
@@ -96,6 +175,7 @@ function startMistBoneCast(boss: LiveBoss) {
   boss.skillEffectSpawned = false;
   boss.actionState = "cast";
   boss.actionTimer = 0;
+  boss.comboStep = undefined;
   boss.skillCd = mistBoneSkillCooldown(boss.skillMode, boss.phase);
   boss.vx = 0;
 
@@ -103,10 +183,12 @@ function startMistBoneCast(boss: LiveBoss) {
 }
 
 function nextMistBoneSkill(boss: LiveBoss): BossSkillMode {
-  const roll = Math.random();
-  if (boss.awakened && (boss.phase >= CAGE_PHASE || roll < CAGE_RANDOM_CHANCE)) return "mistBoneCage";
-  if (boss.phase >= LINE_PHASE && roll < LINE_RANDOM_CHANCE) return "mistBoneLine";
-  return "mistBoneSpike";
+  if (!boss.awakened && boss.phase < LINE_PHASE) return "mistBoneSpike";
+
+  const sequence = boss.awakened ? AWAKENED_PATTERN_SEQUENCE : BASE_PATTERN_SEQUENCE;
+  const patternStep = boss.mistBonePatternStep ?? 0;
+  boss.mistBonePatternStep = patternStep + 1;
+  return sequence[patternStep % sequence.length] as BossSkillMode;
 }
 
 function mistBoneSkillCooldown(skillMode: BossSkillMode, phase: number) {

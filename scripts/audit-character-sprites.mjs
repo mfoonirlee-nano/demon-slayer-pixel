@@ -130,8 +130,14 @@ const actors = [
   ]),
   boss("mist-bone", "血月眷属 · 雾骨", "mist-bone", [
     sheet("move", "assets/sprites/boss/mist-bone/mist_bone_move.png", 350, 419, 4, { primary: true }),
-    sheet("cast", "assets/sprites/boss/mist-bone/mist_bone_cast.png", 400, 400, 6),
-  ], ["assets/sprites/boss/mist-bone/mist_bone_spikes.png"]),
+    sheet("attack", "assets/sprites/boss/mist-bone/mist_bone_attack.png", 400, 400, 6),
+    sheet("pointCast", "assets/sprites/boss/mist-bone/mist_bone_cast.png", 400, 400, 6),
+    sheet("lineCast", "assets/sprites/boss/mist-bone/mist_bone_line_cast.png", 400, 400, 6),
+    sheet("cageCast", "assets/sprites/boss/mist-bone/mist_bone_cage_cast.png", 400, 400, 6),
+  ], [
+    "assets/sprites/boss/mist-bone/mist_bone_spikes.png",
+    "assets/sprites/boss/mist-bone/mist_bone_dart.png",
+  ]),
   boss("mirror-dream", "血月眷属 · 镜魇", "mirror-dream", [
     sheet("move", "assets/sprites/boss/mirror-dream/mirror_dream.png", 350, 419, 4, { primary: true }),
     sheet("cast", "assets/sprites/boss/mirror-dream/mirror_dream_cast.png", 400, 400, 6),
