@@ -112,35 +112,8 @@ export type BossPreludeToriiPlacement = {
 
 export type NearForegroundOccluder = EnemySpawnOccluderState;
 
-export type SpawnOccluderReveal = {
-  x: number;
-  y: number;
-  w: number;
-  h: number;
-  direction: number;
-  progress: number;
-};
-
-export type SpawnOccluderClip = {
-  x: number;
-  y: number;
-  w: number;
-  h: number;
-};
-
 function clamp01(value: number) {
   return Math.min(1, Math.max(0, value));
-}
-
-export function resolveSpawnOccluderClip(reveal: SpawnOccluderReveal): SpawnOccluderClip {
-  const progress = clamp01(reveal.progress);
-  const remainingW = reveal.w * (1 - progress);
-  return {
-    x: reveal.direction >= 0 ? reveal.x : reveal.x + reveal.w - remainingW,
-    y: reveal.y,
-    w: remainingW,
-    h: reveal.h,
-  };
 }
 
 export function resolveBossPreludeToriiPlacement(input: {
@@ -383,37 +356,6 @@ function occluderImageAndRegion(occluder: EnemySpawnOccluderState) {
     image: TORII_SPRITES.image,
     region: TORII_SPRITES.variants[occluder.variantIndex],
   };
-}
-
-export function drawNearForegroundOccluder(
-  occluder: EnemySpawnOccluderState,
-  elapsedDelta = 0,
-  reveal?: SpawnOccluderReveal,
-) {
-  const context = ctx;
-  if (!context) return;
-
-  const { image, region } = occluderImageAndRegion(occluder);
-  if (!image || !region) return;
-
-  const clip = reveal ? resolveSpawnOccluderClip(reveal) : null;
-  if (clip) {
-    context.save();
-    context.beginPath();
-    context.rect(clip.x, clip.y, clip.w, clip.h);
-    context.clip();
-  }
-
-  drawRegion(
-    context,
-    image,
-    region,
-    occluder.x - elapsedDelta * NEAR_FOREGROUND_SCROLL_SPEED,
-    occluder.y,
-    occluder.drawH,
-    occluder.alpha,
-  );
-  if (clip) context.restore();
 }
 
 function drawTrees(context: CanvasRenderingContext2D, pass: number, offset: number) {

@@ -24,7 +24,13 @@ import { drawBackground, drawGroundTileBase, drawGroundTileOcclusion } from "../
 import { drawNearForeground } from "../rendering/nearForeground";
 
 import { updatePlayer, drawPlayer, triggerAttack, castSelectedSkill, castUltimateSkill, selectSkill, tryJump } from "../entities/player";
-import { spawnEnemyById, spawnEnemyBySheetIndex, updateEnemies, drawEnemy } from "../entities/enemy";
+import {
+  drawEnemy,
+  isEnemyBehindSpawnOccluder,
+  spawnEnemyById,
+  spawnEnemyBySheetIndex,
+  updateEnemies,
+} from "../entities/enemy";
 import { updateBindingZones, drawBindingZonesBack, drawBindingZonesFront } from "../entities/enemies/binder";
 import {
   drawBruteFireballEffects,
@@ -74,7 +80,7 @@ import {
 } from "../entities/particle";
 import type { GameSnapshot } from "./gameStore";
 import type { SkillId } from "../types/assets";
-import type { EquipmentItemId, EquipmentSlot, SkillLevel } from "../types/game-state";
+import type { EnemyState, EquipmentItemId, EquipmentSlot, SkillLevel } from "../types/game-state";
 import { applyUpgradeChoice } from "../systems/progression";
 import { chooseBossEquipment as chooseBossEquipmentReward, equipEquipment as equipEquipmentInState } from "../systems/equipment";
 import { equipSkillSlot as equipSkillSlotInState, setSkillLevel as setSkillLevelInState, SKILL_SLOT_COUNT } from "../systems/loadout";
@@ -82,6 +88,19 @@ import { updateEnemyDirector } from "../systems/enemyDirector";
 import { markSpritesReady } from "../systems/runLifecycle";
 
 let frameId = 0;
+
+type EnemyLayerFilter = (enemy: EnemyState) => boolean;
+
+function isEnemyAboveNearForeground(enemy: EnemyState) {
+  return !isEnemyBehindSpawnOccluder(enemy);
+}
+
+function drawEnemyLayer(shouldDraw: EnemyLayerFilter) {
+  drawWardenAuraIndicators(shouldDraw);
+  for (const enemy of state.enemies) {
+    if (shouldDraw(enemy)) drawEnemy(enemy);
+  }
+}
 let running = false;
 let manualPaused = false;
 let publishState: (snapshot: GameSnapshot) => void = () => {};
@@ -313,6 +332,7 @@ function loop(ts: number) {
   }
 
   drawBackground();
+  drawEnemyLayer(isEnemyBehindSpawnOccluder);
   drawNearForeground();
   drawGroundTileBase();
   drawPlatforms();
@@ -352,8 +372,7 @@ function loop(ts: number) {
   drawGuardCounterEffect();
   drawSkillBursts();
   drawUltimateAfterimageSlashes();
-  drawWardenAuraIndicators();
-  for (const e of state.enemies) drawEnemy(e);
+  drawEnemyLayer(isEnemyAboveNearForeground);
   drawBoss();
   drawBossSkill1Effects();
   drawSpiderStringCageEffects();

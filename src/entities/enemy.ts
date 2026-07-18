@@ -7,6 +7,7 @@ import {
   ENEMY_CONFIG,
   ENEMY_BACKGROUND_SPAWN,
   LANTERN_EMBER_CONFIG,
+  NEAR_FOREGROUND_SCROLL_SPEED,
   PLAYER_COMBAT,
 } from "../constants";
 import type { ActBand, EnemyId, EnemySpawnSource, EnemyState, PlatformState, SpawnPattern } from "../types/game-state";
@@ -42,10 +43,8 @@ import {
 import { BOSS_ARCHETYPE_IDS } from "./bosses/registry";
 import { actBandForAct } from "../systems/runProgression";
 import {
-  drawNearForegroundOccluder,
   resolveNearForegroundOccluders,
   type NearForegroundOccluder,
-  type SpawnOccluderReveal,
 } from "../rendering/nearForeground";
 
 type SpawnEnemyOptions = {
@@ -172,7 +171,7 @@ function pickBackgroundOccluderSpawn(
     elapsed: state.elapsed,
     bossPreludeElapsed: state.enemyDirector.bossPrelude?.elapsed ?? null,
     act: state.enemyDirector.act,
-  }).filter((occluder) => occluderFitsEnemy(occluder, size));
+  }).filter((occluder) => occluder.source !== "torii" && occluderFitsEnemy(occluder, size));
   if (candidates.length === 0) return null;
 
   const actPropCandidates = candidates.filter((occluder) => occluder.source === "actProp");
@@ -190,11 +189,8 @@ function placeEnemyBehindBackgroundOccluder(enemy: EnemyState, occluder: NearFor
   enemy.vy = 0;
   enemy.onPlatform = null;
   enemy.spawnOccluder = { ...occluder };
-  // Regular spawn requests run before updateEnemies(), so the extra count preserves every reveal frame.
-  enemy.spawnOccluderFrames = ENEMY_BACKGROUND_SPAWN.coverFrames + 1;
   enemy.spawnOccluderStartedAt = state.elapsed;
   enemy.spawnOccluderDirection = occluderCenterX(occluder) < playerCenterX() ? 1 : -1;
-  enemy.spawnOccluderDirectionPending = true;
 }
 
 function spawnBody(enemy: EnemyState) {
@@ -218,10 +214,8 @@ function placeEnemyOnGround(enemy: EnemyState, side: number) {
   enemy.vy = 0;
   enemy.onPlatform = null;
   delete enemy.spawnOccluder;
-  delete enemy.spawnOccluderFrames;
   delete enemy.spawnOccluderStartedAt;
   delete enemy.spawnOccluderDirection;
-  delete enemy.spawnOccluderDirectionPending;
 
   for (let attempt = 0; attempt < SPAWN_PLACEMENT_ATTEMPTS; attempt += 1) {
     enemy.x = baseX + side * step * attempt;
@@ -435,26 +429,72 @@ export function spawnEnemyBySheetIndex(sheetIndex: number, side = 1, options: Sp
   state.enemies.push(createSpawnedEnemy(enemyId, side, "debug", options));
 }
 
+function spawnOccluderBounds(enemy: EnemyState) {
+  const occluder = enemy.spawnOccluder;
+  if (!occluder) return null;
+  const elapsedDelta = Math.max(
+    0,
+    state.elapsed - (enemy.spawnOccluderStartedAt ?? state.elapsed),
+  );
+  return {
+    x: occluder.x - elapsedDelta * NEAR_FOREGROUND_SCROLL_SPEED,
+    y: occluder.y,
+    w: occluder.drawW,
+    h: occluder.drawH,
+  };
+}
+
+function enemySpawnVisualBounds(enemy: EnemyState) {
+  const archetype = enemyArchetypeForSheet(enemy.sheetIndex);
+  const visualSize = enemyVisualSize(enemy.sheetIndex, archetype);
+  return {
+    x: enemy.x + enemy.w / 2 - visualSize.w / 2,
+    y: enemy.y + enemy.h - visualSize.h,
+    w: visualSize.w,
+    h: visualSize.h,
+  };
+}
+
+export function isEnemyBehindSpawnOccluder(enemy: EnemyState) {
+  const occluderBounds = spawnOccluderBounds(enemy);
+  return occluderBounds !== null && hitbox(enemySpawnVisualBounds(enemy), occluderBounds);
+}
+
+function clearSpawnOccluder(enemy: EnemyState) {
+  delete enemy.spawnOccluder;
+  delete enemy.spawnOccluderStartedAt;
+  delete enemy.spawnOccluderDirection;
+}
+
+function updateSpawnOccluderEntry(enemy: EnemyState) {
+  if (!enemy.spawnOccluder) return false;
+  if (!isEnemyBehindSpawnOccluder(enemy)) {
+    clearSpawnOccluder(enemy);
+    return false;
+  }
+
+  const direction = enemy.spawnOccluderDirection ?? (enemy.vx >= 0 ? 1 : -1);
+  const speed = Math.max(Math.abs(enemy.vx), ENEMY_BACKGROUND_SPAWN.emergeMinSpeed);
+  enemy.vx = direction * speed;
+  enemy.x += enemy.vx;
+  if (!isEnemyBehindSpawnOccluder(enemy)) clearSpawnOccluder(enemy);
+  return true;
+}
+
 export function updateEnemies() {
   for (let i = state.enemies.length - 1; i >= 0; i -= 1) {
     const enemy = state.enemies[i];
     const lanternBuffed = (enemy.lanternBuffTimer ?? 0) > 0;
     enemy.hitCd -= 1;
-    if ((enemy.spawnOccluderFrames ?? 0) > 0) {
-      enemy.spawnOccluderFrames = Math.max(0, (enemy.spawnOccluderFrames ?? 0) - 1);
-    }
     if ((enemy.armorBreakTimer ?? 0) > 0) {
       enemy.armorBreakTimer = Math.max(0, (enemy.armorBreakTimer ?? 0) - 1);
     }
 
     const archetype = enemyArchetypeForSheet(enemy.sheetIndex);
+    if (updateSpawnOccluderEntry(enemy)) continue;
     const usesPlatformPhysics = enemyUsesPlatformPhysics(enemy);
     const prevBottom = usesPlatformPhysics ? prepareEnemyPlatformPhysics(enemy) : 0;
     archetype.update(enemy);
-    if (enemy.spawnOccluderDirectionPending) {
-      if (enemy.vx !== 0) enemy.spawnOccluderDirection = Math.sign(enemy.vx);
-      enemy.spawnOccluderDirectionPending = false;
-    }
     if (archetype.shouldRemove?.(enemy)) {
       state.enemies.splice(i, 1);
       continue;
@@ -475,7 +515,11 @@ export function updateEnemies() {
     const enemy = state.enemies[i];
     const lanternBuffed = (enemy.lanternBuffTimer ?? 0) > 0;
     const archetype = enemyArchetypeForSheet(enemy.sheetIndex);
-    if (!archetype.contactDamageDisabled?.(enemy) && hitbox(state.player, enemy)) {
+    if (
+      !isEnemyBehindSpawnOccluder(enemy)
+      && !archetype.contactDamageDisabled?.(enemy)
+      && hitbox(state.player, enemy)
+    ) {
       const damage = lanternBuffed
         ? enemyAttackDamage(enemy, enemy.damage * LANTERN_EMBER_CONFIG.buffDamageScale)
         : enemyAttackDamage(enemy, enemy.damage);
@@ -488,37 +532,8 @@ export function updateEnemies() {
   }
 }
 
-function spawnOccluderRevealForEnemy(
-  enemy: EnemyState,
-  archetype: ReturnType<typeof enemyArchetypeForSheet>,
-): SpawnOccluderReveal {
-  const visualSize = enemyVisualSize(enemy.sheetIndex, archetype);
-  const revealW = Math.round(visualSize.w * ENEMY_BACKGROUND_SPAWN.revealBoundsScale);
-  const revealH = Math.round(visualSize.h * ENEMY_BACKGROUND_SPAWN.revealBoundsScale);
-  const remainingFrames = Math.min(
-    ENEMY_BACKGROUND_SPAWN.coverFrames,
-    enemy.spawnOccluderFrames ?? 0,
-  );
-
-  return {
-    x: enemy.x + enemy.w / 2 - revealW / 2,
-    y: enemy.y + enemy.h - revealH,
-    w: revealW,
-    h: revealH,
-    direction: enemy.spawnOccluderDirection ?? (enemy.vx >= 0 ? 1 : -1),
-    progress: 1 - remainingFrames / ENEMY_BACKGROUND_SPAWN.coverFrames,
-  };
-}
-
 export function drawEnemy(enemy: EnemyState) {
   const archetype = enemyArchetypeForSheet(enemy.sheetIndex);
   archetype.draw(enemy);
   drawEnemyEliteMarker(enemy, archetype);
-  if (enemy.spawnOccluder && (enemy.spawnOccluderFrames ?? 0) > 0) {
-    drawNearForegroundOccluder(
-      enemy.spawnOccluder,
-      Math.max(0, state.elapsed - (enemy.spawnOccluderStartedAt ?? state.elapsed)),
-      spawnOccluderRevealForEnemy(enemy, archetype),
-    );
-  }
 }

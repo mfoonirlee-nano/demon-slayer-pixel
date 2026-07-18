@@ -1,6 +1,15 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { PLATFORM_SPRITES, PLAYER_ANIMATION_STATES, PLAYER_COMBAT, PLAYER_SHEETS } from "../constants";
+import {
+  ENEMY_SHEETS,
+  PLATFORM_SPRITES,
+  PLAYER_ANIMATION_STATES,
+  PLAYER_COMBAT,
+  PLAYER_SHEETS,
+  WARDEN_BLOOD_MOON_BUFF_SHEET,
+} from "../constants";
+import { spawnEnemyBySheetIndex } from "../entities/enemy";
 import { setCanvas } from "../rendering/context";
+import { drawNearForeground } from "../rendering/nearForeground";
 import { resetState, state } from "./state";
 import { startGame, stopGame, updateUltimateCastFreezeFrame } from "./runtime";
 
@@ -26,12 +35,17 @@ type MockCanvasContext = CanvasRenderingContext2D & {
 
 const PLAYER_IMAGE = {} as HTMLImageElement;
 const PLATFORM_IMAGE = {} as HTMLImageElement;
+const ENEMY_IMAGE = {} as HTMLImageElement;
+const FOREGROUND_IMAGE = {} as HTMLImageElement;
+const ENEMY_BUFF_IMAGE = {} as HTMLImageElement;
 const TEST_FRAME_TIME = 16;
 const ULTIMATE_FREEZE_SKILL_TIMER = 7;
 const ULTIMATE_FREEZE_VELOCITY_X = 4;
 const ULTIMATE_FREEZE_VELOCITY_Y = 5;
 const ULTIMATE_FREEZE_ELAPSED = 42;
 const ULTIMATE_FREEZE_PLATFORM_SPAWN_TIMER = 3;
+const SPAWN_OCCLUDER_TEST_PADDING = 200;
+const SPAWN_OCCLUDER_TEST_SIZE = 400;
 
 function createMockContext(): MockCanvasContext {
   return {
@@ -51,12 +65,16 @@ function createMockContext(): MockCanvasContext {
 describe("game runtime", () => {
   beforeEach(() => {
     resetState();
+    vi.clearAllMocks();
+    vi.mocked(drawNearForeground).mockReset();
   });
 
   afterEach(() => {
     stopGame();
     PLAYER_SHEETS[PLAYER_ANIMATION_STATES.idle].image = null;
     PLATFORM_SPRITES.image = null;
+    ENEMY_SHEETS[0].image = null;
+    WARDEN_BLOOD_MOON_BUFF_SHEET.image = null;
     setCanvas(null);
     vi.unstubAllGlobals();
   });
@@ -202,5 +220,69 @@ describe("game runtime", () => {
     state.player.onPlatform = platform;
     const afterLanding = drawFrame();
     expect(afterLanding.platformDrawIndex).toBeGreaterThan(afterLanding.playerDrawIndex);
+  });
+
+  it("draws a covered enemy behind the near foreground until it emerges", () => {
+    const frameQueue: { callback?: FrameRequestCallback } = {};
+    vi.stubGlobal("requestAnimationFrame", vi.fn((callback: FrameRequestCallback) => {
+      frameQueue.callback = callback;
+      return 1;
+    }));
+    vi.stubGlobal("cancelAnimationFrame", vi.fn());
+    const context = createMockContext();
+    setCanvas({ getContext: () => context } as unknown as HTMLCanvasElement);
+    vi.mocked(drawNearForeground).mockImplementation(() => {
+      context.drawImage(FOREGROUND_IMAGE, 0, 0);
+    });
+    PLAYER_SHEETS[PLAYER_ANIMATION_STATES.idle].image = PLAYER_IMAGE;
+    ENEMY_SHEETS[0].image = ENEMY_IMAGE;
+    WARDEN_BLOOD_MOON_BUFF_SHEET.image = ENEMY_BUFF_IMAGE;
+    state.spritesReady = true;
+
+    startGame();
+    state.gameOver = true;
+    spawnEnemyBySheetIndex(0);
+
+    const coveredEnemy = state.enemies[0];
+    coveredEnemy.spawnOccluder = {
+      source: "actProp",
+      variantIndex: 0,
+      x: coveredEnemy.x - SPAWN_OCCLUDER_TEST_PADDING,
+      y: coveredEnemy.y - SPAWN_OCCLUDER_TEST_PADDING,
+      drawW: SPAWN_OCCLUDER_TEST_SIZE,
+      drawH: SPAWN_OCCLUDER_TEST_SIZE,
+      alpha: 1,
+    };
+    coveredEnemy.spawnOccluderStartedAt = state.elapsed;
+    coveredEnemy.spawnOccluderDirection = 1;
+    coveredEnemy.wardenBuffedFrames = 1;
+
+    const drawFrame = () => {
+      context.drawImage.mockClear();
+      frameQueue.callback?.(TEST_FRAME_TIME);
+      const enemyDraws = context.drawImage.mock.calls.filter(([image]) => image === ENEMY_IMAGE);
+      const buffDraws = context.drawImage.mock.calls.filter(([image]) => image === ENEMY_BUFF_IMAGE);
+      const foregroundDraws = context.drawImage.mock.calls.filter(([image]) => image === FOREGROUND_IMAGE);
+      expect(enemyDraws).toHaveLength(1);
+      expect(buffDraws).toHaveLength(1);
+      expect(foregroundDraws).toHaveLength(1);
+      return {
+        enemyDrawIndex: context.drawImage.mock.calls.findIndex(([image]) => image === ENEMY_IMAGE),
+        buffDrawIndex: context.drawImage.mock.calls.findIndex(([image]) => image === ENEMY_BUFF_IMAGE),
+        foregroundDrawIndex: context.drawImage.mock.calls.findIndex(([image]) => image === FOREGROUND_IMAGE),
+      };
+    };
+
+    const coveredFrame = drawFrame();
+    expect(coveredFrame.enemyDrawIndex).toBeLessThan(coveredFrame.foregroundDrawIndex);
+    expect(coveredFrame.buffDrawIndex).toBeLessThan(coveredFrame.foregroundDrawIndex);
+
+    coveredEnemy.x = coveredEnemy.spawnOccluder.x
+      + coveredEnemy.spawnOccluder.drawW
+      + SPAWN_OCCLUDER_TEST_PADDING;
+    const emergedFrame = drawFrame();
+    expect(state.enemies[0]).toBe(coveredEnemy);
+    expect(emergedFrame.enemyDrawIndex).toBeGreaterThan(emergedFrame.foregroundDrawIndex);
+    expect(emergedFrame.buffDrawIndex).toBeGreaterThan(emergedFrame.foregroundDrawIndex);
   });
 });

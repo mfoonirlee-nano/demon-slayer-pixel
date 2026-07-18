@@ -12,7 +12,6 @@ import {
   BOSS_PRELUDE_TORII_DRAW_H,
   resolveNearForegroundOccluders,
   resolveBossPreludeToriiPlacement,
-  resolveSpawnOccluderClip,
 } from "./nearForeground";
 
 const ACT_ONE = 1;
@@ -24,11 +23,6 @@ const FINAL_ACT = 13;
 const ACTS = Array.from({ length: FINAL_ACT }, (_, index) => index + 1);
 const MAX_GROUNDED_ENEMY_DRAW_WIDTH = 142;
 const MAX_GROUNDED_ENEMY_DRAW_HEIGHT = 160;
-const REVEAL_X = 100;
-const REVEAL_Y = 200;
-const REVEAL_WIDTH = 80;
-const REVEAL_HEIGHT = 120;
-const HALF_REVEAL_WIDTH = REVEAL_WIDTH / 2;
 
 describe("near foreground placement", () => {
   it("does not draw the torii outside the boss prelude", () => {
@@ -139,41 +133,4 @@ describe("near foreground placement", () => {
     expect(actProps.every((occluder) => occluder.alpha === 1)).toBe(true);
   });
 
-  it("reveals a covered enemy from its direction of travel", () => {
-    const baseReveal = {
-      x: REVEAL_X,
-      y: REVEAL_Y,
-      w: REVEAL_WIDTH,
-      h: REVEAL_HEIGHT,
-      progress: 0.5,
-    };
-
-    expect(resolveSpawnOccluderClip({ ...baseReveal, direction: 1 })).toEqual({
-      x: REVEAL_X,
-      y: REVEAL_Y,
-      w: HALF_REVEAL_WIDTH,
-      h: REVEAL_HEIGHT,
-    });
-    expect(resolveSpawnOccluderClip({ ...baseReveal, direction: -1 })).toEqual({
-      x: REVEAL_X + HALF_REVEAL_WIDTH,
-      y: REVEAL_Y,
-      w: HALF_REVEAL_WIDTH,
-      h: REVEAL_HEIGHT,
-    });
-    expect(resolveSpawnOccluderClip({
-      ...baseReveal,
-      direction: 1,
-      progress: 0,
-    })).toEqual({
-      x: REVEAL_X,
-      y: REVEAL_Y,
-      w: REVEAL_WIDTH,
-      h: REVEAL_HEIGHT,
-    });
-    expect(resolveSpawnOccluderClip({
-      ...baseReveal,
-      direction: 1,
-      progress: 1,
-    }).w).toBe(0);
-  });
 });

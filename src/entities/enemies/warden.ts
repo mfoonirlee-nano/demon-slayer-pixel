@@ -370,12 +370,12 @@ function drawBuffMark(enemy: EnemyState) {
   ctx.restore();
 }
 
-export function drawWardenAuraIndicators() {
+export function drawWardenAuraIndicators(shouldDraw: (enemy: EnemyState) => boolean) {
   for (const enemy of state.enemies) {
-    drawAuraRing(enemy);
+    if (shouldDraw(enemy)) drawAuraRing(enemy);
   }
   for (const enemy of state.enemies) {
-    drawBuffMark(enemy);
+    if (shouldDraw(enemy)) drawBuffMark(enemy);
   }
 }
 

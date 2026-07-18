@@ -271,10 +271,8 @@ export type EnemyState = {
   wardenAttackDamageScale?: number;
   wardenDamageImmune?: boolean;
   spawnOccluder?: EnemySpawnOccluderState;
-  spawnOccluderFrames?: number;
   spawnOccluderStartedAt?: number;
   spawnOccluderDirection?: number;
-  spawnOccluderDirectionPending?: boolean;
   burrowerPhase?: BurrowerPhase;
   burrowerTimer?: number;
   burrowerPhaseDuration?: number;

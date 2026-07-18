@@ -9,6 +9,7 @@ import { enemyVisualSize } from "./enemies/common";
 import { enemyArchetypeForSheet } from "./enemies/registry";
 import {
   backgroundOccluderSpawnChanceForAct,
+  isEnemyBehindSpawnOccluder,
   spawnEnemyById,
   updateEnemies,
 } from "./enemy";
@@ -32,8 +33,13 @@ const INTRO_OCCLUDER_TEST_ACT = 1;
 const FINAL_ACT = 13;
 const OCCLUDER_TEST_ELAPSED = 0;
 const FIRST_RANDOM_VALUE = 0;
+const LAST_RANDOM_VALUE = 0.999;
 const HALF_DIVISOR = 2;
 const SECOND_SPAWN_INDEX = 1;
+const FRAMES_PER_SECOND = 60;
+const TEST_FRAME_SECONDS = 1 / FRAMES_PER_SECOND;
+const BACKGROUND_ENTRY_FRAME_GUARD = 240;
+const BOSS_PRELUDE_TORII_CANDIDATE_ELAPSED = 7.75;
 
 const CHASER_TEST_BASE_SPEED = 2;
 const CHASER_NEAR_SPEED_SCALE = 1.5;
@@ -41,7 +47,6 @@ const CHASER_NEAR_SPEED = CHASER_TEST_BASE_SPEED * CHASER_NEAR_SPEED_SCALE;
 const CHASER_FAR_PLAYER_OFFSET = 260;
 const CHASER_NEAR_PLAYER_OFFSET = 120;
 const PLAYER_OVERLAP_ACT_PROP_X = 400;
-const RANGED_RETREAT_PLAYER_X = 300;
 
 function platform(overrides: Partial<PlatformState> = {}): PlatformState {
   return {
@@ -370,7 +375,6 @@ describe("enemy background occluder spawns", () => {
 
     expect(runner.onPlatform).toBeNull();
     expect(runner.spawnOccluder).toEqual(expectedOccluder);
-    expect(runner.spawnOccluderFrames).toBe(ENEMY_BACKGROUND_SPAWN.coverFrames + 1);
     expect(runner.spawnOccluderStartedAt).toBe(OCCLUDER_TEST_ELAPSED);
     expect(runner.y + runner.h).toBe(GROUND_Y);
     expect(runner.x + runner.w / HALF_DIVISOR).toBeCloseTo(occluderCenterX(expectedOccluder));
@@ -380,10 +384,16 @@ describe("enemy background occluder spawns", () => {
       expectedOccluder.x + expectedOccluder.drawW <= state.player.x
       || expectedOccluder.x >= state.player.x + state.player.w,
     ).toBe(true);
+    expect(isEnemyBehindSpawnOccluder(runner)).toBe(true);
 
-    updateEnemies();
+    for (let frame = 0; frame < BACKGROUND_ENTRY_FRAME_GUARD && runner.spawnOccluder; frame += 1) {
+      state.elapsed += TEST_FRAME_SECONDS;
+      updateEnemies();
+    }
 
-    expect(runner.spawnOccluderFrames).toBe(ENEMY_BACKGROUND_SPAWN.coverFrames);
+    expect(state.enemies[0]).toBe(runner);
+    expect(runner.spawnOccluder).toBeUndefined();
+    expect(isEnemyBehindSpawnOccluder(runner)).toBe(false);
   });
 
   it("lets early regular enemies emerge from act scenery", () => {
@@ -398,9 +408,71 @@ describe("enemy background occluder spawns", () => {
     expect(runner.y + runner.h).toBe(GROUND_Y);
     expect(runner.onPlatform).toBeNull();
     expect(runner.spawnOccluder?.source).toBe("actProp");
-    expect(runner.spawnOccluderFrames).toBe(ENEMY_BACKGROUND_SPAWN.coverFrames + 1);
     expect(runner.spawnOccluderStartedAt).toBe(OCCLUDER_TEST_ELAPSED);
     expect(runner.x).not.toBe(ENEMY_CONFIG.spawnOffsetLeft);
+  });
+
+  it("moves a stationary backliner out before resuming its attack AI", () => {
+    resetState();
+    state.enemyDirector.act = BACKGROUND_OCCLUDER_TEST_ACT;
+    state.elapsed = OCCLUDER_TEST_ELAPSED;
+    vi.spyOn(Math, "random").mockReturnValue(FIRST_RANDOM_VALUE);
+
+    expect(spawnEnemyById("caster", "regular", "left")).toBe(true);
+
+    const caster = state.enemies[0];
+    const startX = caster.x;
+    caster.vx = 0;
+    caster.casterPhase = "windup";
+    caster.casterTimer = 1;
+
+    updateEnemies();
+
+    expect(Math.abs(caster.x - startX)).toBeCloseTo(ENEMY_BACKGROUND_SPAWN.emergeMinSpeed);
+    expect(caster.casterPhase).toBe("windup");
+    expect(caster.casterTimer).toBe(1);
+    expect(state.projectiles).toHaveLength(0);
+  });
+
+  it("does not deal contact damage before the enemy clears its spawn occluder", () => {
+    resetState();
+    state.enemyDirector.act = BACKGROUND_OCCLUDER_TEST_ACT;
+    state.elapsed = OCCLUDER_TEST_ELAPSED;
+    vi.spyOn(Math, "random").mockReturnValue(FIRST_RANDOM_VALUE);
+
+    expect(spawnEnemyById("caster", "regular", "left")).toBe(true);
+
+    const caster = state.enemies[0];
+    state.player.x = caster.x + caster.w / HALF_DIVISOR - state.player.w / HALF_DIVISOR;
+    state.player.y = caster.y + caster.h - state.player.h;
+    const hpBeforeEntry = state.player.hp;
+
+    expect(isEnemyBehindSpawnOccluder(caster)).toBe(true);
+    updateEnemies();
+
+    expect(isEnemyBehindSpawnOccluder(caster)).toBe(true);
+    expect(state.player.hp).toBe(hpBeforeEntry);
+  });
+
+  it("does not use the moving boss-prelude torii as a spawn occluder", () => {
+    resetState();
+    state.enemyDirector.act = BACKGROUND_OCCLUDER_TEST_ACT;
+    state.elapsed = OCCLUDER_TEST_ELAPSED;
+    state.player.x = PLAYER_OVERLAP_ACT_PROP_X;
+    state.enemyDirector.bossPrelude = {
+      elapsed: BOSS_PRELUDE_TORII_CANDIDATE_ELAPSED,
+      reinforcementTimer: 0,
+      reinforcementsSpawned: 0,
+    };
+    vi.spyOn(Math, "random")
+      .mockReturnValueOnce(FIRST_RANDOM_VALUE)
+      .mockReturnValueOnce(LAST_RANDOM_VALUE)
+      .mockReturnValue(FIRST_RANDOM_VALUE);
+
+    expect(spawnEnemyById("runner", "regular", "left")).toBe(true);
+
+    expect(state.enemies[0].spawnOccluder).toBeDefined();
+    expect(state.enemies[0].spawnOccluder?.source).not.toBe("torii");
   });
 
   it("keeps airborne enemies on their dedicated entry path", () => {
@@ -413,8 +485,8 @@ describe("enemy background occluder spawns", () => {
 
     const glider = state.enemies[0];
     expect(glider.spawnOccluder).toBeUndefined();
-    expect(glider.spawnOccluderFrames).toBeUndefined();
     expect(glider.spawnOccluderStartedAt).toBeUndefined();
+    expect(glider.spawnOccluderDirection).toBeUndefined();
   });
 
   it.each(["leaper", "burrower"] as const)(
@@ -447,24 +519,4 @@ describe("enemy background occluder spawns", () => {
     ).toBe(true);
   });
 
-  it("captures the first actual retreat direction for the reveal", () => {
-    resetState();
-    state.enemyDirector.act = AWAKENED_ACT;
-    state.elapsed = OCCLUDER_TEST_ELAPSED;
-    state.player.x = RANGED_RETREAT_PLAYER_X;
-    vi.spyOn(Math, "random").mockReturnValue(FIRST_RANDOM_VALUE);
-
-    expect(spawnEnemyById("caster", "regular", "left")).toBe(true);
-
-    const caster = state.enemies[0];
-    expect(caster.spawnOccluder?.source).toBe("actProp");
-    expect(caster.spawnOccluderDirectionPending).toBe(true);
-    expect(caster.spawnOccluderDirection).toBe(-1);
-
-    updateEnemies();
-
-    expect(caster.vx).toBeGreaterThan(0);
-    expect(caster.spawnOccluderDirection).toBe(1);
-    expect(caster.spawnOccluderDirectionPending).toBe(false);
-  });
 });

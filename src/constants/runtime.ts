@@ -12,8 +12,7 @@ export const ENEMY_BACKGROUND_SPAWN = {
   standardChancePerAct: 0.045,
   earlyChancePerAct: 0.015,
   maxChance: 0.45,
-  coverFrames: 36,
-  revealBoundsScale: 1.5,
+  emergeMinSpeed: 2.4,
 } as const;
 
 export const UI_COPY = {
