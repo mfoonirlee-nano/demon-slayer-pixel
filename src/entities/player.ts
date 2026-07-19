@@ -13,7 +13,7 @@ import {
 } from "../constants";
 import { onGround, hitbox, overlapHitPoint } from "../game/utils";
 import { playSfx } from "../game/audio";
-import { emitSlash, emitHitBurst, damageDashRepositionTravel, finishDashRepositionSkill } from "./particle";
+import { emitFallAttackSplash, emitSlash, emitHitBurst, damageDashRepositionTravel, finishDashRepositionSkill } from "./particle";
 import {
   bindingZonePlayerMoveScale,
   isBinderTalismanKeyScrambled,
@@ -60,7 +60,6 @@ const DASH_REPOSITION_INVINCIBLE_REFRESH_FRAMES = 2;
 const FALL_ATTACK_ENEMY_SLASH_SCALE = 1.25;
 const FALL_ATTACK_BOSS_SLASH_SCALE = 0.9;
 const FALL_ATTACK_BOSS_BURST_BONUS = 0.6;
-const FALL_ATTACK_GROUND_SLASH_Y_OFFSET = 8;
 const FALL_ATTACK_GROUND_BURST_Y_OFFSET = 6;
 const FALL_ATTACK_GROUND_SLASH_SCALE = 0.8;
 const FALL_ATTACK_GROUND_BURST_BONUS = 0.4;
@@ -254,7 +253,7 @@ function triggerFallAttackImpact() {
     }
   }
 
-  emitSlash(cx, impactY - FALL_ATTACK_GROUND_SLASH_Y_OFFSET, box.color, FALL_ATTACK.radius * FALL_ATTACK_GROUND_SLASH_SCALE);
+  emitFallAttackSplash(cx, impactY, box.color, FALL_ATTACK.radius * FALL_ATTACK_GROUND_SLASH_SCALE);
   emitHitBurst(
     cx,
     impactY - FALL_ATTACK_GROUND_BURST_Y_OFFSET,

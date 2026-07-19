@@ -271,7 +271,7 @@ export type BruteGuardReflectionState = {
 };
 
 export type ParticleState = {
-  kind?: "leaperRock";
+  kind?: "fallAttackSplash" | "leaperRock";
   x: number;
   y: number;
   vx: number;

@@ -6,6 +6,7 @@ import {
   PLAYER_SHEETS,
   SKILL_IDS,
 } from "../constants";
+import { keys } from "../game/input";
 import { resetState, state } from "../game/state";
 import { spawnEnemyById } from "./enemy";
 import { updateCloseArcBasicCrescentEffects } from "./particle";
@@ -48,6 +49,10 @@ function advanceAttackToBasicCrescentFrame() {
 
 function advanceThroughAttack() {
   while (state.player.attackTimer > 0) updatePlayer();
+}
+
+function fallAttackSplashParticles() {
+  return state.particles.filter((particle) => particle.kind === "fallAttackSplash");
 }
 
 describe("close arc basic attack crescent", () => {
@@ -128,5 +133,42 @@ describe("close arc basic attack crescent", () => {
     updateCloseArcBasicCrescentEffects();
 
     expect(enemy.hp).toBeCloseTo(TEST_ENEMY_HP - expectedDamage);
+  });
+});
+
+describe("fall attack landing feedback", () => {
+  beforeEach(() => {
+    resetState();
+    keys.clear();
+  });
+
+  it("does not emit a water splash for a normal landing", () => {
+    state.player.y = GROUND_Y - state.player.h - 1;
+    state.player.vy = 1;
+
+    updatePlayer();
+
+    expect(fallAttackSplashParticles()).toHaveLength(0);
+  });
+
+  it("emits one aligned water splash when a fall attack lands", () => {
+    state.player.x = 240;
+    state.player.y = GROUND_Y - state.player.h - 1;
+    const expectedX = state.player.x + state.player.w / 2;
+    keys.add("s");
+
+    triggerAttack();
+    updatePlayer();
+
+    const splashParticles = fallAttackSplashParticles();
+    expect(splashParticles.length).toBeGreaterThan(0);
+    expect(splashParticles.every(({ x, y }) => x === expectedX && y === GROUND_Y)).toBe(true);
+    expect(splashParticles.some(({ vx }) => vx < 0)).toBe(true);
+    expect(splashParticles.some(({ vx }) => vx > 0)).toBe(true);
+    expect(splashParticles.every(({ vy }) => vy < 0)).toBe(true);
+    expect(splashParticles.every(({ gravity }) => (gravity ?? 0) > 0)).toBe(true);
+
+    updatePlayer();
+    expect(fallAttackSplashParticles()).toHaveLength(splashParticles.length);
   });
 });

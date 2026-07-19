@@ -7,6 +7,22 @@ import { skillById } from "../../systems/loadout";
 const FULL_CIRCLE_RADIANS = Math.PI * 2;
 const DEFAULT_HIT_BURST_COLOR = "#9feaff";
 const SLASH_VERTICAL_SPREAD_SCALE = 0.6;
+const FALL_ATTACK_SPLASH = {
+  count: 16,
+  // Sample each angular slice at its center so edge droplets lift above the ground.
+  angleBinCenterOffset: 0.5,
+  speedBase: 3.6,
+  speedVariance: 2.4,
+  sizeBase: 2.5,
+  sizeVariance: 3,
+  lifeBase: 22,
+  lifeVariance: 12,
+  gravity: 0.25,
+  velocityFade: 0.985,
+  dropletLengthScale: 1.8,
+  groundSlashYOffset: 8,
+  colors: ["#d2f8ff", "#9feaff", "#50cdff"],
+} as const;
 const ROCK_OUTLINE_COLOR = "#2a1b1b";
 const ROCK_INSET = 1;
 let nextParticleReplacementIndex = 0;
@@ -114,6 +130,27 @@ function resetSpark(spark: SparkState, index: number, count: number, power: numb
 export function emitSlash(x: number, y: number, color: string, spread: number = PARTICLE_CONFIG.slashDefaultSpread) {
   for (let i = 0; i < PARTICLE_CONFIG.slashCount; i += 1) {
     resetSlashParticle(writableParticle(), x, y, color, spread);
+  }
+}
+
+export function emitFallAttackSplash(x: number, y: number, color: string, spread: number) {
+  emitSlash(x, y - FALL_ATTACK_SPLASH.groundSlashYOffset, color, spread);
+  for (let index = 0; index < FALL_ATTACK_SPLASH.count; index += 1) {
+    const progress = (index + FALL_ATTACK_SPLASH.angleBinCenterOffset) / FALL_ATTACK_SPLASH.count;
+    const angle = -Math.PI + progress * Math.PI;
+    const speed = FALL_ATTACK_SPLASH.speedBase + Math.random() * FALL_ATTACK_SPLASH.speedVariance;
+    emitParticle({
+      kind: "fallAttackSplash",
+      x,
+      y,
+      vx: Math.cos(angle) * speed,
+      vy: Math.sin(angle) * speed,
+      life: FALL_ATTACK_SPLASH.lifeBase + Math.random() * FALL_ATTACK_SPLASH.lifeVariance,
+      color: FALL_ATTACK_SPLASH.colors[index % FALL_ATTACK_SPLASH.colors.length],
+      size: FALL_ATTACK_SPLASH.sizeBase + Math.random() * FALL_ATTACK_SPLASH.sizeVariance,
+      fade: FALL_ATTACK_SPLASH.velocityFade,
+      gravity: FALL_ATTACK_SPLASH.gravity,
+    });
   }
 }
 
@@ -251,6 +288,20 @@ export function drawParticles() {
   if (!ctx) return;
   for (const p of state.particles) {
     const size = p.size || PARTICLE_CONFIG.defaultSize;
+    if (p.kind === "fallAttackSplash") {
+      ctx.save();
+      ctx.translate(p.x, p.y);
+      ctx.rotate(Math.atan2(p.vy, p.vx) + Math.PI / 2);
+      ctx.fillStyle = p.color;
+      ctx.fillRect(
+        -size / 2,
+        -size * FALL_ATTACK_SPLASH.dropletLengthScale,
+        size,
+        size * FALL_ATTACK_SPLASH.dropletLengthScale,
+      );
+      ctx.restore();
+      continue;
+    }
     if (p.kind === "leaperRock") {
       ctx.save();
       ctx.translate(p.x + size / 2, p.y + size / 2);
