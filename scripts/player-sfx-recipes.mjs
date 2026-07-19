@@ -37,9 +37,11 @@ export function createPlayerSfxSpecs({
       mixWood(samples, rng, { start: 0.018, duration: 0.13, frequency: 230, gain: 0.33 });
       mixBreath(samples, rng, { start: 0.045, duration: 0.18, gain: 0.12, lowCutoff: 420, cutoff: 2_400 });
     }),
-    sound("playerAttackStart", 0.19, -6.5, (samples, rng) => {
-      mixBlade(samples, rng, { start: 0.002, duration: 0.165, baseFrequency: 900, gain: 0.64 });
-      mixNoise(samples, rng, { duration: 0.038, gain: 0.12, color: "band", lowCutoff: 2_400, cutoff: 8_800, attack: 0.001, release: 0.012, decay: 4.2 });
+    sound("playerAttackStart", 0.15, -5.2, (samples, rng) => {
+      mixNoise(samples, rng, { start: 0.002, duration: 0.075, gain: 0.5, color: "band", lowCutoff: 760, cutoff: 3_200, endLowCutoff: 2_600, endCutoff: 9_600, attack: 0.004, release: 0.014, contour: (progress) => Math.sin(Math.PI * Math.pow(progress, 0.7)) });
+      mixNoise(samples, rng, { start: 0.032, duration: 0.082, gain: 0.78, color: "band", lowCutoff: 4_200, cutoff: 12_000, endLowCutoff: 1_300, endCutoff: 5_200, attack: 0.001, release: 0.026, decay: 2.8 });
+      mixOscillator(samples, { start: 0.036, duration: 0.052, frequency: 3_600, endFrequency: 2_100, gain: 0.055, wave: "sine", attack: 0.001, release: 0.024, decay: 3.4 });
+      mixOscillator(samples, { start: 0.038, duration: 0.036, frequency: 7_200, endFrequency: 4_200, gain: 0.018, wave: "sine", attack: 0.001, release: 0.018, decay: 4.2 });
     }),
     sound("playerAttackHit", 0.25, -1.05, (samples, rng) => {
       mixTaiko(samples, rng, { duration: 0.19, frequency: 106, gain: 0.4 });

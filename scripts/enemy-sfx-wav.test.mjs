@@ -11,8 +11,8 @@ const PEAK_LIMIT = Math.floor(PCM_MAX * 0.89);
 const PCM_SAMPLE_COUNT = 8;
 const WAV_HEADER_BYTES = 44;
 const SAMPLE_RATE = 48_000;
-const PLAYER_ATTACK_TAIL_START_SECONDS = 0.16;
-const PLAYER_ATTACK_MAX_TAIL_ENERGY_RATIO = 0.1;
+const PLAYER_ATTACK_TAIL_START_SECONDS = 0.1;
+const PLAYER_ATTACK_MAX_TAIL_ENERGY_RATIO = 0.15;
 const PLAYER_SFX_DIRECTORY = path.join(process.cwd(), "assets/audio/sfx/players");
 const EXPECTED_PLAYER_SFX_FILES = [
   "playerAttackHit.wav",
