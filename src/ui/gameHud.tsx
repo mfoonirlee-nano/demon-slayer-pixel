@@ -51,6 +51,9 @@ const ULTIMATE_CHARGE_STAGE_COUNT = 8;
 const ULTIMATE_PERCENT_SCALE = 100;
 const ULTIMATE_DECAY_FULL_ANGLE = 360;
 const ULTIMATE_DECAY_MIN_ANGLE = 8;
+const BOSS_LOCALE_EMBLEM_LEFT = 182;
+const BOSS_LOCALE_EMBLEM_TOP = 55;
+const BOSS_LOCALE_EMBLEM_SIZE = 17;
 function useGhostValue(value: number) {
   const [ghost, setGhost] = useState(value);
   const ghostRef = useRef(value);
@@ -371,6 +374,33 @@ export function GameHud() {
               imageRendering: "pixelated",
             }}
           />
+          {language === "en" ? (
+            <span
+              aria-hidden="true"
+              className="boss-locale-emblem"
+              style={{
+                position: "absolute",
+                zIndex: 2,
+                left: BOSS_LOCALE_EMBLEM_LEFT,
+                top: BOSS_LOCALE_EMBLEM_TOP,
+                width: BOSS_LOCALE_EMBLEM_SIZE,
+                height: BOSS_LOCALE_EMBLEM_SIZE,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                border: "1px solid #9b6344",
+                borderRadius: "50%",
+                background: "#1b0b0d",
+                color: "#e6b887",
+                fontSize: 5,
+                fontWeight: 800,
+                lineHeight: 1,
+                textShadow: "0 1px 1px #000",
+              }}
+            >
+              KO
+            </span>
+          ) : null}
           <span
             style={{
               position: "absolute",

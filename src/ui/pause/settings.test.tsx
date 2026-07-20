@@ -1,25 +1,60 @@
+// @vitest-environment jsdom
+
+import { act } from "react";
 import { Provider } from "jotai";
 import { createStore } from "jotai/vanilla";
-import { renderToStaticMarkup } from "react-dom/server";
-import { describe, expect, it } from "vitest";
-import { languageAtom } from "../../i18n/language";
+import { createRoot, type Root } from "react-dom/client";
+import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { LANGUAGE_STORAGE_KEY, languageAtom } from "../../i18n/language";
 import { PauseSettings } from "./settings";
 
+const actEnvironment = globalThis as typeof globalThis & {
+  IS_REACT_ACT_ENVIRONMENT: boolean;
+};
+
 describe("PauseSettings localization", () => {
-  it("renders the English language setting alongside localized audio controls", () => {
+  let container: HTMLDivElement;
+  let root: Root;
+
+  beforeEach(() => {
+    actEnvironment.IS_REACT_ACT_ENVIRONMENT = true;
+    window.localStorage.clear();
+    container = document.createElement("div");
+    document.body.append(container);
+    root = createRoot(container);
+  });
+
+  afterEach(() => {
+    act(() => root.unmount());
+    container.remove();
+    actEnvironment.IS_REACT_ACT_ENVIRONMENT = false;
+  });
+
+  it("switches the live settings UI to English and persists the selection", () => {
     const store = createStore();
-    store.set(languageAtom, "en");
 
-    const markup = renderToStaticMarkup(
-      <Provider store={store}>
-        <PauseSettings />
-      </Provider>,
+    act(() => {
+      root.render(
+        <Provider store={store}>
+          <PauseSettings />
+        </Provider>,
+      );
+    });
+
+    const englishButton = [...container.querySelectorAll("button")].find(
+      (button) => button.textContent === "English",
     );
+    expect(englishButton).toBeDefined();
 
-    expect(markup).toContain("Master volume");
-    expect(markup).toContain("Sound effects");
-    expect(markup).toContain("Language");
-    expect(markup).toContain('aria-pressed="true">English');
-    expect(markup).not.toMatch(/[主音量音效设置]/u);
+    act(() => englishButton?.click());
+
+    expect(store.get(languageAtom)).toBe("en");
+    expect(window.localStorage.getItem(LANGUAGE_STORAGE_KEY)).toBe("en");
+    expect(document.documentElement.lang).toBe("en");
+    expect(container.textContent).toContain("Master volume");
+    expect(container.textContent).toContain("Sound effects");
+    expect(container.textContent).toContain("Language");
+    expect(englishButton?.getAttribute("aria-pressed")).toBe("true");
+    expect(container.textContent).not.toMatch(/[主音量音效设置]/u);
   });
 });

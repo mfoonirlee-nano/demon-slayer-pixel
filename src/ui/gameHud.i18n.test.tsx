@@ -32,6 +32,8 @@ describe("GameHud localization", () => {
     );
 
     expect(markup).toContain("Blood Moon Kin · Awakened Mirror Dream · Phase 1");
+    expect(markup).toContain("boss-locale-emblem");
+    expect(markup).toContain(">KO<");
     expect(markup).not.toContain("血月眷属");
   });
 });

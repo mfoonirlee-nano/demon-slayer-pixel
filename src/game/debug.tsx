@@ -1,3 +1,4 @@
+import { useAtomValue } from "jotai";
 import { useEffect, useState } from "react";
 import {
   BINDER_SHEET_INDEX,
@@ -14,6 +15,11 @@ import {
   BURROWER_SHEET_INDEX,
 } from "../constants";
 import { BOSS_ARCHETYPES } from "../entities/bosses/registry";
+import { bossName } from "../i18n/bossCopy";
+import { debugEnemyLabel, debugGrowthLabel, debugPlatformLabel } from "../i18n/debugCopy";
+import { languageAtom } from "../i18n/language";
+import { message } from "../i18n/messages";
+import { skillName } from "../i18n/skillCopy";
 import { implementedPlayerSkills } from "../systems/skillCatalog";
 import { canvas } from "../rendering/context";
 import type { SegmentKind } from "../entities/platform";
@@ -64,50 +70,24 @@ const DEBUG_ENEMY_SHEET_INDEX: Record<DebugEnemyKind, number> = {
   burrower: BURROWER_SHEET_INDEX,
 };
 
-const DEBUG_ENEMY_OPTIONS: Array<{ kind: DebugEnemyKind; label: string }> = [
-  { kind: "chaser", label: "chaser" },
-  { kind: "crawler", label: "crawler" },
-  { kind: "runner", label: "runner" },
-  { kind: "caster", label: "caster" },
-  { kind: "duelist", label: "duelist" },
-  { kind: "brute", label: "brute" },
-  { kind: "binder", label: "binder" },
-  { kind: "glider", label: "glider" },
-  { kind: "leaper", label: "leaper" },
-  { kind: "splitter", label: "splitter" },
-  { kind: "warden", label: "warden" },
-  { kind: "burrower", label: "burrower" },
-];
-
-const DEBUG_ENEMY_GROWTH_OPTIONS: Array<{ stage: ActBand; label: string }> = [
-  { stage: "intro", label: "intro" },
-  { stage: "awakened", label: "awakened" },
-  { stage: "final", label: "final" },
-];
-
-const DEBUG_BOSS_OPTIONS = Object.values(BOSS_ARCHETYPES).map((boss) => ({
-  id: boss.id,
-  label: boss.displayName,
-}));
-
-const DEBUG_SKILL_OPTIONS = implementedPlayerSkills().map((skill) => ({
-  id: skill.id,
-  label: skill.name,
-}));
+const DEBUG_ENEMY_OPTIONS: DebugEnemyKind[] = Object.keys(DEBUG_ENEMY_SHEET_INDEX) as DebugEnemyKind[];
+const DEBUG_ENEMY_GROWTH_OPTIONS: ActBand[] = ["intro", "awakened", "final"];
+const DEBUG_BOSS_OPTIONS = Object.values(BOSS_ARCHETYPES).map((boss) => boss.id);
+const DEBUG_SKILL_OPTIONS = implementedPlayerSkills().map((skill) => skill.id);
 
 const DEBUG_SKILL_SLOT_OPTIONS = [0, 1, 2] as const;
 const MAX_DEBUG_SKILL_LEVEL: SkillLevel = 3;
 const DEBUG_SKILL_LEVEL_OPTIONS: SkillLevel[] = [1, 2, MAX_DEBUG_SKILL_LEVEL];
 
-const DEBUG_PLATFORM_OPTIONS: Array<{ kind: SegmentKind; label: string }> = [
-  { kind: "safeBridge", label: "safeBridge" },
-  { kind: "breather", label: "breather" },
-  { kind: "stairUp", label: "stairUp" },
-  { kind: "stairDown", label: "stairDown" },
-  { kind: "zigzag", label: "zigzag" },
-  { kind: "gapJump", label: "gapJump" },
-  { kind: "hoverPair", label: "hoverPair" },
-  { kind: "rewardRisk", label: "rewardRisk" },
+const DEBUG_PLATFORM_OPTIONS: SegmentKind[] = [
+  "safeBridge",
+  "breather",
+  "stairUp",
+  "stairDown",
+  "zigzag",
+  "gapJump",
+  "hoverPair",
+  "rewardRisk",
 ];
 
 let runtimeActions: DebugRuntimeActions = {
@@ -259,14 +239,15 @@ function useGameWindowSize() {
 }
 
 export function DebugPanel() {
+  const language = useAtomValue(languageAtom);
   const [collapsed, setCollapsed] = useState(false);
   const [enemyKind, setEnemyKind] = useState<DebugEnemyKind>("chaser");
   const [enemyGrowthStage, setEnemyGrowthStage] = useState<ActBand>("intro");
-  const [bossId, setBossId] = useState<BossArchetypeId>(DEBUG_BOSS_OPTIONS[0]?.id ?? "spider-string");
+  const [bossId, setBossId] = useState<BossArchetypeId>(DEBUG_BOSS_OPTIONS[0] ?? "spider-string");
   const [bossAwakened, setBossAwakened] = useState(false);
   const [platformKind, setPlatformKind] = useState<SegmentKind>("safeBridge");
   const [skillSlotIndex, setSkillSlotIndex] = useState<number>(0);
-  const [skillId, setSkillId] = useState<SkillId>(DEBUG_SKILL_OPTIONS[0]?.id ?? "line_projectile");
+  const [skillId, setSkillId] = useState<SkillId>(DEBUG_SKILL_OPTIONS[0] ?? "line_projectile");
   const [skillLevel, setSkillLevelValue] = useState<SkillLevel>(1);
   const [infiniteHealth, setInfiniteHealth] = useState(hasDebugInfiniteHealth());
   const [infiniteSkillCharge, setInfiniteSkillCharge] = useState(hasDebugInfiniteSkillCharge());
@@ -276,12 +257,15 @@ export function DebugPanel() {
   if (!isDebugMode) return null;
 
   const panelClassName = `${collapsed ? "w-[82px]" : "w-[190px]"} pointer-events-auto absolute right-2 top-2 z-30 max-w-[calc(100%-16px)] rounded-[6px] border border-[#70d7ff66] bg-[#07131ee6] p-2 text-left text-[10px] leading-none text-[#e7f8ff] shadow-[0_8px_20px_rgba(0,0,0,0.35)]`;
-  const collapseLabel = collapsed ? "Expand debug panel" : "Collapse debug panel";
+  const collapseLabel = message(
+    language,
+    collapsed ? "debug.expandPanel" : "debug.collapsePanel",
+  );
   const panelHeader = (
     <div className={`${collapsed ? "" : "mb-2 border-b border-[#70d7ff33] pb-1"} flex items-center justify-between gap-2`}>
       <span className="text-[9px] font-bold text-[#7fe8ff]">DEBUG</span>
       <div className="flex items-center gap-1">
-        {collapsed ? null : <span className="text-[8px] text-[#9fbfd0]">Auto off</span>}
+        {collapsed ? null : <span className="text-[8px] text-[#9fbfd0]">{message(language, "debug.autoOff")}</span>}
         <button
           type="button"
           className="flex h-5 w-5 shrink-0 items-center justify-center rounded-[4px] border border-[#70d7ff55] bg-[#102033] text-[13px] font-bold leading-none text-[#c3efff] active:translate-y-px"
@@ -308,9 +292,9 @@ export function DebugPanel() {
     <div className={panelClassName}>
       {panelHeader}
       <div className="mb-2 flex items-center justify-between rounded-[4px] border border-[#70d7ff33] bg-[#10203388] px-2 py-1 text-[8px]">
-        <span className="text-[#9ed8ff]">Game window</span>
+        <span className="text-[#9ed8ff]">{message(language, "debug.gameWindow")}</span>
         <span className="font-bold tabular-nums text-[#e7f8ff]">
-          {gameWindowSize ? `${gameWindowSize.width}x${gameWindowSize.height}` : "unknown"}
+          {gameWindowSize ? `${gameWindowSize.width}x${gameWindowSize.height}` : message(language, "debug.unknown")}
         </span>
       </div>
       <label className="mb-2 flex items-center gap-2 text-[8px] text-[#c3efff]" htmlFor="debug-infinite-health">
@@ -325,7 +309,7 @@ export function DebugPanel() {
             setDebugInfiniteHealth(enabled);
           }}
         />
-        Infinite health
+        {message(language, "debug.infiniteHealth")}
       </label>
       <label className="mb-2 flex items-center gap-2 text-[8px] text-[#c3efff]" htmlFor="debug-infinite-skill-charge">
         <input
@@ -339,7 +323,7 @@ export function DebugPanel() {
             setDebugInfiniteSkillCharge(enabled);
           }}
         />
-        Skill charge full
+        {message(language, "debug.skillChargeFull")}
       </label>
       <label className="mb-2 flex items-center gap-2 text-[8px] text-[#c3efff]" htmlFor="debug-infinite-ultimate-charge">
         <input
@@ -353,13 +337,13 @@ export function DebugPanel() {
             setDebugInfiniteUltimateCharge(enabled);
           }}
         />
-        Ultimate charge full
+        {message(language, "debug.ultimateChargeFull")}
       </label>
-      <label className="block text-[8px] text-[#9ed8ff]" htmlFor="debug-skill-kind">Skill</label>
+      <label className="block text-[8px] text-[#9ed8ff]" htmlFor="debug-skill-kind">{message(language, "debug.skill")}</label>
       <div className="mt-1 flex gap-1">
         <select
           id="debug-skill-slot"
-          aria-label="Skill slot"
+          aria-label={message(language, "debug.skillSlot")}
           className="w-[44px] rounded-[4px] border border-[#70d7ff44] bg-[#102033] px-1 py-1 text-[9px] text-[#f2fbff]"
           value={skillSlotIndex}
           onChange={(event) => setSkillSlotIndex(Number(event.target.value))}
@@ -379,12 +363,12 @@ export function DebugPanel() {
           }}
         >
           {DEBUG_SKILL_OPTIONS.map((option) => (
-            <option key={option.id} value={option.id}>{option.label}</option>
+            <option key={option} value={option}>{skillName(language, option)}</option>
           ))}
         </select>
         <select
           id="debug-skill-level"
-          aria-label="Skill level"
+          aria-label={message(language, "debug.skillLevel")}
           className="w-[42px] rounded-[4px] border border-[#70d7ff44] bg-[#102033] px-1 py-1 text-[9px] text-[#f2fbff]"
           value={skillLevel}
           onChange={(event) => {
@@ -398,7 +382,7 @@ export function DebugPanel() {
           ))}
         </select>
       </div>
-      <label className="mt-2 block text-[8px] text-[#9ed8ff]" htmlFor="debug-enemy-kind">Enemy</label>
+      <label className="mt-2 block text-[8px] text-[#9ed8ff]" htmlFor="debug-enemy-kind">{message(language, "debug.enemy")}</label>
       <div className="mt-1 flex gap-1">
         <select
           id="debug-enemy-kind"
@@ -407,18 +391,18 @@ export function DebugPanel() {
           onChange={(event) => setEnemyKind(event.target.value as DebugEnemyKind)}
         >
           {DEBUG_ENEMY_OPTIONS.map((option) => (
-            <option key={option.kind} value={option.kind}>{option.label}</option>
+            <option key={option} value={option}>{debugEnemyLabel(language, option)}</option>
           ))}
         </select>
         <select
           id="debug-enemy-growth"
-          aria-label="Enemy growth"
+          aria-label={message(language, "debug.enemyGrowth")}
           className="w-[74px] rounded-[4px] border border-[#70d7ff44] bg-[#102033] px-1 py-1 text-[9px] text-[#f2fbff]"
           value={enemyGrowthStage}
           onChange={(event) => setEnemyGrowthStage(event.target.value as ActBand)}
         >
           {DEBUG_ENEMY_GROWTH_OPTIONS.map((option) => (
-            <option key={option.stage} value={option.stage}>{option.label}</option>
+            <option key={option} value={option}>{debugGrowthLabel(language, option)}</option>
           ))}
         </select>
         <button
@@ -426,10 +410,10 @@ export function DebugPanel() {
           className="rounded-[4px] border border-[#88f3ff77] bg-[#12394a] px-2 py-1 text-[9px] font-bold text-[#e7fbff] active:translate-y-px"
           onClick={() => spawnDebugEnemy(enemyKind, enemyGrowthStage)}
         >
-          Spawn
+          {message(language, "debug.spawn")}
         </button>
       </div>
-      <label className="mt-2 block text-[8px] text-[#9ed8ff]" htmlFor="debug-platform-kind">Platform</label>
+      <label className="mt-2 block text-[8px] text-[#9ed8ff]" htmlFor="debug-platform-kind">{message(language, "debug.platform")}</label>
       <div className="mt-1 flex gap-1">
         <select
           id="debug-platform-kind"
@@ -438,7 +422,7 @@ export function DebugPanel() {
           onChange={(event) => setPlatformKind(event.target.value as SegmentKind)}
         >
           {DEBUG_PLATFORM_OPTIONS.map((option) => (
-            <option key={option.kind} value={option.kind}>{option.label}</option>
+            <option key={option} value={option}>{debugPlatformLabel(language, option)}</option>
           ))}
         </select>
         <button
@@ -446,10 +430,10 @@ export function DebugPanel() {
           className="rounded-[4px] border border-[#88f3ff77] bg-[#12394a] px-2 py-1 text-[9px] font-bold text-[#e7fbff] active:translate-y-px"
           onClick={() => spawnDebugPlatformSegment(platformKind)}
         >
-          Spawn
+          {message(language, "debug.spawn")}
         </button>
       </div>
-      <label className="mt-2 block text-[8px] text-[#ffd899]" htmlFor="debug-boss-kind">Boss</label>
+      <label className="mt-2 block text-[8px] text-[#ffd899]" htmlFor="debug-boss-kind">{message(language, "debug.boss")}</label>
       <label className="mt-1 flex items-center gap-2 text-[8px] text-[#ffe6b5]" htmlFor="debug-boss-awakened">
         <input
           id="debug-boss-awakened"
@@ -458,7 +442,7 @@ export function DebugPanel() {
           checked={bossAwakened}
           onChange={(event) => setBossAwakened(event.target.checked)}
         />
-        Awakened
+        {message(language, "debug.awakened")}
       </label>
       <div className="mt-1 flex gap-1">
         <select
@@ -468,7 +452,7 @@ export function DebugPanel() {
           onChange={(event) => setBossId(event.target.value as BossArchetypeId)}
         >
           {DEBUG_BOSS_OPTIONS.map((option) => (
-            <option key={option.id} value={option.id}>{option.label}</option>
+            <option key={option} value={option}>{bossName(language, option)}</option>
           ))}
         </select>
         <button
@@ -476,7 +460,7 @@ export function DebugPanel() {
           className="rounded-[4px] border border-[#ffcf7a99] bg-[#4a2b12] px-2 py-1 text-[9px] font-bold text-[#fff2c7] active:translate-y-px"
           onClick={() => spawnDebugBoss(bossId, bossAwakened)}
         >
-          Spawn
+          {message(language, "debug.spawn")}
         </button>
       </div>
     </div>

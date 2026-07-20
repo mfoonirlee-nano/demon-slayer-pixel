@@ -18,6 +18,7 @@ describe("localized end screens", () => {
     );
 
     expect(markup).toContain("Defeated");
+    expect(markup).toContain("death-title-animated");
     expect(markup).toContain("Survived 12.3s");
     expect(markup).toContain("Press R to restart");
     expect(markup).not.toContain("assets/sprites/ui/end.png");

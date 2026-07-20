@@ -82,6 +82,10 @@
     0 0 18px rgba(180, 0, 0, 0.7);
 }
 
+.death-title-animated {
+  animation: death-title-materialize 1610ms steps(6, end) both;
+}
+
 .death-message {
   min-height: 7.5rem;
   margin-top: clamp(1.5rem, 5vh, 3rem);
@@ -129,5 +133,31 @@
   to {
     opacity: 1;
     transform: translateY(0);
+  }
+}
+
+@keyframes death-title-materialize {
+  0% {
+    filter: blur(4px);
+    opacity: 0;
+    transform: scale(0.78) translateY(10px);
+  }
+
+  72% {
+    filter: blur(1px);
+    opacity: 0.72;
+    transform: scale(1.08) translateY(0);
+  }
+
+  100% {
+    filter: blur(0);
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .death-title-animated {
+    animation: none;
   }
 }

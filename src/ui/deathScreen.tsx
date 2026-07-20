@@ -89,7 +89,7 @@ export function DeathScreen({ elapsed }: { elapsed: number }) {
           />
         </div>
       ) : (
-        <div className="death-title">{message(language, "death.title")}</div>
+        <div className="death-title death-title-animated">{message(language, "death.title")}</div>
       )}
 
       <div

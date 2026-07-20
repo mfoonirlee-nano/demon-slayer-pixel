@@ -11,78 +11,46 @@ type BossPresentationCopy = {
 
 const BOSS_COPY: Record<Language, Record<BossArchetypeId, BossPresentationCopy>> = {
   "zh-CN": {
-    "spider-string": {
-      name: "蛛弦",
-      phaseTitle: chinesePhaseTitle("蛛弦"),
-      awakenedPhaseTitle: chineseAwakenedPhaseTitle("蛛弦"),
-    },
-    "mist-bone": {
-      name: "雾骨",
-      phaseTitle: chinesePhaseTitle("雾骨"),
-      awakenedPhaseTitle: chineseAwakenedPhaseTitle("雾骨"),
-    },
-    "mirror-dream": {
-      name: "镜魇",
-      phaseTitle: chinesePhaseTitle("镜魇"),
-      awakenedPhaseTitle: chineseAwakenedPhaseTitle("镜魇"),
-    },
-    "fang-gale": {
-      name: "牙岚",
-      phaseTitle: chinesePhaseTitle("牙岚"),
-      awakenedPhaseTitle: chineseAwakenedPhaseTitle("牙岚"),
-    },
-    "lantern-ember": {
-      name: "灯烬",
-      phaseTitle: chinesePhaseTitle("灯烬"),
-      awakenedPhaseTitle: chineseAwakenedPhaseTitle("灯烬"),
-    },
-    "dead-bell": {
-      name: "枯铃",
-      phaseTitle: chinesePhaseTitle("枯铃"),
-      awakenedPhaseTitle: chineseAwakenedPhaseTitle("枯铃"),
-    },
+    "spider-string": chineseBossCopy("蛛弦"),
+    "mist-bone": chineseBossCopy("雾骨"),
+    "mirror-dream": chineseBossCopy("镜魇"),
+    "fang-gale": chineseBossCopy("牙岚"),
+    "lantern-ember": chineseBossCopy("灯烬"),
+    "dead-bell": chineseBossCopy("枯铃"),
     "blood-moon-many-faces": {
       name: "万相血月",
       phaseTitle: (phase) => `终幕夜相 · 万相血月 · 第 ${phase} 相`,
     },
   },
   en: {
-    "spider-string": {
-      name: "Spider String",
-      phaseTitle: englishPhaseTitle("Spider String"),
-      awakenedPhaseTitle: englishAwakenedPhaseTitle("Spider String"),
-    },
-    "mist-bone": {
-      name: "Mist Bone",
-      phaseTitle: englishPhaseTitle("Mist Bone"),
-      awakenedPhaseTitle: englishAwakenedPhaseTitle("Mist Bone"),
-    },
-    "mirror-dream": {
-      name: "Mirror Dream",
-      phaseTitle: englishPhaseTitle("Mirror Dream"),
-      awakenedPhaseTitle: englishAwakenedPhaseTitle("Mirror Dream"),
-    },
-    "fang-gale": {
-      name: "Fang Gale",
-      phaseTitle: englishPhaseTitle("Fang Gale"),
-      awakenedPhaseTitle: englishAwakenedPhaseTitle("Fang Gale"),
-    },
-    "lantern-ember": {
-      name: "Lantern Ember",
-      phaseTitle: englishPhaseTitle("Lantern Ember"),
-      awakenedPhaseTitle: englishAwakenedPhaseTitle("Lantern Ember"),
-    },
-    "dead-bell": {
-      name: "Dead Bell",
-      phaseTitle: englishPhaseTitle("Dead Bell"),
-      awakenedPhaseTitle: englishAwakenedPhaseTitle("Dead Bell"),
-    },
+    "spider-string": englishBossCopy("Spider String"),
+    "mist-bone": englishBossCopy("Mist Bone"),
+    "mirror-dream": englishBossCopy("Mirror Dream"),
+    "fang-gale": englishBossCopy("Fang Gale"),
+    "lantern-ember": englishBossCopy("Lantern Ember"),
+    "dead-bell": englishBossCopy("Dead Bell"),
     "blood-moon-many-faces": {
       name: "Many-Faced Blood Moon",
       phaseTitle: (phase) => `Final Night · Many-Faced Blood Moon · Aspect ${phase}`,
     },
   },
 };
+
+function chineseBossCopy(name: string): BossPresentationCopy {
+  return {
+    name,
+    phaseTitle: chinesePhaseTitle(name),
+    awakenedPhaseTitle: chineseAwakenedPhaseTitle(name),
+  };
+}
+
+function englishBossCopy(name: string): BossPresentationCopy {
+  return {
+    name,
+    phaseTitle: englishPhaseTitle(name),
+    awakenedPhaseTitle: englishAwakenedPhaseTitle(name),
+  };
+}
 
 export function bossName(language: Language, bossId: BossArchetypeId) {
   return BOSS_COPY[language][bossId].name;
