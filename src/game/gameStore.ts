@@ -10,6 +10,7 @@ import {
 import type { SkillId } from "../types/assets";
 import type {
   ActBand,
+  BossArchetypeId,
   EquipmentChoiceState,
   EquipmentItemState,
   EquipmentSlot,
@@ -21,9 +22,10 @@ import type {
 const initialSkillEnergyMax = maxSkillEnergyForLevel(1);
 
 export type BossSnapshot = {
-  id: string;
+  id: BossArchetypeId;
   displayName: string;
   phaseTitle: string;
+  awakened: boolean;
   hp: number;
   hpMax: number;
   phase: number;

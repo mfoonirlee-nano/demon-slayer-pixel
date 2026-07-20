@@ -266,6 +266,7 @@ export function getStateSnapshot(manualPaused = false, paused = manualPaused): G
           phaseTitle: state.boss.awakened && bossArchetype.awakenedPhaseTitle
             ? bossArchetype.awakenedPhaseTitle(state.boss.phase)
             : bossArchetype.phaseTitle(state.boss.phase),
+          awakened: state.boss.awakened,
           hp: state.boss.hp,
           hpMax: state.boss.hpMax,
           phase: state.boss.phase,

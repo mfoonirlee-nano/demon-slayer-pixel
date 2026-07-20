@@ -15,6 +15,7 @@ const BASE_PLAYER = {
   baseAttack: 16,
   attackBonus: 0,
 };
+const MAX_TEST_REWARD_LEVEL = 3;
 
 function makeEquipmentChoice(
   itemId: EquipmentItemId,
@@ -108,6 +109,42 @@ describe("reward choice details", () => {
     expect(metricValue(metrics, "终能获取")).toBe("-10%");
   });
 
+  it("localizes every visible equipment metric and value unit in English", () => {
+    const flowBlade = equipmentRewardMetrics(
+      makeEquipmentChoice("flow_blade", "fine", "common", "tierUpgrade"),
+      "en",
+    );
+    expect(flowBlade[0]).toMatchObject({ label: "Attack", value: "+12% -> +25%" });
+    expect(metricValue(flowBlade, "Charged Hits")).toBe("4 hits -> 3 hits");
+    expect(metricValue(flowBlade, "Skill Damage")).toBe("+25% -> +30%");
+    expect(metricValue(flowBlade, "Energy on Hit")).toBe("+6");
+
+    expect(metricValue(equipmentRewardMetrics(makeEquipmentChoice("burst_garb", "common"), "en"), "Lethal Guard"))
+      .toBe("Keep 1 HP");
+    expect(metricValue(equipmentRewardMetrics(makeEquipmentChoice("burst_garb", "common"), "en"), "Invincibility"))
+      .toBe("1.5 seconds");
+    expect(metricValue(equipmentRewardMetrics(makeEquipmentChoice("shadowstep_garb", "common"), "en"), "Movement Check"))
+      .toBe("8 frames");
+    expect(metricValue(equipmentRewardMetrics(makeEquipmentChoice("flow_talisman", "common"), "en"), "Hit Requirement"))
+      .toBe("2 targets");
+    expect(metricValue(equipmentRewardMetrics(makeEquipmentChoice("hunt_blade", "common"), "en"), "Kill Requirement"))
+      .toBe("2 kills");
+    expect(metricValue(equipmentRewardMetrics(makeEquipmentChoice("risk_talisman", "awakened"), "en"), "At Least"))
+      .toBe("1 skill bar");
+    expect(metricValue(equipmentRewardMetrics(makeEquipmentChoice("burst_talisman", "fine"), "en"), "Boss Skill Hit"))
+      .toBe("+2 ultimate energy");
+    expect(metricValue(equipmentRewardMetrics(makeEquipmentChoice("tempo_blade", "awakened"), "en"), "Penalty-Free Hits"))
+      .toBe("3 hits");
+
+    for (const itemId of EQUIPMENT_CHOICE_IDS) {
+      for (const tier of ["common", "fine", "awakened"] as const) {
+        const metrics = equipmentRewardMetrics(makeEquipmentChoice(itemId, tier), "en");
+        expect(metrics.map(({ label, value }) => `${label}: ${value}`).join("\n"), `${itemId}/${tier}`)
+          .not.toMatch(/[\u3400-\u9fff]/u);
+      }
+    }
+  });
+
   it("shows current attack-based damage for core skill upgrades", () => {
     const choice: UpgradeChoiceState = {
       id: "upgrade-line-projectile",
@@ -173,5 +210,67 @@ describe("reward choice details", () => {
 
     expect(metricValue(metrics, "终式伤害")).toBe("+15% -> +25%");
     expect(metricValue(metrics, "持续时间")).toBe("6秒 -> 7.5秒");
+  });
+
+  it("localizes every visible skill and ultimate metric in English", () => {
+    const lineProjectile: UpgradeChoiceState = {
+      id: "upgrade-line-projectile",
+      type: "upgradeSkill",
+      title: "技能精进",
+      name: "潮龙·破阵 III",
+      description: "潮龙解锁击退效果。",
+      skillId: SKILL_IDS.lineProjectile,
+      nextLevel: 3,
+    };
+    const lineMetrics = upgradeRewardMetrics(lineProjectile, BASE_PLAYER, "en");
+    expect(metricValue(lineMetrics, "Skill Knockback")).toBe("2 body widths");
+    expect(metricValue(lineMetrics, "Passive Knockback")).toBe("10%");
+
+    const closeArc: UpgradeChoiceState = {
+      id: "upgrade-close-arc",
+      type: "upgradeSkill",
+      title: "技能精进",
+      name: "弦月·回锋 III",
+      description: "解锁普攻剑气。",
+      skillId: SKILL_IDS.closeArc,
+      nextLevel: 3,
+    };
+    expect(metricValue(upgradeRewardMetrics(closeArc, BASE_PLAYER, "en"), "Basic Attack Crescent"))
+      .toBe("Unlocked");
+
+    const ultimate: UpgradeChoiceState = {
+      id: "upgrade-ultimate",
+      type: "upgradeUltimate",
+      title: "终式精进",
+      name: "终式·月潮无间 II",
+      description: "提高月潮强化效果。",
+      nextLevel: 2,
+    };
+    const ultimateMetrics = upgradeRewardMetrics(ultimate, BASE_PLAYER, "en");
+    expect(metricValue(ultimateMetrics, "Ultimate Damage")).toBe("+15% -> +25%");
+    expect(metricValue(ultimateMetrics, "Duration")).toBe("6 seconds -> 7.5 seconds");
+
+    for (const skillId of implementedPlayerSkillIds()) {
+      for (const nextLevel of [1, 2, MAX_TEST_REWARD_LEVEL] as const) {
+        const choice: UpgradeChoiceState = {
+          id: `english-${skillId}-${nextLevel}`,
+          type: nextLevel === 1 ? "unlockSkill" : "upgradeSkill",
+          title: "",
+          name: "",
+          description: "",
+          skillId,
+          nextLevel,
+        };
+        const metrics = upgradeRewardMetrics(choice, BASE_PLAYER, "en");
+        expect(metrics.map(({ label, value }) => `${label}: ${value}`).join("\n"), `${skillId}/${nextLevel}`)
+          .not.toMatch(/[\u3400-\u9fff]/u);
+      }
+    }
+
+    for (const nextLevel of [1, 2, MAX_TEST_REWARD_LEVEL] as const) {
+      const metrics = upgradeRewardMetrics({ ...ultimate, nextLevel }, BASE_PLAYER, "en");
+      expect(metrics.map(({ label, value }) => `${label}: ${value}`).join("\n"), `ultimate/${nextLevel}`)
+        .not.toMatch(/[\u3400-\u9fff]/u);
+    }
   });
 });

@@ -1,13 +1,18 @@
 import type { GameSnapshot } from "../../game/gameStore";
+import {
+  equipmentPrimaryStatLabel,
+  equipmentSlotLabel,
+  localizeEquipmentItem,
+} from "../../i18n/equipmentCopy";
+import { DEFAULT_LANGUAGE, type Language } from "../../i18n/language";
+import { message } from "../../i18n/messages";
+import { skillCopy, skillDescription } from "../../i18n/skillCopy";
 import { EQUIPMENT_ITEMS } from "../../systems/equipment";
-import { EQUIPMENT_PRIMARY_STAT_LABELS } from "../../systems/equipmentCatalog";
 import type { EquipmentItemId, EquipmentItemState } from "../../types/game-state";
 import {
-  EQUIPMENT_SLOT_LABELS,
   getSkill,
   romanLevel,
 } from "../uiDisplay";
-import { playerSkillDescription } from "../../systems/skillCatalog";
 import { formatSignedPercent } from "../../utils";
 import type { EquipmentDetailTarget, PauseDetailCopy, SkillDetailTarget } from "./types";
 
@@ -15,44 +20,62 @@ export function equipmentDetailCopy(
   target: EquipmentDetailTarget,
   equipment: GameSnapshot["equipment"],
   unlockedEquipmentIds: ReadonlySet<EquipmentItemId>,
+  language: Language = DEFAULT_LANGUAGE,
 ): PauseDetailCopy {
   if (target.type === "item") {
     const catalogItem = EQUIPMENT_ITEMS[target.itemId];
     const ownedItem = equipment.inventory.find((entry) => entry.id === target.itemId);
-    const item = ownedItem ?? catalogItem;
+    const item = localizeEquipmentItem(language, ownedItem ?? catalogItem);
     const equipped = equipment.equipped[item.slot]?.id === item.id;
     const unlocked = unlockedEquipmentIds.has(item.id);
 
     return {
-      kicker: `${EQUIPMENT_SLOT_LABELS[item.slot]} · ${item.uiTags.join(" · ")} · ${equipped ? "已装备" : unlocked ? "可装备" : "未解锁"}`,
+      kicker: `${equipmentSlotLabel(language, item.slot)} · ${item.uiTags.join(" · ")} · ${
+        message(language, equipped ? "status.equipped" : unlocked ? "status.canEquip" : "status.locked")
+      }`,
       title: item.name,
-      body: equipmentItemDetailBody(item),
+      body: equipmentItemDetailBody(item, language),
     };
   }
 
-  const item = equipment.equipped[target.slot];
+  const equippedItem = equipment.equipped[target.slot];
+  const item = equippedItem ? localizeEquipmentItem(language, equippedItem) : null;
   return {
-    kicker: `${EQUIPMENT_SLOT_LABELS[target.slot]} · ${item?.uiTags.join(" · ") ?? "未装备"}`,
-    title: item?.name ?? "空槽",
-    body: item ? equipmentItemDetailBody(item) : "当前槽位未装备。",
+    kicker: `${equipmentSlotLabel(language, target.slot)} · ${item?.uiTags.join(" · ") ?? message(language, "status.notEquipped")}`,
+    title: item?.name ?? message(language, "status.emptySlot"),
+    body: item ? equipmentItemDetailBody(item, language) : message(language, "pause.detail.currentEquipmentEmpty"),
   };
 }
 
-function equipmentItemDetailBody(item: EquipmentItemState) {
+function equipmentItemDetailBody(item: EquipmentItemState, language: Language) {
   const primaryStatPercent = formatSignedPercent(item.primaryStatBonusRatio);
-  return `基础属性：${EQUIPMENT_PRIMARY_STAT_LABELS[item.slot]} ${primaryStatPercent}。专属机制：${item.summary}`;
+  return language === "zh-CN"
+    ? `基础属性：${equipmentPrimaryStatLabel(language, item.slot)} ${primaryStatPercent}。专属机制：${item.summary}`
+    : `Base Stat: ${equipmentPrimaryStatLabel(language, item.slot)} ${primaryStatPercent}. Unique Effect: ${item.summary}`;
 }
 
-export function skillDetailCopy(target: SkillDetailTarget, player: GameSnapshot["player"]): PauseDetailCopy {
+export function skillDetailCopy(
+  target: SkillDetailTarget,
+  player: GameSnapshot["player"],
+  language: Language = DEFAULT_LANGUAGE,
+): PauseDetailCopy {
   if (target.type === "item") {
     const skill = getSkill(target.skillId);
     const level = player.skillLevels[target.skillId];
     const equippedSlot = player.equippedSkillIds.findIndex((skillId) => skillId === target.skillId);
 
+    const copy = skill ? skillCopy(language, target.skillId) : null;
+    const levelText = level ? romanLevel(level) : message(language, "status.locked");
+    const equippedText = equippedSlot >= 0
+      ? ` · ${message(language, "pause.detail.equippedSlot", { slot: equippedSlot + 1 })}`
+      : "";
+
     return {
-      kicker: `技能 · 等级 ${level ? romanLevel(level) : "未解锁"}${equippedSlot >= 0 ? ` · 已装备 ${equippedSlot + 1}` : ""}`,
-      title: skill?.name ?? "未知技能",
-      body: skill && level ? playerSkillDescription(target.skillId, level) : skill?.description ?? "暂无技能说明。",
+      kicker: `${message(language, "pause.detail.skill")} · ${message(language, "pause.detail.level", { level: levelText })}${equippedText}`,
+      title: copy?.name ?? message(language, "pause.detail.unknownSkill"),
+      body: skill && level
+        ? skillDescription(language, target.skillId, level)
+        : copy?.description ?? message(language, "pause.detail.noSkillDescription"),
     };
   }
 
@@ -60,9 +83,16 @@ export function skillDetailCopy(target: SkillDetailTarget, player: GameSnapshot[
   const skill = getSkill(skillId);
   const level = skillId ? player.skillLevels[skillId] : undefined;
 
+  const copy = skillId && skill ? skillCopy(language, skillId) : null;
+  const stateText = skill
+    ? message(language, "pause.detail.level", { level: romanLevel(level) })
+    : message(language, "status.emptySlot");
+
   return {
-    kicker: `槽位 ${target.slotIndex + 1} · 快捷键 ${target.slotIndex + 1} · ${skill ? `等级 ${romanLevel(level)}` : "空槽"}`,
-    title: skill?.name ?? "空槽",
-    body: skillId && level ? playerSkillDescription(skillId, level) : skill?.description ?? "当前槽位未装备技能。",
+    kicker: `${message(language, "pause.detail.slot", { slot: target.slotIndex + 1 })} · ${message(language, "pause.detail.hotkey", { key: target.slotIndex + 1 })} · ${stateText}`,
+    title: copy?.name ?? message(language, "status.emptySlot"),
+    body: skillId && level
+      ? skillDescription(language, skillId, level)
+      : copy?.description ?? message(language, "pause.detail.currentSkillEmpty"),
   };
 }

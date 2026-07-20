@@ -78,7 +78,9 @@ import {
   drawUltimateAfterimageSlashes,
   drawUltimatePlayerGhosts,
 } from "../entities/particle";
-import type { GameSnapshot } from "./gameStore";
+import { gameStore, type GameSnapshot } from "./gameStore";
+import { languageAtom } from "../i18n/language";
+import { message } from "../i18n/messages";
 import type { SkillId } from "../types/assets";
 import type { EnemyState, EquipmentItemId, EquipmentSlot, SkillLevel } from "../types/game-state";
 import { applyUpgradeChoice } from "../systems/progression";
@@ -241,7 +243,7 @@ function drawLoadingState() {
   ctx.fillRect(0, 0, WIDTH, HEIGHT);
   ctx.fillStyle = LOADING_SCREEN.textColor;
   ctx.font = LOADING_SCREEN.font;
-  const loadingText = UI_COPY.loadingSprites;
+  const loadingText = message(gameStore.get(languageAtom), "loading.sprites");
   ctx.fillText(loadingText, WIDTH / 2 - ctx.measureText(loadingText).width / 2, HEIGHT / 2);
 }
 

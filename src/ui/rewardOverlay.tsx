@@ -1,7 +1,16 @@
 import { type CSSProperties, useEffect, useState } from "react";
+import { useAtomValue } from "jotai";
 import { chooseBossEquipment, chooseUpgradeReward } from "../game/runtime";
 import type { GameSnapshot } from "../game/gameStore";
-import { EQUIPMENT_FAMILY_LABELS, EQUIPMENT_TIER_LABELS } from "../systems/equipment";
+import {
+  equipmentFamilyLabel,
+  equipmentSlotLabel,
+  equipmentTierLabel,
+  localizeEquipmentItem,
+} from "../i18n/equipmentCopy";
+import { languageAtom, type Language } from "../i18n/language";
+import { message, type MessageKey } from "../i18n/messages";
+import { localizeUpgradeChoice } from "../i18n/upgradeCopy";
 import { playerSkillColor, playerSkillIconSrc } from "../systems/skillCatalog";
 import type { EquipmentChoiceState, UpgradeChoiceState, UpgradeChoiceType } from "../types/game-state";
 import {
@@ -10,7 +19,7 @@ import {
   type RewardChoiceMetric,
   type RewardMetricTone,
 } from "./rewardChoiceDetails";
-import { EQUIPMENT_SLOT_LABELS, equipmentIconSrc, equipmentSlotBadgeSrc } from "./uiDisplay";
+import { equipmentIconSrc, equipmentSlotBadgeSrc } from "./uiDisplay";
 import { getRewardOverlayLayout } from "./rewardOverlayLayout";
 import { UiSprite } from "./uiSprite";
 
@@ -35,22 +44,22 @@ const REWARD_METRIC_TONE_COLORS: Record<RewardMetricTone, string> = {
 const UPGRADE_CHOICE_STYLE: Record<UpgradeChoiceType, {
   accent: string;
   glow: string;
-  label: string;
+  labelKey: MessageKey;
 }> = {
   unlockSkill: {
     accent: "#39f2ff",
     glow: "rgba(57, 242, 255, 0.18)",
-    label: "新术",
+    labelKey: "reward.badge.newSkill",
   },
   upgradeSkill: {
     accent: "#c9f5ff",
     glow: "rgba(151, 229, 255, 0.15)",
-    label: "精进",
+    labelKey: "reward.badge.mastery",
   },
   upgradeUltimate: {
     accent: "#ffd36a",
     glow: "rgba(255, 185, 84, 0.18)",
-    label: "终式",
+    labelKey: "reward.badge.ultimate",
   },
 };
 
@@ -72,12 +81,26 @@ function upgradeChoiceIconSrc(choice: UpgradeChoiceState) {
   return choice.skillId ? playerSkillIconSrc(choice.skillId) : ULTIMATE_SKILL_ICON_SRC;
 }
 
-function equipmentChoiceStatus(choice: EquipmentChoiceState, currentName: string | undefined) {
+function equipmentChoiceStatus(
+  choice: EquipmentChoiceState,
+  currentName: string | undefined,
+  language: Language,
+) {
   if (choice.reason === "tierUpgrade" && choice.previousTier) {
-    return `品质提升：${EQUIPMENT_TIER_LABELS[choice.previousTier]} -> ${EQUIPMENT_TIER_LABELS[choice.tier]}`;
+    return message(language, "reward.status.tierUpgrade", {
+      previous: equipmentTierLabel(language, choice.previousTier),
+      next: equipmentTierLabel(language, choice.tier),
+    });
   }
-  if (choice.reason === "replacement") return `替换：当前${EQUIPMENT_SLOT_LABELS[choice.slot]}「${currentName ?? "无"}」`;
-  return `新装备：${EQUIPMENT_TIER_LABELS[choice.tier]}`;
+  if (choice.reason === "replacement") {
+    return message(language, "reward.status.replacement", {
+      slot: equipmentSlotLabel(language, choice.slot),
+      name: currentName ?? message(language, "common.none"),
+    });
+  }
+  return message(language, "reward.status.new", {
+    tier: equipmentTierLabel(language, choice.tier),
+  });
 }
 
 function RewardMetricList({ metrics, accent }: { metrics: RewardChoiceMetric[]; accent: string }) {
@@ -108,6 +131,7 @@ function RewardMetricList({ metrics, accent }: { metrics: RewardChoiceMetric[]; 
 }
 
 export function RewardOverlay({ snapshot }: { snapshot: GameSnapshot }) {
+  const language = useAtomValue(languageAtom);
   const isBossReward = snapshot.activeOverlay === "bossEquipment";
   const choices = isBossReward ? snapshot.pendingEquipmentChoices : snapshot.pendingUpgradeChoices;
   const choiceCount = choices.length;
@@ -115,7 +139,10 @@ export function RewardOverlay({ snapshot }: { snapshot: GameSnapshot }) {
   const [selectedIndex, setSelectedIndex] = useState(0);
   const selectedChoiceIndex = choiceCount > 0 ? Math.min(selectedIndex, choiceCount - 1) : 0;
   const layout = getRewardOverlayLayout(isBossReward ? "bossEquipment" : "upgrade", choices.length);
-  const title = isBossReward ? "夜潮遗物" : "选择需要的强化";
+  const title = message(
+    language,
+    isBossReward ? "reward.title.equipment" : "reward.title.upgrade",
+  );
 
   useEffect(() => {
     setSelectedIndex(0);
@@ -193,8 +220,15 @@ export function RewardOverlay({ snapshot }: { snapshot: GameSnapshot }) {
           }}
         >
           {choices.map((choice, index) => {
-            const item = isBossReward ? choice as EquipmentChoiceState : null;
-            const upgrade = isBossReward ? null : choice as typeof snapshot.pendingUpgradeChoices[number];
+            const item = isBossReward
+              ? localizeEquipmentItem(language, choice as EquipmentChoiceState)
+              : null;
+            const upgrade = isBossReward
+              ? null
+              : localizeUpgradeChoice(
+                language,
+                choice as typeof snapshot.pendingUpgradeChoices[number],
+              );
             const upgradeStyle = upgrade ? UPGRADE_CHOICE_STYLE[upgrade.type] : null;
             const upgradeAccent = upgrade && upgradeStyle
               ? upgrade.skillId
@@ -209,11 +243,14 @@ export function RewardOverlay({ snapshot }: { snapshot: GameSnapshot }) {
             const bossIconBadgeSize = layout.cardIcon
               ? Math.max(BOSS_ICON_BADGE_MIN_SIZE, Math.round(layout.cardIcon.size * BOSS_ICON_BADGE_SIZE_RATIO))
               : 0;
-            const equippedItem = item ? snapshot.equipment.equipped[item.slot] : null;
+            const equippedItemSource = item ? snapshot.equipment.equipped[item.slot] : null;
+            const equippedItem = equippedItemSource
+              ? localizeEquipmentItem(language, equippedItemSource)
+              : null;
             const metrics = item
-              ? equipmentRewardMetrics(item)
+              ? equipmentRewardMetrics(item, language)
               : upgrade
-                ? upgradeRewardMetrics(upgrade, snapshot.player)
+                ? upgradeRewardMetrics(upgrade, snapshot.player, language)
                 : [];
             return (
               <button
@@ -307,12 +344,12 @@ export function RewardOverlay({ snapshot }: { snapshot: GameSnapshot }) {
                               color: "#ffb09a",
                             }}
                           >
-                            {EQUIPMENT_SLOT_LABELS[item.slot]} · {EQUIPMENT_TIER_LABELS[item.tier]}
+                            {equipmentSlotLabel(language, item.slot)} · {equipmentTierLabel(language, item.tier)}
                           </span>
                         </div>
-                        <div className="mt-2 min-h-[31px] text-center text-[10px] font-bold leading-[1.25] text-[#fff8e6]">{choice.name}</div>
+                        <div className="mt-2 min-h-[31px] text-center text-[10px] font-bold leading-[1.25] text-[#fff8e6]">{item.name}</div>
                         <div className="mt-1 truncate text-center text-[8px] font-bold leading-none text-[#ffd46e]">
-                          {EQUIPMENT_FAMILY_LABELS[item.family]} · {item.uiTags[item.uiTags.length - 1]}
+                          {equipmentFamilyLabel(language, item.family)} · {item.uiTags[item.uiTags.length - 1]}
                         </div>
                         <RewardMetricList metrics={metrics} accent={bossAccent} />
                         <div className="mt-1 line-clamp-2 text-center text-[8px] leading-[1.4] text-[#c8efff]">{item.summary}</div>
@@ -328,10 +365,10 @@ export function RewardOverlay({ snapshot }: { snapshot: GameSnapshot }) {
                               color: upgradeAccent,
                             }}
                           >
-                            {upgradeStyle.label}
+                            {message(language, upgradeStyle.labelKey)}
                           </span>
                         </div>
-                        <div className="mt-2 min-h-[31px] text-center text-[10px] font-bold leading-[1.25] text-[#fff8e6]">{choice.name}</div>
+                        <div className="mt-2 min-h-[31px] text-center text-[10px] font-bold leading-[1.25] text-[#fff8e6]">{upgrade.name}</div>
                         <div className="mt-1 text-center text-[8px] font-bold leading-none" style={{ color: upgradeAccent }}>
                           {levelTransition(upgrade)}
                         </div>
@@ -341,7 +378,7 @@ export function RewardOverlay({ snapshot }: { snapshot: GameSnapshot }) {
                     ) : null}
                     {isBossReward && item ? (
                       <div className="mt-auto pt-2 text-center text-[7px] leading-[1.35] text-[#ffd9a0]">
-                        {equipmentChoiceStatus(item, equippedItem?.name)}
+                        {equipmentChoiceStatus(item, equippedItem?.name, language)}
                       </div>
                     ) : null}
                   </div>

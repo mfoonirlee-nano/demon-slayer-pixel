@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useLayoutEffect, useRef, useState, type CSSProperties } from "react";
-import { Provider } from "jotai";
+import { Provider, useAtomValue } from "jotai";
 import {
   WIDTH,
   HEIGHT,
@@ -12,6 +12,8 @@ import { StartScreen } from "../ui/startScreen";
 import { ensureAudio } from "../game/audio";
 import { GameHud } from "../ui/gameHud";
 import { TouchControls } from "../ui/touchControls";
+import { languageAtom } from "../i18n/language";
+import { message } from "../i18n/messages";
 
 type AppPhase = "menu" | "playing";
 
@@ -71,6 +73,7 @@ function useViewportGameScale() {
 
 function GameCanvas({ active, backingScale }: { active: boolean; backingScale: number }) {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
+  const language = useAtomValue(languageAtom);
 
   useLayoutEffect(() => {
     const canvas = canvasRef.current;
@@ -103,7 +106,7 @@ function GameCanvas({ active, backingScale }: { active: boolean; backingScale: n
     <canvas
       ref={canvasRef}
       id="game"
-      aria-label="Moonlit Tide Survivor"
+      aria-label={message(language, "app.canvasLabel")}
       className="pixel-canvas"
     />
   );

@@ -7,12 +7,7 @@ import type { PauseTab } from "./types";
 export const EQUIPMENT_SLOTS: EquipmentSlot[] = ["blade", "garb", "talisman"];
 export const ALL_EQUIPMENT_ITEMS = EQUIPMENT_CHOICE_IDS.map((itemId) => EQUIPMENT_ITEMS[itemId]);
 export const PAUSE_SKILLS = allPlayerSkills();
-export const PAUSE_TABS: Array<{ id: PauseTab; label: string }> = [
-  { id: "info", label: "基础信息" },
-  { id: "equipment", label: "装备" },
-  { id: "skills", label: "技能" },
-  { id: "settings", label: "设置" },
-];
+export const PAUSE_TABS: PauseTab[] = ["info", "equipment", "skills", "settings"];
 
 export const AUDIO_PERCENT_SCALE = 100;
 export const PAUSE_PANEL_SPRITE = "upgradeRewardPanel" satisfies UiSpriteId;

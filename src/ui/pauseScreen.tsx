@@ -1,11 +1,18 @@
 import { useLayoutEffect, useRef, useState, type KeyboardEvent } from "react";
-import { getAudioVolumeSettings, setAudioVolumeSettings, type AudioVolumeSettings } from "../game/audio";
+import { useAtomValue } from "jotai";
 import { equipEquipment, equipSkillSlot } from "../game/runtime";
 import type { GameSnapshot } from "../game/gameStore";
+import {
+  equipmentFamilyMark,
+  equipmentItemCopy,
+  equipmentSlotLabel,
+  localizeEquipmentItem,
+} from "../i18n/equipmentCopy";
+import { languageAtom } from "../i18n/language";
+import { message, type MessageKey } from "../i18n/messages";
+import { skillName } from "../i18n/skillCopy";
 import type { EquipmentSlot } from "../types/game-state";
 import {
-  EQUIPMENT_FAMILY_GLYPHS,
-  EQUIPMENT_SLOT_LABELS,
   equipmentIconSrc,
   equipmentSlotBadgeSrc,
   getSkill,
@@ -40,8 +47,6 @@ import {
   PAUSE_PANEL_INSET_X,
   PAUSE_PANEL_SPRITE,
   PAUSE_PANEL_W,
-  PAUSE_SETTINGS_GAP,
-  PAUSE_SETTINGS_INSET_X,
   PAUSE_SKILLS,
   PAUSE_TAB_BODY_INSET_BOTTOM,
   PAUSE_TAB_BODY_INSET_TOP,
@@ -52,9 +57,17 @@ import {
   PAUSE_TAB_W,
   PAUSE_TABS,
 } from "./pause/constants";
-import { AudioVolumeControl, PauseDetailPanel, PauseSquareIcon, StatRow } from "./pause/components";
+import { PauseDetailPanel, PauseSquareIcon, StatRow } from "./pause/components";
 import { equipmentDetailCopy, skillDetailCopy } from "./pause/detailCopy";
+import { PauseSettings } from "./pause/settings";
 import type { EquipmentDetailTarget, PauseTab, SkillDetailTarget } from "./pause/types";
+
+const PAUSE_TAB_LABEL_KEYS: Record<PauseTab, MessageKey> = {
+  info: "pause.tab.info",
+  equipment: "pause.tab.equipment",
+  skills: "pause.tab.skills",
+  settings: "pause.tab.settings",
+};
 
 function usePausePanelScale() {
   const scaleFrameRef = useRef<HTMLDivElement>(null);
@@ -77,6 +90,7 @@ function usePausePanelScale() {
 }
 
 export function PauseScreen({ snapshot }: { snapshot: GameSnapshot }) {
+  const language = useAtomValue(languageAtom);
   const { player, equipment } = snapshot;
   const { panelScale, scaleFrameRef } = usePausePanelScale();
   const tabRefs = useRef<Array<HTMLButtonElement | null>>([]);
@@ -88,7 +102,6 @@ export function PauseScreen({ snapshot }: { snapshot: GameSnapshot }) {
   const [hoveredEquipmentDetail, setHoveredEquipmentDetail] = useState<EquipmentDetailTarget | null>(null);
   const [selectedSkillDetail, setSelectedSkillDetail] = useState<SkillDetailTarget>({ type: "slot", slotIndex: initialSkillSlot });
   const [hoveredSkillDetail, setHoveredSkillDetail] = useState<SkillDetailTarget | null>(null);
-  const [volumeSettings, setVolumeSettings] = useState<AudioVolumeSettings>(() => getAudioVolumeSettings());
   const activeSkill = getSkill(player.equippedSkillIds[player.skillIndex]);
   const totalAttack = player.baseAttack + player.attackBonus;
   const attackText = player.attackBonus > 0
@@ -96,17 +109,22 @@ export function PauseScreen({ snapshot }: { snapshot: GameSnapshot }) {
     : `${totalAttack}`;
   const skillEnergyText = `${Math.floor(player.skillEnergy)} / ${player.skillEnergyMax}`;
   const ultimateEnergyText = `${Math.floor(player.ultimateEnergy)} / ${player.ultimateEnergyMax}`;
-  const ultimateLevelText = player.ultimateLevel > 0 ? romanLevel(player.ultimateLevel) : "未习得";
-  const selectedEquipmentItem = equipment.equipped[selectedEquipmentSlot];
+  const ultimateLevelText = player.ultimateLevel > 0
+    ? romanLevel(player.ultimateLevel)
+    : message(language, "status.notLearned");
+  const selectedEquipmentItem = equipment.equipped[selectedEquipmentSlot]
+    ? localizeEquipmentItem(language, equipment.equipped[selectedEquipmentSlot])
+    : null;
   const unlockedEquipmentIds = new Set(equipment.inventory.map((item) => item.id));
   const visibleEquipmentItems = ALL_EQUIPMENT_ITEMS.filter((item) => item.slot === selectedEquipmentSlot);
   const selectedSkill = getSkill(player.equippedSkillIds[selectedSkillSlot]);
-  const equipmentDetail = equipmentDetailCopy(hoveredEquipmentDetail ?? selectedEquipmentDetail, equipment, unlockedEquipmentIds);
-  const skillDetail = skillDetailCopy(hoveredSkillDetail ?? selectedSkillDetail, player);
-
-  const updateVolume = (setting: keyof AudioVolumeSettings, value: number) => {
-    setVolumeSettings(setAudioVolumeSettings({ [setting]: value }));
-  };
+  const equipmentDetail = equipmentDetailCopy(
+    hoveredEquipmentDetail ?? selectedEquipmentDetail,
+    equipment,
+    unlockedEquipmentIds,
+    language,
+  );
+  const skillDetail = skillDetailCopy(hoveredSkillDetail ?? selectedSkillDetail, player, language);
 
   const selectPauseTab = (tabId: PauseTab) => {
     setActiveTab(tabId);
@@ -133,7 +151,7 @@ export function PauseScreen({ snapshot }: { snapshot: GameSnapshot }) {
     }
 
     event.preventDefault();
-    selectPauseTab(PAUSE_TABS[nextIndex].id);
+    selectPauseTab(PAUSE_TABS[nextIndex]);
     focusTab(nextIndex);
   };
 
@@ -174,29 +192,29 @@ export function PauseScreen({ snapshot }: { snapshot: GameSnapshot }) {
               columnGap: PAUSE_TAB_GAP,
             }}
             role="tablist"
-            aria-label="暂停菜单"
+            aria-label={message(language, "pause.menu")}
           >
             {PAUSE_TABS.map((tab, index) => (
               <button
-                key={tab.id}
+                key={tab}
                 ref={(element) => {
                   tabRefs.current[index] = element;
                 }}
                 type="button"
                 role="tab"
-                aria-selected={activeTab === tab.id}
-                tabIndex={activeTab === tab.id ? 0 : -1}
+                aria-selected={activeTab === tab}
+                tabIndex={activeTab === tab ? 0 : -1}
                 className="pause-tab-button border-0 bg-transparent p-0 text-[12px] font-bold"
-                onClick={() => selectPauseTab(tab.id)}
+                onClick={() => selectPauseTab(tab)}
                 onKeyDown={(event) => handleTabKeyDown(event, index)}
               >
                 <UiSprite
-                  id={activeTab === tab.id ? "pauseTabActive" : "pauseTabNormal"}
+                  id={activeTab === tab ? "pauseTabActive" : "pauseTabNormal"}
                   width={PAUSE_TAB_W}
                   height={PAUSE_TAB_H}
-                  className={`${PAUSE_TAB_CONTENT_CLASS} ${activeTab === tab.id ? "text-[#e8fbff]" : "text-[#7fc8e0]"}`}
+                  className={`${PAUSE_TAB_CONTENT_CLASS} ${activeTab === tab ? "text-[#e8fbff]" : "text-[#7fc8e0]"}`}
                 >
-                  {tab.label}
+                  {message(language, PAUSE_TAB_LABEL_KEYS[tab])}
                 </UiSprite>
               </button>
             ))}
@@ -218,14 +236,17 @@ export function PauseScreen({ snapshot }: { snapshot: GameSnapshot }) {
                   gridTemplateRows: "repeat(4, minmax(0, 1fr))",
                 }}
               >
-                <StatRow label="等级" value={`Lv.${player.runLevel}`} />
-                <StatRow label="经验" value={`${player.runXp} / ${player.xpToNext}`} />
-                <StatRow label="生命值" value={`${Math.max(0, Math.floor(player.hp))} / ${player.maxHp}`} />
-                <StatRow label="攻击力" value={attackText} />
-                <StatRow label="技能能量" value={skillEnergyText} />
-                <StatRow label="当前技能" value={activeSkill?.name ?? "未装备"} />
-                <StatRow label="大招能量" value={ultimateEnergyText} accent={player.ultimateReady} />
-                <StatRow label="大招等级" value={ultimateLevelText} />
+                <StatRow label={message(language, "pause.stat.level")} value={`Lv.${player.runLevel}`} />
+                <StatRow label={message(language, "pause.stat.experience")} value={`${player.runXp} / ${player.xpToNext}`} />
+                <StatRow label={message(language, "pause.stat.health")} value={`${Math.max(0, Math.floor(player.hp))} / ${player.maxHp}`} />
+                <StatRow label={message(language, "pause.stat.attack")} value={attackText} />
+                <StatRow label={message(language, "pause.stat.skillEnergy")} value={skillEnergyText} />
+                <StatRow
+                  label={message(language, "pause.stat.currentSkill")}
+                  value={activeSkill ? skillName(language, activeSkill.id) : message(language, "status.notEquipped")}
+                />
+                <StatRow label={message(language, "pause.stat.ultimateEnergy")} value={ultimateEnergyText} accent={player.ultimateReady} />
+                <StatRow label={message(language, "pause.stat.ultimateLevel")} value={ultimateLevelText} />
               </div>
             ) : null}
 
@@ -255,7 +276,7 @@ export function PauseScreen({ snapshot }: { snapshot: GameSnapshot }) {
                     }}
                   >
                     <div className="flex min-w-0 items-center justify-between gap-2 text-[10px] leading-none text-[#7fc8e0]">
-                      <span>当前装备</span>
+                      <span>{message(language, "pause.currentEquipment")}</span>
                     </div>
                     <div
                       className="grid content-start"
@@ -267,6 +288,7 @@ export function PauseScreen({ snapshot }: { snapshot: GameSnapshot }) {
                     >
                       {EQUIPMENT_SLOTS.map((slot) => {
                         const item = equipment.equipped[slot];
+                        const itemCopy = item ? localizeEquipmentItem(language, item) : null;
                         const iconSrc = item ? equipmentIconSrc(item.id) : undefined;
                         const detailTarget: EquipmentDetailTarget = { type: "slot", slot };
                         const active = selectedEquipmentSlot === slot;
@@ -274,7 +296,7 @@ export function PauseScreen({ snapshot }: { snapshot: GameSnapshot }) {
                           <button
                             key={slot}
                             type="button"
-                            aria-label={`${EQUIPMENT_SLOT_LABELS[slot]}：${item?.name ?? "空槽"}`}
+                            aria-label={`${equipmentSlotLabel(language, slot)}: ${itemCopy?.name ?? message(language, "status.emptySlot")}`}
                             className="pause-square-button border-0 bg-transparent p-0"
                             onMouseEnter={() => setHoveredEquipmentDetail(detailTarget)}
                             onMouseLeave={() => setHoveredEquipmentDetail(null)}
@@ -290,7 +312,7 @@ export function PauseScreen({ snapshot }: { snapshot: GameSnapshot }) {
                               empty={!item}
                               iconSrc={iconSrc}
                               badgeSrc={equipmentSlotBadgeSrc(slot)}
-                              centerText={!iconSrc && item ? EQUIPMENT_FAMILY_GLYPHS[item.family] : undefined}
+                              centerText={!iconSrc && item ? equipmentFamilyMark(language, item.family) : undefined}
                               size={PAUSE_CURRENT_FRAME_SIZE}
                               iconSize={PAUSE_CURRENT_ICON_SIZE}
                               badgeSize={PAUSE_CURRENT_BADGE_SIZE}
@@ -306,9 +328,13 @@ export function PauseScreen({ snapshot }: { snapshot: GameSnapshot }) {
                     style={{ gridTemplateRows: "auto 1fr", rowGap: PAUSE_CURRENT_ROW_GAP }}
                   >
                     <div className="flex items-center justify-between gap-3 text-[10px] leading-none text-[#7fc8e0]">
-                      <span>{EQUIPMENT_SLOT_LABELS[selectedEquipmentSlot]}候选</span>
+                      <span>
+                        {message(language, "pause.equipmentCandidates", {
+                          slot: equipmentSlotLabel(language, selectedEquipmentSlot),
+                        })}
+                      </span>
                       <span className="truncate text-[#26d5ff]">
-                        {selectedEquipmentItem?.name ?? "未装备"}
+                        {selectedEquipmentItem?.name ?? message(language, "status.notEquipped")}
                       </span>
                     </div>
                     <div className="min-h-0 overflow-y-auto overflow-x-hidden">
@@ -322,6 +348,7 @@ export function PauseScreen({ snapshot }: { snapshot: GameSnapshot }) {
                           }}
                         >
                           {visibleEquipmentItems.map((item) => {
+                            const copy = equipmentItemCopy(language, item.id, item.tier);
                             const unlocked = unlockedEquipmentIds.has(item.id);
                             const equipped = equipment.equipped[item.slot]?.id === item.id;
                             const detailTarget: EquipmentDetailTarget = { type: "item", itemId: item.id };
@@ -331,7 +358,7 @@ export function PauseScreen({ snapshot }: { snapshot: GameSnapshot }) {
                                 key={item.id}
                                 type="button"
                                 aria-disabled={!unlocked}
-                                aria-label={`${item.name}：${unlocked ? "可装备" : "未解锁"}`}
+                                aria-label={`${copy.name}: ${message(language, unlocked ? "status.canEquip" : "status.locked")}`}
                                 className={`pause-choice-button border-0 bg-transparent p-0 ${
                                   !unlocked
                                     ? "text-[#4a7a9a]"
@@ -354,7 +381,7 @@ export function PauseScreen({ snapshot }: { snapshot: GameSnapshot }) {
                                   disabled={!unlocked}
                                   iconSrc={iconSrc}
                                   badgeSrc={equipmentSlotBadgeSrc(item.slot)}
-                                  centerText={!iconSrc ? EQUIPMENT_FAMILY_GLYPHS[item.family] : undefined}
+                                  centerText={!iconSrc ? equipmentFamilyMark(language, item.family) : undefined}
                                   size={PAUSE_CHOICE_FRAME_SIZE}
                                   iconSize={PAUSE_CHOICE_ICON_SIZE}
                                   badgeSize={PAUSE_CHOICE_BADGE_SIZE}
@@ -371,7 +398,7 @@ export function PauseScreen({ snapshot }: { snapshot: GameSnapshot }) {
                             size={PAUSE_CHOICE_FRAME_SIZE}
                             iconSize={PAUSE_CHOICE_ICON_SIZE}
                           />
-                          <span>暂无装备设定</span>
+                          <span>{message(language, "pause.noEquipment")}</span>
                         </div>
                       )}
                     </div>
@@ -408,7 +435,7 @@ export function PauseScreen({ snapshot }: { snapshot: GameSnapshot }) {
                     }}
                   >
                     <div className="flex min-w-0 items-center justify-between gap-2 text-[10px] leading-none text-[#7fc8e0]">
-                      <span>当前技能</span>
+                      <span>{message(language, "pause.stat.currentSkill")}</span>
                     </div>
                     <div
                       className="grid content-start"
@@ -427,7 +454,9 @@ export function PauseScreen({ snapshot }: { snapshot: GameSnapshot }) {
                           <button
                             key={index}
                             type="button"
-                            aria-label={`技能槽 ${index + 1}：${skill?.name ?? "空槽"}`}
+                            aria-label={`${message(language, "pause.skillSlot", { slot: index + 1 })}: ${
+                              skillId ? skillName(language, skillId) : message(language, "status.emptySlot")
+                            }`}
                             className="pause-square-button border-0 bg-transparent p-0"
                             onMouseEnter={() => setHoveredSkillDetail(detailTarget)}
                             onMouseLeave={() => setHoveredSkillDetail(null)}
@@ -458,8 +487,10 @@ export function PauseScreen({ snapshot }: { snapshot: GameSnapshot }) {
                     style={{ gridTemplateRows: "auto 1fr", rowGap: PAUSE_CURRENT_ROW_GAP }}
                   >
                     <div className="flex items-center justify-between gap-3 text-[10px] leading-none text-[#7fc8e0]">
-                      <span>全部技能</span>
-                      <span className="truncate text-[#26d5ff]">{selectedSkill?.name ?? "空槽"}</span>
+                      <span>{message(language, "pause.allSkills")}</span>
+                      <span className="truncate text-[#26d5ff]">
+                        {selectedSkill ? skillName(language, selectedSkill.id) : message(language, "status.emptySlot")}
+                      </span>
                     </div>
                     <div className="min-h-0 overflow-y-auto overflow-x-hidden">
                       {PAUSE_SKILLS.length > 0 ? (
@@ -472,6 +503,7 @@ export function PauseScreen({ snapshot }: { snapshot: GameSnapshot }) {
                           }}
                         >
                           {PAUSE_SKILLS.map((skill) => {
+                            const localizedName = skillName(language, skill.id);
                             const learned = Boolean(player.skillLevels[skill.id]);
                             const equippedElsewhere = player.equippedSkillIds.some((skillId, index) => (
                               index !== selectedSkillSlot && skillId === skill.id
@@ -484,7 +516,13 @@ export function PauseScreen({ snapshot }: { snapshot: GameSnapshot }) {
                                 key={skill.id}
                                 type="button"
                                 aria-disabled={!canEquip}
-                                aria-label={`${skill.name}：${learned ? `等级 ${romanLevel(player.skillLevels[skill.id])}` : "未解锁"}${equippedElsewhere ? "，已在其他槽位装备" : ""}`}
+                                aria-label={`${localizedName}: ${
+                                  learned
+                                    ? message(language, "pause.detail.level", {
+                                      level: romanLevel(player.skillLevels[skill.id]),
+                                    })
+                                    : message(language, "status.locked")
+                                }${equippedElsewhere ? `, ${message(language, "status.equippedElsewhere")}` : ""}`}
                                 className={`pause-choice-button border-0 bg-transparent p-0 ${
                                   !learned
                                     ? "text-[#4a7a9a]"
@@ -521,7 +559,7 @@ export function PauseScreen({ snapshot }: { snapshot: GameSnapshot }) {
                             size={PAUSE_CHOICE_FRAME_SIZE}
                             iconSize={PAUSE_CHOICE_ICON_SIZE}
                           />
-                          <span>暂无技能设定</span>
+                          <span>{message(language, "pause.noSkills")}</span>
                         </div>
                       )}
                     </div>
@@ -533,26 +571,7 @@ export function PauseScreen({ snapshot }: { snapshot: GameSnapshot }) {
             ) : null}
 
             {activeTab === "settings" ? (
-              <div
-                className="grid h-full content-start overflow-hidden"
-                style={{
-                  gap: PAUSE_SETTINGS_GAP,
-                  paddingInline: PAUSE_SETTINGS_INSET_X,
-                  paddingTop: PAUSE_TAB_BODY_INSET_TOP,
-                  paddingBottom: PAUSE_TAB_BODY_INSET_BOTTOM,
-                }}
-              >
-                <AudioVolumeControl
-                  label="主音量"
-                  value={volumeSettings.master}
-                  onChange={(value) => updateVolume("master", value)}
-                />
-                <AudioVolumeControl
-                  label="音效音量"
-                  value={volumeSettings.sfx}
-                  onChange={(value) => updateVolume("sfx", value)}
-                />
-              </div>
+              <PauseSettings />
             ) : null}
           </div>
         </div>

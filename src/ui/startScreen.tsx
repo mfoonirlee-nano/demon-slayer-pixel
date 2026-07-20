@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState, type CSSProperties } from "react";
+import { useAtomValue } from "jotai";
 import {
   COVER_MOON_PHASE_COUNT,
   getCoverMoonPhaseIndex,
@@ -8,6 +9,8 @@ import {
   writeLastSeenCoverKills,
 } from "../game/coverProgress";
 import { getMoonPhaseGlowScale } from "../moon/phaseGlow";
+import { languageAtom, type Language } from "../i18n/language";
+import { message } from "../i18n/messages";
 
 type CustomCssProperties = CSSProperties & Record<`--${string}`, string>;
 
@@ -232,12 +235,12 @@ function useCoverProgress(prefersReducedMotion: boolean) {
   };
 }
 
-function CoverKillCounter({ value }: { value: number }) {
+function CoverKillCounter({ value, language }: { value: number; language: Language }) {
   const kills = Math.max(0, Math.floor(value));
   if (kills <= 0) return null;
 
   return (
-    <div className="cover-kill-counter" aria-label={`击杀 ${kills}`}>
+    <div className="cover-kill-counter" aria-label={message(language, "start.kills", { kills })}>
       {String(kills).split("").map((digit, index) => {
         const digitIndex = Number(digit);
         const column = digitIndex % KILL_DIGIT_COLUMNS;
@@ -311,9 +314,12 @@ function CoverMoonPhase({ progress, transitionKind }: {
 }
 
 export function StartScreen({ assetsReady, startQueued, onStart }: StartScreenProps) {
+  const language = useAtomValue(languageAtom);
   const prefersReducedMotion = usePrefersReducedMotion();
   const { kills, progress, transitionKind } = useCoverProgress(prefersReducedMotion);
-  const promptText = assetsReady ? "按任意键开始" : "加载像素贴图中...";
+  const promptText = assetsReady
+    ? message(language, "start.prompt")
+    : message(language, "loading.sprites");
   const promptClassName = startQueued && !assetsReady
     ? "start-prompt start-prompt-loading"
     : "start-prompt";
@@ -346,7 +352,7 @@ export function StartScreen({ assetsReady, startQueued, onStart }: StartScreenPr
         <CoverMoonPhase progress={progress} transitionKind={transitionKind} />
         <div className="cover-darkness" />
       </div>
-      <CoverKillCounter value={kills} />
+      <CoverKillCounter value={kills} language={language} />
       <div className={promptClassName}>{promptText}</div>
     </div>
   );

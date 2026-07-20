@@ -7,7 +7,6 @@ import {
   SKILL_IDS,
 } from "../constants";
 import { CORE_PLAYER_SKILL_EFFECT_CONFIGS } from "../systems/skillCatalog";
-import { EQUIPMENT_PRIMARY_STAT_LABELS } from "../systems/equipmentCatalog";
 import {
   BURST_BLADE_AWAKENED_SLASH_ATTACK_SCALE,
   BURST_BLADE_BOSS_DAMAGE_MULTIPLIER,
@@ -82,6 +81,13 @@ import {
   isGenericPlayerSkillId,
   valueForSkillLevel,
 } from "../systems/playerSkills";
+import { DEFAULT_LANGUAGE, type Language } from "../i18n/language";
+import {
+  formatRewardUnit,
+  rewardLabel,
+  rewardValue,
+  type RewardLabelKey,
+} from "../i18n/rewardMessages";
 import type { SkillId } from "../types/assets";
 import type {
   EquipmentChoiceState,
@@ -117,13 +123,19 @@ const EQUIPMENT_PRIMARY_STAT_TONES = {
   garb: "defense",
   talisman: "resource",
 } as const satisfies Record<EquipmentChoiceState["slot"], RewardMetricTone>;
+const EQUIPMENT_PRIMARY_STAT_LABEL_KEYS = {
+  blade: "attack",
+  garb: "maxHp",
+  talisman: "maxSkillEnergy",
+} as const satisfies Record<EquipmentChoiceState["slot"], RewardLabelKey>;
 
 export function upgradeRewardMetrics(
   choice: UpgradeChoiceState,
   player: PlayerDamageStats,
+  language: Language = DEFAULT_LANGUAGE,
 ): RewardChoiceMetric[] {
   if (choice.type === "upgradeUltimate") {
-    return ultimateRewardMetrics(choice);
+    return ultimateRewardMetrics(choice, language);
   }
 
   if (!choice.skillId) return [];
@@ -131,185 +143,190 @@ export function upgradeRewardMetrics(
   if (!nextLevel) return [];
 
   const previousLevel = choice.type === "unlockSkill" ? 0 : asSkillLevel(nextLevel - 1) ?? 0;
-  const damageMetrics = skillDamageMetrics(choice.skillId, nextLevel, previousLevel, player);
+  const damageMetrics = skillDamageMetrics(choice.skillId, nextLevel, previousLevel, player, language);
   return compactMetrics([
     ...damageMetrics,
-    ...skillTuningMetrics(choice.skillId, nextLevel, previousLevel),
+    ...skillTuningMetrics(choice.skillId, nextLevel, previousLevel, language),
   ]);
 }
 
-export function equipmentRewardMetrics(choice: EquipmentChoiceState): RewardChoiceMetric[] {
+export function equipmentRewardMetrics(
+  choice: EquipmentChoiceState,
+  language: Language = DEFAULT_LANGUAGE,
+): RewardChoiceMetric[] {
   return compactMetrics([
-    equipmentPrimaryStatMetric(choice),
-    ...equipmentEffectMetrics(choice),
+    equipmentPrimaryStatMetric(choice, language),
+    ...equipmentEffectMetrics(choice, language),
   ]);
 }
 
-function equipmentEffectMetrics(choice: EquipmentChoiceState): RewardChoiceMetric[] {
+function equipmentEffectMetrics(choice: EquipmentChoiceState, language: Language): RewardChoiceMetric[] {
+  const label = (key: RewardLabelKey) => rewardLabel(language, key);
+  const frames = (value: number) => formatFrames(value, language);
   switch (choice.id) {
     case "flow_blade":
       return compactMetrics([
-        tierTableMetric(choice, "蓄势命中", FLOW_BLADE_HITS_REQUIRED, (value) => `${value}次`, "utility"),
-        tierTableMetric(choice, "技能伤害", FLOW_BLADE_SKILL_DAMAGE_MULTIPLIER, formatMultiplierDelta, "damage"),
-        tierAtLeast(choice.tier, "fine") ? metric("命中返能", `+${FLOW_BLADE_SKILL_REFUND}`, "resource") : null,
-        tierAtLeast(choice.tier, "awakened") ? metric("Boss终能", `+${FLOW_BLADE_ULTIMATE_GAIN}`, "resource") : null,
+        tierTableMetric(choice, label("chargedHits"), FLOW_BLADE_HITS_REQUIRED, (value) => formatRewardUnit(language, "hits", value), "utility"),
+        tierTableMetric(choice, label("skillDamage"), FLOW_BLADE_SKILL_DAMAGE_MULTIPLIER, formatMultiplierDelta, "damage"),
+        tierAtLeast(choice.tier, "fine") ? metric(label("energyOnHit"), `+${FLOW_BLADE_SKILL_REFUND}`, "resource") : null,
+        tierAtLeast(choice.tier, "awakened") ? metric(label("bossUltimateEnergy"), `+${FLOW_BLADE_ULTIMATE_GAIN}`, "resource") : null,
       ]);
     case "flow_garb":
       return compactMetrics([
-        metric("技能后移速", formatMultiplierDelta(FLOW_GARB_SPEED_MULTIPLIER), "speed"),
-        metric("持续", formatFrames(FLOW_GARB_TIMER_FRAMES), "utility"),
-        tierAtLeast(choice.tier, "fine") ? metric("受伤", formatMultiplierDelta(FLOW_GARB_DAMAGE_MULTIPLIER), "defense") : null,
-        tierAtLeast(choice.tier, "awakened") ? metric("续时", `+${formatFrames(FLOW_GARB_EXTEND_FRAMES)}`, "utility") : null,
+        metric(label("postSkillMoveSpeed"), formatMultiplierDelta(FLOW_GARB_SPEED_MULTIPLIER), "speed"),
+        metric(label("duration"), frames(FLOW_GARB_TIMER_FRAMES), "utility"),
+        tierAtLeast(choice.tier, "fine") ? metric(label("damageTaken"), formatMultiplierDelta(FLOW_GARB_DAMAGE_MULTIPLIER), "defense") : null,
+        tierAtLeast(choice.tier, "awakened") ? metric(label("durationExtension"), `+${frames(FLOW_GARB_EXTEND_FRAMES)}`, "utility") : null,
       ]);
     case "flow_talisman":
       return compactMetrics([
-        tierTableMetric(choice, "命中要求", FLOW_TALISMAN_HIT_THRESHOLD, (value) => `${value}目标`, "utility"),
-        tierTableMetric(choice, "技能能量", FLOW_TALISMAN_REFUND, (value) => `+${value}`, "resource"),
-        tierAtLeast(choice.tier, "awakened") ? metric("终能", `+${FLOW_TALISMAN_ULTIMATE_GAIN}`, "resource") : null,
+        tierTableMetric(choice, label("hitRequirement"), FLOW_TALISMAN_HIT_THRESHOLD, (value) => formatRewardUnit(language, "targets", value), "utility"),
+        tierTableMetric(choice, label("skillEnergy"), FLOW_TALISMAN_REFUND, (value) => `+${value}`, "resource"),
+        tierAtLeast(choice.tier, "awakened") ? metric(label("ultimateEnergy"), `+${FLOW_TALISMAN_ULTIMATE_GAIN}`, "resource") : null,
       ]);
     case "burst_blade":
       return compactMetrics([
-        metric("Boss血线", `<=${formatPercent(BURST_BLADE_BOSS_HP_RATIO)}`, "utility"),
-        tierTableMetric(choice, "Boss伤害", BURST_BLADE_BOSS_DAMAGE_MULTIPLIER, formatMultiplierDelta, "damage"),
+        metric(label("bossHpThreshold"), `<=${formatPercent(BURST_BLADE_BOSS_HP_RATIO)}`, "utility"),
+        tierTableMetric(choice, label("bossDamage"), BURST_BLADE_BOSS_DAMAGE_MULTIPLIER, formatMultiplierDelta, "damage"),
         tierAtLeast(choice.tier, "fine")
-          ? metric("普攻强化", formatMultiplierDelta(BURST_BLADE_EXECUTE_ATTACK_MULTIPLIER), "damage")
+          ? metric(label("basicAttackBoost"), formatMultiplierDelta(BURST_BLADE_EXECUTE_ATTACK_MULTIPLIER), "damage")
           : null,
         tierAtLeast(choice.tier, "awakened")
-          ? metric("追加斩击", `${BURST_BLADE_AWAKENED_SLASH_ATTACK_SCALE}x攻击`, "damage")
+          ? metric(label("bonusSlash"), formatRewardUnit(language, "attackMultiplier", BURST_BLADE_AWAKENED_SLASH_ATTACK_SCALE), "damage")
           : null,
       ]);
     case "burst_garb":
       return compactMetrics([
-        metric("致命保护", "保留1 HP", "defense"),
-        metric("无敌", formatFrames(BURST_GARB_INVINCIBLE_FRAMES), "defense"),
-        tierAtLeast(choice.tier, "fine") ? metric("移速", formatMultiplierDelta(BURST_GARB_SPEED_MULTIPLIER), "speed") : null,
-        tierAtLeast(choice.tier, "fine") ? metric("移速持续", formatFrames(BURST_GARB_SPEED_TIMER_FRAMES), "utility") : null,
+        metric(label("lethalGuard"), rewardValue(language, "keepOneHp"), "defense"),
+        metric(label("invincibility"), frames(BURST_GARB_INVINCIBLE_FRAMES), "defense"),
+        tierAtLeast(choice.tier, "fine") ? metric(label("moveSpeed"), formatMultiplierDelta(BURST_GARB_SPEED_MULTIPLIER), "speed") : null,
+        tierAtLeast(choice.tier, "fine") ? metric(label("speedDuration"), frames(BURST_GARB_SPEED_TIMER_FRAMES), "utility") : null,
       ]);
     case "burst_talisman":
       return compactMetrics([
-        tierTableMetric(choice, "Boss终能", BURST_TALISMAN_ULTIMATE_GAIN, (value) => `+${value}`, "resource"),
-        metric("冷却", formatFrames(BURST_TALISMAN_COOLDOWN), "utility"),
+        tierTableMetric(choice, label("bossUltimateEnergy"), BURST_TALISMAN_ULTIMATE_GAIN, (value) => `+${value}`, "resource"),
+        metric(label("cooldown"), frames(BURST_TALISMAN_COOLDOWN), "utility"),
         tierAtLeast(choice.tier, "fine")
-          ? metric("技能命中Boss", `+${BURST_TALISMAN_SKILL_BOSS_ULTIMATE_GAIN}终能`, "resource")
+          ? metric(label("bossSkillHit"), formatRewardUnit(language, "ultimateEnergy", `+${BURST_TALISMAN_SKILL_BOSS_ULTIMATE_GAIN}`), "resource")
           : null,
         tierAtLeast(choice.tier, "awakened")
-          ? metric("击杀保留", formatPercent(BURST_TALISMAN_RETAIN_RATIO), "resource")
+          ? metric(label("retainedOnKill"), formatPercent(BURST_TALISMAN_RETAIN_RATIO), "resource")
           : null,
       ]);
     case "shadowstep_blade":
       return compactMetrics([
-        metric("蓄势距离", `${SHADOWSTEP_DISTANCE_REQUIRED}px`, "utility"),
-        tierTableMetric(choice, "普攻范围", SHADOWSTEP_BLADE_REACH_BONUS, (value) => `+${value}`, "range"),
+        metric(label("chargeDistance"), `${SHADOWSTEP_DISTANCE_REQUIRED}px`, "utility"),
+        tierTableMetric(choice, label("basicAttackRange"), SHADOWSTEP_BLADE_REACH_BONUS, (value) => `+${value}`, "range"),
         tierAtLeast(choice.tier, "fine")
-          ? tierTableMetric(choice, "影斩伤害", SHADOWSTEP_BLADE_DAMAGE_MULTIPLIER, formatMultiplierDelta, "damage")
+          ? tierTableMetric(choice, label("shadowSlashDamage"), SHADOWSTEP_BLADE_DAMAGE_MULTIPLIER, formatMultiplierDelta, "damage")
           : null,
         tierAtLeast(choice.tier, "awakened")
-          ? metric("Boss终能", `+${SHADOWSTEP_BLADE_ULTIMATE_GAIN}`, "resource")
+          ? metric(label("bossUltimateEnergy"), `+${SHADOWSTEP_BLADE_ULTIMATE_GAIN}`, "resource")
           : null,
       ]);
     case "shadowstep_garb":
       return compactMetrics([
-        tierTableMetric(choice, "接触伤害", SHADOWSTEP_GARB_DAMAGE_MULTIPLIER, formatMultiplierDelta, "defense"),
-        metric("移动判定", `${SHADOWSTEP_GARB_MOVING_FRAMES}帧`, "utility"),
+        tierTableMetric(choice, label("contactDamage"), SHADOWSTEP_GARB_DAMAGE_MULTIPLIER, formatMultiplierDelta, "defense"),
+        metric(label("movementCheck"), formatRewardUnit(language, "frames", SHADOWSTEP_GARB_MOVING_FRAMES), "utility"),
         tierAtLeast(choice.tier, "fine")
-          ? metric("击退", formatMultiplierDelta(SHADOWSTEP_GARB_KNOCKBACK_MULTIPLIER), "defense")
+          ? metric(label("knockback"), formatMultiplierDelta(SHADOWSTEP_GARB_KNOCKBACK_MULTIPLIER), "defense")
           : null,
         tierAtLeast(choice.tier, "awakened")
-          ? metric("受伤移速", formatMultiplierDelta(SHADOWSTEP_GARB_HURT_SPEED_MULTIPLIER), "speed")
+          ? metric(label("moveSpeedOnHit"), formatMultiplierDelta(SHADOWSTEP_GARB_HURT_SPEED_MULTIPLIER), "speed")
           : null,
       ]);
     case "shadowstep_talisman":
       return compactMetrics([
-        metric("触发半径", `${SHADOWSTEP_TALISMAN_RADIUS}px`, "range"),
-        tierTableMetric(choice, "技能能量", SHADOWSTEP_TALISMAN_SKILL_GAIN, (value) => `+${value}`, "resource"),
-        metric("冷却", formatFrames(SHADOWSTEP_TALISMAN_COOLDOWN), "utility"),
+        metric(label("triggerRadius"), `${SHADOWSTEP_TALISMAN_RADIUS}px`, "range"),
+        tierTableMetric(choice, label("skillEnergy"), SHADOWSTEP_TALISMAN_SKILL_GAIN, (value) => `+${value}`, "resource"),
+        metric(label("cooldown"), frames(SHADOWSTEP_TALISMAN_COOLDOWN), "utility"),
         tierAtLeast(choice.tier, "awakened")
-          ? metric("Boss终能", `+${SHADOWSTEP_TALISMAN_ULTIMATE_GAIN}`, "resource")
+          ? metric(label("bossUltimateEnergy"), `+${SHADOWSTEP_TALISMAN_ULTIMATE_GAIN}`, "resource")
           : null,
       ]);
     case "hunt_blade":
       return compactMetrics([
-        metric("连杀要求", `${HUNT_BLADE_KILLS_REQUIRED}个`, "utility"),
-        tierTableMetric(choice, "普攻范围", HUNT_BLADE_REACH_BONUS, (value) => `+${value}`, "range"),
-        tierTableMetric(choice, "普攻伤害", HUNT_BLADE_DAMAGE_MULTIPLIER, formatMultiplierDelta, "damage"),
-        tierAtLeast(choice.tier, "awakened") ? metric("水刃持续", formatFrames(HUNT_BLADE_WATER_TIMER_FRAMES), "utility") : null,
+        metric(label("killRequirement"), formatRewardUnit(language, "kills", HUNT_BLADE_KILLS_REQUIRED), "utility"),
+        tierTableMetric(choice, label("basicAttackRange"), HUNT_BLADE_REACH_BONUS, (value) => `+${value}`, "range"),
+        tierTableMetric(choice, label("basicAttackDamage"), HUNT_BLADE_DAMAGE_MULTIPLIER, formatMultiplierDelta, "damage"),
+        tierAtLeast(choice.tier, "awakened") ? metric(label("waterBladeDuration"), frames(HUNT_BLADE_WATER_TIMER_FRAMES), "utility") : null,
       ]);
     case "hunt_garb":
       return compactMetrics([
-        tierTableMetric(choice, "击杀移速", HUNT_GARB_SPEED_MULTIPLIER, formatMultiplierDelta, "speed"),
-        metric("持续", formatFrames(HUNT_GARB_TIMER_FRAMES), "utility"),
-        metric("连杀窗口", formatFrames(HUNT_KILL_WINDOW), "utility"),
+        tierTableMetric(choice, label("moveSpeedOnKill"), HUNT_GARB_SPEED_MULTIPLIER, formatMultiplierDelta, "speed"),
+        metric(label("duration"), frames(HUNT_GARB_TIMER_FRAMES), "utility"),
+        metric(label("killWindow"), frames(HUNT_KILL_WINDOW), "utility"),
         tierAtLeast(choice.tier, "awakened")
-          ? metric("护身减伤", formatMultiplierDelta(HUNT_GARB_GUARD_DAMAGE_MULTIPLIER), "defense")
+          ? metric(label("guardDamageReduction"), formatMultiplierDelta(HUNT_GARB_GUARD_DAMAGE_MULTIPLIER), "defense")
           : null,
       ]);
     case "hunt_talisman":
       return compactMetrics([
-        metric("连杀要求", `${HUNT_TALISMAN_KILLS_REQUIRED}个`, "utility"),
-        tierTableMetric(choice, "技能能量", HUNT_TALISMAN_SKILL_GAIN, (value) => `+${value}`, "resource"),
-        tierTableMetric(choice, "终能", HUNT_TALISMAN_ULTIMATE_GAIN, (value) => `+${value}`, "resource"),
-        metric("冷却", formatFrames(HUNT_TALISMAN_COOLDOWN), "utility"),
+        metric(label("killRequirement"), formatRewardUnit(language, "kills", HUNT_TALISMAN_KILLS_REQUIRED), "utility"),
+        tierTableMetric(choice, label("skillEnergy"), HUNT_TALISMAN_SKILL_GAIN, (value) => `+${value}`, "resource"),
+        tierTableMetric(choice, label("ultimateEnergy"), HUNT_TALISMAN_ULTIMATE_GAIN, (value) => `+${value}`, "resource"),
+        metric(label("cooldown"), frames(HUNT_TALISMAN_COOLDOWN), "utility"),
       ]);
     case "risk_blade":
       return compactMetrics([
-        metric("低血线", `<=${formatPercent(LOW_HP_RATIO)}`, "utility"),
-        tierTableMetric(choice, "普攻伤害", RISK_BLADE_BASIC_DAMAGE_MULTIPLIER, formatMultiplierDelta, "damage"),
+        metric(label("lowHpThreshold"), `<=${formatPercent(LOW_HP_RATIO)}`, "utility"),
+        tierTableMetric(choice, label("basicAttackDamage"), RISK_BLADE_BASIC_DAMAGE_MULTIPLIER, formatMultiplierDelta, "damage"),
         tierAtLeast(choice.tier, "fine")
-          ? metric("技能伤害", formatMultiplierDelta(RISK_BLADE_SKILL_DAMAGE_MULTIPLIER), "damage")
+          ? metric(label("skillDamage"), formatMultiplierDelta(RISK_BLADE_SKILL_DAMAGE_MULTIPLIER), "damage")
           : null,
         tierAtLeast(choice.tier, "awakened")
-          ? metric("首次技能", formatMultiplierDelta(RISK_BLADE_AWAKENED_SKILL_MULTIPLIER), "damage")
+          ? metric(label("firstSkill"), formatMultiplierDelta(RISK_BLADE_AWAKENED_SKILL_MULTIPLIER), "damage")
           : null,
       ]);
     case "risk_garb":
       return compactMetrics([
-        metric("低血线", `<=${formatPercent(LOW_HP_RATIO)}`, "utility"),
-        tierTableMetric(choice, "受伤", RISK_GARB_DAMAGE_MULTIPLIER, formatMultiplierDelta, "defense"),
+        metric(label("lowHpThreshold"), `<=${formatPercent(LOW_HP_RATIO)}`, "utility"),
+        tierTableMetric(choice, label("damageTaken"), RISK_GARB_DAMAGE_MULTIPLIER, formatMultiplierDelta, "defense"),
         tierAtLeast(choice.tier, "fine")
-          ? metric("受伤无敌", `+${formatFrames(RISK_GARB_FINE_INVINCIBLE_BONUS_FRAMES)}`, "defense")
+          ? metric(label("hitInvincibility"), `+${frames(RISK_GARB_FINE_INVINCIBLE_BONUS_FRAMES)}`, "defense")
           : null,
         tierAtLeast(choice.tier, "awakened")
-          ? metric("Boss无敌", formatFrames(RISK_GARB_AWAKENED_INVINCIBLE_FRAMES), "defense")
+          ? metric(label("bossInvincibility"), frames(RISK_GARB_AWAKENED_INVINCIBLE_FRAMES), "defense")
           : null,
       ]);
     case "risk_talisman":
       return compactMetrics([
-        metric("低血线", `<=${formatPercent(LOW_HP_RATIO)}`, "utility"),
-        tierTableMetric(choice, "技能能量", RISK_TALISMAN_SKILL_GAIN, (value) => `+${value}`, "resource"),
-        tierAtLeast(choice.tier, "awakened") ? metric("至少", "1格技能", "resource") : null,
-        tierAtLeast(choice.tier, "awakened") ? metric("终能", `+${RISK_TALISMAN_ULTIMATE_GAIN}`, "resource") : null,
+        metric(label("lowHpThreshold"), `<=${formatPercent(LOW_HP_RATIO)}`, "utility"),
+        tierTableMetric(choice, label("skillEnergy"), RISK_TALISMAN_SKILL_GAIN, (value) => `+${value}`, "resource"),
+        tierAtLeast(choice.tier, "awakened") ? metric(label("atLeast"), formatRewardUnit(language, "skillBars", 1), "resource") : null,
+        tierAtLeast(choice.tier, "awakened") ? metric(label("ultimateEnergy"), `+${RISK_TALISMAN_ULTIMATE_GAIN}`, "resource") : null,
       ]);
     case "tempo_blade":
       return compactMetrics([
-        tierTableMetric(choice, "普攻间隔", TEMPO_BLADE_ATTACK_FRAME_MULTIPLIER, formatMultiplierDelta, "speed"),
-        tierTableMetric(choice, "单击伤害", TEMPO_BLADE_DAMAGE_MULTIPLIER, formatMultiplierDelta, "damage"),
+        tierTableMetric(choice, label("basicAttackInterval"), TEMPO_BLADE_ATTACK_FRAME_MULTIPLIER, formatMultiplierDelta, "speed"),
+        tierTableMetric(choice, label("hitDamage"), TEMPO_BLADE_DAMAGE_MULTIPLIER, formatMultiplierDelta, "damage"),
         tierAtLeast(choice.tier, "awakened")
-          ? metric("免罚命中", `${TEMPO_BLADE_HITS_FOR_NO_PENALTY}次`, "utility")
+          ? metric(label("penaltyFreeHits"), formatRewardUnit(language, "hits", TEMPO_BLADE_HITS_FOR_NO_PENALTY), "utility")
           : null,
       ]);
     case "tempo_garb":
       return compactMetrics([
-        tierTableMetric(choice, "受伤击退", TEMPO_GARB_KNOCKBACK_MULTIPLIER, formatMultiplierDelta, "defense"),
-        tierAtLeast(choice.tier, "fine") ? metric("受伤移速", formatMultiplierDelta(TEMPO_GARB_SPEED_MULTIPLIER), "speed") : null,
-        tierAtLeast(choice.tier, "fine") ? metric("持续", formatFrames(TEMPO_GARB_RECOVERY_TIMER_FRAMES), "utility") : null,
-        tierAtLeast(choice.tier, "awakened") ? metric("技能能量", `+${TEMPO_GARB_SKILL_GAIN}`, "resource") : null,
+        tierTableMetric(choice, label("hurtKnockback"), TEMPO_GARB_KNOCKBACK_MULTIPLIER, formatMultiplierDelta, "defense"),
+        tierAtLeast(choice.tier, "fine") ? metric(label("moveSpeedOnHit"), formatMultiplierDelta(TEMPO_GARB_SPEED_MULTIPLIER), "speed") : null,
+        tierAtLeast(choice.tier, "fine") ? metric(label("duration"), frames(TEMPO_GARB_RECOVERY_TIMER_FRAMES), "utility") : null,
+        tierAtLeast(choice.tier, "awakened") ? metric(label("skillEnergy"), `+${TEMPO_GARB_SKILL_GAIN}`, "resource") : null,
       ]);
     case "tempo_talisman":
       return compactMetrics([
-        metric("技能消耗", skillCostTransition(choice), "resource"),
-        tierTableMetric(choice, "终能获取", TEMPO_TALISMAN_ULTIMATE_GAIN_MULTIPLIER, formatMultiplierDelta, "resource"),
-        tierAtLeast(choice.tier, "awakened") ? metric("换招返能", `+${TEMPO_TALISMAN_AWAKENED_REFUND}`, "resource") : null,
+        metric(label("skillCost"), skillCostTransition(choice), "resource"),
+        tierTableMetric(choice, label("ultimateGain"), TEMPO_TALISMAN_ULTIMATE_GAIN_MULTIPLIER, formatMultiplierDelta, "resource"),
+        tierAtLeast(choice.tier, "awakened") ? metric(label("switchRefund"), `+${TEMPO_TALISMAN_AWAKENED_REFUND}`, "resource") : null,
       ]);
     default:
       return [];
   }
 }
 
-function equipmentPrimaryStatMetric(choice: EquipmentChoiceState) {
+function equipmentPrimaryStatMetric(choice: EquipmentChoiceState, language: Language) {
   const bonuses = EQUIPMENT_PRIMARY_STAT_BONUS_RATIOS[choice.id];
   return tierTableMetric(
     choice,
-    EQUIPMENT_PRIMARY_STAT_LABELS[choice.slot],
+    rewardLabel(language, EQUIPMENT_PRIMARY_STAT_LABEL_KEYS[choice.slot]),
     bonuses,
     formatSignedPercent,
     EQUIPMENT_PRIMARY_STAT_TONES[choice.slot],
@@ -321,11 +338,12 @@ function skillDamageMetrics(
   nextLevel: SkillLevel,
   previousLevel: SkillLevel | 0,
   player: PlayerDamageStats,
+  language: Language,
 ): RewardChoiceMetric[] {
   const enemyDamage = skillDamage(skillId, nextLevel, player, false);
   const previousEnemyDamage = previousLevel ? skillDamage(skillId, previousLevel, player, false) : null;
   const enemyMetric = metric(
-    isGenericPlayerSkillId(skillId) ? "小怪伤害" : "命中伤害",
+    rewardLabel(language, isGenericPlayerSkillId(skillId) ? "enemyDamage" : "impactDamage"),
     numberTransition(previousEnemyDamage, enemyDamage),
     "damage",
   );
@@ -336,7 +354,7 @@ function skillDamageMetrics(
   const previousBossDamage = previousLevel ? skillDamage(skillId, previousLevel, player, true) : null;
   return [
     enemyMetric,
-    metric("Boss伤害", numberTransition(previousBossDamage, bossDamage), "damage"),
+    metric(rewardLabel(language, "bossDamage"), numberTransition(previousBossDamage, bossDamage), "damage"),
   ];
 }
 
@@ -344,18 +362,20 @@ function skillTuningMetrics(
   skillId: SkillId,
   nextLevel: SkillLevel,
   previousLevel: SkillLevel | 0,
+  language: Language,
 ): RewardChoiceMetric[] {
+  const label = (key: RewardLabelKey) => rewardLabel(language, key);
   if (isGenericPlayerSkillId(skillId)) {
     const tuning = GENERIC_PLAYER_SKILL_TUNING[skillId];
     return compactMetrics([
-      tuning.count ? levelTableMetric("段数", tuning.count, nextLevel, previousLevel, String, "damage") : null,
-      tuning.maxHits ? levelTableMetric("最大命中", tuning.maxHits, nextLevel, previousLevel, String, "damage") : null,
+      tuning.count ? levelTableMetric(label("strikeCount"), tuning.count, nextLevel, previousLevel, String, "damage") : null,
+      tuning.maxHits ? levelTableMetric(label("maxHits"), tuning.maxHits, nextLevel, previousLevel, String, "damage") : null,
       tuning.armorBreakMultiplier
-        ? levelTableMetric("后续增伤", tuning.armorBreakMultiplier, nextLevel, previousLevel, formatMultiplierDelta, "damage")
+        ? levelTableMetric(label("followUpDamage"), tuning.armorBreakMultiplier, nextLevel, previousLevel, formatMultiplierDelta, "damage")
         : null,
-      tuning.radius ? levelTableMetric("范围半径", tuning.radius, nextLevel, previousLevel, (value) => `${value}px`, "range") : null,
-      tuning.distance ? levelTableMetric("距离", tuning.distance, nextLevel, previousLevel, (value) => `${value}px`, "range") : null,
-      levelTableMetric("范围", tuning.width, nextLevel, previousLevel, (value) => `${value}px`, "range"),
+      tuning.radius ? levelTableMetric(label("radius"), tuning.radius, nextLevel, previousLevel, (value) => `${value}px`, "range") : null,
+      tuning.distance ? levelTableMetric(label("distance"), tuning.distance, nextLevel, previousLevel, (value) => `${value}px`, "range") : null,
+      levelTableMetric(label("range"), tuning.width, nextLevel, previousLevel, (value) => `${value}px`, "range"),
     ]);
   }
 
@@ -369,14 +389,14 @@ function skillTuningMetrics(
     return compactMetrics([
       unlocksKnockback
         ? metric(
-          "技能击退",
-          `${LINE_PROJECTILE_EFFECT_CONFIG.knockbackDistanceTargetWidths}身位`,
+          label("skillKnockback"),
+          formatRewardUnit(language, "bodyWidths", LINE_PROJECTILE_EFFECT_CONFIG.knockbackDistanceTargetWidths),
           "utility",
         )
         : null,
       unlocksKnockback
         ? metric(
-          "被动击退",
+          label("passiveKnockback"),
           formatPercent(LINE_PROJECTILE_EFFECT_CONFIG.passiveKnockbackChance),
           "utility",
         )
@@ -387,9 +407,9 @@ function skillTuningMetrics(
   if (skillId === SKILL_IDS.closeArc) {
     const maxDrawScale = CORE_PLAYER_SKILL_EFFECT_CONFIGS[SKILL_IDS.closeArc].drawScale;
     return compactMetrics([
-      growthMetric("飞行距离", previousGrowth?.maxTravel, nextGrowth.maxTravel, (value) => `${value}px`, "range"),
+      growthMetric(label("travelDistance"), previousGrowth?.maxTravel, nextGrowth.maxTravel, (value) => `${value}px`, "range"),
       growthMetric(
-        "效果尺寸",
+        label("effectSize"),
         previousGrowth?.drawScale,
         nextGrowth.drawScale,
         (value) => `${Math.round(value / maxDrawScale * PERCENT_MULTIPLIER)}%`,
@@ -397,15 +417,15 @@ function skillTuningMetrics(
       ),
       nextLevel >= CLOSE_ARC_BASIC_CRESCENT_CONFIG.requiredSkillLevel
         && previousLevel < CLOSE_ARC_BASIC_CRESCENT_CONFIG.requiredSkillLevel
-        ? metric("普攻剑气", "解锁", "damage")
+        ? metric(label("basicAttackCrescent"), rewardValue(language, "unlocked"), "damage")
         : null,
     ]);
   }
 
   if (skillId === SKILL_IDS.guardCounter) {
     return compactMetrics([
-      growthMetric("反击次数", previousGrowth?.maxHits, nextGrowth.maxHits, String, "damage"),
-      growthMetric("防护时间", previousGrowth?.activeFrames, nextGrowth.activeFrames, formatFrames, "defense"),
+      growthMetric(label("counterHits"), previousGrowth?.maxHits, nextGrowth.maxHits, String, "damage"),
+      growthMetric(label("guardDuration"), previousGrowth?.activeFrames, nextGrowth.activeFrames, (value) => formatFrames(value, language), "defense"),
     ]);
   }
 
@@ -433,16 +453,16 @@ function skillDamage(
   return attack * config.damageMultiplier * growth.damageMultiplier;
 }
 
-function ultimateRewardMetrics(choice: UpgradeChoiceState): RewardChoiceMetric[] {
+function ultimateRewardMetrics(choice: UpgradeChoiceState, language: Language): RewardChoiceMetric[] {
   const nextLevel = asActiveUltimateLevel(choice.nextLevel);
   if (!nextLevel) return [];
   const previousLevel = nextLevel > 1 ? (nextLevel - 1) as ActiveUltimateLevel : null;
 
   return compactMetrics([
-    ultimateMetric("终式伤害", previousLevel, nextLevel, (config) => config.damageMultiplier, formatMultiplierDelta, "damage"),
-    ultimateMetric("持续时间", previousLevel, nextLevel, (config) => config.durationFrames, formatFrames, "utility"),
-    ultimateMetric("普攻间隔", previousLevel, nextLevel, (config) => config.attackFrameMultiplier, formatMultiplierDelta, "speed"),
-    ultimateMetric("残影率", previousLevel, nextLevel, (config) => config.afterimageChance, formatPercent, "damage"),
+    ultimateMetric(rewardLabel(language, "ultimateDamage"), previousLevel, nextLevel, (config) => config.damageMultiplier, formatMultiplierDelta, "damage"),
+    ultimateMetric(rewardLabel(language, "durationTime"), previousLevel, nextLevel, (config) => config.durationFrames, (value) => formatFrames(value, language), "utility"),
+    ultimateMetric(rewardLabel(language, "basicAttackInterval"), previousLevel, nextLevel, (config) => config.attackFrameMultiplier, formatMultiplierDelta, "speed"),
+    ultimateMetric(rewardLabel(language, "afterimageChance"), previousLevel, nextLevel, (config) => config.afterimageChance, formatPercent, "damage"),
   ]);
 }
 
@@ -542,9 +562,9 @@ function formatPercent(value: number) {
   return `${Math.round(value * PERCENT_MULTIPLIER)}%`;
 }
 
-function formatFrames(frames: number) {
+function formatFrames(frames: number, language: Language = DEFAULT_LANGUAGE) {
   const seconds = frames / FRAMES_PER_SECOND;
-  return `${Number.isInteger(seconds) ? seconds : seconds.toFixed(1)}秒`;
+  return formatRewardUnit(language, "seconds", Number.isInteger(seconds) ? seconds : seconds.toFixed(1));
 }
 
 function asSkillLevel(level: number | undefined): SkillLevel | null {

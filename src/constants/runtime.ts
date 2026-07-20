@@ -16,6 +16,5 @@ export const ENEMY_BACKGROUND_SPAWN = {
 } as const;
 
 export const UI_COPY = {
-  loadingSprites: "加载像素贴图中...",
   canvasContextMissing: "Canvas context is not ready.",
 } as const;

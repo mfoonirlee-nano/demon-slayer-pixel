@@ -3,6 +3,9 @@ import { useAtomValue } from "jotai";
 import { HUD_UI } from "../constants";
 import { DebugPanel } from "../game/debug";
 import { gameSnapshotAtom } from "../game/gameStore";
+import { bossPhaseTitle } from "../i18n/bossCopy";
+import { languageAtom } from "../i18n/language";
+import { message } from "../i18n/messages";
 import { skillEnergyCostForTalisman } from "../systems/equipment";
 import { DeathScreen } from "./deathScreen";
 import { PauseScreen } from "./pauseScreen";
@@ -229,6 +232,7 @@ export function UltimateOrb({ value, max, ready, size = ULTIMATE_ORB_DEFAULT_SIZ
 
 export function GameHud() {
   const snapshot = useAtomValue(gameSnapshotAtom);
+  const language = useAtomValue(languageAtom);
   const { player, boss, elapsed, spritesReady } = snapshot;
   const activeSkillId = player.equippedSkillIds[player.skillIndex];
   const activeSkill = getSkill(activeSkillId);
@@ -385,14 +389,14 @@ export function GameHud() {
               lineHeight: 1,
             }}
           >
-            {boss.phaseTitle}
+            {bossPhaseTitle(language, boss.id, boss.phase, boss.awakened)}
           </span>
         </div>
       ) : null}
 
       {!spritesReady ? (
         <div className="pointer-events-none absolute inset-0 z-20 flex items-center justify-center bg-black/30 text-sm text-white md:hidden">
-          加载像素贴图中...
+          {message(language, "loading.sprites")}
         </div>
       ) : null}
 

@@ -72,6 +72,21 @@ describe("pause equipment detail copy", () => {
     expect(detail.body).toContain(`基础属性：${expectedStat}`);
     expect(detail.body).toContain(`专属机制：${item.summary}`);
   });
+
+  it("derives English copy from an existing Chinese equipment snapshot", () => {
+    const equipment = makeEquipment("flow_blade", "common");
+    const detail = equipmentDetailCopy(
+      { type: "item", itemId: "flow_blade" },
+      equipment,
+      new Set(["flow_blade"]),
+      "en",
+    );
+
+    expect(detail.title).toBe("Flow Blade");
+    expect(detail.body).toContain("Base Stat: Attack +12%.");
+    expect(detail.body).toContain("Unique Effect: After 4 basic hits");
+    expect(`${detail.kicker}${detail.title}${detail.body}`).not.toMatch(/[一-龥]/u);
+  });
 });
 
 describe("pause skill detail copy", () => {
@@ -88,5 +103,17 @@ describe("pause skill detail copy", () => {
     const detail = skillDetailCopy({ type: "item", skillId: SKILL_IDS.vortexControl }, player);
 
     expect(detail.body).toBe(playerSkillById(SKILL_IDS.vortexControl)?.description);
+  });
+
+  it("derives English skill copy from the same player snapshot", () => {
+    const detail = skillDetailCopy(
+      { type: "slot", slotIndex: 0 },
+      makePlayer(),
+      "en",
+    );
+
+    expect(detail.title).toBe("Tidal Dragon: Breakthrough");
+    expect(detail.body).toContain("Knocks normal enemies back two body lengths");
+    expect(`${detail.kicker}${detail.title}${detail.body}`).not.toMatch(/[一-龥]/u);
   });
 });

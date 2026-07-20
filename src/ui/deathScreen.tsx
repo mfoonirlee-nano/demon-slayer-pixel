@@ -1,4 +1,7 @@
 import { useEffect, useState } from "react";
+import { useAtomValue } from "jotai";
+import { languageAtom } from "../i18n/language";
+import { message } from "../i18n/messages";
 
 const DEATH_SPRITE_COLUMNS = 6;
 const DEATH_SPRITE_ROWS = 4;
@@ -29,6 +32,7 @@ export function deathSpriteFrameForStep(step: number) {
 }
 
 export function DeathScreen({ elapsed }: { elapsed: number }) {
+  const language = useAtomValue(languageAtom);
   const [frame, setFrame] = useState(0);
   const [showMessage, setShowMessage] = useState(false);
 
@@ -66,30 +70,36 @@ export function DeathScreen({ elapsed }: { elapsed: number }) {
 
   return (
     <div className="death-screen absolute inset-0 z-50 flex flex-col items-center justify-center px-6 text-center text-white">
-      <div
-        aria-hidden="true"
-        className="death-sprite-frame"
-        style={{ width: DEATH_FRAME_WIDTH, height: DEATH_FRAME_HEIGHT }}
-      >
-        <img
-          src="assets/sprites/ui/end.png"
-          alt=""
-          draggable={false}
-          className="death-sprite-sheet"
-          style={{
-            width: DEATH_SHEET_WIDTH,
-            height: DEATH_SHEET_HEIGHT,
-            transform: `translate3d(-${column * DEATH_FRAME_WIDTH + DEATH_FRAME_CONTENT_OFFSET_X}px, -${row * DEATH_FRAME_HEIGHT + DEATH_FRAME_CONTENT_OFFSET_Y}px, 0)`,
-          }}
-        />
-      </div>
+      {language === "zh-CN" ? (
+        <div
+          aria-hidden="true"
+          className="death-sprite-frame"
+          style={{ width: DEATH_FRAME_WIDTH, height: DEATH_FRAME_HEIGHT }}
+        >
+          <img
+            src="assets/sprites/ui/end.png"
+            alt=""
+            draggable={false}
+            className="death-sprite-sheet"
+            style={{
+              width: DEATH_SHEET_WIDTH,
+              height: DEATH_SHEET_HEIGHT,
+              transform: `translate3d(-${column * DEATH_FRAME_WIDTH + DEATH_FRAME_CONTENT_OFFSET_X}px, -${row * DEATH_FRAME_HEIGHT + DEATH_FRAME_CONTENT_OFFSET_Y}px, 0)`,
+            }}
+          />
+        </div>
+      ) : (
+        <div className="death-title">{message(language, "death.title")}</div>
+      )}
 
       <div
         className={`death-message space-y-3 ${showMessage ? "death-message-visible" : ""}`}
         aria-hidden={!showMessage}
       >
-        <div className="death-survival-text">最终生存 {elapsed.toFixed(1)}s</div>
-        <div className="death-restart-text">按 R 重新开始</div>
+        <div className="death-survival-text">
+          {message(language, "death.survival", { seconds: elapsed.toFixed(1) })}
+        </div>
+        <div className="death-restart-text">{message(language, "common.restart")}</div>
       </div>
     </div>
   );

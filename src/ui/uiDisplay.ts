@@ -1,21 +1,6 @@
 import type { SkillId } from "../types/assets";
-import type { EquipmentFamily, EquipmentItemId, EquipmentSlot, SkillLevel, UltimateLevel } from "../types/game-state";
+import type { EquipmentItemId, EquipmentSlot, SkillLevel, UltimateLevel } from "../types/game-state";
 import { playerSkillById, playerSkillIconSrc } from "../systems/skillCatalog";
-
-export const EQUIPMENT_SLOT_LABELS: Record<EquipmentSlot, string> = {
-  blade: "刃器",
-  garb: "衣装",
-  talisman: "饰符",
-};
-
-export const EQUIPMENT_FAMILY_GLYPHS: Record<EquipmentFamily, string> = {
-  flow: "流",
-  burst: "破",
-  shadowstep: "影",
-  hunt: "猎",
-  risk: "残",
-  tempo: "奏",
-};
 
 export function getSkill(skillId: SkillId | null | undefined) {
   return playerSkillById(skillId);
