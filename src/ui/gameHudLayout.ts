@@ -53,3 +53,7 @@ export const HUD_SKILL_METER_PLACEMENT: HudMeterPlacement = {
   left: 92,
   top: 45,
 };
+
+export const HUD_STATUS_BAR_LEFT = HUD_SKILL_METER_PLACEMENT.left;
+export const HUD_STATUS_BAR_TOP = 76;
+export const HUD_STATUS_BAR_ICON_SIZE = 24;

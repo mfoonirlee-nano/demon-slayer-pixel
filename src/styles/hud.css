@@ -4,6 +4,7 @@
   align-items: flex-start;
   gap: 0;
   height: 72px;
+  overflow: visible;
 }
 
 .player-hud-abilities {
@@ -119,6 +120,86 @@
     -1px 0 #02070c,
     0 1px #02070c,
     0 -1px #02070c;
+}
+
+.player-status-bar {
+  display: flex;
+  position: absolute;
+  z-index: 5;
+  flex-wrap: wrap;
+  gap: 3px;
+}
+
+.player-status-icon {
+  position: relative;
+  overflow: hidden;
+  width: var(--player-status-icon-size);
+  height: var(--player-status-icon-size);
+  border: 1px solid rgba(115, 211, 232, 0.72);
+  background: rgba(3, 12, 25, 0.9);
+  box-shadow:
+    inset 0 0 0 1px rgba(4, 22, 37, 0.82),
+    0 1px 2px rgba(0, 0, 0, 0.7);
+  isolation: isolate;
+}
+
+.player-status-icon img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
+}
+
+.player-status-icon--debuff {
+  border-color: rgba(222, 91, 104, 0.82);
+  box-shadow:
+    inset 0 0 0 1px rgba(51, 9, 19, 0.9),
+    0 1px 2px rgba(0, 0, 0, 0.7);
+}
+
+.player-status-duration-mask {
+  position: absolute;
+  z-index: 1;
+  inset: 0;
+  background: conic-gradient(
+    from -90deg,
+    rgba(0, 0, 0, 0.58) 0deg var(--player-status-remaining-angle),
+    transparent var(--player-status-remaining-angle) 360deg
+  );
+}
+
+.player-status-stacks {
+  position: absolute;
+  z-index: 2;
+  right: 1px;
+  bottom: 0;
+  color: #fff4c5;
+  font-size: 7px;
+  font-weight: 700;
+  line-height: 1;
+  text-shadow:
+    1px 0 #02070c,
+    -1px 0 #02070c,
+    0 1px #02070c,
+    0 -1px #02070c;
+}
+
+.player-status-progress {
+  position: absolute;
+  z-index: 2;
+  right: 1px;
+  bottom: 1px;
+  left: 1px;
+  height: 2px;
+  background: rgba(1, 8, 15, 0.86);
+}
+
+.player-status-progress span {
+  display: block;
+  height: 100%;
+  background: #7fe8ff;
+  box-shadow: 0 0 2px rgba(127, 232, 255, 0.88);
 }
 
 .hud-xp-bar {

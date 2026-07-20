@@ -117,12 +117,14 @@ export type PlayerState = {
   ultimateEnergyMax: number;
   ultimateLevel: UltimateLevel;
   ultimateTimer: number;
+  ultimateDuration: number;
   ultimateCastTimer: number;
   ultimateEffectSpawned: boolean;
   flowBladeHits: number;
   flowBladeSurgeReady: boolean;
   flowBladeSurgeSkillTimer: number;
   flowGarbTimer: number;
+  flowGarbDuration: number;
   burstGarbProtectionUsed: boolean;
   burstGarbSpeedTimer: number;
   burstBladeExecuteReady: boolean;

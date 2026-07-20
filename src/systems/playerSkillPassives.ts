@@ -1,7 +1,25 @@
-import { LINE_PROJECTILE_EFFECT_CONFIG, SKILL_IDS } from "../constants";
+import {
+  CLOSE_ARC_BASIC_CRESCENT_CONFIG,
+  LINE_PROJECTILE_EFFECT_CONFIG,
+  SKILL_IDS,
+} from "../constants";
 import type { EnemyState, GameState } from "../types/game-state";
 
 export type PlayerHitKnockbackOverride = "disabled" | { direction: number };
+
+export function hasLineProjectileKnockbackPassive(state: GameState) {
+  const player = state.player;
+  return (player.skillLevels[SKILL_IDS.lineProjectile] ?? 0)
+      >= LINE_PROJECTILE_EFFECT_CONFIG.knockbackRequiredLevel
+    && player.equippedSkillIds.includes(SKILL_IDS.lineProjectile);
+}
+
+export function hasCloseArcBasicCrescentPassive(state: GameState) {
+  const player = state.player;
+  return (player.skillLevels[SKILL_IDS.closeArc] ?? 0)
+      >= CLOSE_ARC_BASIC_CRESCENT_CONFIG.requiredSkillLevel
+    && player.equippedSkillIds[player.skillIndex] === SKILL_IDS.closeArc;
+}
 
 export function applyPlayerHitKnockback(
   state: GameState,
@@ -14,9 +32,7 @@ export function applyPlayerHitKnockback(
   let direction = override?.direction;
   if (direction === undefined) {
     if (
-      (player.skillLevels[SKILL_IDS.lineProjectile] ?? 0)
-        < LINE_PROJECTILE_EFFECT_CONFIG.knockbackRequiredLevel
-      || !player.equippedSkillIds.includes(SKILL_IDS.lineProjectile)
+      !hasLineProjectileKnockbackPassive(state)
       || Math.random() >= LINE_PROJECTILE_EFFECT_CONFIG.passiveKnockbackChance
     ) {
       return false;

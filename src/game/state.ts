@@ -5,6 +5,7 @@ import { createInitialMoonState } from "../moon";
 import type { GameState, PlayerState } from "../types/game-state";
 import { equipmentItem } from "../systems/equipment";
 import { createEnemyDirectorState } from "../systems/enemyDirector";
+import { activePlayerStatuses } from "../systems/playerStatuses";
 import {
   actBandForAct,
   actForBossKills,
@@ -62,12 +63,14 @@ export function createInitialPlayerState(): PlayerState {
     ultimateEnergyMax: PLAYER_DEFAULTS.maxUltimateEnergy,
     ultimateLevel: 0,
     ultimateTimer: 0,
+    ultimateDuration: 0,
     ultimateCastTimer: 0,
     ultimateEffectSpawned: false,
     flowBladeHits: 0,
     flowBladeSurgeReady: false,
     flowBladeSurgeSkillTimer: 0,
     flowGarbTimer: 0,
+    flowGarbDuration: 0,
     burstGarbProtectionUsed: false,
     burstGarbSpeedTimer: 0,
     burstBladeExecuteReady: false,
@@ -236,6 +239,9 @@ export function resetState() {
 export function getStateSnapshot(manualPaused = false, paused = manualPaused): GameSnapshot {
   const bossArchetype = state.boss ? bossArchetypeForId(state.boss.id) : null;
   const ultimateConfig = moonTideUltimateConfig(state.player.ultimateLevel);
+  const activeUltimateDuration = state.player.ultimateTimer > 0 && state.player.ultimateDuration > 0
+    ? state.player.ultimateDuration
+    : ultimateConfig.durationFrames;
   const act = actForBossKills(state.bossKills);
   const activeOverlay = state.gameOver
     ? state.runCleared ? "victory" : "death"
@@ -293,13 +299,14 @@ export function getStateSnapshot(manualPaused = false, paused = manualPaused): G
       ultimateEnergyMax: state.player.ultimateEnergyMax,
       ultimateLevel: state.player.ultimateLevel,
       ultimateTimer: state.player.ultimateTimer,
-      ultimateDuration: ultimateConfig.durationFrames,
+      ultimateDuration: activeUltimateDuration,
       ultimateCastTimer: state.player.ultimateCastTimer,
       ultimateCastDuration: PLAYER_COMBAT.ultimateCastFrames,
       ultimateReady: hasLearnedUltimate(state)
         && state.player.ultimateEnergy >= state.player.ultimateEnergyMax
         && state.player.ultimateTimer <= 0
         && state.player.ultimateCastTimer <= 0,
+      statuses: activePlayerStatuses(state),
     },
     equipment: {
       inventory: state.equipmentInventory.map((entry) => equipmentItem(entry.id, entry.tier)).filter((item) => item !== null),

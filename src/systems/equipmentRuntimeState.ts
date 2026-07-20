@@ -23,6 +23,7 @@ export function resetSlotRuntimeState(state: GameState, slot: EquipmentSlot) {
   }
   if (slot === "garb") {
     player.flowGarbTimer = 0;
+    player.flowGarbDuration = 0;
     player.burstGarbProtectionUsed = false;
     player.burstGarbSpeedTimer = 0;
     player.shadowstepGarbMovingTimer = 0;

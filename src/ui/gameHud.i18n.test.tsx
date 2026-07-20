@@ -36,4 +36,31 @@ describe("GameHud localization", () => {
     expect(markup).toContain(">KO<");
     expect(markup).not.toContain("血月眷属");
   });
+
+  it("renders active snapshot statuses through the HUD in the selected language", () => {
+    const store = createStore();
+    store.set(languageAtom, "en");
+    const initialSnapshot = gameStore.get(gameSnapshotAtom);
+    store.set(gameSnapshotAtom, {
+      ...initialSnapshot,
+      player: {
+        ...initialSnapshot.player,
+        statuses: [{
+          id: "moon_tide",
+          remainingFrames: initialSnapshot.player.ultimateDuration / 2,
+          durationFrames: initialSnapshot.player.ultimateDuration,
+        }],
+      },
+    });
+
+    const markup = renderToStaticMarkup(
+      <Provider store={store}>
+        <GameHud />
+      </Provider>,
+    );
+
+    expect(markup).toContain("Active status effects");
+    expect(markup).toContain("Moon Tide Form");
+    expect(markup).toContain("--player-status-remaining-angle:180deg");
+  });
 });

@@ -10,6 +10,7 @@ import { skillEnergyCostForTalisman } from "../systems/equipment";
 import { DeathScreen } from "./deathScreen";
 import { PauseScreen } from "./pauseScreen";
 import { RewardOverlay } from "./rewardOverlay";
+import { PlayerStatusBar } from "./playerStatusBar";
 import { VictoryScreen } from "./victoryScreen";
 import { getSkill, romanLevel, skillIconSrc } from "./uiDisplay";
 import { UiSprite, uiSpriteDisplaySize } from "./uiSprite";
@@ -333,6 +334,11 @@ export function GameHud() {
               markerPercents={skillMarkerPercents}
             />
           </div>
+          <PlayerStatusBar
+            statuses={player.statuses}
+            language={language}
+            width={playerBarWidth}
+          />
         </div>
       </div>
 

@@ -39,6 +39,7 @@ export function applySkillHitEquipmentRefund(
     && hitCount >= 2
   ) {
     state.player.flowGarbTimer += FLOW_GARB_EXTEND_FRAMES;
+    state.player.flowGarbDuration += FLOW_GARB_EXTEND_FRAMES;
     flowApplied = true;
     applied = true;
   }

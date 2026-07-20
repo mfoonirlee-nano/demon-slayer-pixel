@@ -6,6 +6,8 @@ import {
   BINDER_SHEET_INDEX,
   BINDER_MAGIC_CIRCLE_SHEET,
   BINDER_SHEETS,
+  BINDER_TALISMAN_DEBUFF_FRAMES,
+  BINDER_TALISMAN_STUN_FRAMES,
   ENEMY_SHEETS,
 } from "../../constants";
 import { drawSheetFrame } from "../../rendering/graphics";
@@ -62,7 +64,7 @@ const BINDER_CONFIG = {
   talismanTrackingFrames: 54,
   talismanTurnRate: 0.058,
   talismanSlowMoveScale: 0.45,
-  talismanDebuffFrames: 210,
+  talismanDebuffFrames: BINDER_TALISMAN_DEBUFF_FRAMES,
   talismanDamageFirstFrame: 24,
   talismanDamageIntervalFrames: 36,
   zoneDamageInvincibleFrames: 10,
@@ -74,7 +76,7 @@ const BINDER_CONFIG = {
   zoneFadeFrames: 16,
   zoneAlpha: 0.88,
   zoneDrawWidthScale: 2.52,
-  stunActiveFrames: 22,
+  stunActiveFrames: BINDER_TALISMAN_STUN_FRAMES,
   stunCooldownMinFrames: 34,
   stunCooldownJitterFrames: 48,
   drawScale: 1,

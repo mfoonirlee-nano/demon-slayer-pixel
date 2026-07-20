@@ -10,3 +10,4 @@ export * from "./platform";
 export * from "./visual";
 export * from "./ui";
 export * from "./uiSprites";
+export * from "./statusEffects";

@@ -298,7 +298,8 @@ export function updateUltimateCastAndTimer() {
         p.ultimateEffectSpawned = true;
         triggerUltimateOpeningEffect();
       }
-      p.ultimateTimer = currentMoonTideConfig().durationFrames;
+      p.ultimateDuration = currentMoonTideConfig().durationFrames;
+      p.ultimateTimer = p.ultimateDuration;
     }
   } else if (p.ultimateTimer > 0) {
     p.ultimateTimer -= 1;

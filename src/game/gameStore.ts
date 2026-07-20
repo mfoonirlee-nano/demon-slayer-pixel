@@ -14,6 +14,7 @@ import type {
   EquipmentChoiceState,
   EquipmentItemState,
   EquipmentSlot,
+  PlayerStatusSnapshot,
   SkillLevel,
   UltimateLevel,
   UpgradeChoiceState,
@@ -56,6 +57,7 @@ export type PlayerSnapshot = {
   ultimateCastTimer: number;
   ultimateCastDuration: number;
   ultimateReady: boolean;
+  statuses: PlayerStatusSnapshot[];
 };
 
 export type EquipmentSnapshot = {
@@ -124,6 +126,7 @@ const initialSnapshot: GameSnapshot = {
     ultimateCastTimer: 0,
     ultimateCastDuration: 24,
     ultimateReady: false,
+    statuses: [],
   },
   equipment: {
     inventory: [],

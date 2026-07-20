@@ -41,6 +41,7 @@ import {
 import { applyBossDamage, applyEnemyDamage, resolveBossHit, resolveEnemyHit } from "../systems/combatResolution";
 import { endRun } from "../systems/runLifecycle";
 import { selectSkillSlot } from "../systems/loadout";
+import { hasCloseArcBasicCrescentPassive } from "../systems/playerSkillPassives";
 import { CORE_PLAYER_SKILL_EFFECT_CONFIGS, playerSkillColor } from "../systems/skillCatalog";
 import {
   moonTideAttackFrames,
@@ -149,8 +150,7 @@ export function attackBox() {
 
 function spawnCloseArcBasicCrescent(life: number) {
   const p = state.player;
-  if (p.equippedSkillIds[p.skillIndex] !== SKILL_IDS.closeArc) return;
-  if ((p.skillLevels[SKILL_IDS.closeArc] ?? 0) < CLOSE_ARC_BASIC_CRESCENT_CONFIG.requiredSkillLevel) return;
+  if (!hasCloseArcBasicCrescentPassive(state)) return;
 
   const box = attackBox();
   const rangeExtension = Math.max(1, p.h * CLOSE_ARC_BASIC_CRESCENT_CONFIG.rangeExtensionPlayerRatio);

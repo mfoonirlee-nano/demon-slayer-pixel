@@ -36,6 +36,7 @@ function makePlayer(overrides: Partial<GameSnapshot["player"]> = {}): GameSnapsh
     ultimateCastTimer: 0,
     ultimateCastDuration: 24,
     ultimateReady: false,
+    statuses: [],
     ...overrides,
   };
 }

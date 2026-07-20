@@ -229,6 +229,7 @@ export function consumeSkillCastEquipmentDamageMultiplier(state: GameState) {
 export function applySkillCastEquipmentEffects(state: GameState, skillId?: SkillId) {
   if (state.equippedEquipment.garb === "flow_garb") {
     state.player.flowGarbTimer = FLOW_GARB_TIMER_FRAMES;
+    state.player.flowGarbDuration = FLOW_GARB_TIMER_FRAMES;
   }
 
   const tempoTier = equippedTier(state, "talisman", "tempo_talisman");
@@ -584,6 +585,6 @@ function tickTempoGarbRecovery(state: GameState) {
   }
 }
 
-function isPlayerLowHp(state: GameState) {
+export function isPlayerLowHp(state: GameState) {
   return state.player.hp / Math.max(1, state.player.maxHp) <= LOW_HP_RATIO;
 }

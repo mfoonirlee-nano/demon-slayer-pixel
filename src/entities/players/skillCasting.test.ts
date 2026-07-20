@@ -3,6 +3,7 @@ import {
   CLOSE_ARC_EFFECT_CONFIG,
   GUARD_COUNTER_EFFECT_CONFIG,
   LINE_PROJECTILE_EFFECT_CONFIG,
+  MOON_TIDE_ULTIMATE,
   SKILL_IDS,
 } from "../../constants";
 import { updateGuardCounterEffect, updateUltimateEffects } from "../particle";
@@ -106,6 +107,7 @@ describe("player skill casting", () => {
       updatePlayer();
       updateUltimateEffects();
     }
+    expect(state.player.ultimateDuration).toBe(MOON_TIDE_ULTIMATE[1].durationFrames);
     while (state.player.ultimateTimer > 1) {
       updatePlayer();
       updateUltimateEffects();
