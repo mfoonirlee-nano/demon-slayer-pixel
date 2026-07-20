@@ -84,6 +84,9 @@ export function updateLineProjectileEffects() {
         damage,
         hitCooldown: LINE_PROJECTILE_EFFECT_CONFIG.hitCooldown,
         reward: "enemyNoCover",
+        knockbackOverride: eff.effectLevel >= LINE_PROJECTILE_EFFECT_CONFIG.knockbackRequiredLevel
+          ? { direction: eff.facing }
+          : "disabled",
       });
       hitTargets += 1;
       emitSlash(hit.hitX, hit.hitY, PLAYER_COMBAT.effects.skillEnemyBurstColor, enemy.w);

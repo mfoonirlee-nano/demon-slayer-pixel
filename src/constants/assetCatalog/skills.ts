@@ -12,7 +12,7 @@ export const SKILLS: Skill[] = [
     levelDescriptions: {
       1: "向前释放潮龙，造成窄长直线伤害，适合点杀和穿排。",
       2: "潮龙伤害 +18%，潮龙身形变长，贴住目标时更容易追加命中。",
-      3: "潮龙伤害 +35%，潮龙身形继续变长，穿排和对首领的多段命中更稳定。",
+      3: "潮龙伤害 +35%，命中普通敌人时击退两个身位；装备后，其他攻击命中有 10% 概率触发相同击退，首领免疫。",
     },
     src: "assets/sprites/skills/line_projectile/skill.png",
     frameCount: 5,

@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
   CLOSE_ARC_BASIC_CRESCENT_CONFIG,
   GROUND_Y,
@@ -18,6 +18,9 @@ const OUTER_RANGE_GAP = 2;
 const CLOSE_ARC_SLOT_INDEX = 1;
 const CLOSE_ARC_BASIC_CRESCENT_ATTACK_FRAME_START = 3;
 const CLOSE_ARC_BASIC_CRESCENT_ATTACK_FRAME_END = 5;
+const LINE_PROJECTILE_LEVEL_THREE = 3;
+const SUCCESSFUL_KNOCKBACK_ROLL = 0.09;
+const KNOCKBACK_CHANCE_BOUNDARY = 0.1;
 
 function spawnRunnerAt(x: number) {
   expect(spawnEnemyById("runner", "debug", "left")).toBe(true);
@@ -54,6 +57,10 @@ function advanceThroughAttack() {
 function fallAttackSplashParticles() {
   return state.particles.filter((particle) => particle.kind === "fallAttackSplash");
 }
+
+afterEach(() => {
+  vi.restoreAllMocks();
+});
 
 describe("close arc basic attack crescent", () => {
   beforeEach(() => {
@@ -133,6 +140,59 @@ describe("close arc basic attack crescent", () => {
     updateCloseArcBasicCrescentEffects();
 
     expect(enemy.hp).toBeCloseTo(TEST_ENEMY_HP - expectedDamage);
+  });
+});
+
+describe("line projectile equipped passive", () => {
+  beforeEach(() => {
+    resetState();
+    keys.clear();
+    state.player.facing = 1;
+    state.player.skillLevels[SKILL_IDS.lineProjectile] = LINE_PROJECTILE_LEVEL_THREE;
+    state.player.skillIndex = CLOSE_ARC_SLOT_INDEX;
+  });
+
+  it.each([1, -1])(
+    "lets another equipped skill stay active while a successful roll knocks an enemy away",
+    (facing) => {
+      state.player.facing = facing;
+      const enemy = spawnRunnerAt(attackBox().x);
+      const startingX = enemy.x;
+      vi.spyOn(Math, "random").mockReturnValue(SUCCESSFUL_KNOCKBACK_ROLL);
+
+      triggerAttack();
+      updatePlayer();
+
+      expect(state.player.equippedSkillIds[state.player.skillIndex]).toBe(SKILL_IDS.closeArc);
+      expect(enemy.x).toBe(startingX + facing * enemy.w * 2);
+    },
+  );
+
+  it.each([
+    {
+      scenario: "the roll equals ten percent",
+      level: LINE_PROJECTILE_LEVEL_THREE,
+      equipped: true,
+      roll: KNOCKBACK_CHANCE_BOUNDARY,
+    },
+    { scenario: "line projectile is below level three", level: 2, equipped: true, roll: 0 },
+    {
+      scenario: "line projectile is not equipped",
+      level: LINE_PROJECTILE_LEVEL_THREE,
+      equipped: false,
+      roll: 0,
+    },
+  ] as const)("does not knock an enemy back when $scenario", ({ level, equipped, roll }) => {
+    state.player.skillLevels[SKILL_IDS.lineProjectile] = level;
+    if (!equipped) state.player.equippedSkillIds[0] = null;
+    const enemy = spawnRunnerAt(attackBox().x);
+    const startingX = enemy.x;
+    vi.spyOn(Math, "random").mockReturnValue(roll);
+
+    triggerAttack();
+    updatePlayer();
+
+    expect(enemy.x).toBe(startingX);
   });
 });
 

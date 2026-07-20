@@ -10,6 +10,10 @@ import type { EnemyState } from "../types/game-state";
 import { overlapHitPoint, type RectLike } from "../game/utils";
 import { state } from "../game/state";
 import { equipmentBossDamageMultiplier, recordBossDamageEquipmentEffects } from "./equipment";
+import {
+  applyPlayerHitKnockback,
+  type PlayerHitKnockbackOverride,
+} from "./playerSkillPassives";
 
 export type EnemyHitResolution = {
   hitX: number;
@@ -64,6 +68,7 @@ export function resolveEnemyHit({
   reward,
   damageKind = "normal",
   afterDamage,
+  knockbackOverride,
 }: {
   enemy: EnemyState;
   enemyIndex: number;
@@ -74,14 +79,17 @@ export function resolveEnemyHit({
   reward: EnemyDefeatRewardKind;
   damageKind?: EnemyDamageKind;
   afterDamage?: () => void;
+  knockbackOverride?: PlayerHitKnockbackOverride;
 }): EnemyHitResolution {
   const { x: hitX, y: hitY } = hitPoint ?? overlapHitPoint(hitRect, enemy);
   const appliedDamage = applyEnemyDamage(enemy, damage, hitCooldown, damageKind, hitX);
   afterDamage?.();
+  const defeated = resolveEnemyDefeat(enemy, enemyIndex, reward);
+  if (!defeated) applyPlayerHitKnockback(state, enemy, knockbackOverride);
   return {
     hitX,
     hitY,
-    defeated: resolveEnemyDefeat(enemy, enemyIndex, reward),
+    defeated,
     appliedDamage,
   };
 }

@@ -124,6 +124,23 @@ describe("reward choice details", () => {
     expect(metricValue(metrics, "命中伤害")).toBe("19 -> 23");
   });
 
+  it("shows line projectile knockback and its equipped passive at level three", () => {
+    const choice: UpgradeChoiceState = {
+      id: "upgrade-line-projectile",
+      type: "upgradeSkill",
+      title: "技能精进",
+      name: "潮龙·破阵 III",
+      description: "潮龙解锁击退效果。",
+      skillId: SKILL_IDS.lineProjectile,
+      nextLevel: 3,
+    };
+
+    const metrics = upgradeRewardMetrics(choice, BASE_PLAYER);
+
+    expect(metricValue(metrics, "技能击退")).toBe("2身位");
+    expect(metricValue(metrics, "被动击退")).toBe("10%");
+  });
+
   it("shows current attack-based enemy and boss damage for generic skill upgrades", () => {
     const choice: UpgradeChoiceState = {
       id: "upgrade-dash-reposition",

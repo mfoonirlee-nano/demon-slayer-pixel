@@ -1,6 +1,7 @@
 import {
   CLOSE_ARC_BASIC_CRESCENT_CONFIG,
   EQUIPMENT_PRIMARY_STAT_BONUS_RATIOS,
+  LINE_PROJECTILE_EFFECT_CONFIG,
   MOON_TIDE_ULTIMATE,
   PLAYER_COMBAT,
   SKILL_IDS,
@@ -361,6 +362,27 @@ function skillTuningMetrics(
   const nextGrowth = corePlayerSkillGrowth(skillId, nextLevel);
   const previousGrowth = previousLevel ? corePlayerSkillGrowth(skillId, previousLevel) : null;
   if (!nextGrowth) return [];
+
+  if (skillId === SKILL_IDS.lineProjectile) {
+    const unlocksKnockback = nextLevel >= LINE_PROJECTILE_EFFECT_CONFIG.knockbackRequiredLevel
+      && previousLevel < LINE_PROJECTILE_EFFECT_CONFIG.knockbackRequiredLevel;
+    return compactMetrics([
+      unlocksKnockback
+        ? metric(
+          "技能击退",
+          `${LINE_PROJECTILE_EFFECT_CONFIG.knockbackDistanceTargetWidths}身位`,
+          "utility",
+        )
+        : null,
+      unlocksKnockback
+        ? metric(
+          "被动击退",
+          formatPercent(LINE_PROJECTILE_EFFECT_CONFIG.passiveKnockbackChance),
+          "utility",
+        )
+        : null,
+    ]);
+  }
 
   if (skillId === SKILL_IDS.closeArc) {
     const maxDrawScale = CORE_PLAYER_SKILL_EFFECT_CONFIGS[SKILL_IDS.closeArc].drawScale;

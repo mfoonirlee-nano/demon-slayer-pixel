@@ -41,6 +41,9 @@ export const LINE_PROJECTILE_EFFECT_CONFIG = {
   damageMultiplier: 1.2,
   // frames between successive hits on the same target
   hitCooldown: 20,
+  knockbackRequiredLevel: 3,
+  knockbackDistanceTargetWidths: 2,
+  passiveKnockbackChance: 0.1,
 } as const;
 
 export const CLOSE_ARC_EFFECT_SHEET: SpriteSheet = {

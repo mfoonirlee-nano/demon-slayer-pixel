@@ -9,6 +9,7 @@ import {
   implementedPlayerSkills,
   lineProjectileEffectSheetForLevel,
   playerSkillEffectSheets,
+  playerSkillDescription,
 } from "./skillCatalog";
 
 const BLOCKED_TECHNICAL_COPY = ["px", "帧", "判定", "半径", "宽高", "倍率", "系数", "Boss"];
@@ -93,6 +94,14 @@ describe("player skill catalog copy", () => {
       levelTwo.src,
       levelThree.src,
     ]));
+  });
+
+  it("explains the level-three line projectile knockback and equipped passive", () => {
+    const description = playerSkillDescription(SKILL_IDS.lineProjectile, LINE_PROJECTILE_LEVEL_THREE);
+
+    expect(description).toContain("击退两个身位");
+    expect(description).toContain("10%");
+    expect(description).toContain("首领");
   });
 
   it("preloads the close arc level three basic attack crescent sheet", () => {

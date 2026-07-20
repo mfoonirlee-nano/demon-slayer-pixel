@@ -1,8 +1,10 @@
-import { beforeEach, describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
   LINE_PROJECTILE_EFFECT_CONFIG,
+  SKILL_IDS,
 } from "../../constants";
 import { createBossEncounter } from "../bosses/encounter";
+import { spawnEnemyById } from "../enemy";
 import { resetState, state } from "../../game/state";
 import { lineProjectileEffectSheetForLevel } from "../../systems/skillCatalog";
 import type { SkillLevel } from "../../types/game-state";
@@ -12,6 +14,12 @@ const LINE_PROJECTILE_TEST_START_X = 250;
 const LINE_PROJECTILE_TEST_Y = 300;
 const LINE_PROJECTILE_TEST_BOSS_X = 600;
 const LINE_PROJECTILE_TEST_FRAMES = 130;
+const LINE_PROJECTILE_TEST_ENEMY_HP = 100_000;
+const LINE_PROJECTILE_TEST_ENEMY_X = 400;
+
+afterEach(() => {
+  vi.restoreAllMocks();
+});
 
 function lineProjectileHitsAgainstBoss({
   effectLevel,
@@ -62,6 +70,88 @@ describe("line projectile runtime", () => {
     });
 
     expect(levelThreeHits).toBeGreaterThan(levelOneHits);
+  });
+
+  it.each([
+    { facing: 1, projectileX: 250, enemyX: 400 },
+    { facing: -1, projectileX: 750, enemyX: 500 },
+  ])("pushes a living enemy two of its widths in flight direction at level three", ({
+    facing,
+    projectileX,
+    enemyX,
+  }) => {
+    expect(spawnEnemyById("runner", "debug", "left")).toBe(true);
+    const enemy = state.enemies[0];
+    enemy.x = enemyX;
+    enemy.y = LINE_PROJECTILE_TEST_Y;
+    enemy.hp = LINE_PROJECTILE_TEST_ENEMY_HP;
+    enemy.hitCd = 0;
+    state.player.skillLevels[SKILL_IDS.lineProjectile] = 3;
+    vi.spyOn(Math, "random").mockReturnValue(0);
+    state.lineProjectileEffects.push({
+      x: projectileX,
+      y: LINE_PROJECTILE_TEST_Y,
+      vx: facing * LINE_PROJECTILE_EFFECT_CONFIG.speed,
+      facing,
+      frame: 0,
+      elapsed: 0,
+      drawScale: LINE_PROJECTILE_EFFECT_CONFIG.drawScale,
+      effectLevel: 3,
+      damageMultiplier: 1,
+    });
+
+    updateLineProjectileEffects();
+
+    expect(enemy.x).toBe(enemyX + facing * enemy.w * 2);
+  });
+
+  it("does not knock an enemy back before level three", () => {
+    expect(spawnEnemyById("runner", "debug", "left")).toBe(true);
+    const enemy = state.enemies[0];
+    enemy.x = LINE_PROJECTILE_TEST_ENEMY_X;
+    enemy.y = LINE_PROJECTILE_TEST_Y;
+    enemy.hp = LINE_PROJECTILE_TEST_ENEMY_HP;
+    enemy.hitCd = 0;
+    state.lineProjectileEffects.push({
+      x: LINE_PROJECTILE_TEST_START_X,
+      y: LINE_PROJECTILE_TEST_Y,
+      vx: LINE_PROJECTILE_EFFECT_CONFIG.speed,
+      facing: 1,
+      frame: 0,
+      elapsed: 0,
+      drawScale: LINE_PROJECTILE_EFFECT_CONFIG.drawScale,
+      effectLevel: 2,
+      damageMultiplier: 1,
+    });
+
+    updateLineProjectileEffects();
+
+    expect(enemy.x).toBe(LINE_PROJECTILE_TEST_ENEMY_X);
+  });
+
+  it("damages a boss at level three without moving it", () => {
+    state.player.skillLevels.line_projectile = 3;
+    state.boss = createBossEncounter({ bossKills: 0, elapsedSeconds: 0, animSeed: 0 });
+    state.boss.x = LINE_PROJECTILE_TEST_ENEMY_X;
+    state.boss.y = LINE_PROJECTILE_TEST_Y;
+    const startingX = state.boss.x;
+    const startingHp = state.boss.hp;
+    state.lineProjectileEffects.push({
+      x: LINE_PROJECTILE_TEST_START_X,
+      y: LINE_PROJECTILE_TEST_Y,
+      vx: LINE_PROJECTILE_EFFECT_CONFIG.speed,
+      facing: 1,
+      frame: 0,
+      elapsed: 0,
+      drawScale: LINE_PROJECTILE_EFFECT_CONFIG.drawScale,
+      effectLevel: 3,
+      damageMultiplier: 1,
+    });
+
+    updateLineProjectileEffects();
+
+    expect(state.boss.x).toBe(startingX);
+    expect(state.boss.hp).toBeLessThan(startingHp);
   });
 
   it("loops only max-length dash frames after the dragon growth finishes", () => {
