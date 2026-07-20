@@ -15,7 +15,9 @@ const SKILL_RIGHT_CAP_DISPLAY_W = 31;
 const SKILL_RIGHT_CAP_DISPLAY_H = 25;
 // First fully visible upper-rail rows at each join after runtime sprite scaling.
 const HP_MID_UPPER_RAIL_TOP = 6;
-const HP_RIGHT_CAP_UPPER_RAIL_TOP = 10;
+const HP_RIGHT_CAP_UPPER_RAIL_TOP = 6;
+const HP_MID_FILL_WINDOW = { top: 10, bottom: 15 };
+const HP_RIGHT_CAP_FILL_WINDOW = { top: 10, bottom: 15 };
 const SKILL_MID_UPPER_RAIL_TOP = 2;
 const SKILL_RIGHT_CAP_UPPER_RAIL_TOP = 6;
 
@@ -44,7 +46,7 @@ describe("game HUD layout", () => {
     expect(skillFillCenterY).toBe(HUD_CURRENT_SKILL_FRAME_TOP + UI_SPRITES.currentSkillFrame.displayH / 2);
   });
 
-  it("aligns the visible upper rails of the right caps and middle frame segments", () => {
+  it("aligns the visible rails and HP fill window across frame joins", () => {
     expect({
       hp: HUD_HP_METER_FRAME.rightTop + HP_RIGHT_CAP_UPPER_RAIL_TOP,
       skill: HUD_SKILL_METER_FRAME.rightTop + SKILL_RIGHT_CAP_UPPER_RAIL_TOP,
@@ -52,6 +54,10 @@ describe("game HUD layout", () => {
       hp: HP_MID_UPPER_RAIL_TOP,
       skill: SKILL_MID_UPPER_RAIL_TOP,
     });
+    expect({
+      top: HUD_HP_METER_FRAME.rightTop + HP_RIGHT_CAP_FILL_WINDOW.top,
+      bottom: HUD_HP_METER_FRAME.rightTop + HP_RIGHT_CAP_FILL_WINDOW.bottom,
+    }).toEqual(HP_MID_FILL_WINDOW);
     expect(UI_SPRITES.hudHpBarRight.displayW).toBe(HP_RIGHT_CAP_DISPLAY_W);
     expect(UI_SPRITES.hudHpBarRight.displayH).toBe(HP_RIGHT_CAP_DISPLAY_H);
     expect(UI_SPRITES.hudSkillBarRight.displayW).toBe(SKILL_RIGHT_CAP_DISPLAY_W);

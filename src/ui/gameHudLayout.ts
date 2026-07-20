@@ -29,7 +29,7 @@ export const HUD_HP_METER_FRAME: HudMeterFrame = {
   fillBottom: 1,
   fillInsetLeft: 15,
   fillInsetRight: 7,
-  rightTop: -4,
+  rightTop: 0,
 };
 
 export const HUD_HP_METER_PLACEMENT: HudMeterPlacement = {
