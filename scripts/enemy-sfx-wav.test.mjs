@@ -16,7 +16,9 @@ const PLAYER_ATTACK_MAX_TAIL_ENERGY_RATIO = 0.15;
 const ENEMY_HURT_MAX_DURATION_SECONDS = 0.13;
 const ENEMY_HURT_FRONT_END_SECONDS = 0.015;
 const ENEMY_HURT_MIN_FRONT_ENERGY_RATIO = 0.5;
+const ENEMY_HURT_MAX_FRONT_ENERGY_RATIO = 0.8;
 const ENEMY_HURT_TAIL_START_SECONDS = 0.06;
+const ENEMY_HURT_MIN_BODY_ENERGY_RATIO = 0.15;
 const ENEMY_HURT_MAX_TAIL_ENERGY_RATIO = 0.04;
 const ENEMY_HURT_LOW_PASS_CUTOFF_HZ = 250;
 const ENEMY_HURT_MAX_LOW_FREQUENCY_ENERGY_RATIO = 0.3;
@@ -142,13 +144,20 @@ describe("SFX WAV validation", () => {
     expect(tailEnergyRatio).toBeLessThanOrEqual(PLAYER_ATTACK_MAX_TAIL_ENERGY_RATIO);
   });
 
-  it("keeps the enemy hurt cue short, bright, and front-loaded", () => {
+  it("keeps the enemy hurt cue short, bright, and punchy", () => {
     const wav = readFileSync(path.join(ENEMY_SFX_DIRECTORY, "enemyHurt.wav"));
     const pcm = decodePcm16(wav);
+    const frontEnergyRatio = measureEnergyRatioInRange(pcm, 0, ENEMY_HURT_FRONT_END_SECONDS);
+    const bodyEnergyRatio = measureEnergyRatioInRange(
+      pcm,
+      ENEMY_HURT_FRONT_END_SECONDS,
+      ENEMY_HURT_TAIL_START_SECONDS,
+    );
 
     expect.soft(pcm.length / SAMPLE_RATE).toBeLessThanOrEqual(ENEMY_HURT_MAX_DURATION_SECONDS);
-    expect.soft(measureEnergyRatioInRange(pcm, 0, ENEMY_HURT_FRONT_END_SECONDS))
-      .toBeGreaterThanOrEqual(ENEMY_HURT_MIN_FRONT_ENERGY_RATIO);
+    expect.soft(frontEnergyRatio).toBeGreaterThanOrEqual(ENEMY_HURT_MIN_FRONT_ENERGY_RATIO);
+    expect.soft(frontEnergyRatio).toBeLessThanOrEqual(ENEMY_HURT_MAX_FRONT_ENERGY_RATIO);
+    expect.soft(bodyEnergyRatio).toBeGreaterThanOrEqual(ENEMY_HURT_MIN_BODY_ENERGY_RATIO);
     expect.soft(measureEnergyRatioInRange(
       pcm,
       ENEMY_HURT_TAIL_START_SECONDS,
