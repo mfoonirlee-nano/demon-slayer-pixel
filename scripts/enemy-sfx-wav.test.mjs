@@ -22,6 +22,11 @@ const ENEMY_HURT_MIN_BODY_ENERGY_RATIO = 0.15;
 const ENEMY_HURT_MAX_TAIL_ENERGY_RATIO = 0.04;
 const ENEMY_HURT_LOW_PASS_CUTOFF_HZ = 250;
 const ENEMY_HURT_MAX_LOW_FREQUENCY_ENERGY_RATIO = 0.3;
+const DUELIST_SLASH_MAX_DURATION_SECONDS = 0.24;
+const DUELIST_SLASH_TAIL_START_SECONDS = 0.14;
+const DUELIST_SLASH_MAX_TAIL_ENERGY_RATIO = 0.2;
+const DUELIST_SLASH_LOW_PASS_CUTOFF_HZ = 2_500;
+const DUELIST_SLASH_MIN_LOW_FREQUENCY_ENERGY_RATIO = 0.5;
 const PLAYER_SFX_DIRECTORY = path.join(process.cwd(), "assets/audio/sfx/players");
 const ENEMY_SFX_DIRECTORY = path.join(process.cwd(), "assets/audio/sfx/enemies");
 const BOSS_SFX_DIRECTORY = path.join(process.cwd(), "assets/audio/sfx/bosses");
@@ -184,5 +189,21 @@ describe("SFX WAV validation", () => {
       .toBeLessThanOrEqual(ENEMY_HURT_MAX_TAIL_ENERGY_RATIO);
     expect.soft(measureLowPassEnergyRatio(pcm, ENEMY_HURT_LOW_PASS_CUTOFF_HZ))
       .toBeLessThanOrEqual(ENEMY_HURT_MAX_LOW_FREQUENCY_ENERGY_RATIO);
+  });
+
+  it("keeps the duelist slash cue short, front-loaded, and metal-bodied", () => {
+    const wav = readFileSync(path.join(ENEMY_SFX_DIRECTORY, "enemySlash.wav"));
+    const pcm = decodePcm16(wav);
+
+    expect.soft(pcm.length / SAMPLE_RATE).toBeLessThanOrEqual(
+      DUELIST_SLASH_MAX_DURATION_SECONDS,
+    );
+    expect.soft(measureEnergyRatioInRange(
+      pcm,
+      DUELIST_SLASH_TAIL_START_SECONDS,
+      pcm.length / SAMPLE_RATE,
+    )).toBeLessThanOrEqual(DUELIST_SLASH_MAX_TAIL_ENERGY_RATIO);
+    expect.soft(measureLowPassEnergyRatio(pcm, DUELIST_SLASH_LOW_PASS_CUTOFF_HZ))
+      .toBeGreaterThanOrEqual(DUELIST_SLASH_MIN_LOW_FREQUENCY_ENERGY_RATIO);
   });
 });

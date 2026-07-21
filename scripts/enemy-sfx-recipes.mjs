@@ -41,9 +41,11 @@ export function createEnemySfxSpecs({
       mixWood(samples, rng, { start: 0.03, duration: 0.09, frequency: 190, gain: 0.42 });
       mixWood(samples, rng, { start: 0.115, duration: 0.09, frequency: 160, gain: 0.34 });
     }),
-    sound("enemySlash", 0.28, -2, (samples, rng) => {
-      mixBlade(samples, rng, { duration: 0.23, baseFrequency: 390, gain: 0.72 });
-      mixWood(samples, rng, { start: 0.025, duration: 0.11, frequency: 170, gain: 0.25 });
+    sound("enemySlash", 0.21, -2.5, (samples, rng) => {
+      mixNoise(samples, rng, { duration: 0.072, gain: 0.22, color: "band", lowCutoff: 900, cutoff: 4_500, endLowCutoff: 2_200, endCutoff: 7_200, attack: 0.002, release: 0.018, contour: swell });
+      mixDullIron(samples, rng, { start: 0.018, duration: 0.17, baseFrequency: 620, gain: 0.52 });
+      mixOscillator(samples, { start: 0.01, duration: 0.12, frequency: 2_100, endFrequency: 780, gain: 0.18, wave: "triangle", attack: 0.001, release: 0.035, decay: 2.2 });
+      mixDryPluck(samples, rng, { start: 0.026, duration: 0.13, frequency: 980, gain: 0.16 });
     }),
     sound("enemyCastStart", 0.56, -6.8, (samples, rng) => {
       mixBreath(samples, rng, { duration: 0.5, gain: 0.25, lowCutoff: 170, cutoff: 1_350, endCutoff: 2_200, contour: rise(0.75) });
