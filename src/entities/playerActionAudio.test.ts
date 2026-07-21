@@ -52,6 +52,15 @@ function selectedSkillOrThrow(skillId: SkillId) {
   return skill;
 }
 
+function placeChaserInAttackBox() {
+  expect(spawnEnemyById("chaser", "debug", "right")).toBe(true);
+  const box = attackBox();
+  const enemy = state.enemies[0]!;
+  enemy.x = box.x;
+  enemy.y = box.y;
+  return enemy;
+}
+
 describe("player action audio", () => {
   beforeEach(() => {
     resetState();
@@ -113,17 +122,25 @@ describe("player action audio", () => {
     expect(state.player.fallAttackTimer).toBe(0);
   });
 
-  it("plays the enemy hit cue when a basic attack connects", () => {
-    expect(spawnEnemyById("chaser", "debug", "right")).toBe(true);
-    const box = attackBox();
-    const enemy = state.enemies[0]!;
-    enemy.x = box.x;
-    enemy.y = box.y;
+  it("plays one hit feedback cue when a basic attack connects with one enemy", () => {
+    placeChaserInAttackBox();
 
     triggerAttack();
+    audioMock.playSfx.mockClear();
     updatePlayer();
 
-    expect(audioMock.playSfx).toHaveBeenCalledWith("playerAttackHit");
+    expect(audioMock.playSfx.mock.calls).toEqual([["enemyHurt", expect.any(Number)]]);
+  });
+
+  it("plays one defeat feedback cue when a basic attack defeats one enemy", () => {
+    const enemy = placeChaserInAttackBox();
+    enemy.hp = 1;
+
+    triggerAttack();
+    audioMock.playSfx.mockClear();
+    updatePlayer();
+
+    expect(audioMock.playSfx.mock.calls).toEqual([["enemyDefeat", expect.any(Number)]]);
   });
 
   it("plays the boss hit cue when a basic attack connects", () => {

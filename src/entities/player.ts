@@ -557,7 +557,6 @@ export function updatePlayer() {
         });
         emitSlash(hit.hitX, hit.hitY, box.color, e.w);
         emitHitBurst(hit.hitX, hit.hitY, PLAYER_COMBAT.effects.attackEnemyBurstColor, PLAYER_COMBAT.attackEnemyBurstPower);
-        playSfx("playerAttackHit");
         if (hit.defeated) {
           emitSlash(e.x + Math.random() * e.w, e.y + Math.random() * e.h, PLAYER_COMBAT.effects.attackKillSlashColor, e.w);
         }
