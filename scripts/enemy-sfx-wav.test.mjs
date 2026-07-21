@@ -13,7 +13,15 @@ const WAV_HEADER_BYTES = 44;
 const SAMPLE_RATE = 48_000;
 const PLAYER_ATTACK_TAIL_START_SECONDS = 0.1;
 const PLAYER_ATTACK_MAX_TAIL_ENERGY_RATIO = 0.15;
+const ENEMY_HURT_MAX_DURATION_SECONDS = 0.13;
+const ENEMY_HURT_FRONT_END_SECONDS = 0.015;
+const ENEMY_HURT_MIN_FRONT_ENERGY_RATIO = 0.5;
+const ENEMY_HURT_TAIL_START_SECONDS = 0.06;
+const ENEMY_HURT_MAX_TAIL_ENERGY_RATIO = 0.04;
+const ENEMY_HURT_LOW_PASS_CUTOFF_HZ = 250;
+const ENEMY_HURT_MAX_LOW_FREQUENCY_ENERGY_RATIO = 0.3;
 const PLAYER_SFX_DIRECTORY = path.join(process.cwd(), "assets/audio/sfx/players");
+const ENEMY_SFX_DIRECTORY = path.join(process.cwd(), "assets/audio/sfx/enemies");
 const EXPECTED_PLAYER_SFX_FILES = [
   "playerAttackHit.wav",
   "playerAttackStart.wav",
@@ -55,18 +63,35 @@ function decodePcm16(wav) {
   return pcm;
 }
 
-function measureEnergyRatioAfter(pcm, startSeconds) {
-  const tailStart = Math.floor(startSeconds * SAMPLE_RATE);
-  let totalEnergy = 0;
-  let tailEnergy = 0;
+function measureEnergy(pcm) {
+  let energy = 0;
+  for (const sample of pcm) energy += sample * sample;
+  return energy;
+}
 
-  for (let index = 0; index < pcm.length; index += 1) {
-    const energy = pcm[index] * pcm[index];
-    totalEnergy += energy;
-    if (index >= tailStart) tailEnergy += energy;
+function measureEnergyRatioInRange(pcm, startSeconds, endSeconds) {
+  const start = Math.floor(startSeconds * SAMPLE_RATE);
+  const end = Math.min(pcm.length, Math.floor(endSeconds * SAMPLE_RATE));
+  let rangeEnergy = 0;
+
+  for (let index = start; index < end; index += 1) {
+    rangeEnergy += pcm[index] * pcm[index];
   }
 
-  return tailEnergy / totalEnergy;
+  return rangeEnergy / measureEnergy(pcm);
+}
+
+function measureLowPassEnergyRatio(pcm, cutoffHz) {
+  const alpha = 1 - Math.exp(-2 * Math.PI * cutoffHz / SAMPLE_RATE);
+  let lowPass = 0;
+  let lowPassEnergy = 0;
+
+  for (const sample of pcm) {
+    lowPass += alpha * (sample - lowPass);
+    lowPassEnergy += lowPass * lowPass;
+  }
+
+  return lowPassEnergy / measureEnergy(pcm);
 }
 
 describe("SFX WAV validation", () => {
@@ -108,8 +133,29 @@ describe("SFX WAV validation", () => {
   it("keeps the basic attack cue front-loaded like a sword swing", () => {
     const wav = readFileSync(path.join(PLAYER_SFX_DIRECTORY, "playerAttackStart.wav"));
     const pcm = decodePcm16(wav);
-    const tailEnergyRatio = measureEnergyRatioAfter(pcm, PLAYER_ATTACK_TAIL_START_SECONDS);
+    const tailEnergyRatio = measureEnergyRatioInRange(
+      pcm,
+      PLAYER_ATTACK_TAIL_START_SECONDS,
+      pcm.length / SAMPLE_RATE,
+    );
 
     expect(tailEnergyRatio).toBeLessThanOrEqual(PLAYER_ATTACK_MAX_TAIL_ENERGY_RATIO);
+  });
+
+  it("keeps the enemy hurt cue short, bright, and front-loaded", () => {
+    const wav = readFileSync(path.join(ENEMY_SFX_DIRECTORY, "enemyHurt.wav"));
+    const pcm = decodePcm16(wav);
+
+    expect.soft(pcm.length / SAMPLE_RATE).toBeLessThanOrEqual(ENEMY_HURT_MAX_DURATION_SECONDS);
+    expect.soft(measureEnergyRatioInRange(pcm, 0, ENEMY_HURT_FRONT_END_SECONDS))
+      .toBeGreaterThanOrEqual(ENEMY_HURT_MIN_FRONT_ENERGY_RATIO);
+    expect.soft(measureEnergyRatioInRange(
+      pcm,
+      ENEMY_HURT_TAIL_START_SECONDS,
+      pcm.length / SAMPLE_RATE,
+    ))
+      .toBeLessThanOrEqual(ENEMY_HURT_MAX_TAIL_ENERGY_RATIO);
+    expect.soft(measureLowPassEnergyRatio(pcm, ENEMY_HURT_LOW_PASS_CUTOFF_HZ))
+      .toBeLessThanOrEqual(ENEMY_HURT_MAX_LOW_FREQUENCY_ENERGY_RATIO);
   });
 });

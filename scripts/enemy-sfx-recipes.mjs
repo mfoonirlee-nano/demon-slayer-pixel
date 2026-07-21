@@ -168,10 +168,43 @@ export function createEnemySfxSpecs({
       mixWood(samples, rng, { start: 0.24, duration: 0.09, frequency: 500, gain: 0.22 });
       mixWood(samples, rng, { start: 0.33, duration: 0.08, frequency: 680, gain: 0.16 });
     }),
-    sound("enemyHurt", 0.18, -8, (samples, rng) => {
-      mixRasp(samples, rng, { duration: 0.15, frequency: 170, gain: 0.58, endRatio: 0.82 });
-      mixNoise(samples, rng, { duration: 0.11, gain: 0.34, color: "band", lowCutoff: 180, cutoff: 1_450, decay: 2.2 });
-      mixWood(samples, rng, { duration: 0.08, frequency: 220, gain: 0.23 });
+    sound("enemyHurt", 0.11, -5.5, (samples, rng) => {
+      mixNoise(samples, rng, {
+        duration: 0.048,
+        gain: 0.72,
+        color: "band",
+        lowCutoff: 1_100,
+        cutoff: 6_200,
+        endLowCutoff: 700,
+        endCutoff: 3_200,
+        attack: 0.001,
+        release: 0.012,
+        decay: 5,
+      });
+      mixOscillator(samples, {
+        start: 0.004,
+        duration: 0.072,
+        frequency: 920,
+        endFrequency: 650,
+        gain: 0.24,
+        wave: "triangle",
+        attack: 0.001,
+        release: 0.018,
+        decay: 3.8,
+      });
+      mixNoise(samples, rng, {
+        start: 0.006,
+        duration: 0.058,
+        gain: 0.18,
+        color: "band",
+        lowCutoff: 360,
+        cutoff: 1_900,
+        endLowCutoff: 480,
+        endCutoff: 1_250,
+        attack: 0.001,
+        release: 0.018,
+        decay: 3.6,
+      });
     }),
   ];
 }
