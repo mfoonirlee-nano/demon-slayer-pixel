@@ -125,6 +125,10 @@ function HudMeter({ value, max, ghostValue, color, ghostColor, text, width, fram
   const rightSize = uiSpriteDisplaySize(frame.right);
   const rightW = rightSize.w;
   const midWidth = Math.max(uiSpriteDisplaySize(frame.mid).w, width - leftW - rightW);
+  const rightDecorationTop = frame.rightDecorationTop ?? frame.rightTop;
+  const rightConnectorWidth = frame.rightConnectorWidth ?? 0;
+  const splitRightCap = frame.rightDecorationTop !== undefined
+    && frame.rightConnectorWidth !== undefined;
 
   return (
     <div
@@ -138,8 +142,27 @@ function HudMeter({ value, max, ghostValue, color, ghostColor, text, width, fram
           id={frame.right}
           width={rightW}
           height={rightSize.h}
-          style={{ position: "relative", top: frame.rightTop }}
+          className={splitRightCap ? "player-hud-meter-right-cap-decoration" : ""}
+          style={{
+            position: "relative",
+            top: rightDecorationTop,
+            clipPath: splitRightCap ? `inset(0 0 0 ${rightConnectorWidth}px)` : undefined,
+          }}
         />
+        {splitRightCap ? (
+          <UiSprite
+            id={frame.right}
+            width={rightW}
+            height={rightSize.h}
+            className="player-hud-meter-right-cap-connector"
+            style={{
+              position: "absolute",
+              right: 0,
+              top: frame.rightTop,
+              clipPath: `inset(0 ${rightW - rightConnectorWidth}px 0 0)`,
+            }}
+          />
+        ) : null}
       </div>
       <div
         className="player-hud-meter-fill"

@@ -10,6 +10,8 @@ export type HudMeterFrame = {
   fillInsetLeft: number;
   fillInsetRight: number;
   rightTop: number;
+  rightDecorationTop?: number;
+  rightConnectorWidth?: number;
 };
 
 export type HudMeterPlacement = {
@@ -47,6 +49,8 @@ export const HUD_SKILL_METER_FRAME: HudMeterFrame = {
   fillInsetLeft: 15,
   fillInsetRight: 7,
   rightTop: -4,
+  rightDecorationTop: -6,
+  rightConnectorWidth: 6,
 };
 
 export const HUD_SKILL_METER_PLACEMENT: HudMeterPlacement = {
