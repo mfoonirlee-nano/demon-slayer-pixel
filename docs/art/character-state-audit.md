@@ -19,7 +19,7 @@
 | 项 | 数量 | 说明 |
 | --- | ---: | --- |
 | Actor groups | 20 | 1 player, 12 enemies, 7 Boss groups |
-| In-scope sheets | 95 | 只含角色身体、施法身体、clone/proxy 身体 |
+| In-scope sheets | 96 | 只含角色身体、施法身体、clone/proxy 身体 |
 | Contract failures | 0 | 图集尺寸、帧数、空帧检查均通过 |
 | Out-of-scope effects | 多个 | `effect.png`、投射物、咒圈、声波、火线、UI icon 等未做身份审计 |
 
@@ -42,6 +42,7 @@
 
 ## Audit Notes
 
+- 2026-07-21 玩家跟进修复：新增移动普攻图集，以跑步首帧作为起收姿态、保留原普攻关键帧并补低身恢复帧；跑步循环改为按实际移动距离推进，退出动作后从固定入口相位恢复。玩法命中框、伤害、移动速度和攻击时长未改。
 - 所有 in-scope sheet 均通过尺寸和空帧检查；没有因为规格错误导致的直接阻塞。
 - 很多帧 bbox 触边，这是现有图集的紧切片/底部锚定特征，不等于本次身份 drift。
 - `mirror-dream` 的 `nightmare`、`splitter` 的 `splitling*` 按 body-like proxy 审计；它们不要求保持完整本体姿态，只要求身份来源可读。
@@ -72,7 +73,7 @@
 
 | Actor | Category | Baseline Status | Sheets | Severity | Repair Type | Finding | Evidence |
 | --- | --- | --- | ---: | --- | --- | --- | --- |
-| `player` | player | baseline clear | 15 | `ok` | none | 本体、普攻、下落攻击、普通技能施法和大招施法均保留深蓝披风、水蓝刀光和修长剑士轮廓；技能施法缩放不同但身份未断裂。 | `contact-sheets/player.png` |
+| `player` | player | baseline clear | 16 | `ok` | repaired | 本体、静止/移动普攻、下落攻击、普通技能施法和大招施法均保留深蓝披风、水蓝刀光和修长剑士轮廓；移动普攻已补低身起收势并锁定跑步入口相位。 | `contact-sheets/player.png` |
 | `chaser` | enemy | baseline clear | 1 | `ok` | none | 单状态追击循环，赤褐身体、黑发和灰裤布稳定。 | `contact-sheets/chaser.png` |
 | `crawler` | enemy | baseline clear | 4 | `ok` | none | `move` / `windup` / `lunge` / `recover` 都保持低伏甲壳蛛形，动作变化清楚。 | `contact-sheets/crawler.png` |
 | `runner` | enemy | baseline clear | 4 | `ok` | none | 角、黑发、赤褐肌肉和冲刺姿态贯穿全状态。 | `contact-sheets/runner.png` |

@@ -24,6 +24,8 @@ const BINDER_ATTACHMENT_CENTER_Y_RATIO = 0.55;
 const BINDER_KEY_SCRAMBLE_HOVER_Y_OFFSET = 18;
 const EXPECTED_ULTIMATE_CAST_FRAME_DURATION = 5;
 const TEST_IMAGE = {} as HTMLImageElement;
+const RUN_IMAGE = {} as HTMLImageElement;
+const MOVING_ATTACK_IMAGE = {} as HTMLImageElement;
 
 function createMockContext(): MockCanvasContext {
   const context = {
@@ -53,6 +55,8 @@ describe("player render", () => {
   beforeEach(() => {
     resetState();
     PLAYER_SHEETS[PLAYER_ANIMATION_STATES.idle].image = TEST_IMAGE;
+    PLAYER_SHEETS[PLAYER_ANIMATION_STATES.run].image = RUN_IMAGE;
+    PLAYER_SHEETS[PLAYER_ANIMATION_STATES.movingAttack].image = MOVING_ATTACK_IMAGE;
     BINDER_TALISMAN_SHEET.image = TEST_IMAGE;
     BINDER_TALISMAN_KEY_SCRAMBLE_EFFECT_SHEET.image = TEST_IMAGE;
     BINDER_TALISMAN_STUN_EFFECT_SHEET.image = TEST_IMAGE;
@@ -61,6 +65,8 @@ describe("player render", () => {
 
   afterEach(() => {
     PLAYER_SHEETS[PLAYER_ANIMATION_STATES.idle].image = null;
+    PLAYER_SHEETS[PLAYER_ANIMATION_STATES.run].image = null;
+    PLAYER_SHEETS[PLAYER_ANIMATION_STATES.movingAttack].image = null;
     BINDER_TALISMAN_SHEET.image = null;
     BINDER_TALISMAN_KEY_SCRAMBLE_EFFECT_SHEET.image = null;
     BINDER_TALISMAN_STUN_EFFECT_SHEET.image = null;
@@ -128,5 +134,31 @@ describe("player render", () => {
     state.player.ultimateCastTimer -= 1;
     drawPlayer();
     expect(context.drawImage.mock.calls[0]?.[1]).toBe(ULTIMATE_SKILL_SHEET.frameW);
+  });
+
+  it("renders a running basic attack from the movement-specific sheet", () => {
+    const context = createMockContext();
+    installMockContext(context);
+    state.player.attackFromRun = true;
+    state.player.attackTimer = state.player.attackDuration;
+
+    drawPlayer();
+
+    expect(context.drawImage.mock.calls[0]?.[0]).toBe(MOVING_ATTACK_IMAGE);
+  });
+
+  it("locks the run frame to traveled distance instead of global elapsed", () => {
+    const context = createMockContext();
+    installMockContext(context);
+    const runSheet = PLAYER_SHEETS[PLAYER_ANIMATION_STATES.run];
+    const expectedFrame = 3;
+    state.elapsed = 99;
+    state.player.vx = state.player.speed;
+    state.player.runStepDistance = PLAYER_COMBAT.runAnimationCycleDistance * expectedFrame / runSheet.count;
+
+    drawPlayer();
+
+    expect(context.drawImage.mock.calls[0]?.[0]).toBe(RUN_IMAGE);
+    expect(context.drawImage.mock.calls[0]?.[1]).toBe(runSheet.frameW * expectedFrame);
   });
 });

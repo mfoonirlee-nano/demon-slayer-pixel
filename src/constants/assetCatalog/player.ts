@@ -46,6 +46,17 @@ export const PLAYER_SHEETS: Record<PlayerAnimationState, PlayerSheet> = {
     animSpeed: 3,
     anchorY: 0.979,
   },
+  [PLAYER_ANIMATION_STATES.movingAttack]: {
+    src: "assets/sprites/player/player_moving_attack.png",
+    frameW: 768,
+    frameH: 480,
+    count: 8,
+    image: null,
+    drawW: 227,
+    drawH: 142,
+    animSpeed: 3,
+    anchorY: 0.979,
+  },
   [PLAYER_ANIMATION_STATES.fallAttack]: {
     src: "assets/sprites/player/player_fall_attack.png",
     frameW: 640,

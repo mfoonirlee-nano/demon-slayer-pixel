@@ -267,7 +267,10 @@ function drawMoonTideOutline(snapshot: UltimatePlayerGhostSnapshot, currentSkill
 }
 
 function playerGhostAction(stateName: keyof typeof PLAYER_SHEETS): UltimatePlayerGhostAction {
-  if (stateName === PLAYER_ANIMATION_STATES.attack) return "attack";
+  if (
+    stateName === PLAYER_ANIMATION_STATES.attack
+    || stateName === PLAYER_ANIMATION_STATES.movingAttack
+  ) return "attack";
   if (stateName === PLAYER_ANIMATION_STATES.fallAttack) return "fallAttack";
   if (stateName === PLAYER_ANIMATION_STATES.run || stateName === PLAYER_ANIMATION_STATES.jump) return "move";
   return "idle";
@@ -363,8 +366,12 @@ export function drawPlayer() {
   const isLanded = onGround(p, p.onPlatform);
   const stateName = p.fallAttackTimer > 0 || p.fallAttackRecoveryTimer > 0
     ? PLAYER_ANIMATION_STATES.fallAttack
-    : p.skillTimer > 0 || p.attackTimer > 0
+    : p.skillTimer > 0
     ? PLAYER_ANIMATION_STATES.attack
+    : p.attackTimer > 0
+      ? p.attackFromRun
+        ? PLAYER_ANIMATION_STATES.movingAttack
+        : PLAYER_ANIMATION_STATES.attack
     : !isLanded
       ? PLAYER_ANIMATION_STATES.jump
       : Math.abs(p.vx) > PLAYER_COMBAT.movementIdleThreshold
@@ -375,7 +382,12 @@ export function drawPlayer() {
   const { drawW, drawH, animSpeed, anchorX = 0.5, anchorY = 1, flipX } = sheet;
   const action = playerGhostAction(stateName);
   let frame = frameIndex(sheet.count, moonTidePlayerAnimationFrameSpeed(action, animSpeed), state.elapsed);
-  if (stateName === PLAYER_ANIMATION_STATES.fallAttack) {
+  if (stateName === PLAYER_ANIMATION_STATES.run) {
+    frame = Math.min(
+      sheet.count - 1,
+      Math.floor(p.runStepDistance * sheet.count / PLAYER_COMBAT.runAnimationCycleDistance),
+    );
+  } else if (stateName === PLAYER_ANIMATION_STATES.fallAttack) {
     const airFrameCount = 5;
     const recoveryFrameCount = sheet.count - airFrameCount;
     if (p.fallAttackTimer > 0) {
@@ -387,7 +399,10 @@ export function drawPlayer() {
         Math.floor(Math.max(0, elapsedRecovery) * recoveryFrameCount / FALL_ATTACK.recoveryFrames),
       );
     }
-  } else if (stateName === PLAYER_ANIMATION_STATES.attack && p.attackTimer > 0) {
+  } else if (
+    (stateName === PLAYER_ANIMATION_STATES.attack || stateName === PLAYER_ANIMATION_STATES.movingAttack)
+    && p.attackTimer > 0
+  ) {
     const attackDuration = Math.max(1, p.attackDuration);
     const elapsedAttack = attackDuration - p.attackTimer;
     frame = Math.min(

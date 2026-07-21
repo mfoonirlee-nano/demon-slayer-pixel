@@ -7,10 +7,19 @@ import {
   MIST_BONE_CAGE_CAST_SHEET,
   MIST_BONE_DART_SHEET,
   MIST_BONE_LINE_CAST_SHEET,
+  PLAYER_ANIMATION_STATES,
+  PLAYER_SHEETS,
 } from "../constants";
 import { spriteImageLoadTargets } from "./manifest";
 
 describe("sprite manifest", () => {
+  it("preloads the moving attack sheet exactly once", () => {
+    const loadedSources = spriteImageLoadTargets().map((target) => target.src);
+    const movingAttack = PLAYER_SHEETS[PLAYER_ANIMATION_STATES.movingAttack];
+
+    expect(loadedSources.filter((src) => src === movingAttack.src)).toHaveLength(1);
+  });
+
   it("preloads every act landmark exactly once", () => {
     const loadedSources = spriteImageLoadTargets().map((target) => target.src);
 

@@ -84,6 +84,7 @@ export type PlayerState = {
   invincible: number;
   attackTimer: number;
   attackDuration: number;
+  attackFromRun: boolean;
   fallAttackTimer: number;
   fallAttackRecoveryTimer: number;
   score: number;

@@ -20,7 +20,7 @@ export type SkillTypeTag =
   | "returning_blade"
   | "vertical_wave";
 
-export type PlayerAnimationState = "idle" | "run" | "jump" | "attack" | "fallAttack";
+export type PlayerAnimationState = "idle" | "run" | "jump" | "attack" | "movingAttack" | "fallAttack";
 type SkillDescriptionLevel = 1 | 2 | 3;
 
 export type Skill = {

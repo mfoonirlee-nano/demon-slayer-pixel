@@ -196,6 +196,25 @@ describe("line projectile equipped passive", () => {
   });
 });
 
+describe("player action animation state", () => {
+  beforeEach(() => {
+    resetState();
+    keys.clear();
+  });
+
+  it("locks a moving attack variant and resets the run cycle for its exit", () => {
+    keys.add("d");
+    updatePlayer();
+    expect(state.player.runStepDistance).toBeGreaterThan(0);
+
+    triggerAttack();
+    expect(state.player.attackFromRun).toBe(true);
+
+    updatePlayer();
+    expect(state.player.runStepDistance).toBe(0);
+  });
+});
+
 describe("fall attack landing feedback", () => {
   beforeEach(() => {
     resetState();

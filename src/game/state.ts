@@ -41,6 +41,7 @@ export function createInitialPlayerState(): PlayerState {
     invincible: 0,
     attackTimer: 0,
     attackDuration: BASIC_ATTACK.frames,
+    attackFromRun: false,
     fallAttackTimer: 0,
     fallAttackRecoveryTimer: 0,
     score: 0,

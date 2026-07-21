@@ -27,6 +27,7 @@ const actors = [
       sheet("run", "assets/sprites/player/player_run.png", 448, 420, 8),
       sheet("jump", "assets/sprites/player/player_jump.png", 448, 420, 6),
       sheet("attack", "assets/sprites/player/player_attack.png", 768, 480, 8),
+      sheet("movingAttack", "assets/sprites/player/player_moving_attack.png", 768, 480, 8),
       sheet("fallAttack", "assets/sprites/player/player_fall_attack.png", 640, 560, 8),
       sheet("skill:line_projectile", "assets/sprites/skills/line_projectile/skill.png", 800, 420, 5),
       sheet("skill:close_arc", "assets/sprites/skills/close_arc/skill.png", 500, 500, 6),

@@ -60,6 +60,7 @@ export const PLAYER_LIMITS = {
 } as const;
 
 export const PLAYER_COMBAT = {
+  runAnimationCycleDistance: 128,
   skillBurstLife: 40,
   skillBurstYOffset: 2,
   skillScaleIn: 0.92,

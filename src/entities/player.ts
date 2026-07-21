@@ -108,6 +108,7 @@ export function triggerAttack() {
   }
 
   const frames = Math.max(1, Math.round(moonTideAttackFrames() * equipmentBasicAttackFrameMultiplier(state)));
+  p.attackFromRun = Boolean(onGround(p, p.onPlatform)) && Math.abs(p.vx) > PLAYER_COMBAT.movementIdleThreshold;
   beginBasicAttackEquipmentEffects(state);
   state.player.attackDuration = frames;
   state.player.attackTimer = frames;
@@ -516,9 +517,9 @@ export function updatePlayer() {
     && p.skillTimer <= 0
     && p.ultimateCastTimer <= 0;
   if (canPlayRunStep) {
-    p.runStepDistance += horizontalMoveDistance;
-    if (p.runStepDistance >= PLAYER_RUN_STEP_DISTANCE) {
-      p.runStepDistance %= PLAYER_RUN_STEP_DISTANCE;
+    const previousStep = Math.floor(p.runStepDistance / PLAYER_RUN_STEP_DISTANCE);
+    p.runStepDistance = (p.runStepDistance + horizontalMoveDistance) % PLAYER_COMBAT.runAnimationCycleDistance;
+    if (Math.floor(p.runStepDistance / PLAYER_RUN_STEP_DISTANCE) !== previousStep) {
       playSfx("playerRunStep", p.facing === 1 ? PLAYER_RUN_STEP_RIGHT_PITCH : PLAYER_RUN_STEP_LEFT_PITCH);
     }
   } else {
