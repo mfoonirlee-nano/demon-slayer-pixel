@@ -216,9 +216,17 @@ export const ENEMY_SFX_SAMPLE_URLS = {
   ).href,
 } satisfies Partial<Record<GameSfx, string>>;
 
+export const BOSS_SFX_SAMPLE_URLS = {
+  bossKill: new URL(
+    "../../assets/audio/sfx/bosses/bossKill.wav",
+    import.meta.url,
+  ).href,
+} satisfies Partial<Record<GameSfx, string>>;
+
 const audioSampleBuffers = new Map<GameSfx, AudioBuffer>();
 let audioSampleLoadTask: Promise<void> | null = null;
 const SFX_SAMPLE_URLS = {
+  ...BOSS_SFX_SAMPLE_URLS,
   ...ENEMY_SFX_SAMPLE_URLS,
   ...PLAYER_SFX_SAMPLE_URLS,
 } satisfies Partial<Record<GameSfx, string>>;

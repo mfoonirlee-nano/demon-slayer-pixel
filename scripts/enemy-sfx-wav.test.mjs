@@ -24,6 +24,8 @@ const ENEMY_HURT_LOW_PASS_CUTOFF_HZ = 250;
 const ENEMY_HURT_MAX_LOW_FREQUENCY_ENERGY_RATIO = 0.3;
 const PLAYER_SFX_DIRECTORY = path.join(process.cwd(), "assets/audio/sfx/players");
 const ENEMY_SFX_DIRECTORY = path.join(process.cwd(), "assets/audio/sfx/enemies");
+const BOSS_SFX_DIRECTORY = path.join(process.cwd(), "assets/audio/sfx/bosses");
+const EXPECTED_BOSS_SFX_FILES = ["bossKill.wav"];
 const EXPECTED_PLAYER_SFX_FILES = [
   "playerAttackHit.wav",
   "playerAttackStart.wav",
@@ -63,6 +65,25 @@ function decodePcm16(wav) {
     pcm[index] = wav.readInt16LE(WAV_HEADER_BYTES + index * 2);
   }
   return pcm;
+}
+
+function expectValidWav(filePath) {
+  const wav = readFileSync(filePath);
+  expect(wav.toString("ascii", 0, 4)).toBe("RIFF");
+  expect(wav.toString("ascii", 8, 12)).toBe("WAVE");
+  expect(wav.readUInt16LE(20)).toBe(1);
+  expect(wav.readUInt16LE(22)).toBe(1);
+  expect(wav.readUInt32LE(24)).toBe(SAMPLE_RATE);
+  expect(wav.readUInt16LE(34)).toBe(16);
+  expect(wav.length).toBe(WAV_HEADER_BYTES + wav.readUInt32LE(40));
+
+  const metrics = measureAndValidatePcm(
+    path.basename(filePath),
+    decodePcm16(wav),
+    PCM_MAX,
+    PEAK_LIMIT,
+  );
+  expect(metrics.rmsDb).toBeGreaterThan(-35);
 }
 
 function measureEnergy(pcm) {
@@ -118,18 +139,15 @@ describe("SFX WAV validation", () => {
     expect(files).toEqual([...EXPECTED_PLAYER_SFX_FILES].sort());
 
     for (const file of files) {
-      const wav = readFileSync(path.join(PLAYER_SFX_DIRECTORY, file));
-      expect(wav.toString("ascii", 0, 4)).toBe("RIFF");
-      expect(wav.toString("ascii", 8, 12)).toBe("WAVE");
-      expect(wav.readUInt16LE(20)).toBe(1);
-      expect(wav.readUInt16LE(22)).toBe(1);
-      expect(wav.readUInt32LE(24)).toBe(SAMPLE_RATE);
-      expect(wav.readUInt16LE(34)).toBe(16);
-      expect(wav.length).toBe(WAV_HEADER_BYTES + wav.readUInt32LE(40));
-
-      const metrics = measureAndValidatePcm(file, decodePcm16(wav), PCM_MAX, PEAK_LIMIT);
-      expect(metrics.rmsDb).toBeGreaterThan(-35);
+      expectValidWav(path.join(PLAYER_SFX_DIRECTORY, file));
     }
+  });
+
+  it("ships the boss defeat cue as a valid WAV", () => {
+    const files = readdirSync(BOSS_SFX_DIRECTORY).filter((file) => file.endsWith(".wav")).sort();
+    expect(files).toEqual(EXPECTED_BOSS_SFX_FILES);
+
+    expectValidWav(path.join(BOSS_SFX_DIRECTORY, files[0]));
   });
 
   it("keeps the basic attack cue front-loaded like a sword swing", () => {

@@ -4,6 +4,7 @@ import { createHash } from "node:crypto";
 import { mkdirSync, writeFileSync } from "node:fs";
 import path from "node:path";
 import process from "node:process";
+import { createBossSfxSpecs } from "./boss-sfx-recipes.mjs";
 import { createEnemySfxSpecs } from "./enemy-sfx-recipes.mjs";
 import { encodeMonoPcm16Wav, measureAndValidatePcm } from "./enemy-sfx-wav.mjs";
 import { createPlayerSfxSpecs } from "./player-sfx-recipes.mjs";
@@ -15,7 +16,7 @@ const PEAK_LIMIT_RATIO = 0.89;
 const PEAK_LIMIT = Math.floor(PCM_MAX * PEAK_LIMIT_RATIO);
 const TWO_PI = Math.PI * 2;
 const BASE_SEED = 0x4d4f4f4e;
-const EXPECTED_SOUND_COUNT = 52;
+const EXPECTED_SOUND_COUNT = 53;
 const START_FADE_SECONDS = 0.001;
 const END_FADE_SECONDS = 0.012;
 const MIN_PEAK_SPREAD_DB = 4;
@@ -45,6 +46,7 @@ const RECIPE_TOOLS = {
   swell,
 };
 const SOUND_SPECS = [
+  ...createBossSfxSpecs(RECIPE_TOOLS),
   ...createEnemySfxSpecs(RECIPE_TOOLS),
   ...createPlayerSfxSpecs(RECIPE_TOOLS),
 ];
@@ -568,7 +570,9 @@ function renderAll() {
     const metrics = measureAndValidatePcm(spec.name, pcm, PCM_MAX, PEAK_LIMIT);
     metricsByName.set(spec.name, metrics);
     const wav = encodeMonoPcm16Wav(pcm, SAMPLE_RATE);
-    const actorDirectory = spec.name.startsWith("player") ? "players" : "enemies";
+    let actorDirectory = "enemies";
+    if (spec.name.startsWith("boss")) actorDirectory = "bosses";
+    if (spec.name.startsWith("player")) actorDirectory = "players";
     const outputPath = path.join(OUTPUT_DIRECTORY, actorDirectory, `${spec.name}.wav`);
     mkdirSync(path.dirname(outputPath), { recursive: true });
     writeFileSync(outputPath, wav);

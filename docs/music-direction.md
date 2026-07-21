@@ -5,11 +5,12 @@
 - 游戏是 2D 像素横版生存战，核心场景是夜色山林、鸟居、血月、平台移动和高频战斗。
 - 玩家攻击气质来自原创“月潮流”剑术：清亮、流动、带白色浪尖和蓝色卷线的英雄感。
 - 敌人与 Boss 是原创夜妖变体。音乐也应保持原创，不直接模仿任何现成动漫、电影或游戏配乐。
-- 当前 `src/game/audio.ts` 已接入敌人与玩家采样音效，并保留简单音调作为加载失败回退；本文继续聚焦 BGM、Boss 音乐和短音乐反馈的生成 prompt。
+- 当前 `src/game/audio.ts` 已接入 Boss、敌人与玩家采样音效，并保留简单音调作为加载失败回退；本文继续聚焦 BGM、Boss 音乐和短音乐反馈的生成 prompt。
 
 ## Character SFX Runtime
 
-- `npm run generate:sfx` 会用固定 seed 生成 23 个敌人音效与 29 个玩家音效，分别位于 `assets/audio/sfx/enemies/` 和 `assets/audio/sfx/players/`，格式统一为 48 kHz、16-bit、mono WAV。
+- `npm run generate:sfx` 会用固定 seed 生成 1 个 Boss 音效、23 个敌人音效与 29 个玩家音效，分别位于 `assets/audio/sfx/bosses/`、`assets/audio/sfx/enemies/` 和 `assets/audio/sfx/players/`，格式统一为 48 kHz、16-bit、mono WAV。
+- Boss 音效当前覆盖击败反馈，以重太鼓、下坠妖气与裂铃上行尾音区分普通敌人击败。
 - 敌人音效覆盖攻击前摇、冲刺/斩击、灯焰与纸符施法、诅咒伤害、盾击/破盾、俯冲/落地、分裂/出生、光环、潜地/钻出、受伤和击败。
 - 玩家音效覆盖脚步、跳跃、落地、普攻/下落攻击、九种技能、反击、受伤/死亡和月潮终式；破甲命中、回刃转向/收回、残影命中、终式结束与眩晕生效使用独立动态 cue。
 - `src/game/audioSamples.ts` 负责样本路径、预载、解码与播放；现有 `playSfx(sfx, pitch)` 调用点和全局防连发间隔保持不变。
@@ -248,7 +249,7 @@ Duration: 4 seconds, seamless micro-loop. Mood: urgent but restrained. No vocals
 
 ## Generation Workflow
 
-1. 修改敌人或玩家音效配方后运行 `npm run generate:sfx`，再检查格式、峰值、削波和重复生成哈希。
+1. 修改 Boss、敌人或玩家音效配方后运行 `npm run generate:sfx`，再检查格式、峰值、削波和重复生成哈希。
 2. BGM 先生成 `Start Screen`、`Act 1`、`Spider String` 三首，验证整体音色是否贴合游戏。
 3. 每个 BGM prompt 至少生成 3 个版本，筛掉不能自然循环、音效空间太满、旋律过像现成动画配乐的版本。
 4. 确认可用后，再批量生成 Act 2/3/4 与其他 Boss 主题。

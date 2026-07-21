@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import type { GameSfx } from "./audioTypes";
 
-const EXPECTED_SAMPLE_COUNT = 52;
+const EXPECTED_SAMPLE_COUNT = 53;
 const EXPECTED_OSCILLATOR_COUNT = 3;
 const ENCODED_AUDIO_BYTE_LENGTH = 8;
 const EXPECTED_SAMPLE_VOLUME = 0.16;

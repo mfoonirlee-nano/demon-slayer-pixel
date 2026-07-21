@@ -1,5 +1,6 @@
 import { afterAll, describe, expect, it, vi } from "vitest";
 import {
+  BOSS_SFX_SAMPLE_URLS,
   ENEMY_SFX_SAMPLE_URLS,
   PLAYER_SFX_SAMPLE_URLS,
   hasSfxSample,
@@ -63,6 +64,7 @@ const EXPECTED_PLAYER_SFX = [
   "playerUltimateEnd",
   "playerUltimateImpact",
 ] as const;
+const EXPECTED_BOSS_SFX = ["bossKill"] as const;
 const TEST_CONTEXT_TIME = 3;
 const TEST_PITCH = 0.84;
 const TEST_VOLUME = 0.2;
@@ -80,7 +82,7 @@ describe("audio samples", () => {
     }
   });
 
-  it("decodes enemy and player samples and plays them through pitch and volume controls", async () => {
+  it("decodes boss, enemy, and player samples and plays them through pitch and volume controls", async () => {
     const decodedBuffer = {} as AudioBuffer;
     const source = {
       buffer: null as AudioBuffer | null,
@@ -107,15 +109,18 @@ describe("audio samples", () => {
 
     preloadSfxSamples(context);
     await vi.waitFor(() => {
+      expect(hasSfxSample("bossKill")).toBe(true);
       expect(hasSfxSample("enemyHurt")).toBe(true);
       expect(hasSfxSample("playerSkillLine")).toBe(true);
     });
 
-    const expectedSampleCount = EXPECTED_ENEMY_SFX.length + EXPECTED_PLAYER_SFX.length;
+    const expectedSampleCount = (
+      EXPECTED_BOSS_SFX.length + EXPECTED_ENEMY_SFX.length + EXPECTED_PLAYER_SFX.length
+    );
     expect(fetchMock).toHaveBeenCalledTimes(expectedSampleCount);
     expect(context.decodeAudioData).toHaveBeenCalledTimes(expectedSampleCount);
 
-    playSfxSample(context, "playerSkillLine", TEST_PITCH, TEST_VOLUME);
+    playSfxSample(context, "bossKill", TEST_PITCH, TEST_VOLUME);
 
     expect(source.buffer).toBe(decodedBuffer);
     expect(source.playbackRate.value).toBe(TEST_PITCH);
@@ -132,5 +137,12 @@ describe("player audio samples", () => {
     for (const url of Object.values(PLAYER_SFX_SAMPLE_URLS)) {
       expect(url).toMatch(/\.wav$/);
     }
+  });
+});
+
+describe("boss audio samples", () => {
+  it("maps the boss defeat sound to a WAV asset", () => {
+    expect(Object.keys(BOSS_SFX_SAMPLE_URLS)).toEqual(EXPECTED_BOSS_SFX);
+    expect(BOSS_SFX_SAMPLE_URLS.bossKill).toMatch(/\.wav$/);
   });
 });

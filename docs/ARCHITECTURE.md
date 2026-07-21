@@ -50,7 +50,7 @@
 - `src/rendering/actLandmarks.ts`: 按当前幕解析并绘制 Boss 专属中景地标，不参与碰撞或出生遮挡。
 - `src/rendering/nearForeground.ts`: 编排近景树线、逐幕出生遮挡物、Boss 地标、石塔和鸟居，使用独立视差速度。
 - `src/moon/`: 管理月亮状态、血月插值、天空配色和月亮渲染。
-- `src/game/audio.ts`: 使用 Web Audio 播放敌人与玩家采样音效，并在加载失败时回退到振荡器音型。
+- `src/game/audio.ts`: 使用 Web Audio 播放 Boss、敌人与玩家采样音效，并在加载失败时回退到振荡器音型。
 - `src/game/utils.ts`: 通用工具函数。
 - `src/entities/`:
   - `player.ts`: 玩家控制、重力、碰撞检测、技能释放逻辑。
