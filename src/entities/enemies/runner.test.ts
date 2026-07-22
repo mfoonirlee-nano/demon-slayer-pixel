@@ -3,8 +3,13 @@ import { ENEMY_CONFIG, GROUND_Y } from "../../constants";
 import { resetState, state } from "../../game/state";
 import type { ActBand, EnemyState } from "../../types/game-state";
 import { spawnEnemyById, updateEnemies } from "../enemy";
-import { runnerDashAnimationFrame } from "./runner";
+import { runnerDashAnimationFrame, runnerWindupAnimationFrame } from "./runner";
 
+const RUNNER_TRIGGER_DISTANCE = 160;
+const WINDUP_ANIM_FRAME_DURATION_FRAMES = 7;
+const WINDUP_FINAL_FRAME_INDEX = 3;
+const WINDUP_FINAL_FRAME_START_FRAMES = WINDUP_ANIM_FRAME_DURATION_FRAMES * WINDUP_FINAL_FRAME_INDEX;
+const WINDUP_FINAL_HOLD_FRAMES = 60;
 const DASH_ANIM_FRAME_DURATION_FRAMES = 3;
 const DASH_START_FRAME_INDEX = 0;
 const DASH_SECOND_FRAME_INDEX = 1;
@@ -15,8 +20,8 @@ const DASH_LONG_ELAPSED_FRAMES = 120;
 const INTRO_DASH_SPEED = 6.15;
 const AWAKENED_DASH_SPEED_SCALE = 1.25;
 const FINAL_DASH_SPEED_SCALE = 1.5;
-const INTRO_DASH_MIN_BODY_WIDTHS = 2;
-const INTRO_DASH_MAX_BODY_WIDTHS = 2.67;
+const INTRO_DASH_MIN_BODY_WIDTHS = 1.33;
+const INTRO_DASH_MAX_BODY_WIDTHS = 1.78;
 const AWAKENED_DASH_MIN_BODY_WIDTHS = 4;
 const AWAKENED_DASH_MAX_BODY_WIDTHS = 4.67;
 const BODY_WIDTH_TOLERANCE = 0.05;
@@ -54,7 +59,48 @@ function overlapRunnerWithPlayer(runner: EnemyState) {
   runner.y = GROUND_Y - runner.h;
 }
 
+function placeRunnerRightOfPlayer(runner: EnemyState, distance: number) {
+  const playerCenterX = state.player.x + state.player.w / 2;
+  runner.x = playerCenterX + distance - runner.w / 2;
+}
+
 describe("runner dash tuning", () => {
+  it("plays a slower windup once and holds its final frame for one second", () => {
+    resetState();
+    state.elapsed = 0;
+    expect(spawnEnemyById("runner", "debug", "left", { growthStage: "intro" })).toBe(true);
+
+    const runner = state.enemies[0];
+    placeRunnerRightOfPlayer(runner, RUNNER_TRIGGER_DISTANCE);
+    updateEnemies();
+
+    expect(runner.runnerPhase).toBe("windup");
+    expect(runner.runnerTimer).toBe(WINDUP_FINAL_FRAME_START_FRAMES + WINDUP_FINAL_HOLD_FRAMES);
+    expect(runnerWindupAnimationFrame(0)).toBe(0);
+
+    for (let frame = 0; frame < WINDUP_ANIM_FRAME_DURATION_FRAMES; frame += 1) updateEnemies();
+    expect(runnerWindupAnimationFrame(WINDUP_ANIM_FRAME_DURATION_FRAMES)).toBe(1);
+
+    for (
+      let frame = WINDUP_ANIM_FRAME_DURATION_FRAMES;
+      frame < WINDUP_FINAL_FRAME_START_FRAMES;
+      frame += 1
+    ) {
+      updateEnemies();
+    }
+    expect(runner.runnerTimer).toBe(WINDUP_FINAL_HOLD_FRAMES);
+    expect(runnerWindupAnimationFrame(WINDUP_FINAL_FRAME_START_FRAMES)).toBe(WINDUP_FINAL_FRAME_INDEX);
+
+    for (let frame = 1; frame < WINDUP_FINAL_HOLD_FRAMES; frame += 1) {
+      updateEnemies();
+      expect(runner.runnerPhase).toBe("windup");
+      expect(runner.vx).toBe(0);
+    }
+
+    updateEnemies();
+    expect(runner.runnerPhase).toBe("dash");
+  });
+
   it("holds runner_dash on frame 4 until the landing frame is active", () => {
     expect(runnerDashAnimationFrame(0)).toBe(DASH_START_FRAME_INDEX);
     expect(runnerDashAnimationFrame(DASH_ANIM_FRAME_DURATION_FRAMES)).toBe(DASH_SECOND_FRAME_INDEX);
@@ -79,7 +125,7 @@ describe("runner dash tuning", () => {
     expect(Math.abs(finalRunner.vx)).toBeGreaterThan(Math.abs(awakenedRunner.vx));
   });
 
-  it("travels 2-2.67 visual body widths in the intro growth stage", () => {
+  it("travels one-third less distance in the intro growth stage", () => {
     const runner = enterRunnerDash("intro");
     const bodyWidths = dashDistanceInBodyWidths(runner);
 

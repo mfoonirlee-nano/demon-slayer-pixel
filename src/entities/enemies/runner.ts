@@ -15,6 +15,7 @@ import {
 } from "./common";
 
 const HALF_DIVISOR = 2;
+const FRAMES_PER_SECOND = 60;
 
 const RUNNER_CONFIG = {
   triggerDistance: 250,
@@ -29,10 +30,10 @@ const RUNNER_CONFIG = {
     awakened: 1.25,
     final: 1.5,
   },
-  windupMinFrames: 14,
-  windupFrameJitter: 5,
-  dashNormalMinBodyWidths: 2,
-  dashNormalMaxBodyWidths: 2.67,
+  windupFrameDuration: 7,
+  windupFinalHoldFrames: FRAMES_PER_SECOND,
+  dashNormalMinBodyWidths: 1.3333333333333333,
+  dashNormalMaxBodyWidths: 1.78,
   dashAwakenedMinBodyWidths: 4,
   dashAwakenedMaxBodyWidths: 4.67,
   eliteDashSpeedScale: 1.12,
@@ -49,7 +50,6 @@ const RUNNER_CONFIG = {
   dashHoldFrame: 3,
   dashLandingFrame: 4,
   dashLandingFrames: 3,
-  windupAnimSpeed: 5,
   defaultAnimSpeed: 7,
 } as const;
 
@@ -59,10 +59,6 @@ const RUNNER_GROUND_CONTACT_EPSILON = 0.1;
 
 function isRunner(enemy: Pick<EnemyState, "sheetIndex">) {
   return enemy.sheetIndex === RUNNER_SHEET_INDEX;
-}
-
-function randomFrameCount(min: number, jitter: number) {
-  return min + Math.floor(Math.random() * jitter);
 }
 
 function randomFrameCountBetween(min: number, max: number) {
@@ -87,9 +83,9 @@ function runnerDashSpeed(enemy: EnemyState) {
   return isEliteEnemy(enemy) ? speed * RUNNER_CONFIG.eliteDashSpeedScale : speed;
 }
 
-function runnerWindupFrames(enemy: EnemyState) {
-  const extraFrames = isEliteEnemy(enemy) ? RUNNER_CONFIG.windupFrameJitter : 0;
-  return randomFrameCount(RUNNER_CONFIG.windupMinFrames + extraFrames, RUNNER_CONFIG.windupFrameJitter);
+function runnerWindupFrames() {
+  const playbackFrames = (RUNNER_SHEETS.windup.count - 1) * RUNNER_CONFIG.windupFrameDuration;
+  return playbackFrames + RUNNER_CONFIG.windupFinalHoldFrames;
 }
 
 function runnerDashBodyWidthRange(enemy: EnemyState) {
@@ -173,6 +169,13 @@ export function runnerDashAnimationFrame(dashElapsedFrames: number, landingFrame
   );
 }
 
+export function runnerWindupAnimationFrame(windupElapsedFrames: number) {
+  return Math.min(
+    RUNNER_SHEETS.windup.count - 1,
+    Math.max(0, Math.floor(windupElapsedFrames / RUNNER_CONFIG.windupFrameDuration)),
+  );
+}
+
 function initRunner(enemy: EnemyState, context: EnemySpawnContext) {
   enemy.runnerPhase = "approach";
   enemy.runnerTimer = 0;
@@ -199,7 +202,7 @@ function updateRunner(enemy: EnemyState) {
     );
     if (Math.abs(toward) <= RUNNER_CONFIG.triggerDistance) {
       enemy.runnerPhase = "windup";
-      enemy.runnerTimer = runnerWindupFrames(enemy);
+      enemy.runnerTimer = runnerWindupFrames();
       enemy.runnerFacing = facing;
       enemy.vx = 0;
       playSfx("enemyWarning", RUNNER_WARNING_SFX_PITCH);
@@ -262,20 +265,17 @@ function updateRunner(enemy: EnemyState) {
 function drawRunner(enemy: EnemyState) {
   const phase = enemy.runnerPhase ?? "approach";
   const sheet = runnerSheetForPhase(phase);
-  const animSpeed = phase === "dash"
-    ? RUNNER_CONFIG.dashAnimSpeed
-    : phase === "windup"
-      ? RUNNER_CONFIG.windupAnimSpeed
-      : RUNNER_CONFIG.defaultAnimSpeed;
   const facing = enemy.runnerFacing ?? (enemy.vx >= 0 ? 1 : -1);
   const drawScale = enemyDrawScale(RUNNER_ARCHETYPE) * (
     phase === "dash" ? RUNNER_CONFIG.dashDrawScaleMultiplier : 1
   );
-  if (phase === "dash") {
-    const frame = runnerDashAnimationFrame(
-      enemy.runnerDashElapsed ?? 0,
-      (enemy.runnerDashLandingTimer ?? 0) > 0,
-    );
+  if (phase === "dash" || phase === "windup") {
+    const frame = phase === "dash"
+      ? runnerDashAnimationFrame(
+          enemy.runnerDashElapsed ?? 0,
+          (enemy.runnerDashLandingTimer ?? 0) > 0,
+        )
+      : runnerWindupAnimationFrame(runnerWindupFrames() - (enemy.runnerTimer ?? 0));
     const drawW = Math.round(sheet.frameW * drawScale);
     const drawH = Math.round(sheet.frameH * drawScale);
     const centerX = enemyCenterX(enemy);
@@ -293,7 +293,7 @@ function drawRunner(enemy: EnemyState) {
     return;
   }
 
-  drawEnemyFrame(enemy, sheet, drawScale, animSpeed, state.elapsed, facing);
+  drawEnemyFrame(enemy, sheet, drawScale, RUNNER_CONFIG.defaultAnimSpeed, state.elapsed, facing);
 }
 
 export const RUNNER_ARCHETYPE: EnemyArchetype = {
