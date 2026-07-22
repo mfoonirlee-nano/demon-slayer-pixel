@@ -4,6 +4,11 @@ export const SUPPORTED_LANGUAGES = ["zh-CN", "en"] as const;
 
 export type Language = typeof SUPPORTED_LANGUAGES[number];
 
+export const LANGUAGE_LABELS: Record<Language, string> = {
+  "zh-CN": "中文",
+  en: "English",
+};
+
 export const DEFAULT_LANGUAGE: Language = "zh-CN";
 export const LANGUAGE_STORAGE_KEY = "moonlit-tide-language";
 
@@ -84,6 +89,6 @@ function applyLanguageToPage(language: Language, page: LanguagePage | undefined)
   page.title = PAGE_TITLES[language];
 }
 
-function isLanguage(value: string | null): value is Language {
+export function isLanguage(value: string | null): value is Language {
   return SUPPORTED_LANGUAGES.some((language) => language === value);
 }
