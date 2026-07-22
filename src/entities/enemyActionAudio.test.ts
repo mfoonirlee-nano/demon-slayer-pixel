@@ -13,6 +13,7 @@ const audioMock = vi.hoisted(() => ({
 vi.mock("../game/audio", () => audioMock);
 
 const RUNNER_TRIGGER_DISTANCE = 160;
+const RUNNER_UPDATE_STEP_SECONDS = 0.016666666666666666;
 const CASTER_CAST_DISTANCE = 250;
 const BINDER_CAST_DISTANCE = 230;
 const RUNNER_DASH_GUARD_FRAMES = 90;
@@ -69,6 +70,7 @@ describe("enemy action audio", () => {
       runner.runnerPhase === "windup" && frame < RUNNER_DASH_GUARD_FRAMES;
       frame += 1
     ) {
+      state.elapsed += RUNNER_UPDATE_STEP_SECONDS;
       updateEnemies();
     }
 

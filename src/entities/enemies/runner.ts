@@ -88,6 +88,21 @@ function runnerWindupFrames() {
   return playbackFrames + RUNNER_CONFIG.windupFinalHoldFrames;
 }
 
+function runnerWindupElapsedFrames(enemy: EnemyState) {
+  if (enemy.runnerWindupStartedAt === undefined) {
+    return runnerWindupFrames() - (enemy.runnerTimer ?? 0);
+  }
+  return Math.max(0, (state.elapsed - enemy.runnerWindupStartedAt) * FRAMES_PER_SECOND);
+}
+
+function updateRunnerWindupTimer(enemy: EnemyState) {
+  if (enemy.runnerWindupStartedAt === undefined) {
+    enemy.runnerTimer = (enemy.runnerTimer ?? 0) - 1;
+    return;
+  }
+  enemy.runnerTimer = Math.max(0, Math.ceil(runnerWindupFrames() - runnerWindupElapsedFrames(enemy)));
+}
+
 function runnerDashBodyWidthRange(enemy: EnemyState) {
   return hasAwakenedGrowth(enemy)
     ? {
@@ -203,13 +218,14 @@ function updateRunner(enemy: EnemyState) {
     if (Math.abs(toward) <= RUNNER_CONFIG.triggerDistance) {
       enemy.runnerPhase = "windup";
       enemy.runnerTimer = runnerWindupFrames();
+      enemy.runnerWindupStartedAt = state.elapsed;
       enemy.runnerFacing = facing;
       enemy.vx = 0;
       playSfx("enemyWarning", RUNNER_WARNING_SFX_PITCH);
     }
   } else if (enemy.runnerPhase === "windup") {
     const lockedFacing = enemy.runnerFacing ?? facing;
-    enemy.runnerTimer -= 1;
+    updateRunnerWindupTimer(enemy);
     enemy.vx = 0;
     if (enemy.runnerTimer <= 0) {
       if (runnerDashCount() >= RUNNER_CONFIG.maxActiveDashes) {
@@ -219,6 +235,7 @@ function updateRunner(enemy: EnemyState) {
         enemy.runnerTimer = runnerDashFrames(enemy);
         enemy.runnerDashElapsed = 0;
         enemy.runnerDashLandingTimer = 0;
+        enemy.runnerWindupStartedAt = undefined;
         enemy.runnerFacing = lockedFacing;
         enemy.vx = lockedFacing * runnerDashSpeed(enemy);
         playSfx("enemyDash", RUNNER_DASH_SFX_PITCH);
@@ -275,7 +292,7 @@ function drawRunner(enemy: EnemyState) {
           enemy.runnerDashElapsed ?? 0,
           (enemy.runnerDashLandingTimer ?? 0) > 0,
         )
-      : runnerWindupAnimationFrame(runnerWindupFrames() - (enemy.runnerTimer ?? 0));
+      : runnerWindupAnimationFrame(runnerWindupElapsedFrames(enemy));
     const drawW = Math.round(sheet.frameW * drawScale);
     const drawH = Math.round(sheet.frameH * drawScale);
     const centerX = enemyCenterX(enemy);

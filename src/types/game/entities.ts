@@ -210,6 +210,7 @@ export type EnemyState = {
   crawlerLeapBaseTargetX?: number;
   runnerPhase?: RunnerPhase;
   runnerTimer?: number;
+  runnerWindupStartedAt?: number;
   runnerFacing?: number;
   runnerApproachSpeed?: number;
   runnerDashElapsed?: number;

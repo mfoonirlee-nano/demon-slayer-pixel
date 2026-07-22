@@ -21,7 +21,7 @@
 
 | ProfileId | Required tags | Preferred tags | 组合意图 |
 | --- | --- | --- | --- |
-| `basic_intro` | `baseline`, `low`, `fast` | — | 用基础追击、低位穿插和短前摇冲刺建立横版生存的移动、跳跃、普攻三件事。 |
+| `basic_intro` | `baseline`, `low`, `fast` | — | 用基础追击、低位穿插和读招冲刺建立横版生存的移动、跳跃、普攻三件事。 |
 | `technique_intro` | `melee_burst`, `ranged` | `baseline`, `fast` | 用近战爆发和远程牵制要求玩家读前摇、分优先级和用技能解围。 |
 | `vertical_intro` | `vertical` | `ranged`, `melee_burst`, `fast` | 引入纵向/空中压力，让平台、跳跃和落点判断变成核心。 |
 | `heavy_wall` | `heavy` | `baseline`, `melee_burst`, `ranged` | 用重型单位制造正面墙，再用追击、斩击或远程迫使玩家绕行。 |

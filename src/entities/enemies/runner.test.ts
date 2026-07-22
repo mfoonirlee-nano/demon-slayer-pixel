@@ -10,6 +10,10 @@ const WINDUP_ANIM_FRAME_DURATION_FRAMES = 7;
 const WINDUP_FINAL_FRAME_INDEX = 3;
 const WINDUP_FINAL_FRAME_START_FRAMES = WINDUP_ANIM_FRAME_DURATION_FRAMES * WINDUP_FINAL_FRAME_INDEX;
 const WINDUP_FINAL_HOLD_FRAMES = 60;
+const WINDUP_SECOND_FRAME_AT_SECONDS = 0.11666666666666667;
+const WINDUP_FINAL_FRAME_START_SECONDS = 0.35;
+const WINDUP_BEFORE_DASH_SECONDS = 1.349;
+const WINDUP_DASH_AT_SECONDS = 1.35;
 const DASH_ANIM_FRAME_DURATION_FRAMES = 3;
 const DASH_START_FRAME_INDEX = 0;
 const DASH_SECOND_FRAME_INDEX = 1;
@@ -78,25 +82,24 @@ describe("runner dash tuning", () => {
     expect(runner.runnerTimer).toBe(WINDUP_FINAL_FRAME_START_FRAMES + WINDUP_FINAL_HOLD_FRAMES);
     expect(runnerWindupAnimationFrame(0)).toBe(0);
 
-    for (let frame = 0; frame < WINDUP_ANIM_FRAME_DURATION_FRAMES; frame += 1) updateEnemies();
+    state.elapsed = WINDUP_SECOND_FRAME_AT_SECONDS;
+    updateEnemies();
+    expect(runner.runnerTimer).toBe(
+      WINDUP_FINAL_FRAME_START_FRAMES + WINDUP_FINAL_HOLD_FRAMES - WINDUP_ANIM_FRAME_DURATION_FRAMES,
+    );
     expect(runnerWindupAnimationFrame(WINDUP_ANIM_FRAME_DURATION_FRAMES)).toBe(1);
 
-    for (
-      let frame = WINDUP_ANIM_FRAME_DURATION_FRAMES;
-      frame < WINDUP_FINAL_FRAME_START_FRAMES;
-      frame += 1
-    ) {
-      updateEnemies();
-    }
+    state.elapsed = WINDUP_FINAL_FRAME_START_SECONDS;
+    updateEnemies();
     expect(runner.runnerTimer).toBe(WINDUP_FINAL_HOLD_FRAMES);
     expect(runnerWindupAnimationFrame(WINDUP_FINAL_FRAME_START_FRAMES)).toBe(WINDUP_FINAL_FRAME_INDEX);
 
-    for (let frame = 1; frame < WINDUP_FINAL_HOLD_FRAMES; frame += 1) {
-      updateEnemies();
-      expect(runner.runnerPhase).toBe("windup");
-      expect(runner.vx).toBe(0);
-    }
+    state.elapsed = WINDUP_BEFORE_DASH_SECONDS;
+    updateEnemies();
+    expect(runner.runnerPhase).toBe("windup");
+    expect(runner.vx).toBe(0);
 
+    state.elapsed = WINDUP_DASH_AT_SECONDS;
     updateEnemies();
     expect(runner.runnerPhase).toBe("dash");
   });
