@@ -62,7 +62,7 @@ export const SKILLS: Skill[] = [
     levelDescriptions: {
       1: "潮幕成形后开始护身，最多抵挡并反击 3 次。",
       2: "反击伤害 +18%，防护更久，反击范围小幅扩大。",
-      3: "反击伤害 +35%，最多反击 4 次，防守容错更高。",
+      3: "反击伤害 +35%，最多反击 4 次；装备后，受到伤害降低 15%～30%，减伤随玩家等级成长。",
     },
     src: "assets/sprites/skills/guard_counter/skill.png",
     frameCount: 5,

@@ -5,6 +5,7 @@ const STATUS_NAMES: Record<Language, Record<PlayerStatusId, string>> = {
   "zh-CN": {
     line_projectile_knockback: "潮龙被动击退",
     close_arc_basic_crescent: "弦月普攻剑气",
+    guard_counter_damage_reduction: "镜潮减伤",
     guard_counter: "镜潮护返",
     moon_tide: "终式·月潮无间",
     flow_blade_charge: "流水刃蓄势",
@@ -43,6 +44,7 @@ const STATUS_NAMES: Record<Language, Record<PlayerStatusId, string>> = {
   en: {
     line_projectile_knockback: "Tidal Dragon Passive Knockback",
     close_arc_basic_crescent: "Crescent Basic Slash",
+    guard_counter_damage_reduction: "Mirror Tide Damage Reduction",
     guard_counter: "Mirror Tide Counter",
     moon_tide: "Moon Tide Form",
     flow_blade_charge: "Flow Blade Charge",

@@ -1,5 +1,6 @@
 import {
   CLOSE_ARC_BASIC_CRESCENT_CONFIG,
+  GUARD_COUNTER_EFFECT_CONFIG,
   LINE_PROJECTILE_EFFECT_CONFIG,
   SKILL_IDS,
 } from "../constants";
@@ -19,6 +20,27 @@ export function hasCloseArcBasicCrescentPassive(state: GameState) {
   return (player.skillLevels[SKILL_IDS.closeArc] ?? 0)
       >= CLOSE_ARC_BASIC_CRESCENT_CONFIG.requiredSkillLevel
     && player.equippedSkillIds[player.skillIndex] === SKILL_IDS.closeArc;
+}
+
+export function hasGuardCounterDamageReductionPassive(state: GameState) {
+  const player = state.player;
+  return (player.skillLevels[SKILL_IDS.guardCounter] ?? 0)
+      >= GUARD_COUNTER_EFFECT_CONFIG.damageReductionRequiredLevel
+    && player.equippedSkillIds.includes(SKILL_IDS.guardCounter);
+}
+
+export function guardCounterIncomingDamageMultiplier(state: GameState) {
+  if (!hasGuardCounterDamageReductionPassive(state)) return 1;
+
+  const config = GUARD_COUNTER_EFFECT_CONFIG;
+  const playerLevel = Math.max(1, Math.min(
+    state.player.runLevel,
+    config.damageReductionMaxPlayerLevel,
+  ));
+  const levelProgress = (playerLevel - 1) / (config.damageReductionMaxPlayerLevel - 1);
+  const damageReduction = config.damageReductionMin
+    + (config.damageReductionMax - config.damageReductionMin) * levelProgress;
+  return 1 - damageReduction;
 }
 
 export function applyPlayerHitKnockback(

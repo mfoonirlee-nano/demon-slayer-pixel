@@ -10,7 +10,7 @@ import { keys } from "../game/input";
 import { resetState, state } from "../game/state";
 import { spawnEnemyById } from "./enemy";
 import { updateCloseArcBasicCrescentEffects } from "./particle";
-import { attackBox, triggerAttack, updatePlayer } from "./player";
+import { attackBox, hurtPlayer, triggerAttack, updatePlayer } from "./player";
 
 const TEST_ENEMY_HP = 100;
 const TEST_ATTACK_BONUS = 4;
@@ -19,6 +19,9 @@ const CLOSE_ARC_SLOT_INDEX = 1;
 const CLOSE_ARC_BASIC_CRESCENT_ATTACK_FRAME_START = 3;
 const CLOSE_ARC_BASIC_CRESCENT_ATTACK_FRAME_END = 5;
 const LINE_PROJECTILE_LEVEL_THREE = 3;
+const GUARD_COUNTER_LEVEL_THREE = 3;
+const PASSIVE_INCOMING_DAMAGE = 40;
+const LEVEL_ONE_PASSIVE_DAMAGE = 34;
 const SUCCESSFUL_KNOCKBACK_ROLL = 0.09;
 const KNOCKBACK_CHANCE_BOUNDARY = 0.1;
 
@@ -193,6 +196,51 @@ describe("line projectile equipped passive", () => {
     updatePlayer();
 
     expect(enemy.x).toBe(startingX);
+  });
+});
+
+describe("guard counter equipped passive", () => {
+  beforeEach(() => {
+    resetState();
+  });
+
+  it("reduces incoming damage by fifteen percent at player level one", () => {
+    state.player.skillLevels[SKILL_IDS.guardCounter] = GUARD_COUNTER_LEVEL_THREE;
+    const hpBefore = state.player.hp;
+
+    hurtPlayer(PASSIVE_INCOMING_DAMAGE, 1);
+
+    expect(hpBefore - state.player.hp).toBeCloseTo(LEVEL_ONE_PASSIVE_DAMAGE);
+  });
+
+  it.each([
+    { playerLevel: 7, expectedDamage: 31 },
+    { playerLevel: 13, expectedDamage: 28 },
+    { playerLevel: 20, expectedDamage: 28 },
+  ])(
+    "scales damage reduction through level thirteen and caps afterward at level $playerLevel",
+    ({ playerLevel, expectedDamage }) => {
+      state.player.skillLevels[SKILL_IDS.guardCounter] = GUARD_COUNTER_LEVEL_THREE;
+      state.player.runLevel = playerLevel;
+      const hpBefore = state.player.hp;
+
+      hurtPlayer(PASSIVE_INCOMING_DAMAGE, 1);
+
+      expect(hpBefore - state.player.hp).toBeCloseTo(expectedDamage);
+    },
+  );
+
+  it.each([
+    { scenario: "the skill is below level three", skillLevel: 2, equipped: true },
+    { scenario: "the skill is not equipped", skillLevel: GUARD_COUNTER_LEVEL_THREE, equipped: false },
+  ] as const)("does not reduce damage when $scenario", ({ skillLevel, equipped }) => {
+    state.player.skillLevels[SKILL_IDS.guardCounter] = skillLevel;
+    if (!equipped) state.player.equippedSkillIds[2] = null;
+    const hpBefore = state.player.hp;
+
+    hurtPlayer(PASSIVE_INCOMING_DAMAGE, 1);
+
+    expect(hpBefore - state.player.hp).toBeCloseTo(PASSIVE_INCOMING_DAMAGE);
   });
 });
 

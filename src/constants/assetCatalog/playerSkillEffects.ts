@@ -123,6 +123,10 @@ export const GUARD_COUNTER_EFFECT_CONFIG = {
   activeFrames: 72,
   maxHits: 3,
   damageMultiplier: 2,
+  damageReductionRequiredLevel: 3,
+  damageReductionMin: 0.15,
+  damageReductionMax: 0.3,
+  damageReductionMaxPlayerLevel: 13,
 } as const;
 
 export const PLAYER_SKILL_EFFECT_SHEETS: Partial<Record<SkillId, SpriteSheet>> = {

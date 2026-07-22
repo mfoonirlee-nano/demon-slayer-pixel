@@ -41,7 +41,7 @@ import {
 import { applyBossDamage, applyEnemyDamage, resolveBossHit, resolveEnemyHit } from "../systems/combatResolution";
 import { endRun } from "../systems/runLifecycle";
 import { selectSkillSlot } from "../systems/loadout";
-import { hasCloseArcBasicCrescentPassive } from "../systems/playerSkillPassives";
+import { guardCounterIncomingDamageMultiplier, hasCloseArcBasicCrescentPassive } from "../systems/playerSkillPassives";
 import { CORE_PLAYER_SKILL_EFFECT_CONFIGS, playerSkillColor } from "../systems/skillCatalog";
 import {
   moonTideAttackFrames,
@@ -351,7 +351,8 @@ export function hurtPlayer(damage: number, sourceVx: number) {
     return;
   }
 
-  const incomingDamage = damage * equipmentIncomingDamageMultiplier(state);
+  const incomingDamage = damage * equipmentIncomingDamageMultiplier(state)
+    * guardCounterIncomingDamageMultiplier(state);
   if (p.hp - incomingDamage <= 0 && applyFatalDamageEquipmentProtection(state)) {
     playSfx("playerHurt");
     return;

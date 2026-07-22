@@ -1,10 +1,10 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { GROUND_Y, MIST_BONE_CONFIG, MIST_BONE_DART_SHEET } from "../constants";
+import { GROUND_Y, MIST_BONE_CONFIG, MIST_BONE_DART_SHEET, SKILL_IDS } from "../constants";
 import { resetState, state } from "../game/state";
 import { keys } from "../game/input";
 import type { ProjectileState } from "../types/game-state";
 import { spawnEnemyById, updateEnemies } from "./enemy";
-import { updateBindingZones } from "./enemies/binder";
+import { applyBinderTalismanDebuffs, updateBindingZones } from "./enemies/binder";
 import { binderTalismanFrameEffect } from "./enemies/binderTalismanVisuals";
 import { updatePlayer } from "./player";
 import { updateProjectiles } from "./projectile";
@@ -50,6 +50,8 @@ const TEST_BINDER_FACING = 1;
 const TEST_BINDER_PLAYER_X_OFFSET = 240;
 const TEST_GUARD_COUNTER_HITS = 2;
 const TEST_GUARD_COUNTER_ACTIVE_FRAMES = 72;
+const GUARD_COUNTER_LEVEL_THREE = 3;
+const LEVEL_ONE_DAMAGE_MULTIPLIER = 0.85;
 const AWAKENED_WISP_STRESS_VOLLEYS = 5;
 
 afterEach(() => {
@@ -149,6 +151,15 @@ function activateGuardCounter(hitsRemaining = TEST_GUARD_COUNTER_HITS) {
     damageMultiplier: 1,
     barrierFlash: 0,
   };
+}
+
+function binderTalismanDamageTaken() {
+  applyBinderTalismanDebuffs(["damage"]);
+  const hpBefore = state.player.hp;
+  for (let frame = 0; frame < BINDER_TALISMAN_DAMAGE_FIRST_FRAME; frame += 1) {
+    updateBindingZones();
+  }
+  return hpBefore - state.player.hp;
 }
 
 describe("Mist Bone darts", () => {
@@ -466,6 +477,17 @@ describe("binder talismans", () => {
     }
 
     expect(state.player.hp).toBeLessThan(hpBeforeDot);
+  });
+
+  it("reduces binder talisman damage with the level-three guard counter passive", () => {
+    resetState();
+    const baselineDamage = binderTalismanDamageTaken();
+    resetState();
+    state.player.skillLevels[SKILL_IDS.guardCounter] = GUARD_COUNTER_LEVEL_THREE;
+
+    const reducedDamage = binderTalismanDamageTaken();
+
+    expect(reducedDamage / baselineDamage).toBeCloseTo(LEVEL_ONE_DAMAGE_MULTIPLIER);
   });
 
   it("lets guard counter block binder talismans without spending hits", () => {

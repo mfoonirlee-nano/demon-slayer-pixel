@@ -90,6 +90,17 @@ describe("resetState", () => {
     ]);
   });
 
+  it("exposes the level-three guard counter damage reduction while equipped", () => {
+    resetState();
+    state.player.skillLevels.guard_counter = 3;
+
+    expect(getStateSnapshot().player.statuses).toContainEqual({
+      id: "guard_counter_damage_reduction",
+      remainingFrames: null,
+      durationFrames: null,
+    });
+  });
+
   it("exposes active guard counter and ultimate durations in gameplay frames", () => {
     resetState();
     state.guardCounterEffect = {

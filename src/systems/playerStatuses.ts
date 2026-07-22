@@ -29,6 +29,7 @@ import {
 } from "./equipmentTuning";
 import {
   hasCloseArcBasicCrescentPassive,
+  hasGuardCounterDamageReductionPassive,
   hasLineProjectileKnockbackPassive,
 } from "./playerSkillPassives";
 import { moonTideUltimateConfig } from "./progression";
@@ -57,6 +58,9 @@ function pushSkillStatuses(state: GameState, statuses: PlayerStatusSnapshot[]) {
   }
   if (hasCloseArcBasicCrescentPassive(state)) {
     statuses.push(persistentStatus("close_arc_basic_crescent"));
+  }
+  if (hasGuardCounterDamageReductionPassive(state)) {
+    statuses.push(persistentStatus("guard_counter_damage_reduction"));
   }
 
   const guardCounter = state.guardCounterEffect;

@@ -178,6 +178,22 @@ describe("reward choice details", () => {
     expect(metricValue(metrics, "被动击退")).toBe("10%");
   });
 
+  it("shows guard counter passive damage reduction at level three", () => {
+    const choice: UpgradeChoiceState = {
+      id: "upgrade-guard-counter",
+      type: "upgradeSkill",
+      title: "技能精进",
+      name: "镜潮·护返 III",
+      description: "镜潮解锁被动减伤。",
+      skillId: SKILL_IDS.guardCounter,
+      nextLevel: 3,
+    };
+
+    const metrics = upgradeRewardMetrics(choice, BASE_PLAYER);
+
+    expect(metricValue(metrics, "被动减伤")).toBe("15%–30%");
+  });
+
   it("shows current attack-based enemy and boss damage for generic skill upgrades", () => {
     const choice: UpgradeChoiceState = {
       id: "upgrade-dash-reposition",

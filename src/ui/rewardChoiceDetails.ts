@@ -1,6 +1,7 @@
 import {
   CLOSE_ARC_BASIC_CRESCENT_CONFIG,
   EQUIPMENT_PRIMARY_STAT_BONUS_RATIOS,
+  GUARD_COUNTER_EFFECT_CONFIG,
   LINE_PROJECTILE_EFFECT_CONFIG,
   MOON_TIDE_ULTIMATE,
   PLAYER_COMBAT,
@@ -423,9 +424,19 @@ function skillTuningMetrics(
   }
 
   if (skillId === SKILL_IDS.guardCounter) {
+    const unlocksDamageReduction = nextLevel
+        >= GUARD_COUNTER_EFFECT_CONFIG.damageReductionRequiredLevel
+      && previousLevel < GUARD_COUNTER_EFFECT_CONFIG.damageReductionRequiredLevel;
     return compactMetrics([
       growthMetric(label("counterHits"), previousGrowth?.maxHits, nextGrowth.maxHits, String, "damage"),
       growthMetric(label("guardDuration"), previousGrowth?.activeFrames, nextGrowth.activeFrames, (value) => formatFrames(value, language), "defense"),
+      unlocksDamageReduction
+        ? metric(
+          label("passiveDamageReduction"),
+          `${formatPercent(GUARD_COUNTER_EFFECT_CONFIG.damageReductionMin)}–${formatPercent(GUARD_COUNTER_EFFECT_CONFIG.damageReductionMax)}`,
+          "defense",
+        )
+        : null,
     ]);
   }
 

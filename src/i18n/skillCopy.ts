@@ -46,7 +46,7 @@ const ENGLISH_SKILL_COPY = {
     levelDescriptions: {
       1: "Once formed, the tide veil guards you and can block and counter up to 3 hits.",
       2: "Counter damage +18%. Guard duration and counter range increase slightly.",
-      3: "Counter damage +35%. Counters up to 4 hits, making defense more forgiving.",
+      3: "Counter damage +35%. Counters up to 4 hits. While equipped, damage taken is reduced by 15%-30%, scaling with player level.",
     },
   },
   [SKILL_IDS.dashReposition]: {

@@ -28,6 +28,7 @@ const LINE_PROJECTILE_EFFECT_FRAME_COUNT = 8;
 const LINE_PROJECTILE_EFFECT_LOOP_FROM_FRAME = 5;
 const CLOSE_ARC_BASIC_CRESCENT_FRAME_COUNT = 2;
 const CLOSE_ARC_BASIC_CRESCENT_FRAME_DURATION = 4;
+const GUARD_COUNTER_LEVEL_THREE = 3;
 
 describe("player skill catalog copy", () => {
   it("uses the canonical display names for all implemented normal skills", () => {
@@ -102,6 +103,14 @@ describe("player skill catalog copy", () => {
     expect(description).toContain("击退两个身位");
     expect(description).toContain("10%");
     expect(description).toContain("首领");
+  });
+
+  it("explains the level-three guard counter scaling damage reduction", () => {
+    const description = playerSkillDescription(SKILL_IDS.guardCounter, GUARD_COUNTER_LEVEL_THREE);
+
+    expect(description).toContain("15%");
+    expect(description).toContain("30%");
+    expect(description).toContain("玩家等级");
   });
 
   it("preloads the close arc level three basic attack crescent sheet", () => {

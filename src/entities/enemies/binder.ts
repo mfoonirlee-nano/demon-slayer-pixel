@@ -24,6 +24,7 @@ import {
   isEliteEnemy,
 } from "./common";
 import { endRun } from "../../systems/runLifecycle";
+import { guardCounterIncomingDamageMultiplier } from "../../systems/playerSkillPassives";
 
 export const BINDER_UNLOCK_SECONDS = 90;
 
@@ -169,7 +170,8 @@ function applyBinderTalismanDamage() {
   const player = state.player;
   if (player.invincible > 0) return;
 
-  player.hp = Math.max(0, player.hp - bindingZoneDamage());
+  const incomingDamage = bindingZoneDamage() * guardCounterIncomingDamageMultiplier(state);
+  player.hp = Math.max(0, player.hp - incomingDamage);
   player.invincible = BINDER_CONFIG.zoneDamageInvincibleFrames;
   playSfx("enemyCurseTick", ZONE_DAMAGE_SFX_PITCH);
   if (player.hp <= 0) {
