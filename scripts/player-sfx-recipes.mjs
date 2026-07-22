@@ -78,11 +78,12 @@ export function createPlayerSfxSpecs({
       mixCrackedBell(samples, rng, { start: 0.32, duration: 0.27, baseFrequency: 784, gain: 0.08 });
       mixDarkEcho(samples, { delay: 0.08, gain: 0.06, cutoff: 2_600 });
     }),
-    sound("playerSkillLine", 0.48, -2, (samples, rng) => {
-      mixBlade(samples, rng, { duration: 0.4, baseFrequency: 620, gain: 0.78 });
-      mixBreath(samples, rng, { duration: 0.38, gain: 0.3, lowCutoff: 420, cutoff: 2_200, endLowCutoff: 1_400, endCutoff: 5_200, contour: swell });
-      mixOscillator(samples, { start: 0.025, duration: 0.3, frequency: 440, endFrequency: 880, gain: 0.1, wave: "triangle", contour: swell, release: 0.04 });
-      mixDryPluck(samples, rng, { start: 0.06, duration: 0.27, frequency: 784, gain: 0.12 });
+    sound("playerSkillLine", 0.75, -2, (samples, rng) => {
+      mixTaiko(samples, rng, { duration: 0.3, frequency: 64, gain: 0.5 });
+      mixRasp(samples, rng, { start: 0.015, duration: 0.62, frequency: 145, gain: 0.8, endRatio: 0.45 });
+      mixBreath(samples, rng, { start: 0.035, duration: 0.66, gain: 0.55, lowCutoff: 120, cutoff: 1_250, endLowCutoff: 180, endCutoff: 950, contour: swell });
+      mixOscillator(samples, { start: 0.02, duration: 0.58, frequency: 200, endFrequency: 75, gain: 0.2, wave: "triangle", contour: swell, release: 0.09 });
+      mixDarkEcho(samples, { delay: 0.105, gain: 0.13, cutoff: 1_300 });
     }),
     sound("playerSkillArc", 0.44, -2.3, (samples, rng) => {
       mixBlade(samples, rng, { duration: 0.36, baseFrequency: 520, gain: 0.72 });

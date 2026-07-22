@@ -283,8 +283,9 @@ export function playSfx(sfx: GameSfx, pitch = 1) {
       return;
     case "playerSkillLine":
       playPattern(sfx, [
-        { frequency: 360, slideTo: 900, duration: 0.085, type: "triangle", volume: 0.05 },
-        { frequency: 180, slideTo: 120, duration: 0.08, type: "sine", volume: 0.032, delay: 0.018 },
+        { frequency: 210, slideTo: 72, duration: 0.32, type: "sawtooth", volume: 0.045 },
+        { frequency: 128, slideTo: 48, duration: 0.34, type: "square", volume: 0.028, delay: 0.025 },
+        { frequency: 280, slideTo: 105, duration: 0.24, type: "triangle", volume: 0.022, delay: 0.065 },
       ], SFX_MIN_GAPS.playerSkillLine, pitch);
       return;
     case "playerSkillArc":

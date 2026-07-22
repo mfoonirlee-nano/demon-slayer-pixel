@@ -6,6 +6,9 @@ const EXPECTED_OSCILLATOR_COUNT = 3;
 const ENCODED_AUDIO_BYTE_LENGTH = 8;
 const EXPECTED_SAMPLE_VOLUME = 0.16;
 const SAMPLE_MIN_GAP = 0.12;
+const DRAGON_ROAR_FALLBACK_OSCILLATOR_COUNT = 3;
+const DRAGON_ROAR_FALLBACK_MAX_START_FREQUENCY = 300;
+const DRAGON_ROAR_FALLBACK_MIN_DURATION_SECONDS = 0.22;
 
 function oscillatorNode() {
   return {
@@ -151,6 +154,49 @@ describe("audio fallback", () => {
       createOscillator.mockClear();
       playSfx(sfx);
       expect(createOscillator, `${sfx} should keep a fallback tone`).toHaveBeenCalled();
+    }
+  });
+
+  it("keeps the line projectile fallback low, descending, and sustained", async () => {
+    const oscillators: ReturnType<typeof oscillatorNode>[] = [];
+    const createOscillator = vi.fn(() => {
+      const oscillator = oscillatorNode();
+      oscillators.push(oscillator);
+      return oscillator;
+    });
+    class FakeAudioContext {
+      state = "running";
+      currentTime = 1;
+      destination = {};
+      resume = vi.fn();
+      createOscillator = createOscillator;
+      createGain = vi.fn(gainNode);
+    }
+    vi.stubGlobal("fetch", vi.fn(() => new Promise<Response>(() => undefined)));
+    vi.stubGlobal("window", {
+      AudioContext: FakeAudioContext,
+      localStorage: {
+        getItem: vi.fn(() => null),
+        setItem: vi.fn(),
+      },
+    });
+
+    const { ensureAudio, playSfx } = await import("./audio");
+    ensureAudio();
+    playSfx("playerSkillLine");
+
+    expect(oscillators).toHaveLength(DRAGON_ROAR_FALLBACK_OSCILLATOR_COUNT);
+    for (const oscillator of oscillators) {
+      const [[startFrequency, startTime]] = oscillator.frequency.setValueAtTime.mock.calls as [number, number][];
+      const [[endFrequency, endTime]] = oscillator.frequency.exponentialRampToValueAtTime.mock.calls as [number, number][];
+
+      expect.soft(startFrequency).toBeLessThanOrEqual(
+        DRAGON_ROAR_FALLBACK_MAX_START_FREQUENCY,
+      );
+      expect.soft(endFrequency).toBeLessThan(startFrequency);
+      expect.soft(endTime - startTime).toBeGreaterThanOrEqual(
+        DRAGON_ROAR_FALLBACK_MIN_DURATION_SECONDS,
+      );
     }
   });
 });

@@ -27,6 +27,12 @@ const DUELIST_SLASH_TAIL_START_SECONDS = 0.14;
 const DUELIST_SLASH_MAX_TAIL_ENERGY_RATIO = 0.2;
 const DUELIST_SLASH_LOW_PASS_CUTOFF_HZ = 2_500;
 const DUELIST_SLASH_MIN_LOW_FREQUENCY_ENERGY_RATIO = 0.5;
+const PLAYER_SKILL_LINE_MIN_DURATION_SECONDS = 0.7;
+const PLAYER_SKILL_LINE_MAX_DURATION_SECONDS = 0.85;
+const PLAYER_SKILL_LINE_TAIL_START_SECONDS = 0.35;
+const PLAYER_SKILL_LINE_MIN_TAIL_ENERGY_RATIO = 0.12;
+const PLAYER_SKILL_LINE_LOW_PASS_CUTOFF_HZ = 500;
+const PLAYER_SKILL_LINE_MIN_LOW_FREQUENCY_ENERGY_RATIO = 0.5;
 const PLAYER_SFX_DIRECTORY = path.join(process.cwd(), "assets/audio/sfx/players");
 const ENEMY_SFX_DIRECTORY = path.join(process.cwd(), "assets/audio/sfx/enemies");
 const BOSS_SFX_DIRECTORY = path.join(process.cwd(), "assets/audio/sfx/bosses");
@@ -205,5 +211,24 @@ describe("SFX WAV validation", () => {
     )).toBeLessThanOrEqual(DUELIST_SLASH_MAX_TAIL_ENERGY_RATIO);
     expect.soft(measureLowPassEnergyRatio(pcm, DUELIST_SLASH_LOW_PASS_CUTOFF_HZ))
       .toBeGreaterThanOrEqual(DUELIST_SLASH_MIN_LOW_FREQUENCY_ENERGY_RATIO);
+  });
+
+  it("keeps the line projectile cue long, low, and sustained like a dragon roar", () => {
+    const wav = readFileSync(path.join(PLAYER_SFX_DIRECTORY, "playerSkillLine.wav"));
+    const pcm = decodePcm16(wav);
+
+    expect.soft(pcm.length / SAMPLE_RATE).toBeGreaterThanOrEqual(
+      PLAYER_SKILL_LINE_MIN_DURATION_SECONDS,
+    );
+    expect.soft(pcm.length / SAMPLE_RATE).toBeLessThanOrEqual(
+      PLAYER_SKILL_LINE_MAX_DURATION_SECONDS,
+    );
+    expect.soft(measureEnergyRatioInRange(
+      pcm,
+      PLAYER_SKILL_LINE_TAIL_START_SECONDS,
+      pcm.length / SAMPLE_RATE,
+    )).toBeGreaterThanOrEqual(PLAYER_SKILL_LINE_MIN_TAIL_ENERGY_RATIO);
+    expect.soft(measureLowPassEnergyRatio(pcm, PLAYER_SKILL_LINE_LOW_PASS_CUTOFF_HZ))
+      .toBeGreaterThanOrEqual(PLAYER_SKILL_LINE_MIN_LOW_FREQUENCY_ENERGY_RATIO);
   });
 });
