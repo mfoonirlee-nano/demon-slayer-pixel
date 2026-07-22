@@ -269,6 +269,7 @@ export type EnemyState = {
   splitterHasSplit?: boolean;
   wardenPhase?: WardenPhase;
   wardenTimer?: number;
+  wardenAuraEndsAt?: number;
   wardenFacing?: number;
   wardenBaseSpeed?: number;
   wardenBuffedFrames?: number;

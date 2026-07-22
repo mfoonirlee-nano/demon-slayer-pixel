@@ -1,10 +1,11 @@
-import { describe, expect, it, beforeEach } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { WARDEN_BLOOD_MOON_BUFF_SHEET, WARDEN_SHEET_INDEX } from "../../constants";
 import { state, resetState } from "../../game/state";
+import { setCanvas } from "../../rendering/context";
 import type { BossState, EnemyState } from "../../types/game-state";
 import { updateEnemies } from "../enemy";
 import { createEnemyState, damageEnemy, type EnemySpawnContext } from "./common";
-import { applyWardenAuraBuffs, WARDEN_ARCHETYPE } from "./warden";
+import { applyWardenAuraBuffs, drawWardenAuraIndicators, WARDEN_ARCHETYPE } from "./warden";
 
 const VALID_SUPPORT_RANGE = 260;
 const OTHER_WARDEN_X = 350;
@@ -27,6 +28,30 @@ const FINAL_AURA_SPEED_EXTRA_X = 4;
 const BLOOD_MOON_BUFF_SRC = "assets/sprites/enemies/warden/warden_blood_moon_buff.png";
 const BLOOD_MOON_BUFF_FRAME_SIZE = 72;
 const BLOOD_MOON_BUFF_FRAME_COUNT = 6;
+const BUFF_EFFECT_CRESCENT_FRAME = 3;
+const BUFF_EFFECT_PEAK_FRAME = 4;
+const BUFF_EFFECT_FRAME_DURATION_SECONDS = 0.16666666666666666;
+const BUFF_EFFECT_HOLD_SAMPLE_SECONDS = 0.1;
+const BUFF_EFFECT_SAMPLE_EPSILON_SECONDS = 0.001;
+const HIGH_REFRESH_STEP_SECONDS = 0.008333333333333333;
+const HIGH_REFRESH_PRE_EXPIRY_UPDATES = 119;
+const NORMAL_AURA_DURATION_SECONDS = 1;
+const TEST_IMAGE = {} as HTMLImageElement;
+
+type MockCanvasContext = CanvasRenderingContext2D & {
+  drawImage: ReturnType<typeof vi.fn>;
+};
+
+function createMockContext(): MockCanvasContext {
+  return {
+    drawImage: vi.fn(),
+    restore: vi.fn(),
+    save: vi.fn(),
+    scale: vi.fn(),
+    translate: vi.fn(),
+    globalAlpha: 1,
+  } as unknown as MockCanvasContext;
+}
 
 function spawnContext(overrides: Partial<EnemySpawnContext> = {}): EnemySpawnContext {
   return {
@@ -96,6 +121,12 @@ describe("warden support attack loop", () => {
     state.player.invincible = 0;
   });
 
+  afterEach(() => {
+    WARDEN_BLOOD_MOON_BUFF_SHEET.image = null;
+    setCanvas(null);
+    vi.restoreAllMocks();
+  });
+
   it("exposes the blood moon buff effect sheet for preloading", () => {
     expect(WARDEN_BLOOD_MOON_BUFF_SHEET.src).toBe(BLOOD_MOON_BUFF_SRC);
     expect(WARDEN_BLOOD_MOON_BUFF_SHEET.frameW).toBe(BLOOD_MOON_BUFF_FRAME_SIZE);
@@ -114,6 +145,26 @@ describe("warden support attack loop", () => {
     expect(wardenEnemy.vx).toBe(0);
   });
 
+  it("keeps the intended aura lifetime at high refresh rates", () => {
+    vi.spyOn(Math, "random").mockReturnValue(0);
+    const wardenEnemy = warden({ wardenPhase: "move", wardenTimer: 0 });
+    setPlayerAtRangeFrom(wardenEnemy, VALID_SUPPORT_RANGE);
+    state.enemies.push(wardenEnemy, enemy({ x: 360, y: 410 }));
+
+    WARDEN_ARCHETYPE.update(wardenEnemy);
+    expect(wardenEnemy.wardenPhase).toBe("aura");
+
+    for (let update = 0; update < HIGH_REFRESH_PRE_EXPIRY_UPDATES; update += 1) {
+      state.elapsed += HIGH_REFRESH_STEP_SECONDS;
+      WARDEN_ARCHETYPE.update(wardenEnemy);
+      expect(wardenEnemy.wardenPhase).toBe("aura");
+    }
+
+    state.elapsed = NORMAL_AURA_DURATION_SECONDS;
+    WARDEN_ARCHETYPE.update(wardenEnemy);
+    expect(wardenEnemy.wardenPhase).toBe("move");
+  });
+
   it("exits aura when there are no support targets", () => {
     const wardenEnemy = warden({ wardenPhase: "aura", wardenTimer: 40 });
     setPlayerAtRangeFrom(wardenEnemy, VALID_SUPPORT_RANGE);
@@ -122,6 +173,52 @@ describe("warden support attack loop", () => {
     WARDEN_ARCHETYPE.update(wardenEnemy);
 
     expect(wardenEnemy.wardenPhase).toBe("move");
+  });
+
+  it("draws a slower continuous buff marker loop while aura applies", () => {
+    const context = createMockContext();
+    setCanvas({ getContext: () => context } as unknown as HTMLCanvasElement);
+    WARDEN_BLOOD_MOON_BUFF_SHEET.image = TEST_IMAGE;
+    const wardenEnemy = warden({ wardenPhase: "aura" });
+    setPlayerAtRangeFrom(wardenEnemy, VALID_SUPPORT_RANGE);
+    const buffedEnemy = enemy({ x: 360, y: 410 });
+    state.enemies.push(wardenEnemy, buffedEnemy);
+
+    const drawBuffAt = (elapsed: number) => {
+      state.elapsed = elapsed;
+      applyWardenAuraBuffs();
+      context.drawImage.mockClear();
+      drawWardenAuraIndicators((candidate) => candidate === buffedEnemy);
+      expect(buffedEnemy.wardenBuffedFrames).toBe(2);
+      expect(context.drawImage).toHaveBeenCalledTimes(1);
+      return context.drawImage.mock.calls[0][1] as number;
+    };
+
+    expect(drawBuffAt(BUFF_EFFECT_HOLD_SAMPLE_SECONDS)).toBe(0);
+
+    const expectedLoopFrames = [
+      0,
+      1,
+      2,
+      BUFF_EFFECT_CRESCENT_FRAME,
+      BUFF_EFFECT_PEAK_FRAME,
+      BUFF_EFFECT_CRESCENT_FRAME,
+      2,
+      1,
+      0,
+    ];
+    const sampledFrames = expectedLoopFrames.map((_, sample) => (
+      drawBuffAt(
+        sample * BUFF_EFFECT_FRAME_DURATION_SECONDS + BUFF_EFFECT_SAMPLE_EPSILON_SECONDS,
+      ) / BLOOD_MOON_BUFF_FRAME_SIZE
+    ));
+    expect(sampledFrames).toEqual(expectedLoopFrames);
+
+    wardenEnemy.wardenPhase = "move";
+    applyWardenAuraBuffs();
+    context.drawImage.mockClear();
+    drawWardenAuraIndicators((candidate) => candidate === buffedEnemy);
+    expect(context.drawImage).not.toHaveBeenCalled();
   });
 
   it("buffs boss-summoned enemies but not wardens or the boss", () => {
