@@ -29,6 +29,11 @@ export const DASH_REPOSITION_PASSIVE_CONFIG = {
   moveSpeedMultiplier: 1.15,
 } as const;
 
+export const VORTEX_CONTROL_DOUBLE_JUMP_CONFIG = {
+  requiredLevel: 3,
+  extraAirJumps: 1,
+} as const;
+
 export const ANTI_AIR_MULTI_BONUS_DROP_CONFIG = {
   requiredLevel: 3,
   chance: 0.3,

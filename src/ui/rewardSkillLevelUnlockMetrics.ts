@@ -5,6 +5,7 @@ import {
   RETURNING_BLADE_WATER_RING_CONFIG,
   SKILL_IDS,
   VERTICAL_WAVE_PILLAR_CONFIG,
+  VORTEX_CONTROL_DOUBLE_JUMP_CONFIG,
 } from "../constants";
 import type { Language } from "../i18n/language";
 import { formatRewardUnit, rewardLabel } from "../i18n/rewardMessages";
@@ -54,6 +55,21 @@ export function skillLevelUnlockRewardMetric(
         skillDamageValue(language, RETURNING_BLADE_WATER_RING_CONFIG.damageMultiplier)
       }`,
       tone: "damage" as const,
+    };
+  }
+
+  if (
+    skillId === SKILL_IDS.vortexControl
+    && unlocksLevel(nextLevel, previousLevel, VORTEX_CONTROL_DOUBLE_JUMP_CONFIG.requiredLevel)
+  ) {
+    return {
+      label: rewardLabel(language, "extraMidairJump"),
+      value: formatRewardUnit(
+        language,
+        "jumps",
+        `+${VORTEX_CONTROL_DOUBLE_JUMP_CONFIG.extraAirJumps}`,
+      ),
+      tone: "utility" as const,
     };
   }
 

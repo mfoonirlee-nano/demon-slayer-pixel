@@ -92,10 +92,11 @@ export function teardownInput() {
 
 function handleInputPress(key: string) {
   const k = key.toLowerCase();
+  const alreadyPressed = keys.has(k);
   keys.add(k);
   ensureAudio();
 
-  if (handlers.onJump && (k === "w" || k === " ")) handlers.onJump();
+  if (handlers.onJump && !alreadyPressed && (k === "w" || k === " ")) handlers.onJump();
   if (handlers.onAttack && k === "j") handlers.onAttack();
   if (handlers.onSkill && k === "k") handlers.onSkill();
   if (handlers.onUltimate && k === "l") handlers.onUltimate();

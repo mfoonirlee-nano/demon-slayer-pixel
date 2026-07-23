@@ -3,6 +3,7 @@ import {
   RETURNING_BLADE_WATER_RING_CONFIG,
   SKILL_IDS,
   VERTICAL_WAVE_PILLAR_CONFIG,
+  VORTEX_CONTROL_DOUBLE_JUMP_CONFIG,
 } from "../constants";
 import { EQUIPMENT_CHOICE_IDS, equipmentItemForTier } from "../systems/equipmentCatalog";
 import { implementedPlayerSkillIds } from "../systems/skillCatalog";
@@ -230,6 +231,23 @@ describe("reward choice details", () => {
 
     expect(metricValue(upgradeRewardMetrics(choice, BASE_PLAYER), "移速")).toBe("+15%");
     expect(metricValue(upgradeRewardMetrics(choice, BASE_PLAYER, "en"), "Move Speed")).toBe("+15%");
+  });
+
+  it("shows the vortex control extra air jump at level three", () => {
+    const choice: UpgradeChoiceState = {
+      id: "upgrade-vortex-control",
+      type: "upgradeSkill",
+      title: "技能精进",
+      name: "回涡·引潮 III",
+      description: "引潮解锁二段跳。",
+      skillId: SKILL_IDS.vortexControl,
+      nextLevel: VORTEX_CONTROL_DOUBLE_JUMP_CONFIG.requiredLevel,
+    };
+
+    expect(metricValue(upgradeRewardMetrics(choice, BASE_PLAYER), "空中追加跳跃"))
+      .toBe(`+${VORTEX_CONTROL_DOUBLE_JUMP_CONFIG.extraAirJumps}次`);
+    expect(metricValue(upgradeRewardMetrics(choice, BASE_PLAYER, "en"), "Extra Midair Jump"))
+      .toBe(`+${VORTEX_CONTROL_DOUBLE_JUMP_CONFIG.extraAirJumps} jump`);
   });
 
   it("shows the armor break passive shield penetration at level three", () => {

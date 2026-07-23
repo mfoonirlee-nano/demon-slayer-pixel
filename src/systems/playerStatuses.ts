@@ -33,6 +33,7 @@ import {
   hasCloseArcBasicCrescentPassive,
   hasGuardCounterDamageReductionPassive,
   hasLineProjectileKnockbackPassive,
+  hasVortexControlDoubleJumpPassive,
 } from "./playerSkillPassives";
 import { moonTideUltimateConfig } from "./progression";
 
@@ -66,6 +67,9 @@ function pushSkillStatuses(state: GameState, statuses: PlayerStatusSnapshot[]) {
   }
   if (dashRepositionMoveSpeedMultiplier(state) > 1) {
     statuses.push(persistentStatus("dash_reposition_move_speed"));
+  }
+  if (hasVortexControlDoubleJumpPassive(state)) {
+    statuses.push(persistentStatus("vortex_control_double_jump"));
   }
   if (armorBreakShieldPenetration(state) > 0) {
     statuses.push(persistentStatus("armor_break_shield_penetration"));

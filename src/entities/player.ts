@@ -4,7 +4,6 @@ import {
   CLOSE_ARC_BASIC_CRESCENT_CONFIG,
   FALL_ATTACK,
   GRAVITY,
-  GROUND_Y,
   PLAYER_ANIMATION_STATES,
   PLAYER_COMBAT,
   PLAYER_SHEETS,
@@ -47,10 +46,10 @@ import { CORE_PLAYER_SKILL_EFFECT_CONFIGS, playerSkillColor } from "../systems/s
 import {
   moonTideAttackFrames,
   moonTideBasicDamageMultiplier,
-  moonTideJumpMultiplier,
   spawnMoonTideTrail,
   triggerMoonTideAfterimageHit,
 } from "./players/moonTide";
+import { resolvePlayerLanding, tryPlayerJump } from "./players/jumping";
 import { playerMoveScale } from "./players/movementModifiers";
 import { updateSkillCastRelease, updateUltimateCastAndTimer } from "./players/skillCasting";
 
@@ -375,14 +374,7 @@ export function hurtPlayer(damage: number, sourceVx: number) {
 }
 
 export function tryJump() {
-  if (isBinderTalismanStunned()) return;
-
-  const p = state.player;
-  if (p.ultimateCastTimer > 0) return;
-  if (onGround(p, p.onPlatform)) {
-    p.vy = -p.jump * moonTideJumpMultiplier();
-    playSfx("playerJump");
-  }
+  tryPlayerJump(state);
 }
 
 export function updatePlayer() {
@@ -442,30 +434,7 @@ export function updatePlayer() {
   p.y += p.vy;
   const landingVelocity = p.vy;
   p.x = Math.max(0, Math.min(WIDTH - p.w, p.x));
-  p.onPlatform = null;
-
-  let landed = false;
-  if (p.vy >= 0) {
-    for (const plt of state.platforms) {
-      const overlapX = p.x + p.w > plt.x + PLAYER_COMBAT.platformEdgePadding
-        && p.x < plt.x + plt.w - PLAYER_COMBAT.platformEdgePadding;
-      if (!overlapX) continue;
-      const nowBottom = p.y + p.h;
-      if (prevBottom <= plt.y + PLAYER_COMBAT.platformLandingTolerance && nowBottom >= plt.y) {
-        p.y = plt.y - p.h;
-        p.vy = 0;
-        p.onPlatform = plt;
-        landed = true;
-        break;
-      }
-    }
-  }
-
-  if (!landed && p.y + p.h >= GROUND_Y) {
-    p.y = GROUND_Y - p.h;
-    p.vy = 0;
-    landed = true;
-  }
+  const landed = resolvePlayerLanding(state, prevBottom);
 
   if (landed && p.fallAttackTimer > 0) {
     triggerFallAttackImpact();

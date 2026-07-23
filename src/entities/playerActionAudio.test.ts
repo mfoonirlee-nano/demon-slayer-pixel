@@ -108,6 +108,21 @@ describe("player action audio", () => {
     expect(audioMock.playSfx).toHaveBeenCalledWith("playerJump");
   });
 
+  it("plays jump sfx for a successful air jump but not a third jump", () => {
+    state.player.skillLevels[SKILL_IDS.vortexControl] = 3;
+    state.player.equippedSkillIds[2] = SKILL_IDS.vortexControl;
+    state.player.y = GROUND_Y - state.player.h - AIR_ATTACK_TEST_HEIGHT;
+
+    tryJump();
+
+    expect(audioMock.playSfx).toHaveBeenCalledTimes(1);
+    expect(audioMock.playSfx).toHaveBeenCalledWith("playerJump");
+
+    tryJump();
+
+    expect(audioMock.playSfx).toHaveBeenCalledTimes(1);
+  });
+
   it("plays attack action sfx on the ground and in the air", () => {
     triggerAttack();
     expect(audioMock.playSfx).toHaveBeenCalledWith("playerAttackStart");

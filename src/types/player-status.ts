@@ -3,6 +3,7 @@ export type PlayerStatusId =
   | "close_arc_basic_crescent"
   | "guard_counter_damage_reduction"
   | "dash_reposition_move_speed"
+  | "vortex_control_double_jump"
   | "armor_break_shield_penetration"
   | "guard_counter"
   | "moon_tide"

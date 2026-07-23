@@ -4,6 +4,7 @@ import {
   SKILLS,
   SKILL_IDS,
   VERTICAL_WAVE_PILLAR_CONFIG,
+  VORTEX_CONTROL_DOUBLE_JUMP_CONFIG,
 } from "../constants";
 import { formatPercent } from "../utils";
 import { skillCopy, skillDescription, skillName } from "./skillCopy";
@@ -93,6 +94,22 @@ describe("localized skill copy", () => {
     expect(description).toContain("15%");
     expect(description).toContain("equipped");
     expect(description).toContain("movement speed");
+  });
+
+  it("localizes the level-three vortex control double jump passive", () => {
+    const description = skillDescription(
+      "en",
+      SKILL_IDS.vortexControl,
+      VORTEX_CONTROL_DOUBLE_JUMP_CONFIG.requiredLevel,
+    );
+
+    expect(description).toContain("equipped");
+    expect(description).toContain(
+      `${VORTEX_CONTROL_DOUBLE_JUMP_CONFIG.extraAirJumps} extra midair jump`,
+    );
+    expect(description).toContain("refreshes on landing");
+    expect(description).toContain("jump over a boss's head");
+    expect(description).toContain("still cannot pull bosses");
   });
 
   it("localizes the level-three returning blade water-ring slash", () => {

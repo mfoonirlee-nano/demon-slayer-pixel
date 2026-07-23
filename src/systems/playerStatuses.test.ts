@@ -142,6 +142,20 @@ describe("player status snapshot", () => {
     expect(status("dash_reposition_move_speed")).toBeUndefined();
   });
 
+  it("exposes the vortex control double jump passive only while level three is equipped", () => {
+    state.player.skillLevels.vortex_control = 3;
+    state.player.equippedSkillIds[2] = "vortex_control";
+
+    expect(status("vortex_control_double_jump")).toMatchObject({
+      remainingFrames: null,
+      durationFrames: null,
+    });
+
+    state.player.equippedSkillIds[2] = null;
+
+    expect(status("vortex_control_double_jump")).toBeUndefined();
+  });
+
   it("projects guard duration and hit stacks through its effective barrier flash", () => {
     state.guardCounterEffect = {
       elapsed: 12,

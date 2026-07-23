@@ -2,6 +2,7 @@ import { SKILL_IDS } from "../ids";
 import {
   RETURNING_BLADE_WATER_RING_CONFIG,
   VERTICAL_WAVE_PILLAR_CONFIG,
+  VORTEX_CONTROL_DOUBLE_JUMP_CONFIG,
 } from "../combat";
 import type { Skill } from "../../types/assets";
 import { formatPercent } from "../../utils";
@@ -122,7 +123,7 @@ export const SKILLS: Skill[] = [
     levelDescriptions: {
       1: "生成短时潮涡，聚拢并减速小怪；首领只受到伤害。",
       2: "潮涡持续更久、范围更大，聚拢和减速更明显。",
-      3: "潮涡牵制继续变强，但仍拉不动首领。",
+      3: `潮涡牵制继续变强；装备后可在空中追加跳跃 ${VORTEX_CONTROL_DOUBLE_JUMP_CONFIG.extraAirJumps} 次，落地后恢复，可直接越过首领头顶。潮涡本体仍拉不动首领。`,
     },
     src: "assets/sprites/skills/vortex_control/skill.png",
     frameCount: 5,

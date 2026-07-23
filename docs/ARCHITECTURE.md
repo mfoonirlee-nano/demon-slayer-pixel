@@ -20,6 +20,8 @@
 
 玩家的常态横向移动倍率由 `src/entities/players/movementModifiers.ts` 统一汇总环境减速、装备、常驻技能被动和月潮倍率，`src/entities/player.ts` 只消费最终倍率；潮闪等固定轨迹位移仍走独立更新分支。
 
+玩家的起跳判定、回涡 Lv3 装备后二段跳次数和地面/平台落地重置统一由 `src/entities/players/jumping.ts` 管理，`src/entities/player.ts` 只编排重力更新与落地结果。`src/game/input.ts` 以按下边沿触发跳跃，长按产生的重复 `keydown` 不会自动消耗空中追加跳跃。
+
 ### 5. 配置与类型分层
 重构后，仓库把常量配置与类型定义从运行时逻辑中拆出：
 - `src/constants/` 负责游戏配置、资源元数据、运行时调参与领域标识。
@@ -55,7 +57,8 @@
 - `src/game/audio.ts`: 使用 Web Audio 播放 Boss、敌人与玩家采样音效，并在加载失败时回退到振荡器音型。
 - `src/game/utils.ts`: 通用工具函数。
 - `src/entities/`:
-  - `player.ts`: 玩家控制、重力、碰撞检测、技能释放逻辑。
+  - `player.ts`: 玩家控制、重力更新、战斗结算与技能释放编排。
+  - `players/jumping.ts`: 玩家起跳条件、空中追加跳跃次数和地面/平台落地解析。
   - `enemy.ts`: 小怪生成与 AI。
   - `boss.ts`: 阶段式 Boss 逻辑与招式。
   - `platform.ts`: 片段式地图生成、平台、水晶与宝箱逻辑。

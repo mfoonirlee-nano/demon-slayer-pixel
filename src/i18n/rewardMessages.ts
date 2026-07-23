@@ -63,6 +63,7 @@ const ZH_REWARD_LABELS = {
   bonusRainDrop: "追加雨滴",
   bonusWaterRingSlash: "追加回旋剑气",
   bonusWaterPillars: "追加水柱",
+  extraMidairJump: "空中追加跳跃",
   skillKnockback: "技能击退",
   passiveKnockback: "被动击退",
   passiveShieldPenetration: "被动穿盾",
@@ -142,6 +143,7 @@ const EN_REWARD_LABELS = {
   bonusRainDrop: "Bonus Raindrop",
   bonusWaterRingSlash: "Bonus Water-Ring Slash",
   bonusWaterPillars: "Bonus Water Pillars",
+  extraMidairJump: "Extra Midair Jump",
   skillKnockback: "Skill Knockback",
   passiveKnockback: "Passive Knockback",
   passiveShieldPenetration: "Passive Shield Penetration",
@@ -186,7 +188,8 @@ export type RewardValueUnit =
   | "skillBars"
   | "ultimateEnergy"
   | "attackMultiplier"
-  | "skillDamage";
+  | "skillDamage"
+  | "jumps";
 
 type RewardUnitValue = number | string;
 type RewardUnitFormatter = (value: RewardUnitValue) => string;
@@ -203,6 +206,7 @@ const REWARD_UNIT_FORMATTERS = {
     ultimateEnergy: (value) => `${value}终能`,
     attackMultiplier: (value) => `${value}x攻击`,
     skillDamage: (value) => `${value}技能伤害`,
+    jumps: (value) => `${value}次`,
   },
   en: {
     seconds: (value) => `${value} ${Number(value) === 1 ? "second" : "seconds"}`,
@@ -215,6 +219,7 @@ const REWARD_UNIT_FORMATTERS = {
     ultimateEnergy: (value) => `${value} ultimate energy`,
     attackMultiplier: (value) => `${value}x Attack`,
     skillDamage: (value) => `${value} skill damage`,
+    jumps: (value) => `${value} ${Number(value) === 1 ? "jump" : "jumps"}`,
   },
 } satisfies Record<Language, Record<RewardValueUnit, RewardUnitFormatter>>;
 

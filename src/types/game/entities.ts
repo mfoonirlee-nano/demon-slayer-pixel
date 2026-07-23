@@ -102,6 +102,7 @@ export type PlayerState = {
   skillTimer: number;
   skillEffectSpawned: boolean;
   skillCastDamageMultiplier: number;
+  vortexControlAirJumpsUsed: number;
   dashReposition: {
     startX: number;
     targetX: number;

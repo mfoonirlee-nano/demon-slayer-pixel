@@ -3,6 +3,7 @@ import {
   SKILLS,
   SKILL_IDS,
   VERTICAL_WAVE_PILLAR_CONFIG,
+  VORTEX_CONTROL_DOUBLE_JUMP_CONFIG,
 } from "../constants";
 import type { SkillId } from "../types/assets";
 import type { SkillLevel } from "../types/game-state";
@@ -75,7 +76,7 @@ const ENGLISH_SKILL_COPY = {
     levelDescriptions: {
       1: "Create a brief vortex that pulls and slows normal enemies; bosses only take damage.",
       2: "The vortex lasts longer, covers more area, and pulls and slows more strongly.",
-      3: "The vortex restrains enemies even more, but still cannot pull bosses.",
+      3: `The vortex restrains normal enemies even more. While equipped, gain ${VORTEX_CONTROL_DOUBLE_JUMP_CONFIG.extraAirJumps} extra midair jump; it refreshes on landing and lets you jump over a boss's head. The vortex itself still cannot pull bosses.`,
     },
   },
   [SKILL_IDS.armorBreak]: {

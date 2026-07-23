@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
+  BOSS_CONFIG,
   CLOSE_ARC_BASIC_CRESCENT_CONFIG,
   GROUND_Y,
   PLAYER_ANIMATION_STATES,
@@ -11,7 +12,14 @@ import { resetState, state } from "../game/state";
 import { equipmentMoveSpeedMultiplier } from "../systems/equipment";
 import { spawnEnemyById } from "./enemy";
 import { updateCloseArcBasicCrescentEffects } from "./particle";
-import { attackBox, castSelectedSkill, hurtPlayer, triggerAttack, updatePlayer } from "./player";
+import {
+  attackBox,
+  castSelectedSkill,
+  hurtPlayer,
+  triggerAttack,
+  tryJump,
+  updatePlayer,
+} from "./player";
 
 const TEST_ENEMY_HP = 100;
 const TEST_ATTACK_BONUS = 4;
@@ -27,6 +35,14 @@ const DASH_REPOSITION_PASSIVE_SLOT_INDEX = 2;
 const DASH_REPOSITION_MOVE_SPEED_MULTIPLIER = 1.15;
 const DASH_REPOSITION_LEVEL_THREE_DISTANCE = 124;
 const MOON_TIDE_LEVEL_THREE_MOVE_SPEED_MULTIPLIER = 1.25;
+const VORTEX_CONTROL_LEVEL_THREE = 3;
+const VORTEX_CONTROL_LEVEL_BEFORE_PASSIVE = 2;
+const VORTEX_CONTROL_PASSIVE_SLOT_INDEX = 2;
+const VORTEX_CONTROL_TEST_AIR_HEIGHT = 100;
+const VORTEX_CONTROL_TEST_FALL_VELOCITY = 3;
+const VORTEX_CONTROL_TEST_PLATFORM_MARGIN_X = 20;
+const VORTEX_CONTROL_TEST_PLATFORM_Y_OFFSET = 140;
+const VORTEX_CONTROL_BOSS_CLEARANCE_FRAMES = 120;
 const PASSIVE_INCOMING_DAMAGE = 40;
 const LEVEL_ONE_PASSIVE_DAMAGE = 34;
 const SUCCESSFUL_KNOCKBACK_ROLL = 0.09;
@@ -54,6 +70,16 @@ function attackFrameStartElapsed(frameIndex: number) {
 
 function updatePlayerFrames(frames: number) {
   for (let frame = 0; frame < frames; frame += 1) updatePlayer();
+}
+
+function enableVortexControlDoubleJump(skillSlot = VORTEX_CONTROL_PASSIVE_SLOT_INDEX) {
+  state.player.skillLevels[SKILL_IDS.vortexControl] = VORTEX_CONTROL_LEVEL_THREE;
+  state.player.equippedSkillIds[skillSlot] = SKILL_IDS.vortexControl;
+}
+
+function placePlayerInAir(surfaceY = GROUND_Y) {
+  state.player.y = surfaceY - state.player.h - VORTEX_CONTROL_TEST_AIR_HEIGHT;
+  state.player.vy = VORTEX_CONTROL_TEST_FALL_VELOCITY;
 }
 
 function advanceAttackToBasicCrescentFrame() {
@@ -379,6 +405,152 @@ describe("dash reposition level-three movement passive", () => {
     while (state.player.dashReposition) updatePlayer();
 
     expect(state.player.x - startX).toBeCloseTo(DASH_REPOSITION_LEVEL_THREE_DISTANCE);
+  });
+});
+
+describe("vortex control level-three double jump passive", () => {
+  beforeEach(() => {
+    resetState();
+    keys.clear();
+  });
+
+  it.each([0, 1, 2] as const)(
+    "grants one air jump while equipped in non-selected slot %i",
+    (skillSlot) => {
+      enableVortexControlDoubleJump(skillSlot);
+      state.player.skillIndex = (skillSlot + 1) % state.player.equippedSkillIds.length;
+      placePlayerInAir();
+
+      tryJump();
+
+      expect(state.player.vy).toBe(-state.player.jump);
+
+      state.player.vy = VORTEX_CONTROL_TEST_FALL_VELOCITY;
+      tryJump();
+
+      expect(state.player.vy).toBe(VORTEX_CONTROL_TEST_FALL_VELOCITY);
+    },
+  );
+
+  it.each([
+    {
+      scenario: "the skill is below level three",
+      skillLevel: VORTEX_CONTROL_LEVEL_BEFORE_PASSIVE,
+      equipped: true,
+    },
+    {
+      scenario: "the skill is not equipped",
+      skillLevel: VORTEX_CONTROL_LEVEL_THREE,
+      equipped: false,
+    },
+  ] as const)("does not grant an air jump when $scenario", ({ skillLevel, equipped }) => {
+    state.player.skillLevels[SKILL_IDS.vortexControl] = skillLevel;
+    if (equipped) {
+      state.player.equippedSkillIds[VORTEX_CONTROL_PASSIVE_SLOT_INDEX] = SKILL_IDS.vortexControl;
+    }
+    placePlayerInAir();
+
+    tryJump();
+
+    expect(state.player.vy).toBe(VORTEX_CONTROL_TEST_FALL_VELOCITY);
+  });
+
+  it("restores the air jump after landing", () => {
+    enableVortexControlDoubleJump();
+    placePlayerInAir();
+
+    tryJump();
+    state.player.y = GROUND_Y - state.player.h - 1;
+    state.player.vy = VORTEX_CONTROL_TEST_FALL_VELOCITY;
+    updatePlayer();
+    tryJump();
+    updatePlayer();
+    state.player.vy = VORTEX_CONTROL_TEST_FALL_VELOCITY;
+    tryJump();
+
+    expect(state.player.vy).toBe(-state.player.jump);
+  });
+
+  it("restores the air jump after landing on a platform", () => {
+    enableVortexControlDoubleJump();
+    const platform = {
+      x: state.player.x - VORTEX_CONTROL_TEST_PLATFORM_MARGIN_X,
+      y: GROUND_Y - VORTEX_CONTROL_TEST_PLATFORM_Y_OFFSET,
+      baseY: GROUND_Y - VORTEX_CONTROL_TEST_PLATFORM_Y_OFFSET,
+      w: 160,
+      h: 22,
+      vx: 0,
+      phase: 0,
+      style: "stone",
+      kind: "normal",
+      spriteIndex: 0,
+      spriteAct: null,
+      trim: 0,
+      notch: 0,
+      hoverAmplitude: 0,
+    } as const;
+    state.platforms.push(platform);
+    placePlayerInAir(platform.y);
+
+    tryJump();
+    state.player.y = platform.y - state.player.h - 1;
+    state.player.vy = 2;
+    updatePlayer();
+
+    expect(state.player.onPlatform).toBe(platform);
+
+    tryJump();
+    updatePlayer();
+    state.player.vy = VORTEX_CONTROL_TEST_FALL_VELOCITY;
+    tryJump();
+
+    expect(state.player.vy).toBe(-state.player.jump);
+  });
+
+  it("does not consume the air jump during a fall attack", () => {
+    enableVortexControlDoubleJump();
+    placePlayerInAir();
+    state.player.fallAttackTimer = 1;
+
+    tryJump();
+
+    expect(state.player.vy).toBe(VORTEX_CONTROL_TEST_FALL_VELOCITY);
+
+    state.player.fallAttackTimer = 0;
+    tryJump();
+
+    expect(state.player.vy).toBe(-state.player.jump);
+  });
+
+  it("applies the moon tide jump multiplier to both jumps", () => {
+    enableVortexControlDoubleJump();
+    state.player.ultimateLevel = 3;
+    state.player.ultimateTimer = 30;
+
+    tryJump();
+    const firstJumpVelocity = state.player.vy;
+    placePlayerInAir();
+    tryJump();
+
+    expect(state.player.vy).toBe(firstJumpVelocity);
+  });
+
+  it("can raise the player's feet above the boss collision body", () => {
+    enableVortexControlDoubleJump();
+    let minimumPlayerBottom = state.player.y + state.player.h;
+
+    tryJump();
+    while (state.player.vy < 0) {
+      updatePlayer();
+      minimumPlayerBottom = Math.min(minimumPlayerBottom, state.player.y + state.player.h);
+    }
+    tryJump();
+    for (let frame = 0; frame < VORTEX_CONTROL_BOSS_CLEARANCE_FRAMES; frame += 1) {
+      updatePlayer();
+      minimumPlayerBottom = Math.min(minimumPlayerBottom, state.player.y + state.player.h);
+    }
+
+    expect(minimumPlayerBottom).toBeLessThan(GROUND_Y - BOSS_CONFIG.h);
   });
 });
 

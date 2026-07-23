@@ -9,6 +9,7 @@ import {
   SKILL_IDS,
   VERTICAL_WAVE_PILLAR_CONFIG,
   VERTICAL_WAVE_PILLAR_SHEET,
+  VORTEX_CONTROL_DOUBLE_JUMP_CONFIG,
 } from "../constants";
 import { formatPercent } from "../utils";
 import {
@@ -134,6 +135,19 @@ describe("player skill catalog copy", () => {
     expect(description).toContain("15%");
     expect(description).toContain("装备");
     expect(description).toContain("移动速度");
+  });
+
+  it("explains the level-three vortex control equipped double jump passive", () => {
+    const description = playerSkillDescription(
+      SKILL_IDS.vortexControl,
+      VORTEX_CONTROL_DOUBLE_JUMP_CONFIG.requiredLevel,
+    );
+
+    expect(description).toContain("装备");
+    expect(description).toContain(`空中追加跳跃 ${VORTEX_CONTROL_DOUBLE_JUMP_CONFIG.extraAirJumps} 次`);
+    expect(description).toContain("落地后恢复");
+    expect(description).toContain("越过首领头顶");
+    expect(description).toContain("仍拉不动首领");
   });
 
   it("explains the level-three armor break equipped shield penetration passive", () => {

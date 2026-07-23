@@ -5,6 +5,7 @@ import {
   GUARD_COUNTER_EFFECT_CONFIG,
   LINE_PROJECTILE_EFFECT_CONFIG,
   SKILL_IDS,
+  VORTEX_CONTROL_DOUBLE_JUMP_CONFIG,
 } from "../constants";
 import type { EnemyState, GameState } from "../types/game-state";
 
@@ -45,6 +46,13 @@ export function dashRepositionMoveSpeedMultiplier(state: GameState) {
       >= DASH_REPOSITION_PASSIVE_CONFIG.requiredLevel
     && player.equippedSkillIds.includes(SKILL_IDS.dashReposition);
   return hasPassive ? DASH_REPOSITION_PASSIVE_CONFIG.moveSpeedMultiplier : 1;
+}
+
+export function hasVortexControlDoubleJumpPassive(state: GameState) {
+  const player = state.player;
+  return (player.skillLevels[SKILL_IDS.vortexControl] ?? 0)
+      >= VORTEX_CONTROL_DOUBLE_JUMP_CONFIG.requiredLevel
+    && player.equippedSkillIds.includes(SKILL_IDS.vortexControl);
 }
 
 export function guardCounterIncomingDamageMultiplier(state: GameState) {
