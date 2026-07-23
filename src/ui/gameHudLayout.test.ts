@@ -18,16 +18,15 @@ const SKILL_RIGHT_CAP_DISPLAY_W = 31;
 const SKILL_RIGHT_CAP_DISPLAY_H = 25;
 const STATUS_BAR_GAP_FROM_SKILL_FRAME = 4;
 const STATUS_ICON_DISPLAY_SIZE = 24;
-// First fully visible upper-rail rows at each join after runtime sprite scaling.
+// Visible join rows after runtime sprite scaling.
 const HP_MID_UPPER_RAIL_TOP = 6;
 const HP_RIGHT_CAP_UPPER_RAIL_TOP = 6;
 const HP_MID_FILL_WINDOW = { top: 10, bottom: 15 };
 const HP_RIGHT_CAP_FILL_WINDOW = { top: 10, bottom: 15 };
-const SKILL_MID_UPPER_RAIL_TOP = 2;
-const SKILL_RIGHT_CAP_UPPER_RAIL_TOP = 6;
-const SKILL_RIGHT_CAP_DECORATION_TOP = -6;
-const SKILL_RIGHT_CAP_CONNECTOR_WIDTH = 6;
-const SKILL_RIGHT_CAP_BLUE_CORE_CENTER_Y = 15;
+const SKILL_MID_UPPER_RAIL_HIGHLIGHT = 3;
+const SKILL_RIGHT_CAP_UPPER_RAIL_HIGHLIGHT = 6;
+const SKILL_MID_INNER_OPENING_TOP = 6;
+const SKILL_RIGHT_CAP_INNER_OPENING_TOP = 9;
 
 describe("game HUD layout", () => {
   it("centers the skill meter fill in the skill frame artwork", () => {
@@ -54,14 +53,16 @@ describe("game HUD layout", () => {
     expect(skillFillCenterY).toBe(HUD_CURRENT_SKILL_FRAME_TOP + UI_SPRITES.currentSkillFrame.displayH / 2);
   });
 
-  it("aligns the visible rails and HP fill window across frame joins", () => {
+  it("aligns visible rails and inner openings across frame joins", () => {
     expect({
       hp: HUD_HP_METER_FRAME.rightTop + HP_RIGHT_CAP_UPPER_RAIL_TOP,
-      skill: HUD_SKILL_METER_FRAME.rightTop + SKILL_RIGHT_CAP_UPPER_RAIL_TOP,
+      skill: HUD_SKILL_METER_FRAME.rightTop + SKILL_RIGHT_CAP_UPPER_RAIL_HIGHLIGHT,
     }).toEqual({
       hp: HP_MID_UPPER_RAIL_TOP,
-      skill: SKILL_MID_UPPER_RAIL_TOP,
+      skill: SKILL_MID_UPPER_RAIL_HIGHLIGHT,
     });
+    expect(HUD_SKILL_METER_FRAME.rightTop + SKILL_RIGHT_CAP_INNER_OPENING_TOP)
+      .toBe(SKILL_MID_INNER_OPENING_TOP);
     expect({
       top: HUD_HP_METER_FRAME.rightTop + HP_RIGHT_CAP_FILL_WINDOW.top,
       bottom: HUD_HP_METER_FRAME.rightTop + HP_RIGHT_CAP_FILL_WINDOW.bottom,
@@ -70,22 +71,6 @@ describe("game HUD layout", () => {
     expect(UI_SPRITES.hudHpBarRight.displayH).toBe(HP_RIGHT_CAP_DISPLAY_H);
     expect(UI_SPRITES.hudSkillBarRight.displayW).toBe(SKILL_RIGHT_CAP_DISPLAY_W);
     expect(UI_SPRITES.hudSkillBarRight.displayH).toBe(SKILL_RIGHT_CAP_DISPLAY_H);
-  });
-
-  it("centers the skill right-cap decoration without moving its rail connector", () => {
-    const skillFillCenterY = (
-      HUD_SKILL_METER_FRAME.fillTop
-      + HUD_SKILL_METER_FRAME.height
-      - HUD_SKILL_METER_FRAME.fillBottom
-    ) / 2;
-
-    expect(HUD_SKILL_METER_FRAME).toMatchObject({
-      rightTop: -4,
-      rightDecorationTop: SKILL_RIGHT_CAP_DECORATION_TOP,
-      rightConnectorWidth: SKILL_RIGHT_CAP_CONNECTOR_WIDTH,
-    });
-    expect(SKILL_RIGHT_CAP_DECORATION_TOP + SKILL_RIGHT_CAP_BLUE_CORE_CENTER_Y)
-      .toBe(skillFillCenterY);
   });
 
   it("places status icons below both the skill meter and current-skill frame", () => {

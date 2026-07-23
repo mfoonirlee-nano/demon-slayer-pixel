@@ -81,12 +81,9 @@ describe("player resource meter transitions", () => {
     expect(markup.match(/motion-reduce:transition-none/g)).toHaveLength(2);
   });
 
-  it("positions the skill cap decoration independently from its rail connector", () => {
+  it("keeps the skill cap artwork continuous across its join", () => {
     const markup = renderToStaticMarkup(<GameHud />);
 
-    expect(markup.match(/player-hud-meter-right-cap-decoration/g)).toHaveLength(1);
-    expect(markup.match(/player-hud-meter-right-cap-connector/g)).toHaveLength(1);
-    expect(markup).toContain("top:-6px;clip-path:inset(0 0 0 6px)");
-    expect(markup).toContain("position:absolute;right:0;top:-4px;clip-path:inset(0 25px 0 0)");
+    expect(markup.match(/hud-skill-bar-right\.png/g)).toHaveLength(1);
   });
 });
