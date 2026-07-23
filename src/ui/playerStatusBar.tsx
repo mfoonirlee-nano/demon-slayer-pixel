@@ -27,6 +27,7 @@ export const PLAYER_STATUS_ICON_PATHS = {
   line_projectile_knockback: "assets/sprites/ui/status/line_projectile_passive_knockback.png",
   close_arc_basic_crescent: "assets/sprites/ui/status/close_arc_basic_attack_crescent.png",
   guard_counter_damage_reduction: "assets/sprites/skills/guard_counter/icon.png",
+  dash_reposition_move_speed: "assets/sprites/skills/dash_reposition/icon.png",
   armor_break_shield_penetration: "assets/sprites/skills/armor_break/icon.png",
   guard_counter: "assets/sprites/skills/guard_counter/icon.png",
   moon_tide: "assets/sprites/skills/ultimate_skill/icon.png",

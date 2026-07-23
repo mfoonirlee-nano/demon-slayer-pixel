@@ -1,6 +1,7 @@
 import {
   ARMOR_BREAK_PASSIVE_CONFIG,
   CLOSE_ARC_BASIC_CRESCENT_CONFIG,
+  DASH_REPOSITION_PASSIVE_CONFIG,
   GUARD_COUNTER_EFFECT_CONFIG,
   LINE_PROJECTILE_EFFECT_CONFIG,
   SKILL_IDS,
@@ -36,6 +37,14 @@ export function armorBreakShieldPenetration(state: GameState) {
       >= ARMOR_BREAK_PASSIVE_CONFIG.requiredLevel
     && player.equippedSkillIds.includes(SKILL_IDS.armorBreak);
   return hasPassive ? ARMOR_BREAK_PASSIVE_CONFIG.shieldPenetration : 0;
+}
+
+export function dashRepositionMoveSpeedMultiplier(state: GameState) {
+  const player = state.player;
+  const hasPassive = (player.skillLevels[SKILL_IDS.dashReposition] ?? 0)
+      >= DASH_REPOSITION_PASSIVE_CONFIG.requiredLevel
+    && player.equippedSkillIds.includes(SKILL_IDS.dashReposition);
+  return hasPassive ? DASH_REPOSITION_PASSIVE_CONFIG.moveSpeedMultiplier : 1;
 }
 
 export function guardCounterIncomingDamageMultiplier(state: GameState) {

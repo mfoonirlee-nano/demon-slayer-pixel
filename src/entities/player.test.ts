@@ -8,9 +8,10 @@ import {
 } from "../constants";
 import { keys } from "../game/input";
 import { resetState, state } from "../game/state";
+import { equipmentMoveSpeedMultiplier } from "../systems/equipment";
 import { spawnEnemyById } from "./enemy";
 import { updateCloseArcBasicCrescentEffects } from "./particle";
-import { attackBox, hurtPlayer, triggerAttack, updatePlayer } from "./player";
+import { attackBox, castSelectedSkill, hurtPlayer, triggerAttack, updatePlayer } from "./player";
 
 const TEST_ENEMY_HP = 100;
 const TEST_ATTACK_BONUS = 4;
@@ -20,6 +21,12 @@ const CLOSE_ARC_BASIC_CRESCENT_ATTACK_FRAME_START = 3;
 const CLOSE_ARC_BASIC_CRESCENT_ATTACK_FRAME_END = 5;
 const LINE_PROJECTILE_LEVEL_THREE = 3;
 const GUARD_COUNTER_LEVEL_THREE = 3;
+const DASH_REPOSITION_LEVEL_THREE = 3;
+const DASH_REPOSITION_LEVEL_BEFORE_PASSIVE = 2;
+const DASH_REPOSITION_PASSIVE_SLOT_INDEX = 2;
+const DASH_REPOSITION_MOVE_SPEED_MULTIPLIER = 1.15;
+const DASH_REPOSITION_LEVEL_THREE_DISTANCE = 124;
+const MOON_TIDE_LEVEL_THREE_MOVE_SPEED_MULTIPLIER = 1.25;
 const PASSIVE_INCOMING_DAMAGE = 40;
 const LEVEL_ONE_PASSIVE_DAMAGE = 34;
 const SUCCESSFUL_KNOCKBACK_ROLL = 0.09;
@@ -260,6 +267,118 @@ describe("player action animation state", () => {
 
     updatePlayer();
     expect(state.player.runStepDistance).toBe(0);
+  });
+});
+
+describe("dash reposition level-three movement passive", () => {
+  beforeEach(() => {
+    resetState();
+    keys.clear();
+    keys.add("d");
+  });
+
+  it.each([0, 1, 2] as const)(
+    "increases movement speed while equipped in non-selected slot %i",
+    (skillSlot) => {
+      state.player.skillLevels[SKILL_IDS.dashReposition] = DASH_REPOSITION_LEVEL_THREE;
+      state.player.equippedSkillIds[skillSlot] = SKILL_IDS.dashReposition;
+      state.player.skillIndex = (skillSlot + 1) % state.player.equippedSkillIds.length;
+      const startX = state.player.x;
+
+      updatePlayer();
+
+      expect(state.player.x - startX)
+        .toBeCloseTo(state.player.speed * DASH_REPOSITION_MOVE_SPEED_MULTIPLIER);
+    },
+  );
+
+  it.each([
+    {
+      scenario: "the skill is below level three",
+      skillLevel: DASH_REPOSITION_LEVEL_BEFORE_PASSIVE,
+      equipped: true,
+    },
+    {
+      scenario: "the skill is not equipped",
+      skillLevel: DASH_REPOSITION_LEVEL_THREE,
+      equipped: false,
+    },
+  ] as const)("does not increase movement speed when $scenario", ({ skillLevel, equipped }) => {
+    state.player.skillLevels[SKILL_IDS.dashReposition] = skillLevel;
+    if (equipped) {
+      state.player.equippedSkillIds[DASH_REPOSITION_PASSIVE_SLOT_INDEX] = SKILL_IDS.dashReposition;
+    }
+    const startX = state.player.x;
+
+    updatePlayer();
+
+    expect(state.player.x - startX).toBeCloseTo(state.player.speed);
+  });
+
+  it("also increases leftward movement speed", () => {
+    state.player.skillLevels[SKILL_IDS.dashReposition] = DASH_REPOSITION_LEVEL_THREE;
+    state.player.equippedSkillIds[DASH_REPOSITION_PASSIVE_SLOT_INDEX] = SKILL_IDS.dashReposition;
+    keys.clear();
+    keys.add("a");
+    const startX = state.player.x;
+
+    updatePlayer();
+
+    expect(state.player.x - startX)
+      .toBeCloseTo(-state.player.speed * DASH_REPOSITION_MOVE_SPEED_MULTIPLIER);
+  });
+
+  it("stacks multiplicatively with the moon tide movement bonus", () => {
+    state.player.skillLevels[SKILL_IDS.dashReposition] = DASH_REPOSITION_LEVEL_THREE;
+    state.player.equippedSkillIds[DASH_REPOSITION_PASSIVE_SLOT_INDEX] = SKILL_IDS.dashReposition;
+    state.player.ultimateLevel = 3;
+    state.player.ultimateTimer = 30;
+    const startX = state.player.x;
+
+    updatePlayer();
+
+    expect(state.player.x - startX).toBeCloseTo(
+      state.player.speed
+        * DASH_REPOSITION_MOVE_SPEED_MULTIPLIER
+        * MOON_TIDE_LEVEL_THREE_MOVE_SPEED_MULTIPLIER,
+    );
+  });
+
+  it("stacks multiplicatively with equipment movement bonuses", () => {
+    state.player.skillLevels[SKILL_IDS.dashReposition] = DASH_REPOSITION_LEVEL_THREE;
+    state.player.equippedSkillIds[DASH_REPOSITION_PASSIVE_SLOT_INDEX] = SKILL_IDS.dashReposition;
+    state.equipmentInventory.push({ id: "flow_garb", tier: "common" });
+    state.equippedEquipment.garb = "flow_garb";
+    state.player.flowGarbTimer = 30;
+    const equipmentMultiplier = equipmentMoveSpeedMultiplier(state);
+    const startX = state.player.x;
+
+    updatePlayer();
+
+    expect(state.player.x - startX).toBeCloseTo(
+      state.player.speed * DASH_REPOSITION_MOVE_SPEED_MULTIPLIER * equipmentMultiplier,
+    );
+  });
+
+  it("does not change the level-three dash travel distance", () => {
+    state.player.skillLevels[SKILL_IDS.dashReposition] = DASH_REPOSITION_LEVEL_THREE;
+    state.player.equippedSkillIds[DASH_REPOSITION_PASSIVE_SLOT_INDEX] = SKILL_IDS.dashReposition;
+    state.player.skillIndex = DASH_REPOSITION_PASSIVE_SLOT_INDEX;
+    state.player.skillEnergy = state.player.skillEnergyMax;
+    keys.clear();
+    const startX = state.player.x;
+
+    castSelectedSkill();
+    while (!state.player.dashReposition && state.player.skillTimer > 0) updatePlayer();
+
+    expect(state.player.dashReposition).toMatchObject({
+      startX,
+      targetX: startX + DASH_REPOSITION_LEVEL_THREE_DISTANCE,
+    });
+
+    while (state.player.dashReposition) updatePlayer();
+
+    expect(state.player.x - startX).toBeCloseTo(DASH_REPOSITION_LEVEL_THREE_DISTANCE);
   });
 });
 

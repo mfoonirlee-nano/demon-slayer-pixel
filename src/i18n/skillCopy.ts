@@ -55,7 +55,7 @@ const ENGLISH_SKILL_COPY = {
     levelDescriptions: {
       1: "Dash a short distance, pierce enemies ahead, then finish with a sheathing slash.",
       2: "Dash farther; the sheathing slash gains range and damage, improving pursuit.",
-      3: "Further strengthens the dash and sheathing slash while keeping it a short repositioning move.",
+      3: "Further strengthens the dash and sheathing slash. While equipped, movement speed increases by 15%. Tideflash remains a short repositioning move.",
     },
   },
   [SKILL_IDS.vortexControl]: {

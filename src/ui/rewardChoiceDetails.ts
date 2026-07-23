@@ -1,5 +1,4 @@
 import {
-  ARMOR_BREAK_PASSIVE_CONFIG,
   CLOSE_ARC_BASIC_CRESCENT_CONFIG,
   EQUIPMENT_PRIMARY_STAT_BONUS_RATIOS,
   GUARD_COUNTER_EFFECT_CONFIG,
@@ -99,7 +98,8 @@ import type {
   UltimateLevel,
   UpgradeChoiceState,
 } from "../types/game-state";
-import { formatSignedPercent } from "../utils";
+import { formatPercent, formatSignedPercent } from "../utils";
+import { skillPassiveRewardMetric } from "./rewardSkillPassiveMetrics";
 
 export type RewardMetricTone = "damage" | "defense" | "resource" | "range" | "speed" | "utility";
 
@@ -118,7 +118,6 @@ type ActiveUltimateLevel = Exclude<UltimateLevel, 0>;
 
 const MAX_REWARD_METRICS = 4;
 const FRAMES_PER_SECOND = 60;
-const PERCENT_MULTIPLIER = 100;
 const MAX_REWARD_LEVEL = 3;
 const EQUIPMENT_TIER_ORDER: EquipmentTier[] = ["common", "fine", "awakened"];
 const EQUIPMENT_PRIMARY_STAT_TONES = {
@@ -373,16 +372,13 @@ function skillTuningMetrics(
     const unlocksBonusRainDrop = skillId === SKILL_IDS.antiAirMulti
       && nextLevel >= ANTI_AIR_MULTI_BONUS_DROP_CONFIG.requiredLevel
       && previousLevel < ANTI_AIR_MULTI_BONUS_DROP_CONFIG.requiredLevel;
-    const unlocksArmorBreakPassive = skillId === SKILL_IDS.armorBreak
-      && nextLevel >= ARMOR_BREAK_PASSIVE_CONFIG.requiredLevel
-      && previousLevel < ARMOR_BREAK_PASSIVE_CONFIG.requiredLevel;
     const bonusRainDropValue = `${formatPercent(ANTI_AIR_MULTI_BONUS_DROP_CONFIG.chance)} / ${
       formatRewardUnit(language, "skillDamage", formatPercent(ANTI_AIR_MULTI_BONUS_DROP_CONFIG.damageMultiplier))
     }`;
     return compactMetrics([
       tuning.count ? levelTableMetric(label("strikeCount"), tuning.count, nextLevel, previousLevel, String, "damage") : null,
       unlocksBonusRainDrop ? metric(label("bonusRainDrop"), bonusRainDropValue, "damage") : null,
-      unlocksArmorBreakPassive ? metric(label("passiveShieldPenetration"), formatPercent(ARMOR_BREAK_PASSIVE_CONFIG.shieldPenetration), "utility") : null,
+      skillPassiveRewardMetric(skillId, nextLevel, previousLevel, language),
       tuning.maxHits ? levelTableMetric(label("maxHits"), tuning.maxHits, nextLevel, previousLevel, String, "damage") : null,
       tuning.armorBreakMultiplier
         ? levelTableMetric(label("followUpDamage"), tuning.armorBreakMultiplier, nextLevel, previousLevel, formatMultiplierDelta, "damage")
@@ -426,7 +422,7 @@ function skillTuningMetrics(
         label("effectSize"),
         previousGrowth?.drawScale,
         nextGrowth.drawScale,
-        (value) => `${Math.round(value / maxDrawScale * PERCENT_MULTIPLIER)}%`,
+        (value) => formatPercent(value / maxDrawScale),
         "range",
       ),
       nextLevel >= CLOSE_ARC_BASIC_CRESCENT_CONFIG.requiredSkillLevel
@@ -580,10 +576,6 @@ function numberTransition(previousValue: number | null, nextValue: number) {
 
 function formatMultiplierDelta(multiplier: number) {
   return formatSignedPercent(multiplier - 1);
-}
-
-function formatPercent(value: number) {
-  return `${Math.round(value * PERCENT_MULTIPLIER)}%`;
 }
 
 function formatFrames(frames: number, language: Language = DEFAULT_LANGUAGE) {

@@ -80,4 +80,12 @@ describe("localized skill copy", () => {
     expect(description).toContain("equipped");
     expect(description).toContain("shield");
   });
+
+  it("localizes the level-three dash reposition movement speed passive", () => {
+    const description = skillDescription("en", SKILL_IDS.dashReposition, LEVEL_THREE);
+
+    expect(description).toContain("15%");
+    expect(description).toContain("equipped");
+    expect(description).toContain("movement speed");
+  });
 });

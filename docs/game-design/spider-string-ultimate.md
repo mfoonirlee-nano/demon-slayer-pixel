@@ -133,7 +133,10 @@ moveScale = Math.min(
   bindingZonePlayerMoveScale(),
   lanternAshZonePlayerMoveScale(),
   spiderSilkSlowPlayerMoveScale(),
-) * equipmentMoveSpeedMultiplier(state) * moonTideMoveSpeedMultiplier();
+)
+  * equipmentMoveSpeedMultiplier(state)
+  * dashRepositionMoveSpeedMultiplier(state)
+  * moonTideMoveSpeedMultiplier();
 ```
 
 ## Defense Rules

@@ -86,7 +86,7 @@ export const SKILLS: Skill[] = [
     levelDescriptions: {
       1: "短距离向前闪进，穿击身前敌人并追加收刀斩。",
       2: "突进更远，收刀斩范围和伤害提升，更适合追击。",
-      3: "突进和收刀斩继续强化，但仍是短距离进退。",
+      3: "突进和收刀斩继续强化；装备后移动速度提升 15%，但潮闪仍是短距离进退。",
     },
     src: "assets/sprites/skills/dash_reposition/skill.png",
     frameCount: 5,

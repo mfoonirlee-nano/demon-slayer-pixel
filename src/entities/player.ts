@@ -15,7 +15,6 @@ import { onGround, hitbox, overlapHitPoint } from "../game/utils";
 import { playSfx } from "../game/audio";
 import { emitFallAttackSplash, emitSlash, emitHitBurst, damageDashRepositionTravel, finishDashRepositionSkill } from "./particle";
 import {
-  bindingZonePlayerMoveScale,
   isBinderTalismanKeyScrambled,
   isBinderTalismanStunned,
 } from "./enemies/binder";
@@ -30,7 +29,6 @@ import {
   equipmentBasicAttackReachBonus,
   equipmentIncomingDamageMultiplier,
   equipmentKnockbackMultiplier,
-  equipmentMoveSpeedMultiplier,
   grantSkillEnergy,
   grantUltimateEnergy,
   recordBasicAttackHit,
@@ -41,17 +39,19 @@ import {
 import { applyBossDamage, applyEnemyDamage, resolveBossHit, resolveEnemyHit } from "../systems/combatResolution";
 import { endRun } from "../systems/runLifecycle";
 import { selectSkillSlot } from "../systems/loadout";
-import { guardCounterIncomingDamageMultiplier, hasCloseArcBasicCrescentPassive } from "../systems/playerSkillPassives";
+import {
+  guardCounterIncomingDamageMultiplier,
+  hasCloseArcBasicCrescentPassive,
+} from "../systems/playerSkillPassives";
 import { CORE_PLAYER_SKILL_EFFECT_CONFIGS, playerSkillColor } from "../systems/skillCatalog";
 import {
   moonTideAttackFrames,
   moonTideBasicDamageMultiplier,
   moonTideJumpMultiplier,
-  moonTideMoveSpeedMultiplier,
   spawnMoonTideTrail,
   triggerMoonTideAfterimageHit,
 } from "./players/moonTide";
-import { lanternAshZonePlayerMoveScale, spiderSilkSlowPlayerMoveScale } from "./players/movementModifiers";
+import { playerMoveScale } from "./players/movementModifiers";
 import { updateSkillCastRelease, updateUltimateCastAndTimer } from "./players/skillCasting";
 
 export { castSelectedSkill, castUltimateSkill } from "./players/skillCasting";
@@ -401,13 +401,7 @@ export function updatePlayer() {
   if (!dashReposition && p.onPlatform && state.platforms.includes(p.onPlatform)) {
     p.x += p.onPlatform.vx;
   }
-  const moveScale = Math.min(
-    bindingZonePlayerMoveScale(),
-    lanternAshZonePlayerMoveScale(),
-    spiderSilkSlowPlayerMoveScale(),
-  )
-    * equipmentMoveSpeedMultiplier(state)
-    * moonTideMoveSpeedMultiplier();
+  const moveScale = playerMoveScale();
   let previousDashX = p.x;
   let previousDashY = p.y;
   const stunned = isBinderTalismanStunned();

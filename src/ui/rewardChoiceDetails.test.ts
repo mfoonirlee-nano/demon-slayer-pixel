@@ -212,6 +212,21 @@ describe("reward choice details", () => {
     expect(metricValue(metrics, "距离")).toBe("92px -> 108px");
   });
 
+  it("shows the dash reposition movement speed passive at level three", () => {
+    const choice: UpgradeChoiceState = {
+      id: "upgrade-dash-reposition",
+      type: "upgradeSkill",
+      title: "技能精进",
+      name: "流步·潮闪 III",
+      description: "潮闪解锁被动移速。",
+      skillId: SKILL_IDS.dashReposition,
+      nextLevel: 3,
+    };
+
+    expect(metricValue(upgradeRewardMetrics(choice, BASE_PLAYER), "移速")).toBe("+15%");
+    expect(metricValue(upgradeRewardMetrics(choice, BASE_PLAYER, "en"), "Move Speed")).toBe("+15%");
+  });
+
   it("shows the armor break passive shield penetration at level three", () => {
     const choice: UpgradeChoiceState = {
       id: "upgrade-armor-break",

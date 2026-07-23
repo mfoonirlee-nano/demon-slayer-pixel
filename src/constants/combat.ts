@@ -24,6 +24,11 @@ export const ARMOR_BREAK_PASSIVE_CONFIG = {
   shieldPenetration: 0.5,
 } as const;
 
+export const DASH_REPOSITION_PASSIVE_CONFIG = {
+  requiredLevel: 3,
+  moveSpeedMultiplier: 1.15,
+} as const;
+
 export const FALL_ATTACK = {
   startVelocity: 5,
   diveVelocity: 7,

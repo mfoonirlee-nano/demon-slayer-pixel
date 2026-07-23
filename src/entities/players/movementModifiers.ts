@@ -1,6 +1,10 @@
 import { state } from "../../game/state";
 import { LANTERN_EMBER_CONFIG, SPIDER_STRING_CAGE_CONFIG } from "../../constants";
+import { equipmentMoveSpeedMultiplier } from "../../systems/equipment";
+import { dashRepositionMoveSpeedMultiplier } from "../../systems/playerSkillPassives";
+import { bindingZonePlayerMoveScale } from "../enemies/binder";
 import { activeLanternAshZoneForPlayer } from "./lanternAshZone";
+import { moonTideMoveSpeedMultiplier } from "./moonTide";
 
 export function lanternAshZonePlayerMoveScale() {
   return activeLanternAshZoneForPlayer(state)
@@ -12,4 +16,15 @@ export function spiderSilkSlowPlayerMoveScale() {
   return state.player.spiderSilkSlowTimer > 0
     ? SPIDER_STRING_CAGE_CONFIG.slowMoveScale
     : 1;
+}
+
+export function playerMoveScale() {
+  return Math.min(
+    bindingZonePlayerMoveScale(),
+    lanternAshZonePlayerMoveScale(),
+    spiderSilkSlowPlayerMoveScale(),
+  )
+    * equipmentMoveSpeedMultiplier(state)
+    * dashRepositionMoveSpeedMultiplier(state)
+    * moonTideMoveSpeedMultiplier();
 }

@@ -128,6 +128,20 @@ describe("player status snapshot", () => {
     expect(status("armor_break_shield_penetration")).toBeUndefined();
   });
 
+  it("exposes the dash reposition movement passive only while level three is equipped", () => {
+    state.player.skillLevels.dash_reposition = 3;
+    state.player.equippedSkillIds[2] = "dash_reposition";
+
+    expect(status("dash_reposition_move_speed")).toMatchObject({
+      remainingFrames: null,
+      durationFrames: null,
+    });
+
+    state.player.equippedSkillIds[2] = null;
+
+    expect(status("dash_reposition_move_speed")).toBeUndefined();
+  });
+
   it("projects guard duration and hit stacks through its effective barrier flash", () => {
     state.guardCounterEffect = {
       elapsed: 12,
