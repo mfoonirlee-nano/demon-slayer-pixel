@@ -162,7 +162,7 @@ export const SKILLS: Skill[] = [
     levelDescriptions: {
       1: "落下 4 条潮线，覆盖上方和远处目标。",
       2: "落下 5 条潮线，每条伤害提升，对空压制更密。",
-      3: "落下 6 条潮线，伤害和覆盖继续提升。",
+      3: "落下 6 条潮线；每次施放有 30% 概率追加雨滴攻击，造成 50% 技能伤害。",
     },
     src: "assets/sprites/skills/anti_air_multi/skill.png",
     frameCount: 5,

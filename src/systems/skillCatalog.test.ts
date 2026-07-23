@@ -5,6 +5,7 @@ import {
   LINE_PROJECTILE_EFFECT_CONFIG,
   SKILL_IDS,
 } from "../constants";
+import { ANTI_AIR_MULTI_BONUS_DROP_CONFIG } from "./playerSkills";
 import {
   implementedPlayerSkills,
   lineProjectileEffectSheetForLevel,
@@ -29,6 +30,8 @@ const LINE_PROJECTILE_EFFECT_LOOP_FROM_FRAME = 5;
 const CLOSE_ARC_BASIC_CRESCENT_FRAME_COUNT = 2;
 const CLOSE_ARC_BASIC_CRESCENT_FRAME_DURATION = 4;
 const GUARD_COUNTER_LEVEL_THREE = 3;
+const ANTI_AIR_MULTI_LEVEL_THREE = 3;
+const PERCENT_MULTIPLIER = 100;
 
 describe("player skill catalog copy", () => {
   it("uses the canonical display names for all implemented normal skills", () => {
@@ -111,6 +114,13 @@ describe("player skill catalog copy", () => {
     expect(description).toContain("15%");
     expect(description).toContain("30%");
     expect(description).toContain("玩家等级");
+  });
+
+  it("explains the level-three anti-air bonus drop chance and damage", () => {
+    const description = playerSkillDescription(SKILL_IDS.antiAirMulti, ANTI_AIR_MULTI_LEVEL_THREE);
+
+    expect(description).toContain(`${ANTI_AIR_MULTI_BONUS_DROP_CONFIG.chance * PERCENT_MULTIPLIER}%`);
+    expect(description).toContain(`${ANTI_AIR_MULTI_BONUS_DROP_CONFIG.damageMultiplier * PERCENT_MULTIPLIER}%`);
   });
 
   it("preloads the close arc level three basic attack crescent sheet", () => {

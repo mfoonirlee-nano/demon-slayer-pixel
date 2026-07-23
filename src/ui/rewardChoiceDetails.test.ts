@@ -212,6 +212,22 @@ describe("reward choice details", () => {
     expect(metricValue(metrics, "距离")).toBe("92px -> 108px");
   });
 
+  it("shows the anti-air bonus drop chance and damage at level three", () => {
+    const choice: UpgradeChoiceState = {
+      id: "upgrade-anti-air-multi",
+      type: "upgradeSkill",
+      title: "技能精进",
+      name: "雨线·穿针 III",
+      description: "雨线有概率追加雨滴。",
+      skillId: SKILL_IDS.antiAirMulti,
+      nextLevel: 3,
+    };
+
+    const metrics = upgradeRewardMetrics(choice, BASE_PLAYER);
+
+    expect(metricValue(metrics, "追加雨滴")).toBe("30% / 50%技能伤害");
+  });
+
   it("shows damage and duration changes for ultimate upgrades", () => {
     const choice: UpgradeChoiceState = {
       id: "upgrade-ultimate",
@@ -253,6 +269,18 @@ describe("reward choice details", () => {
     };
     expect(metricValue(upgradeRewardMetrics(closeArc, BASE_PLAYER, "en"), "Basic Attack Crescent"))
       .toBe("Unlocked");
+
+    const antiAirMulti: UpgradeChoiceState = {
+      id: "upgrade-anti-air-multi",
+      type: "upgradeSkill",
+      title: "技能精进",
+      name: "雨线·穿针 III",
+      description: "雨线有概率追加雨滴。",
+      skillId: SKILL_IDS.antiAirMulti,
+      nextLevel: 3,
+    };
+    expect(metricValue(upgradeRewardMetrics(antiAirMulti, BASE_PLAYER, "en"), "Bonus Raindrop"))
+      .toBe("30% / 50% skill damage");
 
     const ultimate: UpgradeChoiceState = {
       id: "upgrade-ultimate",

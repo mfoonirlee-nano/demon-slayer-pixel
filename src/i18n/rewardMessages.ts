@@ -60,6 +60,7 @@ const ZH_REWARD_LABELS = {
   radius: "范围半径",
   distance: "距离",
   range: "范围",
+  bonusRainDrop: "追加雨滴",
   skillKnockback: "技能击退",
   passiveKnockback: "被动击退",
   passiveDamageReduction: "被动减伤",
@@ -135,6 +136,7 @@ const EN_REWARD_LABELS = {
   radius: "Radius",
   distance: "Distance",
   range: "Range",
+  bonusRainDrop: "Bonus Raindrop",
   skillKnockback: "Skill Knockback",
   passiveKnockback: "Passive Knockback",
   passiveDamageReduction: "Passive Damage Reduction",
@@ -177,7 +179,8 @@ export type RewardValueUnit =
   | "bodyWidths"
   | "skillBars"
   | "ultimateEnergy"
-  | "attackMultiplier";
+  | "attackMultiplier"
+  | "skillDamage";
 
 type RewardUnitValue = number | string;
 type RewardUnitFormatter = (value: RewardUnitValue) => string;
@@ -193,6 +196,7 @@ const REWARD_UNIT_FORMATTERS = {
     skillBars: (value) => `${value}格技能`,
     ultimateEnergy: (value) => `${value}终能`,
     attackMultiplier: (value) => `${value}x攻击`,
+    skillDamage: (value) => `${value}技能伤害`,
   },
   en: {
     seconds: (value) => `${value} ${Number(value) === 1 ? "second" : "seconds"}`,
@@ -204,6 +208,7 @@ const REWARD_UNIT_FORMATTERS = {
     skillBars: (value) => `${value} ${Number(value) === 1 ? "skill bar" : "skill bars"}`,
     ultimateEnergy: (value) => `${value} ultimate energy`,
     attackMultiplier: (value) => `${value}x Attack`,
+    skillDamage: (value) => `${value} skill damage`,
   },
 } satisfies Record<Language, Record<RewardValueUnit, RewardUnitFormatter>>;
 

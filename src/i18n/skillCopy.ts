@@ -82,7 +82,7 @@ const ENGLISH_SKILL_COPY = {
     levelDescriptions: {
       1: "Call down 4 tidal lines to cover targets above and at range.",
       2: "Call down 5 tidal lines, each dealing more damage for denser anti-air coverage.",
-      3: "Call down 6 tidal lines with further damage and coverage.",
+      3: "Call down 6 tidal lines. Each cast has a 30% chance to add a raindrop strike dealing 50% skill damage.",
     },
   },
   [SKILL_IDS.returningBlade]: {

@@ -4,7 +4,12 @@ import type { EnemyState, SkillLevel } from "../../types/game-state";
 import type { SkillId } from "../../types/assets";
 import { clamp, hitbox } from "../../game/utils";
 import { resolveBossHit, resolveEnemyHit } from "../../systems/combatResolution";
-import { GENERIC_PLAYER_SKILL_TUNING, isGenericPlayerSkillId, valueForSkillLevel } from "../../systems/playerSkills";
+import {
+  ANTI_AIR_MULTI_BONUS_DROP_CONFIG,
+  GENERIC_PLAYER_SKILL_TUNING,
+  isGenericPlayerSkillId,
+  valueForSkillLevel,
+} from "../../systems/playerSkills";
 import { playerSkillEffectSheet } from "../../systems/skillCatalog";
 import { emitHitBurst, emitSlash } from "./bursts";
 import {
@@ -217,14 +222,24 @@ export function spawnPlayerSkillEffect(skillId: SkillId, castDamageMultiplier = 
 
   if (skillId === SKILL_IDS.antiAirMulti) {
     const count = valueForSkillLevel(tuning.count ?? tuning.life, level);
+    const hasBonusDrop = level >= ANTI_AIR_MULTI_BONUS_DROP_CONFIG.requiredLevel
+      && Math.random() < ANTI_AIR_MULTI_BONUS_DROP_CONFIG.chance;
+    const targets = rainLineTargets(count);
+    if (hasBonusDrop) {
+      const bonusTarget = rainLineTargets(count + 1)[count];
+      if (bonusTarget) targets.push(bonusTarget);
+    }
     const effectLife = valueForSkillLevel(tuning.life, level);
     const sheet = playerSkillEffectSheet(skillId);
     const visualY = sheet
       ? GROUND_Y - sheet.frameH * tuning.drawScale / 2 + RAIN_LINE_EFFECT_BOTTOM_TRANSPARENT_PX * tuning.drawScale
       : undefined;
-    for (const target of rainLineTargets(count)) {
+    for (const [index, target] of targets.entries()) {
+      const damageMultiplier = index < count
+        ? castDamageMultiplier
+        : castDamageMultiplier * ANTI_AIR_MULTI_BONUS_DROP_CONFIG.damageMultiplier;
       const frame = Math.min((sheet?.count ?? 1) - 1, Math.floor(target.elapsed / tuning.frameDuration));
-      state.playerSkillEffects.push(makeGenericEffect(skillId, level, castDamageMultiplier, target.x, target.y - RAIN_LINE_EFFECT_Y_OFFSET, {
+      state.playerSkillEffects.push(makeGenericEffect(skillId, level, damageMultiplier, target.x, target.y - RAIN_LINE_EFFECT_Y_OFFSET, {
         visualY,
         elapsed: target.elapsed,
         frame,

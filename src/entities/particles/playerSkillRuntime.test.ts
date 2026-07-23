@@ -1,6 +1,7 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { SKILL_IDS, WIDTH } from "../../constants";
 import { resetState, state } from "../../game/state";
+import { ANTI_AIR_MULTI_BONUS_DROP_CONFIG } from "../../systems/playerSkills";
 import type { EnemyState } from "../../types/game-state";
 import { spawnEnemyById } from "../enemy";
 import { spawnPlayerSkillEffect } from "./playerSkillSpawn";
@@ -14,6 +15,14 @@ vi.mock("../../game/audio", () => audioMock);
 
 const PLAYER_TEST_X = 420;
 const PLAYER_TEST_Y = 300;
+const ANTI_AIR_LEVEL_TWO = 2;
+const ANTI_AIR_LEVEL_TWO_LINE_COUNT = 5;
+const ANTI_AIR_LEVEL_THREE_LINE_COUNT = 6;
+const SUCCESSFUL_ROLL_MARGIN = 0.01;
+
+afterEach(() => {
+  vi.restoreAllMocks();
+});
 
 function spawnReturningBlade(facing: 1 | -1 = 1) {
   state.player.x = PLAYER_TEST_X;
@@ -89,5 +98,67 @@ describe("armor break runtime", () => {
 
     expect(effect.phase).toBe("impact");
     expect(audioMock.playSfx).toHaveBeenCalledWith("playerSkillArmorBreakImpact");
+  });
+});
+
+describe("anti-air multi level-three bonus drop", () => {
+  beforeEach(() => {
+    resetState();
+  });
+
+  it("adds one stationary rain drop at half skill damage after a successful cast roll", () => {
+    state.player.skillLevels[SKILL_IDS.antiAirMulti] = ANTI_AIR_MULTI_BONUS_DROP_CONFIG.requiredLevel;
+    const random = vi.spyOn(Math, "random").mockReturnValue(ANTI_AIR_MULTI_BONUS_DROP_CONFIG.chance);
+    expect(spawnPlayerSkillEffect(SKILL_IDS.antiAirMulti)).toBe(true);
+    const baseTargets = state.playerSkillEffects.map(({ x, y }) => ({ x, y }));
+    expect(random).toHaveBeenCalledTimes(1);
+
+    resetState();
+    state.player.skillLevels[SKILL_IDS.antiAirMulti] = ANTI_AIR_MULTI_BONUS_DROP_CONFIG.requiredLevel;
+    random.mockClear();
+    random.mockReturnValue(
+      ANTI_AIR_MULTI_BONUS_DROP_CONFIG.chance - SUCCESSFUL_ROLL_MARGIN,
+    );
+
+    expect(spawnPlayerSkillEffect(SKILL_IDS.antiAirMulti)).toBe(true);
+
+    expect(random).toHaveBeenCalledTimes(1);
+    expect(state.playerSkillEffects).toHaveLength(ANTI_AIR_LEVEL_THREE_LINE_COUNT + 1);
+    expect(state.playerSkillEffects.slice(0, ANTI_AIR_LEVEL_THREE_LINE_COUNT).map(
+      ({ x, y }) => ({ x, y }),
+    )).toEqual(baseTargets);
+    const baseLine = state.playerSkillEffects[0]!;
+    const bonusDrop = state.playerSkillEffects[ANTI_AIR_LEVEL_THREE_LINE_COUNT]!;
+    expect(bonusDrop).toMatchObject({
+      kind: "rainLine",
+      vx: 0,
+      vy: 0,
+      refundGroupId: baseLine.refundGroupId,
+    });
+    expect(bonusDrop.damage).toBeCloseTo(
+      baseLine.damage * ANTI_AIR_MULTI_BONUS_DROP_CONFIG.damageMultiplier,
+    );
+    expect(bonusDrop.bossDamage).toBeCloseTo(
+      baseLine.bossDamage * ANTI_AIR_MULTI_BONUS_DROP_CONFIG.damageMultiplier,
+    );
+  });
+
+  it("does not add a rain drop when the roll equals the thirty-percent boundary", () => {
+    state.player.skillLevels[SKILL_IDS.antiAirMulti] = ANTI_AIR_MULTI_BONUS_DROP_CONFIG.requiredLevel;
+    vi.spyOn(Math, "random").mockReturnValue(ANTI_AIR_MULTI_BONUS_DROP_CONFIG.chance);
+
+    expect(spawnPlayerSkillEffect(SKILL_IDS.antiAirMulti)).toBe(true);
+
+    expect(state.playerSkillEffects).toHaveLength(ANTI_AIR_LEVEL_THREE_LINE_COUNT);
+  });
+
+  it("does not roll for a bonus rain drop below level three", () => {
+    state.player.skillLevels[SKILL_IDS.antiAirMulti] = ANTI_AIR_LEVEL_TWO;
+    const random = vi.spyOn(Math, "random").mockReturnValue(0);
+
+    expect(spawnPlayerSkillEffect(SKILL_IDS.antiAirMulti)).toBe(true);
+
+    expect(random).not.toHaveBeenCalled();
+    expect(state.playerSkillEffects).toHaveLength(ANTI_AIR_LEVEL_TWO_LINE_COUNT);
   });
 });
