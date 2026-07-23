@@ -6,6 +6,7 @@ import { hurtPlayer } from "../player";
 import { damageEnemy } from "../enemies/common";
 import { resolveEnemyDefeat } from "../enemies/defeat";
 import { BOSS_ARCHETYPE_IDS, bossArchetypeForId } from "./registry";
+import { bossAttackDamage } from "./shared";
 import type { BossSkill1EffectState } from "../../types/game-state";
 import type { LiveBoss } from "./types";
 
@@ -14,8 +15,10 @@ const PROJECTILE_SFX_PITCH = 0.86;
 export function spawnBossSkill1Effect(boss: LiveBoss) {
   const facing = boss.castFacing;
   const archetype = bossArchetypeForId(boss.id);
-  const damage = (archetype.contactDamageBase + boss.phase * archetype.contactDamagePhase)
-    * BOSS_SKILL1_CONFIG.damageMultiplier;
+  const damage = bossAttackDamage(
+    (archetype.contactDamageBase + boss.phase * archetype.contactDamagePhase)
+      * BOSS_SKILL1_CONFIG.damageMultiplier,
+  );
   const startX = boss.x + boss.w / 2 + facing * BOSS_SKILL1_CONFIG.effectSpawnXOffset;
   const startY = boss.y + BOSS_SKILL1_CONFIG.effectSpawnYOffset;
   const vx = facing * BOSS_SKILL1_CONFIG.effectSpeed;

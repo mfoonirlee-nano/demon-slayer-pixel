@@ -3,7 +3,7 @@ import { state } from "../../game/state";
 import { clamp } from "../../game/utils";
 import { playSfx } from "../../game/audio";
 import { hurtPlayer } from "../player";
-import { damagePlayerOnContact } from "./shared";
+import { bossAttackDamage, damagePlayerOnContact } from "./shared";
 import type { LiveBoss } from "./types";
 
 const RECOVERY_DRAG = 0.82;
@@ -156,7 +156,11 @@ function updateDeadBellReprisal(boss: LiveBoss) {
     const bossCenter = boss.x + boss.w / 2;
     const playerCenter = state.player.x + state.player.w / 2;
     hurtPlayer(
-      DEAD_BELL_CONFIG.damageBase + boss.phase * DEAD_BELL_CONFIG.damagePhase + DUET_REPRISAL_DAMAGE_BONUS,
+      bossAttackDamage(
+        DEAD_BELL_CONFIG.damageBase
+          + boss.phase * DEAD_BELL_CONFIG.damagePhase
+          + DUET_REPRISAL_DAMAGE_BONUS,
+      ),
       bossCenter - playerCenter,
     );
     playSfx("bossPhaseShift", DUET_REPRISAL_SFX_PITCH);
@@ -230,7 +234,9 @@ export function spawnDeadBellWave(boss: LiveBoss, delay: number, maxRadius: numb
     delay,
     elapsed: 0,
     frame: 0,
-    damage: DEAD_BELL_CONFIG.damageBase + boss.phase * DEAD_BELL_CONFIG.damagePhase,
+    damage: bossAttackDamage(
+      DEAD_BELL_CONFIG.damageBase + boss.phase * DEAD_BELL_CONFIG.damagePhase,
+    ),
     hitPlayer: false,
   });
   playSfx("bossWave");
@@ -258,7 +264,11 @@ export function spawnDeadBellBlade(boss: LiveBoss, centerY: number, delay: numbe
     elapsed: 0,
     frame: 0,
     life: DEAD_BELL_CONFIG.bladeLife,
-    damage: DEAD_BELL_CONFIG.damageBase + boss.phase * DEAD_BELL_CONFIG.damagePhase + BLADE_DAMAGE_BONUS,
+    damage: bossAttackDamage(
+      DEAD_BELL_CONFIG.damageBase
+        + boss.phase * DEAD_BELL_CONFIG.damagePhase
+        + BLADE_DAMAGE_BONUS,
+    ),
   });
   playSfx("bossBlade", delay > 0 ? DELAYED_BLADE_SFX_PITCH : 1);
 }

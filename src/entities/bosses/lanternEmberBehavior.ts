@@ -4,7 +4,7 @@ import { state } from "../../game/state";
 import { clamp } from "../../game/utils";
 import { playSfx } from "../../game/audio";
 import { spawnBossSummonEnemy } from "../enemy";
-import { damagePlayerOnContact } from "./shared";
+import { bossAttackDamage, damagePlayerOnContact } from "./shared";
 import type { LiveBoss } from "./types";
 
 const CAST_SFX_PITCH = 0.96;
@@ -163,7 +163,10 @@ export function spawnLanternFireline(boss: LiveBoss) {
     elapsed: 0,
     frame: 0,
     life: LANTERN_EMBER_CONFIG.firelineLife,
-    damage: LANTERN_EMBER_CONFIG.firelineDamageBase + boss.phase * LANTERN_EMBER_CONFIG.firelineDamagePhase,
+    damage: bossAttackDamage(
+      LANTERN_EMBER_CONFIG.firelineDamageBase
+        + boss.phase * LANTERN_EMBER_CONFIG.firelineDamagePhase,
+    ),
     hitPlayer: false,
   });
   playSfx("bossFire");
@@ -214,7 +217,10 @@ function spawnLanternAwakenedGrid(boss: LiveBoss) {
     elapsed: 0,
     frame: 0,
     life: LANTERN_EMBER_CONFIG.awakenedGridLife,
-    damage: LANTERN_EMBER_CONFIG.awakenedGridDamageBase + boss.phase * LANTERN_EMBER_CONFIG.awakenedGridDamagePhase,
+    damage: bossAttackDamage(
+      LANTERN_EMBER_CONFIG.awakenedGridDamageBase
+        + boss.phase * LANTERN_EMBER_CONFIG.awakenedGridDamagePhase,
+    ),
     hitPlayerCd: 0,
   });
   spawnLanternAshZone(boss);
@@ -235,6 +241,9 @@ export function spawnLanternAshZone(boss: LiveBoss) {
     maxLife: LANTERN_EMBER_CONFIG.ashZoneLife,
     elapsed: 0,
     frame: 0,
-    damage: LANTERN_EMBER_CONFIG.ashZoneDamageBase + boss.phase * LANTERN_EMBER_CONFIG.ashZoneDamagePhase,
+    damage: bossAttackDamage(
+      LANTERN_EMBER_CONFIG.ashZoneDamageBase
+        + boss.phase * LANTERN_EMBER_CONFIG.ashZoneDamagePhase,
+    ),
   });
 }

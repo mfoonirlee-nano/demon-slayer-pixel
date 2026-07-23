@@ -13,6 +13,7 @@ const PLAYER_X = 430;
 const PHASE_THREE_HP_RATIO = 0.2;
 const PHASE_THREE = 3;
 const MAX_DART_TRAVEL_FRAMES = 20;
+const MIST_BONE_PHASE_ONE_DART_DAMAGE = 9;
 
 describe("mist bone boss behavior", () => {
   it("uses a sprite-backed bone dart attack between special casts", () => {
@@ -33,7 +34,7 @@ describe("mist bone boss behavior", () => {
     expect(state.projectiles).toHaveLength(1);
     expect(state.projectiles[0]).toMatchObject({
       kind: "bossBone",
-      damage: MIST_BONE_CONFIG.dartDamageBase + MIST_BONE_CONFIG.dartDamagePhase,
+      damage: MIST_BONE_PHASE_ONE_DART_DAMAGE,
     });
     expect(state.projectiles[0].vx).toBeGreaterThan(0);
 

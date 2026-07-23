@@ -6,7 +6,7 @@ import { playSfx } from "../../game/audio";
 import { spawnBossSummonEnemy } from "../enemy";
 import { spawnDeadBellBlade, spawnDeadBellWave, playerBladeLane } from "./deadBellBehavior";
 import { spawnLanternFireline } from "./lanternEmberBehavior";
-import { damagePlayerOnContact } from "./shared";
+import { bossAttackDamage, damagePlayerOnContact } from "./shared";
 import type { LiveBoss } from "./types";
 import type { BloodMoonEffectState } from "../../types/game-state";
 
@@ -187,7 +187,9 @@ function spawnBloodMoonPattern(boss: LiveBoss) {
 }
 
 function bloodMoonDamage(base: number, boss: LiveBoss, scale = 1) {
-  return (base + boss.phase * BLOOD_MOON_CONFIG.damagePhase) * scale;
+  return bossAttackDamage(
+    (base + boss.phase * BLOOD_MOON_CONFIG.damagePhase) * scale,
+  );
 }
 
 function playerFootSurfaceY() {

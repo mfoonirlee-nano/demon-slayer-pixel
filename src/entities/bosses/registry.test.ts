@@ -8,8 +8,22 @@ import {
 } from "./registry";
 
 const FANG_GALE_KILL_COUNT = 3;
+const BOSS_HEALTH_TEST_KILLS = 2;
+const BOSS_HEALTH_TEST_ELAPSED_SECONDS = 10;
+const DOUBLED_BOSS_HP_WITH_GROWTH = 1207;
 
 describe("boss act registry", () => {
+  it("doubles the full boss encounter health curve", () => {
+    const boss = createBossEncounter({
+      id: BOSS_ARCHETYPE_IDS.mistBone,
+      bossKills: BOSS_HEALTH_TEST_KILLS,
+      elapsedSeconds: BOSS_HEALTH_TEST_ELAPSED_SECONDS,
+    });
+
+    expect(boss.hp).toBe(DOUBLED_BOSS_HP_WITH_GROWTH);
+    expect(boss.hpMax).toBe(DOUBLED_BOSS_HP_WITH_GROWTH);
+  });
+
   it("matches the fixed 13-act boss sequence", () => {
     expect(BOSS_ACT_SEQUENCE).toEqual([
       BOSS_ARCHETYPE_IDS.spiderString,

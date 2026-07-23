@@ -11,6 +11,7 @@ import { drawSheetFrame } from "../../rendering/graphics";
 import type { SpiderStringCageSegmentKind, SpiderStringCageState } from "../../types/game-state";
 import { hurtPlayer } from "../player";
 import { bossArchetypeForId } from "./registry";
+import { bossAttackDamage } from "./shared";
 import type { LiveBoss } from "./types";
 
 const SEGMENT_KINDS: readonly SpiderStringCageSegmentKind[] = ["ground", "air", "mixed"];
@@ -19,8 +20,10 @@ const WARNING_ALPHA_GROWTH_RATIO = 0.55;
 
 export function spawnSpiderStringCageEffect(boss: LiveBoss) {
   const archetype = bossArchetypeForId(boss.id);
-  const damage = (archetype.contactDamageBase + boss.phase * archetype.contactDamagePhase)
-    * SPIDER_STRING_CAGE_CONFIG.damageMultiplier;
+  const damage = bossAttackDamage(
+    (archetype.contactDamageBase + boss.phase * archetype.contactDamagePhase)
+      * SPIDER_STRING_CAGE_CONFIG.damageMultiplier,
+  );
 
   state.spiderStringCages.length = 0;
   state.spiderStringCages.push(createCageSegment(0, null, damage));

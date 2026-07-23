@@ -4,7 +4,7 @@ import { state } from "../../game/state";
 import { clamp, hitbox } from "../../game/utils";
 import type { BossSkillMode } from "../../types/game-state";
 import { hurtPlayer } from "../player";
-import { damagePlayerOnContact } from "./shared";
+import { bossAttackDamage, damagePlayerOnContact } from "./shared";
 import type { LiveBoss } from "./types";
 
 const STEERING_PHASE_FORCE = 0.01;
@@ -203,7 +203,9 @@ function updateFangDash(boss: LiveBoss) {
   if (!boss.skillHitDone && hitbox(state.player, boss)) {
     boss.skillHitDone = true;
     hurtPlayer(
-      FANG_GALE_CONFIG.dashDamageBase + boss.phase * FANG_GALE_CONFIG.dashDamagePhase,
+      bossAttackDamage(
+        FANG_GALE_CONFIG.dashDamageBase + boss.phase * FANG_GALE_CONFIG.dashDamagePhase,
+      ),
       boss.vx,
     );
   }
@@ -252,6 +254,8 @@ function spawnFangWave(boss: LiveBoss, facing: number) {
     elapsed: 0,
     frame: 0,
     life: FANG_GALE_CONFIG.waveLife,
-    damage: FANG_GALE_CONFIG.waveDamageBase + boss.phase * FANG_GALE_CONFIG.waveDamagePhase,
+    damage: bossAttackDamage(
+      FANG_GALE_CONFIG.waveDamageBase + boss.phase * FANG_GALE_CONFIG.waveDamagePhase,
+    ),
   });
 }

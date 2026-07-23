@@ -1,6 +1,7 @@
 import type { BossArchetype } from "../entities/bosses/registry";
 import { BOSS_ARCHETYPE_IDS } from "../entities/bosses/registry";
 import { GROUND_TILE_SPRITES } from "../constants/assetCatalog/scenery";
+import { BOSS_CONFIG } from "../constants/combat";
 import type { ActBand } from "../types/game-state";
 
 const MAX_ACT = 13;
@@ -89,9 +90,11 @@ export function bossHpForEncounter(
   bossKills: number,
   elapsedSeconds: number,
 ) {
-  return archetype.hpBase
+  return (
+    archetype.hpBase
     + bossKills * archetype.hpPerKill
-    + elapsedSeconds * BOSS_HP_SCALE_BY_ELAPSED;
+    + elapsedSeconds * BOSS_HP_SCALE_BY_ELAPSED
+  ) * BOSS_CONFIG.healthMultiplier;
 }
 
 export function isAwakenedBossEncounter(archetype: BossArchetype, act: number) {

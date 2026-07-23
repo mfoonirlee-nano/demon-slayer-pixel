@@ -3,7 +3,7 @@ import { playSfx } from "../../game/audio";
 import { state } from "../../game/state";
 import { clamp } from "../../game/utils";
 import type { BossSkillMode } from "../../types/game-state";
-import { damagePlayerOnContact } from "./shared";
+import { bossAttackDamage, damagePlayerOnContact } from "./shared";
 import type { LiveBoss } from "./types";
 
 const RETREAT_PHASE_FORCE = 0.006;
@@ -134,7 +134,9 @@ function spawnMistBoneDart(boss: LiveBoss) {
     vx: boss.castFacing * (MIST_BONE_CONFIG.dartSpeed + boss.phase * MIST_BONE_CONFIG.dartSpeedPhase),
     vy: MIST_BONE_CONFIG.dartVy,
     life: MIST_BONE_CONFIG.dartLife,
-    damage: MIST_BONE_CONFIG.dartDamageBase + boss.phase * MIST_BONE_CONFIG.dartDamagePhase,
+    damage: bossAttackDamage(
+      MIST_BONE_CONFIG.dartDamageBase + boss.phase * MIST_BONE_CONFIG.dartDamagePhase,
+    ),
     frame: 0,
     elapsed: 0,
   });
@@ -256,7 +258,9 @@ function spawnMistBoneSpike(boss: LiveBoss, centerX: number, delay: number) {
     elapsed: 0,
     frame: 0,
     life: MIST_BONE_CONFIG.spikeLife,
-    damage: MIST_BONE_CONFIG.damageBase + boss.phase * MIST_BONE_CONFIG.damagePhase,
+    damage: bossAttackDamage(
+      MIST_BONE_CONFIG.damageBase + boss.phase * MIST_BONE_CONFIG.damagePhase,
+    ),
     hitPlayer: false,
   });
 }

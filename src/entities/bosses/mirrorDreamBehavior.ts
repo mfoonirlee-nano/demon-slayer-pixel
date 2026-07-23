@@ -2,7 +2,7 @@ import { MIRROR_DREAM_CONFIG, WIDTH } from "../../constants";
 import { state } from "../../game/state";
 import { clamp } from "../../game/utils";
 import { playSfx } from "../../game/audio";
-import { damagePlayerOnContact } from "./shared";
+import { bossAttackDamage, damagePlayerOnContact } from "./shared";
 import type { LiveBoss } from "./types";
 import type { BossSkillMode, MirrorAfterimageState, MirrorShardState } from "../../types/game-state";
 
@@ -224,7 +224,9 @@ function spawnMirrorAfterimage(boss: LiveBoss, spawnAt: number | undefined, cent
     maxLife: life,
     spawnAt,
     spawned: false,
-    damage: MIRROR_DREAM_CONFIG.damageBase + boss.phase * MIRROR_DREAM_CONFIG.damagePhase,
+    damage: bossAttackDamage(
+      MIRROR_DREAM_CONFIG.damageBase + boss.phase * MIRROR_DREAM_CONFIG.damagePhase,
+    ),
   });
 }
 
@@ -279,7 +281,9 @@ function spawnMirrorShardFromBoss(boss: LiveBoss) {
     centerY: startY,
     vx: dir * (MIRROR_DREAM_CONFIG.shardSpeed + boss.phase * SHARD_PHASE_SPEED_BONUS),
     vy,
-    damage: MIRROR_DREAM_CONFIG.damageBase + boss.phase * MIRROR_DREAM_CONFIG.damagePhase,
+    damage: bossAttackDamage(
+      MIRROR_DREAM_CONFIG.damageBase + boss.phase * MIRROR_DREAM_CONFIG.damagePhase,
+    ),
     bouncesRemaining: 1,
   });
   playSfx("bossMirror", SHARD_SFX_PITCH);
