@@ -73,7 +73,7 @@ const ENGLISH_SKILL_COPY = {
     levelDescriptions: {
       1: "The tidal line applies Armor Rend on hit, briefly increasing follow-up damage.",
       2: "The tidal line travels farther; Armor Rend lasts longer and increases follow-up damage more.",
-      3: "Damage, travel distance, and Armor Rend all improve; Armor Rend is weaker against bosses.",
+      3: "Damage, travel distance, and Armor Rend all improve. While equipped, other attacks gain 50% shield penetration and can damage guarding enemies. Armor Rend is weaker against bosses.",
     },
   },
   [SKILL_IDS.antiAirMulti]: {

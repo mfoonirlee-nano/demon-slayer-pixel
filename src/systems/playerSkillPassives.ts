@@ -1,4 +1,5 @@
 import {
+  ARMOR_BREAK_PASSIVE_CONFIG,
   CLOSE_ARC_BASIC_CRESCENT_CONFIG,
   GUARD_COUNTER_EFFECT_CONFIG,
   LINE_PROJECTILE_EFFECT_CONFIG,
@@ -27,6 +28,14 @@ export function hasGuardCounterDamageReductionPassive(state: GameState) {
   return (player.skillLevels[SKILL_IDS.guardCounter] ?? 0)
       >= GUARD_COUNTER_EFFECT_CONFIG.damageReductionRequiredLevel
     && player.equippedSkillIds.includes(SKILL_IDS.guardCounter);
+}
+
+export function armorBreakShieldPenetration(state: GameState) {
+  const player = state.player;
+  const hasPassive = (player.skillLevels[SKILL_IDS.armorBreak] ?? 0)
+      >= ARMOR_BREAK_PASSIVE_CONFIG.requiredLevel
+    && player.equippedSkillIds.includes(SKILL_IDS.armorBreak);
+  return hasPassive ? ARMOR_BREAK_PASSIVE_CONFIG.shieldPenetration : 0;
 }
 
 export function guardCounterIncomingDamageMultiplier(state: GameState) {

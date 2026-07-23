@@ -137,7 +137,7 @@ export const SKILLS: Skill[] = [
     levelDescriptions: {
       1: "潮线命中后施加裂甲，短时间提高后续伤害。",
       2: "潮线飞得更远，裂甲持续更久，后续伤害加成提高。",
-      3: "伤害、飞行距离和裂甲收益都提升；对首领的裂甲效果较弱。",
+      3: "伤害、飞行距离和裂甲收益都提升；装备后其他攻击获得 50% 穿盾，可直接伤害举盾敌人；对首领的裂甲效果较弱。",
     },
     src: "assets/sprites/skills/armor_break/skill.png",
     frameCount: 5,

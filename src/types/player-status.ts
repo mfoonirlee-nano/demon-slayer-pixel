@@ -2,6 +2,7 @@ export type PlayerStatusId =
   | "line_projectile_knockback"
   | "close_arc_basic_crescent"
   | "guard_counter_damage_reduction"
+  | "armor_break_shield_penetration"
   | "guard_counter"
   | "moon_tide"
   | "flow_blade_charge"

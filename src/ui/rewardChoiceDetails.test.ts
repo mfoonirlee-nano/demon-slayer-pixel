@@ -212,6 +212,20 @@ describe("reward choice details", () => {
     expect(metricValue(metrics, "距离")).toBe("92px -> 108px");
   });
 
+  it("shows the armor break passive shield penetration at level three", () => {
+    const choice: UpgradeChoiceState = {
+      id: "upgrade-armor-break",
+      type: "upgradeSkill",
+      title: "技能精进",
+      name: "断浪·裂甲 III",
+      description: "裂甲解锁被动穿盾。",
+      skillId: SKILL_IDS.armorBreak,
+      nextLevel: 3,
+    };
+
+    expect(metricValue(upgradeRewardMetrics(choice, BASE_PLAYER), "被动穿盾")).toBe("50%");
+  });
+
   it("shows the anti-air bonus drop chance and damage at level three", () => {
     const choice: UpgradeChoiceState = {
       id: "upgrade-anti-air-multi",

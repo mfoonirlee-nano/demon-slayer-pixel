@@ -28,6 +28,7 @@ import {
   TEMPO_GARB_RECOVERY_TIMER_FRAMES,
 } from "./equipmentTuning";
 import {
+  armorBreakShieldPenetration,
   hasCloseArcBasicCrescentPassive,
   hasGuardCounterDamageReductionPassive,
   hasLineProjectileKnockbackPassive,
@@ -61,6 +62,9 @@ function pushSkillStatuses(state: GameState, statuses: PlayerStatusSnapshot[]) {
   }
   if (hasGuardCounterDamageReductionPassive(state)) {
     statuses.push(persistentStatus("guard_counter_damage_reduction"));
+  }
+  if (armorBreakShieldPenetration(state) > 0) {
+    statuses.push(persistentStatus("armor_break_shield_penetration"));
   }
 
   const guardCounter = state.guardCounterEffect;

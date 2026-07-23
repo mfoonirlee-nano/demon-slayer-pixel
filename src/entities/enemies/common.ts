@@ -179,6 +179,7 @@ function damageBrute(
   kind: EnemyDamageKind,
   sourceX?: number,
   reflectToPlayer = false,
+  shieldPenetration = 0,
 ) {
   if (enemy.bruteShieldBroken || (enemy.bruteShieldHp ?? 0) <= 0) {
     enemy.hp -= damage;
@@ -196,8 +197,11 @@ function damageBrute(
     return shieldHp;
   }
 
+  const penetratingDamage = damage * Math.max(0, Math.min(1, shieldPenetration));
+  const blockedDamage = damage - penetratingDamage;
+  enemy.hp -= penetratingDamage;
   const shieldHp = enemy.bruteShieldHp ?? 0;
-  const shieldDamage = Math.min(damage, shieldHp);
+  const shieldDamage = Math.min(blockedDamage, shieldHp);
   enemy.bruteShieldHp = shieldHp - shieldDamage;
   if (enemy.bruteShieldHp <= 0) {
     breakBruteShield(enemy);
@@ -215,7 +219,7 @@ function damageBrute(
       facing: enemy.bruteFacing ?? (enemy.vx >= 0 ? 1 : -1),
     });
   }
-  return shieldDamage;
+  return penetratingDamage + shieldDamage;
 }
 
 export function damageEnemy(
@@ -225,6 +229,7 @@ export function damageEnemy(
   kind: EnemyDamageKind = "normal",
   sourceX?: number,
   reflectToPlayer = false,
+  shieldPenetration = 0,
 ) {
   if (enemy.wardenDamageImmune) return 0;
 
@@ -236,7 +241,7 @@ export function damageEnemy(
     ? scaledDamage
     : scaledDamage * eliteBruteProtectionScale(enemy);
   const appliedDamage = enemy.sheetIndex === BRUTE_SHEET_INDEX
-    ? damageBrute(enemy, protectedDamage, kind, sourceX, reflectToPlayer)
+    ? damageBrute(enemy, protectedDamage, kind, sourceX, reflectToPlayer, shieldPenetration)
     : protectedDamage;
   if (enemy.sheetIndex !== BRUTE_SHEET_INDEX) enemy.hp -= appliedDamage;
   if (hitCooldown !== undefined) enemy.hitCd = hitCooldown;

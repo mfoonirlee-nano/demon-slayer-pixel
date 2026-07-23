@@ -100,9 +100,15 @@ describe("player status snapshot", () => {
   it("exposes each level-three skill passive only while it can currently trigger", () => {
     state.player.skillLevels.line_projectile = 3;
     state.player.skillLevels.close_arc = 3;
+    state.player.skillLevels.armor_break = 3;
+    state.player.equippedSkillIds[2] = "armor_break";
     state.player.skillIndex = 0;
 
     expect(status("line_projectile_knockback")).toMatchObject({
+      remainingFrames: null,
+      durationFrames: null,
+    });
+    expect(status("armor_break_shield_penetration")).toMatchObject({
       remainingFrames: null,
       durationFrames: null,
     });
@@ -116,8 +122,10 @@ describe("player status snapshot", () => {
     });
 
     state.player.equippedSkillIds[1] = null;
+    state.player.equippedSkillIds[2] = null;
 
     expect(status("close_arc_basic_crescent")).toBeUndefined();
+    expect(status("armor_break_shield_penetration")).toBeUndefined();
   });
 
   it("projects guard duration and hit stacks through its effective barrier flash", () => {

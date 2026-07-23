@@ -72,4 +72,12 @@ describe("localized skill copy", () => {
       "潮刃伤害 +18%，月牙身形变大，飞得更远。",
     );
   });
+
+  it("localizes the level-three armor break shield penetration passive", () => {
+    const description = skillDescription("en", SKILL_IDS.armorBreak, LEVEL_THREE);
+
+    expect(description).toContain("50%");
+    expect(description).toContain("equipped");
+    expect(description).toContain("shield");
+  });
 });

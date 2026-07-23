@@ -30,6 +30,7 @@ const LINE_PROJECTILE_EFFECT_LOOP_FROM_FRAME = 5;
 const CLOSE_ARC_BASIC_CRESCENT_FRAME_COUNT = 2;
 const CLOSE_ARC_BASIC_CRESCENT_FRAME_DURATION = 4;
 const GUARD_COUNTER_LEVEL_THREE = 3;
+const ARMOR_BREAK_LEVEL_THREE = 3;
 const ANTI_AIR_MULTI_LEVEL_THREE = 3;
 const PERCENT_MULTIPLIER = 100;
 
@@ -114,6 +115,14 @@ describe("player skill catalog copy", () => {
     expect(description).toContain("15%");
     expect(description).toContain("30%");
     expect(description).toContain("玩家等级");
+  });
+
+  it("explains the level-three armor break equipped shield penetration passive", () => {
+    const description = playerSkillDescription(SKILL_IDS.armorBreak, ARMOR_BREAK_LEVEL_THREE);
+
+    expect(description).toContain("50%");
+    expect(description).toContain("装备");
+    expect(description).toContain("举盾");
   });
 
   it("explains the level-three anti-air bonus drop chance and damage", () => {

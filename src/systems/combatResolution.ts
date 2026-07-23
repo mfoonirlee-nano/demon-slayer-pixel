@@ -11,6 +11,7 @@ import { overlapHitPoint, type RectLike } from "../game/utils";
 import { state } from "../game/state";
 import { equipmentBossDamageMultiplier, recordBossDamageEquipmentEffects } from "./equipment";
 import {
+  armorBreakShieldPenetration,
   applyPlayerHitKnockback,
   type PlayerHitKnockbackOverride,
 } from "./playerSkillPassives";
@@ -41,7 +42,15 @@ export function applyEnemyDamage(
   damageKind: EnemyDamageKind = "normal",
   sourceX?: number,
 ) {
-  return damageEnemy(enemy, damage, hitCooldown, damageKind, sourceX, true);
+  return damageEnemy(
+    enemy,
+    damage,
+    hitCooldown,
+    damageKind,
+    sourceX,
+    true,
+    armorBreakShieldPenetration(state),
+  );
 }
 
 export function applyBossDamage(

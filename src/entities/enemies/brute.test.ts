@@ -1,7 +1,7 @@
 import { describe, expect, it, beforeEach } from "vitest";
-import { GROUND_Y } from "../../constants";
+import { GROUND_Y, SKILL_IDS } from "../../constants";
 import { resetState, state } from "../../game/state";
-import type { ActBand, EnemyState } from "../../types/game-state";
+import type { ActBand, EnemyState, SkillLevel } from "../../types/game-state";
 import { spawnEnemyById, updateEnemies } from "../enemy";
 import { applyEnemyDamage } from "../../systems/combatResolution";
 import { damageEnemy } from "./common";
@@ -9,6 +9,9 @@ import { damageEnemy } from "./common";
 const SHIELD_TEST_DAMAGE = 30;
 const HIGH_SHIELD_TEST_DAMAGE = 60;
 const LOW_SHIELD_HP = 12;
+const ARMOR_BREAK_PASSIVE_LEVEL = 3;
+const ARMOR_BREAK_LEVEL_BEFORE_PASSIVE = 2;
+const ARMOR_BREAK_SHIELD_PENETRATION = 0.5;
 const SHIELD_HIT_SOURCE_OFFSET = 12;
 const FINAL_REFLECT_RATIO = 0.25;
 const FINAL_REFLECT_CAP = 12;
@@ -46,6 +49,11 @@ function activateGuardCounter() {
     damageMultiplier: 1,
     barrierFlash: 0,
   };
+}
+
+function equipArmorBreak(level: SkillLevel = ARMOR_BREAK_PASSIVE_LEVEL) {
+  state.player.skillLevels[SKILL_IDS.armorBreak] = level;
+  state.player.equippedSkillIds[0] = SKILL_IDS.armorBreak;
 }
 
 function frontSourceX(brute: ReturnType<typeof spawnBrute>) {
@@ -96,16 +104,67 @@ describe("brute shield", () => {
     expect(brute.brutePhase).toBe("shieldBreak");
   });
 
+  it("lets the equipped level-three armor break passive pierce half of frontal shield damage", () => {
+    const brute = spawnBrute();
+    const hpBefore = brute.hp;
+    const shieldBefore = brute.bruteShieldHp ?? 0;
+    equipArmorBreak();
+
+    applyEnemyDamage(brute, SHIELD_TEST_DAMAGE, undefined, "normal", frontSourceX(brute));
+
+    const penetratingDamage = SHIELD_TEST_DAMAGE * ARMOR_BREAK_SHIELD_PENETRATION;
+    expect(brute.hp).toBeCloseTo(hpBefore - penetratingDamage);
+    expect(brute.bruteShieldHp).toBeCloseTo(shieldBefore - penetratingDamage);
+    expect(brute.bruteShieldBroken).toBe(false);
+  });
+
+  it("keeps frontal damage fully blocked before the armor break passive level", () => {
+    const brute = spawnBrute();
+    const hpBefore = brute.hp;
+    const shieldBefore = brute.bruteShieldHp ?? 0;
+    equipArmorBreak(ARMOR_BREAK_LEVEL_BEFORE_PASSIVE);
+
+    applyEnemyDamage(brute, SHIELD_TEST_DAMAGE, undefined, "normal", frontSourceX(brute));
+
+    expect(brute.hp).toBe(hpBefore);
+    expect(brute.bruteShieldHp).toBeCloseTo(shieldBefore - SHIELD_TEST_DAMAGE);
+  });
+
+  it("keeps frontal damage fully blocked while level-three armor break is unequipped", () => {
+    const brute = spawnBrute();
+    const hpBefore = brute.hp;
+    const shieldBefore = brute.bruteShieldHp ?? 0;
+    state.player.skillLevels[SKILL_IDS.armorBreak] = ARMOR_BREAK_PASSIVE_LEVEL;
+
+    applyEnemyDamage(brute, SHIELD_TEST_DAMAGE, undefined, "normal", frontSourceX(brute));
+
+    expect(brute.hp).toBe(hpBefore);
+    expect(brute.bruteShieldHp).toBeCloseTo(shieldBefore - SHIELD_TEST_DAMAGE);
+  });
+
   it("does not shield damage from behind", () => {
     const brute = spawnBrute();
     const hpBefore = brute.hp;
     const shieldBefore = brute.bruteShieldHp ?? 0;
+    equipArmorBreak();
 
-    damageEnemy(brute, SHIELD_TEST_DAMAGE, undefined, "normal", backSourceX(brute));
+    applyEnemyDamage(brute, SHIELD_TEST_DAMAGE, undefined, "normal", backSourceX(brute));
 
     expect(brute.hp).toBeCloseTo(hpBefore - SHIELD_TEST_DAMAGE);
     expect(brute.bruteShieldHp).toBe(shieldBefore);
     expect(brute.bruteShieldBroken).toBe(false);
+  });
+
+  it("does not grant the player passive to damage outside the player damage boundary", () => {
+    const brute = spawnBrute();
+    const hpBefore = brute.hp;
+    const shieldBefore = brute.bruteShieldHp ?? 0;
+    equipArmorBreak();
+
+    damageEnemy(brute, SHIELD_TEST_DAMAGE, undefined, "normal", frontSourceX(brute));
+
+    expect(brute.hp).toBe(hpBefore);
+    expect(brute.bruteShieldHp).toBeCloseTo(shieldBefore - SHIELD_TEST_DAMAGE);
   });
 
   it("breaks the shield with armor_break without damaging the body", () => {
@@ -131,6 +190,19 @@ describe("brute shield", () => {
     expect(state.player.hp).toBeCloseTo(
       hpBefore - Math.min(FINAL_REFLECT_CAP, SHIELD_TEST_DAMAGE * FINAL_REFLECT_RATIO),
     );
+  });
+
+  it("reflects only the shield half of armor break passive damage during final guard", () => {
+    const brute = spawnBrute("final");
+    guardWithShield(brute);
+    equipArmorBreak();
+    const hpBefore = state.player.hp;
+
+    applyEnemyDamage(brute, SHIELD_TEST_DAMAGE, undefined, "normal", frontSourceX(brute));
+    updateEnemies();
+
+    const shieldDamage = SHIELD_TEST_DAMAGE * (1 - ARMOR_BREAK_SHIELD_PENETRATION);
+    expect(state.player.hp).toBeCloseTo(hpBefore - shieldDamage * FINAL_REFLECT_RATIO);
   });
 
   it("caps reflected guard damage", () => {
@@ -173,12 +245,15 @@ describe("brute shield", () => {
   it("does not reflect armor break damage", () => {
     const brute = spawnBrute("final");
     guardWithShield(brute);
-    const hpBefore = state.player.hp;
+    equipArmorBreak();
+    const playerHpBefore = state.player.hp;
+    const bruteHpBefore = brute.hp;
 
     applyEnemyDamage(brute, SHIELD_TEST_DAMAGE, undefined, "armorBreak", frontSourceX(brute));
     updateEnemies();
 
-    expect(state.player.hp).toBe(hpBefore);
+    expect(state.player.hp).toBe(playerHpBefore);
+    expect(brute.hp).toBe(bruteHpBefore);
     expect(brute.bruteShieldBroken).toBe(true);
   });
 

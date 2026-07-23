@@ -1,4 +1,5 @@
 import {
+  ARMOR_BREAK_PASSIVE_CONFIG,
   CLOSE_ARC_BASIC_CRESCENT_CONFIG,
   EQUIPMENT_PRIMARY_STAT_BONUS_RATIOS,
   GUARD_COUNTER_EFFECT_CONFIG,
@@ -372,12 +373,16 @@ function skillTuningMetrics(
     const unlocksBonusRainDrop = skillId === SKILL_IDS.antiAirMulti
       && nextLevel >= ANTI_AIR_MULTI_BONUS_DROP_CONFIG.requiredLevel
       && previousLevel < ANTI_AIR_MULTI_BONUS_DROP_CONFIG.requiredLevel;
+    const unlocksArmorBreakPassive = skillId === SKILL_IDS.armorBreak
+      && nextLevel >= ARMOR_BREAK_PASSIVE_CONFIG.requiredLevel
+      && previousLevel < ARMOR_BREAK_PASSIVE_CONFIG.requiredLevel;
     const bonusRainDropValue = `${formatPercent(ANTI_AIR_MULTI_BONUS_DROP_CONFIG.chance)} / ${
       formatRewardUnit(language, "skillDamage", formatPercent(ANTI_AIR_MULTI_BONUS_DROP_CONFIG.damageMultiplier))
     }`;
     return compactMetrics([
       tuning.count ? levelTableMetric(label("strikeCount"), tuning.count, nextLevel, previousLevel, String, "damage") : null,
       unlocksBonusRainDrop ? metric(label("bonusRainDrop"), bonusRainDropValue, "damage") : null,
+      unlocksArmorBreakPassive ? metric(label("passiveShieldPenetration"), formatPercent(ARMOR_BREAK_PASSIVE_CONFIG.shieldPenetration), "utility") : null,
       tuning.maxHits ? levelTableMetric(label("maxHits"), tuning.maxHits, nextLevel, previousLevel, String, "damage") : null,
       tuning.armorBreakMultiplier
         ? levelTableMetric(label("followUpDamage"), tuning.armorBreakMultiplier, nextLevel, previousLevel, formatMultiplierDelta, "damage")

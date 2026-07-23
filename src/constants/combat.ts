@@ -19,6 +19,11 @@ export const BASIC_ATTACK = {
   height: 48,
 } as const;
 
+export const ARMOR_BREAK_PASSIVE_CONFIG = {
+  requiredLevel: 3,
+  shieldPenetration: 0.5,
+} as const;
+
 export const FALL_ATTACK = {
   startVelocity: 5,
   diveVelocity: 7,
