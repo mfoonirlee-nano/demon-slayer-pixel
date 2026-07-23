@@ -1,11 +1,15 @@
 import { state } from "../../game/state";
 import { playSfx } from "../../game/audio";
 import { ctx } from "../../rendering/context";
-import { PLAYER_COMBAT } from "../../constants";
+import { PLAYER_COMBAT, VERTICAL_WAVE_PILLAR_CONFIG } from "../../constants";
 import type { EnemyState, PlayerSkillEffectState } from "../../types/game-state";
 import { hitbox } from "../../game/utils";
 import { resolveBossHit, resolveEnemyHit } from "../../systems/combatResolution";
-import { GENERIC_PLAYER_SKILL_TUNING, isGenericPlayerSkillId, valueForSkillLevel } from "../../systems/playerSkills";
+import {
+  GENERIC_PLAYER_SKILL_TUNING,
+  isGenericPlayerSkillId,
+  valueForSkillLevel,
+} from "../../systems/playerSkills";
 import { playerSkillEffectSheet } from "../../systems/skillCatalog";
 import { emitHitBurst, emitSlash } from "./bursts";
 import {
@@ -301,6 +305,11 @@ function updateReturningBladeEffect(effect: PlayerSkillEffectState) {
 export function updatePlayerSkillEffects() {
   for (let i = state.playerSkillEffects.length - 1; i >= 0; i -= 1) {
     const effect = state.playerSkillEffects[i] as PlayerSkillEffectState;
+    if ((effect.startDelay ?? 0) > 0) {
+      effect.startDelay = (effect.startDelay ?? 0) - 1;
+      continue;
+    }
+
     effect.elapsed += 1;
     effect.life -= 1;
     effect.frame = playerSkillSheetFrame(effect);
@@ -318,7 +327,9 @@ export function updatePlayerSkillEffects() {
     } else {
       effect.x += effect.vx;
       effect.y += effect.vy;
-      updateOneShotBoxEffect(effect);
+      const waitingForPillarImpact = effect.kind === "verticalWavePillar"
+        && effect.frame < VERTICAL_WAVE_PILLAR_CONFIG.impactFrame;
+      if (!waitingForPillarImpact) updateOneShotBoxEffect(effect);
     }
 
     if (effect.life <= 0) {
@@ -331,7 +342,9 @@ export function drawPlayerSkillEffects() {
   if (!ctx) return;
 
   for (const effect of state.playerSkillEffects) {
-    const sheet = playerSkillEffectSheet(effect.skillId);
+    if ((effect.startDelay ?? 0) > 0) continue;
+
+    const sheet = playerSkillEffectSheet(effect.skillId, effect.kind);
     const tuning = isGenericPlayerSkillId(effect.skillId)
       ? GENERIC_PLAYER_SKILL_TUNING[effect.skillId]
       : null;
@@ -351,7 +364,7 @@ export function drawPlayerSkillEffects() {
       const drawW = sheet.frameW * tuning.drawScale;
       const drawH = sheet.frameH * tuning.drawScale;
       ctx.translate(effect.x, effect.visualY ?? effect.y);
-      ctx.scale(effect.facing, 1);
+      ctx.scale(effect.kind === "verticalWavePillar" ? 1 : effect.facing, 1);
       ctx.drawImage(sheet.image, sx, 0, sheet.frameW, sheet.frameH, -drawW / 2, -drawH / 2, drawW, drawH);
     } else {
       const box = effectBox(effect);

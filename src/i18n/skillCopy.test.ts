@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { SKILLS, SKILL_IDS } from "../constants";
+import { SKILLS, SKILL_IDS, VERTICAL_WAVE_PILLAR_CONFIG } from "../constants";
+import { formatPercent } from "../utils";
 import { skillCopy, skillDescription, skillName } from "./skillCopy";
 
 const LEVEL_TWO = 2;
@@ -87,5 +88,22 @@ describe("localized skill copy", () => {
     expect(description).toContain("15%");
     expect(description).toContain("equipped");
     expect(description).toContain("movement speed");
+  });
+
+  it("localizes the level-three vertical wave pillar chain", () => {
+    const description = skillDescription(
+      "en",
+      SKILL_IDS.verticalWave,
+      VERTICAL_WAVE_PILLAR_CONFIG.requiredLevel,
+    );
+
+    expect(description).toContain("original wave pillar still rises");
+    expect(description).toContain(formatPercent(VERTICAL_WAVE_PILLAR_CONFIG.chance));
+    expect(description).toContain(`${VERTICAL_WAVE_PILLAR_CONFIG.count} additional water pillars`);
+    expect(description).toContain("near to far");
+    expect(description).toContain("crash downward");
+    expect(description).toContain(
+      `${formatPercent(VERTICAL_WAVE_PILLAR_CONFIG.damageMultiplier)} skill damage each`,
+    );
   });
 });

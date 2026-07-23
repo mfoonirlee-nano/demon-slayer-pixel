@@ -1,6 +1,6 @@
 # 素材处理指南 (Sprite Processing)
 
-本项目的运行时素材集中在 `assets/sprites/`，由 `src/assets.ts` 统一异步加载，并在 `src/constants/assets.ts` 中维护帧尺寸、帧数、绘制缩放、锚点和特效参数。
+本项目的运行时素材集中在 `assets/sprites/`，由 `src/assets/manifest.ts` 汇总并通过 `src/assets/index.ts` 统一异步加载，在 `src/constants/assets.ts` 中维护帧尺寸、帧数、绘制缩放、锚点和特效参数。
 
 新增或替换 sprite sheet 时，优先保持已有切片规格不变。只有总尺寸、单帧尺寸、帧数或运行时用途发生变化时，才同步修改 `src/constants/assets.ts`。
 
@@ -134,11 +134,12 @@
 | `anti_air_multi/effect.png` | `1440x320` | 4 | `360x320` | `PLAYER_SKILL_EFFECT_SHEETS.anti_air_multi` |
 | `returning_blade/effect.png` | `960x120` | 4 | `240x120` | `PLAYER_SKILL_EFFECT_SHEETS.returning_blade` |
 | `vertical_wave/effect.png` | `3360x520` | 7 | `480x520` | `PLAYER_SKILL_EFFECT_SHEETS.vertical_wave` |
+| `vertical_wave/downward_pillar.png` | `3360x520` | 7 | `480x520` | `VERTICAL_WAVE_PILLAR_SHEET` |
 | `ultimate_skill/icon.png` | `256x256` | 1 | `256x256` | 大招图标 |
 | `ultimate_skill/skill.png` | `2880x480` | 6 | `480x480` | `ULTIMATE_SKILL_SHEET` |
 | `ultimate_skill/effect.png` | `3840x360` | 8 | `480x360` | `ULTIMATE_SKILL_EFFECT_SHEET` |
 
-玩家技能特效以 `assets/art/player-concept.png`、`assets/art/player-skills-concept.png`、`assets/art/player-skills-implementation-source.png` 和 `assets/art/player-ultimate-concept.png` 为视觉基准：深蓝月潮流、银白浪尖、泡沫碎点和月形水纹。`line_projectile/effect.png`、`line_projectile/effect_lv2.png` 和 `line_projectile/effect_lv3.png` 分别是 `潮龙·破阵` Lv1/Lv2/Lv3 的 8 帧右向潮龙投射物，等级越高使用越长的真实序列帧；每一帧都保留完整的龙头、龙身和龙尾，前 6 帧以刀锋附近的水流起点为锚，保持龙头和龙尾尺寸不变，通过逐帧增加中段龙身的水浪卷数自然变长，并叠加投射物前移；随后从第 6 帧开始循环最后 3 帧，龙头的高度和朝向保持稳定，同一道浪身波峰从颈后向中段、后段和龙尾逐段传递，鬃鳍和泡沫滞后跟随；不得复用同一龙体仅做整体位移或同相摆动。运行时同时负责让投射物直接冲出屏幕，命中间隔保持不变。`close_arc/effect.png` 是 6 帧贴身半月潮刃，对应 `弦月·潮刃` 的 6 帧动作，运行时按技能等级缩放到最高等级的 50% / 75% / 100%；`close_arc/basic_crescent.png` 是 Lv3 普攻追加的 2 帧小型水波纹月牙剑气，只覆盖基础普攻刀尖外侧的小范围。`guard_counter/effect.png` 是 6 帧环身防反潮幕，对应 `镜潮·护返`。六个新增技能的图标、施法图和特效图以 `player-skills-implementation-source.png` 的绿幕源图为初版基础；其中 `雨线·穿针` 已按原画设定重新生成更大的施放动作和单束斜落针雨运行时序列帧，`回涡·引潮` 已重新生成 5 帧贴地引潮施法动作和 6 帧低位地面潮涡特效，`升浪·托月` 已重新生成 6 帧施放动作、7 帧前向弧形上挑浪柱特效和无角色图标；其他新增技能仍从源图裁切、抠像并重排为运行时透明 PNG：`流步·潮闪` 为短潮线收刀斩，`断浪·裂甲` 为裂纹压缩斩，`回刃·归潮` 为往返月牙潮刃。`ultimate_skill/skill.png` 的 6 帧施法动作每帧保持 5 个游戏帧，总计 30 帧；播放期间冻结战斗和关卡推进。`ultimate_skill/effect.png` 是 8 帧月蓝半月潮环，按 `PLAYER_COMBAT.ultimateEffectFrameDuration` 循环并跟随玩家脚下，持续到月潮强化状态结束。以上透明 PNG 均由运行时根据玩家 `facing` 或中心点绘制。
+玩家技能特效以 `assets/art/player-concept.png`、`assets/art/player-skills-concept.png`、`assets/art/player-skills-implementation-source.png` 和 `assets/art/player-ultimate-concept.png` 为视觉基准：深蓝月潮流、银白浪尖、泡沫碎点和月形水纹。`line_projectile/effect.png`、`line_projectile/effect_lv2.png` 和 `line_projectile/effect_lv3.png` 分别是 `潮龙·破阵` Lv1/Lv2/Lv3 的 8 帧右向潮龙投射物，等级越高使用越长的真实序列帧；每一帧都保留完整的龙头、龙身和龙尾，前 6 帧以刀锋附近的水流起点为锚，保持龙头和龙尾尺寸不变，通过逐帧增加中段龙身的水浪卷数自然变长，并叠加投射物前移；随后从第 6 帧开始循环最后 3 帧，龙头的高度和朝向保持稳定，同一道浪身波峰从颈后向中段、后段和龙尾逐段传递，鬃鳍和泡沫滞后跟随；不得复用同一龙体仅做整体位移或同相摆动。运行时同时负责让投射物直接冲出屏幕，命中间隔保持不变。`close_arc/effect.png` 是 6 帧贴身半月潮刃，对应 `弦月·潮刃` 的 6 帧动作，运行时按技能等级缩放到最高等级的 50% / 75% / 100%；`close_arc/basic_crescent.png` 是 Lv3 普攻追加的 2 帧小型水波纹月牙剑气，只覆盖基础普攻刀尖外侧的小范围。`guard_counter/effect.png` 是 6 帧环身防反潮幕，对应 `镜潮·护返`。六个新增技能的图标、施法图和特效图以 `player-skills-implementation-source.png` 的绿幕源图为初版基础；其中 `雨线·穿针` 已按原画设定重新生成更大的施放动作和单束斜落针雨运行时序列帧，`回涡·引潮` 已重新生成 5 帧贴地引潮施法动作和 6 帧低位地面潮涡特效，`升浪·托月` 已重新生成 6 帧施放动作、7 帧前向弧形上挑浪柱特效和无角色图标；`vertical_wave/downward_pillar.png` 是该技能 Lv3 被动独立使用的 7 帧向下水柱，每帧保持 4 个游戏帧、`drawScale=0.42`，原图落点固定在 `(240,450)`，三个实例复用同一图集并按 `0/6/12` 帧启动。该水柱不随 `facing` 镜像，朝向只决定三个落点由近及远排在玩家哪一侧。其他新增技能仍从源图裁切、抠像并重排为运行时透明 PNG：`流步·潮闪` 为短潮线收刀斩，`断浪·裂甲` 为裂纹压缩斩，`回刃·归潮` 为往返月牙潮刃。`ultimate_skill/skill.png` 的 6 帧施法动作每帧保持 5 个游戏帧，总计 30 帧；播放期间冻结战斗和关卡推进。`ultimate_skill/effect.png` 是 8 帧月蓝半月潮环，按 `PLAYER_COMBAT.ultimateEffectFrameDuration` 循环并跟随玩家脚下，持续到月潮强化状态结束。除向下水柱外，以上透明 PNG 均由运行时根据玩家 `facing` 或中心点绘制。
 
 ### 敌人和 Boss
 
@@ -378,7 +379,7 @@ Burrower 运行时由 `BURROWER_SHEETS` 暴露并预加载。普通刷怪在 `el
 4. 对横向序列帧，确保总宽度等于 `frameW * count`，总高度等于 `frameH`。
 5. 替换已有运行时素材时，如果切片规格不变，只需要覆盖 PNG。
 6. 如果切片规格变化，必须同步更新 `src/constants/assets.ts` 中的 `frameW`、`frameH`、`count`，并检查绘制缩放和碰撞范围。
-7. 运行时需要加载的新资源，必须在 `src/constants/assets.ts` 中暴露，并由 `src/assets.ts` 加入加载任务。
+7. 运行时需要加载的新资源，必须在 `src/constants/assets.ts` 中暴露，并由 `src/assets/manifest.ts` 的聚合函数加入加载任务。
 8. 不参与运行时的制作源图需要在文件名中标注 `source`，避免误接入。
 
 ## 脚本说明

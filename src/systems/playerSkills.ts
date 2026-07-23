@@ -87,11 +87,6 @@ export const CORE_PLAYER_SKILL_IDS: CorePlayerSkillId[] = [
 ];
 
 export const GENERIC_SKILL_DAMAGE_ATTACK_BONUS_SCALE = 0.025;
-export const ANTI_AIR_MULTI_BONUS_DROP_CONFIG = {
-  requiredLevel: 3,
-  chance: 0.3,
-  damageMultiplier: 0.5,
-} as const;
 const CLOSE_ARC_LEVEL_ONE_SIZE_RATIO = 0.5;
 const CLOSE_ARC_LEVEL_TWO_SIZE_RATIO = 0.75;
 

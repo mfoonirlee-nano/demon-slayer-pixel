@@ -76,7 +76,6 @@ import {
   TEMPO_TALISMAN_ULTIMATE_GAIN_MULTIPLIER,
 } from "../systems/equipmentTuning";
 import {
-  ANTI_AIR_MULTI_BONUS_DROP_CONFIG,
   GENERIC_PLAYER_SKILL_TUNING,
   GENERIC_SKILL_DAMAGE_ATTACK_BONUS_SCALE,
   corePlayerSkillGrowth,
@@ -99,7 +98,7 @@ import type {
   UpgradeChoiceState,
 } from "../types/game-state";
 import { formatPercent, formatSignedPercent } from "../utils";
-import { skillPassiveRewardMetric } from "./rewardSkillPassiveMetrics";
+import { skillLevelUnlockRewardMetric } from "./rewardSkillLevelUnlockMetrics";
 
 export type RewardMetricTone = "damage" | "defense" | "resource" | "range" | "speed" | "utility";
 
@@ -369,16 +368,9 @@ function skillTuningMetrics(
   const label = (key: RewardLabelKey) => rewardLabel(language, key);
   if (isGenericPlayerSkillId(skillId)) {
     const tuning = GENERIC_PLAYER_SKILL_TUNING[skillId];
-    const unlocksBonusRainDrop = skillId === SKILL_IDS.antiAirMulti
-      && nextLevel >= ANTI_AIR_MULTI_BONUS_DROP_CONFIG.requiredLevel
-      && previousLevel < ANTI_AIR_MULTI_BONUS_DROP_CONFIG.requiredLevel;
-    const bonusRainDropValue = `${formatPercent(ANTI_AIR_MULTI_BONUS_DROP_CONFIG.chance)} / ${
-      formatRewardUnit(language, "skillDamage", formatPercent(ANTI_AIR_MULTI_BONUS_DROP_CONFIG.damageMultiplier))
-    }`;
     return compactMetrics([
       tuning.count ? levelTableMetric(label("strikeCount"), tuning.count, nextLevel, previousLevel, String, "damage") : null,
-      unlocksBonusRainDrop ? metric(label("bonusRainDrop"), bonusRainDropValue, "damage") : null,
-      skillPassiveRewardMetric(skillId, nextLevel, previousLevel, language),
+      skillLevelUnlockRewardMetric(skillId, nextLevel, previousLevel, language),
       tuning.maxHits ? levelTableMetric(label("maxHits"), tuning.maxHits, nextLevel, previousLevel, String, "damage") : null,
       tuning.armorBreakMultiplier
         ? levelTableMetric(label("followUpDamage"), tuning.armorBreakMultiplier, nextLevel, previousLevel, formatMultiplierDelta, "damage")

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { SKILL_IDS } from "../constants";
+import { SKILL_IDS, VERTICAL_WAVE_PILLAR_CONFIG } from "../constants";
 import { EQUIPMENT_CHOICE_IDS, equipmentItemForTier } from "../systems/equipmentCatalog";
 import { implementedPlayerSkillIds } from "../systems/skillCatalog";
 import type {
@@ -9,6 +9,7 @@ import type {
   EquipmentTier,
   UpgradeChoiceState,
 } from "../types/game-state";
+import { formatPercent } from "../utils";
 import { equipmentRewardMetrics, upgradeRewardMetrics, type RewardChoiceMetric } from "./rewardChoiceDetails";
 
 const BASE_PLAYER = {
@@ -255,6 +256,26 @@ describe("reward choice details", () => {
     const metrics = upgradeRewardMetrics(choice, BASE_PLAYER);
 
     expect(metricValue(metrics, "追加雨滴")).toBe("30% / 50%技能伤害");
+  });
+
+  it("shows the vertical wave pillar chance, count, and damage at level three", () => {
+    const choice: UpgradeChoiceState = {
+      id: "upgrade-vertical-wave",
+      type: "upgradeSkill",
+      title: "技能精进",
+      name: "升浪·托月 III",
+      description: "有概率追加水柱。",
+      skillId: SKILL_IDS.verticalWave,
+      nextLevel: VERTICAL_WAVE_PILLAR_CONFIG.requiredLevel,
+    };
+    const pillarUnlockValue = `${formatPercent(VERTICAL_WAVE_PILLAR_CONFIG.chance)} / ${
+      VERTICAL_WAVE_PILLAR_CONFIG.count
+    }×${formatPercent(VERTICAL_WAVE_PILLAR_CONFIG.damageMultiplier)}`;
+
+    expect(metricValue(upgradeRewardMetrics(choice, BASE_PLAYER), "追加水柱"))
+      .toBe(`${pillarUnlockValue}技能伤害`);
+    expect(metricValue(upgradeRewardMetrics(choice, BASE_PLAYER, "en"), "Bonus Water Pillars"))
+      .toBe(`${pillarUnlockValue} skill damage`);
   });
 
   it("shows damage and duration changes for ultimate upgrades", () => {

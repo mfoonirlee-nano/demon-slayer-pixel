@@ -375,7 +375,7 @@ export type PlayerSkillEffectPhase = "out" | "return" | "impact";
 
 export type PlayerSkillEffectState = {
   skillId: SkillId;
-  kind: "dashSlash" | "vortex" | "armorBreak" | "rainLine" | "returningBlade" | "verticalWave";
+  kind: "dashSlash" | "vortex" | "armorBreak" | "rainLine" | "returningBlade" | "verticalWave" | "verticalWavePillar";
   x: number;
   y: number;
   visualY?: number;
@@ -386,6 +386,7 @@ export type PlayerSkillEffectState = {
   facing: number;
   elapsed: number;
   frame: number;
+  frameDuration?: number;
   life: number;
   maxLife: number;
   damage: number;
@@ -405,6 +406,7 @@ export type PlayerSkillEffectState = {
   bossCooldown?: number;
   refundedSkillEnergy?: boolean;
   refundGroupId?: number;
+  startDelay?: number;
   visualOnly?: boolean;
   armorBreakDuration?: number;
   armorBreakMultiplier?: number;

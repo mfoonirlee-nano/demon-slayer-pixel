@@ -1,14 +1,18 @@
 import { describe, expect, it } from "vitest";
 import {
+  ANTI_AIR_MULTI_BONUS_DROP_CONFIG,
   CLOSE_ARC_BASIC_CRESCENT_CONFIG,
   CLOSE_ARC_BASIC_CRESCENT_SHEET,
   LINE_PROJECTILE_EFFECT_CONFIG,
   SKILL_IDS,
+  VERTICAL_WAVE_PILLAR_CONFIG,
+  VERTICAL_WAVE_PILLAR_SHEET,
 } from "../constants";
-import { ANTI_AIR_MULTI_BONUS_DROP_CONFIG } from "./playerSkills";
+import { formatPercent } from "../utils";
 import {
   implementedPlayerSkills,
   lineProjectileEffectSheetForLevel,
+  playerSkillEffectSheet,
   playerSkillEffectSheets,
   playerSkillDescription,
 } from "./skillCatalog";
@@ -33,7 +37,9 @@ const GUARD_COUNTER_LEVEL_THREE = 3;
 const DASH_REPOSITION_LEVEL_THREE = 3;
 const ARMOR_BREAK_LEVEL_THREE = 3;
 const ANTI_AIR_MULTI_LEVEL_THREE = 3;
-const PERCENT_MULTIPLIER = 100;
+const VERTICAL_WAVE_PILLAR_FRAME_WIDTH = 480;
+const VERTICAL_WAVE_PILLAR_FRAME_HEIGHT = 520;
+const VERTICAL_WAVE_PILLAR_FRAME_COUNT = VERTICAL_WAVE_PILLAR_CONFIG.frameCount;
 
 describe("player skill catalog copy", () => {
   it("uses the canonical display names for all implemented normal skills", () => {
@@ -137,8 +143,39 @@ describe("player skill catalog copy", () => {
   it("explains the level-three anti-air bonus drop chance and damage", () => {
     const description = playerSkillDescription(SKILL_IDS.antiAirMulti, ANTI_AIR_MULTI_LEVEL_THREE);
 
-    expect(description).toContain(`${ANTI_AIR_MULTI_BONUS_DROP_CONFIG.chance * PERCENT_MULTIPLIER}%`);
-    expect(description).toContain(`${ANTI_AIR_MULTI_BONUS_DROP_CONFIG.damageMultiplier * PERCENT_MULTIPLIER}%`);
+    expect(description).toContain(formatPercent(ANTI_AIR_MULTI_BONUS_DROP_CONFIG.chance));
+    expect(description).toContain(formatPercent(ANTI_AIR_MULTI_BONUS_DROP_CONFIG.damageMultiplier));
+  });
+
+  it("explains the level-three vertical wave pillar chain", () => {
+    const description = playerSkillDescription(
+      SKILL_IDS.verticalWave,
+      VERTICAL_WAVE_PILLAR_CONFIG.requiredLevel,
+    );
+
+    expect(description).toContain("原有浪柱照常升起");
+    expect(description).toContain(formatPercent(VERTICAL_WAVE_PILLAR_CONFIG.chance));
+    expect(description).toContain(`追加 ${VERTICAL_WAVE_PILLAR_CONFIG.count} 道`);
+    expect(description).toContain("由近及远");
+    expect(description).toContain("向下冲击");
+    expect(description).toContain(
+      `每道造成 ${formatPercent(VERTICAL_WAVE_PILLAR_CONFIG.damageMultiplier)} 技能伤害`,
+    );
+  });
+
+  it("preloads and selects the separate downward pillar sheet", () => {
+    const preloadedSources = playerSkillEffectSheets().map((sheet) => sheet.src);
+
+    expect(preloadedSources.filter((src) => src === VERTICAL_WAVE_PILLAR_SHEET.src)).toHaveLength(1);
+    expect(playerSkillEffectSheet(SKILL_IDS.verticalWave, "verticalWavePillar"))
+      .toBe(VERTICAL_WAVE_PILLAR_SHEET);
+    expect(playerSkillEffectSheet(SKILL_IDS.verticalWave, "verticalWave"))
+      .not.toBe(VERTICAL_WAVE_PILLAR_SHEET);
+    expect(VERTICAL_WAVE_PILLAR_SHEET).toMatchObject({
+      frameW: VERTICAL_WAVE_PILLAR_FRAME_WIDTH,
+      frameH: VERTICAL_WAVE_PILLAR_FRAME_HEIGHT,
+      count: VERTICAL_WAVE_PILLAR_FRAME_COUNT,
+    });
   });
 
   it("preloads the close arc level three basic attack crescent sheet", () => {

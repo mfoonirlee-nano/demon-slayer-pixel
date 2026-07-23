@@ -1,11 +1,17 @@
 import { state } from "../../game/state";
-import { GROUND_Y, PLAYER_COMBAT, SKILL_IDS, WIDTH } from "../../constants";
+import {
+  ANTI_AIR_MULTI_BONUS_DROP_CONFIG,
+  GROUND_Y,
+  PLAYER_COMBAT,
+  SKILL_IDS,
+  VERTICAL_WAVE_PILLAR_CONFIG,
+  WIDTH,
+} from "../../constants";
 import type { EnemyState, SkillLevel } from "../../types/game-state";
 import type { SkillId } from "../../types/assets";
 import { clamp, hitbox } from "../../game/utils";
 import { resolveBossHit, resolveEnemyHit } from "../../systems/combatResolution";
 import {
-  ANTI_AIR_MULTI_BONUS_DROP_CONFIG,
   GENERIC_PLAYER_SKILL_TUNING,
   isGenericPlayerSkillId,
   valueForSkillLevel,
@@ -276,7 +282,7 @@ export function spawnPlayerSkillEffect(skillId: SkillId, castDamageMultiplier = 
   if (skillId === SKILL_IDS.verticalWave) {
     const waveW = valueForSkillLevel(tuning.width, level);
     const waveH = valueForSkillLevel(tuning.height, level);
-    state.playerSkillEffects.push(makeGenericEffect(
+    const baseWave = makeGenericEffect(
       skillId,
       level,
       castDamageMultiplier,
@@ -288,7 +294,34 @@ export function spawnPlayerSkillEffect(skillId: SkillId, castDamageMultiplier = 
         lift: valueForSkillLevel(tuning.lift ?? tuning.height, level),
         refundGroupId,
       },
-    ));
+    );
+    state.playerSkillEffects.push(baseWave);
+
+    const hasPillarChain = level >= VERTICAL_WAVE_PILLAR_CONFIG.requiredLevel
+      && Math.random() < VERTICAL_WAVE_PILLAR_CONFIG.chance;
+    if (hasPillarChain) {
+      for (let index = 0; index < VERTICAL_WAVE_PILLAR_CONFIG.count; index += 1) {
+        const forwardOffset = VERTICAL_WAVE_PILLAR_CONFIG.firstForwardOffset
+          + index * VERTICAL_WAVE_PILLAR_CONFIG.spacing;
+        // Preserve the forward sequence at screen edges; clipping is preferable
+        // to clamping multiple pillars onto one point or behind the player.
+        const pillarX = playerCenterX + player.facing * forwardOffset;
+        state.playerSkillEffects.push(makeGenericEffect(
+          skillId,
+          level,
+          castDamageMultiplier * VERTICAL_WAVE_PILLAR_CONFIG.damageMultiplier,
+          pillarX,
+          feetY - waveH / 2,
+          {
+            kind: "verticalWavePillar",
+            startDelay: index * VERTICAL_WAVE_PILLAR_CONFIG.staggerFrames,
+            frameDuration: VERTICAL_WAVE_PILLAR_CONFIG.frameDuration,
+            life: VERTICAL_WAVE_PILLAR_CONFIG.activeLifeFrames,
+            refundGroupId,
+          },
+        ));
+      }
+    }
     return true;
   }
 

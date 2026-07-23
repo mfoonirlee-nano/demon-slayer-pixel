@@ -124,20 +124,21 @@ export function drawEnemyIntoVortex(effect: PlayerSkillEffectState, enemy: Enemy
 }
 
 export function playerSkillSheetFrame(effect: PlayerSkillEffectState) {
-  const sheet = playerSkillEffectSheet(effect.skillId);
+  const sheet = playerSkillEffectSheet(effect.skillId, effect.kind);
   const tuning = isGenericPlayerSkillId(effect.skillId) ? GENERIC_PLAYER_SKILL_TUNING[effect.skillId] : null;
   if (!sheet || !tuning) return 0;
-  if (tuning.kind === "vortex") return Math.floor(effect.elapsed / tuning.frameDuration) % sheet.count;
+  const frameDuration = effect.frameDuration ?? tuning.frameDuration;
+  if (tuning.kind === "vortex") return Math.floor(effect.elapsed / frameDuration) % sheet.count;
   if (tuning.kind === "armorBreak") {
     if (effect.phase === "impact") {
       return Math.min(
         sheet.count - 1,
-        ARMOR_BREAK_IMPACT_FRAME_START + Math.floor(effect.elapsed / tuning.frameDuration),
+        ARMOR_BREAK_IMPACT_FRAME_START + Math.floor(effect.elapsed / frameDuration),
       );
     }
     return 0;
   }
-  return Math.min(sheet.count - 1, Math.floor(effect.elapsed / tuning.frameDuration));
+  return Math.min(sheet.count - 1, Math.floor(effect.elapsed / frameDuration));
 }
 
 export function refundSkillGroupById(refundGroupId: number | undefined, hitTargets: number, bossHit: boolean) {

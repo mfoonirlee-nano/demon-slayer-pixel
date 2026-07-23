@@ -13,9 +13,10 @@ import {
   SKILLS,
   ULTIMATE_SKILL_EFFECT_SHEET,
   ULTIMATE_SKILL_SHEET,
+  VERTICAL_WAVE_PILLAR_SHEET,
 } from "../constants";
 import type { Skill, SkillId, SpriteSheet } from "../types/assets";
-import type { SkillLevel } from "../types/game-state";
+import type { PlayerSkillEffectState, SkillLevel } from "../types/game-state";
 import {
   GENERIC_PLAYER_SKILL_TUNING,
   isGenericPlayerSkillId,
@@ -86,7 +87,14 @@ export function playerSkillDescription(skillId: SkillId, level: SkillLevel) {
   return skill?.levelDescriptions[level] ?? skill?.description ?? "技能效果提升。";
 }
 
-export function playerSkillEffectSheet(skillId: SkillId): SpriteSheet | null {
+export function playerSkillEffectSheet(
+  skillId: SkillId,
+  effectKind?: PlayerSkillEffectState["kind"],
+): SpriteSheet | null {
+  if (
+    skillId === SKILL_IDS.verticalWave
+    && effectKind === "verticalWavePillar"
+  ) return VERTICAL_WAVE_PILLAR_SHEET;
   if (isCorePlayerSkillId(skillId)) {
     return CORE_PLAYER_SKILL_EFFECT_SHEETS[skillId];
   }
@@ -103,6 +111,7 @@ export function playerSkillEffectSheets(): SpriteSheet[] {
     LINE_PROJECTILE_EFFECT_LEVEL_TWO_SHEET,
     LINE_PROJECTILE_EFFECT_LEVEL_THREE_SHEET,
     ...Object.values(PLAYER_SKILL_EFFECT_SHEETS).filter(isSpriteSheet),
+    VERTICAL_WAVE_PILLAR_SHEET,
   ];
 }
 

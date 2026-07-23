@@ -1,7 +1,11 @@
-import { SKILLS, SKILL_IDS } from "../constants";
+import { SKILLS, SKILL_IDS, VERTICAL_WAVE_PILLAR_CONFIG } from "../constants";
 import type { SkillId } from "../types/assets";
 import type { SkillLevel } from "../types/game-state";
+import { formatPercent } from "../utils";
 import type { Language } from "./language";
+
+const VERTICAL_WAVE_PILLAR_CHANCE = formatPercent(VERTICAL_WAVE_PILLAR_CONFIG.chance);
+const VERTICAL_WAVE_PILLAR_DAMAGE = formatPercent(VERTICAL_WAVE_PILLAR_CONFIG.damageMultiplier);
 
 export type LocalizedSkillCopy = {
   name: string;
@@ -100,7 +104,7 @@ const ENGLISH_SKILL_COPY = {
     levelDescriptions: {
       1: "Raise a short wave pillar that interrupts nearby and overhead targets with a slight lift.",
       2: "The pillar grows taller and wider, dealing more damage and lifting more strongly.",
-      3: "Coverage and damage increase further, but it cannot keep targets airborne for long.",
+      3: `Coverage and damage increase further. The original wave pillar still rises. Each cast has a ${VERTICAL_WAVE_PILLAR_CHANCE} chance to add ${VERTICAL_WAVE_PILLAR_CONFIG.count} additional water pillars that crash downward from near to far, dealing ${VERTICAL_WAVE_PILLAR_DAMAGE} skill damage each. It still cannot keep targets airborne for long.`,
     },
   },
 } satisfies Record<SkillId, LocalizedSkillCopy>;

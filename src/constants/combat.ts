@@ -29,6 +29,30 @@ export const DASH_REPOSITION_PASSIVE_CONFIG = {
   moveSpeedMultiplier: 1.15,
 } as const;
 
+export const ANTI_AIR_MULTI_BONUS_DROP_CONFIG = {
+  requiredLevel: 3,
+  chance: 0.3,
+  damageMultiplier: 0.5,
+} as const;
+
+const VERTICAL_WAVE_PILLAR_FRAME_COUNT = 7;
+const VERTICAL_WAVE_PILLAR_FRAME_DURATION = 4;
+const VERTICAL_WAVE_PILLAR_FIRST_CONTACT_FRAME = 2;
+
+export const VERTICAL_WAVE_PILLAR_CONFIG = {
+  requiredLevel: 3,
+  chance: 0.15,
+  count: 3,
+  damageMultiplier: 0.5,
+  firstForwardOffset: 120,
+  spacing: 84,
+  staggerFrames: 6,
+  frameCount: VERTICAL_WAVE_PILLAR_FRAME_COUNT,
+  frameDuration: VERTICAL_WAVE_PILLAR_FRAME_DURATION,
+  impactFrame: VERTICAL_WAVE_PILLAR_FIRST_CONTACT_FRAME,
+  activeLifeFrames: VERTICAL_WAVE_PILLAR_FRAME_COUNT * VERTICAL_WAVE_PILLAR_FRAME_DURATION,
+} as const;
+
 export const FALL_ATTACK = {
   startVelocity: 5,
   diveVelocity: 7,

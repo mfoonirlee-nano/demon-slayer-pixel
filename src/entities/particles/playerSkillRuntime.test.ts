@@ -1,7 +1,11 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { SKILL_IDS, WIDTH } from "../../constants";
+import {
+  ANTI_AIR_MULTI_BONUS_DROP_CONFIG,
+  SKILL_IDS,
+  VERTICAL_WAVE_PILLAR_CONFIG,
+  WIDTH,
+} from "../../constants";
 import { resetState, state } from "../../game/state";
-import { ANTI_AIR_MULTI_BONUS_DROP_CONFIG } from "../../systems/playerSkills";
 import type { EnemyState } from "../../types/game-state";
 import { spawnEnemyById } from "../enemy";
 import { spawnPlayerSkillEffect } from "./playerSkillSpawn";
@@ -18,7 +22,24 @@ const PLAYER_TEST_Y = 300;
 const ANTI_AIR_LEVEL_TWO = 2;
 const ANTI_AIR_LEVEL_TWO_LINE_COUNT = 5;
 const ANTI_AIR_LEVEL_THREE_LINE_COUNT = 6;
+const VERTICAL_WAVE_LEVEL_TWO = 2;
 const SUCCESSFUL_ROLL_MARGIN = 0.01;
+const VERTICAL_WAVE_PILLAR_TRIGGER_ROLL = VERTICAL_WAVE_PILLAR_CONFIG.chance
+  - SUCCESSFUL_ROLL_MARGIN;
+const VERTICAL_WAVE_PILLAR_FORWARD_DISTANCES = Array.from(
+  { length: VERTICAL_WAVE_PILLAR_CONFIG.count },
+  (_, index) => VERTICAL_WAVE_PILLAR_CONFIG.firstForwardOffset
+    + index * VERTICAL_WAVE_PILLAR_CONFIG.spacing,
+);
+const VERTICAL_WAVE_PILLAR_START_DELAYS = Array.from(
+  { length: VERTICAL_WAVE_PILLAR_CONFIG.count },
+  (_, index) => index * VERTICAL_WAVE_PILLAR_CONFIG.staggerFrames,
+);
+const VERTICAL_WAVE_PILLAR_PRE_IMPACT_FRAMES = VERTICAL_WAVE_PILLAR_CONFIG.impactFrame
+  * VERTICAL_WAVE_PILLAR_CONFIG.frameDuration - 1;
+const VERTICAL_WAVE_PILLAR_FAR_DELAY = (
+  VERTICAL_WAVE_PILLAR_CONFIG.count - 1
+) * VERTICAL_WAVE_PILLAR_CONFIG.staggerFrames;
 
 afterEach(() => {
   vi.restoreAllMocks();
@@ -32,6 +53,29 @@ function spawnReturningBlade(facing: 1 | -1 = 1) {
 
   expect(spawnPlayerSkillEffect(SKILL_IDS.returningBlade)).toBe(true);
   return state.playerSkillEffects[0];
+}
+
+function spawnVerticalWavePillars({
+  facing = 1,
+  playerX = PLAYER_TEST_X,
+  roll = VERTICAL_WAVE_PILLAR_TRIGGER_ROLL,
+}: {
+  facing?: 1 | -1;
+  playerX?: number;
+  roll?: number;
+} = {}) {
+  state.player.x = playerX;
+  state.player.facing = facing;
+  state.player.skillLevels[SKILL_IDS.verticalWave] = VERTICAL_WAVE_PILLAR_CONFIG.requiredLevel;
+  const random = vi.spyOn(Math, "random").mockReturnValue(roll);
+
+  expect(spawnPlayerSkillEffect(SKILL_IDS.verticalWave)).toBe(true);
+
+  return {
+    random,
+    baseWave: state.playerSkillEffects.find(({ kind }) => kind === "verticalWave")!,
+    pillars: state.playerSkillEffects.filter(({ kind }) => kind === "verticalWavePillar"),
+  };
 }
 
 describe("returning blade runtime", () => {
@@ -160,5 +204,118 @@ describe("anti-air multi level-three bonus drop", () => {
 
     expect(random).not.toHaveBeenCalled();
     expect(state.playerSkillEffects).toHaveLength(ANTI_AIR_LEVEL_TWO_LINE_COUNT);
+  });
+});
+
+describe("vertical wave level-three pillar chain", () => {
+  beforeEach(() => {
+    resetState();
+    state.player.x = PLAYER_TEST_X;
+    state.player.y = PLAYER_TEST_Y;
+    state.player.facing = 1;
+  });
+
+  it("adds three half-damage downward pillars from near to far after a successful roll", () => {
+    const { random, baseWave, pillars } = spawnVerticalWavePillars();
+    const playerCenterX = state.player.x + state.player.w / 2;
+    expect(random).toHaveBeenCalledTimes(1);
+    expect(pillars).toHaveLength(VERTICAL_WAVE_PILLAR_CONFIG.count);
+    expect(pillars.map(({ x }) => x - playerCenterX)).toEqual(VERTICAL_WAVE_PILLAR_FORWARD_DISTANCES);
+    expect(pillars.map(({ startDelay }) => startDelay)).toEqual(VERTICAL_WAVE_PILLAR_START_DELAYS);
+    for (const pillar of pillars) {
+      expect(pillar.refundGroupId).toBe(baseWave.refundGroupId);
+      expect(pillar.damage).toBeCloseTo(
+        baseWave.damage * VERTICAL_WAVE_PILLAR_CONFIG.damageMultiplier,
+      );
+      expect(pillar.bossDamage).toBeCloseTo(
+        baseWave.bossDamage * VERTICAL_WAVE_PILLAR_CONFIG.damageMultiplier,
+      );
+      expect(pillar.maxLife).toBe(VERTICAL_WAVE_PILLAR_CONFIG.activeLifeFrames);
+    }
+  });
+
+  it("places the near-to-far chain in front when the player faces left", () => {
+    const { pillars } = spawnVerticalWavePillars({ facing: -1 });
+    const playerCenterX = state.player.x + state.player.w / 2;
+    expect(pillars.map(({ x }) => (x - playerCenterX) * state.player.facing))
+      .toEqual(VERTICAL_WAVE_PILLAR_FORWARD_DISTANCES);
+  });
+
+  it("preserves the forward chain spacing at the facing screen edge", () => {
+    const { pillars } = spawnVerticalWavePillars({
+      playerX: WIDTH - state.player.w,
+    });
+    const playerCenterX = state.player.x + state.player.w / 2;
+
+    expect(pillars.map(({ x }) => x - playerCenterX))
+      .toEqual(VERTICAL_WAVE_PILLAR_FORWARD_DISTANCES);
+  });
+
+  it("does not add pillars when the roll equals the fifteen-percent boundary", () => {
+    const { pillars } = spawnVerticalWavePillars({
+      roll: VERTICAL_WAVE_PILLAR_CONFIG.chance,
+    });
+
+    expect(pillars).toHaveLength(0);
+    expect(state.playerSkillEffects).toHaveLength(1);
+    expect(state.playerSkillEffects[0]?.kind).toBe("verticalWave");
+  });
+
+  it("does not roll for pillars below level three", () => {
+    state.player.skillLevels[SKILL_IDS.verticalWave] = VERTICAL_WAVE_LEVEL_TWO;
+    const random = vi.spyOn(Math, "random").mockReturnValue(0);
+
+    expect(spawnPlayerSkillEffect(SKILL_IDS.verticalWave)).toBe(true);
+
+    expect(random).not.toHaveBeenCalled();
+    expect(state.playerSkillEffects).toHaveLength(1);
+  });
+
+  it("keeps the far pillar's full active lifetime after its start delay", () => {
+    const { pillars } = spawnVerticalWavePillars();
+    const farPillar = pillars[pillars.length - 1]!;
+
+    for (let frame = 0; frame < VERTICAL_WAVE_PILLAR_FAR_DELAY; frame += 1) {
+      updatePlayerSkillEffects();
+    }
+
+    expect(farPillar.life).toBe(farPillar.maxLife);
+    for (let frame = 1; frame < farPillar.maxLife; frame += 1) {
+      updatePlayerSkillEffects();
+    }
+    expect(state.playerSkillEffects).toContain(farPillar);
+
+    updatePlayerSkillEffects();
+
+    expect(state.playerSkillEffects).not.toContain(farPillar);
+  });
+
+  it("impacts from the nearest pillar to the farthest at six-frame intervals", () => {
+    const { pillars } = spawnVerticalWavePillars();
+    for (const pillar of pillars) {
+      expect(spawnEnemyById("chaser", "debug", "right")).toBe(true);
+      const enemy = state.enemies[state.enemies.length - 1]!;
+      enemy.x = pillar.x - enemy.w / 2;
+      enemy.y = pillar.y - enemy.h / 2;
+    }
+    const startingHp = state.enemies.map(({ hp }) => hp);
+    const updateEffects = (frames: number) => {
+      for (let frame = 0; frame < frames; frame += 1) updatePlayerSkillEffects();
+    };
+
+    updateEffects(VERTICAL_WAVE_PILLAR_PRE_IMPACT_FRAMES);
+
+    expect(state.enemies.map(({ hp }) => hp)).toEqual(startingHp);
+
+    for (let pillarIndex = 0; pillarIndex < VERTICAL_WAVE_PILLAR_CONFIG.count; pillarIndex += 1) {
+      updateEffects(pillarIndex === 0 ? 1 : VERTICAL_WAVE_PILLAR_CONFIG.staggerFrames);
+      expect(pillars[pillarIndex]?.frame).toBe(VERTICAL_WAVE_PILLAR_CONFIG.impactFrame);
+      expect(state.enemies.map(({ hp }, enemyIndex) => hp < startingHp[enemyIndex])).toEqual(
+        Array.from(
+          { length: VERTICAL_WAVE_PILLAR_CONFIG.count },
+          (_, enemyIndex) => enemyIndex <= pillarIndex,
+        ),
+      );
+    }
   });
 });

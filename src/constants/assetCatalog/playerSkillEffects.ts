@@ -1,4 +1,5 @@
 import { SKILL_IDS } from "../ids";
+import { VERTICAL_WAVE_PILLAR_CONFIG } from "../combat";
 import type { SkillId, SpriteSheet } from "../../types/assets";
 
 export const LINE_PROJECTILE_EFFECT_SHEET: SpriteSheet = {
@@ -172,6 +173,14 @@ export const PLAYER_SKILL_EFFECT_SHEETS: Partial<Record<SkillId, SpriteSheet>> =
     count: 7,
     image: null,
   },
+};
+
+export const VERTICAL_WAVE_PILLAR_SHEET: SpriteSheet = {
+  src: "assets/sprites/skills/vertical_wave/downward_pillar.png",
+  frameW: 480,
+  frameH: 520,
+  count: VERTICAL_WAVE_PILLAR_CONFIG.frameCount,
+  image: null,
 };
 
 export const ULTIMATE_SKILL_SHEET: SpriteSheet = {

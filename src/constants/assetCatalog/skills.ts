@@ -1,5 +1,10 @@
 import { SKILL_IDS } from "../ids";
+import { VERTICAL_WAVE_PILLAR_CONFIG } from "../combat";
 import type { Skill } from "../../types/assets";
+import { formatPercent } from "../../utils";
+
+const VERTICAL_WAVE_PILLAR_CHANCE = formatPercent(VERTICAL_WAVE_PILLAR_CONFIG.chance);
+const VERTICAL_WAVE_PILLAR_DAMAGE = formatPercent(VERTICAL_WAVE_PILLAR_CONFIG.damageMultiplier);
 
 export const SKILLS: Skill[] = [
   {
@@ -213,7 +218,7 @@ export const SKILLS: Skill[] = [
     levelDescriptions: {
       1: "升起短浪柱，打断贴身和上方目标并轻微上托。",
       2: "浪柱更高更宽，伤害和上托效果提升。",
-      3: "浪柱覆盖和伤害继续提升，但不长期浮空连控。",
+      3: `浪柱覆盖和伤害继续提升；原有浪柱照常升起，每次施放有 ${VERTICAL_WAVE_PILLAR_CHANCE} 概率追加 ${VERTICAL_WAVE_PILLAR_CONFIG.count} 道由近及远向下冲击的水柱，每道造成 ${VERTICAL_WAVE_PILLAR_DAMAGE} 技能伤害；仍不长期浮空连控。`,
     },
     src: "assets/sprites/skills/vertical_wave/skill.png",
     frameCount: 6,
