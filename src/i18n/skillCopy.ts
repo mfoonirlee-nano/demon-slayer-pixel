@@ -1,4 +1,9 @@
-import { SKILLS, SKILL_IDS, VERTICAL_WAVE_PILLAR_CONFIG } from "../constants";
+import {
+  RETURNING_BLADE_WATER_RING_CONFIG,
+  SKILLS,
+  SKILL_IDS,
+  VERTICAL_WAVE_PILLAR_CONFIG,
+} from "../constants";
 import type { SkillId } from "../types/assets";
 import type { SkillLevel } from "../types/game-state";
 import { formatPercent } from "../utils";
@@ -6,6 +11,8 @@ import type { Language } from "./language";
 
 const VERTICAL_WAVE_PILLAR_CHANCE = formatPercent(VERTICAL_WAVE_PILLAR_CONFIG.chance);
 const VERTICAL_WAVE_PILLAR_DAMAGE = formatPercent(VERTICAL_WAVE_PILLAR_CONFIG.damageMultiplier);
+const RETURNING_BLADE_WATER_RING_CHANCE = formatPercent(RETURNING_BLADE_WATER_RING_CONFIG.chance);
+const RETURNING_BLADE_WATER_RING_DAMAGE = formatPercent(RETURNING_BLADE_WATER_RING_CONFIG.damageMultiplier);
 
 export type LocalizedSkillCopy = {
   name: string;
@@ -95,7 +102,7 @@ const ENGLISH_SKILL_COPY = {
     levelDescriptions: {
       1: "The tideblade flies out and returns, hitting up to 2 times and rewarding careful positioning.",
       2: "Travel distance and damage increase, with up to 3 hits.",
-      3: "Hits up to 4 times for greater route payoff, but does not track targets across the arena.",
+      3: `Hits up to 4 times for greater route payoff. The original tideblade still travels out and returns. Each cast has a ${RETURNING_BLADE_WATER_RING_CHANCE} chance to add one spinning water-ring slash dealing ${RETURNING_BLADE_WATER_RING_DAMAGE} skill damage, but it still does not track targets across the arena.`,
     },
   },
   [SKILL_IDS.verticalWave]: {

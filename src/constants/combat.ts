@@ -35,6 +35,16 @@ export const ANTI_AIR_MULTI_BONUS_DROP_CONFIG = {
   damageMultiplier: 0.5,
 } as const;
 
+export const RETURNING_BLADE_WATER_RING_CONFIG = {
+  requiredLevel: 3,
+  chance: 0.15,
+  damageMultiplier: 0.5,
+  startDelay: 4,
+  frameCount: 6,
+  frameDuration: 3,
+  drawScale: 0.56,
+} as const;
+
 const VERTICAL_WAVE_PILLAR_FRAME_COUNT = 7;
 const VERTICAL_WAVE_PILLAR_FRAME_DURATION = 4;
 const VERTICAL_WAVE_PILLAR_FIRST_CONTACT_FRAME = 2;

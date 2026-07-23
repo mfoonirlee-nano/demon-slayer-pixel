@@ -1,10 +1,15 @@
 import { SKILL_IDS } from "../ids";
-import { VERTICAL_WAVE_PILLAR_CONFIG } from "../combat";
+import {
+  RETURNING_BLADE_WATER_RING_CONFIG,
+  VERTICAL_WAVE_PILLAR_CONFIG,
+} from "../combat";
 import type { Skill } from "../../types/assets";
 import { formatPercent } from "../../utils";
 
 const VERTICAL_WAVE_PILLAR_CHANCE = formatPercent(VERTICAL_WAVE_PILLAR_CONFIG.chance);
 const VERTICAL_WAVE_PILLAR_DAMAGE = formatPercent(VERTICAL_WAVE_PILLAR_CONFIG.damageMultiplier);
+const RETURNING_BLADE_WATER_RING_CHANCE = formatPercent(RETURNING_BLADE_WATER_RING_CONFIG.chance);
+const RETURNING_BLADE_WATER_RING_DAMAGE = formatPercent(RETURNING_BLADE_WATER_RING_CONFIG.damageMultiplier);
 
 export const SKILLS: Skill[] = [
   {
@@ -193,7 +198,7 @@ export const SKILLS: Skill[] = [
     levelDescriptions: {
       1: "潮刃飞出后返回，最多 2 次命中，奖励站位预判。",
       2: "飞行距离和伤害提升，最多 3 次命中。",
-      3: "最多 4 次命中，路线收益更高，但不自动追踪全场。",
+      3: `最多 4 次命中，路线收益更高；原有潮刃照常往返，每次施放有 ${RETURNING_BLADE_WATER_RING_CHANCE} 概率追加 1 道回旋水波纹剑气，造成 ${RETURNING_BLADE_WATER_RING_DAMAGE} 技能伤害，但仍不自动追踪全场。`,
     },
     src: "assets/sprites/skills/returning_blade/skill.png",
     frameCount: 5,

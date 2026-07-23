@@ -9,6 +9,7 @@ import {
   LINE_PROJECTILE_EFFECT_LEVEL_TWO_SHEET,
   LINE_PROJECTILE_EFFECT_SHEET,
   PLAYER_SKILL_EFFECT_SHEETS,
+  RETURNING_BLADE_WATER_RING_SHEET,
   SKILL_IDS,
   SKILLS,
   ULTIMATE_SKILL_EFFECT_SHEET,
@@ -95,6 +96,10 @@ export function playerSkillEffectSheet(
     skillId === SKILL_IDS.verticalWave
     && effectKind === "verticalWavePillar"
   ) return VERTICAL_WAVE_PILLAR_SHEET;
+  if (
+    skillId === SKILL_IDS.returningBlade
+    && effectKind === "returningBladeWaterRing"
+  ) return RETURNING_BLADE_WATER_RING_SHEET;
   if (isCorePlayerSkillId(skillId)) {
     return CORE_PLAYER_SKILL_EFFECT_SHEETS[skillId];
   }
@@ -111,6 +116,7 @@ export function playerSkillEffectSheets(): SpriteSheet[] {
     LINE_PROJECTILE_EFFECT_LEVEL_TWO_SHEET,
     LINE_PROJECTILE_EFFECT_LEVEL_THREE_SHEET,
     ...Object.values(PLAYER_SKILL_EFFECT_SHEETS).filter(isSpriteSheet),
+    RETURNING_BLADE_WATER_RING_SHEET,
     VERTICAL_WAVE_PILLAR_SHEET,
   ];
 }

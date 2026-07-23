@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
   ANTI_AIR_MULTI_BONUS_DROP_CONFIG,
+  RETURNING_BLADE_WATER_RING_CONFIG,
   SKILL_IDS,
   VERTICAL_WAVE_PILLAR_CONFIG,
   WIDTH,
@@ -22,8 +23,12 @@ const PLAYER_TEST_Y = 300;
 const ANTI_AIR_LEVEL_TWO = 2;
 const ANTI_AIR_LEVEL_TWO_LINE_COUNT = 5;
 const ANTI_AIR_LEVEL_THREE_LINE_COUNT = 6;
+const RETURNING_BLADE_LEVEL_TWO = 2;
+const RETURNING_BLADE_DAMAGE_TEST_HP = 1_000;
 const VERTICAL_WAVE_LEVEL_TWO = 2;
 const SUCCESSFUL_ROLL_MARGIN = 0.01;
+const RETURNING_BLADE_WATER_RING_TRIGGER_ROLL = RETURNING_BLADE_WATER_RING_CONFIG.chance
+  - SUCCESSFUL_ROLL_MARGIN;
 const VERTICAL_WAVE_PILLAR_TRIGGER_ROLL = VERTICAL_WAVE_PILLAR_CONFIG.chance
   - SUCCESSFUL_ROLL_MARGIN;
 const VERTICAL_WAVE_PILLAR_FORWARD_DISTANCES = Array.from(
@@ -119,6 +124,129 @@ describe("returning blade runtime", () => {
     updatePlayerSkillEffects();
 
     expect(state.playerSkillEffects).toHaveLength(0);
+    expect(audioMock.playSfx).toHaveBeenCalledWith("playerSkillReturningBladeCatch");
+  });
+
+  it("adds one half-damage water-ring slash on the same route after a successful level-three roll", () => {
+    state.player.x = PLAYER_TEST_X;
+    state.player.y = PLAYER_TEST_Y;
+    state.player.facing = 1;
+    state.player.skillLevels[SKILL_IDS.returningBlade] = 3;
+    const random = vi.spyOn(Math, "random").mockReturnValue(
+      RETURNING_BLADE_WATER_RING_TRIGGER_ROLL,
+    );
+
+    expect(spawnPlayerSkillEffect(SKILL_IDS.returningBlade)).toBe(true);
+
+    expect(random).toHaveBeenCalledTimes(1);
+    expect(state.playerSkillEffects.map(({ kind }) => kind)).toEqual([
+      "returningBlade",
+      "returningBladeWaterRing",
+    ]);
+    const baseBlade = state.playerSkillEffects[0]!;
+    const waterRing = state.playerSkillEffects[1]!;
+    expect(waterRing).toMatchObject({
+      x: baseBlade.x,
+      y: baseBlade.y,
+      vx: baseBlade.vx,
+      vy: baseBlade.vy,
+      phase: baseBlade.phase,
+      maxDistance: baseBlade.maxDistance,
+      maxHits: baseBlade.maxHits,
+      refundGroupId: baseBlade.refundGroupId,
+      startDelay: RETURNING_BLADE_WATER_RING_CONFIG.startDelay,
+      frameDuration: RETURNING_BLADE_WATER_RING_CONFIG.frameDuration,
+    });
+    expect(waterRing.hitEnemies).not.toBe(baseBlade.hitEnemies);
+    expect(waterRing.returnHitEnemies).not.toBe(baseBlade.returnHitEnemies);
+    expect(waterRing.damage).toBeCloseTo(
+      baseBlade.damage * RETURNING_BLADE_WATER_RING_CONFIG.damageMultiplier,
+    );
+    expect(waterRing.bossDamage).toBeCloseTo(
+      baseBlade.bossDamage * RETURNING_BLADE_WATER_RING_CONFIG.damageMultiplier,
+    );
+  });
+
+  it("does not add a water-ring slash when the roll equals the fifteen-percent boundary", () => {
+    state.player.skillLevels[SKILL_IDS.returningBlade] = 3;
+    vi.spyOn(Math, "random").mockReturnValue(RETURNING_BLADE_WATER_RING_CONFIG.chance);
+
+    expect(spawnPlayerSkillEffect(SKILL_IDS.returningBlade)).toBe(true);
+
+    expect(state.playerSkillEffects.map(({ kind }) => kind)).toEqual(["returningBlade"]);
+  });
+
+  it("does not roll for a water-ring slash below level three", () => {
+    state.player.skillLevels[SKILL_IDS.returningBlade] = RETURNING_BLADE_LEVEL_TWO;
+    const random = vi.spyOn(Math, "random").mockReturnValue(0);
+
+    expect(spawnPlayerSkillEffect(SKILL_IDS.returningBlade)).toBe(true);
+
+    expect(random).not.toHaveBeenCalled();
+    expect(state.playerSkillEffects.map(({ kind }) => kind)).toEqual(["returningBlade"]);
+  });
+
+  it("loops the water-ring animation while it travels", () => {
+    state.player.skillLevels[SKILL_IDS.returningBlade] = 3;
+    vi.spyOn(Math, "random").mockReturnValue(RETURNING_BLADE_WATER_RING_TRIGGER_ROLL);
+    expect(spawnPlayerSkillEffect(SKILL_IDS.returningBlade)).toBe(true);
+    const waterRing = state.playerSkillEffects[1]!;
+    waterRing.startDelay = 0;
+    waterRing.elapsed = (
+      RETURNING_BLADE_WATER_RING_CONFIG.frameCount
+      * RETURNING_BLADE_WATER_RING_CONFIG.frameDuration
+    ) - 1;
+
+    updatePlayerSkillEffects();
+
+    expect(waterRing.frame).toBe(0);
+  });
+
+  it("lets the original blade and water-ring slash damage the same enemy independently", () => {
+    state.player.skillLevels[SKILL_IDS.returningBlade] = 3;
+    vi.spyOn(Math, "random").mockReturnValue(RETURNING_BLADE_WATER_RING_TRIGGER_ROLL);
+    expect(spawnPlayerSkillEffect(SKILL_IDS.returningBlade)).toBe(true);
+    expect(spawnEnemyById("chaser", "debug", "right")).toBe(true);
+    const [baseBlade, waterRing] = state.playerSkillEffects;
+    const enemy = state.enemies[0]!;
+    baseBlade!.startDelay = 0;
+    waterRing!.startDelay = 0;
+    enemy.x = baseBlade!.x + baseBlade!.vx - enemy.w / 2;
+    enemy.y = baseBlade!.y - enemy.h / 2;
+    enemy.hp = RETURNING_BLADE_DAMAGE_TEST_HP;
+
+    updatePlayerSkillEffects();
+
+    expect(enemy.hp).toBeCloseTo(
+      RETURNING_BLADE_DAMAGE_TEST_HP - baseBlade!.damage - waterRing!.damage,
+    );
+  });
+
+  it("keeps turn and catch cues single when the water-ring slash triggers", () => {
+    state.player.skillLevels[SKILL_IDS.returningBlade] = 3;
+    vi.spyOn(Math, "random").mockReturnValue(RETURNING_BLADE_WATER_RING_TRIGGER_ROLL);
+    expect(spawnPlayerSkillEffect(SKILL_IDS.returningBlade)).toBe(true);
+    const [baseBlade, waterRing] = state.playerSkillEffects;
+    for (const effect of [baseBlade!, waterRing!]) {
+      effect.startDelay = 0;
+      effect.traveled = effect.maxDistance;
+    }
+
+    updatePlayerSkillEffects();
+
+    expect(audioMock.playSfx).toHaveBeenCalledTimes(1);
+    expect(audioMock.playSfx).toHaveBeenCalledWith("playerSkillReturningBladeTurn");
+    audioMock.playSfx.mockClear();
+    for (const effect of state.playerSkillEffects) {
+      effect.phase = "return";
+      effect.x = state.player.x + state.player.w / 2;
+      effect.y = state.player.y + state.player.h / 2;
+    }
+
+    updatePlayerSkillEffects();
+
+    expect(state.playerSkillEffects).toHaveLength(0);
+    expect(audioMock.playSfx).toHaveBeenCalledTimes(1);
     expect(audioMock.playSfx).toHaveBeenCalledWith("playerSkillReturningBladeCatch");
   });
 });

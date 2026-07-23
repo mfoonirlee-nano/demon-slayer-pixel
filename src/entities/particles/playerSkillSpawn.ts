@@ -3,6 +3,7 @@ import {
   ANTI_AIR_MULTI_BONUS_DROP_CONFIG,
   GROUND_Y,
   PLAYER_COMBAT,
+  RETURNING_BLADE_WATER_RING_CONFIG,
   SKILL_IDS,
   VERTICAL_WAVE_PILLAR_CONFIG,
   WIDTH,
@@ -262,10 +263,9 @@ export function spawnPlayerSkillEffect(skillId: SkillId, castDamageMultiplier = 
     const startX = playerCenterX + player.facing * RETURNING_BLADE_SPAWN_FORWARD_OFFSET;
     const maxDistance = returningBladeOutboundDistance(startX, player.facing, minDistance);
     const life = returningBladeLife(maxDistance);
-
-    state.playerSkillEffects.push(makeGenericEffect(skillId, level, castDamageMultiplier, startX, playerCenterY, {
+    const route = {
       vx: player.facing * RETURNING_BLADE_SPEED,
-      phase: "out",
+      phase: "out" as const,
       originX: playerCenterX,
       originY: playerCenterY,
       traveled: 0,
@@ -273,9 +273,32 @@ export function spawnPlayerSkillEffect(skillId: SkillId, castDamageMultiplier = 
       life,
       maxLife: life,
       maxHits: valueForSkillLevel(tuning.maxHits ?? tuning.life, level),
-      returnHitEnemies: [],
       refundGroupId,
+    };
+
+    state.playerSkillEffects.push(makeGenericEffect(skillId, level, castDamageMultiplier, startX, playerCenterY, {
+      ...route,
+      returnHitEnemies: [],
     }));
+    const hasWaterRing = level >= RETURNING_BLADE_WATER_RING_CONFIG.requiredLevel
+      && Math.random() < RETURNING_BLADE_WATER_RING_CONFIG.chance;
+    if (hasWaterRing) {
+      state.playerSkillEffects.push(makeGenericEffect(
+        skillId,
+        level,
+        castDamageMultiplier * RETURNING_BLADE_WATER_RING_CONFIG.damageMultiplier,
+        startX,
+        playerCenterY,
+        {
+          ...route,
+          kind: "returningBladeWaterRing",
+          returnHitEnemies: [],
+          startDelay: RETURNING_BLADE_WATER_RING_CONFIG.startDelay,
+          frameDuration: RETURNING_BLADE_WATER_RING_CONFIG.frameDuration,
+          drawScale: RETURNING_BLADE_WATER_RING_CONFIG.drawScale,
+        },
+      ));
+    }
     return true;
   }
 

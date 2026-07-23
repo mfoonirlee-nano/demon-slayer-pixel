@@ -128,7 +128,12 @@ export function playerSkillSheetFrame(effect: PlayerSkillEffectState) {
   const tuning = isGenericPlayerSkillId(effect.skillId) ? GENERIC_PLAYER_SKILL_TUNING[effect.skillId] : null;
   if (!sheet || !tuning) return 0;
   const frameDuration = effect.frameDuration ?? tuning.frameDuration;
-  if (tuning.kind === "vortex") return Math.floor(effect.elapsed / frameDuration) % sheet.count;
+  // A water ring must keep rotating throughout both route phases; other
+  // projectile sheets remain one-shot animations that hold their last frame.
+  if (
+    tuning.kind === "vortex"
+    || effect.kind === "returningBladeWaterRing"
+  ) return Math.floor(effect.elapsed / frameDuration) % sheet.count;
   if (tuning.kind === "armorBreak") {
     if (effect.phase === "impact") {
       return Math.min(

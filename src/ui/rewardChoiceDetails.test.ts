@@ -1,5 +1,9 @@
 import { describe, expect, it } from "vitest";
-import { SKILL_IDS, VERTICAL_WAVE_PILLAR_CONFIG } from "../constants";
+import {
+  RETURNING_BLADE_WATER_RING_CONFIG,
+  SKILL_IDS,
+  VERTICAL_WAVE_PILLAR_CONFIG,
+} from "../constants";
 import { EQUIPMENT_CHOICE_IDS, equipmentItemForTier } from "../systems/equipmentCatalog";
 import { implementedPlayerSkillIds } from "../systems/skillCatalog";
 import type {
@@ -256,6 +260,26 @@ describe("reward choice details", () => {
     const metrics = upgradeRewardMetrics(choice, BASE_PLAYER);
 
     expect(metricValue(metrics, "追加雨滴")).toBe("30% / 50%技能伤害");
+  });
+
+  it("shows the returning blade water-ring chance and damage at level three", () => {
+    const choice: UpgradeChoiceState = {
+      id: "upgrade-returning-blade",
+      type: "upgradeSkill",
+      title: "技能精进",
+      name: "回刃·归潮 III",
+      description: "有概率追加回旋剑气。",
+      skillId: SKILL_IDS.returningBlade,
+      nextLevel: RETURNING_BLADE_WATER_RING_CONFIG.requiredLevel,
+    };
+    const expectedValue = `${
+      formatPercent(RETURNING_BLADE_WATER_RING_CONFIG.chance)
+    } / ${formatPercent(RETURNING_BLADE_WATER_RING_CONFIG.damageMultiplier)}`;
+
+    expect(metricValue(upgradeRewardMetrics(choice, BASE_PLAYER), "追加回旋剑气"))
+      .toBe(`${expectedValue}技能伤害`);
+    expect(metricValue(upgradeRewardMetrics(choice, BASE_PLAYER, "en"), "Bonus Water-Ring Slash"))
+      .toBe(`${expectedValue} skill damage`);
   });
 
   it("shows the vertical wave pillar chance, count, and damage at level three", () => {

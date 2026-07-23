@@ -1,5 +1,8 @@
 import { SKILL_IDS } from "../ids";
-import { VERTICAL_WAVE_PILLAR_CONFIG } from "../combat";
+import {
+  RETURNING_BLADE_WATER_RING_CONFIG,
+  VERTICAL_WAVE_PILLAR_CONFIG,
+} from "../combat";
 import type { SkillId, SpriteSheet } from "../../types/assets";
 
 export const LINE_PROJECTILE_EFFECT_SHEET: SpriteSheet = {
@@ -180,6 +183,14 @@ export const VERTICAL_WAVE_PILLAR_SHEET: SpriteSheet = {
   frameW: 480,
   frameH: 520,
   count: VERTICAL_WAVE_PILLAR_CONFIG.frameCount,
+  image: null,
+};
+
+export const RETURNING_BLADE_WATER_RING_SHEET: SpriteSheet = {
+  src: "assets/sprites/skills/returning_blade/ripple_slash.png",
+  frameW: 240,
+  frameH: 160,
+  count: RETURNING_BLADE_WATER_RING_CONFIG.frameCount,
   image: null,
 };
 

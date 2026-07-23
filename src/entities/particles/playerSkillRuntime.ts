@@ -243,6 +243,9 @@ function updateArmorBreakEffect(effect: PlayerSkillEffectState) {
 function updateReturningBladeEffect(effect: PlayerSkillEffectState) {
   const previousX = effect.x;
   const previousY = effect.y;
+  // The bonus ring shares this route, but only the original blade owns its
+  // turn and catch cues so one cast never doubles the audible feedback.
+  const playsRouteCues = effect.kind === "returningBlade";
 
   if (effect.phase === "return") {
     const targetX = state.player.x + state.player.w / 2;
@@ -252,7 +255,9 @@ function updateReturningBladeEffect(effect: PlayerSkillEffectState) {
     const distance = Math.hypot(dx, dy);
     if (distance <= RETURNING_BLADE_SPEED) {
       effect.life = 0;
-      playSfx("playerSkillReturningBladeCatch");
+      if (playsRouteCues) {
+        playSfx("playerSkillReturningBladeCatch");
+      }
       return;
     }
     effect.vx = dx / distance * RETURNING_BLADE_SPEED;
@@ -297,7 +302,9 @@ function updateReturningBladeEffect(effect: PlayerSkillEffectState) {
       effect.phase = "return";
       effect.returnHitEnemies ??= [];
       effect.bossCooldown = undefined;
-      playSfx("playerSkillReturningBladeTurn");
+      if (playsRouteCues) {
+        playSfx("playerSkillReturningBladeTurn");
+      }
     }
   }
 }
@@ -322,7 +329,10 @@ export function updatePlayerSkillEffects() {
       updateVortexEffect(effect);
     } else if (effect.kind === "armorBreak") {
       updateArmorBreakEffect(effect);
-    } else if (effect.kind === "returningBlade") {
+    } else if (
+      effect.kind === "returningBlade"
+      || effect.kind === "returningBladeWaterRing"
+    ) {
       updateReturningBladeEffect(effect);
     } else {
       effect.x += effect.vx;
@@ -361,10 +371,15 @@ export function drawPlayerSkillEffects() {
 
     if (sheet?.image && tuning) {
       const sx = effect.frame * sheet.frameW;
-      const drawW = sheet.frameW * tuning.drawScale;
-      const drawH = sheet.frameH * tuning.drawScale;
+      const drawScale = effect.drawScale ?? tuning.drawScale;
+      const drawW = sheet.frameW * drawScale;
+      const drawH = sheet.frameH * drawScale;
       ctx.translate(effect.x, effect.visualY ?? effect.y);
-      ctx.scale(effect.kind === "verticalWavePillar" ? 1 : effect.facing, 1);
+      // Keep the centered ring's rotation phase stable when the return route
+      // flips facing; directional sheets still mirror with the player.
+      const mirrorsWithFacing = effect.kind !== "verticalWavePillar"
+        && effect.kind !== "returningBladeWaterRing";
+      ctx.scale(mirrorsWithFacing ? effect.facing : 1, 1);
       ctx.drawImage(sheet.image, sx, 0, sheet.frameW, sheet.frameH, -drawW / 2, -drawH / 2, drawW, drawH);
     } else {
       const box = effectBox(effect);

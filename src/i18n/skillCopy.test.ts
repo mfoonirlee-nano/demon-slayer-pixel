@@ -1,5 +1,10 @@
 import { describe, expect, it } from "vitest";
-import { SKILLS, SKILL_IDS, VERTICAL_WAVE_PILLAR_CONFIG } from "../constants";
+import {
+  RETURNING_BLADE_WATER_RING_CONFIG,
+  SKILLS,
+  SKILL_IDS,
+  VERTICAL_WAVE_PILLAR_CONFIG,
+} from "../constants";
 import { formatPercent } from "../utils";
 import { skillCopy, skillDescription, skillName } from "./skillCopy";
 
@@ -88,6 +93,22 @@ describe("localized skill copy", () => {
     expect(description).toContain("15%");
     expect(description).toContain("equipped");
     expect(description).toContain("movement speed");
+  });
+
+  it("localizes the level-three returning blade water-ring slash", () => {
+    const description = skillDescription(
+      "en",
+      SKILL_IDS.returningBlade,
+      RETURNING_BLADE_WATER_RING_CONFIG.requiredLevel,
+    );
+
+    expect(description).toContain("original tideblade still travels out and returns");
+    expect(description).toContain(formatPercent(RETURNING_BLADE_WATER_RING_CONFIG.chance));
+    expect(description).toContain("one spinning water-ring slash");
+    expect(description).toContain(
+      `${formatPercent(RETURNING_BLADE_WATER_RING_CONFIG.damageMultiplier)} skill damage`,
+    );
+    expect(description).toContain("does not track targets across the arena");
   });
 
   it("localizes the level-three vertical wave pillar chain", () => {
