@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { UI_SPRITES } from "../constants";
 import {
+  HUD_CURRENT_SKILL_FRAME_LEFT,
   HUD_CURRENT_SKILL_FRAME_TOP,
   HUD_HP_METER_FRAME,
   HUD_HP_METER_PLACEMENT,
@@ -16,8 +17,8 @@ const HP_RIGHT_CAP_DISPLAY_W = 25;
 const HP_RIGHT_CAP_DISPLAY_H = 24;
 const SKILL_RIGHT_CAP_DISPLAY_W = 31;
 const SKILL_RIGHT_CAP_DISPLAY_H = 25;
-const STATUS_BAR_GAP_FROM_SKILL_FRAME = 4;
-const STATUS_ICON_DISPLAY_SIZE = 24;
+const PREVIOUS_STATUS_ICON_DISPLAY_SIZE = 24;
+const STATUS_ICON_SCALE = 0.8;
 // Visible join rows after runtime sprite scaling.
 const HP_MID_UPPER_RAIL_TOP = 6;
 const HP_RIGHT_CAP_UPPER_RAIL_TOP = 6;
@@ -73,14 +74,15 @@ describe("game HUD layout", () => {
     expect(UI_SPRITES.hudSkillBarRight.displayH).toBe(SKILL_RIGHT_CAP_DISPLAY_H);
   });
 
-  it("places status icons below both the skill meter and current-skill frame", () => {
-    const occupiedBottom = Math.max(
-      HUD_SKILL_METER_PLACEMENT.top + HUD_SKILL_METER_FRAME.height,
-      HUD_CURRENT_SKILL_FRAME_TOP + UI_SPRITES.currentSkillFrame.displayH,
+  it("attaches the smaller status icons below the skill meter without covering the skill frame", () => {
+    const skillFrameRight = HUD_CURRENT_SKILL_FRAME_LEFT + UI_SPRITES.currentSkillFrame.displayW;
+    const skillMeterArtworkBottom = HUD_SKILL_METER_PLACEMENT.top + Math.max(
+      HUD_SKILL_METER_FRAME.height,
+      HUD_SKILL_METER_FRAME.rightTop + UI_SPRITES.hudSkillBarRight.displayH,
     );
 
-    expect(HUD_STATUS_BAR_LEFT).toBe(HUD_SKILL_METER_PLACEMENT.left);
-    expect(HUD_STATUS_BAR_TOP).toBe(occupiedBottom + STATUS_BAR_GAP_FROM_SKILL_FRAME);
-    expect(HUD_STATUS_BAR_ICON_SIZE).toBe(STATUS_ICON_DISPLAY_SIZE);
+    expect(HUD_STATUS_BAR_LEFT).toBe(skillFrameRight);
+    expect(HUD_STATUS_BAR_TOP).toBe(skillMeterArtworkBottom);
+    expect(HUD_STATUS_BAR_ICON_SIZE).toBe(PREVIOUS_STATUS_ICON_DISPLAY_SIZE * STATUS_ICON_SCALE);
   });
 });

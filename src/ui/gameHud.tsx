@@ -15,6 +15,7 @@ import { VictoryScreen } from "./victoryScreen";
 import { getSkill, romanLevel, skillIconSrc } from "./uiDisplay";
 import { UiSprite, uiSpriteDisplaySize } from "./uiSprite";
 import {
+  HUD_CURRENT_SKILL_FRAME_LEFT,
   HUD_CURRENT_SKILL_FRAME_TOP,
   HUD_HP_METER_FRAME,
   HUD_HP_METER_PLACEMENT,
@@ -295,7 +296,10 @@ export function GameHud() {
               width={36}
               height={36}
               className="player-hud-current-skill"
-              style={{ top: HUD_CURRENT_SKILL_FRAME_TOP }}
+              style={{
+                left: HUD_CURRENT_SKILL_FRAME_LEFT,
+                top: HUD_CURRENT_SKILL_FRAME_TOP,
+              }}
             >
               {activeSkillId && activeSkill ? (
                 <>

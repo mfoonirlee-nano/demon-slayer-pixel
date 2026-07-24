@@ -1,4 +1,10 @@
-import type { UiSpriteId } from "../constants";
+import { UI_SPRITES, type UiSpriteId } from "../constants";
+
+const STATUS_ICON_BASE_SIZE = 24;
+const STATUS_GAP_BASE_SIZE = 3;
+const STATUS_STACK_FONT_BASE_SIZE = 7;
+const STATUS_PROGRESS_BASE_HEIGHT = 2;
+export const HUD_STATUS_BAR_SCALE = 0.8;
 
 export type HudMeterFrame = {
   left: UiSpriteId;
@@ -18,6 +24,7 @@ export type HudMeterPlacement = {
 };
 
 export const HUD_ULTIMATE_FRAME_TOP = 0;
+export const HUD_CURRENT_SKILL_FRAME_LEFT = 60;
 export const HUD_CURRENT_SKILL_FRAME_TOP = 36;
 
 export const HUD_HP_METER_FRAME: HudMeterFrame = {
@@ -54,6 +61,15 @@ export const HUD_SKILL_METER_PLACEMENT: HudMeterPlacement = {
   top: 45,
 };
 
-export const HUD_STATUS_BAR_LEFT = HUD_SKILL_METER_PLACEMENT.left;
-export const HUD_STATUS_BAR_TOP = 76;
-export const HUD_STATUS_BAR_ICON_SIZE = 24;
+export const HUD_STATUS_BAR_LEFT =
+  HUD_CURRENT_SKILL_FRAME_LEFT + UI_SPRITES.currentSkillFrame.displayW;
+export const HUD_STATUS_BAR_TOP = HUD_SKILL_METER_PLACEMENT.top + Math.max(
+  HUD_SKILL_METER_FRAME.height,
+  HUD_SKILL_METER_FRAME.rightTop + UI_SPRITES.hudSkillBarRight.displayH,
+);
+export const HUD_STATUS_BAR_ICON_SIZE = STATUS_ICON_BASE_SIZE * HUD_STATUS_BAR_SCALE;
+export const HUD_STATUS_BAR_GAP = STATUS_GAP_BASE_SIZE * HUD_STATUS_BAR_SCALE;
+export const HUD_STATUS_STACK_FONT_SIZE =
+  STATUS_STACK_FONT_BASE_SIZE * HUD_STATUS_BAR_SCALE;
+export const HUD_STATUS_PROGRESS_HEIGHT =
+  STATUS_PROGRESS_BASE_HEIGHT * HUD_STATUS_BAR_SCALE;

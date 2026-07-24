@@ -22,7 +22,6 @@
 
 .player-hud-current-skill {
   position: absolute;
-  left: 60px;
   z-index: 4;
   display: grid;
   place-items: center;
@@ -127,7 +126,7 @@
   position: absolute;
   z-index: 5;
   flex-wrap: wrap;
-  gap: 3px;
+  gap: var(--player-status-gap);
 }
 
 .player-status-icon {
@@ -175,7 +174,7 @@
   right: 1px;
   bottom: 0;
   color: #fff4c5;
-  font-size: 7px;
+  font-size: var(--player-status-stack-font-size);
   font-weight: 700;
   line-height: 1;
   text-shadow:
@@ -191,7 +190,7 @@
   right: 1px;
   bottom: 1px;
   left: 1px;
-  height: 2px;
+  height: var(--player-status-progress-height);
   background: rgba(1, 8, 15, 0.86);
 }
 

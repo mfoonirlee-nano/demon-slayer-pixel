@@ -4,72 +4,99 @@ import type { Language } from "../i18n/language";
 import { playerStatusName } from "../i18n/statusCopy";
 import type { PlayerStatusId, PlayerStatusSnapshot } from "../types/game-state";
 import {
+  HUD_STATUS_BAR_GAP,
   HUD_STATUS_BAR_ICON_SIZE,
   HUD_STATUS_BAR_LEFT,
   HUD_STATUS_BAR_TOP,
+  HUD_STATUS_PROGRESS_HEIGHT,
+  HUD_STATUS_STACK_FONT_SIZE,
 } from "./gameHudLayout";
 
+type PlayerStatusTone = "buff" | "debuff";
 type PlayerStatusIconPath =
-  | `assets/sprites/ui/status/${string}.png`
-  | `assets/sprites/ui/equipment/${string}_icon.png`
-  | `assets/sprites/skills/${string}/icon.png`;
+  `assets/sprites/ui/status/semantic/${PlayerStatusTone}_${string}.png`;
+type PlayerStatusPresentation = {
+  icon: PlayerStatusIconPath;
+  tone: PlayerStatusTone;
+};
+type BuffIcon = "attack" | "charge" | "combo" | "defense" | "energy" | "execute"
+  | "knockback" | "lifeline" | "mobility" | "penetration" | "recovery" | "speed"
+  | "ultimate";
+type DebuffIcon = "damage" | "hazard" | "scramble" | "slow" | "stun";
 
 const PLAYER_STATUS_ICON_URLS = import.meta.glob<string>(
-  [
-    "../../assets/sprites/ui/status/*.png",
-    "../../assets/sprites/ui/equipment/*_icon.png",
-    "../../assets/sprites/skills/*/icon.png",
-  ],
+  "../../assets/sprites/ui/status/semantic/*.png",
   { eager: true, query: "?url", import: "default" },
 );
 
-export const PLAYER_STATUS_ICON_PATHS = {
-  line_projectile_knockback: "assets/sprites/ui/status/line_projectile_passive_knockback.png",
-  close_arc_basic_crescent: "assets/sprites/ui/status/close_arc_basic_attack_crescent.png",
-  guard_counter_damage_reduction: "assets/sprites/skills/guard_counter/icon.png",
-  dash_reposition_move_speed: "assets/sprites/skills/dash_reposition/icon.png",
-  vortex_control_double_jump: "assets/sprites/skills/vortex_control/icon.png",
-  armor_break_shield_penetration: "assets/sprites/skills/armor_break/icon.png",
-  guard_counter: "assets/sprites/skills/guard_counter/icon.png",
-  moon_tide: "assets/sprites/skills/ultimate_skill/icon.png",
-  flow_blade_charge: "assets/sprites/ui/equipment/flow_blade_icon.png",
-  flow_blade_surge_hit_window: "assets/sprites/ui/status/flow_blade_surge_window.png",
-  flow_garb: "assets/sprites/ui/equipment/flow_garb_icon.png",
-  burst_blade_execute_zone: "assets/sprites/ui/equipment/burst_blade_icon.png",
-  burst_blade_execute_ready: "assets/sprites/ui/status/burst_blade_execute_ready.png",
-  burst_garb_guard_ready: "assets/sprites/ui/equipment/burst_garb_icon.png",
-  burst_garb_escape_haste: "assets/sprites/ui/status/burst_garb_escape_haste.png",
-  shadowstep_blade_charge: "assets/sprites/ui/equipment/shadowstep_blade_icon.png",
-  shadowstep_blade_ready: "assets/sprites/ui/equipment/shadowstep_blade_icon.png",
-  shadowstep_blade_quick_charge: "assets/sprites/ui/status/shadowstep_blade_quick_charge.png",
-  shadowstep_garb_moving_guard: "assets/sprites/ui/equipment/shadowstep_garb_icon.png",
-  shadowstep_garb_hurt_haste: "assets/sprites/ui/status/shadowstep_garb_hurt_haste.png",
-  hunt_kill_chain: "assets/sprites/ui/status/hunt_chain.png",
-  hunt_blade_ready: "assets/sprites/ui/equipment/hunt_blade_icon.png",
-  hunt_blade_water: "assets/sprites/ui/status/hunt_blade_waterblade.png",
-  hunt_garb_haste: "assets/sprites/ui/equipment/hunt_garb_icon.png",
-  hunt_garb_guard_ready: "assets/sprites/ui/status/hunt_garb_guard_ready.png",
-  risk_blade_low_hp: "assets/sprites/ui/equipment/risk_blade_icon.png",
-  risk_blade_skill_ready: "assets/sprites/ui/status/risk_blade_skill_ready.png",
-  risk_garb_low_hp: "assets/sprites/ui/equipment/risk_garb_icon.png",
-  risk_garb_lifeline_ready: "assets/sprites/ui/status/risk_garb_lifeline_ready.png",
-  risk_talisman_ready: "assets/sprites/ui/equipment/risk_talisman_icon.png",
-  tempo_blade_chain: "assets/sprites/ui/equipment/tempo_blade_icon.png",
-  tempo_garb_recovery: "assets/sprites/ui/status/tempo_garb_recovery_haste.png",
-  tempo_talisman_swap_ready: "assets/sprites/ui/equipment/tempo_talisman_icon.png",
-  spider_silk_slow: "assets/sprites/ui/status/spider_silk_slow.png",
-  binder_talisman_slow: "assets/sprites/ui/status/binder_talisman_slow.png",
-  binder_talisman_damage: "assets/sprites/ui/status/binder_talisman_damage.png",
-  binder_talisman_key_scramble: "assets/sprites/ui/status/binder_talisman_key_scramble.png",
-  binder_talisman_stun: "assets/sprites/ui/status/binder_talisman_stun.png",
-  binder_talisman_stunned: "assets/sprites/ui/status/binder_talisman_stunned.png",
-  lantern_ash_zone: "assets/sprites/ui/status/lantern_ash_slow.png",
-} satisfies Record<PlayerStatusId, PlayerStatusIconPath>;
+function buff(icon: BuffIcon): PlayerStatusPresentation {
+  return {
+    icon: `assets/sprites/ui/status/semantic/buff_${icon}.png`,
+    tone: "buff",
+  };
+}
+
+function debuff(icon: DebuffIcon): PlayerStatusPresentation {
+  return {
+    icon: `assets/sprites/ui/status/semantic/debuff_${icon}.png`,
+    tone: "debuff",
+  };
+}
+
+export const PLAYER_STATUS_PRESENTATIONS = {
+  line_projectile_knockback: buff("knockback"),
+  close_arc_basic_crescent: buff("attack"),
+  guard_counter_damage_reduction: buff("defense"),
+  dash_reposition_move_speed: buff("speed"),
+  vortex_control_double_jump: buff("mobility"),
+  armor_break_shield_penetration: buff("penetration"),
+  guard_counter: buff("defense"),
+  moon_tide: buff("ultimate"),
+  flow_blade_charge: buff("charge"),
+  flow_blade_surge_hit_window: buff("energy"),
+  flow_garb: buff("defense"),
+  burst_blade_execute_zone: buff("execute"),
+  burst_blade_execute_ready: buff("execute"),
+  burst_garb_guard_ready: buff("lifeline"),
+  burst_garb_escape_haste: buff("speed"),
+  shadowstep_blade_charge: buff("charge"),
+  shadowstep_blade_ready: buff("attack"),
+  shadowstep_blade_quick_charge: buff("charge"),
+  shadowstep_garb_moving_guard: buff("defense"),
+  shadowstep_garb_hurt_haste: buff("speed"),
+  hunt_kill_chain: buff("combo"),
+  hunt_blade_ready: buff("attack"),
+  hunt_blade_water: buff("attack"),
+  hunt_garb_haste: buff("speed"),
+  hunt_garb_guard_ready: buff("defense"),
+  risk_blade_low_hp: buff("attack"),
+  risk_blade_skill_ready: buff("attack"),
+  risk_garb_low_hp: buff("defense"),
+  risk_garb_lifeline_ready: buff("lifeline"),
+  risk_talisman_ready: buff("energy"),
+  tempo_blade_chain: buff("combo"),
+  tempo_garb_recovery: buff("recovery"),
+  tempo_talisman_swap_ready: buff("energy"),
+  spider_silk_slow: debuff("slow"),
+  binder_talisman_slow: debuff("slow"),
+  binder_talisman_damage: debuff("damage"),
+  binder_talisman_key_scramble: debuff("scramble"),
+  binder_talisman_stun: debuff("stun"),
+  binder_talisman_stunned: debuff("stun"),
+  lantern_ash_zone: debuff("hazard"),
+} satisfies Record<PlayerStatusId, PlayerStatusPresentation>;
+
+export const PLAYER_STATUS_ICON_PATHS = Object.fromEntries(
+  (Object.entries(PLAYER_STATUS_PRESENTATIONS) as [
+    PlayerStatusId,
+    (typeof PLAYER_STATUS_PRESENTATIONS)[PlayerStatusId],
+  ][]).map(([id, presentation]) => [id, presentation.icon]),
+) as unknown as Record<PlayerStatusId, PlayerStatusIconPath>;
 
 const FULL_CIRCLE_DEGREES = 360;
 const PERCENT_SCALE = 100;
 const TEMPO_BLADE_READY_ICON_PATH: PlayerStatusIconPath =
-  "assets/sprites/ui/status/tempo_blade_full_power_ready.png";
+  "assets/sprites/ui/status/semantic/buff_attack.png";
 export const PLAYER_STATUS_ICON_ASSETS = [
   ...new Set([...Object.values(PLAYER_STATUS_ICON_PATHS), TEMPO_BLADE_READY_ICON_PATH]),
 ];
@@ -87,15 +114,6 @@ export const PLAYER_STATUS_ICON_SOURCES = Object.fromEntries(
   ]),
 ) as Record<PlayerStatusId, string>;
 const TEMPO_BLADE_READY_ICON_SOURCE = resolvePlayerStatusIcon(TEMPO_BLADE_READY_ICON_PATH);
-const DEBUFF_STATUS_IDS = new Set<PlayerStatusId>([
-  "spider_silk_slow",
-  "binder_talisman_slow",
-  "binder_talisman_damage",
-  "binder_talisman_key_scramble",
-  "binder_talisman_stun",
-  "binder_talisman_stunned",
-  "lantern_ash_zone",
-]);
 
 export function statusRemainingRatio(status: PlayerStatusSnapshot) {
   if (status.remainingFrames === null || status.durationFrames === null) return null;
@@ -165,10 +183,14 @@ export function PlayerStatusBar({
         width,
         left: HUD_STATUS_BAR_LEFT,
         top: HUD_STATUS_BAR_TOP,
+        "--player-status-gap": `${HUD_STATUS_BAR_GAP}px`,
         "--player-status-icon-size": `${HUD_STATUS_BAR_ICON_SIZE}px`,
+        "--player-status-progress-height": `${HUD_STATUS_PROGRESS_HEIGHT}px`,
+        "--player-status-stack-font-size": `${HUD_STATUS_STACK_FONT_SIZE}px`,
       } as CSSProperties}
     >
       {statuses.map((status) => {
+        const presentation = PLAYER_STATUS_PRESENTATIONS[status.id];
         const remainingRatio = statusRemainingRatio(status);
         const progress = statusProgress(status);
         const name = playerStatusName(language, status.id);
@@ -176,7 +198,7 @@ export function PlayerStatusBar({
         return (
           <div
             key={status.id}
-            className={DEBUFF_STATUS_IDS.has(status.id)
+            className={presentation.tone === "debuff"
               ? "player-status-icon player-status-icon--debuff"
               : "player-status-icon"}
             role="listitem"

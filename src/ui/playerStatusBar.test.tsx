@@ -5,6 +5,7 @@ import type { PlayerStatusId, PlayerStatusSnapshot } from "../types/game-state";
 import {
   PLAYER_STATUS_ICON_ASSETS,
   PLAYER_STATUS_ICON_PATHS,
+  PLAYER_STATUS_PRESENTATIONS,
   PLAYER_STATUS_ICON_SOURCES,
   PlayerStatusBar,
   statusRemainingRatio,
@@ -15,11 +16,7 @@ const FULL_DURATION_FRAMES = 100;
 const CHARGE_PROGRESS = 0.5;
 const ZERO_REMAINING_FRAMES = 0;
 const AVAILABLE_STATUS_ICON_URLS = import.meta.glob<string>(
-  [
-    "../../assets/sprites/ui/status/*.png",
-    "../../assets/sprites/ui/equipment/*_icon.png",
-    "../../assets/sprites/skills/*/icon.png",
-  ],
+  "../../assets/sprites/ui/status/semantic/*.png",
   { eager: true, query: "?url", import: "default" },
 );
 
@@ -124,13 +121,25 @@ describe("PlayerStatusBar", () => {
     }
   });
 
+  it("uses blue buff art and red debuff art for every status presentation", () => {
+    for (const [id, presentation] of Object.entries(PLAYER_STATUS_PRESENTATIONS)) {
+      expect(presentation.icon, id)
+        .toContain(`/semantic/${presentation.tone}_`);
+    }
+
+    expect(PLAYER_STATUS_ICON_PATHS.close_arc_basic_crescent).toContain("buff_attack");
+    expect(PLAYER_STATUS_ICON_PATHS.guard_counter_damage_reduction).toContain("buff_defense");
+    expect(PLAYER_STATUS_ICON_PATHS.dash_reposition_move_speed).toContain("buff_speed");
+    expect(PLAYER_STATUS_ICON_PATHS.spider_silk_slow).toContain("debuff_slow");
+  });
+
   it("renders Vite-managed URLs for regular and conditional status icons", () => {
     for (const id of Object.keys(PLAYER_STATUS_ICON_PATHS) as PlayerStatusId[]) {
       const path = PLAYER_STATUS_ICON_PATHS[id];
       expect(PLAYER_STATUS_ICON_SOURCES[id]).toBe(AVAILABLE_STATUS_ICON_URLS[`../../${path}`]);
     }
 
-    const readyPath = "assets/sprites/ui/status/tempo_blade_full_power_ready.png";
+    const readyPath = "assets/sprites/ui/status/semantic/buff_attack.png";
     const markup = renderToStaticMarkup(
       <PlayerStatusBar
         statuses={[{
