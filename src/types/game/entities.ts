@@ -325,6 +325,8 @@ export type BossState = {
   spiderStringCageCd?: number;
   mirrorTrueImageShiftPhase?: number;
   mistBonePatternStep?: number;
+  lanternPatternStep?: number;
+  lanternPatternPhase?: number;
   deadBellReprisalTimer?: number;
   deadBellReprisalHit?: boolean;
   armorBreakTimer?: number;

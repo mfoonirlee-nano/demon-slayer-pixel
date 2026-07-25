@@ -143,6 +143,8 @@ export type LanternEmberLureState = {
 };
 
 export type LanternEmberFirelineState = {
+  sourceX: number;
+  sourceY: number;
   x: number;
   y: number;
   w: number;
@@ -160,6 +162,7 @@ export type LanternEmberBuffTetherState = {
   fromY: number;
   toX: number;
   toY: number;
+  target: EnemyState;
   facing: number;
   elapsed: number;
   frame: number;

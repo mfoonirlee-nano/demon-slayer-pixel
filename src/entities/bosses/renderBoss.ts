@@ -188,7 +188,10 @@ function bossCastSheet(boss: LiveBoss) {
     return archetype.sheets.cast;
   }
   if (boss.id !== BOSS_ARCHETYPE_IDS.lanternEmber) return archetype.sheets.cast;
-  if (boss.skillMode === "lanternFireline") return LANTERN_EMBER_FIRELINE_CAST_SHEET;
+  if (
+    boss.skillMode === "lanternFireline"
+    || boss.skillMode === "lanternAwakenedGrid"
+  ) return LANTERN_EMBER_FIRELINE_CAST_SHEET;
   if (boss.skillMode === "lanternBuff") return LANTERN_EMBER_BUFF_CAST_SHEET;
   return LANTERN_EMBER_SUMMON_SHEET;
 }

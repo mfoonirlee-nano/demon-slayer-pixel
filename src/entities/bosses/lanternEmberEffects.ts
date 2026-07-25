@@ -5,6 +5,7 @@ import {
   LANTERN_EMBER_CONFIG,
   LANTERN_EMBER_FIRELINE_SHEET,
   LANTERN_EMBER_LURE_EFFECT_SHEET,
+  WIDTH,
 } from "../../constants";
 import { state } from "../../game/state";
 import { clamp } from "../../game/utils";
@@ -15,18 +16,20 @@ import type { LanternEmberAshZoneState, LanternEmberAwakenedGridState, LanternEm
 
 const FIRELINE_FOOT_PADDING = 12;
 const AWAKENED_GRID_FOOT_PADDING = 14;
-const LURE_ALPHA_BASE = 0.36;
-const LURE_ALPHA_SCALE = 0.64;
-const FIRELINE_WARNING_ALPHA = 0.45;
-const FIRELINE_ALPHA_BASE = 0.35;
-const FIRELINE_ALPHA_SCALE = 0.65;
-const GRID_WARNING_ALPHA = 0.38;
-const GRID_ALPHA_BASE = 0.32;
-const GRID_ALPHA_SCALE = 0.6;
+const LURE_ALPHA_BASE = 0.48;
+const LURE_ALPHA_SCALE = 0.52;
+const FIRELINE_WARNING_ALPHA = 0.82;
+const FIRELINE_ALPHA_BASE = 0.58;
+const FIRELINE_ALPHA_SCALE = 0.42;
+const FIRELINE_TRAJECTORY_ALPHA_BASE = 0.5;
+const FIRELINE_TRAJECTORY_ALPHA_SCALE = 0.46;
+const GRID_WARNING_ALPHA = 0.78;
+const GRID_ALPHA_BASE = 0.56;
+const GRID_ALPHA_SCALE = 0.44;
 const ASH_ZONE_FADE_FRAMES = 18;
-const ASH_ZONE_ALPHA_SCALE = 0.78;
-const TETHER_ALPHA_BASE = 0.35;
-const TETHER_ALPHA_SCALE = 0.65;
+const ASH_ZONE_ALPHA_SCALE = 0.72;
+const TETHER_ALPHA_BASE = 0.5;
+const TETHER_ALPHA_SCALE = 0.5;
 
 export function updateLanternEmberEffects() {
   updateLanternLures();
@@ -42,9 +45,10 @@ function updateLanternLures() {
     lure.elapsed += 1;
     lure.life -= 1;
     lure.x += lure.vx;
-    lure.frame = Math.min(
-      LANTERN_EMBER_LURE_EFFECT_SHEET.count - 1,
-      Math.floor(lure.elapsed / LANTERN_EMBER_CONFIG.lureFrameDuration),
+    lure.frame = middleLoopFrame(
+      lure.elapsed,
+      LANTERN_EMBER_CONFIG.lureFrameDuration,
+      LANTERN_EMBER_LURE_EFFECT_SHEET.count,
     );
     if (lure.life <= 0) state.lanternEmberLures.splice(i, 1);
   }
@@ -55,9 +59,12 @@ function updateLanternBuffTethers() {
     const tether = state.lanternEmberBuffTethers[i] as LanternEmberBuffTetherState;
     tether.elapsed += 1;
     tether.life -= 1;
-    tether.frame = Math.min(
-      LANTERN_EMBER_BUFF_TETHER_SHEET.count - 1,
-      Math.floor(tether.elapsed / LANTERN_EMBER_CONFIG.buffTetherFrameDuration),
+    tether.toX = tether.target.x + tether.target.w / 2;
+    tether.toY = tether.target.y + tether.target.h / 2;
+    tether.frame = middleLoopFrame(
+      tether.elapsed,
+      LANTERN_EMBER_CONFIG.buffTetherFrameDuration,
+      LANTERN_EMBER_BUFF_TETHER_SHEET.count,
     );
     if (tether.life <= 0) state.lanternEmberBuffTethers.splice(i, 1);
   }
@@ -71,9 +78,10 @@ function updateLanternFirelines() {
     const activeElapsed = Math.max(0, fireline.elapsed - fireline.warningFrames);
     fireline.frame = fireline.elapsed <= fireline.warningFrames
       ? 0
-      : Math.min(
-        LANTERN_EMBER_FIRELINE_SHEET.count - 1,
-        1 + Math.floor(activeElapsed / LANTERN_EMBER_CONFIG.firelineFrameDuration),
+      : middleLoopFrame(
+        activeElapsed,
+        LANTERN_EMBER_CONFIG.firelineFrameDuration,
+        LANTERN_EMBER_FIRELINE_SHEET.count,
       );
 
     if (!fireline.hitPlayer && fireline.elapsed > fireline.warningFrames && isPlayerInLanternFireline(fireline)) {
@@ -96,9 +104,10 @@ function updateLanternAwakenedGrids() {
     const activeElapsed = Math.max(0, grid.elapsed - grid.warningFrames);
     grid.frame = grid.elapsed <= grid.warningFrames
       ? 0
-      : Math.min(
-        LANTERN_EMBER_AWAKENED_GRID_SHEET.count - 1,
-        1 + Math.floor(activeElapsed / LANTERN_EMBER_CONFIG.awakenedGridFrameDuration),
+      : middleLoopFrame(
+        activeElapsed,
+        LANTERN_EMBER_CONFIG.awakenedGridFrameDuration,
+        LANTERN_EMBER_AWAKENED_GRID_SHEET.count,
       );
 
     if (grid.elapsed > grid.warningFrames && grid.hitPlayerCd <= 0 && isPlayerInLanternGrid(grid)) {
@@ -129,13 +138,20 @@ function updateLanternAshZones() {
     if (rawFrame < LANTERN_EMBER_CONFIG.ashZoneLoopStartFrame) {
       zone.frame = rawFrame;
     } else {
-      const loopCount = LANTERN_EMBER_ASH_ZONE_SHEET.count - LANTERN_EMBER_CONFIG.ashZoneLoopStartFrame;
+      const loopCount = LANTERN_EMBER_ASH_ZONE_SHEET.count
+        - LANTERN_EMBER_CONFIG.ashZoneLoopStartFrame
+        - 1;
       zone.frame = LANTERN_EMBER_CONFIG.ashZoneLoopStartFrame
         + (rawFrame - LANTERN_EMBER_CONFIG.ashZoneLoopStartFrame) % loopCount;
     }
 
     if (zone.life <= 0) state.lanternEmberAshZones.splice(i, 1);
   }
+}
+
+function middleLoopFrame(elapsed: number, frameDuration: number, frameCount: number) {
+  const middleFrameCount = frameCount - 2;
+  return 1 + Math.floor(elapsed / frameDuration) % middleFrameCount;
 }
 
 function isPlayerInLanternFireline(fireline: LanternEmberFirelineState) {
@@ -204,6 +220,7 @@ function drawLanternFirelines() {
     const warning = fireline.elapsed <= fireline.warningFrames;
     const fade = clamp(fireline.life / LANTERN_EMBER_CONFIG.firelineLife, 0, 1);
     const drawH = LANTERN_EMBER_CONFIG.firelineDrawH;
+    if (warning) drawLanternFirelineTrajectory(fireline);
     ctx.save();
     ctx.globalAlpha = warning ? FIRELINE_WARNING_ALPHA : FIRELINE_ALPHA_BASE + fade * FIRELINE_ALPHA_SCALE;
     drawSheetFrame(
@@ -225,14 +242,20 @@ function drawLanternAwakenedGrids() {
     const fade = clamp(grid.life / LANTERN_EMBER_CONFIG.awakenedGridLife, 0, 1);
     ctx.save();
     ctx.globalAlpha = warning ? GRID_WARNING_ALPHA : GRID_ALPHA_BASE + fade * GRID_ALPHA_SCALE;
-    drawSheetFrame(
-      LANTERN_EMBER_AWAKENED_GRID_SHEET,
-      grid.frame,
-      grid.x,
-      grid.y - LANTERN_EMBER_CONFIG.awakenedGridDrawH,
-      LANTERN_EMBER_CONFIG.awakenedGridDrawW,
-      LANTERN_EMBER_CONFIG.awakenedGridDrawH,
-    );
+    for (
+      let tileX = grid.x;
+      tileX < WIDTH;
+      tileX += LANTERN_EMBER_CONFIG.awakenedGridPeriod
+    ) {
+      drawSheetFrame(
+        LANTERN_EMBER_AWAKENED_GRID_SHEET,
+        grid.frame,
+        tileX,
+        grid.y - LANTERN_EMBER_CONFIG.awakenedGridDrawH,
+        LANTERN_EMBER_CONFIG.awakenedGridPeriod,
+        LANTERN_EMBER_CONFIG.awakenedGridDrawH,
+      );
+    }
     ctx.restore();
   }
 }
@@ -242,11 +265,7 @@ function drawLanternAshZones() {
   for (const zone of state.lanternEmberAshZones) {
     const drawW = Math.round(zone.radius * LANTERN_EMBER_CONFIG.ashZoneDrawWidthScale);
     const drawH = Math.round(drawW * LANTERN_EMBER_ASH_ZONE_SHEET.frameH / LANTERN_EMBER_ASH_ZONE_SHEET.frameW);
-    const fade = Math.min(
-      1,
-      zone.elapsed / ASH_ZONE_FADE_FRAMES,
-      zone.life / ASH_ZONE_FADE_FRAMES,
-    );
+    const fade = Math.min(1, zone.life / ASH_ZONE_FADE_FRAMES);
     ctx.save();
     ctx.globalAlpha = ASH_ZONE_ALPHA_SCALE * fade;
     drawSheetFrame(
@@ -262,21 +281,65 @@ function drawLanternAshZones() {
 }
 
 function drawLanternBuffTethers() {
+  if (!ctx) return;
+  for (const tether of state.lanternEmberBuffTethers) {
+    const fade = clamp(tether.life / LANTERN_EMBER_CONFIG.buffTetherLife, 0, 1);
+    drawLanternTether(
+      tether.fromX,
+      tether.fromY,
+      tether.toX,
+      tether.toY,
+      tether.frame,
+      TETHER_ALPHA_BASE + fade * TETHER_ALPHA_SCALE,
+    );
+  }
+}
+
+function drawLanternFirelineTrajectory(fireline: LanternEmberFirelineState) {
+  const progress = clamp(fireline.elapsed / fireline.warningFrames, 0, 1);
+  drawLanternTether(
+    fireline.sourceX,
+    fireline.sourceY,
+    fireline.x + fireline.w / 2,
+    fireline.y,
+    middleLoopFrame(
+      fireline.elapsed,
+      LANTERN_EMBER_CONFIG.buffTetherFrameDuration,
+      LANTERN_EMBER_BUFF_TETHER_SHEET.count,
+    ),
+    FIRELINE_TRAJECTORY_ALPHA_BASE + progress * FIRELINE_TRAJECTORY_ALPHA_SCALE,
+  );
+}
+
+function drawLanternTether(
+  fromX: number,
+  fromY: number,
+  toX: number,
+  toY: number,
+  frame: number,
+  alpha: number,
+) {
   const image = LANTERN_EMBER_BUFF_TETHER_SHEET.image;
   if (!ctx || !image) return;
-  const sheet = LANTERN_EMBER_BUFF_TETHER_SHEET;
-  for (const tether of state.lanternEmberBuffTethers) {
-    const dx = tether.toX - tether.fromX;
-    const dy = tether.toY - tether.fromY;
-    const drawW = Math.max(LANTERN_EMBER_CONFIG.buffTetherDrawW, Math.hypot(dx, dy));
-    const drawH = LANTERN_EMBER_CONFIG.buffTetherDrawH;
-    const sx = tether.frame * sheet.frameW;
-    const fade = clamp(tether.life / LANTERN_EMBER_CONFIG.buffTetherLife, 0, 1);
-    ctx.save();
-    ctx.globalAlpha = TETHER_ALPHA_BASE + fade * TETHER_ALPHA_SCALE;
-    ctx.translate(tether.fromX, tether.fromY);
-    ctx.rotate(Math.atan2(dy, dx));
-    ctx.drawImage(image, sx, 0, sheet.frameW, sheet.frameH, 0, -drawH / 2, drawW, drawH);
-    ctx.restore();
-  }
+  const dx = toX - fromX;
+  const dy = toY - fromY;
+  const drawW = Math.hypot(dx, dy);
+  const drawH = LANTERN_EMBER_CONFIG.buffTetherDrawH;
+  const sx = frame * LANTERN_EMBER_BUFF_TETHER_SHEET.frameW;
+  ctx.save();
+  ctx.globalAlpha = alpha;
+  ctx.translate(fromX, fromY);
+  ctx.rotate(Math.atan2(dy, dx));
+  ctx.drawImage(
+    image,
+    sx,
+    0,
+    LANTERN_EMBER_BUFF_TETHER_SHEET.frameW,
+    LANTERN_EMBER_BUFF_TETHER_SHEET.frameH,
+    0,
+    -drawH / 2,
+    drawW,
+    drawH,
+  );
+  ctx.restore();
 }

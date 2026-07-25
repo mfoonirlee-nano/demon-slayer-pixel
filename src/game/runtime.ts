@@ -382,10 +382,10 @@ function loop(ts: number) {
   drawMistBoneEffects();
   drawMirrorDreamEffects();
   drawFangGaleEffects();
-  drawLanternEmberEffects();
   drawBloodMoonEffects();
   drawLineProjectileEffects();
   drawGroundTileOcclusion();
+  drawLanternEmberEffects();
   drawCloseArcEffects();
   drawCloseArcBasicCrescentEffects();
   drawPlayerSkillEffects();
