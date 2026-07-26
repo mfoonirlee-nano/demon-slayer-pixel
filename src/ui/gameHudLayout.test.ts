@@ -26,8 +26,8 @@ const HP_MID_FILL_WINDOW = { top: 10, bottom: 15 };
 const HP_RIGHT_CAP_FILL_WINDOW = { top: 10, bottom: 15 };
 const SKILL_MID_UPPER_RAIL_HIGHLIGHT = 3;
 const SKILL_RIGHT_CAP_UPPER_RAIL_HIGHLIGHT = 6;
-const SKILL_MID_INNER_OPENING_TOP = 6;
-const SKILL_RIGHT_CAP_INNER_OPENING_TOP = 9;
+const SKILL_MID_INNER_SLOT_CENTER = 9;
+const SKILL_RIGHT_CAP_INNER_SLOT_CENTER = 12;
 
 describe("game HUD layout", () => {
   it("centers the skill meter fill in the skill frame artwork", () => {
@@ -54,7 +54,7 @@ describe("game HUD layout", () => {
     expect(skillFillCenterY).toBe(HUD_CURRENT_SKILL_FRAME_TOP + UI_SPRITES.currentSkillFrame.displayH / 2);
   });
 
-  it("aligns visible rails and inner openings across frame joins", () => {
+  it("aligns visible rails and inner slot centers across frame joins", () => {
     expect({
       hp: HUD_HP_METER_FRAME.rightTop + HP_RIGHT_CAP_UPPER_RAIL_TOP,
       skill: HUD_SKILL_METER_FRAME.rightTop + SKILL_RIGHT_CAP_UPPER_RAIL_HIGHLIGHT,
@@ -62,8 +62,8 @@ describe("game HUD layout", () => {
       hp: HP_MID_UPPER_RAIL_TOP,
       skill: SKILL_MID_UPPER_RAIL_HIGHLIGHT,
     });
-    expect(HUD_SKILL_METER_FRAME.rightTop + SKILL_RIGHT_CAP_INNER_OPENING_TOP)
-      .toBe(SKILL_MID_INNER_OPENING_TOP);
+    expect(HUD_SKILL_METER_FRAME.rightTop + SKILL_RIGHT_CAP_INNER_SLOT_CENTER)
+      .toBe(SKILL_MID_INNER_SLOT_CENTER);
     expect({
       top: HUD_HP_METER_FRAME.rightTop + HP_RIGHT_CAP_FILL_WINDOW.top,
       bottom: HUD_HP_METER_FRAME.rightTop + HP_RIGHT_CAP_FILL_WINDOW.bottom,
