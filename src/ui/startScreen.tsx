@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState, type CSSProperties } from "react";
 import { useAtomValue } from "jotai";
+import { resolveStaticAssetUrl } from "../assets/staticAssetUrl";
 import {
   COVER_MOON_PHASE_COUNT,
   getCoverMoonPhaseIndex,
@@ -255,7 +256,7 @@ function CoverKillCounter({ value, language }: { value: number; language: Langua
             focusable="false"
           >
             <image
-              href={KILL_DIGIT_SHEET_SRC}
+              href={resolveStaticAssetUrl(KILL_DIGIT_SHEET_SRC)}
               x={-column * KILL_DIGIT_FRAME_W}
               y={-row * KILL_DIGIT_FRAME_H}
               width={KILL_DIGIT_SHEET_W}
@@ -294,7 +295,7 @@ function CoverMoonPhase({ progress, transitionKind }: {
         viewBox={`0 0 ${MOON_PHASE_FRAME_W} ${MOON_PHASE_FRAME_H}`}
       >
         <image
-          href={MOON_PHASE_SHEET_SRC}
+          href={resolveStaticAssetUrl(MOON_PHASE_SHEET_SRC)}
           x={-phaseIndex * MOON_PHASE_FRAME_W}
           y={0}
           width={MOON_PHASE_FRAME_W * COVER_MOON_PHASE_COUNT}
@@ -343,7 +344,7 @@ export function StartScreen({ assetsReady, startQueued, onStart }: StartScreenPr
         {COVER_LAYERS.map((layer) => (
           <img
             key={layer.src}
-            src={layer.src}
+            src={resolveStaticAssetUrl(layer.src)}
             alt=""
             draggable={false}
             className={`cover-layer ${layer.className}`}

@@ -41,6 +41,8 @@ describe("ultimate orb animation state", () => {
 
     expect(markup).toContain("ultimate-orb-sprite-charging");
     expect(markup).toContain("--ultimate-charge-stage-y:57.14285714285714%");
+    expect(markup).toContain("../assets/sprites/ui/ultimate_orb_charge_sheet.png");
+    expect(markup).toContain("../assets/sprites/ui/ultimate_orb_sheet.png");
     expect(markup).not.toContain("ultimate-orb-sprite-animated");
   });
 

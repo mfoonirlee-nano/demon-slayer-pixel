@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useAtomValue } from "jotai";
+import { resolveStaticAssetUrl } from "../assets/staticAssetUrl";
 import { languageAtom } from "../i18n/language";
 import { message } from "../i18n/messages";
 
@@ -77,7 +78,7 @@ export function DeathScreen({ elapsed }: { elapsed: number }) {
           style={{ width: DEATH_FRAME_WIDTH, height: DEATH_FRAME_HEIGHT }}
         >
           <img
-            src="assets/sprites/ui/end.png"
+            src={resolveStaticAssetUrl("assets/sprites/ui/end.png")}
             alt=""
             draggable={false}
             className="death-sprite-sheet"

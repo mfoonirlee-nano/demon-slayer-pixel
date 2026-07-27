@@ -39,6 +39,10 @@ npm run dev
 npm run build
 ```
 
+构建后的 `dist/` 只包含 HTML、JavaScript 和 CSS。图片、音频等运行时素材继续保留在
+仓库根目录的 `assets/`；发布时需要让 `dist/` 与 `assets/` 保持同级，并以二者的共同父目录
+作为静态服务根目录，入口为 `dist/index.html`。
+
 ## 项目结构与文档
 
 详细的文档位于 `docs/` 目录下：

@@ -1,5 +1,5 @@
-/// <reference types="vite/client" />
 import type { CSSProperties } from "react";
+import { resolveStaticAssetUrl } from "../assets/staticAssetUrl";
 import type { Language } from "../i18n/language";
 import { playerStatusName } from "../i18n/statusCopy";
 import type { PlayerStatusId, PlayerStatusSnapshot } from "../types/game-state";
@@ -23,11 +23,6 @@ type BuffIcon = "attack" | "charge" | "combo" | "defense" | "energy" | "execute"
   | "knockback" | "lifeline" | "mobility" | "penetration" | "recovery" | "speed"
   | "ultimate";
 type DebuffIcon = "damage" | "hazard" | "scramble" | "slow" | "stun";
-
-const PLAYER_STATUS_ICON_URLS = import.meta.glob<string>(
-  "../../assets/sprites/ui/status/semantic/*.png",
-  { eager: true, query: "?url", import: "default" },
-);
 
 function buff(icon: BuffIcon): PlayerStatusPresentation {
   return {
@@ -102,9 +97,7 @@ export const PLAYER_STATUS_ICON_ASSETS = [
 ];
 
 function resolvePlayerStatusIcon(path: PlayerStatusIconPath) {
-  const source = PLAYER_STATUS_ICON_URLS[`../../${path}`];
-  if (source === undefined) throw new Error(`Missing player status icon: ${path}`);
-  return source;
+  return resolveStaticAssetUrl(path);
 }
 
 export const PLAYER_STATUS_ICON_SOURCES = Object.fromEntries(

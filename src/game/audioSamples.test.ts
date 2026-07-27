@@ -119,6 +119,9 @@ describe("audio samples", () => {
     );
     expect(fetchMock).toHaveBeenCalledTimes(expectedSampleCount);
     expect(context.decodeAudioData).toHaveBeenCalledTimes(expectedSampleCount);
+    for (const [url] of fetchMock.mock.calls) {
+      expect(url).toMatch(/^\.\.\/assets\/audio\/sfx\/.+\.wav$/);
+    }
 
     playSfxSample(context, "bossKill", TEST_PITCH, TEST_VOLUME);
 

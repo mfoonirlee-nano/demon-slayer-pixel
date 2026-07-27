@@ -1,4 +1,5 @@
 import type { CSSProperties, ReactNode } from "react";
+import { resolveStaticAssetUrl } from "../assets/staticAssetUrl";
 import { UI_SPRITES, type UiSpriteId } from "../constants";
 
 export function uiSpriteDisplaySize(spriteId: UiSpriteId) {
@@ -18,7 +19,7 @@ function uiSpriteStyle(spriteId: UiSpriteId, width?: number, height?: number): C
   return {
     width: displayW,
     height: displayH,
-    backgroundImage: `url("${sprite.src}")`,
+    backgroundImage: `url("${resolveStaticAssetUrl(sprite.src)}")`,
     backgroundRepeat: "no-repeat",
     backgroundSize: `${displayW}px ${displayH}px`,
     imageRendering: "pixelated",

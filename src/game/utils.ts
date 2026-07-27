@@ -1,4 +1,5 @@
 import { GROUND_Y } from "../constants";
+import { resolveStaticAssetUrl } from "../assets/staticAssetUrl";
 import type { PlatformState } from "../types/game-state";
 
 const GROUND_CONTACT_EPSILON = 0.1;
@@ -22,7 +23,7 @@ export function loadImage(src: string): Promise<HTMLImageElement> {
     const img = new Image();
     img.onload = () => resolve(img);
     img.onerror = () => reject(new Error(`Sprite load failed: ${src}`));
-    img.src = src;
+    img.src = resolveStaticAssetUrl(src);
   });
 }
 

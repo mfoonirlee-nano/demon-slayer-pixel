@@ -15,11 +15,9 @@ const HALF_REMAINING_FRAMES = 50;
 const FULL_DURATION_FRAMES = 100;
 const CHARGE_PROGRESS = 0.5;
 const ZERO_REMAINING_FRAMES = 0;
-const AVAILABLE_STATUS_ICON_URLS = import.meta.glob<string>(
+const AVAILABLE_STATUS_ICONS = import.meta.glob(
   "../../assets/sprites/ui/status/semantic/*.png",
-  { eager: true, query: "?url", import: "default" },
 );
-
 const PERSISTENT_STATUS: PlayerStatusSnapshot = {
   id: "line_projectile_knockback",
   remainingFrames: null,
@@ -113,10 +111,10 @@ describe("PlayerStatusBar", () => {
   });
 
   it("references only status icon assets that exist in the repository", () => {
-    for (const path of PLAYER_STATUS_ICON_ASSETS) {
+    for (const iconPath of PLAYER_STATUS_ICON_ASSETS) {
       expect(
-        Object.prototype.hasOwnProperty.call(AVAILABLE_STATUS_ICON_URLS, `../../${path}`),
-        path,
+        Object.prototype.hasOwnProperty.call(AVAILABLE_STATUS_ICONS, `../../${iconPath}`),
+        iconPath,
       ).toBe(true);
     }
   });
@@ -133,10 +131,10 @@ describe("PlayerStatusBar", () => {
     expect(PLAYER_STATUS_ICON_PATHS.spider_silk_slow).toContain("debuff_slow");
   });
 
-  it("renders Vite-managed URLs for regular and conditional status icons", () => {
+  it("renders status icons from the assets directory beside dist", () => {
     for (const id of Object.keys(PLAYER_STATUS_ICON_PATHS) as PlayerStatusId[]) {
-      const path = PLAYER_STATUS_ICON_PATHS[id];
-      expect(PLAYER_STATUS_ICON_SOURCES[id]).toBe(AVAILABLE_STATUS_ICON_URLS[`../../${path}`]);
+      const iconPath = PLAYER_STATUS_ICON_PATHS[id];
+      expect(PLAYER_STATUS_ICON_SOURCES[id]).toBe(`../${iconPath}`);
     }
 
     const readyPath = "assets/sprites/ui/status/semantic/buff_attack.png";
@@ -154,6 +152,6 @@ describe("PlayerStatusBar", () => {
       />,
     );
 
-    expect(markup).toContain(`src="${AVAILABLE_STATUS_ICON_URLS[`../../${readyPath}`]}"`);
+    expect(markup).toContain(`src="../${readyPath}"`);
   });
 });

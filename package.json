@@ -10,10 +10,11 @@
     "lint": "eslint . && npm run lint:lines",
     "lint:fix": "eslint . --fix && npm run lint:lines",
     "lint:lines": "node scripts/check-file-lines.mjs",
-    "build": "tsc --noEmit && vite build",
+    "build": "tsc --noEmit && vite build && npm run check:dist-assets",
     "preview": "vite preview",
     "generate:sfx": "node scripts/generate-sfx.mjs",
     "compress": "node scripts/compress-assets.js",
+    "check:dist-assets": "node scripts/check-dist-static-assets.mjs",
     "clean:dist-assets": "node scripts/clean-dist-assets.js",
     "prepare": "husky"
   },

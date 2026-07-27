@@ -1,5 +1,6 @@
 import { type CSSProperties, useEffect, useRef, useState } from "react";
 import { useAtomValue } from "jotai";
+import { resolveStaticAssetUrl } from "../assets/staticAssetUrl";
 import { HUD_UI } from "../constants";
 import { DebugPanel } from "../game/debug";
 import { gameSnapshotAtom } from "../game/gameStore";
@@ -56,6 +57,13 @@ const ULTIMATE_DECAY_MIN_ANGLE = 8;
 const BOSS_LOCALE_EMBLEM_LEFT = 182;
 const BOSS_LOCALE_EMBLEM_TOP = 55;
 const BOSS_LOCALE_EMBLEM_SIZE = 17;
+const ULTIMATE_ORB_CHARGE_SHEET_SRC = resolveStaticAssetUrl(
+  "assets/sprites/ui/ultimate_orb_charge_sheet.png",
+);
+const ULTIMATE_ORB_SHEET_SRC = resolveStaticAssetUrl(
+  "assets/sprites/ui/ultimate_orb_sheet.png",
+);
+
 function useGhostValue(value: number) {
   const [ghost, setGhost] = useState(value);
   const ghostRef = useRef(value);
@@ -199,6 +207,8 @@ export function UltimateOrb({ value, max, ready, size = ULTIMATE_ORB_DEFAULT_SIZ
       style={{
         width: size,
         height: size,
+        "--ultimate-orb-charge-sheet": `url("${ULTIMATE_ORB_CHARGE_SHEET_SRC}")`,
+        "--ultimate-orb-sheet": `url("${ULTIMATE_ORB_SHEET_SRC}")`,
         borderColor: ready ? "#bdf8ff" : active ? "#82f3ff" : percent > 0 ? "#3fb7e8" : "#12324d",
         boxShadow: ready
           ? "0 0 12px rgba(139,238,255,0.95), inset 0 0 12px rgba(64,190,255,0.72)"
@@ -207,7 +217,7 @@ export function UltimateOrb({ value, max, ready, size = ULTIMATE_ORB_DEFAULT_SIZ
             : percent > 0
             ? "0 0 7px rgba(55,180,232,0.64), inset 0 0 9px rgba(25,96,156,0.68)"
             : "inset 0 0 8px rgba(0,0,0,0.9)",
-      }}
+      } as CSSProperties}
     >
       {active ? (
         <div
@@ -372,7 +382,7 @@ export function GameHud() {
             />
           </div>
           <img
-            src="assets/sprites/ui/boss_hp_bar.png"
+            src={resolveStaticAssetUrl("assets/sprites/ui/boss_hp_bar.png")}
             alt=""
             draggable={false}
             style={{

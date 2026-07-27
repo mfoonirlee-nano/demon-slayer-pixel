@@ -1,3 +1,4 @@
+import { resolveStaticAssetUrl } from "../assets/staticAssetUrl";
 import type { SkillId } from "../types/assets";
 import type { EquipmentItemId, EquipmentSlot, SkillLevel, UltimateLevel } from "../types/game-state";
 import { playerSkillById, playerSkillIconSrc } from "../systems/skillCatalog";
@@ -7,15 +8,15 @@ export function getSkill(skillId: SkillId | null | undefined) {
 }
 
 export function skillIconSrc(skillId: SkillId) {
-  return playerSkillIconSrc(skillId);
+  return resolveStaticAssetUrl(playerSkillIconSrc(skillId));
 }
 
 export function equipmentIconSrc(itemId: EquipmentItemId) {
-  return `assets/sprites/ui/equipment/${itemId}_icon.png`;
+  return resolveStaticAssetUrl(`assets/sprites/ui/equipment/${itemId}_icon.png`);
 }
 
 export function equipmentSlotBadgeSrc(slot: EquipmentSlot) {
-  return `assets/sprites/ui/equipment/slot_${slot}_badge.png`;
+  return resolveStaticAssetUrl(`assets/sprites/ui/equipment/slot_${slot}_badge.png`);
 }
 
 export function romanLevel(level: SkillLevel | UltimateLevel | 0 | undefined) {

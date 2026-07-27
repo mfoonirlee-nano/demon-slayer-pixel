@@ -35,7 +35,7 @@
   inset-inline: 0;
   bottom: 0;
   aspect-ratio: 1;
-  background-image: url("../../assets/sprites/ui/ultimate_orb_charge_sheet.png");
+  background-image: var(--ultimate-orb-charge-sheet);
   background-repeat: no-repeat;
   background-size: 400% 800%;
   background-position-x: 0;
@@ -49,7 +49,7 @@
 }
 
 .ultimate-orb-sprite-animated {
-  background-image: url("../../assets/sprites/ui/ultimate_orb_sheet.png");
+  background-image: var(--ultimate-orb-sheet);
   background-size: 800% 100%;
   background-position: 0 0;
   animation: ultimate-orb-sprite-play 1600ms step-end infinite;

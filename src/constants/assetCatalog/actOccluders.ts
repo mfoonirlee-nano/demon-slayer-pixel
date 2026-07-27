@@ -24,9 +24,14 @@ enum IntroAct {
 const AWAKENED_ACT_OFFSET = 6;
 const FINAL_ACT = 13;
 const ALL_ACTS = Array.from({ length: FINAL_ACT }, (_, index) => index + 1);
+const ACT_OCCLUDER_ASSET_ROOT = "assets/sprites/scenery/act-occluders";
 
 function bossActs(introAct: IntroAct) {
   return [introAct, introAct + AWAKENED_ACT_OFFSET];
+}
+
+function actOccluderSource(fileName: string) {
+  return `${ACT_OCCLUDER_ASSET_ROOT}/${fileName}`;
 }
 
 export const ACT_OCCLUDER_BOTTOM_GUTTER = 8;
@@ -36,10 +41,7 @@ export const ACT_OCCLUDER_SPRITES: ActOccluderSprite[] = [
     id: "spider-string-webbed-cedar",
     acts: bossActs(IntroAct.SpiderString),
     kind: "themed",
-    src: new URL(
-      "../../../assets/sprites/scenery/act-occluders/spider-string-webbed-cedar.png",
-      import.meta.url,
-    ).href,
+    src: actOccluderSource("spider-string-webbed-cedar.png"),
     image: null,
     sourceW: 512,
     sourceH: 505,
@@ -50,10 +52,7 @@ export const ACT_OCCLUDER_SPRITES: ActOccluderSprite[] = [
     id: "mist-bone-bamboo-thicket",
     acts: bossActs(IntroAct.MistBone),
     kind: "themed",
-    src: new URL(
-      "../../../assets/sprites/scenery/act-occluders/mist-bone-bamboo-thicket.png",
-      import.meta.url,
-    ).href,
+    src: actOccluderSource("mist-bone-bamboo-thicket.png"),
     image: null,
     sourceW: 512,
     sourceH: 343,
@@ -64,10 +63,7 @@ export const ACT_OCCLUDER_SPRITES: ActOccluderSprite[] = [
     id: "mirror-dream-shard-outcrop",
     acts: bossActs(IntroAct.MirrorDream),
     kind: "themed",
-    src: new URL(
-      "../../../assets/sprites/scenery/act-occluders/mirror-dream-shard-outcrop.png",
-      import.meta.url,
-    ).href,
+    src: actOccluderSource("mirror-dream-shard-outcrop.png"),
     image: null,
     sourceW: 512,
     sourceH: 232,
@@ -78,10 +74,7 @@ export const ACT_OCCLUDER_SPRITES: ActOccluderSprite[] = [
     id: "fang-gale-windbent-pine",
     acts: bossActs(IntroAct.FangGale),
     kind: "themed",
-    src: new URL(
-      "../../../assets/sprites/scenery/act-occluders/fang-gale-windbent-pine.png",
-      import.meta.url,
-    ).href,
+    src: actOccluderSource("fang-gale-windbent-pine.png"),
     image: null,
     sourceW: 512,
     sourceH: 349,
@@ -92,10 +85,7 @@ export const ACT_OCCLUDER_SPRITES: ActOccluderSprite[] = [
     id: "lantern-ember-charred-cedar",
     acts: bossActs(IntroAct.LanternEmber),
     kind: "themed",
-    src: new URL(
-      "../../../assets/sprites/scenery/act-occluders/lantern-ember-charred-cedar.png",
-      import.meta.url,
-    ).href,
+    src: actOccluderSource("lantern-ember-charred-cedar.png"),
     image: null,
     sourceW: 512,
     sourceH: 342,
@@ -106,10 +96,7 @@ export const ACT_OCCLUDER_SPRITES: ActOccluderSprite[] = [
     id: "dead-bell-weeping-tree",
     acts: bossActs(IntroAct.DeadBell),
     kind: "themed",
-    src: new URL(
-      "../../../assets/sprites/scenery/act-occluders/dead-bell-weeping-tree.png",
-      import.meta.url,
-    ).href,
+    src: actOccluderSource("dead-bell-weeping-tree.png"),
     image: null,
     sourceW: 512,
     sourceH: 364,
@@ -120,10 +107,7 @@ export const ACT_OCCLUDER_SPRITES: ActOccluderSprite[] = [
     id: "blood-moon-mask-banyan",
     acts: [FINAL_ACT],
     kind: "themed",
-    src: new URL(
-      "../../../assets/sprites/scenery/act-occluders/blood-moon-mask-banyan.png",
-      import.meta.url,
-    ).href,
+    src: actOccluderSource("blood-moon-mask-banyan.png"),
     image: null,
     sourceW: 512,
     sourceH: 338,
@@ -134,10 +118,7 @@ export const ACT_OCCLUDER_SPRITES: ActOccluderSprite[] = [
     id: "moon-bamboo-rock-cluster",
     acts: ALL_ACTS,
     kind: "generic",
-    src: new URL(
-      "../../../assets/sprites/scenery/act-occluders/moon-bamboo-rock-cluster.png",
-      import.meta.url,
-    ).href,
+    src: actOccluderSource("moon-bamboo-rock-cluster.png"),
     image: null,
     sourceW: 512,
     sourceH: 256,

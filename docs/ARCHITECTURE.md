@@ -48,6 +48,8 @@
   - `game-state.ts`: 玩家、敌人、Boss、平台、粒子等运行时状态类型。
 - `src/rendering/context.ts`: 管理 canvas 与 2D context 引用。
 - `src/assets/index.ts`: 异步加载图片资源，并在加载完成后更新 `spritesReady`。
+- `src/assets/staticAssetUrl.ts`: 将仓库内的逻辑素材路径 `assets/...` 解析为
+  `dist/` 同级目录下的 `../assets/...`；Vite 只构建 HTML、JavaScript 和 CSS，不复制运行时素材。
 - `src/game/input.ts`: 处理键盘输入和移动端虚拟按键逻辑。
 - `src/rendering/background.ts`: 绘制天空、星星、月亮、云层、山脉和地面底色。
 - `src/rendering/clouds.ts`: 绘制大云/小云精灵，支持夜晚灰色滤镜和血月红色染色。

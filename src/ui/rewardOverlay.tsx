@@ -1,5 +1,6 @@
 import { type CSSProperties, useEffect, useState } from "react";
 import { useAtomValue } from "jotai";
+import { resolveStaticAssetUrl } from "../assets/staticAssetUrl";
 import { chooseBossEquipment, chooseUpgradeReward } from "../game/runtime";
 import type { GameSnapshot } from "../game/gameStore";
 import {
@@ -11,7 +12,7 @@ import {
 import { languageAtom, type Language } from "../i18n/language";
 import { message, type MessageKey } from "../i18n/messages";
 import { localizeUpgradeChoice } from "../i18n/upgradeCopy";
-import { playerSkillColor, playerSkillIconSrc } from "../systems/skillCatalog";
+import { playerSkillColor } from "../systems/skillCatalog";
 import type { EquipmentChoiceState, UpgradeChoiceState, UpgradeChoiceType } from "../types/game-state";
 import {
   equipmentRewardMetrics,
@@ -19,11 +20,13 @@ import {
   type RewardChoiceMetric,
   type RewardMetricTone,
 } from "./rewardChoiceDetails";
-import { equipmentIconSrc, equipmentSlotBadgeSrc } from "./uiDisplay";
+import { equipmentIconSrc, equipmentSlotBadgeSrc, skillIconSrc } from "./uiDisplay";
 import { getRewardOverlayLayout } from "./rewardOverlayLayout";
 import { UiSprite } from "./uiSprite";
 
-const ULTIMATE_SKILL_ICON_SRC = "assets/sprites/skills/ultimate_skill/icon.png";
+const ULTIMATE_SKILL_ICON_SRC = resolveStaticAssetUrl(
+  "assets/sprites/skills/ultimate_skill/icon.png",
+);
 
 export const REWARD_OVERLAY_BACKDROP_CLASS = "reward-overlay-backdrop";
 export const REWARD_OVERLAY_PANEL_CLASS = "reward-overlay-panel";
@@ -78,7 +81,7 @@ function levelTransition(choice: UpgradeChoiceState) {
 }
 
 function upgradeChoiceIconSrc(choice: UpgradeChoiceState) {
-  return choice.skillId ? playerSkillIconSrc(choice.skillId) : ULTIMATE_SKILL_ICON_SRC;
+  return choice.skillId ? skillIconSrc(choice.skillId) : ULTIMATE_SKILL_ICON_SRC;
 }
 
 function equipmentChoiceStatus(
