@@ -17,6 +17,10 @@ import type { LiveBoss } from "./types";
 const SEGMENT_KINDS: readonly SpiderStringCageSegmentKind[] = ["ground", "air", "mixed"];
 const WARNING_ALPHA_BASE_RATIO = 0.45;
 const WARNING_ALPHA_GROWTH_RATIO = 0.55;
+const WEB_WARNING_FRAME_COUNT = 2;
+const WEB_FADE_FRAME = SPIDER_STRING_ULTIMATE_WEB_SHEET.count - 1;
+const WEB_HIT_FRAME_COUNT = WEB_FADE_FRAME - WEB_WARNING_FRAME_COUNT;
+const WEB_SPAN_EDGE_COUNT = 2;
 
 export function spawnSpiderStringCageEffect(boss: LiveBoss) {
   const archetype = bossArchetypeForId(boss.id);
@@ -32,10 +36,7 @@ export function spawnSpiderStringCageEffect(boss: LiveBoss) {
 export function updateSpiderStringCageEffects() {
   for (let i = state.spiderStringCages.length - 1; i >= 0; i -= 1) {
     const cage = state.spiderStringCages[i];
-    cage.frame = Math.min(
-      SPIDER_STRING_ULTIMATE_WEB_SHEET.count - 1,
-      Math.floor(cage.elapsed / SPIDER_STRING_CAGE_CONFIG.webFrameDuration),
-    );
+    cage.frame = cageWebFrame(cage);
 
     if (isCageHitWindow(cage) && !cage.hitPlayer && isPlayerInSpiderStringCageDanger(cage)) {
       cage.hitPlayer = true;
@@ -74,9 +75,21 @@ export function drawSpiderStringCageEffects() {
 
     ctx.save();
     ctx.globalAlpha = alpha;
-    for (let column = 0; column < cage.columns; column += 1) {
-      if (column === cage.safeColumn) continue;
-      drawCageColumn(cage, column);
+    if (cage.kind === "ground" || cage.kind === "mixed") {
+      drawCageBand(
+        cage,
+        GROUND_Y
+          - SPIDER_STRING_CAGE_CONFIG.webDrawH
+          + SPIDER_STRING_CAGE_CONFIG.groundDrawYOffset,
+      );
+    }
+    if (cage.kind === "air" || cage.kind === "mixed") {
+      drawCageBand(
+        cage,
+        GROUND_Y
+          - SPIDER_STRING_CAGE_CONFIG.webDrawH
+          - SPIDER_STRING_CAGE_CONFIG.airDrawYOffset,
+      );
     }
     ctx.restore();
   }
@@ -152,6 +165,20 @@ function isCageHitWindow(cage: SpiderStringCageState) {
     && cage.elapsed < cage.warningFrames + cage.hitFrames;
 }
 
+function cageWebFrame(cage: SpiderStringCageState) {
+  if (cage.elapsed < cage.warningFrames) {
+    return Math.floor(cage.elapsed / SPIDER_STRING_CAGE_CONFIG.webFrameDuration)
+      % WEB_WARNING_FRAME_COUNT;
+  }
+
+  const hitElapsed = cage.elapsed - cage.warningFrames;
+  if (hitElapsed >= cage.hitFrames) return WEB_FADE_FRAME;
+  return WEB_WARNING_FRAME_COUNT + Math.min(
+    WEB_HIT_FRAME_COUNT - 1,
+    Math.floor(hitElapsed * WEB_HIT_FRAME_COUNT / cage.hitFrames),
+  );
+}
+
 function cageAlpha(cage: SpiderStringCageState) {
   if (cage.elapsed < cage.warningFrames) {
     const t = cage.elapsed / cage.warningFrames;
@@ -165,29 +192,42 @@ function cageAlpha(cage: SpiderStringCageState) {
   return SPIDER_STRING_CAGE_CONFIG.fadeAlpha * (1 - clamp(fadeT, 0, 1));
 }
 
-function drawCageColumn(cage: SpiderStringCageState, column: number) {
+function drawCageBand(cage: SpiderStringCageState, y: number) {
   const columnW = WIDTH / cage.columns;
-  const x = column * columnW + columnW / 2 - SPIDER_STRING_CAGE_CONFIG.webDrawW / 2;
+  const safeLeft = cage.safeColumn * columnW + SPIDER_STRING_CAGE_CONFIG.safePaddingX;
+  const safeRight = (cage.safeColumn + 1) * columnW
+    - SPIDER_STRING_CAGE_CONFIG.safePaddingX;
 
-  if (cage.kind === "ground" || cage.kind === "mixed") {
-    drawSheetFrame(
-      SPIDER_STRING_ULTIMATE_WEB_SHEET,
-      cage.frame,
-      x,
-      GROUND_Y - SPIDER_STRING_CAGE_CONFIG.webDrawH + SPIDER_STRING_CAGE_CONFIG.groundDrawYOffset,
-      SPIDER_STRING_CAGE_CONFIG.webDrawW,
-      SPIDER_STRING_CAGE_CONFIG.webDrawH,
-    );
-  }
+  drawCageSpan(cage, 0, safeLeft, columnW, y, 1);
+  drawCageSpan(cage, safeRight, WIDTH, columnW, y, -1);
+}
 
-  if (cage.kind === "air" || cage.kind === "mixed") {
-    drawSheetFrame(
-      SPIDER_STRING_ULTIMATE_WEB_SHEET,
-      cage.frame,
-      x,
-      GROUND_Y - SPIDER_STRING_CAGE_CONFIG.webDrawH - SPIDER_STRING_CAGE_CONFIG.airDrawYOffset,
-      SPIDER_STRING_CAGE_CONFIG.webDrawW,
-      SPIDER_STRING_CAGE_CONFIG.webDrawH,
-    );
-  }
+function drawCageSpan(
+  cage: SpiderStringCageState,
+  startX: number,
+  endX: number,
+  columnW: number,
+  y: number,
+  facing: number,
+) {
+  if (!ctx) return;
+  const spanW = endX - startX;
+  const visualSpanW = spanW
+    + SPIDER_STRING_CAGE_CONFIG.safePaddingX * WEB_SPAN_EDGE_COUNT;
+  const drawW = SPIDER_STRING_CAGE_CONFIG.webDrawW * visualSpanW / columnW;
+  const centerX = (startX + endX) / 2;
+  ctx.save();
+  ctx.beginPath();
+  ctx.rect(startX, y, spanW, SPIDER_STRING_CAGE_CONFIG.webDrawH);
+  ctx.clip();
+  drawSheetFrame(
+    SPIDER_STRING_ULTIMATE_WEB_SHEET,
+    cage.frame,
+    centerX - drawW / 2,
+    y,
+    drawW,
+    SPIDER_STRING_CAGE_CONFIG.webDrawH,
+    facing,
+  );
+  ctx.restore();
 }
