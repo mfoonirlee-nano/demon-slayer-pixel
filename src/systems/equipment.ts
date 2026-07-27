@@ -8,12 +8,10 @@ import type {
 import {
   BURST_BLADE_AWAKENED_SLASH_ATTACK_SCALE,
   BURST_BLADE_BOSS_DAMAGE_MULTIPLIER,
-  BURST_BLADE_BOSS_HP_RATIO,
   BURST_BLADE_EXECUTE_ATTACK_MULTIPLIER,
   BURST_GARB_INVINCIBLE_FRAMES,
   BURST_GARB_SPEED_MULTIPLIER,
   BURST_GARB_SPEED_TIMER_FRAMES,
-  BURST_TALISMAN_COOLDOWN,
   BURST_TALISMAN_RETAIN_RATIO,
   BURST_TALISMAN_ULTIMATE_GAIN,
   FLOW_BLADE_HITS_REQUIRED,
@@ -68,6 +66,8 @@ import { resetSlotRuntimeState } from "./equipmentRuntimeState";
 import { applyShadowstepTalismanMovementReward } from "./equipmentMovementRewards";
 import {
   applyFamilyResonanceReward,
+  burstBladeBossHpRatio,
+  burstTalismanCooldown,
   cooldownWithFamilyResonance,
   tickFlowResonanceRegeneration,
   triggerCountWithFamilyResonance,
@@ -353,7 +353,7 @@ export function equipmentBasicAttackDamageMultiplier(state: GameState) {
 
 export function equipmentBossDamageMultiplier(state: GameState, boss: BossLike) {
   const burstTier = equippedTier(state, "blade", "burst_blade");
-  if (burstTier && boss.hp / Math.max(1, boss.hpMax) <= BURST_BLADE_BOSS_HP_RATIO) {
+  if (burstTier && boss.hp / Math.max(1, boss.hpMax) <= burstBladeBossHpRatio(state)) {
     if (tierAtLeast(burstTier, "fine") && !state.player.burstBladeExecuteUsed) {
       state.player.burstBladeExecuteReady = true;
       state.player.burstBladeExecuteUsed = true;
@@ -527,7 +527,7 @@ export function recordBossDamageEquipmentEffects(state: GameState, appliedDamage
   if (burstTalismanTier && state.player.burstTalismanCooldown <= 0) {
     grantUltimateEnergy(state, BURST_TALISMAN_ULTIMATE_GAIN[burstTalismanTier]);
     applyFamilyResonanceReward(state, "burst");
-    state.player.burstTalismanCooldown = cooldownWithFamilyResonance(state, "burst", BURST_TALISMAN_COOLDOWN);
+    state.player.burstTalismanCooldown = burstTalismanCooldown(state);
   }
 
   const burstBladeTier = equippedTier(state, "blade", "burst_blade");
@@ -537,7 +537,7 @@ export function recordBossDamageEquipmentEffects(state: GameState, appliedDamage
     && state.boss
     && !state.player.burstBladeAwakenedSlashUsed
     && state.player.ultimateTimer > 0
-    && state.boss.hp / Math.max(1, state.boss.hpMax) <= BURST_BLADE_BOSS_HP_RATIO
+    && state.boss.hp / Math.max(1, state.boss.hpMax) <= burstBladeBossHpRatio(state)
   ) {
     state.player.burstBladeAwakenedSlashUsed = true;
     const slashDamage = (state.player.baseAttack + state.player.attackBonus) * BURST_BLADE_AWAKENED_SLASH_ATTACK_SCALE;

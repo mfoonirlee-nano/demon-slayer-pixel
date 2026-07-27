@@ -5,6 +5,12 @@ import {
 } from "../constants";
 import { EQUIPMENT_ITEMS } from "./equipmentCatalog";
 import { grantSkillEnergy } from "./equipmentResources";
+import {
+  BURST_BLADE_BOSS_HP_RATIO,
+  BURST_BLADE_PAIR_RESONANCE_BOSS_HP_RATIO,
+  BURST_TALISMAN_COOLDOWN,
+  BURST_TALISMAN_PAIR_RESONANCE_COOLDOWN,
+} from "./equipmentTuning";
 
 const PAIR_RESONANCE_COUNT = 2;
 const FULL_RESONANCE_COUNT = 3;
@@ -16,6 +22,18 @@ export function equippedFamilyCount(state: GameState, family: EquipmentFamily) {
   return Object.values(state.equippedEquipment).filter((itemId) => (
     itemId !== null && EQUIPMENT_ITEMS[itemId].family === family
   )).length;
+}
+
+export function burstBladeBossHpRatio(state: GameState) {
+  return equippedFamilyCount(state, "burst") >= PAIR_RESONANCE_COUNT
+    ? BURST_BLADE_PAIR_RESONANCE_BOSS_HP_RATIO
+    : BURST_BLADE_BOSS_HP_RATIO;
+}
+
+export function burstTalismanCooldown(state: GameState) {
+  return equippedFamilyCount(state, "burst") >= PAIR_RESONANCE_COUNT
+    ? BURST_TALISMAN_PAIR_RESONANCE_COOLDOWN
+    : BURST_TALISMAN_COOLDOWN;
 }
 
 export function triggerCountWithFamilyResonance(state: GameState, family: EquipmentFamily, baseCount: number) {

@@ -8,7 +8,7 @@ import type {
 import { equipmentItem } from "./equipment";
 
 const FULL_HEALTH = 100;
-const BOSS_EXECUTE_THRESHOLD_HP = 35;
+const BOSS_PAIR_EXECUTE_THRESHOLD_HP = 50;
 const ASH_ZONE_DURATION = 160;
 const SHORT_ASH_ZONE_REMAINING = 40;
 const LONG_ASH_ZONE_REMAINING = 120;
@@ -226,8 +226,11 @@ describe("player status snapshot", () => {
 
   it("projects burst execute, protection readiness, and escape haste", () => {
     addAndEquip("burst_blade", "fine");
+    state.boss = makeBoss(BOSS_PAIR_EXECUTE_THRESHOLD_HP);
+
+    expect(status("burst_blade_execute_zone")).toBeUndefined();
+
     addAndEquip("burst_garb", "fine");
-    state.boss = makeBoss(BOSS_EXECUTE_THRESHOLD_HP);
     state.player.burstBladeExecuteReady = true;
     state.player.burstGarbSpeedTimer = 75;
 
