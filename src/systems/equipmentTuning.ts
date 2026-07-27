@@ -24,7 +24,6 @@ export const FLOW_TALISMAN_HIT_THRESHOLD: Record<EquipmentTier, number> = { comm
 export const FLOW_TALISMAN_ULTIMATE_GAIN = 2;
 
 export const BURST_BLADE_BOSS_HP_RATIO = 0.35;
-export const BURST_BLADE_PAIR_RESONANCE_BOSS_HP_RATIO = 0.5;
 export const BURST_BLADE_BOSS_DAMAGE_MULTIPLIER: Record<EquipmentTier, number> = {
   common: 1.22,
   fine: 1.28,
@@ -36,7 +35,6 @@ export const BURST_GARB_INVINCIBLE_FRAMES = 90;
 export const BURST_GARB_SPEED_TIMER_FRAMES = 150;
 export const BURST_GARB_SPEED_MULTIPLIER = 1.15;
 export const BURST_TALISMAN_COOLDOWN = 90;
-export const BURST_TALISMAN_PAIR_RESONANCE_COOLDOWN = 60;
 export const BURST_TALISMAN_ULTIMATE_GAIN: Record<EquipmentTier, number> = { common: 3, fine: 4, awakened: 4 };
 export const BURST_TALISMAN_SKILL_BOSS_ULTIMATE_GAIN = 2;
 export const BURST_TALISMAN_RETAIN_RATIO = 0.25;

@@ -2,6 +2,8 @@ import type { EquipmentItemId, EquipmentTier } from "../types/game-state";
 
 export const FLOW_PAIR_SKILL_ENERGY_REGEN_PER_SECOND = 2;
 export const FLOW_FULL_HEALTH_REGEN_PER_SECOND = 1;
+export const BURST_BLADE_PAIR_RESONANCE_EXECUTE_HP_RATIO = 0.5;
+export const BURST_TALISMAN_PAIR_RESONANCE_COOLDOWN_FRAMES = 60;
 
 export const EQUIPMENT_PRIMARY_STAT_BONUS_RATIOS: Record<
   EquipmentItemId,

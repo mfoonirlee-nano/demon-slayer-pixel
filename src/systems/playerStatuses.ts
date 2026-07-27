@@ -7,7 +7,7 @@ import { activeLanternAshZoneForPlayer } from "../entities/players/lanternAshZon
 import type { GameState, PlayerStatusSnapshot } from "../types/game-state";
 import { isPlayerLowHp } from "./equipment";
 import {
-  burstBladeBossHpRatio,
+  burstBladeExecuteHpRatio,
   triggerCountWithFamilyResonance,
 } from "./equipmentResonance";
 import { equippedTier, tierAtLeast } from "./equipmentState";
@@ -142,7 +142,7 @@ function pushBurstStatuses(state: GameState, statuses: PlayerStatusSnapshot[]) {
   const player = state.player;
   const bladeTier = equippedTier(state, "blade", "burst_blade");
   const bossInExecuteZone = state.boss !== null
-    && state.boss.hp / Math.max(1, state.boss.hpMax) <= burstBladeBossHpRatio(state);
+    && state.boss.hp / Math.max(1, state.boss.hpMax) <= burstBladeExecuteHpRatio(state);
   if (bladeTier && bossInExecuteZone) {
     statuses.push(persistentStatus("burst_blade_execute_zone"));
   }

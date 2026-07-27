@@ -1,5 +1,7 @@
 import type { EquipmentFamily, GameState } from "../types/game-state";
 import {
+  BURST_BLADE_PAIR_RESONANCE_EXECUTE_HP_RATIO,
+  BURST_TALISMAN_PAIR_RESONANCE_COOLDOWN_FRAMES,
   FLOW_FULL_HEALTH_REGEN_PER_SECOND,
   FLOW_PAIR_SKILL_ENERGY_REGEN_PER_SECOND,
 } from "../constants";
@@ -7,9 +9,7 @@ import { EQUIPMENT_ITEMS } from "./equipmentCatalog";
 import { grantSkillEnergy } from "./equipmentResources";
 import {
   BURST_BLADE_BOSS_HP_RATIO,
-  BURST_BLADE_PAIR_RESONANCE_BOSS_HP_RATIO,
   BURST_TALISMAN_COOLDOWN,
-  BURST_TALISMAN_PAIR_RESONANCE_COOLDOWN,
 } from "./equipmentTuning";
 
 const PAIR_RESONANCE_COUNT = 2;
@@ -24,15 +24,15 @@ export function equippedFamilyCount(state: GameState, family: EquipmentFamily) {
   )).length;
 }
 
-export function burstBladeBossHpRatio(state: GameState) {
+export function burstBladeExecuteHpRatio(state: GameState) {
   return equippedFamilyCount(state, "burst") >= PAIR_RESONANCE_COUNT
-    ? BURST_BLADE_PAIR_RESONANCE_BOSS_HP_RATIO
+    ? BURST_BLADE_PAIR_RESONANCE_EXECUTE_HP_RATIO
     : BURST_BLADE_BOSS_HP_RATIO;
 }
 
-export function burstTalismanCooldown(state: GameState) {
+export function burstTalismanCooldownFrames(state: GameState) {
   return equippedFamilyCount(state, "burst") >= PAIR_RESONANCE_COUNT
-    ? BURST_TALISMAN_PAIR_RESONANCE_COOLDOWN
+    ? BURST_TALISMAN_PAIR_RESONANCE_COOLDOWN_FRAMES
     : BURST_TALISMAN_COOLDOWN;
 }
 
