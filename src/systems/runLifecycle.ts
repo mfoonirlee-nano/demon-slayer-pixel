@@ -11,6 +11,7 @@ export function endRun(state: GameState) {
   state.pendingEquipmentChoices = [];
   state.pendingUpgradeChoices = [];
   state.equipmentInventory = [];
+  state.bossDefeatSplitEffect = null;
   state.equippedEquipment = {
     blade: null,
     garb: null,

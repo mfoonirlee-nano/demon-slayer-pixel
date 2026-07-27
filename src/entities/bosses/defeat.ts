@@ -12,6 +12,7 @@ import { addRunXp, bossXp } from "../../systems/progression";
 import { advanceEnemyDirectorToAct } from "../../systems/enemyDirector";
 import { clearRun } from "../../systems/runLifecycle";
 import { BOSS_ARCHETYPE_IDS } from "./registry";
+import { spawnBossDefeatSplitEffect } from "./bossDefeatSplitEffect";
 
 function gainBossKillEnergy() {
   grantSkillEnergy(state, PLAYER_COMBAT.bossEnergyGain);
@@ -29,6 +30,7 @@ function clearBossSummons() {
 export function defeatBoss() {
   if (!state.boss || state.boss.hp > 0) return false;
 
+  spawnBossDefeatSplitEffect(state.boss);
   const defeatedBossId = state.boss.id;
   const clearsRun = defeatedBossId === BOSS_ARCHETYPE_IDS.bloodMoon;
   state.player.score += PLAYER_COMBAT.bossKillScore;

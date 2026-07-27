@@ -1,7 +1,9 @@
 import { describe, expect, it } from "vitest";
+import { BOSS_DEFEAT_SPLIT_VISUAL } from "../../constants";
 import { getStateSnapshot, resetState, state } from "../../game/state";
 import { EQUIPMENT_CHOICE_IDS, chooseBossEquipment } from "../../systems/equipment";
 import { spawnBoss } from "../boss";
+import { updateBossDefeatSplitEffect } from "./bossDefeatSplitEffect";
 import { defeatBoss } from "./defeat";
 import { BOSS_ARCHETYPE_IDS } from "./registry";
 
@@ -38,6 +40,11 @@ describe("boss defeat progression", () => {
 
     expect(state.pendingEquipmentChoices).toHaveLength(BOSS_REWARD_CHOICE_COUNT);
     expect(state.pendingUpgradeChoices).toEqual([]);
+    expect(state.bossDefeatSplitEffect).not.toBeNull();
+    expect(getStateSnapshot().activeOverlay).toBe("none");
+
+    finishBossDefeatSplitEffect();
+
     expect(getStateSnapshot().activeOverlay).toBe("bossEquipment");
   });
 
@@ -58,6 +65,10 @@ describe("boss defeat progression", () => {
     expect(state.pendingEquipmentChoices).toHaveLength(BOSS_REWARD_CHOICE_COUNT);
     expect(state.pendingEquipmentChoices.every((choice) => choice.tier === "awakened")).toBe(true);
     expect(state.pendingUpgradeChoices).toEqual([]);
+    expect(getStateSnapshot().activeOverlay).toBe("none");
+
+    finishBossDefeatSplitEffect();
+
     expect(getStateSnapshot().activeOverlay).toBe("bossEquipment");
 
     expect(chooseBossEquipment(state, 0)).toBe(true);
@@ -84,6 +95,16 @@ describe("boss defeat progression", () => {
     expect(state.boss).toBeNull();
     expect(state.pendingEquipmentChoices).toEqual([]);
     expect(state.pendingUpgradeChoices).toEqual([]);
+    expect(getStateSnapshot().activeOverlay).toBe("none");
+
+    finishBossDefeatSplitEffect();
+
     expect(getStateSnapshot().activeOverlay).toBe("victory");
   });
 });
+
+function finishBossDefeatSplitEffect() {
+  for (let frame = 0; frame < BOSS_DEFEAT_SPLIT_VISUAL.durationFrames; frame += 1) {
+    updateBossDefeatSplitEffect();
+  }
+}

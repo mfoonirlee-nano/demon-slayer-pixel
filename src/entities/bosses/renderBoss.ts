@@ -28,6 +28,7 @@ import { state } from "../../game/state";
 import { frameIndex } from "../../game/utils";
 import { ctx } from "../../rendering/context";
 import { drawSheetFrame } from "../../rendering/graphics";
+import type { BossVisualFrameState } from "../../types/game-state";
 import { BOSS_ARCHETYPE_IDS, bossArchetypeForId } from "./registry";
 import { bloodMoonCastDuration } from "./bloodMoonBehavior";
 import { fangCastDuration } from "./fangGaleBehavior";
@@ -52,6 +53,23 @@ export function drawBoss() {
   const boss = state.boss;
   if (!boss) return;
 
+  const pose = resolveBossVisualFrame(boss, state.elapsed);
+  drawSheetFrame(
+    pose.sheet,
+    pose.frame,
+    pose.x,
+    pose.y,
+    pose.w,
+    pose.h,
+    pose.facing,
+  );
+  drawDeadBellBeatCue(boss);
+}
+
+export function resolveBossVisualFrame(
+  boss: LiveBoss,
+  animationElapsed: number,
+): BossVisualFrameState {
   const archetype = bossArchetypeForId(boss.id);
   const centerX = boss.x + boss.w / 2;
   const feetY = boss.y + boss.h;
@@ -62,7 +80,7 @@ export function drawBoss() {
       BLOOD_MOON_PHASE_SHIFT_SHEET.count - 1,
       Math.floor(elapsed / BLOOD_MOON_CONFIG.phaseShiftFrameDuration),
     );
-    drawSheetFrame(
+    return visualFrame(
       BLOOD_MOON_PHASE_SHIFT_SHEET,
       frame,
       centerX - archetype.castDrawW / 2,
@@ -71,7 +89,6 @@ export function drawBoss() {
       archetype.castDrawH,
       boss.facing,
     );
-    return;
   }
 
   if (boss.castTimer > 0) {
@@ -83,7 +100,7 @@ export function drawBoss() {
       castSheet.count - 1,
       Math.floor(framesSinceCastStart / frameDuration),
     );
-    drawSheetFrame(
+    return visualFrame(
       castSheet,
       frame,
       centerX - archetype.castDrawW / 2,
@@ -92,8 +109,6 @@ export function drawBoss() {
       archetype.castDrawH,
       boss.castFacing,
     );
-    drawDeadBellBeatCue(boss);
-    return;
   }
 
   if (boss.id === BOSS_ARCHETYPE_IDS.mistBone && boss.actionState === "attack") {
@@ -104,7 +119,7 @@ export function drawBoss() {
           / MIST_BONE_CONFIG.attackFrameDuration,
       ),
     );
-    drawSheetFrame(
+    return visualFrame(
       MIST_BONE_ATTACK_SHEET,
       frame,
       centerX - archetype.castDrawW / 2,
@@ -113,7 +128,6 @@ export function drawBoss() {
       archetype.castDrawH,
       boss.castFacing,
     );
-    return;
   }
 
   if (boss.id === BOSS_ARCHETYPE_IDS.fangGale && boss.actionState === "dash") {
@@ -125,7 +139,7 @@ export function drawBoss() {
       FANG_GALE_BITE_SHEET.count - 1,
       Math.floor(Math.min(boss.actionTimer, dashDuration - 1) / frameDuration),
     );
-    drawSheetFrame(
+    return visualFrame(
       FANG_GALE_BITE_SHEET,
       frame,
       centerX - archetype.castDrawW / 2,
@@ -134,7 +148,6 @@ export function drawBoss() {
       archetype.castDrawH,
       boss.facing,
     );
-    return;
   }
 
   if (boss.id === BOSS_ARCHETYPE_IDS.bloodMoon && boss.recoveryTimer > 0) {
@@ -146,7 +159,7 @@ export function drawBoss() {
       BLOOD_MOON_RECOVER_SHEET.count - 1,
       Math.floor(elapsed / BLOOD_MOON_CONFIG.recoverFrameDuration),
     );
-    drawSheetFrame(
+    return visualFrame(
       BLOOD_MOON_RECOVER_SHEET,
       frame,
       centerX - archetype.castDrawW / 2,
@@ -155,16 +168,15 @@ export function drawBoss() {
       archetype.castDrawH,
       boss.facing,
     );
-    return;
   }
 
   const frame = frameIndex(
     archetype.sheets.move.count,
     BOSS_CONFIG.baseAnimSpeed - boss.phase,
-    state.elapsed,
+    animationElapsed,
     boss.animSeed,
   );
-  drawSheetFrame(
+  return visualFrame(
     archetype.sheets.move,
     frame,
     centerX - archetype.drawW / 2,
@@ -173,7 +185,18 @@ export function drawBoss() {
     archetype.drawH,
     boss.facing,
   );
-  drawDeadBellBeatCue(boss);
+}
+
+function visualFrame(
+  sheet: BossVisualFrameState["sheet"],
+  frame: number,
+  x: number,
+  y: number,
+  w: number,
+  h: number,
+  facing: number,
+): BossVisualFrameState {
+  return { sheet, frame, x, y, w, h, facing };
 }
 
 function bossCastSheet(boss: LiveBoss) {

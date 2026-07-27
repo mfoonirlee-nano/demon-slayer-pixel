@@ -43,3 +43,12 @@ export const HIT_BURST_VISUAL = {
   sparkColorRgb: "203,246,255",
 } as const;
 
+export const BOSS_DEFEAT_SPLIT_VISUAL = {
+  durationFrames: 60,
+  maxSeparation: 52,
+  maxTiltRadians: 0.08,
+  maxDrop: 14,
+  fadeStartProgress: 0.55,
+  clipExtentScale: 2,
+  easingExponent: 3,
+} as const;

@@ -20,6 +20,7 @@ import type {
 import type {
   BindingZoneState,
   BloodMoonEffectState,
+  BossDefeatSplitEffectState,
   BossSkill1EffectState,
   BruteFireballState,
   BruteGuardReflectionState,
@@ -109,6 +110,7 @@ export type GameState = {
   gameOver: boolean;
   runCleared: boolean;
   boss: BossState;
+  bossDefeatSplitEffect: BossDefeatSplitEffectState | null;
   moon: MoonState;
   spritesReady: boolean;
   player: PlayerState;

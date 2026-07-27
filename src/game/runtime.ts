@@ -37,7 +37,29 @@ import {
   updateBruteFireballEffects,
 } from "../entities/enemies/bruteFireballEffects";
 import { drawWardenAuraIndicators } from "../entities/enemies/warden";
-import { spawnBoss, updateBoss, drawBoss, updateBossSkill1Effects, drawBossSkill1Effects, updateSpiderStringCageEffects, drawSpiderStringCageEffects, updateDeadBellEffects, drawDeadBellEffects, updateMistBoneEffects, drawMistBoneEffects, updateMirrorDreamEffects, drawMirrorDreamEffects, updateFangGaleEffects, drawFangGaleEffects, updateLanternEmberEffects, drawLanternEmberEffects, updateBloodMoonEffects, drawBloodMoonEffects } from "../entities/boss";
+import {
+  drawBloodMoonEffects,
+  drawBoss,
+  drawBossDefeatSplitEffect,
+  drawBossSkill1Effects,
+  drawDeadBellEffects,
+  drawFangGaleEffects,
+  drawLanternEmberEffects,
+  drawMirrorDreamEffects,
+  drawMistBoneEffects,
+  drawSpiderStringCageEffects,
+  spawnBoss,
+  updateBloodMoonEffects,
+  updateBoss,
+  updateBossDefeatSplitEffect,
+  updateBossSkill1Effects,
+  updateDeadBellEffects,
+  updateFangGaleEffects,
+  updateLanternEmberEffects,
+  updateMirrorDreamEffects,
+  updateMistBoneEffects,
+  updateSpiderStringCageEffects,
+} from "../entities/boss";
 import {
   spawnMapSegmentOfKind,
   spawnNextMapSegment,
@@ -112,7 +134,7 @@ function hasBlockingOverlay() {
 }
 
 function isPaused() {
-  return manualPaused || hasBlockingOverlay();
+  return manualPaused || hasBlockingOverlay() || state.bossDefeatSplitEffect !== null;
 }
 
 function publishCurrentState() {
@@ -140,7 +162,7 @@ function syncDebugInfiniteUltimateCharge() {
 
 function togglePause() {
   if (state.gameOver || !state.spritesReady) return;
-  if (hasBlockingOverlay()) return;
+  if (hasBlockingOverlay() || state.bossDefeatSplitEffect) return;
   manualPaused = !manualPaused;
   publishCurrentState();
 }
@@ -249,7 +271,9 @@ function drawLoadingState() {
 
 function loop(ts: number) {
   if (!running || !ctx) return;
-  if (isPaused()) {
+  const bossDefeatFreezeActive = state.bossDefeatSplitEffect !== null;
+  // Rewards or victory may already be queued, but this RAF must continue until the split finishes.
+  if (manualPaused || (hasBlockingOverlay() && !bossDefeatFreezeActive)) {
     state.last = ts;
     queueNextFrame();
     return;
@@ -272,8 +296,10 @@ function loop(ts: number) {
     return;
   }
 
-  if (!state.gameOver) {
-    if (isUltimateCastFreezeActive()) {
+  if (!state.gameOver || bossDefeatFreezeActive) {
+    if (bossDefeatFreezeActive) {
+      updateBossDefeatSplitEffect();
+    } else if (isUltimateCastFreezeActive()) {
       updateUltimateCastFreezeFrame();
     } else {
       state.elapsed += dt;
@@ -376,6 +402,7 @@ function loop(ts: number) {
   drawUltimateAfterimageSlashes();
   drawEnemyLayer(isEnemyAboveNearForeground);
   drawBoss();
+  drawBossDefeatSplitEffect();
   drawBossSkill1Effects();
   drawSpiderStringCageEffects();
   drawDeadBellEffects();

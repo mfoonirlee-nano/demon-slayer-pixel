@@ -1,4 +1,4 @@
-import type { PlayerAnimationState, SkillId } from "../assets";
+import type { PlayerAnimationState, SkillId, SpriteSheet } from "../assets";
 import type {
   ActBand,
   BinderTalismanDebuff,
@@ -10,6 +10,23 @@ import type {
   SkillLevel,
 } from "./domain";
 import type { EnemyState, PlatformState } from "./entities";
+
+export type BossVisualFrameState = {
+  sheet: SpriteSheet;
+  frame: number;
+  x: number;
+  y: number;
+  w: number;
+  h: number;
+  facing: number;
+};
+
+export type BossDefeatSplitEffectState = {
+  pose: BossVisualFrameState;
+  cutAngle: number;
+  life: number;
+  maxLife: number;
+};
 
 export type BossSkill1EffectState = {
   kind?: BossSkillEffectKind;

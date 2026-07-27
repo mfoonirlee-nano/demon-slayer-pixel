@@ -137,6 +137,7 @@ export function createInitialState(): GameState {
     gameOver: false,
     runCleared: false,
     boss: null,
+    bossDefeatSplitEffect: null,
     moon: createInitialMoonState(),
     spritesReady: false,
     player: createInitialPlayerState(),
@@ -231,6 +232,7 @@ export function resetState() {
   state.pendingVictoryAfterEquipment = next.pendingVictoryAfterEquipment;
   state.platformSpawnTimer = next.platformSpawnTimer;
   state.boss = next.boss;
+  state.bossDefeatSplitEffect = next.bossDefeatSplitEffect;
   state.gameOver = next.gameOver;
   state.runCleared = next.runCleared;
   state.moon = next.moon;
@@ -245,15 +247,17 @@ export function getStateSnapshot(manualPaused = false, paused = manualPaused): G
     ? state.player.ultimateDuration
     : ultimateConfig.durationFrames;
   const act = actForBossKills(state.bossKills);
-  const activeOverlay = state.gameOver
-    ? state.runCleared ? "victory" : "death"
-    : state.pendingEquipmentChoices.length > 0
-      ? "bossEquipment"
-      : state.pendingUpgradeChoices.length > 0
-        ? "upgrade"
-        : manualPaused
-          ? "pause"
-          : "none";
+  const activeOverlay = state.bossDefeatSplitEffect
+    ? "none"
+    : state.gameOver
+      ? state.runCleared ? "victory" : "death"
+      : state.pendingEquipmentChoices.length > 0
+        ? "bossEquipment"
+        : state.pendingUpgradeChoices.length > 0
+          ? "upgrade"
+          : manualPaused
+            ? "pause"
+            : "none";
   return {
     elapsed: state.elapsed,
     act,

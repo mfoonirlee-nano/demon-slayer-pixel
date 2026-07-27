@@ -1,5 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
+  BOSS_DEFEAT_SPLIT_VISUAL,
+  BOSS_SHEET,
   ENEMY_SHEETS,
   PLATFORM_SPRITES,
   PLAYER_ANIMATION_STATES,
@@ -7,9 +9,17 @@ import {
   PLAYER_SHEETS,
   WARDEN_BLOOD_MOON_BUFF_SHEET,
 } from "../constants";
+import {
+  spawnBossDefeatSplitEffect,
+} from "../entities/bosses/bossDefeatSplitEffect";
+import { createBossEncounter } from "../entities/bosses/encounter";
+import { BOSS_ARCHETYPE_IDS } from "../entities/bosses/registry";
 import { spawnEnemyBySheetIndex } from "../entities/enemy";
 import { setCanvas } from "../rendering/context";
 import { drawNearForeground } from "../rendering/nearForeground";
+import { createBossEquipmentChoices } from "../systems/equipment";
+import type { GameSnapshot } from "./gameStore";
+import { setupInput } from "./input";
 import { resetState, state } from "./state";
 import { startGame, stopGame, updateUltimateCastFreezeFrame } from "./runtime";
 
@@ -38,6 +48,7 @@ const PLATFORM_IMAGE = {} as HTMLImageElement;
 const ENEMY_IMAGE = {} as HTMLImageElement;
 const FOREGROUND_IMAGE = {} as HTMLImageElement;
 const ENEMY_BUFF_IMAGE = {} as HTMLImageElement;
+const BOSS_IMAGE = {} as HTMLImageElement;
 const TEST_FRAME_TIME = 16;
 const ULTIMATE_FREEZE_SKILL_TIMER = 7;
 const ULTIMATE_FREEZE_VELOCITY_X = 4;
@@ -50,11 +61,15 @@ const SPAWN_OCCLUDER_TEST_SIZE = 400;
 function createMockContext(): MockCanvasContext {
   return {
     drawImage: vi.fn(),
+    beginPath: vi.fn(),
+    clip: vi.fn(),
     filter: "none",
     globalAlpha: 1,
     globalCompositeOperation: "source-over",
     imageSmoothingEnabled: true,
     restore: vi.fn(),
+    rect: vi.fn(),
+    rotate: vi.fn(),
     save: vi.fn(),
     scale: vi.fn(),
     setTransform: vi.fn(),
@@ -75,6 +90,7 @@ describe("game runtime", () => {
     PLATFORM_SPRITES.image = null;
     ENEMY_SHEETS[0].image = null;
     WARDEN_BLOOD_MOON_BUFF_SHEET.image = null;
+    BOSS_SHEET.image = null;
     setCanvas(null);
     vi.unstubAllGlobals();
   });
@@ -156,6 +172,79 @@ describe("game runtime", () => {
     expect(state.player.vy).toBe(ULTIMATE_FREEZE_VELOCITY_Y);
     expect(state.elapsed).toBe(ULTIMATE_FREEZE_ELAPSED);
     expect(state.platformSpawnTimer).toBe(ULTIMATE_FREEZE_PLATFORM_SPAWN_TIMER);
+  });
+
+  it("plays the boss split before showing rewards while gameplay stays frozen", () => {
+    const frameQueue: { callback?: FrameRequestCallback } = {};
+    vi.stubGlobal("requestAnimationFrame", vi.fn((callback: FrameRequestCallback) => {
+      frameQueue.callback = callback;
+      return 1;
+    }));
+    vi.stubGlobal("cancelAnimationFrame", vi.fn());
+    const context = createMockContext();
+    const snapshots: GameSnapshot[] = [];
+    setCanvas({ getContext: () => context } as unknown as HTMLCanvasElement);
+    PLAYER_SHEETS[PLAYER_ANIMATION_STATES.idle].image = PLAYER_IMAGE;
+    BOSS_SHEET.image = BOSS_IMAGE;
+    state.spritesReady = true;
+
+    startGame({ onStateChange: (snapshot) => snapshots.push(snapshot) });
+    const boss = createBossEncounter({
+      id: BOSS_ARCHETYPE_IDS.spiderString,
+      bossKills: 0,
+      elapsedSeconds: state.elapsed,
+      animSeed: 0,
+    });
+    boss.entering = false;
+    spawnBossDefeatSplitEffect(boss, state.elapsed, () => 0);
+    state.pendingEquipmentChoices = createBossEquipmentChoices(state);
+    state.player.skillTimer = ULTIMATE_FREEZE_SKILL_TIMER;
+    state.player.vx = ULTIMATE_FREEZE_VELOCITY_X;
+    const startX = state.player.x;
+    const startElapsed = state.elapsed;
+
+    for (let frame = 0; frame < BOSS_DEFEAT_SPLIT_VISUAL.durationFrames; frame += 1) {
+      frameQueue.callback?.((frame + 1) * TEST_FRAME_TIME);
+    }
+
+    expect(context.clip).toHaveBeenCalled();
+    expect(state.bossDefeatSplitEffect).toBeNull();
+    expect(state.player.skillTimer).toBe(ULTIMATE_FREEZE_SKILL_TIMER);
+    expect(state.player.x).toBe(startX);
+    expect(state.player.vx).toBe(ULTIMATE_FREEZE_VELOCITY_X);
+    expect(state.elapsed).toBe(startElapsed);
+    expect(snapshots[snapshots.length - 1]?.activeOverlay).toBe("bossEquipment");
+  });
+
+  it("does not let manual pause stall a split without a queued reward", () => {
+    const frameQueue: { callback?: FrameRequestCallback } = {};
+    vi.stubGlobal("requestAnimationFrame", vi.fn((callback: FrameRequestCallback) => {
+      frameQueue.callback = callback;
+      return 1;
+    }));
+    vi.stubGlobal("cancelAnimationFrame", vi.fn());
+    const snapshots: GameSnapshot[] = [];
+    setCanvas({ getContext: () => createMockContext() } as unknown as HTMLCanvasElement);
+    PLAYER_SHEETS[PLAYER_ANIMATION_STATES.idle].image = PLAYER_IMAGE;
+    BOSS_SHEET.image = BOSS_IMAGE;
+    state.spritesReady = true;
+
+    startGame({ onStateChange: (snapshot) => snapshots.push(snapshot) });
+    const boss = createBossEncounter({
+      id: BOSS_ARCHETYPE_IDS.spiderString,
+      bossKills: 0,
+      elapsedSeconds: state.elapsed,
+      animSeed: 0,
+    });
+    spawnBossDefeatSplitEffect(boss, state.elapsed, () => 0);
+
+    vi.mocked(setupInput).mock.calls[0][0].onPause?.();
+    frameQueue.callback?.(TEST_FRAME_TIME);
+
+    expect(state.bossDefeatSplitEffect?.life).toBe(
+      BOSS_DEFEAT_SPLIT_VISUAL.durationFrames - 1,
+    );
+    expect(snapshots[snapshots.length - 1]?.manualPaused).toBe(false);
   });
 
   it("moves the platform in front of the player only after landing", () => {
