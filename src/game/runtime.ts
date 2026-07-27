@@ -328,7 +328,7 @@ function loop(ts: number) {
       }
 
       updateBindingZones();
-      updatePlayer();
+      updatePlayer(dt);
       updatePlatforms(dt);
       updateCrystals(dt);
       updateChests(dt);

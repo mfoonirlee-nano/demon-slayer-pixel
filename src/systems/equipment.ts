@@ -69,6 +69,7 @@ import { applyShadowstepTalismanMovementReward } from "./equipmentMovementReward
 import {
   applyFamilyResonanceReward,
   cooldownWithFamilyResonance,
+  tickFlowResonanceRegeneration,
   triggerCountWithFamilyResonance,
 } from "./equipmentResonance";
 import {
@@ -245,8 +246,9 @@ export function applySkillCastEquipmentEffects(state: GameState, skillId?: Skill
   state.player.tempoTalismanLastSkillId = skillId;
 }
 
-export function tickEquipmentEffects(state: GameState) {
+export function tickEquipmentEffects(state: GameState, deltaSeconds = 0) {
   const player = state.player;
+  tickFlowResonanceRegeneration(state, deltaSeconds);
   decrementTimer(player, "flowBladeSurgeSkillTimer");
   decrementTimer(player, "flowGarbTimer");
   decrementTimer(player, "burstGarbSpeedTimer");

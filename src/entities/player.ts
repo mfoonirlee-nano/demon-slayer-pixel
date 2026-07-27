@@ -377,7 +377,7 @@ export function tryJump() {
   tryPlayerJump(state);
 }
 
-export function updatePlayer() {
+export function updatePlayer(deltaSeconds = 0) {
   const p = state.player;
   if (p.ultimateCastTimer > 0) {
     p.runStepDistance = 0;
@@ -385,7 +385,7 @@ export function updatePlayer() {
     return;
   }
 
-  tickEquipmentEffects(state);
+  tickEquipmentEffects(state, deltaSeconds);
   const movementStartX = p.x;
   const dashReposition = p.dashReposition;
   const wasGrounded = onGround(p, p.onPlatform);

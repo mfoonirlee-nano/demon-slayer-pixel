@@ -1,4 +1,8 @@
 import type { EquipmentFamily, GameState } from "../types/game-state";
+import {
+  FLOW_FULL_HEALTH_REGEN_PER_SECOND,
+  FLOW_PAIR_SKILL_ENERGY_REGEN_PER_SECOND,
+} from "../constants";
 import { EQUIPMENT_ITEMS } from "./equipmentCatalog";
 import { grantSkillEnergy } from "./equipmentResources";
 
@@ -27,4 +31,19 @@ export function cooldownWithFamilyResonance(state: GameState, family: EquipmentF
 export function applyFamilyResonanceReward(state: GameState, family: EquipmentFamily) {
   if (equippedFamilyCount(state, family) < FULL_RESONANCE_COUNT) return;
   grantSkillEnergy(state, FULL_RESONANCE_SKILL_GAIN);
+}
+
+export function tickFlowResonanceRegeneration(state: GameState, deltaSeconds: number) {
+  if (deltaSeconds <= 0) return;
+  const flowCount = equippedFamilyCount(state, "flow");
+  if (flowCount < PAIR_RESONANCE_COUNT) return;
+
+  grantSkillEnergy(state, FLOW_PAIR_SKILL_ENERGY_REGEN_PER_SECOND * deltaSeconds);
+  if (flowCount < FULL_RESONANCE_COUNT) return;
+
+  const player = state.player;
+  player.hp = Math.min(
+    player.maxHp,
+    player.hp + FLOW_FULL_HEALTH_REGEN_PER_SECOND * deltaSeconds,
+  );
 }

@@ -5,7 +5,7 @@
 ## 核心设计模式
 
 ### 1. 游戏循环 (Game Loop)
-`src/game/runtime.ts` 中的 `loop()` 是游戏的核心。它使用 `requestAnimationFrame` 推进 update / draw 管线，并根据时间差 (`dt`) 更新月亮、玩家、敌人、Boss、地图片段、掉落物、技能弹道和粒子效果。
+`src/game/runtime.ts` 中的 `loop()` 是游戏的核心。它使用 `requestAnimationFrame` 推进 update / draw 管线，并根据时间差 (`dt`) 更新月亮、玩家、敌人、Boss、地图片段、掉落物、技能弹道和粒子效果。正常玩法分支通过 `updatePlayer(dt)` 把秒制时间差传入玩家装备更新，供持续恢复类效果按真实时间结算；暂停、奖励选择、Boss 击杀裂身和大招施法冻结分支不推进这类效果。
 
 运行时会在暂停时保留帧循环但停止玩法更新，确保 React 暂停面板能立即显示当前快照。游戏重开时调用 `resetState()` 和 `resetMapGenerator()`，但已加载的素材不会重复加载。
 
