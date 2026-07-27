@@ -1,6 +1,6 @@
 # 地图生成算法文档
 
-> 对应代码：`src/entities/platform.ts`、`src/constants/platform.ts`、`src/constants/assets.ts`、`src/runtime.ts`
+> 对应代码：`src/entities/platform.ts`、`src/constants/platform.ts`、`src/constants/assets.ts`、`src/game/runtime.ts`
 
 ## 概览
 

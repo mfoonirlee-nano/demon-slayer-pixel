@@ -4,22 +4,18 @@
 
 新增或替换 sprite sheet 时，优先保持已有切片规格不变。只有总尺寸、单帧尺寸、帧数或运行时用途发生变化时，才同步修改 `src/constants/assets.ts`。
 
-## 图片生成基础原则
+## 图片生成入口
 
-- 新增、重绘或编辑 sprite 图片内容时，必须使用 Codex 的 Image Gen skill (`imagegen`) 生成或编辑位图素材。
-- 禁止使用 Python 代码生成、绘制、重绘或合成图片内容，也不要新增这类 Python 生成脚本。
-- Python 仅可用于确定性的后处理或检查，例如绿幕抠透明、压缩、尺寸校验；这些步骤不能改变图片创作内容。
-- 项目用素材生成后必须落到 `assets/sprites/` 对应目录中，不能只保留在 Image Gen 的默认输出目录。
-- 使用内置 `imagegen` 后必须检查工具返回本身，不要假设一定会写入 `~/.codex/generated_images/`。可信产物来源包括当前调用的 `image_generation_call.result` PNG base64，或当前 imagegen 工具/开发者输出明确给出的 `~/.codex/generated_images/...` 精确文件路径；必须先解码或复制到 `tmp/imagegen/` 或目标工作区路径，再继续后处理。不要扫描 `~/.codex/generated_images/` 查找最新生成图。
-- 生成结果进入 `assets/sprites/` 前必须做素材规格校验：确认宽高、文件格式、alpha 通道、四边透明像素、可见内容 bbox、帧数/单帧尺寸和运行时常量仍匹配现有使用方式。
-- `imagegen` 可能输出大尺寸 RGB 图、棋盘格伪透明背景或轻微风格漂移。允许做确定性的透明恢复、裁切、缩放和压缩；不允许用脚本补画、重绘或创作缺失的视觉内容。
-- 如果需要精确替换已有 UI/sprite，先记录原素材的尺寸和 alpha bbox，后处理时把生成图对齐回这些运行时约束，避免透明边界、碰撞/布局尺寸或卡片锚点漂移。
-- 使用 Image Gen CLI fallback 前先确认 `OPENAI_API_KEY` 是否可用；如果缺失，不要继续走 CLI 路径，也不要把内置预览误报为已落盘素材。
+- 创建、重绘或编辑位图内容时，先完整执行 [`workflows/imagegen-project-asset.md`](../workflows/imagegen-project-asset.md)。该 workflow 是生成工具、可信产物、后处理和阻塞条件的唯一操作规范。
+- 本文只维护运行时资源目录、图集规格和接入契约；视觉意图从 [`docs/art/README.md`](art/README.md) 进入对应角色、敌人或 Boss brief。
+- 最终运行时素材必须落到 `assets/sprites/` 的对应目录，并在替换前后核对精确宽高、alpha、透明边缘、可见内容 bbox、帧数和单帧尺寸。
+- 只有图集规格或用途变化时才修改运行时常量、manifest 和本文；单纯换图且契约不变时直接保留现有元数据。
 
 ## 当前资源目录
 
 - `assets/sprites/player/`: 玩家待机、跑动、跳跃、普通攻击和下落攻击序列帧。
-- `assets/sprites/enemies/`: 小怪、Boss、Boss 技能和 Boss 技能效果。
+- `assets/sprites/enemies/`: 普通敌人本体、动作和敌人技能效果。
+- `assets/sprites/boss/`: Boss 本体、动作、技能和 Boss 技能效果。
 - `assets/sprites/skills/`: 每个技能一个目录，目录内放 `skill.png`、`effect.png` 和已有的 `icon.png`。
 - `assets/sprites/background/`: 天空、山脉、石塔、鸟居等背景/近景素材。
 - `assets/sprites/scenery/boss-landmarks/`: 第 1-13 幕按 Boss 特征区分的中景地标。
@@ -376,14 +372,13 @@ Burrower 运行时由 `BURROWER_SHEETS` 暴露并预加载。普通刷怪在 `el
 
 ## 资源更新流程
 
-1. 生成或编辑图片内容时，使用 Image Gen skill (`imagegen`)，优先输出为透明 PNG。
-2. 内置 `imagegen` 返回时，先检查 `image_generation_call.result`；也可以使用当前 imagegen 工具/开发者输出明确给出的 `~/.codex/generated_images/...` 精确文件路径。当前规范或用户明确允许时，可以扫描 `~/.codex/generated_images/` 下的当前会话目录定位生成产物。将对应文件保存为源图后再处理。
-3. 如果使用绿幕源图，先保存 `*_source.png`，再通过确定性后处理抠成运行时透明资源。
-4. 对横向序列帧，确保总宽度等于 `frameW * count`，总高度等于 `frameH`。
-5. 替换已有运行时素材时，如果切片规格不变，只需要覆盖 PNG。
-6. 如果切片规格变化，必须同步更新 `src/constants/assets.ts` 中的 `frameW`、`frameH`、`count`，并检查绘制缩放和碰撞范围。
-7. 运行时需要加载的新资源，必须在 `src/constants/assets.ts` 中暴露，并由 `src/assets/manifest.ts` 的聚合函数加入加载任务。
-8. 不参与运行时的制作源图需要在文件名中标注 `source`，避免误接入。
+1. 按 imagegen workflow 获取并保存当前调用的可信源产物，再开始任何后处理；不要从默认生成目录猜测产物。
+2. 如果使用绿幕源图，先保存 `*_source.png`，再通过确定性后处理抠成运行时透明资源。
+3. 对横向序列帧，确保总宽度等于 `frameW * count`，总高度等于 `frameH`。
+4. 替换已有运行时素材时，如果切片规格不变，只需要覆盖 PNG。
+5. 如果切片规格变化，必须同步更新 `src/constants/assets.ts` 中的 `frameW`、`frameH`、`count`，并检查绘制缩放和碰撞范围。
+6. 运行时需要加载的新资源，必须在 `src/constants/assets.ts` 中暴露，并由 `src/assets/manifest.ts` 的聚合函数加入加载任务。
+7. 不参与运行时的制作源图需要在文件名中标注 `source`，避免误接入。
 
 ## 脚本说明
 
