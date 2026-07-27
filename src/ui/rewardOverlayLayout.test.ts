@@ -8,6 +8,7 @@ const BOSS_MIN_TEXT_TOP = 56;
 const BOSS_MIN_TEXT_BOTTOM = 48;
 // Badge, title, family, four metrics, summary, and status need 170px with compact spacing.
 const BOSS_MIN_CONTENT_HEIGHT = 170;
+const BOSS_ICON_DISPLAY_Y_OFFSET = 3;
 const CARD_BODY_QUARTER_DIVISOR = 4;
 const CARD_ICON_SLOT_SOURCE_CENTER_Y = 50;
 const CARD_ICON_CENTER_TOLERANCE = 1;
@@ -39,13 +40,14 @@ describe("reward overlay layout", () => {
     expect(layout.cardContent.top + layout.cardContent.bottom).toBeLessThan(layout.cardBoxH);
   });
 
-  it("aligns the boss equipment card icon frame to the upgrade reward rhythm", () => {
-    const layout = getRewardOverlayLayout("bossEquipment", CHOICE_COUNT);
+  it("raises the boss equipment icon within its card artwork", () => {
+    const bossLayout = getRewardOverlayLayout("bossEquipment", CHOICE_COUNT);
+    const upgradeLayout = getRewardOverlayLayout("upgrade", CHOICE_COUNT);
 
-    expect(layout.cardIcon).not.toBeNull();
-    expect(layout.cardIcon!.top + layout.cardIcon!.size / 2).toBeCloseTo(
-      CARD_ICON_SLOT_SOURCE_CENTER_Y * layout.cardScale,
-      CARD_ICON_CENTER_TOLERANCE,
+    expect(bossLayout.cardIcon).not.toBeNull();
+    expect(upgradeLayout.cardIcon).not.toBeNull();
+    expect(bossLayout.cardIcon!.top).toBe(
+      upgradeLayout.cardIcon!.top - BOSS_ICON_DISPLAY_Y_OFFSET,
     );
   });
 

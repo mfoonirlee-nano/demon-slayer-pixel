@@ -53,7 +53,7 @@ const REWARD_LAYOUTS: Record<RewardOverlayKind, RewardLayoutConfig> = {
     cardIconSource: {
       iconSize: 44,
       size: 56,
-      top: 22,
+      top: 18,
     },
     cardRowTop: 52,
     cardSprite: "bossChoiceCard",
