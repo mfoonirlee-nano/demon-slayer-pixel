@@ -4,6 +4,7 @@ import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
 import { SKILL_IDS } from "../constants";
 import { gameSnapshotAtom, gameStore } from "../game/gameStore";
+import { localizeEquipmentItem } from "../i18n/equipmentCopy";
 import { languageAtom } from "../i18n/language";
 import { equipmentItem } from "../systems/equipment";
 import type { EquipmentChoiceState, UpgradeChoiceState } from "../types/game-state";
@@ -47,6 +48,7 @@ describe("RewardOverlay localization", () => {
     store.set(languageAtom, "en");
     const item = equipmentItem("flow_blade", "common");
     if (!item) throw new Error("Expected flow blade equipment");
+    const localizedItem = localizeEquipmentItem("en", item);
     const choice: EquipmentChoiceState = {
       ...item,
       previousTier: null,
@@ -68,6 +70,35 @@ describe("RewardOverlay localization", () => {
     expect(markup).toContain("Flow Blade");
     expect(markup).toContain("Blade · Common");
     expect(markup).toContain("New equipment: Common");
+    expect(markup).toContain(
+      `class="mt-1 line-clamp-2 text-center text-[8px] leading-[1.4] text-[#c8efff]">${localizedItem.summary}</div>`,
+    );
     expect(markup).not.toMatch(/[夜潮遗物流刃器凡品新装备]/u);
+  });
+
+  it("shows both family set bonuses on an equipment reward card", () => {
+    const store = createStore();
+    store.set(languageAtom, "en");
+    const item = equipmentItem("shadowstep_talisman", "common");
+    if (!item) throw new Error("Expected shadowstep talisman equipment");
+    const choice: EquipmentChoiceState = {
+      ...item,
+      previousTier: null,
+      reason: "new",
+    };
+    const snapshot = {
+      ...gameStore.get(gameSnapshotAtom),
+      activeOverlay: "bossEquipment" as const,
+      pendingEquipmentChoices: [choice],
+    };
+
+    const markup = renderToStaticMarkup(
+      <Provider store={store}>
+        <RewardOverlay snapshot={snapshot} />
+      </Provider>,
+    );
+
+    expect(markup).toContain("2-piece: Gain 15% dodge chance.");
+    expect(markup).toContain("3-piece: Shadowglide triggers grant +10 skill energy.");
   });
 });

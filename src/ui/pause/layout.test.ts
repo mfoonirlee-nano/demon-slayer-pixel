@@ -35,6 +35,7 @@ import {
 const MIN_TAB_WIDTH_USAGE = 0.95;
 const MIN_BODY_WIDTH_USAGE = 0.98;
 const MIN_CHOICE_COLUMN_USAGE = 0.93;
+const MIN_SET_BONUS_DETAIL_HEIGHT = 96;
 
 describe("pause layout", () => {
   it("keeps the reward-sized pause chrome and content rhythm readable", () => {
@@ -85,6 +86,10 @@ describe("pause layout", () => {
     const pickerHeight = safeTabBodyHeight - PAUSE_CURRENT_ROW_GAP - PAUSE_DETAIL_PANEL_H;
 
     expect(pickerHeight).toBeGreaterThanOrEqual(PAUSE_CURRENT_FRAME_SIZE + PAUSE_CURRENT_ROW_GAP);
+  });
+
+  it("reserves enough detail height for the unique effect and both set bonuses", () => {
+    expect(PAUSE_DETAIL_PANEL_H).toBeGreaterThanOrEqual(MIN_SET_BONUS_DETAIL_HEIGHT);
   });
 
   it("keeps the info grid away from the lower pause chrome", () => {

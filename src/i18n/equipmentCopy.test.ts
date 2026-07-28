@@ -4,6 +4,7 @@ import type { EquipmentFamily, EquipmentSlot, EquipmentTier } from "../types/gam
 import {
   equipmentFamilyLabel,
   equipmentFamilyMark,
+  equipmentFamilyResonanceCopy,
   equipmentItemCopy,
   equipmentPrimaryStatLabel,
   equipmentSlotLabel,
@@ -19,6 +20,7 @@ const COPY_FIELD_COUNT = 3;
 const MAX_ITEM_NAME_LENGTH = 24;
 const MAX_ITEM_SUMMARY_LENGTH = 120;
 const MAX_ITEM_TAG_LENGTH = 24;
+const MAX_RESONANCE_ROW_LENGTH = 64;
 
 describe("equipment copy", () => {
   it("provides concise English copy for an equipment tier", () => {
@@ -89,6 +91,33 @@ describe("equipment copy", () => {
       "Max HP",
       "Skill Energy Cap",
     ]);
+  });
+
+  it("describes every family resonance tier and exposes missing effects explicitly", () => {
+    const shadowstep = equipmentFamilyResonanceCopy("zh-CN", "shadowstep");
+    const risk = equipmentFamilyResonanceCopy("zh-CN", "risk");
+    const tempo = equipmentFamilyResonanceCopy("zh-CN", "tempo");
+
+    expect(shadowstep.pair).toContain("15% 闪避");
+    expect(shadowstep.full).toContain("额外获得 10 点技能能量");
+    expect(risk.pair).toContain("暂无套装效果");
+    expect(tempo.pair).toContain("暂无套装效果");
+    expect(tempo.full).toContain("暂无套装效果");
+
+    for (const language of ["zh-CN", "en"] as const) {
+      for (const family of EQUIPMENT_FAMILIES) {
+        const copy = equipmentFamilyResonanceCopy(language, family);
+        expect(copy.pair.length).toBeGreaterThan(0);
+        expect(copy.full.length).toBeGreaterThan(0);
+        expect(copy.pair.length).toBeLessThanOrEqual(MAX_RESONANCE_ROW_LENGTH);
+        expect(copy.full.length).toBeLessThanOrEqual(MAX_RESONANCE_ROW_LENGTH);
+      }
+    }
+
+    const englishCopy = EQUIPMENT_FAMILIES.flatMap((family) =>
+      Object.values(equipmentFamilyResonanceCopy("en", family)),
+    );
+    expect(englishCopy.join(" ")).not.toMatch(/\p{Script=Han}/u);
   });
 
   it("covers every English item tier without Han characters or oversized UI copy", () => {

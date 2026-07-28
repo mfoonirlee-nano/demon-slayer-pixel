@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { SKILL_IDS } from "../../constants";
 import type { GameSnapshot } from "../../game/gameStore";
+import { equipmentFamilyResonanceCopy } from "../../i18n/equipmentCopy";
 import { equipmentItemForTier } from "../../systems/equipmentCatalog";
 import { playerSkillById, playerSkillDescription } from "../../systems/skillCatalog";
 import type { EquipmentItemId, EquipmentTier } from "../../types/game-state";
@@ -87,6 +88,19 @@ describe("pause equipment detail copy", () => {
     expect(detail.body).toContain("Base Stat: Attack +12%.");
     expect(detail.body).toContain("Unique Effect: After 4 basic hits");
     expect(`${detail.kicker}${detail.title}${detail.body}`).not.toMatch(/[一-龥]/u);
+  });
+
+  it("shows both set bonuses for the selected equipment family", () => {
+    const equipment = makeEquipment("shadowstep_talisman", "common");
+    const detail = equipmentDetailCopy(
+      { type: "item", itemId: "shadowstep_talisman" },
+      equipment,
+      new Set(["shadowstep_talisman"]),
+    );
+    const resonance = equipmentFamilyResonanceCopy("zh-CN", "shadowstep");
+
+    expect(detail.body).toContain(resonance.pair);
+    expect(detail.body).toContain(resonance.full);
   });
 });
 

@@ -286,6 +286,24 @@ describe("player status snapshot", () => {
     });
   });
 
+  it("projects shadowstep talisman readiness and cooldown as exclusive states", () => {
+    addAndEquip("shadowstep_talisman");
+
+    expect(status("shadowstep_talisman_ready")).toMatchObject({
+      remainingFrames: null,
+      durationFrames: null,
+    });
+    expect(status("shadowstep_talisman_cooldown")).toBeUndefined();
+
+    state.player.shadowstepTalismanCooldown = 40;
+
+    expect(status("shadowstep_talisman_ready")).toBeUndefined();
+    expect(status("shadowstep_talisman_cooldown")).toMatchObject({
+      remainingFrames: 40,
+      durationFrames: 80,
+    });
+  });
+
   it("deduplicates the shared hunt chain while projecting its timed rewards", () => {
     addAndEquip("hunt_blade", "awakened");
     addAndEquip("hunt_garb", "awakened");

@@ -6,11 +6,23 @@ import type {
   EquipmentTier,
 } from "../types/game-state";
 import {
+  BURST_BLADE_PAIR_RESONANCE_EXECUTE_HP_RATIO,
+  BURST_TALISMAN_PAIR_RESONANCE_COOLDOWN_FRAMES,
+  EQUIPMENT_PAIR_COOLDOWN_MULTIPLIER,
+  EQUIPMENT_PAIR_TRIGGER_REDUCTION,
+  FLOW_FULL_HEALTH_REGEN_PER_SECOND,
+  FLOW_PAIR_SKILL_ENERGY_REGEN_PER_SECOND,
+  FULL_RESONANCE_SKILL_ENERGY_GAIN,
+  SHADOWSTEP_FULL_RESONANCE_SKILL_ENERGY_GAIN,
+  SHADOWSTEP_PAIR_DODGE_CHANCE,
+} from "../constants";
+import {
   EQUIPMENT_FAMILY_LABELS as ZH_EQUIPMENT_FAMILY_LABELS,
   EQUIPMENT_PRIMARY_STAT_LABELS as ZH_EQUIPMENT_PRIMARY_STAT_LABELS,
   EQUIPMENT_TIER_LABELS as ZH_EQUIPMENT_TIER_LABELS,
   equipmentItemForTier,
 } from "../systems/equipmentCatalog";
+import { formatPercent } from "../utils";
 import type { Language } from "./language";
 
 const EQUIPMENT_FAMILY_LABELS: Record<Language, Record<EquipmentFamily, string>> = {
@@ -57,6 +69,69 @@ const EQUIPMENT_SLOT_LABELS: Record<Language, Record<EquipmentSlot, string>> = {
 const EQUIPMENT_PRIMARY_STAT_LABELS: Record<Language, Record<EquipmentSlot, string>> = {
   "zh-CN": ZH_EQUIPMENT_PRIMARY_STAT_LABELS,
   en: { blade: "Attack", garb: "Max HP", talisman: "Skill Energy Cap" },
+};
+
+export type EquipmentFamilyResonanceCopy = {
+  pair: string;
+  full: string;
+};
+
+const EQUIPMENT_FAMILY_RESONANCE_COPY: Record<
+  Language,
+  Record<EquipmentFamily, EquipmentFamilyResonanceCopy>
+> = {
+  "zh-CN": {
+    flow: {
+      pair: `2 件：触发门槛 -${EQUIPMENT_PAIR_TRIGGER_REDUCTION}；每秒恢复 ${FLOW_PAIR_SKILL_ENERGY_REGEN_PER_SECOND} 点技能能量。`,
+      full: `3 件：核心效果触发额外获得 ${FULL_RESONANCE_SKILL_ENERGY_GAIN} 点技能能量；每秒恢复 ${FLOW_FULL_HEALTH_REGEN_PER_SECOND} 点生命。`,
+    },
+    burst: {
+      pair: `2 件：Boss 斩杀线提高至 ${formatPercent(BURST_BLADE_PAIR_RESONANCE_EXECUTE_HP_RATIO)}；燃魂符冷却降至 ${BURST_TALISMAN_PAIR_RESONANCE_COOLDOWN_FRAMES} 帧。`,
+      full: `3 件：燃魂符触发额外获得 ${FULL_RESONANCE_SKILL_ENERGY_GAIN} 点技能能量。`,
+    },
+    shadowstep: {
+      pair: `2 件：拥有 ${formatPercent(SHADOWSTEP_PAIR_DODGE_CHANCE)} 闪避几率。`,
+      full: `3 件：触发掠影时额外获得 ${SHADOWSTEP_FULL_RESONANCE_SKILL_ENERGY_GAIN} 点技能能量。`,
+    },
+    hunt: {
+      pair: `2 件：连杀门槛 -${EQUIPMENT_PAIR_TRIGGER_REDUCTION}；连珠符冷却缩短 ${formatPercent(1 - EQUIPMENT_PAIR_COOLDOWN_MULTIPLIER)}。`,
+      full: `3 件：连珠符触发额外获得 ${FULL_RESONANCE_SKILL_ENERGY_GAIN} 点技能能量。`,
+    },
+    risk: {
+      pair: "2 件：暂无套装效果。",
+      full: `3 件：返魂符触发额外获得 ${FULL_RESONANCE_SKILL_ENERGY_GAIN} 点技能能量。`,
+    },
+    tempo: {
+      pair: "2 件：暂无套装效果。",
+      full: "3 件：暂无套装效果。",
+    },
+  },
+  en: {
+    flow: {
+      pair: `2-piece: Trigger requirements -${EQUIPMENT_PAIR_TRIGGER_REDUCTION}; +${FLOW_PAIR_SKILL_ENERGY_REGEN_PER_SECOND} skill energy/sec.`,
+      full: `3-piece: Core triggers +${FULL_RESONANCE_SKILL_ENERGY_GAIN} skill energy; +${FLOW_FULL_HEALTH_REGEN_PER_SECOND} HP/sec.`,
+    },
+    burst: {
+      pair: `2-piece: Execute at ${formatPercent(BURST_BLADE_PAIR_RESONANCE_EXECUTE_HP_RATIO)}; Soulfire cooldown ${BURST_TALISMAN_PAIR_RESONANCE_COOLDOWN_FRAMES} frames.`,
+      full: `3-piece: Soulfire triggers +${FULL_RESONANCE_SKILL_ENERGY_GAIN} skill energy.`,
+    },
+    shadowstep: {
+      pair: `2-piece: Gain ${formatPercent(SHADOWSTEP_PAIR_DODGE_CHANCE)} dodge chance.`,
+      full: `3-piece: Shadowglide triggers grant +${SHADOWSTEP_FULL_RESONANCE_SKILL_ENERGY_GAIN} skill energy.`,
+    },
+    hunt: {
+      pair: `2-piece: Kill requirements -${EQUIPMENT_PAIR_TRIGGER_REDUCTION}; Chainbead cooldown -${formatPercent(1 - EQUIPMENT_PAIR_COOLDOWN_MULTIPLIER)}.`,
+      full: `3-piece: Chainbead triggers grant +${FULL_RESONANCE_SKILL_ENERGY_GAIN} skill energy.`,
+    },
+    risk: {
+      pair: "2-piece: No set bonus.",
+      full: `3-piece: Soulreturn triggers grant +${FULL_RESONANCE_SKILL_ENERGY_GAIN} skill energy.`,
+    },
+    tempo: {
+      pair: "2-piece: No set bonus.",
+      full: "3-piece: No set bonus.",
+    },
+  },
 };
 
 type EnglishEquipmentItemCopy = {
@@ -361,6 +436,10 @@ export function equipmentFamilyLabel(language: Language, family: EquipmentFamily
 
 export function equipmentFamilyMark(language: Language, family: EquipmentFamily) {
   return EQUIPMENT_FAMILY_MARKS[language][family];
+}
+
+export function equipmentFamilyResonanceCopy(language: Language, family: EquipmentFamily) {
+  return EQUIPMENT_FAMILY_RESONANCE_COPY[language][family];
 }
 
 export function equipmentTierLabel(language: Language, tier: EquipmentTier) {

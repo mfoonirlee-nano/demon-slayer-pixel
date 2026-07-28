@@ -59,6 +59,8 @@ export const PLAYER_STATUS_PRESENTATIONS = {
   shadowstep_blade_quick_charge: buff("charge"),
   shadowstep_garb_moving_guard: buff("defense"),
   shadowstep_garb_hurt_haste: buff("speed"),
+  shadowstep_talisman_ready: buff("energy"),
+  shadowstep_talisman_cooldown: buff("recovery"),
   hunt_kill_chain: buff("combo"),
   hunt_blade_ready: buff("attack"),
   hunt_blade_water: buff("attack"),

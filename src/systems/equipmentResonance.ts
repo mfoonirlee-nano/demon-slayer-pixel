@@ -2,8 +2,13 @@ import type { EquipmentFamily, GameState } from "../types/game-state";
 import {
   BURST_BLADE_PAIR_RESONANCE_EXECUTE_HP_RATIO,
   BURST_TALISMAN_PAIR_RESONANCE_COOLDOWN_FRAMES,
+  EQUIPMENT_PAIR_COOLDOWN_MULTIPLIER,
+  EQUIPMENT_PAIR_TRIGGER_REDUCTION,
   FLOW_FULL_HEALTH_REGEN_PER_SECOND,
   FLOW_PAIR_SKILL_ENERGY_REGEN_PER_SECOND,
+  FULL_RESONANCE_SKILL_ENERGY_GAIN,
+  SHADOWSTEP_FULL_RESONANCE_SKILL_ENERGY_GAIN,
+  SHADOWSTEP_PAIR_DODGE_CHANCE,
 } from "../constants";
 import { EQUIPMENT_ITEMS } from "./equipmentCatalog";
 import { grantSkillEnergy } from "./equipmentResources";
@@ -14,14 +19,16 @@ import {
 
 const PAIR_RESONANCE_COUNT = 2;
 const FULL_RESONANCE_COUNT = 3;
-const PAIR_TRIGGER_REDUCTION = 1;
-const PAIR_COOLDOWN_MULTIPLIER = 0.9;
-const FULL_RESONANCE_SKILL_GAIN = 2;
 
 export function equippedFamilyCount(state: GameState, family: EquipmentFamily) {
   return Object.values(state.equippedEquipment).filter((itemId) => (
     itemId !== null && EQUIPMENT_ITEMS[itemId].family === family
   )).length;
+}
+
+export function shouldDodgeWithShadowstepResonance(state: GameState) {
+  return equippedFamilyCount(state, "shadowstep") >= PAIR_RESONANCE_COUNT
+    && Math.random() < SHADOWSTEP_PAIR_DODGE_CHANCE;
 }
 
 export function burstBladeExecuteHpRatio(state: GameState) {
@@ -38,17 +45,20 @@ export function burstTalismanCooldownFrames(state: GameState) {
 
 export function triggerCountWithFamilyResonance(state: GameState, family: EquipmentFamily, baseCount: number) {
   if (equippedFamilyCount(state, family) < PAIR_RESONANCE_COUNT) return baseCount;
-  return Math.max(1, baseCount - PAIR_TRIGGER_REDUCTION);
+  return Math.max(1, baseCount - EQUIPMENT_PAIR_TRIGGER_REDUCTION);
 }
 
 export function cooldownWithFamilyResonance(state: GameState, family: EquipmentFamily, baseCooldown: number) {
   if (equippedFamilyCount(state, family) < PAIR_RESONANCE_COUNT) return baseCooldown;
-  return Math.max(1, Math.floor(baseCooldown * PAIR_COOLDOWN_MULTIPLIER));
+  return Math.max(1, Math.floor(baseCooldown * EQUIPMENT_PAIR_COOLDOWN_MULTIPLIER));
 }
 
 export function applyFamilyResonanceReward(state: GameState, family: EquipmentFamily) {
   if (equippedFamilyCount(state, family) < FULL_RESONANCE_COUNT) return;
-  grantSkillEnergy(state, FULL_RESONANCE_SKILL_GAIN);
+  const skillEnergyGain = family === "shadowstep"
+    ? SHADOWSTEP_FULL_RESONANCE_SKILL_ENERGY_GAIN
+    : FULL_RESONANCE_SKILL_ENERGY_GAIN;
+  grantSkillEnergy(state, skillEnergyGain);
 }
 
 export function tickFlowResonanceRegeneration(state: GameState, deltaSeconds: number) {

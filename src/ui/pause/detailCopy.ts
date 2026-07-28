@@ -1,5 +1,6 @@
 import type { GameSnapshot } from "../../game/gameStore";
 import {
+  equipmentFamilyResonanceCopy,
   equipmentPrimaryStatLabel,
   equipmentSlotLabel,
   localizeEquipmentItem,
@@ -49,9 +50,10 @@ export function equipmentDetailCopy(
 
 function equipmentItemDetailBody(item: EquipmentItemState, language: Language) {
   const primaryStatPercent = formatSignedPercent(item.primaryStatBonusRatio);
+  const resonance = equipmentFamilyResonanceCopy(language, item.family);
   return language === "zh-CN"
-    ? `基础属性：${equipmentPrimaryStatLabel(language, item.slot)} ${primaryStatPercent}。专属机制：${item.summary}`
-    : `Base Stat: ${equipmentPrimaryStatLabel(language, item.slot)} ${primaryStatPercent}. Unique Effect: ${item.summary}`;
+    ? `基础属性：${equipmentPrimaryStatLabel(language, item.slot)} ${primaryStatPercent}。专属机制：${item.summary}\n套装效果：${resonance.pair}\n${resonance.full}`
+    : `Base Stat: ${equipmentPrimaryStatLabel(language, item.slot)} ${primaryStatPercent}. Unique Effect: ${item.summary}\nSet Bonuses: ${resonance.pair}\n${resonance.full}`;
 }
 
 export function skillDetailCopy(

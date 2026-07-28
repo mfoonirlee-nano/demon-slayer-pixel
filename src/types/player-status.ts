@@ -19,6 +19,8 @@ export type PlayerStatusId =
   | "shadowstep_blade_quick_charge"
   | "shadowstep_garb_moving_guard"
   | "shadowstep_garb_hurt_haste"
+  | "shadowstep_talisman_ready"
+  | "shadowstep_talisman_cooldown"
   | "hunt_kill_chain"
   | "hunt_blade_ready"
   | "hunt_blade_water"

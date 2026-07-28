@@ -5,6 +5,7 @@ import { chooseBossEquipment, chooseUpgradeReward } from "../game/runtime";
 import type { GameSnapshot } from "../game/gameStore";
 import {
   equipmentFamilyLabel,
+  equipmentFamilyResonanceCopy,
   equipmentSlotLabel,
   equipmentTierLabel,
   localizeEquipmentItem,
@@ -255,6 +256,9 @@ export function RewardOverlay({ snapshot }: { snapshot: GameSnapshot }) {
               : upgrade
                 ? upgradeRewardMetrics(upgrade, snapshot.player, language)
                 : [];
+            const resonance = item
+              ? equipmentFamilyResonanceCopy(language, item.family)
+              : null;
             return (
               <button
                 key={choice.id}
@@ -356,6 +360,12 @@ export function RewardOverlay({ snapshot }: { snapshot: GameSnapshot }) {
                         </div>
                         <RewardMetricList metrics={metrics} accent={bossAccent} />
                         <div className="mt-1 line-clamp-2 text-center text-[8px] leading-[1.4] text-[#c8efff]">{item.summary}</div>
+                        {resonance ? (
+                          <div className="mt-1 text-center text-[7px] leading-[1.25] text-[#ffd9a0]">
+                            <div className="line-clamp-2">{resonance.pair}</div>
+                            <div className="mt-[2px] line-clamp-2">{resonance.full}</div>
+                          </div>
+                        ) : null}
                       </>
                     ) : upgrade && upgradeStyle ? (
                       <>
@@ -380,7 +390,7 @@ export function RewardOverlay({ snapshot }: { snapshot: GameSnapshot }) {
                       </>
                     ) : null}
                     {isBossReward && item ? (
-                      <div className="mt-auto pt-2 text-center text-[7px] leading-[1.35] text-[#ffd9a0]">
+                      <div className="mt-auto pt-1 text-center text-[7px] leading-[1.35] text-[#ffd9a0]">
                         {equipmentChoiceStatus(item, equippedItem?.name, language)}
                       </div>
                     ) : null}

@@ -99,7 +99,7 @@ Canvas 每帧大致按以下顺序绘制：
 
 Boss 被击杀时会快照其当帧本体图像和一次性随机切向，并进入 60 帧视觉冻结：普通玩法更新停止，Canvas 继续把快照裁成两半后分离淡出，装备奖励或胜利 overlay 在冻结结束后显示。该快照拥有独立计时，不修改 Boss 动作状态或预留死亡序列。
 
-React HUD 不直接绘制到 Canvas，而是订阅 `gameSnapshotAtom` 显示生命、技能资源、大招能量、Boss 血条、暂停和死亡状态。`src/systems/playerStatuses.ts` 在运行时快照阶段把限时效果和常驻技能被动投影为 `PlayerStatusSnapshot[]`，`src/ui/playerStatusBar.tsx` 再解析对应的本地化名称与图标。角色状态 HUD 由左侧大招圆框、贴在大招右下方的当前技能圆框、两条随等级增长的生命/技能资源条，以及状态图标条组成。
+React HUD 不直接绘制到 Canvas，而是订阅 `gameSnapshotAtom` 显示生命、技能资源、大招能量、Boss 血条、暂停和死亡状态。`src/systems/playerStatuses.ts` 在运行时快照阶段把限时效果、常驻技能被动和需要即时决策的装备状态投影为 `PlayerStatusSnapshot[]`，`src/ui/playerStatusBar.tsx` 再解析对应的本地化名称与图标；掠影符即通过互斥的 `shadowstep_talisman_ready` / `shadowstep_talisman_cooldown` 快照表达就绪与冷却。角色状态 HUD 由左侧大招圆框、贴在大招右下方的当前技能圆框、两条随等级增长的生命/技能资源条，以及状态图标条组成。
 
 ## 相关审视
 

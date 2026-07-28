@@ -46,7 +46,7 @@ const REWARD_LAYOUTS: Record<RewardOverlayKind, RewardLayoutConfig> = {
   bossEquipment: {
     activeCardSprite: "bossChoiceCardActive",
     cardContentSource: {
-      bottom: 84,
+      bottom: 60,
       insetX: 28,
       top: 96,
     },

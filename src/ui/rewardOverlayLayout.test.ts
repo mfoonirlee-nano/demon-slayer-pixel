@@ -6,8 +6,8 @@ const BOSS_SOURCE_CARD_HEIGHT = 389;
 const BOSS_MIN_TEXT_INSET_X = 18;
 const BOSS_MIN_TEXT_TOP = 56;
 const BOSS_MIN_TEXT_BOTTOM = 48;
-// Badge, title, family, four metrics, summary, and status need 170px with compact spacing.
-const BOSS_MIN_CONTENT_HEIGHT = 170;
+// Badge, title, family, four metrics, summary, two set rows, and status need 190px.
+const BOSS_MIN_CONTENT_HEIGHT = 190;
 const BOSS_ICON_DISPLAY_Y_OFFSET = 3;
 const CARD_BODY_QUARTER_DIVISOR = 4;
 const CARD_ICON_SLOT_SOURCE_CENTER_Y = 50;

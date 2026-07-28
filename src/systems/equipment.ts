@@ -111,6 +111,7 @@ export {
   syncSkillChargesForEquipment,
 } from "./equipmentResources";
 export { applySkillHitEquipmentRefund } from "./equipmentSkillHit";
+export { shouldDodgeWithShadowstepResonance } from "./equipmentResonance";
 
 type BossLike = {
   hp: number;

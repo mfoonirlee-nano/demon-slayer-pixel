@@ -33,6 +33,7 @@ import {
   recordBasicAttackHit,
   recordEquipmentMovement,
   recordEquipmentHurt,
+  shouldDodgeWithShadowstepResonance,
   tickEquipmentEffects,
 } from "../systems/equipment";
 import { applyBossDamage, applyEnemyDamage, resolveBossHit, resolveEnemyHit } from "../systems/combatResolution";
@@ -344,6 +345,7 @@ export function hurtPlayer(damage: number, sourceVx: number) {
   const p = state.player;
   if (hasDebugInfiniteHealth()) return;
   if (p.invincible > 0) return;
+  if (shouldDodgeWithShadowstepResonance(state)) return;
 
   const counterRect = activeGuardCounterRect();
   if (counterRect && resolveGuardCounterResponse(counterRect, true, true)) {

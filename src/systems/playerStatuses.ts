@@ -26,6 +26,7 @@ import {
   SHADOWSTEP_GARB_HURT_SPEED_TIMER_FRAMES,
   SHADOWSTEP_GARB_MOVING_FRAMES,
   SHADOWSTEP_QUICK_DISTANCE_REQUIRED,
+  SHADOWSTEP_TALISMAN_COOLDOWN,
   TEMPO_BLADE_HITS_FOR_NO_PENALTY,
   TEMPO_GARB_RECOVERY_TIMER_FRAMES,
 } from "./equipmentTuning";
@@ -207,6 +208,17 @@ function pushShadowstepStatuses(state: GameState, statuses: PlayerStatusSnapshot
       player.shadowstepGarbHurtSpeedTimer,
       SHADOWSTEP_GARB_HURT_SPEED_TIMER_FRAMES,
     ));
+  }
+
+  const talismanTier = equippedTier(state, "talisman", "shadowstep_talisman");
+  if (talismanTier && player.shadowstepTalismanCooldown > 0) {
+    statuses.push(timedStatus(
+      "shadowstep_talisman_cooldown",
+      player.shadowstepTalismanCooldown,
+      SHADOWSTEP_TALISMAN_COOLDOWN,
+    ));
+  } else if (talismanTier) {
+    statuses.push(persistentStatus("shadowstep_talisman_ready"));
   }
 }
 
