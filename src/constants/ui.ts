@@ -3,7 +3,7 @@ export const HUD_UI = {
 
   playerBarBaseW: 190,
   playerBarMaxW: 310,
-  playerBarGrowthPerLevel: 8,
+  playerBarGrowthPerLevel: 4,
 
   // boss_hp_bar.png (1916×821) rendered at 380px wide and cropped vertically.
   bossBarContainerW: 380,

@@ -247,11 +247,11 @@ describe("guard counter equipped passive", () => {
   });
 
   it.each([
-    { playerLevel: 7, expectedDamage: 31 },
-    { playerLevel: 13, expectedDamage: 28 },
-    { playerLevel: 20, expectedDamage: 28 },
+    { playerLevel: 13, expectedDamage: 31 },
+    { playerLevel: 25, expectedDamage: 28 },
+    { playerLevel: 40, expectedDamage: 28 },
   ])(
-    "scales damage reduction through level thirteen and caps afterward at level $playerLevel",
+    "scales damage reduction through level twenty-five and caps afterward at level $playerLevel",
     ({ playerLevel, expectedDamage }) => {
       state.player.skillLevels[SKILL_IDS.guardCounter] = GUARD_COUNTER_LEVEL_THREE;
       state.player.runLevel = playerLevel;

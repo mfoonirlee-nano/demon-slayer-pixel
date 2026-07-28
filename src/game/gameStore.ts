@@ -1,11 +1,12 @@
 import { atom } from "jotai";
 import { createStore } from "jotai/vanilla";
-import { PLAYER_DEFAULTS } from "../constants";
+import { PLAYER_DEFAULTS, RUN_LEVEL_PACING } from "../constants";
 import {
   INITIAL_EQUIPPED_SKILL_IDS,
   INITIAL_SKILL_LEVELS,
   maxSkillChargesForEnergy,
   maxSkillEnergyForLevel,
+  xpToNextLevel,
 } from "../systems/progression";
 import type { SkillId } from "../types/assets";
 import type {
@@ -20,7 +21,8 @@ import type {
   UpgradeChoiceState,
 } from "../types/game-state";
 
-const initialSkillEnergyMax = maxSkillEnergyForLevel(1);
+const initialRunLevel = RUN_LEVEL_PACING.initialLevel;
+const initialSkillEnergyMax = maxSkillEnergyForLevel(initialRunLevel);
 
 export type BossSnapshot = {
   id: BossArchetypeId;
@@ -105,9 +107,9 @@ const initialSnapshot: GameSnapshot = {
     hp: PLAYER_DEFAULTS.maxHp,
     maxHp: PLAYER_DEFAULTS.maxHp,
     score: 0,
-    runLevel: 1,
+    runLevel: initialRunLevel,
     runXp: 0,
-    xpToNext: 85,
+    xpToNext: xpToNextLevel(initialRunLevel),
     baseAttack: PLAYER_DEFAULTS.baseAttack,
     attackBonus: 0,
     totalAttack: PLAYER_DEFAULTS.baseAttack,

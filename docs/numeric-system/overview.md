@@ -4,17 +4,17 @@
 
 ## Purpose
 
-说明当前运行时已经生效的数值边界、单位约定和关键状态来源。未实现的幕数、威胁值和注册表设计见 [act-and-threat.md](act-and-threat.md)，未实现的经验成长见 [progression.md](progression.md)。
+说明当前运行时已经生效的数值边界、单位约定和关键状态来源。幕数与威胁值设计见 [act-and-threat.md](act-and-threat.md)，经验成长见 [progression.md](progression.md)。
 
 ## Current State
 
-当前游戏是单局内线性时间成长：
+当前游戏使用单局内时间、幕数与角色等级混合成长：
 
 - `elapsed` 是当前局已进行时间，单位为秒。
-- 普通敌人、Boss 血量、平台速度和地图片段难度主要读取 `elapsed`。
+- `bossKills` 推进 13 幕结构，敌人和 Boss 同时读取幕数、击杀数与时间压力。
 - 玩家最终攻击力为 `baseAttack + attackBonus`。
-- 当前没有长期进度、Boss 击杀次数、幕数或统一威胁值状态。
-- 目标设计中的经验、等级和升级三选一只属于单局内成长，不是局外长期进度。
+- 经验、角色等级和升级三选一只属于单局内成长，正常每幕由普通战斗和 Boss 各提升 1 级。
+- 当前没有提供永久战力的局外成长。
 
 运行时单位约定：
 

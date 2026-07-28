@@ -31,8 +31,8 @@
 | 终幕万相血月 | `bossKills >= 12` 后出场；5 阶段换相借招、专属施法/特效和击败后停止 Boss 重生已接入 | 第 13 幕击败出胜利结算，不进任何轮换池；死亡动画状态机和通关后进阶待接 | 部分实现 | P4 | `docs/art/bosses/blood-moon-many-faces.md` |
 | 通关后进阶难度 | 未实现 | 血月试炼可叠加难度层（横向解锁，不给局外永久战力） | 目标设计，未实现 | P5 | `docs/numeric-system/endgame-ascension.md` |
 | 地图生成 | 片段式平台生成、张力、奖励预算、低层恢复和防重叠已实现 | 按幕数调整片段权重和平台速度，保留喘息片段 | 部分实现 | P2 | `src/entities/platform.ts`、`docs/map-generation.md` |
-| 奖励拾取 | 分数、技能能量、大招能量、攻击水晶、治疗水晶、宝箱已实现 | 加入 XP、升级三选一、Boss 装备三选一，奖励队列互斥 | 部分实现 | P2 | `src/entities/platform.ts`、`docs/numeric-system/rewards.md` |
-| 经验升级 | 当前无 XP、角色等级、普通技能等级、大招强化等级或升级选择 | 单局 XP、角色等级、普通技能等级、大招强化等级、升级三选一，overlay 暂停战斗 | 目标设计，未实现 | P2 | `docs/numeric-system/progression.md` |
+| 奖励拾取 | 分数、技能能量、大招能量、XP、攻击/治疗水晶、宝箱和 Boss 装备三选一已实现 | 继续按试玩数据校准奖励密度，保持装备与升级覆盖层依次展示 | 已实现 | P2 | `src/entities/platform.ts`、`src/entities/enemies/defeat.ts`、`docs/numeric-system/rewards.md` |
+| 经验升级 | 单局 XP、角色等级、普通技能/大招成长、升级三选一和奖励暂停已实现；正常每幕普通战斗 +1 级、Boss +1 级 | 继续用实际试玩数据校准清怪时点和候选池体验 | 已实现 | P2 | `src/systems/progression.ts`、`docs/numeric-system/progression.md` |
 | 装备系统 | 18 件普通品质装备、Boss 三选一、`blade/garb/talisman` 三槽位、暂停页换装和集中属性派生已接入 | 按 `actBand` 接入精良/觉醒品质与更完整的掉落权重 | 部分实现 | P2 | `docs/numeric-system/equipment.md` |
 | HUD | 生命、技能图标/能量、大招球、Boss 血条、等级/XP/幕数和限时或常驻被动状态图标条已实现；回涡二段跳使用技能图标显示 | 补选择队列状态并继续校准移动端信息密度 | 部分实现 | P2 | `src/ui/gameHud.tsx`、`src/game/gameStore.ts`、`src/systems/playerStatuses.ts` |
 | Pause overlay | 暂停面板、技能说明、关键数值已实现 | 统一 overlay 规范、输入规则和移动端布局 | 部分实现 | P3 | `src/App.tsx` |
@@ -47,7 +47,7 @@
 1. Boss 死亡入口分散，阻塞 `bossKills`、装备掉落、幕数推进和 Boss 轮换。
 2. 敌人已有多个状态机，但生成池仍缺少按幕配置和预算模型。
 3. 地图生成已经比较完整，但还没有读取幕数/威胁值。
-4. XP 和装备都还只是目标设计，缺少运行时状态、选择队列和 overlay。
+4. XP 和装备闭环已经接入，但仍缺少实际试玩 telemetry 来校准不同清怪效率下的升级时点。
 5. UI overlay 之间缺少统一队列规则；升级三选一和装备三选一不能同时覆盖。
 6. 13 幕骨架（6 基础 + 6 蚀醒 + 终幕）只有设计文档，没有 Boss 注册表、蚀醒叠加逻辑或终幕换相；通关后进阶难度尚未设计落地点。
 

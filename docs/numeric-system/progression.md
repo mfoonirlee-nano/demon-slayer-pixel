@@ -22,7 +22,7 @@
 
 ## Runtime State
 
-建议新增运行时状态：
+当前运行时状态：
 
 ```ts
 runXp: number;
@@ -40,7 +40,7 @@ ultimateLevel: 0 | 1 | 2 | 3;
 pendingUpgradeChoices: UpgradeChoice[];
 ```
 
-推荐初始值：
+当前初始值：
 
 ```ts
 runXp = 0;
@@ -75,6 +75,7 @@ pendingUpgradeChoices = [];
 ## Attribute Growth
 
 角色等级不设硬上限。为了让长局中基础属性持续有价值但不过快膨胀，攻击和生命使用“线性成长 + 平方根前期补正”的公式。
+当前节奏每幕提升 2 级，因此单级成长约为旧节奏的一半；完整经历“普通战斗升级 + Boss 升级”后，基础战力约等于旧系统的一次幕成长，避免终幕等级提高后同步造成数值膨胀。
 
 ### 基础攻击
 
@@ -90,14 +91,14 @@ baseAttack(level) = Math.floor(
 
 ```ts
 baseAttack0 = 16;
-atkLinear = 1.2;
-atkCurve = 1.6;
+atkLinear = 0.6;
+atkCurve = 1.13;
 ```
 
 最终公式：
 
 ```ts
-baseAttack(level) = Math.floor(16 + 1.2 * (level - 1) + 1.6 * Math.sqrt(level - 1));
+baseAttack(level) = Math.floor(16 + 0.6 * (level - 1) + 1.13 * Math.sqrt(level - 1));
 ```
 
 示例值：
@@ -105,14 +106,14 @@ baseAttack(level) = Math.floor(16 + 1.2 * (level - 1) + 1.6 * Math.sqrt(level - 
 | 等级 | 基础攻击 |
 | ---: | ---: |
 | Lv1 | 16 |
-| Lv2 | 18 |
-| Lv3 | 20 |
-| Lv4 | 22 |
-| Lv5 | 23 |
-| Lv10 | 31 |
-| Lv20 | 45 |
-| Lv30 | 59 |
-| Lv50 | 82 |
+| Lv2 | 17 |
+| Lv3 | 18 |
+| Lv5 | 20 |
+| Lv10 | 24 |
+| Lv20 | 32 |
+| Lv25 | 35 |
+| Lv27 | 37 |
+| Lv50 | 53 |
 
 最终总攻击仍可沿用当前战斗口径：
 
@@ -136,14 +137,14 @@ maxHp(level) = Math.floor(
 
 ```ts
 baseHp = 100;
-hpLinear = 10;
-hpCurve = 8;
+hpLinear = 5;
+hpCurve = 5.66;
 ```
 
 最终公式：
 
 ```ts
-maxHp(level) = Math.floor(100 + 10 * (level - 1) + 8 * Math.sqrt(level - 1));
+maxHp(level) = Math.floor(100 + 5 * (level - 1) + 5.66 * Math.sqrt(level - 1));
 ```
 
 示例值：
@@ -151,30 +152,31 @@ maxHp(level) = Math.floor(100 + 10 * (level - 1) + 8 * Math.sqrt(level - 1));
 | 等级 | 最大生命 |
 | ---: | ---: |
 | Lv1 | 100 |
-| Lv2 | 118 |
-| Lv3 | 131 |
-| Lv4 | 143 |
-| Lv5 | 156 |
-| Lv10 | 214 |
-| Lv20 | 324 |
-| Lv30 | 433 |
-| Lv50 | 646 |
+| Lv2 | 110 |
+| Lv3 | 118 |
+| Lv5 | 131 |
+| Lv10 | 161 |
+| Lv20 | 219 |
+| Lv25 | 247 |
+| Lv27 | 258 |
+| Lv50 | 384 |
 
 ### 技能能量上限
 
 ```ts
-skillEnergyMax(level) = 90 + 10 * (level - 1);
+skillEnergyMax(level) = 90 + 5 * (level - 1);
 maxSkillCharges = Math.floor(skillEnergyMax / 30);
 ```
 
-技能释放成本保持 `30`。技能能量上限每级增加 `10`，因此可存技能次数每 3 级增加 1 次：
+技能释放成本保持 `30`。技能能量上限每级增加 `5`，因此可存技能次数每 6 级增加 1 次：
 
 | 等级 | 技能能量上限 | 可存技能次数 |
 | ---: | ---: | ---: |
 | Lv1 | 90 | 3 |
-| Lv4 | 120 | 4 |
-| Lv7 | 150 | 5 |
-| Lv10 | 180 | 6 |
+| Lv7 | 120 | 4 |
+| Lv13 | 150 | 5 |
+| Lv19 | 180 | 6 |
+| Lv25 | 210 | 7 |
 
 升级时当前技能能量按比例缩放，避免上限提升后填充比例突然下降：
 
@@ -185,54 +187,44 @@ skillEnergy = Math.round(oldSkillEnergy / oldSkillEnergyMax * newSkillEnergyMax)
 ### 升级回血
 
 ```ts
-healOnLevelUp = Math.max(10, Math.floor((newMaxHp - oldMaxHp) * 0.8));
+healOnLevelUp = Math.max(5, Math.floor((newMaxHp - oldMaxHp) * 0.8));
 hp = Math.min(newMaxHp, hp + healOnLevelUp);
 ```
 
-升级回血只提供喘息，不直接回满血，避免升级变成稳定续命机制。
+两次升级的合计回血接近旧系统一次升级；单次升级只提供喘息，不直接回满血，避免升级变成稳定续命机制。
 
 ## XP Formula
 
-因为角色等级无上限，升级需求必须持续提高。
+因为角色等级无上限，升级需求必须持续提高。Lv1 使用独立的新手门槛，让首次升级落在第 1 幕中段；Lv2 起使用缓增曲线：
 
 ```ts
+xpToNextLevel(1) = 300;
 xpToNextLevel(level) = Math.floor(
-  baseXp
-  + xpLinear * level
-  + xpCurve * level ** 1.6
-);
-```
-
-推荐参数：
-
-```ts
-baseXp = 650;
-xpLinear = 45;
-xpCurve = 5;
-```
-
-最终公式：
-
-```ts
-xpToNextLevel(level) = Math.floor(650 + 45 * level + 5 * level ** 1.6);
+  550 + 10 * level + 0.2 * level ** 1.6
+); // level >= 2
 ```
 
 示例值：
 
 | 当前等级 | 升下一级 XP |
 | ---: | ---: |
-| Lv1 → Lv2 | 700 |
-| Lv2 → Lv3 | 755 |
-| Lv3 → Lv4 | 813 |
-| Lv4 → Lv5 | 875 |
-| Lv5 → Lv6 | 940 |
-| Lv10 → Lv11 | 1299 |
-| Lv15 → Lv16 | 1705 |
-| Lv20 → Lv21 | 2153 |
-| Lv30 → Lv31 | 3154 |
-| Lv50 → Lv51 | 5514 |
+| Lv1 → Lv2 | 300 |
+| Lv2 → Lv3 | 570 |
+| Lv3 → Lv4 | 581 |
+| Lv5 → Lv6 | 602 |
+| Lv10 → Lv11 | 657 |
+| Lv20 → Lv21 | 774 |
+| Lv25 → Lv26 | 834 |
+| Lv27 → Lv28 | 859 |
+| Lv50 → Lv51 | 1154 |
 
-当前曲线按现有 enemy director 的 13 幕结构校准：第 1 幕在 Boss 入场前提供至少 `700 XP` 的普通敌人供给，满清时足够从 Lv1 升到 Lv2；完整清掉后续每幕的普通刷怪、Boss 前奏增援和 Boss 后，至少能推进 1 个局内等级。这里约束的是可获得的经验供给，实际升级时间仍取决于玩家清怪效率。
+当前曲线按现有 enemy director 的 13 幕顺序校准：测试覆盖 `256` 个连续 seed 和既有边界 seed，以实际基础攻击力、`18` 帧普攻间隔和 `enemySpawnStats` 生命值推导击杀速度；一次攻击脉冲作用于所有活动目标，用来代理正常连斩与技能清场。低血量 director 节奏另行验证普通战斗等级上限与 Boss 单级奖励。正常节奏为：
+
+1. 普通战斗把玩家提升 1 级。
+2. 达到本幕普通战斗等级上限后，敌人 XP 继续填充下一条经验，但最高停在差 `1 XP`，不会提前触发本幕第二次升级。
+3. 击杀 Boss 时补足下一等级缺口并触发第 2 次升级。
+
+因此标准路线为第 1 幕 `Lv1 → Lv2 → Lv3`，第 13 幕 `Lv25 → Lv26 → Lv27`。清怪效率不足时，普通战斗升级仍可能延后；规则保证的是正常供给下的节奏和 Boss 对第二次升级的结算权。
 
 ## XP Sources
 
@@ -253,9 +245,9 @@ xpToNextLevel(level) = Math.floor(650 + 45 * level + 5 * level ** 1.6);
 | `splitter` child | 3 |
 | `warden` | 24 |
 | `burrower` | 20 |
-| Boss | `90 + bossKills * 25` |
+| Boss | 补足银行经验后的下一等级缺口 |
 
-Boss XP 随击杀次数提高，保证后期 Boss 仍然有成长价值。
+Boss 奖励会先投影已经银行化的经验，再补足下一次升级。正常无待选升级卡时，Boss 击杀恰好提升 1 级并把当前经验归零；如果同一帧已有升级待选，Boss 等级会排在已有升级之后结算。
 
 ## Normal Skill Pool
 
@@ -317,7 +309,7 @@ Boss XP 随击杀次数提高，保证后期 Boss 仍然有成长价值。
 | ---: | --- |
 | Lv1 | 潮幕成形后进入 72 帧防护窗口，最多抵挡并反击 3 次。 |
 | Lv2 | 反击伤害 +18%，防护窗口 78 帧，反击判定外扩 6px。 |
-| Lv3 | 反击伤害 +35%，防护窗口 84 帧，最多反击 4 次，判定外扩 10px；装备后获得常驻减伤，玩家 Lv1 为 15%，线性成长至 Lv13 的 30%，此后封顶。 |
+| Lv3 | 反击伤害 +35%，防护窗口 84 帧，最多反击 4 次，判定外扩 10px；装备后获得常驻减伤，玩家 Lv1 为 15%，线性成长至 Lv25 的 30%，此后封顶。 |
 
 边界：不能长期无敌；反击次数和窗口必须有限。
 
@@ -540,6 +532,9 @@ HUD 要求：
 22. 候选不足 3 个时，有几个显示几个。
 23. 所有技能和大招满级后，升级只获得攻击和生命成长，不再弹选择。
 24. 死亡或重开后，等级、经验、技能习得、技能等级、大招等级全部重置。
+25. 正常情况下每幕提升 2 级：普通战斗 1 级，Boss 击杀 1 级。
+26. 普通敌人不能提前触发本幕第 2 次升级，但可把 Boss 前经验条填到差 `1 XP`。
+27. 两次单级属性成长与回血合计约等于旧节奏的一次幕成长。
 
 ## Code Sources
 

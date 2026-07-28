@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import { BOSS_DEFEAT_SPLIT_VISUAL } from "../../constants";
 import { getStateSnapshot, resetState, state } from "../../game/state";
 import { EQUIPMENT_CHOICE_IDS, chooseBossEquipment } from "../../systems/equipment";
+import { addRunXp, xpToNextLevel } from "../../systems/progression";
 import { spawnBoss } from "../boss";
 import { updateBossDefeatSplitEffect } from "./bossDefeatSplitEffect";
 import { defeatBoss } from "./defeat";
@@ -11,11 +12,15 @@ const BOSS_REWARD_CHOICE_COUNT = 3;
 const FINAL_BOSS_START_KILLS = 12;
 const FINAL_BOSS_CLEARED_KILLS = 13;
 const SECOND_ACT = 2;
+const PARTIAL_LEVEL_XP = 200;
+const LEVEL_AFTER_FIRST_BOSS = 2;
+const LEVEL_AFTER_BANKED_FINAL_REWARDS = 4;
 
 describe("boss defeat progression", () => {
-  it("grants equipment and continues the run after a non-final boss", () => {
+  it("grants one run level, equipment, and continues after a non-final boss", () => {
     resetState();
     state.bossKills = 0;
+    state.player.runXp = PARTIAL_LEVEL_XP;
     spawnBoss(BOSS_ARCHETYPE_IDS.spiderString);
     if (!state.boss) throw new Error("Boss did not spawn");
     state.boss.hp = 0;
@@ -27,10 +32,13 @@ describe("boss defeat progression", () => {
     expect(state.bossKills).toBe(1);
     expect(state.enemyDirector.act).toBe(SECOND_ACT);
     expect(getStateSnapshot().act).toBe(SECOND_ACT);
+    expect(state.player.runLevel).toBe(LEVEL_AFTER_FIRST_BOSS);
+    expect(state.player.runXp).toBe(0);
+    expect(state.pendingUpgradeChoices).toHaveLength(BOSS_REWARD_CHOICE_COUNT);
     expect(state.pendingEquipmentChoices).toHaveLength(BOSS_REWARD_CHOICE_COUNT);
   });
 
-  it("does not create an ultimate reward after a boss defeat", () => {
+  it("shows equipment before the boss-triggered level-up reward", () => {
     resetState();
     spawnBoss(BOSS_ARCHETYPE_IDS.spiderString);
     if (!state.boss) throw new Error("Boss did not spawn");
@@ -39,13 +47,15 @@ describe("boss defeat progression", () => {
     expect(defeatBoss()).toBe(true);
 
     expect(state.pendingEquipmentChoices).toHaveLength(BOSS_REWARD_CHOICE_COUNT);
-    expect(state.pendingUpgradeChoices).toEqual([]);
+    expect(state.pendingUpgradeChoices).toHaveLength(BOSS_REWARD_CHOICE_COUNT);
     expect(state.bossDefeatSplitEffect).not.toBeNull();
     expect(getStateSnapshot().activeOverlay).toBe("none");
 
     finishBossDefeatSplitEffect();
 
     expect(getStateSnapshot().activeOverlay).toBe("bossEquipment");
+    expect(chooseBossEquipment(state, 0)).toBe(true);
+    expect(getStateSnapshot().activeOverlay).toBe("upgrade");
   });
 
   it("opens awakened equipment choices after defeating the final boss, then clears after selection", () => {
@@ -100,6 +110,22 @@ describe("boss defeat progression", () => {
     finishBossDefeatSplitEffect();
 
     expect(getStateSnapshot().activeOverlay).toBe("victory");
+  });
+
+  it("settles banked level-ups before clearing the final boss reward choices", () => {
+    resetState();
+    state.bossKills = FINAL_BOSS_START_KILLS;
+    addRunXp(state, xpToNextLevel(1));
+    addRunXp(state, xpToNextLevel(2));
+    spawnBoss(BOSS_ARCHETYPE_IDS.bloodMoon);
+    if (!state.boss) throw new Error("Boss did not spawn");
+    state.boss.hp = 0;
+
+    expect(defeatBoss()).toBe(true);
+
+    expect(state.player.runLevel).toBe(LEVEL_AFTER_BANKED_FINAL_REWARDS);
+    expect(state.player.runXp).toBe(0);
+    expect(state.pendingUpgradeChoices).toEqual([]);
   });
 });
 

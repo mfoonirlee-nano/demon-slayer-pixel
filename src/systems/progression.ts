@@ -9,6 +9,9 @@ import {
   LEAPER_SHEET_INDEX,
   MOON_TIDE_ULTIMATE,
   RUNNER_SHEET_INDEX,
+  RUN_LEVEL_PACING,
+  RUN_LEVEL_REWARD,
+  RUN_XP_CURVE,
   SKILL_IDS,
   SPLITTER_SHEET_INDEX,
   WARDEN_SHEET_INDEX,
@@ -47,17 +50,9 @@ export {
   maxSkillEnergyForLevel,
 } from "./playerStatGrowth";
 
-const BASE_XP = 650;
-const XP_LINEAR = 45;
-const XP_CURVE = 5;
-const MIN_LEVEL_HEAL = 10;
-const LEVEL_HEAL_RATIO = 0.8;
-const XP_CURVE_EXPONENT = 1.6;
 const SPLITTER_CHILD_XP = 3;
 const DEFAULT_ENEMY_XP = 8;
 const REGULAR_ELITE_XP_MULTIPLIER = 1.5;
-const BOSS_XP_BASE = 90;
-const BOSS_XP_PER_KILL = 25;
 const MAX_SKILL_LEVEL = 3;
 const UPGRADE_CHOICE_COUNT = 3;
 const MAX_UNLEARNED_CHOICE_COUNT = 2;
@@ -93,7 +88,12 @@ export const INITIAL_EQUIPPED_SKILL_IDS: [SkillId | null, SkillId | null, SkillI
 ];
 
 export function xpToNextLevel(level: number) {
-  return Math.floor(BASE_XP + XP_LINEAR * level + XP_CURVE * level ** XP_CURVE_EXPONENT);
+  if (level === RUN_LEVEL_PACING.initialLevel) return RUN_XP_CURVE.firstLevel;
+  return Math.floor(
+    RUN_XP_CURVE.base
+    + RUN_XP_CURVE.linear * level
+    + RUN_XP_CURVE.curve * level ** RUN_XP_CURVE.exponent,
+  );
 }
 
 export function hasLearnedUltimate(state: GameState) {
@@ -128,13 +128,40 @@ export function enemyXp(enemy: EnemyState) {
   return baseXp;
 }
 
-export function bossXp(bossKillsBeforeKill: number) {
-  return BOSS_XP_BASE + bossKillsBeforeKill * BOSS_XP_PER_KILL;
+export function bossXpForLevelUp(runLevel: number, runXp: number) {
+  let projectedLevel = runLevel;
+  let projectedXp = runXp;
+
+  // An upgrade choice can already be open when an area hit kills a summon and the Boss together.
+  let remainingXp = runXpAfterLevelUp(projectedLevel, projectedXp);
+  while (remainingXp !== null) {
+    projectedXp = remainingXp;
+    projectedLevel += 1;
+    remainingXp = runXpAfterLevelUp(projectedLevel, projectedXp);
+  }
+
+  return xpToNextLevel(projectedLevel) - projectedXp;
 }
 
 export function addRunXp(state: GameState, amount: number) {
   state.player.runXp += Math.max(0, amount);
   processPendingLevelUps(state);
+}
+
+export function addEnemyRunXp(state: GameState, amount: number) {
+  const levelCap = RUN_LEVEL_PACING.initialLevel
+    + state.bossKills * RUN_LEVEL_PACING.levelsPerAct
+    + RUN_LEVEL_PACING.enemyLevelsPerAct;
+  if (state.player.runLevel >= levelCap) {
+    // Normal combat fills the second bar, but the Boss must land the level-up trigger.
+    state.player.runXp = Math.min(
+      xpToNextLevel(state.player.runLevel) - 1,
+      state.player.runXp + Math.max(0, amount),
+    );
+    return;
+  }
+
+  addRunXp(state, amount);
 }
 
 export function applyUpgradeChoice(state: GameState, index: number) {
@@ -162,17 +189,38 @@ export function applyUpgradeChoice(state: GameState, index: number) {
 export function processPendingLevelUps(state: GameState) {
   if (state.pendingUpgradeChoices.length > 0) return;
 
-  while (state.player.runXp >= xpToNextLevel(state.player.runLevel)) {
-    const requiredXp = xpToNextLevel(state.player.runLevel);
-    state.player.runXp -= requiredXp;
-    applyLevelStatGrowth(state);
-
+  while (applyNextRunLevel(state)) {
     const choices = createUpgradeChoices(state);
     if (choices.length > 0) {
       state.pendingUpgradeChoices = choices;
       return;
     }
   }
+}
+
+export function settleRunXpWithoutUpgradeChoices(state: GameState) {
+  // Victory discards upgrade cards, but same-frame banked XP must still apply its stat growth.
+  state.pendingUpgradeChoices = [];
+  while (applyNextRunLevel(state)) {
+    // Apply every banked stat level without creating rewards after the run has ended.
+  }
+}
+
+function runXpAfterLevelUp(level: number, runXp: number) {
+  const requiredXp = xpToNextLevel(level);
+  return runXp >= requiredXp ? runXp - requiredXp : null;
+}
+
+function applyNextRunLevel(state: GameState) {
+  const remainingXp = runXpAfterLevelUp(
+    state.player.runLevel,
+    state.player.runXp,
+  );
+  if (remainingXp === null) return false;
+
+  state.player.runXp = remainingXp;
+  applyLevelStatGrowth(state);
+  return true;
 }
 
 function applyLevelStatGrowth(state: GameState) {
@@ -188,7 +236,10 @@ function applyLevelStatGrowth(state: GameState) {
   player.maxSkillCharges = maxSkillChargesForEnergy(player.skillEnergyMax);
   player.skillEnergy = Math.min(player.skillEnergyMax, Math.round(skillEnergyRatio * player.skillEnergyMax));
   syncSkillChargesForEquipment(state);
-  const heal = Math.max(MIN_LEVEL_HEAL, Math.floor((player.maxHp - oldMaxHp) * LEVEL_HEAL_RATIO));
+  const heal = Math.max(
+    RUN_LEVEL_REWARD.minHeal,
+    Math.floor((player.maxHp - oldMaxHp) * RUN_LEVEL_REWARD.healRatio),
+  );
   player.hp = Math.min(player.maxHp, player.hp + heal);
 }
 

@@ -1,4 +1,10 @@
-import { BASIC_ATTACK, GROUND_Y, PLAYER_COMBAT, PLAYER_DEFAULTS } from "../constants";
+import {
+  BASIC_ATTACK,
+  GROUND_Y,
+  PLAYER_COMBAT,
+  PLAYER_DEFAULTS,
+  RUN_LEVEL_PACING,
+} from "../constants";
 import { bossArchetypeForId } from "../entities/bosses/registry";
 import type { GameSnapshot } from "./gameStore";
 import { createInitialMoonState } from "../moon";
@@ -24,7 +30,7 @@ import {
 export type * from "../types/game-state";
 
 export function createInitialPlayerState(): PlayerState {
-  const skillEnergyMax = maxSkillEnergyForLevel(1);
+  const skillEnergyMax = maxSkillEnergyForLevel(RUN_LEVEL_PACING.initialLevel);
 
   return {
     x: PLAYER_DEFAULTS.x,
@@ -45,7 +51,7 @@ export function createInitialPlayerState(): PlayerState {
     fallAttackTimer: 0,
     fallAttackRecoveryTimer: 0,
     score: 0,
-    runLevel: 1,
+    runLevel: RUN_LEVEL_PACING.initialLevel,
     runXp: 0,
     baseAttack: PLAYER_DEFAULTS.baseAttack,
     attackBonus: 0,

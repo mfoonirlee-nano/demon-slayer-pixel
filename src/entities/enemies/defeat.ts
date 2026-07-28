@@ -5,7 +5,7 @@ import type { EnemyState } from "../../types/game-state";
 import { playSfx } from "../../game/audio";
 import type { EnemyDefeatRewardKind } from "./common";
 import { enemyArchetypeForSheet } from "./registry";
-import { addRunXp, enemyXp } from "../../systems/progression";
+import { addEnemyRunXp, enemyXp } from "../../systems/progression";
 import { grantSkillEnergy, grantUltimateEnergy, recordEnemyDefeatEquipmentEffects } from "../../systems/equipment";
 
 const SPLITLING_SKILL_ENERGY_GAIN = 2;
@@ -22,7 +22,7 @@ function applyEnemyDefeatReward(enemy: EnemyState, reward: EnemyDefeatRewardKind
 
   if (enemy.splitterVariant === "child") {
     gainEnergy(SPLITLING_SKILL_ENERGY_GAIN, SPLITLING_ULTIMATE_ENERGY_GAIN);
-    addRunXp(state, enemyXp(enemy));
+    addEnemyRunXp(state, enemyXp(enemy));
     return;
   }
 
@@ -33,7 +33,7 @@ function applyEnemyDefeatReward(enemy: EnemyState, reward: EnemyDefeatRewardKind
     recordEnemyCoverKill();
   }
   gainEnergy(PLAYER_COMBAT.enemyEnergyGain, PLAYER_COMBAT.enemyUltimateEnergyGain);
-  addRunXp(state, enemyXp(enemy));
+  addEnemyRunXp(state, enemyXp(enemy));
 }
 
 export function resolveEnemyDefeat(

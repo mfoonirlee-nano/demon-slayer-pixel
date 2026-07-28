@@ -4,6 +4,7 @@ import { createInitialState } from "../game/state";
 import type { EnemyState } from "../types/game-state";
 import { equipEquipment } from "./equipment";
 import {
+  addEnemyRunXp,
   addRunXp,
   applyUpgradeChoice,
   enemyXp,
@@ -199,8 +200,20 @@ describe("run progression skills", () => {
     addRunXp(state, xpToNextLevel(1));
 
     expect(state.player).toMatchObject({
-      runLevel: 2, baseAttack: 23, maxHp: 142, skillEnergyMax: 122, maxSkillCharges: 4,
+      runLevel: 2, baseAttack: 21, maxHp: 132, skillEnergyMax: 116, maxSkillCharges: 3,
     });
+  });
+
+  it("splits the old per-act healing budget across two smaller level-ups", () => {
+    const state = createInitialState();
+    state.player.hp = 50;
+
+    addRunXp(state, xpToNextLevel(1));
+    expect(state.player).toMatchObject({ runLevel: 2, hp: 58, maxHp: 110 });
+    expect(applyUpgradeChoice(state, 0)).toBe(true);
+
+    addRunXp(state, xpToNextLevel(2));
+    expect(state.player).toMatchObject({ runLevel: 3, hp: 64, maxHp: 118 });
   });
 
   it("only gives the elite XP bonus to regular elite enemies", () => {
@@ -219,5 +232,19 @@ describe("run progression skills", () => {
     expect(enemyXp(regularRunner)).toBe(RUNNER_XP);
     expect(enemyXp(regularEliteRunner)).toBe(ELITE_RUNNER_XP);
     expect(enemyXp(bossEliteRunner)).toBe(RUNNER_XP);
+  });
+
+  it("banks enemy XP below the second act level until the boss is defeated", () => {
+    const state = createInitialState();
+
+    addEnemyRunXp(state, xpToNextLevel(1));
+    expect(state.player.runLevel).toBe(2);
+    expect(applyUpgradeChoice(state, 0)).toBe(true);
+
+    addEnemyRunXp(state, xpToNextLevel(2));
+
+    expect(state.player.runLevel).toBe(2);
+    expect(state.player.runXp).toBe(xpToNextLevel(2) - 1);
+    expect(state.pendingUpgradeChoices).toEqual([]);
   });
 });

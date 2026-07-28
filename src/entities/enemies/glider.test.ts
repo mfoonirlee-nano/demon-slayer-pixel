@@ -1,4 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { RUN_LEVEL_PACING } from "../../constants";
 import { resetState, state } from "../../game/state";
 import { maxHpForLevel } from "../../systems/playerStatGrowth";
 import type { ActBand, GliderPhase, ProjectileState } from "../../types/game-state";
@@ -13,7 +14,9 @@ const SONIC_RELEASE_GUARD_FRAMES = 180;
 const SONIC_HIT_GUARD_FRAMES = 120;
 const FRAMES_PER_SECOND = 60;
 const DIVE_SPEED_MIN_MULTIPLIER = 3;
-const AWAKENED_PLAYER_LEVEL = 7;
+const AWAKENED_BOSS_KILLS = 6;
+const AWAKENED_PLAYER_LEVEL = RUN_LEVEL_PACING.initialLevel
+  + AWAKENED_BOSS_KILLS * RUN_LEVEL_PACING.levelsPerAct;
 const MIN_SONIC_BLADE_DAMAGE_RATIO = 0.08;
 const MAX_SONIC_BLADE_DAMAGE_RATIO = 0.1;
 

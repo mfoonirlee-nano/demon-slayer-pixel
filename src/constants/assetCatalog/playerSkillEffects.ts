@@ -130,7 +130,7 @@ export const GUARD_COUNTER_EFFECT_CONFIG = {
   damageReductionRequiredLevel: 3,
   damageReductionMin: 0.15,
   damageReductionMax: 0.3,
-  damageReductionMaxPlayerLevel: 13,
+  damageReductionMaxPlayerLevel: 25,
 } as const;
 
 export const PLAYER_SKILL_EFFECT_SHEETS: Partial<Record<SkillId, SpriteSheet>> = {

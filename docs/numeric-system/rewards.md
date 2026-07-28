@@ -4,7 +4,7 @@
 
 ## Purpose
 
-记录当前得分、技能能量、大招能量、水晶、宝箱和奖励预算规则。未实现的经验成长见 [progression.md](progression.md)，未实现的装备掉落见 [equipment.md](equipment.md)。
+记录当前得分、技能能量、大招能量、水晶、宝箱和奖励预算规则。经验成长和每幕升级节奏见 [progression.md](progression.md)，装备掉落见 [equipment.md](equipment.md)。
 
 ## Current State
 

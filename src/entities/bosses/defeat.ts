@@ -8,7 +8,11 @@ import {
   queueBossEquipmentChoices,
   recordBossDefeatEquipmentEffects,
 } from "../../systems/equipment";
-import { addRunXp, bossXp } from "../../systems/progression";
+import {
+  addRunXp,
+  bossXpForLevelUp,
+  settleRunXpWithoutUpgradeChoices,
+} from "../../systems/progression";
 import { advanceEnemyDirectorToAct } from "../../systems/enemyDirector";
 import { clearRun } from "../../systems/runLifecycle";
 import { BOSS_ARCHETYPE_IDS } from "./registry";
@@ -36,10 +40,10 @@ export function defeatBoss() {
   state.player.score += PLAYER_COMBAT.bossKillScore;
   recordBossCoverKill();
   gainBossKillEnergy();
-  addRunXp(state, bossXp(state.bossKills));
+  addRunXp(state, bossXpForLevelUp(state.player.runLevel, state.player.runXp));
   recordBossDefeatEquipmentEffects(state);
   if (clearsRun) {
-    state.pendingUpgradeChoices = [];
+    settleRunXpWithoutUpgradeChoices(state);
     const hasFinalEquipmentChoices = queueBossEquipmentChoices(state, { placeholderReward: false });
     state.pendingVictoryAfterEquipment = hasFinalEquipmentChoices;
   } else {
