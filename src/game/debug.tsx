@@ -1,4 +1,4 @@
-import { useAtomValue } from "jotai";
+import { useAtom, useAtomValue } from "jotai";
 import { useEffect, useState } from "react";
 import {
   BINDER_SHEET_INDEX,
@@ -25,6 +25,7 @@ import { canvas } from "../rendering/context";
 import type { SegmentKind } from "../entities/platform";
 import type { SkillId } from "../types/assets";
 import type { ActBand, BossArchetypeId, GameState, SkillLevel } from "../types/game-state";
+import { isCollisionDebugEnabledAtom } from "./gameStore";
 
 export type DebugEnemyKind =
   | "chaser"
@@ -249,6 +250,9 @@ export function DebugPanel() {
   const [skillSlotIndex, setSkillSlotIndex] = useState<number>(0);
   const [skillId, setSkillId] = useState<SkillId>(DEBUG_SKILL_OPTIONS[0] ?? "line_projectile");
   const [skillLevel, setSkillLevelValue] = useState<SkillLevel>(1);
+  const [isCollisionDebugEnabled, setIsCollisionDebugEnabled] = useAtom(
+    isCollisionDebugEnabledAtom,
+  );
   const [infiniteHealth, setInfiniteHealth] = useState(hasDebugInfiniteHealth());
   const [infiniteSkillCharge, setInfiniteSkillCharge] = useState(hasDebugInfiniteSkillCharge());
   const [infiniteUltimateCharge, setInfiniteUltimateCharge] = useState(hasDebugInfiniteUltimateCharge());
@@ -297,6 +301,16 @@ export function DebugPanel() {
           {gameWindowSize ? `${gameWindowSize.width}x${gameWindowSize.height}` : message(language, "debug.unknown")}
         </span>
       </div>
+      <label className="mb-2 flex items-center gap-2 text-[8px] text-[#c3efff]" htmlFor="debug-collision-boxes">
+        <input
+          id="debug-collision-boxes"
+          type="checkbox"
+          className="h-3 w-3 accent-[#63f4ff]"
+          checked={isCollisionDebugEnabled}
+          onChange={(event) => setIsCollisionDebugEnabled(event.target.checked)}
+        />
+        {message(language, "debug.collisionBoxes")}
+      </label>
       <label className="mb-2 flex items-center gap-2 text-[8px] text-[#c3efff]" htmlFor="debug-infinite-health">
         <input
           id="debug-infinite-health"

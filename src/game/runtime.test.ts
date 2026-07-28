@@ -18,7 +18,11 @@ import { spawnEnemyBySheetIndex } from "../entities/enemy";
 import { setCanvas } from "../rendering/context";
 import { drawNearForeground } from "../rendering/nearForeground";
 import { createBossEquipmentChoices } from "../systems/equipment";
-import type { GameSnapshot } from "./gameStore";
+import {
+  gameStore,
+  isCollisionDebugEnabledAtom,
+  type GameSnapshot,
+} from "./gameStore";
 import { setupInput } from "./input";
 import { resetState, state } from "./state";
 import { startGame, stopGame, updateUltimateCastFreezeFrame } from "./runtime";
@@ -34,7 +38,6 @@ vi.mock("../rendering/nearForeground", () => ({
 }));
 
 vi.mock("./input", () => ({
-  debugCollisionBoxes: false,
   setupInput: vi.fn(),
   teardownInput: vi.fn(),
 }));
@@ -80,6 +83,7 @@ function createMockContext(): MockCanvasContext {
 describe("game runtime", () => {
   beforeEach(() => {
     resetState();
+    gameStore.set(isCollisionDebugEnabledAtom, false);
     vi.clearAllMocks();
     vi.mocked(drawNearForeground).mockReset();
   });
@@ -150,6 +154,18 @@ describe("game runtime", () => {
     expect(state.ultimateTrails).toHaveLength(0);
     expect(state.ultimateAfterimageSlashes).toHaveLength(0);
     expect(state.ultimatePlayerGhosts).toHaveLength(0);
+  });
+
+  it("routes the collision-box shortcut through the shared debug state", () => {
+    vi.stubGlobal("requestAnimationFrame", vi.fn(() => 1));
+    vi.stubGlobal("cancelAnimationFrame", vi.fn());
+    setCanvas({ getContext: () => createMockContext() } as unknown as HTMLCanvasElement);
+    state.spritesReady = true;
+
+    startGame();
+    vi.mocked(setupInput).mock.calls[0][0].onToggleCollisionDebug?.();
+
+    expect(gameStore.get(isCollisionDebugEnabledAtom)).toBe(true);
   });
 
   it("advances the ultimate cast while gameplay timers and player physics stay frozen", () => {

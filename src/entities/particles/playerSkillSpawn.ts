@@ -11,6 +11,7 @@ import {
 import type { EnemyState, SkillLevel } from "../../types/game-state";
 import type { SkillId } from "../../types/assets";
 import { clamp, hitbox } from "../../game/utils";
+import { recordCollisionDebugRect } from "../../game/collisionDebug";
 import { resolveBossHit, resolveEnemyHit } from "../../systems/combatResolution";
 import {
   GENERIC_PLAYER_SKILL_TUNING,
@@ -94,6 +95,7 @@ export function damageDashRepositionTravel(previousX: number, previousY: number,
     w: Math.abs(nextX - previousX) + player.w,
     h: Math.abs(nextY - previousY) + player.h,
   };
+  recordCollisionDebugRect(box, "playerAttack");
   const startCenterX = dash.startX + player.w / 2;
   const damage = genericSkillDamage(SKILL_IDS.dashReposition, dash.level, dash.damageMultiplier);
   const bossDamage = genericSkillDamage(SKILL_IDS.dashReposition, dash.level, dash.damageMultiplier, true);

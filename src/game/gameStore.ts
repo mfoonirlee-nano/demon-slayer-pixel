@@ -144,6 +144,7 @@ const initialSnapshot: GameSnapshot = {
 
 export const gameStore = createStore();
 export const gameSnapshotAtom = atom<GameSnapshot>(initialSnapshot);
+export const isCollisionDebugEnabledAtom = atom(false);
 
 export function setGameSnapshot(snapshot: GameSnapshot) {
   gameStore.set(gameSnapshotAtom, snapshot);

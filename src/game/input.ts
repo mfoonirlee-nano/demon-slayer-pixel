@@ -31,10 +31,10 @@ type InputHandlers = {
   onSwitchSkill?: (index: number) => void;
   onRestart?: () => void;
   onPause?: () => void;
+  onToggleCollisionDebug?: () => void;
 };
 
 export const keys = new Set<string>();
-export let debugCollisionBoxes = false;
 let handlers: InputHandlers = {};
 let cleanupInput: (() => void) | null = null;
 
@@ -53,7 +53,7 @@ export function setupInput(callbacks: InputHandlers) {
 
     if (e.metaKey && raw === "d") {
       e.preventDefault();
-      debugCollisionBoxes = !debugCollisionBoxes;
+      if (!e.repeat) handlers.onToggleCollisionDebug?.();
       return;
     }
 

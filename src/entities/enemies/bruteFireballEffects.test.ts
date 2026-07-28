@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
   BRUTE_FIREBALL_EXPLOSION_SHEET,
   BRUTE_FIREBALL_LAUNCH_SHEET,
@@ -6,6 +6,7 @@ import {
   GROUND_Y,
   WIDTH,
 } from "../../constants";
+import * as collisionDebug from "../../game/collisionDebug";
 import { resetState, state } from "../../game/state";
 import type { ActBand, BruteFireballPhase, PlatformState } from "../../types/game-state";
 import { spawnEnemyById, updateEnemies } from "../enemy";
@@ -91,6 +92,11 @@ function expectedFrames(count: number) {
 describe("brute fireballs", () => {
   beforeEach(() => {
     resetState();
+    vi.spyOn(collisionDebug, "recordCollisionDebugEllipse").mockImplementation(() => {});
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
   });
 
   it.each([
@@ -299,6 +305,30 @@ describe("brute fireballs", () => {
     updateBruteFireballEffects();
 
     expect(state.player.hp).toBe(hpBefore);
+  });
+
+  it("records the explosion ellipse only on its damage-resolution frame", () => {
+    forceShieldBash("awakened");
+    const effect = state.bruteFireballs[0];
+    const recordEllipse = vi.mocked(collisionDebug.recordCollisionDebugEllipse);
+
+    advanceUntil(() => effect.phase === "explode");
+    expect(recordEllipse).not.toHaveBeenCalled();
+
+    advanceUntil(() => effect.damageResolved);
+
+    expect(recordEllipse).toHaveBeenCalledOnce();
+    expect(recordEllipse).toHaveBeenCalledWith(
+      effect.x + effect.w / 2,
+      effect.groundY,
+      effect.explosionRadius,
+      effect.explosionRadius * BRUTE_FIREBALL_CONFIG.explosionVerticalRadiusScale,
+      "enemyAttack",
+    );
+
+    recordEllipse.mockClear();
+    updateBruteFireballEffects();
+    expect(recordEllipse).not.toHaveBeenCalled();
   });
 
   it("clears active fireballs when the game state resets", () => {

@@ -2,6 +2,10 @@ import { state } from "../../game/state";
 import { GROUND_Y, PLAYER_COMBAT, WIDTH } from "../../constants";
 import type { BossState, EnemyState, PlayerSkillEffectState, SkillLevel } from "../../types/game-state";
 import { clamp, hitbox, type RectLike } from "../../game/utils";
+import {
+  recordCollisionDebugEllipse,
+  recordCollisionDebugRect,
+} from "../../game/collisionDebug";
 import { applySkillHitEquipmentRefund } from "../../systems/equipment";
 import {
   GENERIC_SKILL_DAMAGE_ATTACK_BONUS_SCALE,
@@ -76,7 +80,9 @@ export function genericSkillDamage(skillId: GenericPlayerSkillId, level: SkillLe
 }
 
 export function effectBox(effect: PlayerSkillEffectState) {
-  return rectFromCenter(effect.x, effect.y, effect.w, effect.h);
+  const box = rectFromCenter(effect.x, effect.y, effect.w, effect.h);
+  if (!effect.visualOnly) recordCollisionDebugRect(box, "playerAttack");
+  return box;
 }
 
 export function returningBladeOutboundDistance(startX: number, facing: number, minDistance: number) {
@@ -104,9 +110,21 @@ export function rectFeetPoint(rect: { x: number; y: number; w: number; h: number
   };
 }
 
+function vortexCollisionRadii(effect: PlayerSkillEffectState) {
+  return {
+    radiusX: effect.w / 2,
+    radiusY: Math.max(1, effect.h / 2),
+  };
+}
+
+export function recordVortexCollisionDebug(effect: PlayerSkillEffectState) {
+  if (effect.visualOnly) return;
+  const { radiusX, radiusY } = vortexCollisionRadii(effect);
+  recordCollisionDebugEllipse(effect.x, effect.y, radiusX, radiusY, "playerAttack");
+}
+
 export function vortexContainment(effect: PlayerSkillEffectState, pointX: number, pointY: number) {
-  const radiusX = effect.w / 2;
-  const radiusY = Math.max(1, effect.h / 2);
+  const { radiusX, radiusY } = vortexCollisionRadii(effect);
   const dx = (pointX - effect.x) / radiusX;
   const dy = (pointY - effect.y) / radiusY;
   const distanceSq = dx * dx + dy * dy;
@@ -254,17 +272,19 @@ type RainLineTarget = {
 
 export function armorBreakTravelBox(effect: PlayerSkillEffectState, previousX: number, previousY: number): RectLike {
   const previous = rectFromCenter(previousX, previousY, effect.w, effect.h);
-  const current = effectBox(effect);
+  const current = rectFromCenter(effect.x, effect.y, effect.w, effect.h);
   const left = Math.min(previous.x, current.x);
   const top = Math.min(previous.y, current.y);
   const right = Math.max(previous.x + previous.w, current.x + current.w);
   const bottom = Math.max(previous.y + previous.h, current.y + current.h);
-  return {
+  const box = {
     x: left,
     y: top,
     w: right - left,
     h: bottom - top,
   };
+  if (!effect.visualOnly) recordCollisionDebugRect(box, "playerAttack");
+  return box;
 }
 
 export function findArmorBreakCollision(effect: PlayerSkillEffectState, travelBox: RectLike): ArmorBreakCollision | null {

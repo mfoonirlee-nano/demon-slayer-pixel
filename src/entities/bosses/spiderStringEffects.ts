@@ -1,4 +1,5 @@
 import { BOSS_SKILL1_CONFIG, WIDTH } from "../../constants";
+import { recordCollisionDebugRect } from "../../game/collisionDebug";
 import { state } from "../../game/state";
 import { ctx } from "../../rendering/context";
 import { playSfx } from "../../game/audio";
@@ -66,10 +67,17 @@ export function updateBossSkill1Effects() {
       Math.floor(eff.elapsed / BOSS_SKILL1_CONFIG.effectFrameDuration),
     );
 
-    const effLeft = eff.x - drawW / 2;
-    const effRight = eff.x + drawW / 2;
-    const effTop = eff.y - drawH / 2;
-    const effBottom = eff.y + drawH / 2;
+    const effectRect = {
+      x: eff.x - drawW / 2,
+      y: eff.y - drawH / 2,
+      w: drawW,
+      h: drawH,
+    };
+    const effLeft = effectRect.x;
+    const effRight = effectRect.x + effectRect.w;
+    const effTop = effectRect.y;
+    const effBottom = effectRect.y + effectRect.h;
+    recordCollisionDebugRect(effectRect, "enemyAttack");
 
     const p = state.player;
     if (eff.hitPlayerCd <= 0) {

@@ -11,6 +11,7 @@ import {
   WIDTH,
 } from "../constants";
 import { onGround, hitbox, overlapHitPoint } from "../game/utils";
+import { recordCollisionDebugRect } from "../game/collisionDebug";
 import { playSfx } from "../game/audio";
 import { emitFallAttackSplash, emitSlash, emitHitBurst, damageDashRepositionTravel, finishDashRepositionSkill } from "./particle";
 import {
@@ -139,7 +140,7 @@ export function selectSkill(index: number) {
 export function attackBox() {
   const p = state.player;
   const reach = BASIC_ATTACK.reach + equipmentBasicAttackReachBonus(state);
-  return {
+  const box = {
     x: p.facing === 1 ? p.x + p.w : p.x - reach,
     y: p.y + BASIC_ATTACK.yOffset,
     w: reach,
@@ -147,6 +148,8 @@ export function attackBox() {
     damage: getPlayerAttackDamage() * moonTideBasicDamageMultiplier() * equipmentBasicAttackDamageMultiplier(state),
     color: BASIC_ATTACK.color,
   };
+  recordCollisionDebugRect(box, "playerAttack");
+  return box;
 }
 
 function spawnCloseArcBasicCrescent(life: number) {
@@ -199,7 +202,7 @@ function maybeSpawnCloseArcBasicCrescent() {
 
 function fallAttackBox() {
   const p = state.player;
-  return {
+  const box = {
     x: p.x + p.w / 2 - FALL_ATTACK.radius,
     y: p.y + p.h - FALL_ATTACK.height,
     w: FALL_ATTACK.radius * 2,
@@ -207,6 +210,8 @@ function fallAttackBox() {
     damage: getPlayerAttackDamage() * FALL_ATTACK.damageMultiplier,
     color: FALL_ATTACK.color,
   };
+  recordCollisionDebugRect(box, "playerAttack");
+  return box;
 }
 
 function triggerFallAttackImpact() {
@@ -277,12 +282,14 @@ function activeGuardCounterRect(): GuardCounterRect | null {
   const counter = state.guardCounterEffect;
   if (!counter || counter.hitsRemaining <= 0) return null;
   const counterPadding = counter.counterPadding;
-  return {
+  const box = {
     x: p.x - counterPadding,
     y: p.y - counterPadding,
     w: p.w + counterPadding * 2,
     h: p.h + counterPadding * 2,
   };
+  recordCollisionDebugRect(box, "playerAttack");
+  return box;
 }
 
 function resolveGuardCounterResponse(
@@ -381,6 +388,7 @@ export function tryJump() {
 
 export function updatePlayer(deltaSeconds = 0) {
   const p = state.player;
+  activeGuardCounterRect();
   if (p.ultimateCastTimer > 0) {
     p.runStepDistance = 0;
     updateUltimateCastAndTimer();

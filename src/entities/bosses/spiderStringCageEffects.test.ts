@@ -5,6 +5,7 @@ import {
   SPIDER_STRING_ULTIMATE_WEB_SHEET,
   WIDTH,
 } from "../../constants";
+import * as collisionDebug from "../../game/collisionDebug";
 import { resetState, state } from "../../game/state";
 import { setCanvas } from "../../rendering/context";
 import type { SpiderStringCageState } from "../../types/game-state";
@@ -34,11 +35,14 @@ const SPAN_EDGE_COUNT = 2;
 describe("spider string cage effects", () => {
   beforeEach(() => {
     resetState();
+    vi.spyOn(collisionDebug, "recordCollisionDebugPoint").mockImplementation(() => {});
+    vi.spyOn(collisionDebug, "recordCollisionDebugRect").mockImplementation(() => {});
   });
 
   afterEach(() => {
     setCanvas(null);
     SPIDER_STRING_ULTIMATE_WEB_SHEET.image = originalWebImage;
+    vi.restoreAllMocks();
   });
 
   it("draws two continuous web spans that converge on the safe segment", () => {
@@ -154,6 +158,52 @@ describe("spider string cage effects", () => {
     expect(uniqueSorted(warningFrames)).toEqual([0, 1]);
     expect(uniqueSorted(hitFrames)).toEqual(frameRange(FIRST_HIT_FRAME, LAST_HIT_FRAME));
     expect(state.spiderStringCages[0].frame).toBe(FADE_FRAME);
+  });
+
+  it("records dangerous columns and active height bands only during the hit window", () => {
+    const cage = createCage({
+      elapsed: SPIDER_STRING_CAGE_CONFIG.firstWarningFrames - 1,
+      kind: "mixed",
+    });
+    const columnW = WIDTH / cage.columns;
+    state.player.x = (SAFE_COLUMN + 0.5) * columnW - state.player.w / 2;
+    state.spiderStringCages.push(cage);
+    const recordPoint = vi.mocked(collisionDebug.recordCollisionDebugPoint);
+    const recordRect = vi.mocked(collisionDebug.recordCollisionDebugRect);
+
+    updateSpiderStringCageEffects();
+    expect(recordPoint).not.toHaveBeenCalled();
+    expect(recordRect).not.toHaveBeenCalled();
+
+    updateSpiderStringCageEffects();
+
+    const safeLeft = SAFE_COLUMN * columnW + SPIDER_STRING_CAGE_CONFIG.safePaddingX;
+    const safeRight = (SAFE_COLUMN + 1) * columnW
+      - SPIDER_STRING_CAGE_CONFIG.safePaddingX;
+    const groundY = GROUND_Y - SPIDER_STRING_CAGE_CONFIG.groundBandTopOffset;
+    const groundH = SPIDER_STRING_CAGE_CONFIG.groundBandTopOffset
+      + SPIDER_STRING_CAGE_CONFIG.groundBandBottomOffset;
+    const airY = GROUND_Y - SPIDER_STRING_CAGE_CONFIG.airBandTopOffset;
+    const airH = SPIDER_STRING_CAGE_CONFIG.airBandTopOffset
+      - SPIDER_STRING_CAGE_CONFIG.airBandBottomOffset;
+    expect(recordRect.mock.calls).toEqual([
+      [{ x: 0, y: groundY, w: safeLeft, h: groundH }, "enemyAttack"],
+      [{ x: safeRight, y: groundY, w: WIDTH - safeRight, h: groundH }, "enemyAttack"],
+      [{ x: 0, y: airY, w: safeLeft, h: airH }, "enemyAttack"],
+      [{ x: safeRight, y: airY, w: WIDTH - safeRight, h: airH }, "enemyAttack"],
+    ]);
+    expect(recordPoint).toHaveBeenCalledWith(
+      state.player.x + state.player.w / 2,
+      state.player.y + state.player.h,
+      "enemyAttack",
+    );
+
+    cage.hitPlayer = true;
+    recordPoint.mockClear();
+    recordRect.mockClear();
+    updateSpiderStringCageEffects();
+    expect(recordPoint).not.toHaveBeenCalled();
+    expect(recordRect).not.toHaveBeenCalled();
   });
 });
 

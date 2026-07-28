@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { WARDEN_BLOOD_MOON_BUFF_SHEET, WARDEN_SHEET_INDEX } from "../../constants";
+import * as collisionDebug from "../../game/collisionDebug";
 import { state, resetState } from "../../game/state";
 import { setCanvas } from "../../rendering/context";
 import type { BossState, EnemyState } from "../../types/game-state";
@@ -8,6 +9,8 @@ import { createEnemyState, damageEnemy, type EnemySpawnContext } from "./common"
 import { applyWardenAuraBuffs, drawWardenAuraIndicators, WARDEN_ARCHETYPE } from "./warden";
 
 const VALID_SUPPORT_RANGE = 260;
+const NORMAL_AURA_RADIUS = 300;
+const NORMAL_AURA_VERTICAL_RADIUS = 216;
 const OTHER_WARDEN_X = 350;
 const BUFFED_SUMMON_X = 361.5;
 const NORMAL_AURA_EDGE_DISTANCE = 295;
@@ -119,6 +122,7 @@ describe("warden support attack loop", () => {
     state.player.hp = 100;
     state.player.maxHp = 100;
     state.player.invincible = 0;
+    vi.spyOn(collisionDebug, "recordCollisionDebugEllipse").mockImplementation(() => {});
   });
 
   afterEach(() => {
@@ -307,6 +311,32 @@ describe("warden support attack loop", () => {
     expect(distantEnemy.wardenDamageImmune).toBe(true);
     expect(appliedDamage).toBe(0);
     expect(distantEnemy.hp).toBe(FINAL_IMMUNITY_TEST_HP);
+  });
+
+  it("records only finite active aura ellipses as support ranges", () => {
+    const introWarden = warden({ wardenPhase: "aura" });
+    state.enemies.push(introWarden, enemy({ x: 360, y: 410 }));
+    const recordEllipse = vi.mocked(collisionDebug.recordCollisionDebugEllipse);
+
+    applyWardenAuraBuffs();
+
+    expect(recordEllipse).toHaveBeenCalledOnce();
+    expect(recordEllipse).toHaveBeenCalledWith(
+      introWarden.x + introWarden.w / 2,
+      introWarden.y + introWarden.h / 2,
+      NORMAL_AURA_RADIUS,
+      NORMAL_AURA_VERTICAL_RADIUS,
+      "supportRange",
+    );
+
+    resetState();
+    recordEllipse.mockClear();
+    const finalWarden = warden({ growthStage: "final", wardenPhase: "aura" });
+    state.enemies.push(finalWarden, enemy({ x: FINAL_AURA_DISTANCE, y: 410 }));
+
+    applyWardenAuraBuffs();
+
+    expect(recordEllipse).not.toHaveBeenCalled();
   });
 
   it("pauses aura for a 14-frame hit interruption window", () => {

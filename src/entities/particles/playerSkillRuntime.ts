@@ -26,6 +26,7 @@ import {
   findArmorBreakCollision,
   genericSkillLevel,
   playerSkillSheetFrame,
+  recordVortexCollisionDebug,
   rectFeetPoint,
   refundSkillGroup,
   vortexContainment,
@@ -194,6 +195,7 @@ function updateVortexEffect(effect: PlayerSkillEffectState) {
   const slow = tuning ? valueForSkillLevel(tuning.slow ?? tuning.life, level) : 1;
   let hitTargets = 0;
   let bossHit = false;
+  recordVortexCollisionDebug(effect);
 
   for (let j = state.enemies.length - 1; j >= 0; j -= 1) {
     const enemy = state.enemies[j];

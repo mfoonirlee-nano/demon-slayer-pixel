@@ -7,6 +7,10 @@ import {
   LANTERN_EMBER_LURE_EFFECT_SHEET,
   WIDTH,
 } from "../../constants";
+import {
+  recordCollisionDebugEllipse,
+  recordCollisionDebugRect,
+} from "../../game/collisionDebug";
 import { state } from "../../game/state";
 import { clamp } from "../../game/utils";
 import { ctx } from "../../rendering/context";
@@ -122,6 +126,14 @@ function updateLanternAwakenedGrids() {
 function updateLanternAshZones() {
   for (let i = state.lanternEmberAshZones.length - 1; i >= 0; i -= 1) {
     const zone = state.lanternEmberAshZones[i] as LanternEmberAshZoneState;
+    const geometry = lanternAshZoneGeometry(zone);
+    recordCollisionDebugEllipse(
+      geometry.centerX,
+      geometry.centerY,
+      geometry.radiusX,
+      geometry.radiusY,
+      "enemyAttack",
+    );
     zone.elapsed += 1;
     zone.life -= 1;
     if (
@@ -158,10 +170,17 @@ function isPlayerInLanternFireline(fireline: LanternEmberFirelineState) {
   const p = state.player;
   const footX = p.x + p.w / 2;
   const footY = p.y + p.h;
-  return footX >= fireline.x
-    && footX <= fireline.x + fireline.w
-    && footY >= fireline.y - fireline.h
-    && footY <= fireline.y + FIRELINE_FOOT_PADDING;
+  const rect = {
+    x: fireline.x,
+    y: fireline.y - fireline.h,
+    w: fireline.w,
+    h: fireline.h + FIRELINE_FOOT_PADDING,
+  };
+  recordCollisionDebugRect(rect, "enemyAttack");
+  return footX >= rect.x
+    && footX <= rect.x + rect.w
+    && footY >= rect.y
+    && footY <= rect.y + rect.h;
 }
 
 function positiveModulo(value: number, divisor: number) {
@@ -172,19 +191,60 @@ function isPlayerInLanternGrid(grid: LanternEmberAwakenedGridState) {
   const p = state.player;
   const footX = p.x + p.w / 2;
   const footY = p.y + p.h;
-  if (footY < grid.y - grid.h || footY > grid.y + AWAKENED_GRID_FOOT_PADDING) return false;
-  const localX = positiveModulo(footX - grid.x, LANTERN_EMBER_CONFIG.awakenedGridPeriod);
-  return localX <= LANTERN_EMBER_CONFIG.awakenedGridDangerW;
+  const geometry = {
+    y: grid.y - grid.h,
+    h: grid.h + AWAKENED_GRID_FOOT_PADDING,
+    period: LANTERN_EMBER_CONFIG.awakenedGridPeriod,
+    dangerW: LANTERN_EMBER_CONFIG.awakenedGridDangerW,
+  };
+  recordLanternGridDangerStrips(grid.x, geometry);
+  if (footY < geometry.y || footY > geometry.y + geometry.h) return false;
+  const localX = positiveModulo(footX - grid.x, geometry.period);
+  return localX <= geometry.dangerW;
 }
 
 function isPlayerInLanternAshZone(zone: LanternEmberAshZoneState) {
   const p = state.player;
   const footX = p.x + p.w / 2;
   const footY = p.y + p.h;
-  const radiusY = zone.radius * LANTERN_EMBER_CONFIG.ashZoneVerticalRadiusScale;
-  const dx = (footX - zone.x) / zone.radius;
-  const dy = (footY - zone.y) / radiusY;
+  const geometry = lanternAshZoneGeometry(zone);
+  const dx = (footX - geometry.centerX) / geometry.radiusX;
+  const dy = (footY - geometry.centerY) / geometry.radiusY;
   return dx * dx + dy * dy <= 1;
+}
+
+function lanternAshZoneGeometry(zone: LanternEmberAshZoneState) {
+  return {
+    centerX: zone.x,
+    centerY: zone.y,
+    radiusX: zone.radius,
+    radiusY: zone.radius * LANTERN_EMBER_CONFIG.ashZoneVerticalRadiusScale,
+  };
+}
+
+function recordLanternGridDangerStrips(
+  originX: number,
+  geometry: { y: number; h: number; period: number; dangerW: number },
+) {
+  const firstStripIndex = Math.floor(-originX / geometry.period);
+  for (
+    let x = originX + firstStripIndex * geometry.period;
+    x < WIDTH;
+    x += geometry.period
+  ) {
+    const clippedX = Math.max(0, x);
+    const clippedRight = Math.min(WIDTH, x + geometry.dangerW);
+    if (clippedRight <= clippedX) continue;
+    recordCollisionDebugRect(
+      {
+        x: clippedX,
+        y: geometry.y,
+        w: clippedRight - clippedX,
+        h: geometry.h,
+      },
+      "enemyAttack",
+    );
+  }
 }
 
 export function drawLanternEmberEffects() {

@@ -10,6 +10,7 @@ import {
 } from "../../constants";
 import { playTone } from "../../game/audio";
 import { hitbox } from "../../game/utils";
+import { recordCollisionDebugRect } from "../../game/collisionDebug";
 import type { CrystalType, PlatformState } from "../../types/game-state";
 import { emitHitBurst } from "../particle";
 import { healPlayer } from "../player";
@@ -65,6 +66,7 @@ export function updateCrystals(dt: number) {
       CRYSTAL_CONFIG.floatYOffset +
       Math.sin(c.phase) * CRYSTAL_CONFIG.floatAmplitude;
     const box = { x: x - c.size / 2, y: y - c.size / 2, w: c.size, h: c.size };
+    recordCollisionDebugRect(box, "pickup");
 
     if (hitbox(state.player, box)) {
       const rewards = rewardValuesForAct(state.enemyDirector.act);
@@ -111,6 +113,7 @@ export function updateChests(dt: number) {
       CHEST_CONFIG.floatYOffset +
       Math.sin(c.phase) * CHEST_CONFIG.floatAmplitude;
     const box = { x: x - CHEST_CONFIG.size / 2, y: y - CHEST_CONFIG.size / 2, w: CHEST_CONFIG.size, h: CHEST_CONFIG.size };
+    recordCollisionDebugRect(box, "pickup");
 
     if (hitbox(state.player, box)) {
       c.collected = true;

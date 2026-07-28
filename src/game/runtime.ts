@@ -12,14 +12,16 @@ import {
 import {
   WIDTH,
   HEIGHT,
+  GROUND_Y,
   RUNTIME_CONFIG,
   UI_COPY,
   LOADING_SCREEN,
+  PLAYER_COMBAT,
   SKILL_FLASH,
 } from "../constants";
 import { loadSprites } from "../assets";
 import { getCoverProgress } from "./coverProgress";
-import { setupInput, teardownInput, debugCollisionBoxes } from "./input";
+import { setupInput, teardownInput } from "./input";
 import { drawBackground, drawGroundTileBase, drawGroundTileOcclusion } from "../rendering/background";
 import { drawNearForeground } from "../rendering/nearForeground";
 
@@ -31,6 +33,7 @@ import {
   spawnEnemyBySheetIndex,
   updateEnemies,
 } from "../entities/enemy";
+import { recordEliteBruteProtectionCollisionDebug } from "../entities/enemies/common";
 import { updateBindingZones, drawBindingZonesBack, drawBindingZonesFront } from "../entities/enemies/binder";
 import {
   drawBruteFireballEffects,
@@ -100,7 +103,13 @@ import {
   drawUltimateAfterimageSlashes,
   drawUltimatePlayerGhosts,
 } from "../entities/particle";
-import { gameStore, type GameSnapshot } from "./gameStore";
+import { gameStore, isCollisionDebugEnabledAtom, type GameSnapshot } from "./gameStore";
+import {
+  beginCollisionDebugFrame,
+  drawCollisionDebug,
+  recordCollisionDebugRect,
+  recordCollisionDebugSegment,
+} from "./collisionDebug";
 import { languageAtom } from "../i18n/language";
 import { message } from "../i18n/messages";
 import type { SkillId } from "../types/assets";
@@ -125,6 +134,29 @@ function drawEnemyLayer(shouldDraw: EnemyLayerFilter) {
     if (shouldDraw(enemy)) drawEnemy(enemy);
   }
 }
+
+function recordPersistentCollisionShapes() {
+  recordCollisionDebugRect(state.player, "player");
+  for (const enemy of state.enemies) {
+    recordCollisionDebugRect(enemy, "enemy");
+  }
+  if (state.boss) {
+    recordCollisionDebugRect(state.boss, "boss");
+  }
+
+  recordCollisionDebugSegment(0, GROUND_Y, WIDTH, GROUND_Y, "terrain");
+  for (const platform of state.platforms) {
+    recordCollisionDebugSegment(
+      platform.x + PLAYER_COMBAT.platformEdgePadding,
+      platform.y,
+      platform.x + platform.w - PLAYER_COMBAT.platformEdgePadding,
+      platform.y,
+      "terrain",
+    );
+  }
+  recordEliteBruteProtectionCollisionDebug();
+}
+
 let running = false;
 let manualPaused = false;
 let publishState: (snapshot: GameSnapshot) => void = () => {};
@@ -278,6 +310,8 @@ function loop(ts: number) {
     queueNextFrame();
     return;
   }
+  const isCollisionDebugEnabled = gameStore.get(isCollisionDebugEnabledAtom);
+  beginCollisionDebugFrame(isCollisionDebugEnabled);
   if (!state.last) state.last = ts;
   const dt = Math.min(RUNTIME_CONFIG.maxFrameDeltaMs, ts - state.last) / RUNTIME_CONFIG.msPerSecond;
   state.last = ts;
@@ -422,20 +456,9 @@ function loop(ts: number) {
   drawProjectiles();
   drawParticles();
 
-  if (debugCollisionBoxes) {
-    ctx.strokeStyle = "rgba(0, 255, 0, 0.8)";
-    ctx.lineWidth = 1;
-    ctx.strokeRect(state.player.x, state.player.y, state.player.w, state.player.h);
-
-    ctx.strokeStyle = "rgba(255, 0, 0, 0.8)";
-    for (const e of state.enemies) {
-      ctx.strokeRect(e.x, e.y, e.w, e.h);
-    }
-
-    if (state.boss) {
-      ctx.strokeStyle = "rgba(255, 128, 0, 0.8)";
-      ctx.strokeRect(state.boss.x, state.boss.y, state.boss.w, state.boss.h);
-    }
+  if (isCollisionDebugEnabled) {
+    recordPersistentCollisionShapes();
+    drawCollisionDebug(ctx);
   }
 
   publishCurrentState();
@@ -463,6 +486,12 @@ export function startGame(options: { onStateChange?: (snapshot: GameSnapshot) =>
     onSwitchSkill: (index) => runCombatAction(() => selectSkill(index)),
     onRestart: restart,
     onPause: togglePause,
+    onToggleCollisionDebug: () => {
+      gameStore.set(
+        isCollisionDebugEnabledAtom,
+        !gameStore.get(isCollisionDebugEnabledAtom),
+      );
+    },
   });
 
   state.last = 0;

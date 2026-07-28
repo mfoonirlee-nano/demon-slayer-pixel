@@ -1,5 +1,6 @@
 import {
   WIDTH,
+  HEIGHT,
   GROUND_Y,
   ENEMY_SHEETS,
   ENEMY_DRAW_SCALE,
@@ -12,6 +13,7 @@ import { frameIndex } from "../../game/utils";
 import { drawSheetFrame, type SpriteFrameEffect } from "../../rendering/graphics";
 import { ctx } from "../../rendering/context";
 import { playSfx } from "../../game/audio";
+import { recordCollisionDebugRect } from "../../game/collisionDebug";
 import { state } from "../../game/state";
 
 const HALF_DIVISOR = 2;
@@ -127,7 +129,7 @@ export function isEliteEnemy(enemy: EnemyState) {
   return enemy.elite === true;
 }
 
-function eliteBruteProtectionScale(enemy: EnemyState) {
+function eliteBruteProtectors() {
   const enemies = state.enemies;
   const firstEnemy = enemies[0];
   const lastEnemy = enemies[enemies.length - 1];
@@ -147,17 +149,41 @@ function eliteBruteProtectionScale(enemy: EnemyState) {
     ));
   }
 
-  for (const protector of eliteBruteProtectorCache.protectors) {
-    if (
-      protector === enemy
-      || !isEliteEnemy(protector)
-      || protector.hp <= 0
-      || protector.bruteShieldBroken
-      || (protector.bruteShieldHp ?? 0) <= 0
-    ) {
-      continue;
-    }
+  return eliteBruteProtectorCache.protectors;
+}
 
+function isActiveEliteBruteProtector(protector: EnemyState) {
+  return isEliteEnemy(protector)
+    && protector.hp > 0
+    && !protector.bruteShieldBroken
+    && (protector.bruteShieldHp ?? 0) > 0;
+}
+
+function recordEliteBruteProtectionBand(protector: EnemyState) {
+  // Protection ignores vertical distance, so its exact on-canvas region is a full-height band.
+  recordCollisionDebugRect(
+    {
+      x: enemyCenterX(protector) - ELITE_BRUTE_PROTECTION_RANGE,
+      y: 0,
+      w: ELITE_BRUTE_PROTECTION_RANGE * 2,
+      h: HEIGHT,
+    },
+    "supportRange",
+  );
+}
+
+export function recordEliteBruteProtectionCollisionDebug() {
+  for (const protector of eliteBruteProtectors()) {
+    if (isActiveEliteBruteProtector(protector)) {
+      recordEliteBruteProtectionBand(protector);
+    }
+  }
+}
+
+function eliteBruteProtectionScale(enemy: EnemyState) {
+  for (const protector of eliteBruteProtectors()) {
+    if (protector === enemy || !isActiveEliteBruteProtector(protector)) continue;
+    recordEliteBruteProtectionBand(protector);
     if (Math.abs(enemyCenterX(protector) - enemyCenterX(enemy)) <= ELITE_BRUTE_PROTECTION_RANGE) {
       return ELITE_BRUTE_PROTECTION_DAMAGE_SCALE;
     }

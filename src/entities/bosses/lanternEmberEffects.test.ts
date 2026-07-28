@@ -6,11 +6,14 @@ import {
   LANTERN_EMBER_CONFIG,
   LANTERN_EMBER_FIRELINE_SHEET,
   LANTERN_EMBER_LURE_EFFECT_SHEET,
+  WIDTH,
 } from "../../constants";
+import * as collisionDebug from "../../game/collisionDebug";
 import { resetState, state } from "../../game/state";
 import { setCanvas } from "../../rendering/context";
 import type {
   EnemyState,
+  LanternEmberAshZoneState,
   LanternEmberAwakenedGridState,
   LanternEmberBuffTetherState,
   LanternEmberFirelineState,
@@ -34,10 +37,14 @@ const originalTetherImage = LANTERN_EMBER_BUFF_TETHER_SHEET.image;
 const originalGridImage = LANTERN_EMBER_AWAKENED_GRID_SHEET.image;
 const TARGET_MOVE_X = 34;
 const TARGET_MOVE_Y = 12;
+const FIRELINE_FOOT_PADDING = 12;
+const AWAKENED_GRID_FOOT_PADDING = 14;
 
 describe("lantern ember effects", () => {
   beforeEach(() => {
     resetState();
+    vi.spyOn(collisionDebug, "recordCollisionDebugEllipse").mockImplementation(() => {});
+    vi.spyOn(collisionDebug, "recordCollisionDebugRect").mockImplementation(() => {});
   });
 
   afterEach(() => {
@@ -45,6 +52,7 @@ describe("lantern ember effects", () => {
     LANTERN_EMBER_FIRELINE_SHEET.image = originalFirelineImage;
     LANTERN_EMBER_BUFF_TETHER_SHEET.image = originalTetherImage;
     LANTERN_EMBER_AWAKENED_GRID_SHEET.image = originalGridImage;
+    vi.restoreAllMocks();
   });
 
   it("loops a long-lived active fireline through visible frames 1 to 6", () => {
@@ -170,6 +178,99 @@ describe("lantern ember effects", () => {
     expect(drawX).toBe(0);
     expect(drawW).toBeCloseTo(expectedLength);
   });
+
+  it("records a fireline rect only after warning and before it is consumed", () => {
+    const fireline = createFireline({
+      x: 420,
+      y: GROUND_Y,
+      elapsed: LANTERN_EMBER_CONFIG.firelineWarningFrames - 1,
+      life: LONG_EFFECT_LIFE,
+    });
+    state.lanternEmberFirelines.push(fireline);
+    const recordRect = vi.mocked(collisionDebug.recordCollisionDebugRect);
+
+    updateLanternEmberEffects();
+    expect(recordRect).not.toHaveBeenCalled();
+
+    updateLanternEmberEffects();
+    expect(recordRect).toHaveBeenCalledOnce();
+    expect(recordRect).toHaveBeenCalledWith(
+      {
+        x: fireline.x,
+        y: fireline.y - fireline.h,
+        w: fireline.w,
+        h: fireline.h + FIRELINE_FOOT_PADDING,
+      },
+      "enemyAttack",
+    );
+
+    fireline.hitPlayer = true;
+    recordRect.mockClear();
+    updateLanternEmberEffects();
+    expect(recordRect).not.toHaveBeenCalled();
+  });
+
+  it("records each visible dangerous grid strip from the collision period", () => {
+    const grid = createAwakenedGrid({
+      x: 0,
+      y: GROUND_Y,
+      elapsed: LANTERN_EMBER_CONFIG.awakenedGridWarningFrames,
+      life: LONG_EFFECT_LIFE,
+    });
+    state.player.y = -1_000;
+    state.lanternEmberAwakenedGrids.push(grid);
+    const recordRect = vi.mocked(collisionDebug.recordCollisionDebugRect);
+
+    updateLanternEmberEffects();
+
+    const expectedRects = [];
+    for (
+      let x = 0;
+      x < WIDTH;
+      x += LANTERN_EMBER_CONFIG.awakenedGridPeriod
+    ) {
+      expectedRects.push({
+        x,
+        y: GROUND_Y - grid.h,
+        w: Math.min(LANTERN_EMBER_CONFIG.awakenedGridDangerW, WIDTH - x),
+        h: grid.h + AWAKENED_GRID_FOOT_PADDING,
+      });
+    }
+    expect(recordRect.mock.calls).toEqual(
+      expectedRects.map((rect) => [rect, "enemyAttack"]),
+    );
+  });
+
+  it("records the ash-zone ellipse on every active frame", () => {
+    const zone = createAshZone({
+      elapsed: LANTERN_EMBER_CONFIG.ashZoneDamageFirstFrame - 1,
+      life: LONG_EFFECT_LIFE,
+    });
+    state.lanternEmberAshZones.push(zone);
+    const recordEllipse = vi.mocked(collisionDebug.recordCollisionDebugEllipse);
+
+    updateLanternEmberEffects();
+
+    expect(recordEllipse).toHaveBeenCalledOnce();
+    expect(recordEllipse).toHaveBeenCalledWith(
+      zone.x,
+      zone.y,
+      zone.radius,
+      zone.radius * LANTERN_EMBER_CONFIG.ashZoneVerticalRadiusScale,
+      "enemyAttack",
+    );
+
+    recordEllipse.mockClear();
+    updateLanternEmberEffects();
+    expect(recordEllipse).toHaveBeenCalledOnce();
+    expect(recordEllipse).toHaveBeenCalledWith(
+      zone.x,
+      zone.y,
+      zone.radius,
+      zone.radius * LANTERN_EMBER_CONFIG.ashZoneVerticalRadiusScale,
+      "enemyAttack",
+    );
+  });
 });
 
 function createFireline(
@@ -222,6 +323,22 @@ function createLure(
     elapsed: 0,
     frame: 0,
     life: LANTERN_EMBER_CONFIG.lureLife,
+    ...overrides,
+  };
+}
+
+function createAshZone(
+  overrides: Partial<LanternEmberAshZoneState> = {},
+): LanternEmberAshZoneState {
+  return {
+    x: 10_000,
+    y: GROUND_Y,
+    radius: LANTERN_EMBER_CONFIG.ashZoneRadius,
+    life: LANTERN_EMBER_CONFIG.ashZoneLife,
+    maxLife: LANTERN_EMBER_CONFIG.ashZoneLife,
+    elapsed: 0,
+    frame: 0,
+    damage: 1,
     ...overrides,
   };
 }

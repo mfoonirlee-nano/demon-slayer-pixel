@@ -11,7 +11,7 @@ import {
   PLAYER_COMBAT,
 } from "../constants";
 import type { ActBand, EnemyId, EnemySpawnSource, EnemyState, PlatformState, SpawnPattern } from "../types/game-state";
-import { hitbox } from "../game/utils";
+import { hitbox, rectsOverlap } from "../game/utils";
 import { hurtPlayer } from "./player";
 import {
   createEnemyState,
@@ -204,7 +204,7 @@ function spawnBody(enemy: EnemyState) {
 
 function enemySpawnBodyIsClear(enemy: EnemyState) {
   const body = spawnBody(enemy);
-  return state.enemies.every((existingEnemy) => !hitbox(body, existingEnemy));
+  return state.enemies.every((existingEnemy) => !rectsOverlap(body, existingEnemy));
 }
 
 function placeEnemyOnGround(enemy: EnemyState, side: number) {
@@ -457,7 +457,8 @@ function enemySpawnVisualBounds(enemy: EnemyState) {
 
 export function isEnemyBehindSpawnOccluder(enemy: EnemyState) {
   const occluderBounds = spawnOccluderBounds(enemy);
-  return occluderBounds !== null && hitbox(enemySpawnVisualBounds(enemy), occluderBounds);
+  return occluderBounds !== null
+    && rectsOverlap(enemySpawnVisualBounds(enemy), occluderBounds);
 }
 
 function clearSpawnOccluder(enemy: EnemyState) {

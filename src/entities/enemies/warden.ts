@@ -1,4 +1,5 @@
 import { ctx } from "../../rendering/context";
+import { recordCollisionDebugEllipse } from "../../game/collisionDebug";
 import { state } from "../../game/state";
 import { playSfx } from "../../game/audio";
 import {
@@ -150,23 +151,39 @@ function wardenAuraProfile(enemy: EnemyState) {
   };
 }
 
+function wardenAuraGeometry(enemy: EnemyState) {
+  const profile = wardenAuraProfile(enemy);
+  const radiusX = profile.radius;
+  return {
+    centerX: enemyCenterX(enemy),
+    centerY: enemy.y + enemy.h / HALF_DIVISOR,
+    radiusX,
+    radiusY: radiusX * WARDEN_CONFIG.auraVerticalRadiusScale,
+    profile,
+  };
+}
+
+function isEnemyInWardenAura(
+  enemy: EnemyState,
+  geometry: ReturnType<typeof wardenAuraGeometry>,
+) {
+  const dx = (enemyCenterX(enemy) - geometry.centerX) / geometry.radiusX;
+  const dy = ((enemy.y + enemy.h / HALF_DIVISOR) - geometry.centerY)
+    / geometry.radiusY;
+  return dx * dx + dy * dy <= 1;
+}
+
 function wardenSupportTargetCount(warden: EnemyState) {
   let count = 0;
-  const centerX = enemyCenterX(warden);
-  const centerY = warden.y + warden.h / HALF_DIVISOR;
-  const profile = wardenAuraProfile(warden);
-  const radiusX = profile.radius;
-  const radiusY = radiusX * WARDEN_CONFIG.auraVerticalRadiusScale;
+  const geometry = wardenAuraGeometry(warden);
 
   for (const enemy of state.enemies) {
     if (enemy === warden || isWarden(enemy)) continue;
-    if (profile.global) {
+    if (geometry.profile.global) {
       count += 1;
       continue;
     }
-    const dx = (enemyCenterX(enemy) - centerX) / radiusX;
-    const dy = ((enemy.y + enemy.h / HALF_DIVISOR) - centerY) / radiusY;
-    if (dx * dx + dy * dy <= 1) count += 1;
+    if (isEnemyInWardenAura(enemy, geometry)) count += 1;
   }
 
   return count;
@@ -338,19 +355,21 @@ export function applyWardenAuraBuffs() {
   }
 
   for (const warden of activeAuraWardens()) {
-    const centerX = enemyCenterX(warden);
-    const centerY = warden.y + warden.h / HALF_DIVISOR;
-    const profile = wardenAuraProfile(warden);
-    const radiusX = profile.radius;
-    const radiusY = radiusX * WARDEN_CONFIG.auraVerticalRadiusScale;
+    const geometry = wardenAuraGeometry(warden);
+    const { profile } = geometry;
+    if (!profile.global) {
+      recordCollisionDebugEllipse(
+        geometry.centerX,
+        geometry.centerY,
+        geometry.radiusX,
+        geometry.radiusY,
+        "supportRange",
+      );
+    }
 
     for (const enemy of state.enemies) {
       if (enemy === warden || isWarden(enemy)) continue;
-      if (!profile.global) {
-        const dx = (enemyCenterX(enemy) - centerX) / radiusX;
-        const dy = ((enemy.y + enemy.h / HALF_DIVISOR) - centerY) / radiusY;
-        if (dx * dx + dy * dy > 1) continue;
-      }
+      if (!profile.global && !isEnemyInWardenAura(enemy, geometry)) continue;
       enemy.wardenBuffedFrames = 2;
       enemy.wardenAttackDamageScale = profile.attackDamageScale;
       enemy.wardenDamageImmune = profile.damageImmune;

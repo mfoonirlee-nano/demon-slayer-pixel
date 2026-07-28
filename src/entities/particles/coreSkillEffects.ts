@@ -15,6 +15,7 @@ import type {
 import { applySkillHitEquipmentRefund, recordBasicAttackHit } from "../../systems/equipment";
 import { resolveBossHit, resolveEnemyHit } from "../../systems/combatResolution";
 import { hitbox } from "../../game/utils";
+import { recordCollisionDebugRect } from "../../game/collisionDebug";
 import {
   CORE_PLAYER_SKILL_EFFECT_CONFIGS,
   CORE_PLAYER_SKILL_EFFECT_SHEETS,
@@ -64,23 +65,23 @@ export function updateLineProjectileEffects() {
       eff.frame = LINE_PROJECTILE_EFFECT_CONFIG.loopFromFrame + ((rawFrame - sheet.count) % loopLen);
     }
 
-    // hitbox of the effect
-    const effLeft = eff.x - drawW / 2;
-    const effRight = eff.x + drawW / 2;
-    const effTop = eff.y;
-    const effBottom = eff.y + drawH;
+    const box = {
+      x: eff.x - drawW / 2,
+      y: eff.y,
+      w: drawW,
+      h: drawH,
+    };
+    recordCollisionDebugRect(box, "playerAttack");
 
     // damage enemies
     for (let j = state.enemies.length - 1; j >= 0; j -= 1) {
       const enemy = state.enemies[j];
       if (enemy.hitCd > 0) continue;
-      const overlapX = effRight > enemy.x && effLeft < enemy.x + enemy.w;
-      const overlapY = effBottom > enemy.y && effTop < enemy.y + enemy.h;
-      if (!overlapX || !overlapY) continue;
+      if (!hitbox(box, enemy)) continue;
       const hit = resolveEnemyHit({
         enemy,
         enemyIndex: j,
-        hitRect: { x: effLeft, y: effTop, w: drawW, h: drawH },
+        hitRect: box,
         damage,
         hitCooldown: LINE_PROJECTILE_EFFECT_CONFIG.hitCooldown,
         reward: "enemyNoCover",
@@ -96,14 +97,12 @@ export function updateLineProjectileEffects() {
     // damage boss
     if (state.boss && state.boss.hitCd <= 0) {
       const boss = state.boss;
-      const overlapX = effRight > boss.x && effLeft < boss.x + boss.w;
-      const overlapY = effBottom > boss.y && effTop < boss.y + boss.h;
-      if (overlapX && overlapY) {
+      if (hitbox(box, boss)) {
         bossHit = true;
         const hit = resolveBossHit(
           {
             boss,
-            hitRect: { x: effLeft, y: effTop, w: drawW, h: drawH },
+            hitRect: box,
             damage,
             hitCooldown: LINE_PROJECTILE_EFFECT_CONFIG.hitCooldown,
           },
@@ -118,8 +117,8 @@ export function updateLineProjectileEffects() {
     }
 
     // despawn when fully offscreen
-    const offLeft = eff.facing === -1 && effRight < 0;
-    const offRight2 = eff.facing === 1 && effLeft > WIDTH;
+    const offLeft = eff.facing === -1 && box.x + box.w < 0;
+    const offRight2 = eff.facing === 1 && box.x > WIDTH;
     if (offLeft || offRight2) state.lineProjectileEffects.splice(i, 1);
   }
 }
@@ -145,21 +144,22 @@ export function updateCloseArcEffects() {
     const rawFrame = Math.floor(eff.elapsed / CLOSE_ARC_EFFECT_CONFIG.frameDuration);
     eff.frame = Math.min(sheet.count - 1, rawFrame);
 
-    const effLeft = eff.x - drawW / 2;
-    const effRight = eff.x + drawW / 2;
-    const effTop = eff.y;
-    const effBottom = eff.y + drawH;
+    const box = {
+      x: eff.x - drawW / 2,
+      y: eff.y,
+      w: drawW,
+      h: drawH,
+    };
+    recordCollisionDebugRect(box, "playerAttack");
 
     for (let j = state.enemies.length - 1; j >= 0; j -= 1) {
       const enemy = state.enemies[j];
       if (enemy.hitCd > 0) continue;
-      const overlapX = effRight > enemy.x && effLeft < enemy.x + enemy.w;
-      const overlapY = effBottom > enemy.y && effTop < enemy.y + enemy.h;
-      if (!overlapX || !overlapY) continue;
+      if (!hitbox(box, enemy)) continue;
       const hit = resolveEnemyHit({
         enemy,
         enemyIndex: j,
-        hitRect: { x: effLeft, y: effTop, w: drawW, h: drawH },
+        hitRect: box,
         damage,
         hitCooldown: CLOSE_ARC_EFFECT_CONFIG.hitCooldown,
         reward: "enemyNoCover",
@@ -171,14 +171,12 @@ export function updateCloseArcEffects() {
 
     if (state.boss && state.boss.hitCd <= 0) {
       const boss = state.boss;
-      const overlapX = effRight > boss.x && effLeft < boss.x + boss.w;
-      const overlapY = effBottom > boss.y && effTop < boss.y + boss.h;
-      if (overlapX && overlapY) {
+      if (hitbox(box, boss)) {
         bossHit = true;
         const hit = resolveBossHit(
           {
             boss,
-            hitRect: { x: effLeft, y: effTop, w: drawW, h: drawH },
+            hitRect: box,
             damage,
             hitCooldown: CLOSE_ARC_EFFECT_CONFIG.hitCooldown,
           },
@@ -200,6 +198,7 @@ export function updateCloseArcBasicCrescentEffects() {
   for (let i = state.closeArcBasicCrescents.length - 1; i >= 0; i -= 1) {
     const effect = state.closeArcBasicCrescents[i] as CloseArcBasicCrescentState;
     const box = closeArcBasicCrescentBox(effect);
+    recordCollisionDebugRect(box, "playerAttack");
 
     effect.elapsed += 1;
     effect.life -= 1;

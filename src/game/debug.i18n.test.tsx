@@ -33,9 +33,11 @@ describe("DebugPanel localization", () => {
     const englishMarkup = renderPanel("en");
 
     expect(chineseMarkup).toContain("游戏窗口");
+    expect(chineseMarkup).toContain("显示碰撞盒");
     expect(chineseMarkup).toContain("潮龙·破阵");
     expect(chineseMarkup).toContain("蛛弦");
     expect(englishMarkup).toContain("Game window");
+    expect(englishMarkup).toContain("Show collision boxes");
     expect(englishMarkup).toContain("Tidal Dragon: Breakthrough");
     expect(englishMarkup).toContain("Spider String");
     expect(englishMarkup).not.toMatch(/\p{Script=Han}/u);

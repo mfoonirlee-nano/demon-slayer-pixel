@@ -1,6 +1,7 @@
 import { GROUND_Y } from "../constants";
 import { resolveStaticAssetUrl } from "../assets/staticAssetUrl";
 import type { PlatformState } from "../types/game-state";
+import { recordCollisionDebugRect } from "./collisionDebug";
 
 const GROUND_CONTACT_EPSILON = 0.1;
 const FRAMES_PER_SECOND = 60;
@@ -31,8 +32,14 @@ export function onGround(entity: RectLike & { isPlayer?: boolean }, playerOnPlat
   return entity.y + entity.h >= GROUND_Y - GROUND_CONTACT_EPSILON || (entity.isPlayer && playerOnPlatform !== null);
 }
 
-export function hitbox(a: RectLike, b: RectLike) {
+export function rectsOverlap(a: RectLike, b: RectLike) {
   return a.x < b.x + b.w && a.x + a.w > b.x && a.y < b.y + b.h && a.y + a.h > b.y;
+}
+
+export function hitbox(a: RectLike, b: RectLike) {
+  recordCollisionDebugRect(a, "other");
+  recordCollisionDebugRect(b, "other");
+  return rectsOverlap(a, b);
 }
 
 export function clamp(value: number, min: number, max: number) {

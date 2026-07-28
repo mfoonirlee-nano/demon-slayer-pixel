@@ -5,6 +5,7 @@ import {
   GROUND_Y,
 } from "../../constants";
 import { playSfx } from "../../game/audio";
+import { recordCollisionDebugEllipse } from "../../game/collisionDebug";
 import { state } from "../../game/state";
 import { drawSheetFrame } from "../../rendering/graphics";
 import type { SpriteSheet } from "../../types/assets";
@@ -232,11 +233,20 @@ function updateRoll(effect: BruteFireballState) {
 }
 
 function playerInsideExplosion(effect: BruteFireballState) {
+  const centerX = fireballCenterX(effect);
+  const radiusX = effect.explosionRadius;
+  const radiusY = radiusX * BRUTE_FIREBALL_CONFIG.explosionVerticalRadiusScale;
+  recordCollisionDebugEllipse(
+    centerX,
+    effect.groundY,
+    radiusX,
+    radiusY,
+    "enemyAttack",
+  );
   const playerFootX = state.player.x + state.player.w / HALF_DIVISOR;
   const playerFootY = state.player.y + state.player.h;
-  const dx = (playerFootX - fireballCenterX(effect)) / effect.explosionRadius;
-  const verticalRadius = effect.explosionRadius * BRUTE_FIREBALL_CONFIG.explosionVerticalRadiusScale;
-  const dy = (playerFootY - effect.groundY) / verticalRadius;
+  const dx = (playerFootX - centerX) / radiusX;
+  const dy = (playerFootY - effect.groundY) / radiusY;
   return dx * dx + dy * dy <= 1;
 }
 

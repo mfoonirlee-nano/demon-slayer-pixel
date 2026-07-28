@@ -1,4 +1,8 @@
 import { DEAD_BELL_BLADE_SHEET, DEAD_BELL_CONFIG, DEAD_BELL_WAVE_SHEET, WIDTH } from "../../constants";
+import {
+  recordCollisionDebugPoint,
+  recordCollisionDebugRing,
+} from "../../game/collisionDebug";
 import { state } from "../../game/state";
 import { clamp, hitbox } from "../../game/utils";
 import { ctx } from "../../rendering/context";
@@ -50,7 +54,16 @@ function updateDeadBellWaves() {
       const py = p.y + p.h / 2;
       const playerRadius = Math.max(p.w, p.h) * PLAYER_WAVE_RADIUS_RATIO;
       const dist = Math.hypot(px - wave.x, py - wave.y);
-      if (Math.abs(dist - wave.radius) <= wave.thickness + playerRadius) {
+      const collisionTolerance = wave.thickness + playerRadius;
+      recordCollisionDebugRing(
+        wave.x,
+        wave.y,
+        wave.radius,
+        collisionTolerance,
+        "enemyAttack",
+      );
+      recordCollisionDebugPoint(px, py, "player");
+      if (Math.abs(dist - wave.radius) <= collisionTolerance) {
         wave.hitPlayer = true;
         hurtPlayer(wave.damage, wave.x - px);
       }

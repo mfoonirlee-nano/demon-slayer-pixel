@@ -4,6 +4,10 @@ import {
   SPIDER_STRING_ULTIMATE_WEB_SHEET,
   WIDTH,
 } from "../../constants";
+import {
+  recordCollisionDebugPoint,
+  recordCollisionDebugRect,
+} from "../../game/collisionDebug";
 import { state } from "../../game/state";
 import { clamp } from "../../game/utils";
 import { ctx } from "../../rendering/context";
@@ -98,12 +102,25 @@ export function drawSpiderStringCageEffects() {
 export function isPlayerInSpiderStringCageDanger(cage: SpiderStringCageState) {
   const footX = state.player.x + state.player.w / 2;
   const footY = state.player.y + state.player.h;
-  if (!isDangerColumn(cage, footX)) return false;
+  const bounds = cageDangerBounds(cage);
+  const groundBand = {
+    y: GROUND_Y - SPIDER_STRING_CAGE_CONFIG.groundBandTopOffset,
+    h: SPIDER_STRING_CAGE_CONFIG.groundBandTopOffset
+      + SPIDER_STRING_CAGE_CONFIG.groundBandBottomOffset,
+  };
+  const airBand = {
+    y: GROUND_Y - SPIDER_STRING_CAGE_CONFIG.airBandTopOffset,
+    h: SPIDER_STRING_CAGE_CONFIG.airBandTopOffset
+      - SPIDER_STRING_CAGE_CONFIG.airBandBottomOffset,
+  };
+  recordCageDanger(cage, bounds, groundBand, airBand);
+  recordCollisionDebugPoint(footX, footY, "enemyAttack");
+  if (!isDangerColumn(bounds, footX)) return false;
 
-  const inGroundBand = footY >= GROUND_Y - SPIDER_STRING_CAGE_CONFIG.groundBandTopOffset
-    && footY <= GROUND_Y + SPIDER_STRING_CAGE_CONFIG.groundBandBottomOffset;
-  const inAirBand = footY >= GROUND_Y - SPIDER_STRING_CAGE_CONFIG.airBandTopOffset
-    && footY <= GROUND_Y - SPIDER_STRING_CAGE_CONFIG.airBandBottomOffset;
+  const inGroundBand = footY >= groundBand.y
+    && footY <= groundBand.y + groundBand.h;
+  const inAirBand = footY >= airBand.y
+    && footY <= airBand.y + airBand.h;
 
   if (cage.kind === "ground") return inGroundBand;
   if (cage.kind === "air") return inAirBand;
@@ -153,11 +170,41 @@ function playerColumnIndex() {
   return clamp(Math.floor(footX / columnW), 0, SPIDER_STRING_CAGE_CONFIG.columns - 1);
 }
 
-function isDangerColumn(cage: SpiderStringCageState, footX: number) {
+function cageDangerBounds(cage: SpiderStringCageState) {
   const columnW = WIDTH / cage.columns;
   const safeLeft = cage.safeColumn * columnW + SPIDER_STRING_CAGE_CONFIG.safePaddingX;
   const safeRight = (cage.safeColumn + 1) * columnW - SPIDER_STRING_CAGE_CONFIG.safePaddingX;
+  return { safeLeft, safeRight };
+}
+
+function isDangerColumn(
+  { safeLeft, safeRight }: ReturnType<typeof cageDangerBounds>,
+  footX: number,
+) {
   return footX < safeLeft || footX > safeRight;
+}
+
+function recordCageDanger(
+  cage: SpiderStringCageState,
+  { safeLeft, safeRight }: ReturnType<typeof cageDangerBounds>,
+  groundBand: { y: number; h: number },
+  airBand: { y: number; h: number },
+) {
+  const bands = cage.kind === "ground"
+    ? [groundBand]
+    : cage.kind === "air"
+      ? [airBand]
+      : [groundBand, airBand];
+  for (const band of bands) {
+    recordCollisionDebugRect(
+      { x: 0, y: band.y, w: safeLeft, h: band.h },
+      "enemyAttack",
+    );
+    recordCollisionDebugRect(
+      { x: safeRight, y: band.y, w: WIDTH - safeRight, h: band.h },
+      "enemyAttack",
+    );
+  }
 }
 
 function isCageHitWindow(cage: SpiderStringCageState) {
@@ -194,9 +241,7 @@ function cageAlpha(cage: SpiderStringCageState) {
 
 function drawCageBand(cage: SpiderStringCageState, y: number) {
   const columnW = WIDTH / cage.columns;
-  const safeLeft = cage.safeColumn * columnW + SPIDER_STRING_CAGE_CONFIG.safePaddingX;
-  const safeRight = (cage.safeColumn + 1) * columnW
-    - SPIDER_STRING_CAGE_CONFIG.safePaddingX;
+  const { safeLeft, safeRight } = cageDangerBounds(cage);
 
   drawCageSpan(cage, 0, safeLeft, columnW, y, 1);
   drawCageSpan(cage, safeRight, WIDTH, columnW, y, -1);

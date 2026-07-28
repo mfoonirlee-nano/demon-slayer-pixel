@@ -1,10 +1,14 @@
-import { describe, expect, it, beforeEach } from "vitest";
-import { GROUND_Y, SKILL_IDS } from "../../constants";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { GROUND_Y, HEIGHT, SKILL_IDS } from "../../constants";
+import * as collisionDebug from "../../game/collisionDebug";
 import { resetState, state } from "../../game/state";
 import type { ActBand, EnemyState, SkillLevel } from "../../types/game-state";
 import { spawnEnemyById, updateEnemies } from "../enemy";
 import { applyEnemyDamage } from "../../systems/combatResolution";
-import { damageEnemy } from "./common";
+import {
+  damageEnemy,
+  recordEliteBruteProtectionCollisionDebug,
+} from "./common";
 
 const SHIELD_TEST_DAMAGE = 30;
 const HIGH_SHIELD_TEST_DAMAGE = 60;
@@ -20,6 +24,7 @@ const TEST_PLAYER_X = 40;
 const TEST_GUARD_FRAMES = 20;
 const TEST_COUNTER_ACTIVE_FRAMES = 72;
 const ELITE_PROTECTION_DAMAGE_SCALE = 0.86;
+const ELITE_PROTECTION_RANGE = 190;
 const CROWDED_ENEMY_COUNT = 16;
 const ELITE_PROTECTION_ALLY_OFFSET = 100;
 
@@ -65,6 +70,10 @@ function backSourceX(brute: ReturnType<typeof spawnBrute>) {
   brute.bruteFacing = 1;
   return brute.x - SHIELD_HIT_SOURCE_OFFSET;
 }
+
+afterEach(() => {
+  vi.restoreAllMocks();
+});
 
 describe("brute shield", () => {
   beforeEach(() => {
@@ -342,6 +351,35 @@ describe("elite brute protection", () => {
 
     brute.bruteShieldBroken = true;
     expect(damageEnemy(ally, SHIELD_TEST_DAMAGE)).toBeCloseTo(SHIELD_TEST_DAMAGE);
+  });
+
+  it("records the active elite protection band and removes it with the shield", () => {
+    const brute = spawnBrute();
+    brute.elite = true;
+    guardWithShield(brute);
+    const recordRect = vi.spyOn(collisionDebug, "recordCollisionDebugRect")
+      .mockImplementation(() => {});
+
+    recordEliteBruteProtectionCollisionDebug();
+
+    expect(recordRect).toHaveBeenCalledWith(
+      {
+        x: brute.x + brute.w / 2 - ELITE_PROTECTION_RANGE,
+        y: 0,
+        w: ELITE_PROTECTION_RANGE * 2,
+        h: HEIGHT,
+      },
+      "supportRange",
+    );
+
+    brute.bruteShieldBroken = true;
+    recordRect.mockClear();
+    recordEliteBruteProtectionCollisionDebug();
+
+    expect(recordRect).not.toHaveBeenCalledWith(
+      expect.any(Object),
+      "supportRange",
+    );
   });
 
   it("indexes elite protectors once for a crowded same-frame damage batch", () => {
