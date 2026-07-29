@@ -319,8 +319,8 @@ describe("player status snapshot", () => {
     expect(status("hunt_kill_chain")).toMatchObject({
       remainingFrames: 120,
       durationFrames: 240,
-      stacks: 2,
-      maxStacks: 2,
+      stacks: 1,
+      maxStacks: 1,
     });
     expect(status("hunt_blade_ready")).toBeDefined();
     expect(status("hunt_blade_water")).toMatchObject({
@@ -332,6 +332,25 @@ describe("player status snapshot", () => {
       durationFrames: 180,
     });
     expect(status("hunt_garb_guard_ready")).toBeDefined();
+    expect(status("hunt_talisman_ready")).toBeDefined();
+  });
+
+  it("projects hunt talisman readiness and cooldown without a kill-chain status", () => {
+    addAndEquip("hunt_talisman");
+    state.player.huntKillTimer = 120;
+    state.player.huntKillCount = 2;
+
+    expect(status("hunt_kill_chain")).toBeUndefined();
+    expect(status("hunt_talisman_ready")).toBeDefined();
+    expect(status("hunt_talisman_cooldown")).toBeUndefined();
+
+    state.player.huntTalismanCooldown = 60;
+
+    expect(status("hunt_talisman_ready")).toBeUndefined();
+    expect(status("hunt_talisman_cooldown")).toMatchObject({
+      remainingFrames: 60,
+      durationFrames: 240,
+    });
   });
 
   it("projects risk low-health effects and unused one-shot readiness", () => {

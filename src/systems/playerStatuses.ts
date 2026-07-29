@@ -1,6 +1,9 @@
 import {
   BINDER_TALISMAN_DEBUFF_FRAMES,
   BINDER_TALISMAN_STUN_FRAMES,
+  HUNT_BLADE_WATER_TIMER_FRAMES,
+  HUNT_GARB_TIMER_FRAMES,
+  HUNT_KILL_WINDOW_FRAMES,
   SPIDER_STRING_CAGE_CONFIG,
 } from "../constants";
 import { activeLanternAshZoneForPlayer } from "../entities/players/lanternAshZone";
@@ -8,6 +11,10 @@ import type { GameState, PlayerStatusSnapshot } from "../types/game-state";
 import { isPlayerLowHp } from "./equipment";
 import {
   burstBladeExecuteHpRatio,
+  huntBladeKillsRequired,
+  huntGarbKillsRequired,
+  huntTalismanCooldownFrames,
+  isHuntBladeAlwaysActive,
   triggerCountWithFamilyResonance,
 } from "./equipmentResonance";
 import { equippedTier, tierAtLeast } from "./equipmentState";
@@ -16,11 +23,6 @@ import {
   FLOW_BLADE_HITS_REQUIRED,
   FLOW_BLADE_SURGE_SKILL_FRAMES,
   FLOW_GARB_TIMER_FRAMES,
-  HUNT_BLADE_KILLS_REQUIRED,
-  HUNT_BLADE_WATER_TIMER_FRAMES,
-  HUNT_GARB_TIMER_FRAMES,
-  HUNT_KILL_WINDOW,
-  HUNT_TALISMAN_KILLS_REQUIRED,
   SHADOWSTEP_BLADE_QUICK_TIMER_FRAMES,
   SHADOWSTEP_DISTANCE_REQUIRED,
   SHADOWSTEP_GARB_HURT_SPEED_TIMER_FRAMES,
@@ -226,13 +228,8 @@ function huntChainMaxStacks(state: GameState) {
   const thresholds: number[] = [];
   const bladeTier = equippedTier(state, "blade", "hunt_blade");
   const garbTier = equippedTier(state, "garb", "hunt_garb");
-  const talismanTier = equippedTier(state, "talisman", "hunt_talisman");
-  if (bladeTier || (garbTier && tierAtLeast(garbTier, "awakened"))) {
-    thresholds.push(triggerCountWithFamilyResonance(state, "hunt", HUNT_BLADE_KILLS_REQUIRED));
-  }
-  if (talismanTier) {
-    thresholds.push(triggerCountWithFamilyResonance(state, "hunt", HUNT_TALISMAN_KILLS_REQUIRED));
-  }
+  if (bladeTier && !isHuntBladeAlwaysActive(state)) thresholds.push(huntBladeKillsRequired(state));
+  if (garbTier) thresholds.push(huntGarbKillsRequired(state));
   return thresholds.length > 0 ? Math.max(...thresholds) : undefined;
 }
 
@@ -241,16 +238,20 @@ function pushHuntStatuses(state: GameState, statuses: PlayerStatusSnapshot[]) {
   const bladeTier = equippedTier(state, "blade", "hunt_blade");
   const garbTier = equippedTier(state, "garb", "hunt_garb");
   const talismanTier = equippedTier(state, "talisman", "hunt_talisman");
-  if ((bladeTier || garbTier || talismanTier) && player.huntKillTimer > 0 && player.huntKillCount > 0) {
+  if ((bladeTier || garbTier) && player.huntKillTimer > 0 && player.huntKillCount > 0) {
     const maxStacks = huntChainMaxStacks(state);
-    statuses.push(timedStatus("hunt_kill_chain", player.huntKillTimer, HUNT_KILL_WINDOW, {
+    statuses.push(timedStatus("hunt_kill_chain", player.huntKillTimer, HUNT_KILL_WINDOW_FRAMES, {
       stacks: maxStacks === undefined
         ? player.huntKillCount
         : Math.min(player.huntKillCount, maxStacks),
       ...(maxStacks === undefined ? {} : { maxStacks }),
     }));
   }
-  if (bladeTier && (player.huntBladeReady || player.huntBladeStrike)) {
+  if (bladeTier && (
+    isHuntBladeAlwaysActive(state)
+    || player.huntBladeReady
+    || player.huntBladeStrike
+  )) {
     statuses.push(persistentStatus("hunt_blade_ready"));
   }
   if (bladeTier && tierAtLeast(bladeTier, "awakened") && player.huntBladeWaterTimer > 0) {
@@ -265,6 +266,15 @@ function pushHuntStatuses(state: GameState, statuses: PlayerStatusSnapshot[]) {
   }
   if (garbTier && tierAtLeast(garbTier, "awakened") && player.huntGarbGuardReady) {
     statuses.push(persistentStatus("hunt_garb_guard_ready"));
+  }
+  if (talismanTier && player.huntTalismanCooldown > 0) {
+    statuses.push(timedStatus(
+      "hunt_talisman_cooldown",
+      player.huntTalismanCooldown,
+      huntTalismanCooldownFrames(state),
+    ));
+  } else if (talismanTier) {
+    statuses.push(persistentStatus("hunt_talisman_ready"));
   }
 }
 

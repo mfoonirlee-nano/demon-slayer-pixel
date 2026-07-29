@@ -26,6 +26,8 @@ export type PlayerStatusId =
   | "hunt_blade_water"
   | "hunt_garb_haste"
   | "hunt_garb_guard_ready"
+  | "hunt_talisman_ready"
+  | "hunt_talisman_cooldown"
   | "risk_blade_low_hp"
   | "risk_blade_skill_ready"
   | "risk_garb_low_hp"

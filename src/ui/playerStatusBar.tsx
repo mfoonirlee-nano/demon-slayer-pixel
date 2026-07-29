@@ -66,6 +66,8 @@ export const PLAYER_STATUS_PRESENTATIONS = {
   hunt_blade_water: buff("attack"),
   hunt_garb_haste: buff("speed"),
   hunt_garb_guard_ready: buff("defense"),
+  hunt_talisman_ready: buff("energy"),
+  hunt_talisman_cooldown: buff("recovery"),
   risk_blade_low_hp: buff("attack"),
   risk_blade_skill_ready: buff("attack"),
   risk_garb_low_hp: buff("defense"),

@@ -54,6 +54,7 @@ import {
 import { resolvePlayerLanding, tryPlayerJump } from "./players/jumping";
 import { playerMoveScale } from "./players/movementModifiers";
 import { updateSkillCastRelease, updateUltimateCastAndTimer } from "./players/skillCasting";
+import { spawnHuntBladeReachEffect } from "./particles/huntBladeReachEffect";
 
 export { castSelectedSkill, castUltimateSkill } from "./players/skillCasting";
 export { drawPlayer } from "./players/render";
@@ -113,6 +114,9 @@ export function triggerAttack() {
   beginBasicAttackEquipmentEffects(state);
   state.player.attackDuration = frames;
   state.player.attackTimer = frames;
+  if (state.player.huntBladeStrike) {
+    spawnHuntBladeReachEffect(equipmentBasicAttackReachBonus(state));
+  }
   playSfx("playerAttackStart");
 }
 

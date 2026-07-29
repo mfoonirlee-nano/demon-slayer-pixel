@@ -115,6 +115,25 @@ describe("reward choice details", () => {
     expect(metricValue(metrics, "终能获取")).toBe("-10%");
   });
 
+  it.each([
+    { tier: "common", gain: 10 },
+    { tier: "fine", gain: 20 },
+    { tier: "awakened", gain: 30 },
+  ] as const)("shows the hunt talisman kill reward and cooldown at $tier", ({ tier, gain }) => {
+    const metrics = equipmentRewardMetrics(makeEquipmentChoice("hunt_talisman", tier));
+
+    expect(metricValue(metrics, "连杀要求")).toBeUndefined();
+    expect(metricValue(metrics, "技能能量")).toBe(`+${gain}`);
+    expect(metricValue(metrics, "终能")).toBe(`+${gain}`);
+    expect(metricValue(metrics, "冷却")).toBe("4秒");
+  });
+
+  it("shows the hunt garb base three-kill requirement", () => {
+    const metrics = equipmentRewardMetrics(makeEquipmentChoice("hunt_garb", "common"), "en");
+
+    expect(metricValue(metrics, "Kill Requirement")).toBe("3 kills");
+  });
+
   it("localizes every visible equipment metric and value unit in English", () => {
     const flowBlade = equipmentRewardMetrics(
       makeEquipmentChoice("flow_blade", "fine", "common", "tierUpgrade"),

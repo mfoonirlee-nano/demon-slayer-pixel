@@ -160,6 +160,7 @@ export function createInitialState(): GameState {
     lineProjectileEffects: [],
     closeArcEffects: [],
     closeArcBasicCrescents: [],
+    huntBladeReachEffects: [],
     guardCounterEffect: null,
     playerSkillEffects: [],
     ultimateEffects: [],
@@ -204,6 +205,7 @@ export function resetState() {
   resetCollection(state.lineProjectileEffects, next.lineProjectileEffects);
   resetCollection(state.closeArcEffects, next.closeArcEffects);
   resetCollection(state.closeArcBasicCrescents, next.closeArcBasicCrescents);
+  resetCollection(state.huntBladeReachEffects, next.huntBladeReachEffects);
   resetCollection(state.playerSkillEffects, next.playerSkillEffects);
   resetCollection(state.ultimateEffects, next.ultimateEffects);
   resetCollection(state.ultimateTrails, next.ultimateTrails);

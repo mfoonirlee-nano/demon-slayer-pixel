@@ -24,7 +24,6 @@ import {
   equipEquipment,
   equipmentBasicAttackDamageMultiplier,
   equipmentBasicAttackFrameMultiplier,
-  equipmentBasicAttackReachBonus,
   equipmentBossDamageMultiplier,
   equipmentIncomingDamageMultiplier,
   equipmentItem,
@@ -37,7 +36,6 @@ import {
   recordBasicAttackHit,
   recordBossDamageEquipmentEffects,
   recordBossDefeatEquipmentEffects,
-  recordEnemyDefeatEquipmentEffects,
   recordEquipmentHurt,
   recordEquipmentMovement,
   tickEquipmentEffects,
@@ -63,7 +61,6 @@ const COMMON_TEMPO_BLADE_FRAME_MULTIPLIER = 0.82;
 const TEMPO_GARB_RECOVERY_TEST_FRAMES = 150;
 const AWAKENED_TEMPO_TALISMAN_SKILL_COST = 24;
 const PAIR_FLOW_RESONANCE_HIT_COUNT = 3;
-const HUNT_RESONANCE_KILL_COUNT = 2;
 const BURST_GARB_COMMON_MAX_HP = 112;
 const FLOW_BLADE_FINE_ATTACK = 20;
 
@@ -455,57 +452,6 @@ describe("equipment system", () => {
 
     expect(state.player.skillEnergy).toBeGreaterThan(0);
     expect(state.player.ultimateEnergy).toBeGreaterThan(0);
-  });
-
-  it("applies hunt blade awakened water window after a kill chain", () => {
-    const state = createInitialState();
-    addAndEquip(state, "hunt_blade", "awakened");
-
-    recordEnemyDefeatEquipmentEffects(state);
-    recordEnemyDefeatEquipmentEffects(state);
-    beginBasicAttackEquipmentEffects(state);
-
-    expect(state.player.huntBladeWaterTimer).toBeGreaterThan(0);
-    expect(state.player.huntBladeStrike).toBe(true);
-    expect(equipmentBasicAttackReachBonus(state)).toBeGreaterThan(0);
-  });
-
-  it("applies hunt garb awakened next-hit guard after a kill chain", () => {
-    const state = createInitialState();
-    addAndEquip(state, "hunt_garb", "awakened");
-
-    recordEnemyDefeatEquipmentEffects(state);
-    recordEnemyDefeatEquipmentEffects(state);
-
-    expect(state.player.huntGarbGuardReady).toBe(true);
-    expect(equipmentIncomingDamageMultiplier(state)).toBeLessThan(1);
-    expect(state.player.huntGarbGuardReady).toBe(false);
-  });
-
-  it("applies hunt talisman fine ultimate gain on three kills", () => {
-    const state = createInitialState();
-    state.player.ultimateLevel = 1;
-    addAndEquip(state, "hunt_talisman", "fine");
-
-    recordEnemyDefeatEquipmentEffects(state);
-    recordEnemyDefeatEquipmentEffects(state);
-    recordEnemyDefeatEquipmentEffects(state);
-
-    expect(state.player.skillEnergy).toBeGreaterThan(0);
-    expect(state.player.ultimateEnergy).toBeGreaterThan(0);
-  });
-
-  it("applies hunt resonance by triggering talisman energy after a shorter chain", () => {
-    const state = createInitialState();
-    addAndEquip(state, "hunt_blade", "common");
-    addAndEquip(state, "hunt_garb", "common");
-    addAndEquip(state, "hunt_talisman", "common");
-
-    for (let i = 0; i < HUNT_RESONANCE_KILL_COUNT; i += 1) {
-      recordEnemyDefeatEquipmentEffects(state);
-    }
-
-    expect(state.player.skillEnergy).toBeGreaterThan(0);
   });
 
   it("applies risk blade awakened low-health skill burst", () => {

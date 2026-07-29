@@ -2,11 +2,18 @@ import type { EquipmentFamily, GameState } from "../types/game-state";
 import {
   BURST_BLADE_PAIR_RESONANCE_EXECUTE_HP_RATIO,
   BURST_TALISMAN_PAIR_RESONANCE_COOLDOWN_FRAMES,
-  EQUIPMENT_PAIR_COOLDOWN_MULTIPLIER,
   EQUIPMENT_PAIR_TRIGGER_REDUCTION,
   FLOW_FULL_HEALTH_REGEN_PER_SECOND,
   FLOW_PAIR_SKILL_ENERGY_REGEN_PER_SECOND,
   FULL_RESONANCE_SKILL_ENERGY_GAIN,
+  HUNT_BLADE_KILLS_REQUIRED,
+  HUNT_FULL_GARB_KILLS_REQUIRED,
+  HUNT_FULL_TALISMAN_COOLDOWN_FRAMES,
+  HUNT_GARB_KILLS_REQUIRED,
+  HUNT_PAIR_BLADE_KILLS_REQUIRED,
+  HUNT_PAIR_GARB_KILLS_REQUIRED,
+  HUNT_PAIR_TALISMAN_COOLDOWN_FRAMES,
+  HUNT_TALISMAN_COOLDOWN_FRAMES,
   SHADOWSTEP_FULL_RESONANCE_SKILL_ENERGY_GAIN,
   SHADOWSTEP_PAIR_DODGE_CHANCE,
 } from "../constants";
@@ -48,9 +55,28 @@ export function triggerCountWithFamilyResonance(state: GameState, family: Equipm
   return Math.max(1, baseCount - EQUIPMENT_PAIR_TRIGGER_REDUCTION);
 }
 
-export function cooldownWithFamilyResonance(state: GameState, family: EquipmentFamily, baseCooldown: number) {
-  if (equippedFamilyCount(state, family) < PAIR_RESONANCE_COUNT) return baseCooldown;
-  return Math.max(1, Math.floor(baseCooldown * EQUIPMENT_PAIR_COOLDOWN_MULTIPLIER));
+export function huntBladeKillsRequired(state: GameState) {
+  return equippedFamilyCount(state, "hunt") >= PAIR_RESONANCE_COUNT
+    ? HUNT_PAIR_BLADE_KILLS_REQUIRED
+    : HUNT_BLADE_KILLS_REQUIRED;
+}
+
+export function isHuntBladeAlwaysActive(state: GameState) {
+  return equippedFamilyCount(state, "hunt") >= FULL_RESONANCE_COUNT;
+}
+
+export function huntGarbKillsRequired(state: GameState) {
+  const huntCount = equippedFamilyCount(state, "hunt");
+  if (huntCount >= FULL_RESONANCE_COUNT) return HUNT_FULL_GARB_KILLS_REQUIRED;
+  if (huntCount >= PAIR_RESONANCE_COUNT) return HUNT_PAIR_GARB_KILLS_REQUIRED;
+  return HUNT_GARB_KILLS_REQUIRED;
+}
+
+export function huntTalismanCooldownFrames(state: GameState) {
+  const huntCount = equippedFamilyCount(state, "hunt");
+  if (huntCount >= FULL_RESONANCE_COUNT) return HUNT_FULL_TALISMAN_COOLDOWN_FRAMES;
+  if (huntCount >= PAIR_RESONANCE_COUNT) return HUNT_PAIR_TALISMAN_COOLDOWN_FRAMES;
+  return HUNT_TALISMAN_COOLDOWN_FRAMES;
 }
 
 export function applyFamilyResonanceReward(state: GameState, family: EquipmentFamily) {

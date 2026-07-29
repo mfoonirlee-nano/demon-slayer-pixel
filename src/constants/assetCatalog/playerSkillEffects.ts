@@ -79,6 +79,12 @@ export const CLOSE_ARC_BASIC_CRESCENT_SHEET: SpriteSheet = {
   image: null,
 };
 
+// Measured per frame so transparent margins cannot shorten range-aligned visuals.
+export const CLOSE_ARC_BASIC_CRESCENT_ALPHA_BOUNDS = [
+  { x: 42, y: 43, width: 108, height: 42 },
+  { x: 39, y: 39, width: 113, height: 50 },
+] as const;
+
 export const CLOSE_ARC_BASIC_CRESCENT_CONFIG = {
   requiredSkillLevel: 3,
   drawScale: 0.58,

@@ -5,7 +5,16 @@ import type {
   EquipmentSlot,
   EquipmentTier,
 } from "../types/game-state";
-import { EQUIPMENT_PRIMARY_STAT_BONUS_RATIOS } from "../constants";
+import {
+  EQUIPMENT_PRIMARY_STAT_BONUS_RATIOS,
+  HUNT_BLADE_KILLS_REQUIRED,
+  HUNT_BLADE_WATER_DURATION_SECONDS,
+  HUNT_GARB_KILLS_REQUIRED,
+  HUNT_KILL_WINDOW_SECONDS,
+  HUNT_TALISMAN_COOLDOWN_SECONDS,
+  HUNT_TALISMAN_SKILL_GAIN,
+  HUNT_TALISMAN_ULTIMATE_GAIN,
+} from "../constants";
 
 type EquipmentBaseItem = {
   id: EquipmentItemId;
@@ -141,25 +150,47 @@ const EQUIPMENT_TIER_EFFECTS: Record<EquipmentItemId, Record<EquipmentTier, Equi
     },
   },
   hunt_blade: {
-    common: { summary: "短时间内连续击杀小怪后，下一次普攻范围扩大。", tag: "连杀强化" },
-    fine: { summary: "连杀触发后，下一次普攻范围扩大并造成更高伤害。", tag: "水刃强击" },
-    awakened: { summary: "连杀触发后，短时间内普攻周期性获得扩幅与额外伤害。", tag: "连猎水刃" },
+    common: {
+      summary: `${HUNT_KILL_WINDOW_SECONDS} 秒内连续击杀 ${HUNT_BLADE_KILLS_REQUIRED} 个小怪后，下一次普攻扩大范围并投射可见水刃。`,
+      tag: "连杀强化",
+    },
+    fine: {
+      summary: `${HUNT_KILL_WINDOW_SECONDS} 秒内连续击杀 ${HUNT_BLADE_KILLS_REQUIRED} 个小怪后，下一次普攻投射范围更大、伤害更高的水刃。`,
+      tag: "水刃强击",
+    },
+    awakened: {
+      summary: `${HUNT_KILL_WINDOW_SECONDS} 秒内连续击杀 ${HUNT_BLADE_KILLS_REQUIRED} 个小怪后，${HUNT_BLADE_WATER_DURATION_SECONDS} 秒内普攻获得扩幅、额外伤害和可见水刃。`,
+      tag: "连猎水刃",
+    },
   },
   hunt_garb: {
-    common: { summary: "击杀小怪后，短时间内移动速度提高。", tag: "击杀机动" },
-    fine: { summary: "击杀小怪后移动速度提高；连杀时持续时间刷新。", tag: "连杀疾行" },
-    awakened: { summary: "连杀时移动速度提高，并获得下一次受伤减免。", tag: "猎势护身" },
+    common: {
+      summary: `${HUNT_KILL_WINDOW_SECONDS} 秒内连续击杀 ${HUNT_GARB_KILLS_REQUIRED} 个小怪后，短时间内移动速度提高。`,
+      tag: "击杀机动",
+    },
+    fine: {
+      summary: `${HUNT_KILL_WINDOW_SECONDS} 秒内连续击杀 ${HUNT_GARB_KILLS_REQUIRED} 个小怪后提高移动速度；后续击杀会刷新持续时间。`,
+      tag: "连杀疾行",
+    },
+    awakened: {
+      summary: `${HUNT_KILL_WINDOW_SECONDS} 秒内连续击杀 ${HUNT_GARB_KILLS_REQUIRED} 个小怪后提高移动速度，并获得下一次受伤减免。`,
+      tag: "猎势护身",
+    },
   },
   hunt_talisman: {
-    common: { summary: "短时间内连续击杀 3 个小怪后，获得技能能量。", tag: "连杀回能" },
+    common: {
+      summary: `击杀小怪时恢复 ${HUNT_TALISMAN_SKILL_GAIN.common} 点技能能量和 ${HUNT_TALISMAN_ULTIMATE_GAIN.common} 点大招能量，冷却 ${HUNT_TALISMAN_COOLDOWN_SECONDS} 秒。`,
+      tag: "击杀双能",
+      requiresUltimate: true,
+    },
     fine: {
-      summary: "连杀 3 个小怪后，获得技能能量和少量大招能量。",
-      tag: "连杀终能",
+      summary: `击杀小怪时恢复 ${HUNT_TALISMAN_SKILL_GAIN.fine} 点技能能量和 ${HUNT_TALISMAN_ULTIMATE_GAIN.fine} 点大招能量，冷却 ${HUNT_TALISMAN_COOLDOWN_SECONDS} 秒。`,
+      tag: "击杀双能",
       requiresUltimate: true,
     },
     awakened: {
-      summary: "连杀 3 个小怪后获得技能和大招能量；该冷却可被 Boss 击杀重置。",
-      tag: "连珠重置",
+      summary: `击杀小怪时恢复 ${HUNT_TALISMAN_SKILL_GAIN.awakened} 点技能能量和 ${HUNT_TALISMAN_ULTIMATE_GAIN.awakened} 点大招能量，冷却 ${HUNT_TALISMAN_COOLDOWN_SECONDS} 秒。`,
+      tag: "击杀双能",
       requiresUltimate: true,
     },
   },

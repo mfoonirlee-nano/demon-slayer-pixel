@@ -380,6 +380,16 @@ export type CloseArcBasicCrescentState = {
   bossHit: boolean;
 };
 
+export type HuntBladeReachEffectState = {
+  x: number;
+  y: number;
+  facing: number;
+  frame: number;
+  elapsed: number;
+  life: number;
+  reachExtension: number;
+};
+
 export type GuardCounterEffectState = {
   elapsed: number;
   frame: number;

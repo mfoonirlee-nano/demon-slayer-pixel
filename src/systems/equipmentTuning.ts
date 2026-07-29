@@ -65,19 +65,6 @@ export const SHADOWSTEP_TALISMAN_COOLDOWN = 80;
 export const SHADOWSTEP_TALISMAN_SKILL_GAIN: Record<EquipmentTier, number> = { common: 3, fine: 4, awakened: 4 };
 export const SHADOWSTEP_TALISMAN_ULTIMATE_GAIN = 1;
 
-export const HUNT_KILL_WINDOW = 240;
-export const HUNT_BLADE_KILLS_REQUIRED = 2;
-export const HUNT_BLADE_REACH_BONUS: Record<EquipmentTier, number> = { common: 40, fine: 48, awakened: 48 };
-export const HUNT_BLADE_DAMAGE_MULTIPLIER: Record<EquipmentTier, number> = { common: 1.1, fine: 1.2, awakened: 1.18 };
-export const HUNT_BLADE_WATER_TIMER_FRAMES = 300;
-export const HUNT_GARB_TIMER_FRAMES = 180;
-export const HUNT_GARB_SPEED_MULTIPLIER: Record<EquipmentTier, number> = { common: 1.14, fine: 1.16, awakened: 1.16 };
-export const HUNT_GARB_GUARD_DAMAGE_MULTIPLIER = 0.75;
-export const HUNT_TALISMAN_KILLS_REQUIRED = 3;
-export const HUNT_TALISMAN_COOLDOWN = 240;
-export const HUNT_TALISMAN_SKILL_GAIN: Record<EquipmentTier, number> = { common: 14, fine: 14, awakened: 16 };
-export const HUNT_TALISMAN_ULTIMATE_GAIN: Record<EquipmentTier, number> = { common: 0, fine: 2, awakened: 3 };
-
 export const RISK_BLADE_BASIC_DAMAGE_MULTIPLIER: Record<EquipmentTier, number> = {
   common: 1.2,
   fine: 1.2,

@@ -8,11 +8,22 @@ import type {
 import {
   BURST_BLADE_PAIR_RESONANCE_EXECUTE_HP_RATIO,
   BURST_TALISMAN_PAIR_RESONANCE_COOLDOWN_FRAMES,
-  EQUIPMENT_PAIR_COOLDOWN_MULTIPLIER,
   EQUIPMENT_PAIR_TRIGGER_REDUCTION,
   FLOW_FULL_HEALTH_REGEN_PER_SECOND,
   FLOW_PAIR_SKILL_ENERGY_REGEN_PER_SECOND,
   FULL_RESONANCE_SKILL_ENERGY_GAIN,
+  HUNT_BLADE_KILLS_REQUIRED,
+  HUNT_BLADE_WATER_DURATION_SECONDS,
+  HUNT_FULL_GARB_KILLS_REQUIRED,
+  HUNT_FULL_TALISMAN_COOLDOWN_SECONDS,
+  HUNT_GARB_KILLS_REQUIRED,
+  HUNT_KILL_WINDOW_SECONDS,
+  HUNT_PAIR_BLADE_KILLS_REQUIRED,
+  HUNT_PAIR_GARB_KILLS_REQUIRED,
+  HUNT_PAIR_TALISMAN_COOLDOWN_SECONDS,
+  HUNT_TALISMAN_COOLDOWN_SECONDS,
+  HUNT_TALISMAN_SKILL_GAIN,
+  HUNT_TALISMAN_ULTIMATE_GAIN,
   SHADOWSTEP_FULL_RESONANCE_SKILL_ENERGY_GAIN,
   SHADOWSTEP_PAIR_DODGE_CHANCE,
 } from "../constants";
@@ -94,8 +105,8 @@ const EQUIPMENT_FAMILY_RESONANCE_COPY: Record<
       full: `3 件：触发掠影时额外获得 ${SHADOWSTEP_FULL_RESONANCE_SKILL_ENERGY_GAIN} 点技能能量。`,
     },
     hunt: {
-      pair: `2 件：连杀门槛 -${EQUIPMENT_PAIR_TRIGGER_REDUCTION}；连珠符冷却缩短 ${formatPercent(1 - EQUIPMENT_PAIR_COOLDOWN_MULTIPLIER)}。`,
-      full: `3 件：连珠符触发额外获得 ${FULL_RESONANCE_SKILL_ENERGY_GAIN} 点技能能量。`,
+      pair: `2 件：狩牙刃 ${HUNT_BLADE_KILLS_REQUIRED}→${HUNT_PAIR_BLADE_KILLS_REQUIRED}；逐猎衣 ${HUNT_GARB_KILLS_REQUIRED}→${HUNT_PAIR_GARB_KILLS_REQUIRED}；连珠符冷却 ${HUNT_TALISMAN_COOLDOWN_SECONDS}→${HUNT_PAIR_TALISMAN_COOLDOWN_SECONDS} 秒。`,
+      full: `3 件：狩牙刃常态生效；逐猎衣 ${HUNT_GARB_KILLS_REQUIRED}→${HUNT_FULL_GARB_KILLS_REQUIRED}；连珠符冷却 ${HUNT_TALISMAN_COOLDOWN_SECONDS}→${HUNT_FULL_TALISMAN_COOLDOWN_SECONDS} 秒。`,
     },
     risk: {
       pair: "2 件：暂无套装效果。",
@@ -120,8 +131,8 @@ const EQUIPMENT_FAMILY_RESONANCE_COPY: Record<
       full: `3-piece: Shadowglide triggers grant +${SHADOWSTEP_FULL_RESONANCE_SKILL_ENERGY_GAIN} skill energy.`,
     },
     hunt: {
-      pair: `2-piece: Kill requirements -${EQUIPMENT_PAIR_TRIGGER_REDUCTION}; Chainbead cooldown -${formatPercent(1 - EQUIPMENT_PAIR_COOLDOWN_MULTIPLIER)}.`,
-      full: `3-piece: Chainbead triggers grant +${FULL_RESONANCE_SKILL_ENERGY_GAIN} skill energy.`,
+      pair: `2-piece: Blade ${HUNT_BLADE_KILLS_REQUIRED}→${HUNT_PAIR_BLADE_KILLS_REQUIRED}; garb ${HUNT_GARB_KILLS_REQUIRED}→${HUNT_PAIR_GARB_KILLS_REQUIRED}; talisman cooldown ${HUNT_TALISMAN_COOLDOWN_SECONDS}→${HUNT_PAIR_TALISMAN_COOLDOWN_SECONDS}s.`,
+      full: `3-piece: Blade always on; garb ${HUNT_GARB_KILLS_REQUIRED}→${HUNT_FULL_GARB_KILLS_REQUIRED}; talisman cooldown ${HUNT_TALISMAN_COOLDOWN_SECONDS}→${HUNT_FULL_TALISMAN_COOLDOWN_SECONDS}s.`,
     },
     risk: {
       pair: "2-piece: No set bonus.",
@@ -288,15 +299,15 @@ const EN_EQUIPMENT_COPY: Record<EquipmentItemId, EnglishEquipmentItemCopy> = {
     name: "Huntfang Blade",
     tiers: {
       common: {
-        summary: "After several quick mob kills, your next basic attack gains reach.",
+        summary: `After ${HUNT_BLADE_KILLS_REQUIRED} mob kills within ${HUNT_KILL_WINDOW_SECONDS}s, your next basic gains reach and fires a visible water blade.`,
         tag: "Kill-Chain Boost",
       },
       fine: {
-        summary: "A kill chain makes your next basic attack wider and stronger.",
+        summary: `After ${HUNT_BLADE_KILLS_REQUIRED} mob kills within ${HUNT_KILL_WINDOW_SECONDS}s, your next basic fires a wider, stronger water blade.`,
         tag: "Waterblade Strike",
       },
       awakened: {
-        summary: "After a kill chain, basic attacks periodically gain reach and damage for a short time.",
+        summary: `After ${HUNT_BLADE_KILLS_REQUIRED} mob kills within ${HUNT_KILL_WINDOW_SECONDS}s, basics gain reach, damage, and water blades for ${HUNT_BLADE_WATER_DURATION_SECONDS}s.`,
         tag: "Chainhunt Waterblade",
       },
     },
@@ -304,13 +315,16 @@ const EN_EQUIPMENT_COPY: Record<EquipmentItemId, EnglishEquipmentItemCopy> = {
   hunt_garb: {
     name: "Pursuit Garb",
     tiers: {
-      common: { summary: "After killing a mob, briefly move faster.", tag: "Kill Haste" },
+      common: {
+        summary: `After ${HUNT_GARB_KILLS_REQUIRED} mob kills within ${HUNT_KILL_WINDOW_SECONDS}s, briefly move faster.`,
+        tag: "Kill Haste",
+      },
       fine: {
-        summary: "After killing a mob, move faster; a kill chain refreshes the duration.",
+        summary: `After ${HUNT_GARB_KILLS_REQUIRED} mob kills within ${HUNT_KILL_WINDOW_SECONDS}s, move faster; further kills refresh it.`,
         tag: "Chain Sprint",
       },
       awakened: {
-        summary: "During a kill chain, move faster and reduce the damage of the next hit.",
+        summary: `After ${HUNT_GARB_KILLS_REQUIRED} mob kills within ${HUNT_KILL_WINDOW_SECONDS}s, move faster and guard the next hit.`,
         tag: "Hunter's Guard",
       },
     },
@@ -318,14 +332,17 @@ const EN_EQUIPMENT_COPY: Record<EquipmentItemId, EnglishEquipmentItemCopy> = {
   hunt_talisman: {
     name: "Chainbead Talisman",
     tiers: {
-      common: { summary: "After 3 quick mob kills, gain skill energy.", tag: "Kill-Chain Energy" },
+      common: {
+        summary: `Mob kills restore ${HUNT_TALISMAN_SKILL_GAIN.common} skill and ${HUNT_TALISMAN_ULTIMATE_GAIN.common} ultimate energy, with a ${HUNT_TALISMAN_COOLDOWN_SECONDS}-second cooldown.`,
+        tag: "Kill Energy",
+      },
       fine: {
-        summary: "After 3 quick mob kills, gain skill energy and a little ultimate energy.",
-        tag: "Kill-Chain Finale",
+        summary: `Mob kills restore ${HUNT_TALISMAN_SKILL_GAIN.fine} skill and ${HUNT_TALISMAN_ULTIMATE_GAIN.fine} ultimate energy, with a ${HUNT_TALISMAN_COOLDOWN_SECONDS}-second cooldown.`,
+        tag: "Kill Energy",
       },
       awakened: {
-        summary: "After 3 quick mob kills, gain skill and ultimate energy; defeating a Boss resets the cooldown.",
-        tag: "Chainbead Reset",
+        summary: `Mob kills restore ${HUNT_TALISMAN_SKILL_GAIN.awakened} skill and ${HUNT_TALISMAN_ULTIMATE_GAIN.awakened} ultimate energy, with a ${HUNT_TALISMAN_COOLDOWN_SECONDS}-second cooldown.`,
+        tag: "Kill Energy",
       },
     },
   },

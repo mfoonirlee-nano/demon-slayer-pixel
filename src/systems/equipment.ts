@@ -1,4 +1,15 @@
-import { PLAYER_COMBAT } from "../constants";
+import {
+  HUNT_BLADE_DAMAGE_MULTIPLIER,
+  HUNT_BLADE_REACH_BONUS,
+  HUNT_BLADE_WATER_TIMER_FRAMES,
+  HUNT_GARB_GUARD_DAMAGE_MULTIPLIER,
+  HUNT_GARB_SPEED_MULTIPLIER,
+  HUNT_GARB_TIMER_FRAMES,
+  HUNT_KILL_WINDOW_FRAMES,
+  HUNT_TALISMAN_SKILL_GAIN,
+  HUNT_TALISMAN_ULTIMATE_GAIN,
+  PLAYER_COMBAT,
+} from "../constants";
 import type { SkillId } from "../types/assets";
 import type {
   EquipmentItemId,
@@ -20,18 +31,6 @@ import {
   FLOW_GARB_DAMAGE_MULTIPLIER,
   FLOW_GARB_SPEED_MULTIPLIER,
   FLOW_GARB_TIMER_FRAMES,
-  HUNT_BLADE_DAMAGE_MULTIPLIER,
-  HUNT_BLADE_KILLS_REQUIRED,
-  HUNT_BLADE_REACH_BONUS,
-  HUNT_BLADE_WATER_TIMER_FRAMES,
-  HUNT_GARB_GUARD_DAMAGE_MULTIPLIER,
-  HUNT_GARB_SPEED_MULTIPLIER,
-  HUNT_GARB_TIMER_FRAMES,
-  HUNT_KILL_WINDOW,
-  HUNT_TALISMAN_COOLDOWN,
-  HUNT_TALISMAN_KILLS_REQUIRED,
-  HUNT_TALISMAN_SKILL_GAIN,
-  HUNT_TALISMAN_ULTIMATE_GAIN,
   LOW_HP_RATIO,
   RISK_BLADE_AWAKENED_SKILL_MULTIPLIER,
   RISK_BLADE_BASIC_DAMAGE_MULTIPLIER,
@@ -68,7 +67,10 @@ import {
   applyFamilyResonanceReward,
   burstBladeExecuteHpRatio,
   burstTalismanCooldownFrames,
-  cooldownWithFamilyResonance,
+  huntBladeKillsRequired,
+  huntGarbKillsRequired,
+  huntTalismanCooldownFrames,
+  isHuntBladeAlwaysActive,
   tickFlowResonanceRegeneration,
   triggerCountWithFamilyResonance,
 } from "./equipmentResonance";
@@ -158,7 +160,7 @@ export function beginBasicAttackEquipmentEffects(state: GameState) {
   const shadowstepTier = equippedTier(state, "blade", "shadowstep_blade");
   const huntTier = equippedTier(state, "blade", "hunt_blade");
   player.shadowstepBladeStrike = shadowstepTier !== null && player.shadowstepBladeReady;
-  player.huntBladeStrike = huntTier !== null && (player.huntBladeReady || (
+  player.huntBladeStrike = huntTier !== null && (isHuntBladeAlwaysActive(state) || player.huntBladeReady || (
     tierAtLeast(huntTier, "awakened") && player.huntBladeWaterTimer > 0
   ));
   if (player.shadowstepBladeStrike) {
@@ -485,39 +487,36 @@ export function applyLowHealthEquipmentTriggers(state: GameState) {
 
 export function recordEnemyDefeatEquipmentEffects(state: GameState) {
   const player = state.player;
-  const hasHuntEquipment = state.equippedEquipment.blade === "hunt_blade"
-    || state.equippedEquipment.garb === "hunt_garb"
-    || state.equippedEquipment.talisman === "hunt_talisman";
-  if (!hasHuntEquipment) return;
-
-  player.huntKillCount = player.huntKillTimer > 0 ? player.huntKillCount + 1 : 1;
-  player.huntKillTimer = HUNT_KILL_WINDOW;
-
   const huntBladeTier = equippedTier(state, "blade", "hunt_blade");
-  const huntBladeKillsRequired = triggerCountWithFamilyResonance(state, "hunt", HUNT_BLADE_KILLS_REQUIRED);
-  if (huntBladeTier && player.huntKillCount >= huntBladeKillsRequired) {
-    player.huntBladeReady = true;
-    if (tierAtLeast(huntBladeTier, "awakened")) {
-      player.huntBladeWaterTimer = HUNT_BLADE_WATER_TIMER_FRAMES;
-    }
-  }
   const huntGarbTier = equippedTier(state, "garb", "hunt_garb");
-  if (huntGarbTier) {
-    player.huntGarbTimer = HUNT_GARB_TIMER_FRAMES;
-    if (tierAtLeast(huntGarbTier, "awakened") && player.huntKillCount >= huntBladeKillsRequired) {
-      player.huntGarbGuardReady = true;
+  const huntTalismanTier = equippedTier(state, "talisman", "hunt_talisman");
+  if (!huntBladeTier && !huntGarbTier && !huntTalismanTier) return;
+
+  if (huntBladeTier || huntGarbTier) {
+    player.huntKillCount = player.huntKillTimer > 0 ? player.huntKillCount + 1 : 1;
+    player.huntKillTimer = HUNT_KILL_WINDOW_FRAMES;
+
+    if (huntBladeTier && player.huntKillCount >= huntBladeKillsRequired(state)) {
+      player.huntBladeReady = true;
+      if (tierAtLeast(huntBladeTier, "awakened")) {
+        player.huntBladeWaterTimer = HUNT_BLADE_WATER_TIMER_FRAMES;
+      }
+    }
+    if (huntGarbTier && player.huntKillCount >= huntGarbKillsRequired(state)) {
+      player.huntGarbTimer = HUNT_GARB_TIMER_FRAMES;
+      if (tierAtLeast(huntGarbTier, "awakened")) {
+        player.huntGarbGuardReady = true;
+      }
     }
   }
-  const huntTalismanTier = equippedTier(state, "talisman", "hunt_talisman");
+
   if (
     huntTalismanTier
-    && player.huntKillCount >= triggerCountWithFamilyResonance(state, "hunt", HUNT_TALISMAN_KILLS_REQUIRED)
     && player.huntTalismanCooldown <= 0
   ) {
     grantSkillEnergy(state, HUNT_TALISMAN_SKILL_GAIN[huntTalismanTier]);
     grantUltimateEnergy(state, HUNT_TALISMAN_ULTIMATE_GAIN[huntTalismanTier]);
-    applyFamilyResonanceReward(state, "hunt");
-    player.huntTalismanCooldown = cooldownWithFamilyResonance(state, "hunt", HUNT_TALISMAN_COOLDOWN);
+    player.huntTalismanCooldown = huntTalismanCooldownFrames(state);
   }
 }
 
@@ -552,11 +551,6 @@ export function recordBossDefeatEquipmentEffects(state: GameState) {
   if (burstTalismanTier && tierAtLeast(burstTalismanTier, "awakened") && player.ultimateLevel > 0) {
     player.ultimateEnergy = Math.max(player.ultimateEnergy, player.ultimateEnergyMax * BURST_TALISMAN_RETAIN_RATIO);
   }
-  const huntTalismanTier = equippedTier(state, "talisman", "hunt_talisman");
-  if (huntTalismanTier && tierAtLeast(huntTalismanTier, "awakened")) {
-    player.huntTalismanCooldown = 0;
-  }
-
   player.burstGarbProtectionUsed = false;
   player.burstBladeExecuteReady = false;
   player.burstBladeExecuteUsed = false;

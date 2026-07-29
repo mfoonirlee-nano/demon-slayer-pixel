@@ -2,6 +2,17 @@ import {
   CLOSE_ARC_BASIC_CRESCENT_CONFIG,
   EQUIPMENT_PRIMARY_STAT_BONUS_RATIOS,
   GUARD_COUNTER_EFFECT_CONFIG,
+  HUNT_BLADE_DAMAGE_MULTIPLIER,
+  HUNT_BLADE_KILLS_REQUIRED,
+  HUNT_BLADE_REACH_BONUS,
+  HUNT_BLADE_WATER_TIMER_FRAMES,
+  HUNT_GARB_GUARD_DAMAGE_MULTIPLIER,
+  HUNT_GARB_KILLS_REQUIRED,
+  HUNT_GARB_SPEED_MULTIPLIER,
+  HUNT_GARB_TIMER_FRAMES,
+  HUNT_TALISMAN_COOLDOWN_FRAMES,
+  HUNT_TALISMAN_SKILL_GAIN,
+  HUNT_TALISMAN_ULTIMATE_GAIN,
   LINE_PROJECTILE_EFFECT_CONFIG,
   MOON_TIDE_ULTIMATE,
   PLAYER_COMBAT,
@@ -31,18 +42,6 @@ import {
   FLOW_TALISMAN_HIT_THRESHOLD,
   FLOW_TALISMAN_REFUND,
   FLOW_TALISMAN_ULTIMATE_GAIN,
-  HUNT_BLADE_DAMAGE_MULTIPLIER,
-  HUNT_BLADE_KILLS_REQUIRED,
-  HUNT_BLADE_REACH_BONUS,
-  HUNT_BLADE_WATER_TIMER_FRAMES,
-  HUNT_GARB_GUARD_DAMAGE_MULTIPLIER,
-  HUNT_GARB_SPEED_MULTIPLIER,
-  HUNT_GARB_TIMER_FRAMES,
-  HUNT_KILL_WINDOW,
-  HUNT_TALISMAN_COOLDOWN,
-  HUNT_TALISMAN_KILLS_REQUIRED,
-  HUNT_TALISMAN_SKILL_GAIN,
-  HUNT_TALISMAN_ULTIMATE_GAIN,
   LOW_HP_RATIO,
   RISK_BLADE_AWAKENED_SKILL_MULTIPLIER,
   RISK_BLADE_BASIC_DAMAGE_MULTIPLIER,
@@ -256,17 +255,16 @@ function equipmentEffectMetrics(choice: EquipmentChoiceState, language: Language
       return compactMetrics([
         tierTableMetric(choice, label("moveSpeedOnKill"), HUNT_GARB_SPEED_MULTIPLIER, formatMultiplierDelta, "speed"),
         metric(label("duration"), frames(HUNT_GARB_TIMER_FRAMES), "utility"),
-        metric(label("killWindow"), frames(HUNT_KILL_WINDOW), "utility"),
+        metric(label("killRequirement"), formatRewardUnit(language, "kills", HUNT_GARB_KILLS_REQUIRED), "utility"),
         tierAtLeast(choice.tier, "awakened")
           ? metric(label("guardDamageReduction"), formatMultiplierDelta(HUNT_GARB_GUARD_DAMAGE_MULTIPLIER), "defense")
           : null,
       ]);
     case "hunt_talisman":
       return compactMetrics([
-        metric(label("killRequirement"), formatRewardUnit(language, "kills", HUNT_TALISMAN_KILLS_REQUIRED), "utility"),
         tierTableMetric(choice, label("skillEnergy"), HUNT_TALISMAN_SKILL_GAIN, (value) => `+${value}`, "resource"),
         tierTableMetric(choice, label("ultimateEnergy"), HUNT_TALISMAN_ULTIMATE_GAIN, (value) => `+${value}`, "resource"),
-        metric(label("cooldown"), frames(HUNT_TALISMAN_COOLDOWN), "utility"),
+        metric(label("cooldown"), frames(HUNT_TALISMAN_COOLDOWN_FRAMES), "utility"),
       ]);
     case "risk_blade":
       return compactMetrics([

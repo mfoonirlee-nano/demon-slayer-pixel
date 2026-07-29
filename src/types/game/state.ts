@@ -31,6 +31,7 @@ import type {
   FangGaleWaveState,
   GuardCounterEffectState,
   HitBurstState,
+  HuntBladeReachEffectState,
   LanternEmberAshZoneState,
   LanternEmberAwakenedGridState,
   LanternEmberBuffTetherState,
@@ -127,6 +128,7 @@ export type GameState = {
   lineProjectileEffects: LineProjectileEffectState[];
   closeArcEffects: CloseArcEffectState[];
   closeArcBasicCrescents: CloseArcBasicCrescentState[];
+  huntBladeReachEffects: HuntBladeReachEffectState[];
   guardCounterEffect: GuardCounterEffectState | null;
   playerSkillEffects: PlayerSkillEffectState[];
   ultimateEffects: UltimateEffectState[];

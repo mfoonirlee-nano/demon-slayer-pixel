@@ -120,6 +120,23 @@ describe("equipment copy", () => {
     expect(englishCopy.join(" ")).not.toMatch(/\p{Script=Han}/u);
   });
 
+  it("describes the exact hunt two-piece and three-piece breakpoints", () => {
+    expect(equipmentFamilyResonanceCopy("zh-CN", "hunt")).toEqual({
+      pair: "2 件：狩牙刃 2→1；逐猎衣 3→2；连珠符冷却 4→3 秒。",
+      full: "3 件：狩牙刃常态生效；逐猎衣 3→1；连珠符冷却 4→2 秒。",
+    });
+    expect(equipmentFamilyResonanceCopy("en", "hunt")).toEqual({
+      pair: "2-piece: Blade 2→1; garb 3→2; talisman cooldown 4→3s.",
+      full: "3-piece: Blade always on; garb 3→1; talisman cooldown 4→2s.",
+    });
+  });
+
+  it("marks every hunt talisman tier as requiring ultimate energy", () => {
+    for (const tier of EQUIPMENT_TIERS) {
+      expect(equipmentItemForTier("hunt_talisman", tier).requiresUltimate).toBe(true);
+    }
+  });
+
   it("covers every English item tier without Han characters or oversized UI copy", () => {
     const itemText = EQUIPMENT_CHOICE_IDS.flatMap((itemId) =>
       EQUIPMENT_TIERS.flatMap((tier) => Object.values(equipmentItemCopy("en", itemId, tier))),

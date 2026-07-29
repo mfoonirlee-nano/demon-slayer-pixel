@@ -84,6 +84,7 @@ import {
   updateLineProjectileEffects,
   updateCloseArcEffects,
   updateCloseArcBasicCrescentEffects,
+  updateHuntBladeReachEffects,
   updateGuardCounterEffect,
   updatePlayerSkillEffects,
   updateUltimateEffects,
@@ -96,6 +97,7 @@ import {
   drawLineProjectileEffects,
   drawCloseArcEffects,
   drawCloseArcBasicCrescentEffects,
+  drawHuntBladeReachEffects,
   drawGuardCounterEffect,
   drawPlayerSkillEffects,
   drawUltimateEffects,
@@ -384,6 +386,7 @@ function loop(ts: number) {
       updateLineProjectileEffects();
       updateCloseArcEffects();
       updateCloseArcBasicCrescentEffects();
+      updateHuntBladeReachEffects();
       updateGuardCounterEffect();
       updatePlayerSkillEffects();
       updateUltimateEffects();
@@ -430,6 +433,7 @@ function loop(ts: number) {
 
   drawUltimatePlayerGhosts();
   drawPlayer();
+  drawHuntBladeReachEffects();
   drawPlatformOcclusion();
   drawGuardCounterEffect();
   drawSkillBursts();

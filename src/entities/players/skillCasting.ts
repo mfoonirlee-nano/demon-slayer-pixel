@@ -168,6 +168,7 @@ export function castUltimateSkill() {
 
   p.ultimateEnergy = 0;
   p.attackTimer = 0;
+  state.huntBladeReachEffects.length = 0;
   p.ultimateEffectSpawned = false;
   p.ultimateCastTimer = PLAYER_COMBAT.ultimateCastFrames;
   p.skillFlash = SKILL_FLASH.maxFrames;
