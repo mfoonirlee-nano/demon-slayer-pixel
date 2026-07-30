@@ -14,7 +14,11 @@ import {
   HUNT_TALISMAN_COOLDOWN_SECONDS,
   HUNT_TALISMAN_SKILL_GAIN,
   HUNT_TALISMAN_ULTIMATE_GAIN,
+  LOW_HP_RATIO,
+  RISK_TALISMAN_SKILL_REGEN_PER_SECOND,
+  RISK_TALISMAN_ULTIMATE_GAIN,
 } from "../constants";
+import { formatPercent } from "../utils";
 
 type EquipmentBaseItem = {
   id: EquipmentItemId;
@@ -205,10 +209,16 @@ const EQUIPMENT_TIER_EFFECTS: Record<EquipmentItemId, Record<EquipmentTier, Equi
     awakened: { summary: "每场 Boss 战首次进入低血时，清除受击硬直并获得短暂无敌。", tag: "赤纹护命" },
   },
   risk_talisman: {
-    common: { summary: "每幕首次生命低于 35% 时，获得技能能量。", tag: "濒死资源" },
-    fine: { summary: "每幕首次生命低于 35% 时，获得更多技能能量。", tag: "濒死回能" },
+    common: {
+      summary: `生命 ≤${formatPercent(LOW_HP_RATIO)} 时，每秒恢复 ${RISK_TALISMAN_SKILL_REGEN_PER_SECOND.common} 点技能能量。`,
+      tag: "持续回能",
+    },
+    fine: {
+      summary: `生命 ≤${formatPercent(LOW_HP_RATIO)} 时，每秒恢复 ${RISK_TALISMAN_SKILL_REGEN_PER_SECOND.fine} 点技能能量。`,
+      tag: "持续回能",
+    },
     awakened: {
-      summary: "每幕首次生命低于 35% 时，至少补满一格技能能量，并获得部分大招能量。",
+      summary: `生命 ≤${formatPercent(LOW_HP_RATIO)} 时，每秒恢复 ${RISK_TALISMAN_SKILL_REGEN_PER_SECOND.awakened} 点技能能量；每幕首次进入低血时补足至少一格技能能量，并获得 ${RISK_TALISMAN_ULTIMATE_GAIN} 点大招能量。`,
       tag: "返魂终能",
       requiresUltimate: true,
     },

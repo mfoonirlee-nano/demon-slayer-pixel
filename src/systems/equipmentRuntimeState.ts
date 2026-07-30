@@ -38,7 +38,7 @@ export function resetSlotRuntimeState(state: GameState, slot: EquipmentSlot) {
     player.burstTalismanCooldown = 0;
     player.shadowstepTalismanCooldown = 0;
     player.huntTalismanCooldown = 0;
-    player.riskTalismanTriggered = false;
+    player.riskTalismanAwakenedTriggered = false;
     player.tempoTalismanLastSkillId = null;
   }
 }

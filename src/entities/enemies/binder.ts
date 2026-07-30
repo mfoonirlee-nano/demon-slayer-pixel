@@ -24,6 +24,7 @@ import {
   isEliteEnemy,
 } from "./common";
 import { endRun } from "../../systems/runLifecycle";
+import { consumeRiskFullSetShield } from "../../systems/equipmentResonance";
 import { guardCounterIncomingDamageMultiplier } from "../../systems/playerSkillPassives";
 
 export const BINDER_UNLOCK_SECONDS = 90;
@@ -169,6 +170,7 @@ function applyBinderTalismanDamage() {
 
   const player = state.player;
   if (player.invincible > 0) return;
+  if (consumeRiskFullSetShield(state)) return;
 
   const incomingDamage = bindingZoneDamage() * guardCounterIncomingDamageMultiplier(state);
   player.hp = Math.max(0, player.hp - incomingDamage);

@@ -134,6 +134,14 @@ describe("reward choice details", () => {
     expect(metricValue(metrics, "Kill Requirement")).toBe("3 kills");
   });
 
+  it("shows the risk talisman's tier-scaled low-health regeneration rate", () => {
+    const common = equipmentRewardMetrics(makeEquipmentChoice("risk_talisman", "common"), "en");
+    const awakened = equipmentRewardMetrics(makeEquipmentChoice("risk_talisman", "awakened"), "en");
+
+    expect(metricValue(common, "Skill Energy")).toBe("+2/s");
+    expect(metricValue(awakened, "Skill Energy")).toBe("+4/s");
+  });
+
   it("localizes every visible equipment metric and value unit in English", () => {
     const flowBlade = equipmentRewardMetrics(
       makeEquipmentChoice("flow_blade", "fine", "common", "tierUpgrade"),

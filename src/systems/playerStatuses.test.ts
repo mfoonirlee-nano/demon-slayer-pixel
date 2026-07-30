@@ -353,7 +353,7 @@ describe("player status snapshot", () => {
     });
   });
 
-  it("projects risk low-health effects and unused one-shot readiness", () => {
+  it("projects risk low-health regeneration, set haste, and shield readiness", () => {
     addAndEquip("risk_blade", "awakened");
     addAndEquip("risk_garb", "awakened");
     addAndEquip("risk_talisman", "awakened");
@@ -366,14 +366,25 @@ describe("player status snapshot", () => {
     expect(status("risk_blade_skill_ready")).toBeDefined();
     expect(status("risk_garb_low_hp")).toBeDefined();
     expect(status("risk_garb_lifeline_ready")).toBeDefined();
-    expect(status("risk_talisman_ready")).toBeDefined();
+    expect(status("risk_talisman_regen")).toBeDefined();
+    expect(status("risk_resonance_haste")).toBeDefined();
+    expect(status("risk_shield_ready")).toBeDefined();
+    expect(status("risk_shield_cooldown")).toBeUndefined();
+
+    state.player.riskShieldCooldown = 120;
+
+    expect(status("risk_shield_ready")).toBeUndefined();
+    expect(status("risk_shield_cooldown")).toMatchObject({
+      remainingFrames: 120,
+      durationFrames: 300,
+    });
 
     state.player.hp = 36;
-    state.player.riskTalismanTriggered = true;
-
     expect(status("risk_blade_low_hp")).toBeUndefined();
     expect(status("risk_garb_low_hp")).toBeUndefined();
-    expect(status("risk_talisman_ready")).toBeUndefined();
+    expect(status("risk_talisman_regen")).toBeUndefined();
+    expect(status("risk_resonance_haste")).toBeUndefined();
+    expect(status("risk_shield_cooldown")).toBeUndefined();
   });
 
   it("projects tempo hit stacks, recovery time, and only an actionable skill-swap readiness", () => {

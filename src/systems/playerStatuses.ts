@@ -4,20 +4,22 @@ import {
   HUNT_BLADE_WATER_TIMER_FRAMES,
   HUNT_GARB_TIMER_FRAMES,
   HUNT_KILL_WINDOW_FRAMES,
+  RISK_FULL_SHIELD_COOLDOWN_FRAMES,
   SPIDER_STRING_CAGE_CONFIG,
 } from "../constants";
 import { activeLanternAshZoneForPlayer } from "../entities/players/lanternAshZone";
 import type { GameState, PlayerStatusSnapshot } from "../types/game-state";
-import { isPlayerLowHp } from "./equipment";
 import {
   burstBladeExecuteHpRatio,
+  hasRiskFullResonance,
   huntBladeKillsRequired,
   huntGarbKillsRequired,
   huntTalismanCooldownFrames,
   isHuntBladeAlwaysActive,
+  riskResonanceSpeedMultiplier,
   triggerCountWithFamilyResonance,
 } from "./equipmentResonance";
-import { equippedTier, tierAtLeast } from "./equipmentState";
+import { equippedTier, isPlayerLowHp, tierAtLeast } from "./equipmentState";
 import {
   BURST_GARB_SPEED_TIMER_FRAMES,
   FLOW_BLADE_HITS_REQUIRED,
@@ -302,8 +304,24 @@ function pushRiskStatuses(state: GameState, statuses: PlayerStatusSnapshot[]) {
     statuses.push(persistentStatus("risk_garb_lifeline_ready"));
   }
 
-  if (equippedTier(state, "talisman", "risk_talisman") && !player.riskTalismanTriggered) {
-    statuses.push(persistentStatus("risk_talisman_ready"));
+  const talismanTier = equippedTier(state, "talisman", "risk_talisman");
+  if (talismanTier && lowHp) {
+    statuses.push(persistentStatus("risk_talisman_regen"));
+  }
+
+  if (lowHp && riskResonanceSpeedMultiplier(state) > 1) {
+    statuses.push(persistentStatus("risk_resonance_haste"));
+  }
+  if (lowHp && hasRiskFullResonance(state)) {
+    if (player.riskShieldCooldown > 0) {
+      statuses.push(timedStatus(
+        "risk_shield_cooldown",
+        player.riskShieldCooldown,
+        RISK_FULL_SHIELD_COOLDOWN_FRAMES,
+      ));
+    } else {
+      statuses.push(persistentStatus("risk_shield_ready"));
+    }
   }
 }
 

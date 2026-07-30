@@ -151,7 +151,8 @@ export type PlayerState = {
   riskBladeLowHpSkillReady: boolean;
   riskBladeLowHpSkillUsed: boolean;
   riskGarbBossLowHpProtectionUsed: boolean;
-  riskTalismanTriggered: boolean;
+  riskTalismanAwakenedTriggered: boolean;
+  riskShieldCooldown: number;
   tempoBladeHitCount: number;
   tempoBladeNoPenaltyReady: boolean;
   tempoGarbRecoveryTimer: number;

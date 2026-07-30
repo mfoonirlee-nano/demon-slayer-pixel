@@ -100,7 +100,7 @@ describe("equipment copy", () => {
 
     expect(shadowstep.pair).toContain("15% 闪避");
     expect(shadowstep.full).toContain("额外获得 10 点技能能量");
-    expect(risk.pair).toContain("暂无套装效果");
+    expect(risk.pair).toContain("攻击速度、移动速度提高 15%");
     expect(tempo.pair).toContain("暂无套装效果");
     expect(tempo.full).toContain("暂无套装效果");
 
@@ -129,6 +129,26 @@ describe("equipment copy", () => {
       pair: "2-piece: Blade 2→1; garb 3→2; talisman cooldown 4→3s.",
       full: "3-piece: Blade always on; garb 3→1; talisman cooldown 4→2s.",
     });
+  });
+
+  it("describes the exact risk two-piece and three-piece low-health bonuses", () => {
+    expect(equipmentFamilyResonanceCopy("zh-CN", "risk")).toEqual({
+      pair: "2 件：低血时攻击速度、移动速度提高 15%。",
+      full: "3 件：低血时攻击速度、移动速度提高 30%；免伤护盾抵挡 1 次伤害，冷却 5 秒。",
+    });
+    expect(equipmentFamilyResonanceCopy("en", "risk")).toEqual({
+      pair: "2-piece: Low HP +15% attack/move speed.",
+      full: "3-piece: Low HP +30% attack/move speed; 1-hit shield, 5s CD.",
+    });
+  });
+
+  it("describes the risk talisman's continuous regeneration and awakened burst", () => {
+    expect(equipmentItemCopy("zh-CN", "risk_talisman", "common").summary)
+      .toBe("生命 ≤35% 时，每秒恢复 2 点技能能量。");
+    expect(equipmentItemCopy("zh-CN", "risk_talisman", "awakened").summary)
+      .toBe("生命 ≤35% 时，每秒恢复 4 点技能能量；每幕首次进入低血时补足至少一格技能能量，并获得 8 点大招能量。");
+    expect(equipmentItemCopy("en", "risk_talisman", "fine").summary)
+      .toBe("At ≤35% HP, regenerate 3 skill energy/sec.");
   });
 
   it("marks every hunt talisman tier as requiring ultimate energy", () => {

@@ -3,7 +3,6 @@ import type { EquipmentSlot, EquipmentTier } from "../types/game-state";
 export const EQUIPMENT_SLOTS: EquipmentSlot[] = ["blade", "garb", "talisman"];
 export const EQUIPMENT_TIER_ORDER: EquipmentTier[] = ["common", "fine", "awakened"];
 export const BOSS_EQUIPMENT_CHOICE_COUNT = 3;
-export const LOW_HP_RATIO = 0.35;
 export const NO_CANDIDATE_HEAL_RATIO = 0.2;
 
 export const FLOW_BLADE_HITS_REQUIRED: Record<EquipmentTier, number> = { common: 4, fine: 3, awakened: 3 };
@@ -79,8 +78,6 @@ export const RISK_GARB_DAMAGE_MULTIPLIER: Record<EquipmentTier, number> = {
 };
 export const RISK_GARB_FINE_INVINCIBLE_BONUS_FRAMES = 30;
 export const RISK_GARB_AWAKENED_INVINCIBLE_FRAMES = 90;
-export const RISK_TALISMAN_SKILL_GAIN: Record<EquipmentTier, number> = { common: 22, fine: 30, awakened: 30 };
-export const RISK_TALISMAN_ULTIMATE_GAIN = 8;
 
 export const TEMPO_BLADE_ATTACK_FRAME_MULTIPLIER: Record<EquipmentTier, number> = {
   common: 0.82,

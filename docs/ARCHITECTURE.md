@@ -5,7 +5,7 @@
 ## 核心设计模式
 
 ### 1. 游戏循环 (Game Loop)
-`src/game/runtime.ts` 中的 `loop()` 是游戏的核心。它使用 `requestAnimationFrame` 推进 update / draw 管线，并根据时间差 (`dt`) 更新月亮、玩家、敌人、Boss、地图片段、掉落物、技能弹道和粒子效果。正常玩法分支通过 `updatePlayer(dt)` 把秒制时间差传入玩家装备更新，供持续恢复类效果按真实时间结算；暂停、奖励选择、Boss 击杀裂身和大招施法冻结分支不推进这类效果。
+`src/game/runtime.ts` 中的 `loop()` 是游戏的核心。它使用 `requestAnimationFrame` 推进 update / draw 管线，并根据时间差 (`dt`) 更新月亮、玩家、敌人、Boss、地图片段、掉落物、技能弹道和粒子效果。正常玩法分支通过 `updatePlayer(dt)` 把秒制时间差传入玩家装备更新，供流水共鸣和返魂符等持续恢复效果按真实时间结算；暂停、奖励选择、Boss 击杀裂身和大招施法冻结分支不推进这类效果。
 
 运行时会在暂停时保留帧循环但停止玩法更新，确保 React 暂停面板能立即显示当前快照。游戏重开时调用 `resetState()` 和 `resetMapGenerator()`，但已加载的素材不会重复加载。
 
@@ -104,7 +104,9 @@ Canvas 每帧大致按以下顺序绘制：
 
 Boss 被击杀时会快照其当帧本体图像和一次性随机切向，并进入 60 帧视觉冻结：普通玩法更新停止，Canvas 继续把快照裁成两半后分离淡出，装备奖励或胜利 overlay 在冻结结束后显示。该快照拥有独立计时，不修改 Boss 动作状态或预留死亡序列。
 
-React HUD 不直接绘制到 Canvas，而是订阅 `gameSnapshotAtom` 显示生命、技能资源、大招能量、Boss 血条、暂停和死亡状态。`src/systems/playerStatuses.ts` 在运行时快照阶段把限时效果、常驻技能被动和需要即时决策的装备状态投影为 `PlayerStatusSnapshot[]`，`src/ui/playerStatusBar.tsx` 再解析对应的本地化名称与图标；掠影符和连珠符分别通过互斥的 ready / cooldown 快照表达就绪与冷却。角色状态 HUD 由左侧大招圆框、贴在大招右下方的当前技能圆框、两条随等级增长的生命/技能资源条，以及状态图标条组成。
+React HUD 不直接绘制到 Canvas，而是订阅 `gameSnapshotAtom` 显示生命、技能资源、大招能量、Boss 血条、暂停和死亡状态。`src/systems/playerStatuses.ts` 在运行时快照阶段把限时效果、常驻技能被动和需要即时决策的装备状态投影为 `PlayerStatusSnapshot[]`，`src/ui/playerStatusBar.tsx` 再解析对应的本地化名称与图标；掠影符、连珠符和残心免伤护盾分别通过互斥的 ready / cooldown 快照表达就绪与冷却，返魂符则只在低血持续回能时显示。角色状态 HUD 由左侧大招圆框、贴在大招右下方的当前技能圆框、两条随等级增长的生命/技能资源条，以及状态图标条组成。
+
+残心 3 件套护盾在玩家统一受伤入口中先于扣血、击退和致死保护结算；缚咒师符咒的持续伤害是唯一不经过 `hurtPlayer()` 的伤害路径，因此会显式调用同一个护盾消费函数，保证“抵挡一次伤害”的语义覆盖所有玩家伤害来源。
 
 ## 相关审视
 

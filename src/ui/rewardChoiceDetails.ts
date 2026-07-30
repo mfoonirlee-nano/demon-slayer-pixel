@@ -14,8 +14,11 @@ import {
   HUNT_TALISMAN_SKILL_GAIN,
   HUNT_TALISMAN_ULTIMATE_GAIN,
   LINE_PROJECTILE_EFFECT_CONFIG,
+  LOW_HP_RATIO,
   MOON_TIDE_ULTIMATE,
   PLAYER_COMBAT,
+  RISK_TALISMAN_SKILL_REGEN_PER_SECOND,
+  RISK_TALISMAN_ULTIMATE_GAIN,
   SKILL_IDS,
 } from "../constants";
 import { CORE_PLAYER_SKILL_EFFECT_CONFIGS } from "../systems/skillCatalog";
@@ -42,15 +45,12 @@ import {
   FLOW_TALISMAN_HIT_THRESHOLD,
   FLOW_TALISMAN_REFUND,
   FLOW_TALISMAN_ULTIMATE_GAIN,
-  LOW_HP_RATIO,
   RISK_BLADE_AWAKENED_SKILL_MULTIPLIER,
   RISK_BLADE_BASIC_DAMAGE_MULTIPLIER,
   RISK_BLADE_SKILL_DAMAGE_MULTIPLIER,
   RISK_GARB_AWAKENED_INVINCIBLE_FRAMES,
   RISK_GARB_DAMAGE_MULTIPLIER,
   RISK_GARB_FINE_INVINCIBLE_BONUS_FRAMES,
-  RISK_TALISMAN_SKILL_GAIN,
-  RISK_TALISMAN_ULTIMATE_GAIN,
   SHADOWSTEP_BLADE_DAMAGE_MULTIPLIER,
   SHADOWSTEP_BLADE_REACH_BONUS,
   SHADOWSTEP_BLADE_ULTIMATE_GAIN,
@@ -291,7 +291,13 @@ function equipmentEffectMetrics(choice: EquipmentChoiceState, language: Language
     case "risk_talisman":
       return compactMetrics([
         metric(label("lowHpThreshold"), `<=${formatPercent(LOW_HP_RATIO)}`, "utility"),
-        tierTableMetric(choice, label("skillEnergy"), RISK_TALISMAN_SKILL_GAIN, (value) => `+${value}`, "resource"),
+        tierTableMetric(
+          choice,
+          label("skillEnergy"),
+          RISK_TALISMAN_SKILL_REGEN_PER_SECOND,
+          (value) => language === "zh-CN" ? `+${value}/秒` : `+${value}/s`,
+          "resource",
+        ),
         tierAtLeast(choice.tier, "awakened") ? metric(label("atLeast"), formatRewardUnit(language, "skillBars", 1), "resource") : null,
         tierAtLeast(choice.tier, "awakened") ? metric(label("ultimateEnergy"), `+${RISK_TALISMAN_ULTIMATE_GAIN}`, "resource") : null,
       ]);

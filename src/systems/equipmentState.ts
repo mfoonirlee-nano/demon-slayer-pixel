@@ -20,6 +20,7 @@ import {
   EQUIPMENT_TIER_ORDER,
   NO_CANDIDATE_HEAL_RATIO,
 } from "./equipmentTuning";
+import { LOW_HP_RATIO } from "../constants";
 
 export function equipmentItem(itemId: EquipmentItemId | null | undefined, tier: EquipmentTier = "common") {
   return itemId ? equipmentItemForTier(itemId, tier) : null;
@@ -114,6 +115,10 @@ export function equipmentInventoryTier(state: GameState, itemId: EquipmentItemId
 export function equippedTier(state: GameState, slot: EquipmentSlot, itemId: EquipmentItemId): EquipmentTier | null {
   if (state.equippedEquipment[slot] !== itemId) return null;
   return equipmentInventoryTier(state, itemId) ?? "common";
+}
+
+export function isPlayerLowHp(state: GameState) {
+  return state.player.hp / Math.max(1, state.player.maxHp) <= LOW_HP_RATIO;
 }
 
 export function compareEquipmentTiers(left: EquipmentTier, right: EquipmentTier) {

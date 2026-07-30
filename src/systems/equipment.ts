@@ -9,6 +9,8 @@ import {
   HUNT_TALISMAN_SKILL_GAIN,
   HUNT_TALISMAN_ULTIMATE_GAIN,
   PLAYER_COMBAT,
+  RISK_TALISMAN_SKILL_REGEN_PER_SECOND,
+  RISK_TALISMAN_ULTIMATE_GAIN,
 } from "../constants";
 import type { SkillId } from "../types/assets";
 import type {
@@ -31,15 +33,12 @@ import {
   FLOW_GARB_DAMAGE_MULTIPLIER,
   FLOW_GARB_SPEED_MULTIPLIER,
   FLOW_GARB_TIMER_FRAMES,
-  LOW_HP_RATIO,
   RISK_BLADE_AWAKENED_SKILL_MULTIPLIER,
   RISK_BLADE_BASIC_DAMAGE_MULTIPLIER,
   RISK_BLADE_SKILL_DAMAGE_MULTIPLIER,
   RISK_GARB_AWAKENED_INVINCIBLE_FRAMES,
   RISK_GARB_DAMAGE_MULTIPLIER,
   RISK_GARB_FINE_INVINCIBLE_BONUS_FRAMES,
-  RISK_TALISMAN_SKILL_GAIN,
-  RISK_TALISMAN_ULTIMATE_GAIN,
   SHADOWSTEP_BLADE_DAMAGE_MULTIPLIER,
   SHADOWSTEP_BLADE_QUICK_TIMER_FRAMES,
   SHADOWSTEP_BLADE_REACH_BONUS,
@@ -71,6 +70,7 @@ import {
   huntGarbKillsRequired,
   huntTalismanCooldownFrames,
   isHuntBladeAlwaysActive,
+  riskResonanceSpeedMultiplier,
   tickFlowResonanceRegeneration,
   triggerCountWithFamilyResonance,
 } from "./equipmentResonance";
@@ -86,6 +86,7 @@ import {
   equipmentItem,
   equippedTier,
   hasEquipment,
+  isPlayerLowHp,
   tierAtLeast,
 } from "./equipmentState";
 import { applyEquipmentStatChange } from "./equipmentStats";
@@ -113,7 +114,7 @@ export {
   syncSkillChargesForEquipment,
 } from "./equipmentResources";
 export { applySkillHitEquipmentRefund } from "./equipmentSkillHit";
-export { shouldDodgeWithShadowstepResonance } from "./equipmentResonance";
+export { consumeRiskFullSetShield, shouldDodgeWithShadowstepResonance } from "./equipmentResonance";
 
 type BossLike = {
   hp: number;
@@ -252,6 +253,10 @@ export function applySkillCastEquipmentEffects(state: GameState, skillId?: Skill
 export function tickEquipmentEffects(state: GameState, deltaSeconds = 0) {
   const player = state.player;
   tickFlowResonanceRegeneration(state, deltaSeconds);
+  const riskTalismanTier = equippedTier(state, "talisman", "risk_talisman");
+  if (deltaSeconds > 0 && riskTalismanTier && isPlayerLowHp(state)) {
+    grantSkillEnergy(state, RISK_TALISMAN_SKILL_REGEN_PER_SECOND[riskTalismanTier] * deltaSeconds);
+  }
   decrementTimer(player, "flowBladeSurgeSkillTimer");
   decrementTimer(player, "flowGarbTimer");
   decrementTimer(player, "burstGarbSpeedTimer");
@@ -264,6 +269,7 @@ export function tickEquipmentEffects(state: GameState, deltaSeconds = 0) {
   decrementTimer(player, "huntBladeWaterTimer");
   decrementTimer(player, "huntGarbTimer");
   decrementTimer(player, "huntTalismanCooldown");
+  decrementTimer(player, "riskShieldCooldown");
   tickTempoGarbRecovery(state);
   if (player.huntKillTimer <= 0) player.huntKillCount = 0;
   if (player.attackTimer <= 0) {
@@ -308,12 +314,16 @@ export function equipmentMoveSpeedMultiplier(state: GameState) {
   if (state.player.burstGarbSpeedTimer > 0) multiplier *= BURST_GARB_SPEED_MULTIPLIER;
   if (state.player.shadowstepGarbHurtSpeedTimer > 0) multiplier *= SHADOWSTEP_GARB_HURT_SPEED_MULTIPLIER;
   if (state.player.tempoGarbRecoveryTimer > 0) multiplier *= TEMPO_GARB_SPEED_MULTIPLIER;
+  if (isPlayerLowHp(state)) multiplier *= riskResonanceSpeedMultiplier(state);
   return multiplier;
 }
 
 export function equipmentBasicAttackFrameMultiplier(state: GameState) {
   const tempoTier = equippedTier(state, "blade", "tempo_blade");
-  return tempoTier ? TEMPO_BLADE_ATTACK_FRAME_MULTIPLIER[tempoTier] : 1;
+  const tempoMultiplier = tempoTier ? TEMPO_BLADE_ATTACK_FRAME_MULTIPLIER[tempoTier] : 1;
+  return isPlayerLowHp(state)
+    ? tempoMultiplier / riskResonanceSpeedMultiplier(state)
+    : tempoMultiplier;
 }
 
 export function equipmentBasicAttackReachBonus(state: GameState) {
@@ -473,15 +483,16 @@ export function applyLowHealthEquipmentTriggers(state: GameState) {
   }
 
   const riskTalismanTier = equippedTier(state, "talisman", "risk_talisman");
-  if (riskTalismanTier && !player.riskTalismanTriggered && isPlayerLowHp(state)) {
-    player.riskTalismanTriggered = true;
-    grantSkillEnergy(state, RISK_TALISMAN_SKILL_GAIN[riskTalismanTier]);
-    applyFamilyResonanceReward(state, "risk");
-    if (tierAtLeast(riskTalismanTier, "awakened")) {
-      player.skillEnergy = Math.max(player.skillEnergy, equipmentSkillEnergyCost(state));
-      syncSkillChargesForEquipment(state);
-      grantUltimateEnergy(state, RISK_TALISMAN_ULTIMATE_GAIN);
-    }
+  if (
+    riskTalismanTier
+    && tierAtLeast(riskTalismanTier, "awakened")
+    && !player.riskTalismanAwakenedTriggered
+    && isPlayerLowHp(state)
+  ) {
+    player.riskTalismanAwakenedTriggered = true;
+    player.skillEnergy = Math.max(player.skillEnergy, equipmentSkillEnergyCost(state));
+    syncSkillChargesForEquipment(state);
+    grantUltimateEnergy(state, RISK_TALISMAN_ULTIMATE_GAIN);
   }
 }
 
@@ -555,7 +566,7 @@ export function recordBossDefeatEquipmentEffects(state: GameState) {
   player.burstBladeExecuteReady = false;
   player.burstBladeExecuteUsed = false;
   player.burstBladeAwakenedSlashUsed = false;
-  player.riskTalismanTriggered = false;
+  player.riskTalismanAwakenedTriggered = false;
   player.riskBladeLowHpSkillReady = false;
   player.riskBladeLowHpSkillUsed = false;
   player.riskGarbBossLowHpProtectionUsed = false;
@@ -580,8 +591,4 @@ function tickTempoGarbRecovery(state: GameState) {
     player.tempoGarbRecoverySkillGranted = true;
     grantSkillEnergy(state, TEMPO_GARB_SKILL_GAIN);
   }
-}
-
-export function isPlayerLowHp(state: GameState) {
-  return state.player.hp / Math.max(1, state.player.maxHp) <= LOW_HP_RATIO;
 }

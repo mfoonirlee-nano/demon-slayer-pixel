@@ -24,6 +24,12 @@ import {
   HUNT_TALISMAN_COOLDOWN_SECONDS,
   HUNT_TALISMAN_SKILL_GAIN,
   HUNT_TALISMAN_ULTIMATE_GAIN,
+  LOW_HP_RATIO,
+  RISK_FULL_SHIELD_COOLDOWN_SECONDS,
+  RISK_FULL_SPEED_MULTIPLIER,
+  RISK_PAIR_SPEED_MULTIPLIER,
+  RISK_TALISMAN_SKILL_REGEN_PER_SECOND,
+  RISK_TALISMAN_ULTIMATE_GAIN,
   SHADOWSTEP_FULL_RESONANCE_SKILL_ENERGY_GAIN,
   SHADOWSTEP_PAIR_DODGE_CHANCE,
 } from "../constants";
@@ -109,8 +115,8 @@ const EQUIPMENT_FAMILY_RESONANCE_COPY: Record<
       full: `3 件：狩牙刃常态生效；逐猎衣 ${HUNT_GARB_KILLS_REQUIRED}→${HUNT_FULL_GARB_KILLS_REQUIRED}；连珠符冷却 ${HUNT_TALISMAN_COOLDOWN_SECONDS}→${HUNT_FULL_TALISMAN_COOLDOWN_SECONDS} 秒。`,
     },
     risk: {
-      pair: "2 件：暂无套装效果。",
-      full: `3 件：返魂符触发额外获得 ${FULL_RESONANCE_SKILL_ENERGY_GAIN} 点技能能量。`,
+      pair: `2 件：低血时攻击速度、移动速度提高 ${formatPercent(RISK_PAIR_SPEED_MULTIPLIER - 1)}。`,
+      full: `3 件：低血时攻击速度、移动速度提高 ${formatPercent(RISK_FULL_SPEED_MULTIPLIER - 1)}；免伤护盾抵挡 1 次伤害，冷却 ${RISK_FULL_SHIELD_COOLDOWN_SECONDS} 秒。`,
     },
     tempo: {
       pair: "2 件：暂无套装效果。",
@@ -135,8 +141,8 @@ const EQUIPMENT_FAMILY_RESONANCE_COPY: Record<
       full: `3-piece: Blade always on; garb ${HUNT_GARB_KILLS_REQUIRED}→${HUNT_FULL_GARB_KILLS_REQUIRED}; talisman cooldown ${HUNT_TALISMAN_COOLDOWN_SECONDS}→${HUNT_FULL_TALISMAN_COOLDOWN_SECONDS}s.`,
     },
     risk: {
-      pair: "2-piece: No set bonus.",
-      full: `3-piece: Soulreturn triggers grant +${FULL_RESONANCE_SKILL_ENERGY_GAIN} skill energy.`,
+      pair: `2-piece: Low HP +${formatPercent(RISK_PAIR_SPEED_MULTIPLIER - 1)} attack/move speed.`,
+      full: `3-piece: Low HP +${formatPercent(RISK_FULL_SPEED_MULTIPLIER - 1)} attack/move speed; 1-hit shield, ${RISK_FULL_SHIELD_COOLDOWN_SECONDS}s CD.`,
     },
     tempo: {
       pair: "2-piece: No set bonus.",
@@ -377,13 +383,16 @@ const EN_EQUIPMENT_COPY: Record<EquipmentItemId, EnglishEquipmentItemCopy> = {
   risk_talisman: {
     name: "Soulreturn Talisman",
     tiers: {
-      common: { summary: "The first time each act you drop below 35% HP, gain skill energy.", tag: "Near-Death Energy" },
+      common: {
+        summary: `At ≤${formatPercent(LOW_HP_RATIO)} HP, regenerate ${RISK_TALISMAN_SKILL_REGEN_PER_SECOND.common} skill energy/sec.`,
+        tag: "Low-HP Regen",
+      },
       fine: {
-        summary: "The first time each act you drop below 35% HP, gain more skill energy.",
-        tag: "Near-Death Refund",
+        summary: `At ≤${formatPercent(LOW_HP_RATIO)} HP, regenerate ${RISK_TALISMAN_SKILL_REGEN_PER_SECOND.fine} skill energy/sec.`,
+        tag: "Low-HP Regen",
       },
       awakened: {
-        summary: "The first time each act below 35% HP, fill at least one skill bar and gain ultimate energy.",
+        summary: `At ≤${formatPercent(LOW_HP_RATIO)} HP, regenerate ${RISK_TALISMAN_SKILL_REGEN_PER_SECOND.awakened} skill energy/sec; once per act, ensure one skill bar and gain ${RISK_TALISMAN_ULTIMATE_GAIN} ultimate energy.`,
         tag: "Soulreturn Finale",
       },
     },

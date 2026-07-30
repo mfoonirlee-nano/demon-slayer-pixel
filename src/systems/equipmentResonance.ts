@@ -14,11 +14,15 @@ import {
   HUNT_PAIR_GARB_KILLS_REQUIRED,
   HUNT_PAIR_TALISMAN_COOLDOWN_FRAMES,
   HUNT_TALISMAN_COOLDOWN_FRAMES,
+  RISK_FULL_SPEED_MULTIPLIER,
+  RISK_FULL_SHIELD_COOLDOWN_FRAMES,
+  RISK_PAIR_SPEED_MULTIPLIER,
   SHADOWSTEP_FULL_RESONANCE_SKILL_ENERGY_GAIN,
   SHADOWSTEP_PAIR_DODGE_CHANCE,
 } from "../constants";
 import { EQUIPMENT_ITEMS } from "./equipmentCatalog";
 import { grantSkillEnergy } from "./equipmentResources";
+import { isPlayerLowHp } from "./equipmentState";
 import {
   BURST_BLADE_BOSS_HP_RATIO,
   BURST_TALISMAN_COOLDOWN,
@@ -77,6 +81,27 @@ export function huntTalismanCooldownFrames(state: GameState) {
   if (huntCount >= FULL_RESONANCE_COUNT) return HUNT_FULL_TALISMAN_COOLDOWN_FRAMES;
   if (huntCount >= PAIR_RESONANCE_COUNT) return HUNT_PAIR_TALISMAN_COOLDOWN_FRAMES;
   return HUNT_TALISMAN_COOLDOWN_FRAMES;
+}
+
+export function riskResonanceSpeedMultiplier(state: GameState) {
+  const riskCount = equippedFamilyCount(state, "risk");
+  if (riskCount >= FULL_RESONANCE_COUNT) return RISK_FULL_SPEED_MULTIPLIER;
+  if (riskCount >= PAIR_RESONANCE_COUNT) return RISK_PAIR_SPEED_MULTIPLIER;
+  return 1;
+}
+
+export function hasRiskFullResonance(state: GameState) {
+  return equippedFamilyCount(state, "risk") >= FULL_RESONANCE_COUNT;
+}
+
+export function consumeRiskFullSetShield(state: GameState) {
+  const player = state.player;
+  if (!hasRiskFullResonance(state)) return false;
+  if (!isPlayerLowHp(state)) return false;
+  if (player.riskShieldCooldown > 0) return false;
+
+  player.riskShieldCooldown = RISK_FULL_SHIELD_COOLDOWN_FRAMES;
+  return true;
 }
 
 export function applyFamilyResonanceReward(state: GameState, family: EquipmentFamily) {

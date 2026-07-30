@@ -24,6 +24,7 @@ import {
   applyFatalDamageEquipmentProtection,
   applyLowHealthEquipmentTriggers,
   beginBasicAttackEquipmentEffects,
+  consumeRiskFullSetShield,
   equipmentBasicAttackDamageMultiplier,
   equipmentBasicAttackFrameMultiplier,
   equipmentBasicAttackReachBonus,
@@ -362,6 +363,7 @@ export function hurtPlayer(damage: number, sourceVx: number) {
   if (counterRect && resolveGuardCounterResponse(counterRect, true, true)) {
     return;
   }
+  if (consumeRiskFullSetShield(state)) return;
 
   const incomingDamage = damage * equipmentIncomingDamageMultiplier(state)
     * guardCounterIncomingDamageMultiplier(state);
