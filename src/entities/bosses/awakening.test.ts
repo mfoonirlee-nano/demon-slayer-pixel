@@ -96,9 +96,15 @@ describe("boss awakening behavior", () => {
     state.player.attackTimer = 1;
     state.player.invincible = 0;
     const hpBefore = state.player.hp;
+    const remainingWarningFrames = (boss.deadBellReprisalTimer ?? 0)
+      - DEAD_BELL_CONFIG.reprisalActiveFrames;
+
+    advanceBoss(updateDeadBellBoss, boss, remainingWarningFrames);
+
+    expect(state.player.hp).toBe(hpBefore);
+    expect(boss.deadBellReprisalHit).toBe(false);
 
     updateDeadBellBoss(boss);
-
     expect(state.player.hp).toBeLessThan(hpBefore);
     expect(boss.deadBellReprisalHit).toBe(true);
   });

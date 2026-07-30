@@ -18,6 +18,8 @@ const WAVE_FADE_MIN_ALPHA = 0.28;
 const WAVE_WARNING_ALPHA = 0.52;
 const BLADE_WARNING_ALPHA_BASE = 0.2;
 const BLADE_WARNING_ALPHA_GAIN = 0.35;
+const BLADE_WARNING_FILL_ALPHA = 0.12;
+const BLADE_WARNING_FILL_ALPHA_GAIN = 0.08;
 const BLADE_WARNING_DASH_LENGTH = 12;
 const BLADE_WARNING_DASH_GAP = 10;
 
@@ -134,16 +136,28 @@ function drawDeadBellBlades() {
   if (!ctx) return;
   for (const blade of state.deadBellBlades) {
     if (blade.delay > 0) {
+      const warningProgress = clamp(
+        1 - blade.delay / Math.max(1, blade.warningFrames),
+        0,
+        1,
+      );
       ctx.save();
+      ctx.globalAlpha = BLADE_WARNING_FILL_ALPHA
+        + warningProgress * BLADE_WARNING_FILL_ALPHA_GAIN;
+      ctx.fillStyle = "#9c2f28";
+      ctx.fillRect(0, blade.y, WIDTH, blade.h);
       ctx.globalAlpha = BLADE_WARNING_ALPHA_BASE
-        + (1 - blade.delay / DEAD_BELL_CONFIG.bladeWarningFrames) * BLADE_WARNING_ALPHA_GAIN;
+        + warningProgress * BLADE_WARNING_ALPHA_GAIN;
       ctx.strokeStyle = "#d7b66d";
       ctx.lineWidth = 2;
       ctx.setLineDash([BLADE_WARNING_DASH_LENGTH, BLADE_WARNING_DASH_GAP]);
       ctx.beginPath();
-      ctx.moveTo(0, blade.y + blade.h / 2);
-      ctx.lineTo(WIDTH, blade.y + blade.h / 2);
+      ctx.moveTo(0, blade.y);
+      ctx.lineTo(WIDTH, blade.y);
+      ctx.moveTo(0, blade.y + blade.h);
+      ctx.lineTo(WIDTH, blade.y + blade.h);
       ctx.stroke();
+      ctx.setLineDash([]);
       ctx.restore();
       continue;
     }

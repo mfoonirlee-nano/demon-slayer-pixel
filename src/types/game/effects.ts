@@ -84,6 +84,7 @@ export type DeadBellBladeState = {
   vx: number;
   facing: number;
   delay: number;
+  warningFrames: number;
   elapsed: number;
   frame: number;
   life: number;

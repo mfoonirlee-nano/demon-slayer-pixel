@@ -325,6 +325,7 @@ export type BossState = {
   spiderStringCageUsed?: boolean;
   spiderStringCageCd?: number;
   mirrorTrueImageShiftPhase?: number;
+  mirrorTeleportTargetX?: number;
   mistBonePatternStep?: number;
   lanternPatternStep?: number;
   lanternPatternPhase?: number;

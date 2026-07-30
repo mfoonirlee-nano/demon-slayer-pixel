@@ -6,6 +6,7 @@ import { playSfx } from "../../game/audio";
 import { spawnBossSummonEnemy } from "../enemy";
 import { spawnDeadBellBlade, spawnDeadBellWave, playerBladeLane } from "./deadBellBehavior";
 import { spawnLanternFireline } from "./lanternEmberBehavior";
+import { bossCastDuration } from "./attackTiming";
 import { bossAttackDamage, damagePlayerOnContact } from "./shared";
 import type { LiveBoss } from "./types";
 import type { BloodMoonEffectState } from "../../types/game-state";
@@ -78,7 +79,7 @@ export function updateBloodMoonBoss(boss: LiveBoss) {
 
   if (boss.castTimer > 0) {
     boss.vx = 0;
-    const castDuration = bloodMoonCastDuration(boss);
+    const castDuration = bossCastDuration(boss);
     const spawnAtFrame = boss.skillMode === "bloodMoonManyFaces"
       ? BLOOD_MOON_CONFIG.finalSpawnAtFrame
       : BLOOD_MOON_CONFIG.spawnAtFrame;
@@ -109,18 +110,12 @@ export function updateBloodMoonBoss(boss: LiveBoss) {
   damagePlayerOnContact(boss);
 }
 
-export function bloodMoonCastDuration(boss: LiveBoss) {
-  return boss.skillMode === "bloodMoonManyFaces"
-    ? BLOOD_MOON_CONFIG.finalCastDuration
-    : BLOOD_MOON_CONFIG.castDuration;
-}
-
 function startBloodMoonCast(boss: LiveBoss) {
   const toPlayer = state.player.x + state.player.w / 2 - (boss.x + boss.w / 2);
   boss.castFacing = toPlayer >= 0 ? 1 : -1;
   boss.facing = boss.castFacing;
   boss.skillMode = nextBloodMoonSkill(boss);
-  boss.castTimer = bloodMoonCastDuration(boss);
+  boss.castTimer = bossCastDuration(boss);
   boss.skillEffectSpawned = false;
   boss.actionState = "cast";
   boss.actionTimer = 0;

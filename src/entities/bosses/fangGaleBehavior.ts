@@ -4,6 +4,7 @@ import { state } from "../../game/state";
 import { clamp, hitbox } from "../../game/utils";
 import type { BossSkillMode } from "../../types/game-state";
 import { hurtPlayer } from "../player";
+import { bossCastDuration, fangChainWindupFrames } from "./attackTiming";
 import { bossAttackDamage, damagePlayerOnContact } from "./shared";
 import type { LiveBoss } from "./types";
 
@@ -45,6 +46,7 @@ const STORM_WAVE_SFX_PITCH = 1.12;
 const DASH_PHASE_SPEED_BONUS = 0.28;
 const STORM_DASH_SFX_PITCH = 1.16;
 const STORM_CHAIN_WAVE_SFX_PITCH = 1.06;
+const STORM_CHAIN_WARNING_SFX_PITCH = 1.16;
 const MAX_STORM_COMBO_STEP = 3;
 const WAVE_FORWARD_OFFSET = 42;
 const WAVE_CENTER_Y_SCALE = 0.56;
@@ -72,7 +74,7 @@ export function updateFangGaleBoss(boss: LiveBoss) {
   }
 
   if (boss.castTimer > 0) {
-    const castDuration = fangCastDuration(boss);
+    const castDuration = bossCastDuration(boss);
     const framesSinceCastStart = castDuration - boss.castTimer;
     boss.vx = 0;
     boss.castTimer -= 1;
@@ -95,13 +97,6 @@ export function updateFangGaleBoss(boss: LiveBoss) {
   damagePlayerOnContact(boss);
 }
 
-export function fangCastDuration(boss: LiveBoss) {
-  if (boss.actionState === "windup") return FANG_GALE_CONFIG.chainWindupFrames;
-  return boss.skillMode === "fangGaleStorm"
-    ? FANG_GALE_CONFIG.stormCastDuration
-    : FANG_GALE_CONFIG.castDuration;
-}
-
 function moveFangGaleBoss(boss: LiveBoss) {
   const toward = state.player.x + state.player.w / 2 - (boss.x + boss.w / 2);
   boss.facing = toward >= 0 ? 1 : -1;
@@ -121,7 +116,7 @@ function startFangCast(boss: LiveBoss) {
   boss.castFacing = toPlayer >= 0 ? 1 : -1;
   boss.facing = boss.castFacing;
   boss.skillMode = nextFangSkill(boss);
-  boss.castTimer = fangCastDuration(boss);
+  boss.castTimer = bossCastDuration(boss);
   boss.skillEffectSpawned = false;
   boss.skillHitDone = false;
   boss.actionState = "cast";
@@ -179,7 +174,7 @@ function startFangDashSegment(boss: LiveBoss) {
 }
 
 function updateFangStormWindup(boss: LiveBoss) {
-  const framesSinceWindupStart = FANG_GALE_CONFIG.chainWindupFrames - boss.castTimer;
+  const framesSinceWindupStart = fangChainWindupFrames(boss.phase) - boss.castTimer;
   boss.vx = 0;
   boss.castTimer -= 1;
 
@@ -189,7 +184,6 @@ function updateFangStormWindup(boss: LiveBoss) {
     playSfx("bossBlade", STORM_CHAIN_WAVE_SFX_PITCH);
   }
   if (boss.castTimer <= 0) startFangDashSegment(boss);
-  damagePlayerOnContact(boss);
 }
 
 function updateFangDash(boss: LiveBoss) {
@@ -229,12 +223,13 @@ function startFangStormChainWindup(boss: LiveBoss) {
   boss.comboStep = (boss.comboStep ?? 1) + 1;
   boss.castFacing *= -1;
   boss.facing = boss.castFacing;
-  boss.castTimer = FANG_GALE_CONFIG.chainWindupFrames;
+  boss.castTimer = fangChainWindupFrames(boss.phase);
   boss.skillEffectSpawned = false;
   boss.skillHitDone = false;
   boss.actionState = "windup";
   boss.actionTimer = 0;
   boss.vx = 0;
+  playSfx("bossCast", STORM_CHAIN_WARNING_SFX_PITCH);
 }
 
 function spawnFangWave(boss: LiveBoss, facing: number) {

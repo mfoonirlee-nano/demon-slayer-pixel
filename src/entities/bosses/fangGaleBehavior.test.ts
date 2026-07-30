@@ -48,6 +48,21 @@ describe("fang gale boss behavior", () => {
       randomSpy.mockRestore();
     }
   });
+
+  it("keeps the storm chain windup safe until the dash starts", () => {
+    const boss = readyFangGale();
+    boss.actionState = "windup";
+    boss.skillMode = "fangGaleStorm";
+    boss.castTimer = FANG_GALE_CONFIG.chainWindupFrames;
+    state.player.x = boss.x;
+    state.player.y = boss.y;
+    const hpBeforeWindup = state.player.hp;
+
+    updateFangGaleBoss(boss);
+
+    expect(boss.actionState).toBe("windup");
+    expect(state.player.hp).toBe(hpBeforeWindup);
+  });
 });
 
 function readyFangGale(): LiveBoss {

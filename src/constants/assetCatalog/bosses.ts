@@ -416,6 +416,8 @@ export const DEAD_BELL_CONFIG = {
   bladeYOffset: 58,
   upperBladeY: 330,
   lowerBladeY: 424,
+  reprisalWarningFrames: 18,
+  reprisalActiveFrames: 42,
   damageBase: 11,
   damagePhase: 3,
   skillCooldown: 238,

@@ -29,10 +29,8 @@ import { frameIndex } from "../../game/utils";
 import { ctx } from "../../rendering/context";
 import { drawSheetFrame } from "../../rendering/graphics";
 import type { BossVisualFrameState } from "../../types/game-state";
+import { bossCastDuration } from "./attackTiming";
 import { BOSS_ARCHETYPE_IDS, bossArchetypeForId } from "./registry";
-import { bloodMoonCastDuration } from "./bloodMoonBehavior";
-import { fangCastDuration } from "./fangGaleBehavior";
-import { lanternCastDuration } from "./lanternEmberBehavior";
 import type { LiveBoss } from "./types";
 
 const DEAD_BELL_CUE_CENTER_Y_SCALE = 0.42;
@@ -225,23 +223,6 @@ function bloodMoonCastSheet(boss: LiveBoss) {
   if (boss.skillMode === "bloodMoonSixfold") return BLOOD_MOON_SIXFOLD_CAST_SHEET;
   if (boss.skillMode === "bloodMoonManyFaces") return BLOOD_MOON_MANY_FACES_CAST_SHEET;
   return BLOOD_MOON_SPIDER_MIST_CAST_SHEET;
-}
-
-function bossCastDuration(boss: LiveBoss) {
-  if (boss.id === BOSS_ARCHETYPE_IDS.deadBell) {
-    return boss.skillMode === "deadBellCombo" || boss.skillMode === "deadBellDuet"
-      ? DEAD_BELL_CONFIG.comboCastDuration
-      : DEAD_BELL_CONFIG.castDuration;
-  }
-  if (boss.id === BOSS_ARCHETYPE_IDS.fangGale) return fangCastDuration(boss);
-  if (boss.id === BOSS_ARCHETYPE_IDS.lanternEmber) return lanternCastDuration(boss);
-  if (boss.id === BOSS_ARCHETYPE_IDS.mistBone) return MIST_BONE_CONFIG.castDuration;
-  if (boss.id === BOSS_ARCHETYPE_IDS.mirrorDream) return MIRROR_DREAM_CONFIG.castDuration;
-  if (boss.id === BOSS_ARCHETYPE_IDS.bloodMoon) return bloodMoonCastDuration(boss);
-  if (boss.id === BOSS_ARCHETYPE_IDS.spiderString && boss.skillMode === "spiderStringCage") {
-    return SPIDER_STRING_CAGE_CONFIG.castDuration;
-  }
-  return BOSS_SKILL1_CONFIG.castDuration;
 }
 
 function bossCastFrameDuration(boss: LiveBoss) {

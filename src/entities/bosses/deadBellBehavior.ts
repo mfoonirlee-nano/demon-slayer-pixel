@@ -3,6 +3,7 @@ import { state } from "../../game/state";
 import { clamp } from "../../game/utils";
 import { playSfx } from "../../game/audio";
 import { hurtPlayer } from "../player";
+import { bossCastDuration } from "./attackTiming";
 import { bossAttackDamage, damagePlayerOnContact } from "./shared";
 import type { LiveBoss } from "./types";
 
@@ -33,7 +34,6 @@ const DUET_THIRD_WAVE_DELAY_BONUS = 18;
 const DUET_WAVE_RADIUS_BONUS = 70;
 const DUET_UPPER_BLADE_DELAY = 16;
 const DUET_LOWER_BLADE_DELAY = 42;
-const DUET_REPRISAL_FRAMES = 42;
 const DUET_REPRISAL_RECOVERY_BONUS = 18;
 const DUET_REPRISAL_DAMAGE_BONUS = 5;
 const DUET_REPRISAL_SFX_PITCH = 0.82;
@@ -53,9 +53,7 @@ export function updateDeadBellBoss(boss: LiveBoss) {
 
   if (boss.castTimer > 0) {
     boss.vx = 0;
-    const castDuration = isDeadBellLongCast(boss.skillMode)
-      ? DEAD_BELL_CONFIG.comboCastDuration
-      : DEAD_BELL_CONFIG.castDuration;
+    const castDuration = bossCastDuration(boss);
     const framesSinceCastStart = castDuration - boss.castTimer;
     const spawnAtFrame = isDeadBellLongCast(boss.skillMode)
       ? DEAD_BELL_CONFIG.comboSpawnAtFrame
@@ -71,7 +69,8 @@ export function updateDeadBellBoss(boss: LiveBoss) {
       boss.actionTimer = 0;
       boss.recoveryTimer = deadBellRecoveryFrames(boss);
       if (boss.skillMode === "deadBellDuet") {
-        boss.deadBellReprisalTimer = DUET_REPRISAL_FRAMES;
+        boss.deadBellReprisalTimer = DEAD_BELL_CONFIG.reprisalWarningFrames
+          + DEAD_BELL_CONFIG.reprisalActiveFrames;
         boss.deadBellReprisalHit = false;
       }
     }
@@ -108,9 +107,7 @@ function startDeadBellCast(boss: LiveBoss) {
   boss.castFacing = toPlayer >= 0 ? 1 : -1;
   boss.facing = boss.castFacing;
   boss.skillMode = nextDeadBellSkill(boss);
-  boss.castTimer = isDeadBellLongCast(boss.skillMode)
-    ? DEAD_BELL_CONFIG.comboCastDuration
-    : DEAD_BELL_CONFIG.castDuration;
+  boss.castTimer = bossCastDuration(boss);
   boss.skillEffectSpawned = false;
   boss.actionState = "cast";
   boss.actionTimer = 0;
@@ -150,7 +147,9 @@ function deadBellRecoveryFrames(boss: LiveBoss) {
 function updateDeadBellReprisal(boss: LiveBoss) {
   if (boss.skillMode !== "deadBellDuet" || (boss.deadBellReprisalTimer ?? 0) <= 0) return;
 
-  if (!boss.deadBellReprisalHit && isPlayerUsingOffense()) {
+  const reprisalActive = (boss.deadBellReprisalTimer ?? 0)
+    <= DEAD_BELL_CONFIG.reprisalActiveFrames;
+  if (reprisalActive && !boss.deadBellReprisalHit && isPlayerUsingOffense()) {
     boss.deadBellReprisalHit = true;
     boss.deadBellReprisalTimer = 0;
     const bossCenter = boss.x + boss.w / 2;
@@ -261,6 +260,7 @@ export function spawnDeadBellBlade(boss: LiveBoss, centerY: number, delay: numbe
     vx: boss.castFacing * DEAD_BELL_CONFIG.bladeSpeed,
     facing: boss.castFacing,
     delay,
+    warningFrames: delay,
     elapsed: 0,
     frame: 0,
     life: DEAD_BELL_CONFIG.bladeLife,

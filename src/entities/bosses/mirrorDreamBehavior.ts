@@ -113,6 +113,9 @@ function startMirrorDreamCast(boss: LiveBoss, forcedSkillMode?: BossSkillMode) {
   boss.castFacing = toPlayer >= 0 ? 1 : -1;
   boss.facing = boss.castFacing;
   boss.skillMode = forcedSkillMode ?? nextMirrorDreamSkill(boss);
+  boss.mirrorTeleportTargetX = mirrorSkillTeleports(boss.skillMode)
+    ? mirrorTeleportTargetX(boss)
+    : undefined;
   boss.castTimer = MIRROR_DREAM_CONFIG.castDuration;
   boss.skillEffectSpawned = false;
   boss.actionState = "cast";
@@ -231,6 +234,16 @@ function spawnMirrorAfterimage(boss: LiveBoss, spawnAt: number | undefined, cent
 }
 
 function teleportMirrorDreamBoss(boss: LiveBoss) {
+  boss.x = boss.mirrorTeleportTargetX ?? mirrorTeleportTargetX(boss);
+  boss.mirrorTeleportTargetX = undefined;
+  boss.vx = 0;
+  const playerCenter = state.player.x + state.player.w / 2;
+  const toPlayer = playerCenter - (boss.x + boss.w / 2);
+  boss.facing = toPlayer >= 0 ? 1 : -1;
+  boss.castFacing = boss.facing;
+}
+
+function mirrorTeleportTargetX(boss: LiveBoss) {
   const playerCenter = state.player.x + state.player.w / 2;
   const bossCenter = boss.x + boss.w / 2;
   const side = bossCenter < playerCenter ? 1 : -1;
@@ -241,12 +254,11 @@ function teleportMirrorDreamBoss(boss: LiveBoss) {
   const targetCenter = preferredCenter >= minCenter && preferredCenter <= maxCenter
     ? preferredCenter
     : fallbackCenter;
+  return clamp(targetCenter - boss.w / 2, 0, WIDTH - boss.w);
+}
 
-  boss.x = clamp(targetCenter - boss.w / 2, 0, WIDTH - boss.w);
-  boss.vx = 0;
-  const toPlayer = playerCenter - (boss.x + boss.w / 2);
-  boss.facing = toPlayer >= 0 ? 1 : -1;
-  boss.castFacing = boss.facing;
+function mirrorSkillTeleports(skillMode: BossSkillMode) {
+  return skillMode === "mirrorAfterimage" || skillMode === "mirrorTrueImageShift";
 }
 
 function spawnMirrorNightmareImages(boss: LiveBoss) {
@@ -272,7 +284,7 @@ function spawnMirrorShardFromBoss(boss: LiveBoss) {
   const startY = boss.y + boss.h * SHARD_START_Y_SCALE;
   const targetX = state.player.x + state.player.w / 2;
   const targetY = state.player.y + state.player.h / 2;
-  const dir = Math.sign(targetX - startX) || boss.castFacing;
+  const dir = boss.castFacing;
   const travelFrames = Math.max(MIN_SHARD_TRAVEL_FRAMES, Math.abs(targetX - startX) / MIRROR_DREAM_CONFIG.shardSpeed);
   const vy = clamp((targetY - startY) / travelFrames, -SHARD_MAX_VERTICAL_SPEED, SHARD_MAX_VERTICAL_SPEED);
   spawnMirrorShard({

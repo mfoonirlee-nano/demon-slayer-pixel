@@ -59,17 +59,37 @@ describe("spider string boss behavior", () => {
     const boss = readySpiderForMovement();
 
     updateBoss();
+    expect(boss.actionState).toBe("windup");
+    expect(boss.facing).toBe(1);
+
+    state.player.x = 0;
     advanceBossFrames(BOSS_CONFIG.rushWindupFrames);
     expect(boss.actionState).toBe("dash");
     expect(boss.facing).toBe(1);
 
-    state.player.x = 0;
     const xBeforeDash = boss.x;
     updateBoss();
 
     expect(boss.actionState).toBe("dash");
     expect(boss.facing).toBe(1);
     expect(boss.x).toBeGreaterThan(xBeforeDash);
+  });
+
+  it("does not deal rush contact damage before the phase-one warning completes", () => {
+    const boss = readySpiderForMovement();
+    state.player.x = boss.x;
+    state.player.y = boss.y;
+    const hpBeforeWindup = state.player.hp;
+
+    updateBoss();
+    advanceBossFrames(BOSS_CONFIG.rushWindupFrames - 1);
+
+    expect(boss.actionState).toBe("windup");
+    expect(state.player.hp).toBe(hpBeforeWindup);
+
+    updateBoss();
+    expect(boss.actionState).toBe("dash");
+    expect(state.player.hp).toBeLessThan(hpBeforeWindup);
   });
 
   it("starts the sprite-backed spider string cast when the skill is ready", () => {

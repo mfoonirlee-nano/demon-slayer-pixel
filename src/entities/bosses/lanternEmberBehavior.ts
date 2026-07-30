@@ -4,6 +4,7 @@ import { state } from "../../game/state";
 import { clamp } from "../../game/utils";
 import { playSfx } from "../../game/audio";
 import { spawnBossSummonEnemy } from "../enemy";
+import { bossCastDuration } from "./attackTiming";
 import { bossAttackDamage, damagePlayerOnContact } from "./shared";
 import type { LiveBoss } from "./types";
 
@@ -54,7 +55,7 @@ export function updateLanternEmberBoss(boss: LiveBoss) {
 
   if (boss.castTimer > 0) {
     boss.vx = 0;
-    const castDuration = lanternCastDuration(boss);
+    const castDuration = bossCastDuration(boss);
     const spawnAtFrame = boss.skillMode === "lanternAwakenedGrid"
       ? LANTERN_EMBER_CONFIG.awakenedSpawnAtFrame
       : LANTERN_EMBER_CONFIG.spawnAtFrame;
@@ -83,12 +84,6 @@ export function updateLanternEmberBoss(boss: LiveBoss) {
   damagePlayerOnContact(boss);
 }
 
-export function lanternCastDuration(boss: LiveBoss) {
-  return boss.skillMode === "lanternAwakenedGrid"
-    ? LANTERN_EMBER_CONFIG.awakenedCastDuration
-    : LANTERN_EMBER_CONFIG.castDuration;
-}
-
 function startLanternEmberCast(boss: LiveBoss) {
   const toPlayer = state.player.x + state.player.w / 2 - (boss.x + boss.w / 2);
   boss.castFacing = toPlayer >= 0 ? 1 : -1;
@@ -100,7 +95,7 @@ function startLanternEmberCast(boss: LiveBoss) {
     }
   }
   boss.facing = boss.castFacing;
-  boss.castTimer = lanternCastDuration(boss);
+  boss.castTimer = bossCastDuration(boss);
   boss.skillEffectSpawned = false;
   boss.actionState = "cast";
   boss.actionTimer = 0;

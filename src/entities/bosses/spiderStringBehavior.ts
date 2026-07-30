@@ -6,11 +6,13 @@ import { clamp } from "../../game/utils";
 import { spawnBossSummonEnemy } from "../enemy";
 import { spawnSpiderStringCageEffect } from "./spiderStringCageEffects";
 import { spawnBossSkill1Effect } from "./spiderStringEffects";
+import { spiderRushWindupFrames } from "./attackTiming";
 import { damagePlayerOnContact } from "./shared";
 import type { LiveBoss } from "./types";
 
 const CAST_SFX_PITCH = 0.92;
 const SUMMON_SFX_PITCH = 0.92;
+const RUSH_WARNING_SFX_PITCH = 1.12;
 
 export function updateSpiderStringBoss(boss: LiveBoss) {
   if ((boss.spiderStringCageCd ?? 0) > 0) {
@@ -38,7 +40,9 @@ export function updateSpiderStringBoss(boss: LiveBoss) {
   }
 
   if (updateSpiderRushCycleIfActive(boss)) {
-    damagePlayerOnContact(boss);
+    // The windup is the promised reaction window; collision damage resumes only
+    // after the telegraphed rush state actually begins.
+    if (boss.actionState !== "windup") damagePlayerOnContact(boss);
     return;
   }
 
@@ -85,14 +89,13 @@ export function updateSpiderStringBoss(boss: LiveBoss) {
     boss.aiTimer = BOSS_CONFIG.aiBaseCooldown - boss.phase * BOSS_CONFIG.aiPhaseReduction;
   }
 
-  damagePlayerOnContact(boss);
 }
 
 function updateSpiderRushCycleIfActive(boss: LiveBoss) {
   if (boss.actionState === "windup") {
     boss.vx = 0;
-    facePlayer(boss);
-    if (boss.actionTimer >= BOSS_CONFIG.rushWindupFrames) startSpiderDash(boss);
+    boss.facing = boss.castFacing;
+    if (boss.actionTimer >= spiderRushWindupFrames(boss.phase)) startSpiderDash(boss);
     return true;
   }
 
@@ -129,12 +132,16 @@ function startSpiderRushWindup(boss: LiveBoss) {
   boss.actionTimer = 0;
   boss.vx = 0;
   facePlayer(boss);
+  // Keep the warning corridor truthful if the player crosses behind the boss.
+  boss.castFacing = boss.facing;
+  playSfx("bossCast", RUSH_WARNING_SFX_PITCH);
 }
 
 function startSpiderDash(boss: LiveBoss) {
   boss.actionState = "dash";
   boss.actionTimer = 0;
-  boss.vx = boss.facing * (BOSS_CONFIG.rushVelocityBase + boss.phase);
+  boss.facing = boss.castFacing;
+  boss.vx = boss.castFacing * (BOSS_CONFIG.rushVelocityBase + boss.phase);
 }
 
 function startSpiderRetreat(boss: LiveBoss) {
