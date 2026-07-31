@@ -40,7 +40,7 @@ const CAST_CASES: readonly {
 }[] = [
   {
     id: BOSS_ARCHETYPE_IDS.spiderString,
-    modes: ["spiderString", "spiderStringCage"],
+    modes: ["spiderString", "spiderStringPillars", "spiderStringCage"],
   },
   {
     id: BOSS_ARCHETYPE_IDS.mistBone,

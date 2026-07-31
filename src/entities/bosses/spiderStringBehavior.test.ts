@@ -1,5 +1,9 @@
 import { describe, expect, it } from "vitest";
 import { BOSS_CONFIG, BOSS_SKILL1_CONFIG, GROUND_Y, SPIDER_STRING_CAGE_CONFIG, WIDTH } from "../../constants";
+import {
+  SPIDER_STRING_ATTACK_CONFIG,
+  SPIDER_STRING_PILLAR_CONFIG,
+} from "../../constants/assets";
 import { resetState, state } from "../../game/state";
 import type { EnemyState } from "../../types/game-state";
 import { updateBoss } from "../boss";
@@ -9,7 +13,7 @@ import { updateSpiderStringCageEffects } from "./spiderStringCageEffects";
 import { updateSpiderStringBoss } from "./spiderStringBehavior";
 
 describe("spider string boss behavior", () => {
-  it("lunges toward the player for a limited window, then backs away", () => {
+  it("lunges, attacks, then backs away", () => {
     const boss = readySpiderForMovement();
 
     updateBoss();
@@ -23,6 +27,10 @@ describe("spider string boss behavior", () => {
     const xBeforeRush = boss.x;
     advanceBossFrames(BOSS_CONFIG.rushFrames);
     expect(boss.x).toBeGreaterThan(xBeforeRush);
+    expect(boss.actionState).toBe("attack");
+    expect(boss.vx).toBe(0);
+
+    advanceBossFrames(SPIDER_STRING_ATTACK_CONFIG.duration);
     expect(boss.actionState).toBe("recover");
 
     const xBeforeRetreat = boss.x;
@@ -35,7 +43,11 @@ describe("spider string boss behavior", () => {
     const boss = readySpiderForMovement();
 
     updateBoss();
-    advanceBossFrames(BOSS_CONFIG.rushWindupFrames + BOSS_CONFIG.rushFrames);
+    advanceBossFrames(
+      BOSS_CONFIG.rushWindupFrames
+      + BOSS_CONFIG.rushFrames
+      + SPIDER_STRING_ATTACK_CONFIG.duration,
+    );
     advanceBossFrames(BOSS_CONFIG.retreatFrames);
 
     const restingX = boss.x;
@@ -52,7 +64,7 @@ describe("spider string boss behavior", () => {
     updateBoss();
     expect(boss.actionState).toBe("move");
     updateBoss();
-    expect(boss.actionState).toBe("cast");
+    expect(boss.actionState).toBe("windup");
   });
 
   it("commits to the direction chosen during the rush windup", () => {
@@ -75,21 +87,58 @@ describe("spider string boss behavior", () => {
     expect(boss.x).toBeGreaterThan(xBeforeDash);
   });
 
-  it("does not deal rush contact damage before the phase-one warning completes", () => {
+  it("deals damage once through the melee hitbox, not through dash or recovery contact", () => {
     const boss = readySpiderForMovement();
+
+    updateBoss();
+    advanceBossFrames(BOSS_CONFIG.rushWindupFrames);
+    expect(boss.actionState).toBe("dash");
+
     state.player.x = boss.x;
     state.player.y = boss.y;
-    const hpBeforeWindup = state.player.hp;
+    const hpBeforeDashContact = state.player.hp;
+    updateBoss();
+    expect(state.player.hp).toBe(hpBeforeDashContact);
+
+    advanceBossFrames(BOSS_CONFIG.rushFrames - 1);
+    expect(boss.actionState).toBe("attack");
+
+    movePlayerIntoSpiderAttack(boss);
+    advanceBossFrames(SPIDER_STRING_ATTACK_CONFIG.hitStartFrame - 1);
+    expect(state.player.hp).toBe(hpBeforeDashContact);
 
     updateBoss();
-    advanceBossFrames(BOSS_CONFIG.rushWindupFrames - 1);
+    expect(state.player.hp).toBeLessThan(hpBeforeDashContact);
+    expect(boss.skillHitDone).toBe(true);
+
+    const hpAfterAttack = state.player.hp;
+    state.player.invincible = 0;
+    updateBoss();
+    expect(state.player.hp).toBe(hpAfterAttack);
+
+    advanceBossFrames(
+      SPIDER_STRING_ATTACK_CONFIG.duration
+      - SPIDER_STRING_ATTACK_CONFIG.hitStartFrame
+      - 1,
+    );
+    expect(boss.actionState).toBe("recover");
+
+    state.player.invincible = 0;
+    state.player.x = boss.x;
+    state.player.y = boss.y;
+    updateBoss();
+    expect(state.player.hp).toBe(hpAfterAttack);
+  });
+
+  it("does not unlock a cast during phase one", () => {
+    const boss = readySpiderForMovement();
+    boss.skillCd = 0;
+
+    updateSpiderStringBoss(boss);
 
     expect(boss.actionState).toBe("windup");
-    expect(state.player.hp).toBe(hpBeforeWindup);
-
-    updateBoss();
-    expect(boss.actionState).toBe("dash");
-    expect(state.player.hp).toBeLessThan(hpBeforeWindup);
+    expect(state.bossSkill1Effects).toEqual([]);
+    expect(state.spiderStringPillars).toEqual([]);
   });
 
   it("starts the sprite-backed spider string cast when the skill is ready", () => {
@@ -101,6 +150,7 @@ describe("spider string boss behavior", () => {
       animSeed: 0,
     });
     boss.entering = false;
+    boss.phase = BOSS_SKILL1_CONFIG.minPhase;
     boss.x = 200;
     state.player.x = 500;
     boss.skillCd = 0;
@@ -119,7 +169,7 @@ describe("spider string boss behavior", () => {
     expect(state.bossSkill1Effects).toEqual([]);
   });
 
-  it("does not start the cage ultimate for a non-awakened phase three boss", () => {
+  it("starts the pillar cast instead of the cage for a non-awakened phase three boss", () => {
     resetState();
     const boss = createBossEncounter({
       id: BOSS_ARCHETYPE_IDS.spiderString,
@@ -128,15 +178,39 @@ describe("spider string boss behavior", () => {
       animSeed: 0,
     });
     boss.entering = false;
-    boss.phase = SPIDER_STRING_CAGE_CONFIG.minPhase;
+    boss.phase = SPIDER_STRING_PILLAR_CONFIG.minPhase;
     boss.awakened = false;
     boss.skillCd = 0;
 
     updateSpiderStringBoss(boss);
 
+    expect(boss.skillMode).toBe("spiderStringPillars");
+    expect(boss.castTimer).toBe(SPIDER_STRING_PILLAR_CONFIG.castDuration);
+    expect(boss.skillCd).toBe(SPIDER_STRING_PILLAR_CONFIG.cooldown);
+    expect(state.spiderStringCages).toEqual([]);
+  });
+
+  it("alternates the phase-three pillar cast with the phase-two spider string", () => {
+    resetState();
+    const boss = createBossEncounter({
+      id: BOSS_ARCHETYPE_IDS.spiderString,
+      bossKills: 0,
+      elapsedSeconds: 0,
+      animSeed: 0,
+    });
+    boss.entering = false;
+    boss.phase = SPIDER_STRING_PILLAR_CONFIG.minPhase;
+    boss.skillCd = 0;
+
+    updateSpiderStringBoss(boss);
+    expect(boss.skillMode).toBe("spiderStringPillars");
+
+    boss.castTimer = 0;
+    boss.skillCd = 0;
+    updateSpiderStringBoss(boss);
+
     expect(boss.skillMode).toBe("spiderString");
     expect(boss.castTimer).toBe(BOSS_SKILL1_CONFIG.castDuration);
-    expect(state.spiderStringCages).toEqual([]);
   });
 
   it("starts Spider String Cage for an awakened phase three boss", () => {
@@ -196,6 +270,7 @@ describe("spider string boss behavior", () => {
       animSeed: 0,
     });
     boss.entering = false;
+    boss.phase = BOSS_SKILL1_CONFIG.minPhase;
     boss.x = 200;
     state.player.x = 500;
     boss.skillCd = 0;
@@ -220,7 +295,7 @@ describe("spider string boss behavior", () => {
     expect(state.bossSkill1Effects).toHaveLength(1);
   });
 
-  it("does not spawn generic code-drawn boss projectiles in later phases", () => {
+  it("spawns the pillar pattern once at its configured cast frame", () => {
     resetState();
     const boss = createBossEncounter({
       id: BOSS_ARCHETYPE_IDS.spiderString,
@@ -229,12 +304,40 @@ describe("spider string boss behavior", () => {
       animSeed: 0,
     });
     boss.entering = false;
-    boss.phase = 2;
+    boss.phase = SPIDER_STRING_PILLAR_CONFIG.minPhase;
+    boss.skillCd = 0;
+
+    updateSpiderStringBoss(boss);
+    for (let i = 1; i < SPIDER_STRING_PILLAR_CONFIG.spawnAtFrame; i += 1) {
+      updateSpiderStringBoss(boss);
+    }
+    expect(state.spiderStringPillars).toEqual([]);
+
+    updateSpiderStringBoss(boss);
+
+    expect(boss.skillEffectSpawned).toBe(true);
+    expect(state.spiderStringPillars).toHaveLength(SPIDER_STRING_PILLAR_CONFIG.count);
+
+    updateSpiderStringBoss(boss);
+    expect(state.spiderStringPillars).toHaveLength(SPIDER_STRING_PILLAR_CONFIG.count);
+  });
+
+  it("does not summon enemies or generic projectiles in phase three", () => {
+    resetState();
+    const boss = createBossEncounter({
+      id: BOSS_ARCHETYPE_IDS.spiderString,
+      bossKills: 0,
+      elapsedSeconds: 0,
+      animSeed: 0,
+    });
+    boss.entering = false;
+    boss.phase = SPIDER_STRING_PILLAR_CONFIG.minPhase;
     boss.aiTimer = 0;
     boss.skillCd = 999;
 
     updateSpiderStringBoss(boss);
 
+    expect(state.enemies).toEqual([]);
     expect(state.projectiles).toEqual([]);
   });
 
@@ -306,6 +409,14 @@ function readySpiderForMovement() {
 
 function advanceBossFrames(frames: number) {
   for (let i = 0; i < frames; i += 1) updateBoss();
+}
+
+function movePlayerIntoSpiderAttack(boss: NonNullable<typeof state.boss>) {
+  state.player.x = boss.castFacing > 0
+    ? boss.x + boss.w
+    : boss.x - state.player.w;
+  state.player.y = boss.y + SPIDER_STRING_ATTACK_CONFIG.hitboxTopOffset;
+  state.player.invincible = 0;
 }
 
 function startAwakenedPhaseThreeCage() {

@@ -573,5 +573,5 @@ export const BOSS_SKILL1_CONFIG = {
   initialCooldown: 150,
   hitPlayerCooldown: 24,
   hitEnemyCooldown: 18,
-  minPhase: 1,
+  minPhase: 2,
 } as const;

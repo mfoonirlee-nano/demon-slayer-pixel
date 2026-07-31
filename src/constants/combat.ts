@@ -268,7 +268,6 @@ export const BOSS_CONFIG = {
   retreatFrames: 28,
   retreatVelocity: 3.2,
   breathingFrames: 48,
-  summonExtraEnemyPhase: 3,
   aiBaseCooldown: 100,
   aiPhaseReduction: 14,
   attackDamageMultiplier: 1.5,

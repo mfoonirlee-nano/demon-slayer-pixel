@@ -10,6 +10,9 @@ import {
   MOON_TIDE_PLAYER_SHEETS,
   PLAYER_ANIMATION_STATES,
   PLAYER_SHEETS,
+  SPIDER_STRING_ATTACK_SHEET,
+  SPIDER_STRING_PILLAR_CAST_SHEET,
+  SPIDER_STRING_PILLAR_EFFECT_SHEET,
 } from "../constants";
 import { spriteImageLoadTargets } from "./manifest";
 
@@ -72,6 +75,19 @@ describe("sprite manifest", () => {
     ];
 
     for (const action of mistBoneActions) {
+      expect(loadedSources.filter((src) => src === action.src)).toHaveLength(1);
+    }
+  });
+
+  it("preloads every Spider String phase action asset exactly once", () => {
+    const loadedSources = spriteImageLoadTargets().map((target) => target.src);
+    const spiderStringActions = [
+      SPIDER_STRING_ATTACK_SHEET,
+      SPIDER_STRING_PILLAR_CAST_SHEET,
+      SPIDER_STRING_PILLAR_EFFECT_SHEET,
+    ];
+
+    for (const action of spiderStringActions) {
       expect(loadedSources.filter((src) => src === action.src)).toHaveLength(1);
     }
   });

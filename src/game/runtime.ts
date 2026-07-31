@@ -52,6 +52,7 @@ import {
   drawMirrorDreamEffects,
   drawMistBoneEffects,
   drawSpiderStringCageEffects,
+  drawSpiderStringPillarEffects,
   spawnBoss,
   updateBloodMoonEffects,
   updateBoss,
@@ -63,6 +64,7 @@ import {
   updateMirrorDreamEffects,
   updateMistBoneEffects,
   updateSpiderStringCageEffects,
+  updateSpiderStringPillarEffects,
 } from "../entities/boss";
 import {
   spawnMapSegmentOfKind,
@@ -374,6 +376,7 @@ function loop(ts: number) {
       updateBoss();
       updateBossSkill1Effects();
       updateSpiderStringCageEffects();
+      updateSpiderStringPillarEffects();
       updateDeadBellEffects();
       updateMistBoneEffects();
       updateMirrorDreamEffects();
@@ -444,6 +447,7 @@ function loop(ts: number) {
   drawBossDefeatSplitEffect();
   drawBossSkill1Effects();
   drawSpiderStringCageEffects();
+  drawSpiderStringPillarEffects();
   drawDeadBellEffects();
   drawMistBoneEffects();
   drawMirrorDreamEffects();

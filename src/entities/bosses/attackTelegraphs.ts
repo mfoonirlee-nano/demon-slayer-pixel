@@ -7,6 +7,7 @@ import {
   MIRROR_DREAM_CONFIG,
   MIST_BONE_CONFIG,
   SPIDER_STRING_CAGE_CONFIG,
+  SPIDER_STRING_PILLAR_CONFIG,
   WIDTH,
 } from "../../constants";
 import { state } from "../../game/state";
@@ -176,9 +177,31 @@ function resolveDeadBellReprisalCue(boss: LiveBoss) {
 function resolveCastCueSpec(boss: LiveBoss) {
   const elapsedFrames = castElapsedFrames(boss);
   if (boss.id === BOSS_ARCHETYPE_IDS.spiderString) {
-    return boss.skillMode === "spiderStringCage"
-      ? cueSpec("spiderStringCage", "area", "ultimate", SPIDER_STRING_CAGE_CONFIG.firstWarningFrames, elapsedFrames)
-      : cueSpec("spiderString", "directional", "standard", BOSS_SKILL1_CONFIG.spawnAtFrame, elapsedFrames);
+    if (boss.skillMode === "spiderStringCage") {
+      return cueSpec(
+        "spiderStringCage",
+        "area",
+        "ultimate",
+        SPIDER_STRING_CAGE_CONFIG.firstWarningFrames,
+        elapsedFrames,
+      );
+    }
+    if (boss.skillMode === "spiderStringPillars") {
+      return cueSpec(
+        "spiderStringPillars",
+        "area",
+        "heavy",
+        SPIDER_STRING_PILLAR_CONFIG.spawnAtFrame,
+        elapsedFrames,
+      );
+    }
+    return cueSpec(
+      "spiderString",
+      "directional",
+      "standard",
+      BOSS_SKILL1_CONFIG.spawnAtFrame,
+      elapsedFrames,
+    );
   }
   if (boss.id === BOSS_ARCHETYPE_IDS.mistBone) {
     return cueSpec(boss.skillMode, "area", "heavy", MIST_BONE_CONFIG.spawnAtFrame, elapsedFrames);

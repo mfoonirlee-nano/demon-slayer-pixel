@@ -170,6 +170,7 @@ export function createInitialState(): GameState {
     ultimatePlayerGhosts: [],
     bossSkill1Effects: [],
     spiderStringCages: [],
+    spiderStringPillars: [],
     deadBellWaves: [],
     deadBellBlades: [],
     mistBoneSpikes: [],
@@ -214,6 +215,7 @@ export function resetState() {
   resetCollection(state.ultimatePlayerGhosts, next.ultimatePlayerGhosts);
   resetCollection(state.bossSkill1Effects, next.bossSkill1Effects);
   resetCollection(state.spiderStringCages, next.spiderStringCages);
+  resetCollection(state.spiderStringPillars, next.spiderStringPillars);
   resetCollection(state.deadBellWaves, next.deadBellWaves);
   resetCollection(state.deadBellBlades, next.deadBellBlades);
   resetCollection(state.mistBoneSpikes, next.mistBoneSpikes);

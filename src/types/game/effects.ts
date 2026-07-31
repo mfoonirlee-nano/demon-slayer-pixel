@@ -61,6 +61,20 @@ export type SpiderStringCageState = {
   kind: SpiderStringCageSegmentKind;
 };
 
+export type SpiderStringPillarState = {
+  x: number;
+  y: number;
+  w: number;
+  h: number;
+  delay: number;
+  warningFrames: number;
+  elapsed: number;
+  frame: number;
+  life: number;
+  damage: number;
+  hitPlayer: boolean;
+};
+
 export type DeadBellWaveState = {
   x: number;
   y: number;

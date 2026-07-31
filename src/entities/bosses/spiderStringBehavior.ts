@@ -1,17 +1,21 @@
 import { BOSS_CONFIG, BOSS_SKILL1_CONFIG, SPIDER_STRING_CAGE_CONFIG, WIDTH } from "../../constants";
-import { canAutoSpawnEntities } from "../../game/debug";
-import { state } from "../../game/state";
+import {
+  SPIDER_STRING_ATTACK_CONFIG,
+  SPIDER_STRING_PILLAR_CONFIG,
+} from "../../constants/assets";
 import { playSfx } from "../../game/audio";
-import { clamp } from "../../game/utils";
-import { spawnBossSummonEnemy } from "../enemy";
+import { recordCollisionDebugRect } from "../../game/collisionDebug";
+import { state } from "../../game/state";
+import { clamp, rectsOverlap } from "../../game/utils";
+import { hurtPlayer } from "../player";
 import { spawnSpiderStringCageEffect } from "./spiderStringCageEffects";
 import { spawnBossSkill1Effect } from "./spiderStringEffects";
+import { spawnSpiderStringPillars } from "./spiderStringPillarEffects";
 import { spiderRushWindupFrames } from "./attackTiming";
-import { damagePlayerOnContact } from "./shared";
+import { bossAttackDamage, damagePlayerOnContact } from "./shared";
 import type { LiveBoss } from "./types";
 
 const CAST_SFX_PITCH = 0.92;
-const SUMMON_SFX_PITCH = 0.92;
 const RUSH_WARNING_SFX_PITCH = 1.12;
 
 export function updateSpiderStringBoss(boss: LiveBoss) {
@@ -30,19 +34,23 @@ export function updateSpiderStringBoss(boss: LiveBoss) {
       return;
     }
 
-    const framesSinceCastStart = BOSS_SKILL1_CONFIG.castDuration - boss.castTimer;
-    if (!boss.skillEffectSpawned && framesSinceCastStart >= BOSS_SKILL1_CONFIG.spawnAtFrame) {
+    const castConfig = boss.skillMode === "spiderStringPillars"
+      ? SPIDER_STRING_PILLAR_CONFIG
+      : BOSS_SKILL1_CONFIG;
+    const framesSinceCastStart = castConfig.castDuration - boss.castTimer;
+    if (!boss.skillEffectSpawned && framesSinceCastStart >= castConfig.spawnAtFrame) {
       boss.skillEffectSpawned = true;
-      spawnBossSkill1Effect(boss);
+      if (boss.skillMode === "spiderStringPillars") {
+        spawnSpiderStringPillars(boss);
+      } else {
+        spawnBossSkill1Effect(boss);
+      }
     }
     damagePlayerOnContact(boss);
     return;
   }
 
   if (updateSpiderRushCycleIfActive(boss)) {
-    // The windup is the promised reaction window; collision damage resumes only
-    // after the telegraphed rush state actually begins.
-    if (boss.actionState !== "windup") damagePlayerOnContact(boss);
     return;
   }
 
@@ -65,30 +73,24 @@ export function updateSpiderStringBoss(boss: LiveBoss) {
   }
 
   if (boss.skillCd <= 0 && boss.phase >= BOSS_SKILL1_CONFIG.minPhase) {
+    const skillMode = nextSpiderStringSkill(boss);
+    const castConfig = skillMode === "spiderStringPillars"
+      ? SPIDER_STRING_PILLAR_CONFIG
+      : BOSS_SKILL1_CONFIG;
     facePlayer(boss);
     boss.castFacing = boss.facing;
-    boss.castTimer = BOSS_SKILL1_CONFIG.castDuration;
+    boss.castTimer = castConfig.castDuration;
     boss.skillEffectSpawned = false;
-    boss.skillMode = "spiderString";
+    boss.skillMode = skillMode;
     boss.actionState = "cast";
     boss.actionTimer = 0;
-    boss.skillCd = BOSS_SKILL1_CONFIG.cooldown;
+    boss.skillCd = castConfig.cooldown;
     boss.vx = 0;
     playSfx("bossCast", CAST_SFX_PITCH);
     return;
   }
 
   startSpiderRushWindup(boss);
-
-  if (boss.aiTimer <= 0) {
-    if (canAutoSpawnEntities()) {
-      spawnBossSummonEnemy();
-      if (boss.phase >= BOSS_CONFIG.summonExtraEnemyPhase) spawnBossSummonEnemy();
-      playSfx("bossSummon", SUMMON_SFX_PITCH);
-    }
-    boss.aiTimer = BOSS_CONFIG.aiBaseCooldown - boss.phase * BOSS_CONFIG.aiPhaseReduction;
-  }
-
 }
 
 function updateSpiderRushCycleIfActive(boss: LiveBoss) {
@@ -103,7 +105,12 @@ function updateSpiderRushCycleIfActive(boss: LiveBoss) {
     const nextX = clamp(boss.x + boss.vx, 0, WIDTH - boss.w);
     boss.x = nextX;
     const reachedEdge = nextX === 0 || nextX === WIDTH - boss.w;
-    if (boss.actionTimer >= BOSS_CONFIG.rushFrames || reachedEdge) startSpiderRetreat(boss);
+    if (boss.actionTimer >= BOSS_CONFIG.rushFrames || reachedEdge) startSpiderAttack(boss);
+    return true;
+  }
+
+  if (boss.actionState === "attack") {
+    updateSpiderAttack(boss);
     return true;
   }
 
@@ -144,6 +151,53 @@ function startSpiderDash(boss: LiveBoss) {
   boss.vx = boss.castFacing * (BOSS_CONFIG.rushVelocityBase + boss.phase);
 }
 
+function startSpiderAttack(boss: LiveBoss) {
+  boss.actionState = "attack";
+  boss.actionTimer = 0;
+  boss.facing = boss.castFacing;
+  boss.skillHitDone = false;
+  boss.vx = 0;
+}
+
+function updateSpiderAttack(boss: LiveBoss) {
+  boss.vx = 0;
+  boss.facing = boss.castFacing;
+
+  const isHitWindow = boss.actionTimer >= SPIDER_STRING_ATTACK_CONFIG.hitStartFrame
+    && boss.actionTimer <= SPIDER_STRING_ATTACK_CONFIG.hitEndFrame;
+  if (isHitWindow) {
+    const hitbox = spiderAttackHitbox(boss);
+    recordCollisionDebugRect(hitbox, "enemyAttack");
+    if (!boss.skillHitDone && rectsOverlap(hitbox, state.player)) {
+      boss.skillHitDone = true;
+      hurtPlayer(
+        bossAttackDamage(
+          (BOSS_CONFIG.touchDamageBase + boss.phase * BOSS_CONFIG.touchDamagePhase)
+            * SPIDER_STRING_ATTACK_CONFIG.damageMultiplier,
+        ),
+        boss.castFacing,
+      );
+    }
+  }
+
+  if (boss.actionTimer >= SPIDER_STRING_ATTACK_CONFIG.duration) {
+    startSpiderRetreat(boss);
+  }
+}
+
+function spiderAttackHitbox(boss: LiveBoss) {
+  const x = boss.castFacing > 0
+    ? boss.x + boss.w - SPIDER_STRING_ATTACK_CONFIG.forwardOffset
+    : boss.x - SPIDER_STRING_ATTACK_CONFIG.hitboxWidth
+      + SPIDER_STRING_ATTACK_CONFIG.forwardOffset;
+  return {
+    x,
+    y: boss.y + SPIDER_STRING_ATTACK_CONFIG.hitboxTopOffset,
+    w: SPIDER_STRING_ATTACK_CONFIG.hitboxWidth,
+    h: SPIDER_STRING_ATTACK_CONFIG.hitboxHeight,
+  };
+}
+
 function startSpiderRetreat(boss: LiveBoss) {
   boss.actionState = "recover";
   boss.actionTimer = 0;
@@ -160,4 +214,11 @@ function facePlayer(boss: LiveBoss) {
 function shouldCastSpiderStringCage(boss: LiveBoss) {
   if (!boss.awakened || boss.phase < SPIDER_STRING_CAGE_CONFIG.minPhase) return false;
   return !boss.spiderStringCageUsed || (boss.spiderStringCageCd ?? 0) <= 0;
+}
+
+function nextSpiderStringSkill(boss: LiveBoss) {
+  if (boss.phase < SPIDER_STRING_PILLAR_CONFIG.minPhase) return "spiderString";
+  return boss.skillMode === "spiderStringPillars"
+    ? "spiderString"
+    : "spiderStringPillars";
 }

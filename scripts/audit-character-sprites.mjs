@@ -129,10 +129,13 @@ const actors = [
   ]),
   boss("spider-string", "血月眷属 · 蛛弦", "spider-string", [
     sheet("move", "assets/sprites/boss/spider-string/boss.png", 350, 419, 4, { primary: true }),
+    sheet("attack", "assets/sprites/boss/spider-string/boss_attack.png", 400, 400, 6),
     sheet("cast", "assets/sprites/boss/spider-string/boss_skill1.png", 400, 400, 6),
+    sheet("pillarCast", "assets/sprites/boss/spider-string/boss_pillar_cast.png", 400, 400, 6),
     sheet("ultimateCast", "assets/sprites/boss/spider-string/boss_ultimate_cast.png", 400, 400, 8),
   ], [
     "assets/sprites/boss/spider-string/boss_skill1_effect.png",
+    "assets/sprites/boss/spider-string/boss_pillar_effect.png",
     "assets/sprites/boss/spider-string/boss_ultimate_web.png",
   ]),
   boss("mist-bone", "血月眷属 · 雾骨", "mist-bone", [

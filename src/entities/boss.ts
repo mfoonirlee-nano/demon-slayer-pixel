@@ -22,6 +22,10 @@ export {
 } from "./bosses/bossDefeatSplitEffect";
 export { drawBossSkill1Effects, updateBossSkill1Effects } from "./bosses/spiderStringEffects";
 export { drawSpiderStringCageEffects, updateSpiderStringCageEffects } from "./bosses/spiderStringCageEffects";
+export {
+  drawSpiderStringPillarEffects,
+  updateSpiderStringPillarEffects,
+} from "./bosses/spiderStringPillarEffects";
 export { drawDeadBellEffects, updateDeadBellEffects } from "./bosses/deadBellEffects";
 export { drawFangGaleEffects, updateFangGaleEffects } from "./bosses/fangGaleEffects";
 export { drawMirrorDreamEffects, updateMirrorDreamEffects } from "./bosses/mirrorDreamEffects";

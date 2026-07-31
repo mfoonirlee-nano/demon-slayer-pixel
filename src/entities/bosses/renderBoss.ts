@@ -21,7 +21,11 @@ import {
   MIST_BONE_CONFIG,
   MIST_BONE_LINE_CAST_SHEET,
   MIRROR_DREAM_CONFIG,
+  SPIDER_STRING_ATTACK_CONFIG,
+  SPIDER_STRING_ATTACK_SHEET,
   SPIDER_STRING_CAGE_CONFIG,
+  SPIDER_STRING_PILLAR_CAST_SHEET,
+  SPIDER_STRING_PILLAR_CONFIG,
   SPIDER_STRING_ULTIMATE_CAST_SHEET,
 } from "../../constants";
 import { state } from "../../game/state";
@@ -93,6 +97,17 @@ export function resolveBossVisualFrame(
     const castSheet = bossCastSheet(boss);
     const castDuration = bossCastDuration(boss);
     const frameDuration = bossCastFrameDuration(boss);
+    const pillarCast = boss.id === BOSS_ARCHETYPE_IDS.spiderString
+      && boss.skillMode === "spiderStringPillars";
+    const drawW = pillarCast
+      ? SPIDER_STRING_PILLAR_CONFIG.castDrawW
+      : archetype.castDrawW;
+    const drawH = pillarCast
+      ? SPIDER_STRING_PILLAR_CONFIG.castDrawH
+      : archetype.castDrawH;
+    const bottomPadding = pillarCast
+      ? SPIDER_STRING_PILLAR_CONFIG.castDrawBottomPadding
+      : archetype.castBottomPadding;
     const framesSinceCastStart = castDuration - boss.castTimer;
     const frame = Math.min(
       castSheet.count - 1,
@@ -101,11 +116,32 @@ export function resolveBossVisualFrame(
     return visualFrame(
       castSheet,
       frame,
-      centerX - archetype.castDrawW / 2,
-      feetY - archetype.castDrawH + archetype.castBottomPadding,
-      archetype.castDrawW,
-      archetype.castDrawH,
+      centerX - drawW / 2,
+      feetY - drawH + bottomPadding,
+      drawW,
+      drawH,
       boss.castFacing,
+    );
+  }
+
+  if (boss.id === BOSS_ARCHETYPE_IDS.spiderString && boss.actionState === "attack") {
+    const frame = Math.min(
+      SPIDER_STRING_ATTACK_SHEET.count - 1,
+      Math.floor(
+        Math.min(boss.actionTimer, SPIDER_STRING_ATTACK_CONFIG.duration - 1)
+          / SPIDER_STRING_ATTACK_CONFIG.frameDuration,
+      ),
+    );
+    return visualFrame(
+      SPIDER_STRING_ATTACK_SHEET,
+      frame,
+      centerX - SPIDER_STRING_ATTACK_CONFIG.drawW / 2,
+      feetY
+        - SPIDER_STRING_ATTACK_CONFIG.drawH
+        + SPIDER_STRING_ATTACK_CONFIG.drawBottomPadding,
+      SPIDER_STRING_ATTACK_CONFIG.drawW,
+      SPIDER_STRING_ATTACK_CONFIG.drawH,
+      boss.facing,
     );
   }
 
@@ -203,6 +239,10 @@ function bossCastSheet(boss: LiveBoss) {
   if (boss.id === BOSS_ARCHETYPE_IDS.spiderString && boss.skillMode === "spiderStringCage") {
     return SPIDER_STRING_ULTIMATE_CAST_SHEET;
   }
+  if (
+    boss.id === BOSS_ARCHETYPE_IDS.spiderString
+    && boss.skillMode === "spiderStringPillars"
+  ) return SPIDER_STRING_PILLAR_CAST_SHEET;
   if (boss.id === BOSS_ARCHETYPE_IDS.mistBone) {
     if (boss.skillMode === "mistBoneLine") return MIST_BONE_LINE_CAST_SHEET;
     if (boss.skillMode === "mistBoneCage") return MIST_BONE_CAGE_CAST_SHEET;
@@ -235,6 +275,10 @@ function bossCastFrameDuration(boss: LiveBoss) {
   if (boss.id === BOSS_ARCHETYPE_IDS.spiderString && boss.skillMode === "spiderStringCage") {
     return SPIDER_STRING_CAGE_CONFIG.castFrameDuration;
   }
+  if (
+    boss.id === BOSS_ARCHETYPE_IDS.spiderString
+    && boss.skillMode === "spiderStringPillars"
+  ) return SPIDER_STRING_PILLAR_CONFIG.castFrameDuration;
   return BOSS_SKILL1_CONFIG.castFrameDuration;
 }
 

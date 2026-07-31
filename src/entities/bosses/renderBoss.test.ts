@@ -3,12 +3,16 @@ import {
   GROUND_Y,
   LANTERN_EMBER_FIRELINE_CAST_SHEET,
   LANTERN_EMBER_SUMMON_SHEET,
+  SPIDER_STRING_ATTACK_CONFIG,
+  SPIDER_STRING_ATTACK_SHEET,
+  SPIDER_STRING_PILLAR_CAST_SHEET,
+  SPIDER_STRING_PILLAR_CONFIG,
 } from "../../constants";
 import { resetState, state } from "../../game/state";
 import { setCanvas } from "../../rendering/context";
 import { createBossEncounter } from "./encounter";
 import { BOSS_ARCHETYPE_IDS } from "./registry";
-import { drawBoss } from "./renderBoss";
+import { drawBoss, resolveBossVisualFrame } from "./renderBoss";
 
 const originalFirelineCastImage = LANTERN_EMBER_FIRELINE_CAST_SHEET.image;
 const originalSummonImage = LANTERN_EMBER_SUMMON_SHEET.image;
@@ -44,6 +48,47 @@ describe("boss casting visuals", () => {
 
     expect(context.drawImage).toHaveBeenCalledOnce();
     expect(context.drawImage.mock.calls[0][0]).toBe(firelineCastImage);
+  });
+
+  it("uses the dedicated melee sequence for Spider String's post-rush attack", () => {
+    const boss = createBossEncounter({
+      id: BOSS_ARCHETYPE_IDS.spiderString,
+      bossKills: 0,
+      elapsedSeconds: 0,
+    });
+    boss.entering = false;
+    boss.actionState = "attack";
+    boss.actionTimer = SPIDER_STRING_ATTACK_CONFIG.hitStartFrame;
+
+    const pose = resolveBossVisualFrame(boss, 0);
+
+    expect(pose).toMatchObject({
+      sheet: SPIDER_STRING_ATTACK_SHEET,
+      frame: 3,
+      w: SPIDER_STRING_ATTACK_CONFIG.drawW,
+      h: SPIDER_STRING_ATTACK_CONFIG.drawH,
+    });
+  });
+
+  it("uses the dedicated upward-pull cast sequence for Spider String's pillars", () => {
+    const boss = createBossEncounter({
+      id: BOSS_ARCHETYPE_IDS.spiderString,
+      bossKills: 0,
+      elapsedSeconds: 0,
+    });
+    boss.entering = false;
+    boss.actionState = "cast";
+    boss.skillMode = "spiderStringPillars";
+    boss.castTimer = SPIDER_STRING_PILLAR_CONFIG.castDuration;
+
+    const pose = resolveBossVisualFrame(boss, 0);
+
+    expect(pose).toMatchObject({
+      sheet: SPIDER_STRING_PILLAR_CAST_SHEET,
+      frame: 0,
+      w: SPIDER_STRING_PILLAR_CONFIG.castDrawW,
+      h: SPIDER_STRING_PILLAR_CONFIG.castDrawH,
+    });
   });
 });
 
