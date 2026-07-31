@@ -136,7 +136,7 @@ const actors = [
   ], [
     "assets/sprites/boss/spider-string/boss_skill1_effect.png",
     "assets/sprites/boss/spider-string/boss_pillar_effect.png",
-    "assets/sprites/boss/spider-string/boss_ultimate_web.png",
+    "assets/sprites/boss/spider-string/boss_ultimate_pillar.png",
   ]),
   boss("mist-bone", "血月眷属 · 雾骨", "mist-bone", [
     sheet("move", "assets/sprites/boss/mist-bone/mist_bone_move.png", 350, 419, 4, { primary: true }),

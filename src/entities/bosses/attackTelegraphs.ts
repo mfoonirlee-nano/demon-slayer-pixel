@@ -182,7 +182,7 @@ function resolveCastCueSpec(boss: LiveBoss) {
         "spiderStringCage",
         "area",
         "ultimate",
-        SPIDER_STRING_CAGE_CONFIG.firstWarningFrames,
+        SPIDER_STRING_CAGE_CONFIG.warningFrames,
         elapsedFrames,
       );
     }

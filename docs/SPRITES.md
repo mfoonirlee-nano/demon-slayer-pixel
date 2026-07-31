@@ -172,7 +172,7 @@
 | `boss/spider-string/boss_pillar_cast.png` | `2400x400` | 6 | `400x400` | `SPIDER_STRING_PILLAR_CAST_SHEET` |
 | `boss/spider-string/boss_pillar_effect.png` | `1920x360` | 8 | `240x360` | `SPIDER_STRING_PILLAR_EFFECT_SHEET` |
 | `boss/spider-string/boss_ultimate_cast.png` | `3200x400` | 8 | `400x400` | `SPIDER_STRING_ULTIMATE_CAST_SHEET` |
-| `boss/spider-string/boss_ultimate_web.png` | `3840x220` | 8 | `480x220` | `SPIDER_STRING_ULTIMATE_WEB_SHEET` |
+| `boss/spider-string/boss_ultimate_pillar.png` | `1920x420` | 8 | `240x420` | `SPIDER_STRING_ULTIMATE_PILLAR_SHEET` |
 | `boss/mist-bone/mist_bone_move.png` | `1400x419` | 4 | `350x419` | `MIST_BONE_SHEET` |
 | `boss/mist-bone/mist_bone_attack.png` | `2400x400` | 6 | `400x400` | `MIST_BONE_ATTACK_SHEET` |
 | `boss/mist-bone/mist_bone_cast.png` | `2400x400` | 6 | `400x400` | `MIST_BONE_CAST_SHEET` |
@@ -218,9 +218,9 @@
 | `boss/blood-moon-many-faces/blood_moon_sixfold_effect.png` | `3360x350` | 8 | `420x350` | `BLOOD_MOON_SIXFOLD_EFFECT_SHEET` |
 | `boss/blood-moon-many-faces/blood_moon_many_faces_effect.png` | `5760x420` | 12 | `480x420` | `BLOOD_MOON_MANY_FACES_EFFECT_SHEET` |
 
-Boss 当前普通运行时轮换为 `蛛弦 -> 雾骨 -> 镜魇 -> 牙岚 -> 灯烬 -> 枯铃`，`bossKills >= 12` 后进入终幕 `万相血月`。`蛛弦` 使用 `spider-string/` 下的本体、近战攻击、蛛丝弹施法/特效、地下蛛丝柱施法/特效、千丝牢笼施法和蛛网线特效图集；阶段技能按 `P1 突进后近战 -> P2 解锁蛛丝弹 -> P3 解锁地下蛛丝柱` 累计保留，突进本体继续复用 `boss.png`，不使用独立突进图集。`boss_attack.png` 在突进结束后的近战状态一次性播放；`boss_pillar_cast.png` 负责向地下牵丝并上提的施法动作，多个 `boss_pillar_effect.png` 实例按落点错峰播放地下预警、上刺峰值和断丝消散，不横向平铺。`镜魇` 使用 `mirror-dream/` 下的本体、共用施法、月镜碎片、假身留影和镜中噩梦图集；`牙岚` 使用 `fang-gale/` 下的本体移动、蓄力、扑咬冲刺和风牙裂波图集；`灯烬` 使用 `lantern-ember/` 下的本体、三张施法、召唤牵引、贴地火线、强化连线、蚀醒火线网格、灰烬减速区和死亡预留图集；其中火线用强化连线图集从施法者指向落点，网格每周期只在判定危险侧绘制并始终保留透明缝隙，灰烬区按完整椭圆足迹绘制。`枯铃` 使用 `dead_bell/` 下的本体、摇铃施法、声波环和横向音刃图集。`mirror_shard.png` 用于可左右边界折返一次的反射弹；`mirror_afterimage.png` 用于不造成接触伤害的假身；`mirror_nightmare.png` 用于镜影破碎后朝玩家方向发射的碎光。`灯烬` 的蚀醒形态复用基础本体，运行时增加移动火线网格和灰烬减速区；当前击败流程仍沿用全局 Boss 即时结算，并额外快照击杀当帧本体，播放 60 帧随机方向裂身效果后再显示奖励或胜利界面。`lantern_ember_death.png` 和 `blood_moon_death.png` 仍作为后续死亡状态机素材预留，裂身快照不推进或修改这些序列。`万相血月` 使用 `blood-moon-many-faces/` 下的换相、恢复、五招施法和五招特效图集；击败后停止 Boss 重生并在裂身结束后进入胜利结算。以上 Boss 素材不提交 `*_source.png` 绿幕制作源图；运行时只加载透明 PNG。
+Boss 当前普通运行时轮换为 `蛛弦 -> 雾骨 -> 镜魇 -> 牙岚 -> 灯烬 -> 枯铃`，`bossKills >= 12` 后进入终幕 `万相血月`。`蛛弦` 使用 `spider-string/` 下的本体、近战攻击、蛛丝弹施法/特效、地下蛛丝柱施法/特效、千丝牢笼施法和强化蛛丝柱图集；阶段技能按 `P1 突进后近战 -> P2 解锁蛛丝弹 -> P3 解锁地下蛛丝柱` 累计保留，突进本体继续复用 `boss.png`，不使用独立突进图集。`boss_attack.png` 在突进结束后的近战状态一次性播放；`boss_pillar_cast.png` 负责向地下牵丝并上提的施法动作，多个 `boss_pillar_effect.png` 实例按落点错峰播放地下预警、上刺峰值和断丝消散，不横向平铺。`镜魇` 使用 `mirror-dream/` 下的本体、共用施法、月镜碎片、假身留影和镜中噩梦图集；`牙岚` 使用 `fang-gale/` 下的本体移动、蓄力、扑咬冲刺和风牙裂波图集；`灯烬` 使用 `lantern-ember/` 下的本体、三张施法、召唤牵引、贴地火线、强化连线、蚀醒火线网格、灰烬减速区和死亡预留图集；其中火线用强化连线图集从施法者指向落点，网格每周期只在判定危险侧绘制并始终保留透明缝隙，灰烬区按完整椭圆足迹绘制。`枯铃` 使用 `dead_bell/` 下的本体、摇铃施法、声波环和横向音刃图集。`mirror_shard.png` 用于可左右边界折返一次的反射弹；`mirror_afterimage.png` 用于不造成接触伤害的假身；`mirror_nightmare.png` 用于镜影破碎后朝玩家方向发射的碎光。`灯烬` 的蚀醒形态复用基础本体，运行时增加移动火线网格和灰烬减速区；当前击败流程仍沿用全局 Boss 即时结算，并额外快照击杀当帧本体，播放 60 帧随机方向裂身效果后再显示奖励或胜利界面。`lantern_ember_death.png` 和 `blood_moon_death.png` 仍作为后续死亡状态机素材预留，裂身快照不推进或修改这些序列。`万相血月` 使用 `blood-moon-many-faces/` 下的换相、恢复、五招施法和五招特效图集；击败后停止 Boss 重生并在裂身结束后进入胜利结算。以上 Boss 素材不提交 `*_source.png` 绿幕制作源图；运行时只加载透明 PNG。
 
-`boss_ultimate_web.png` 的单向收束帧不作为瓦片重复；千丝牢笼运行时把安全段左右的危险列分别合并为连续网带，并将两侧网带相向镜像到真实危险边界。
+`boss_ultimate_pillar.png` 是单根独立竖向强化蛛丝柱：Frame 1-2 预警，Frame 3 成长，Frame 4-6 为命中峰值，Frame 7 断裂回缩，Frame 8 残丝消散。运行时按危险 lane 逐柱绘制，不横向平铺、合并或拉伸；地面柱按源方向上刺，空中柱沿 Y 轴镜像后向下砸落。左右夹击仍保持竖向柱体，只由运行时在内部安全缝两侧安排连续 pulse。
 
 雾骨额外使用独立的雾骨钉普攻、单点埋骨、成列压地和蚀醒合围施法图集；普攻在第 4 帧从手部高度斜向下释放独立的 4 帧骨钉飞行循环。三种地刺施法共享原有伤害与预警时序，但用不同本体轮廓提前区分单点、横排和由外向内合围。
 

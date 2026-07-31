@@ -50,6 +50,12 @@ export function updateSpiderStringBoss(boss: LiveBoss) {
     return;
   }
 
+  // Cage keeps its skill mode during the post-cast pause, so ordinary spider states stay unaffected.
+  if (boss.skillMode === "spiderStringCage" && boss.aiTimer > 0) {
+    boss.vx = 0;
+    return;
+  }
+
   if (updateSpiderRushCycleIfActive(boss)) {
     return;
   }

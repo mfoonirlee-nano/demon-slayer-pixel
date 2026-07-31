@@ -235,7 +235,12 @@ describe("spider string boss behavior", () => {
     expect(boss.castTimer).toBe(SPIDER_STRING_CAGE_CONFIG.castDuration);
     expect(boss.spiderStringCageUsed).toBe(true);
     expect(boss.spiderStringCageCd).toBe(SPIDER_STRING_CAGE_CONFIG.cooldown);
-    expect(state.spiderStringCages).toHaveLength(1);
+    expect(state.spiderStringCages).toHaveLength(cagePulseCount());
+    expect(state.spiderStringCages[0]).toMatchObject({
+      pulseIndex: 0,
+      kind: "ground",
+      delay: SPIDER_STRING_CAGE_CONFIG.groundPulseStartFrames[0],
+    });
     expect(state.bossSkill1Effects).toEqual([]);
   });
 
@@ -259,6 +264,19 @@ describe("spider string boss behavior", () => {
 
     expect(boss.castTimer).toBe(0);
     expect(boss.aiTimer).toBe(SPIDER_STRING_CAGE_CONFIG.postAiTimer);
+
+    state.boss = boss;
+    updateBoss();
+    expect(boss.actionState).toBe("move");
+    expect(boss.aiTimer).toBe(SPIDER_STRING_CAGE_CONFIG.postAiTimer - 1);
+
+    advanceBossFrames(SPIDER_STRING_CAGE_CONFIG.postAiTimer - 2);
+    expect(boss.actionState).toBe("move");
+    expect(boss.aiTimer).toBe(1);
+
+    updateBoss();
+    expect(boss.aiTimer).toBe(0);
+    expect(boss.actionState).toBe("windup");
   });
 
   it("spawns the spider string effect once at the configured cast frame", () => {
@@ -341,22 +359,26 @@ describe("spider string boss behavior", () => {
     expect(state.projectiles).toEqual([]);
   });
 
-  it("keeps the first cage safe column near the player and avoids repeated safe columns", () => {
+  it("keeps every cage gap reachable while moving the final barrage inward", () => {
     resetState();
     startAwakenedPhaseThreeCage();
-    const firstSafeColumn = state.spiderStringCages[0].safeColumn;
-    const playerColumn = playerColumnIndex();
+    const pulses = state.spiderStringCages;
+    const firstPulse = pulses[0];
+    const playerLane = playerLaneIndex();
+    const sidePulses = pulses.filter((pulse) => pulse.kind === "sides");
 
-    expect(Math.abs(firstSafeColumn - playerColumn)).toBeLessThanOrEqual(1);
-
-    advanceCageFrames(
-      state.spiderStringCages[0].warningFrames
-      + state.spiderStringCages[0].hitFrames
-      + state.spiderStringCages[0].afterFrames,
+    expect(playerLane).toBeGreaterThanOrEqual(firstPulse.safeLaneStart);
+    expect(playerLane).toBeLessThan(
+      firstPulse.safeLaneStart + SPIDER_STRING_CAGE_CONFIG.safeLaneCount,
     );
-
-    expect(state.spiderStringCages[0].segmentIndex).toBe(1);
-    expect(state.spiderStringCages[0].safeColumn).not.toBe(firstSafeColumn);
+    expect(pulses.slice(1).every((pulse, index) => (
+      Math.abs(pulse.safeLaneStart - pulses[index].safeLaneStart) <= 1
+    ))).toBe(true);
+    expect(sidePulses.every((pulse) => pulse.safeLaneStart > 0)).toBe(true);
+    expect(sidePulses.every((pulse) => (
+      pulse.safeLaneStart + SPIDER_STRING_CAGE_CONFIG.safeLaneCount
+        < SPIDER_STRING_CAGE_CONFIG.laneCount
+    ))).toBe(true);
   });
 
   it("damages and slows only the player during a cage hit window", () => {
@@ -368,7 +390,7 @@ describe("spider string boss behavior", () => {
     const playerHpBefore = state.player.hp;
     const enemyHpBefore = enemy.hp;
 
-    advanceCageFrames(SPIDER_STRING_CAGE_CONFIG.firstWarningFrames + 1);
+    advanceCageFrames(cageFramesBeforeFirstHit());
 
     expect(state.player.hp).toBeLessThan(playerHpBefore);
     expect(state.player.spiderSilkSlowTimer).toBe(SPIDER_STRING_CAGE_CONFIG.slowFrames);
@@ -383,7 +405,7 @@ describe("spider string boss behavior", () => {
     state.player.invincible = 12;
     const hpBefore = state.player.hp;
 
-    advanceCageFrames(SPIDER_STRING_CAGE_CONFIG.firstWarningFrames + 1);
+    advanceCageFrames(cageFramesBeforeFirstHit());
 
     expect(state.player.hp).toBe(hpBefore);
     expect(state.player.spiderSilkSlowTimer).toBe(0);
@@ -443,21 +465,38 @@ function advanceCageFrames(frames: number) {
   }
 }
 
-function playerColumnIndex() {
-  const columnW = WIDTH / SPIDER_STRING_CAGE_CONFIG.columns;
-  return Math.floor((state.player.x + state.player.w / 2) / columnW);
+function playerLaneIndex() {
+  const laneW = WIDTH / SPIDER_STRING_CAGE_CONFIG.laneCount;
+  return Math.floor((state.player.x + state.player.w / 2) / laneW);
 }
 
 function movePlayerToDangerColumn() {
-  const safeColumn = state.spiderStringCages[0].safeColumn;
-  const dangerColumn = safeColumn === 0 ? 2 : 0;
-  movePlayerToColumn(dangerColumn);
+  const safeLaneStart = state.spiderStringCages[0].safeLaneStart;
+  const dangerLane = safeLaneStart === 0
+    ? SPIDER_STRING_CAGE_CONFIG.laneCount - 1
+    : 0;
+  movePlayerToLane(dangerLane);
 }
 
-function movePlayerToColumn(column: number) {
-  const columnW = WIDTH / SPIDER_STRING_CAGE_CONFIG.columns;
-  state.player.x = column * columnW + columnW / 2 - state.player.w / 2;
+function movePlayerToLane(lane: number) {
+  const laneW = WIDTH / SPIDER_STRING_CAGE_CONFIG.laneCount;
+  state.player.x = lane * laneW + laneW / 2 - state.player.w / 2;
   state.player.y = GROUND_Y - state.player.h;
+}
+
+function cagePulseCount() {
+  return SPIDER_STRING_CAGE_CONFIG.groundPulseStartFrames.length
+    + SPIDER_STRING_CAGE_CONFIG.airPulseStartFrames.length
+    + SPIDER_STRING_CAGE_CONFIG.sidePulseStartFrames.length;
+}
+
+function cageFramesBeforeFirstHit() {
+  return SPIDER_STRING_CAGE_CONFIG.warningFrames
+    + (
+      SPIDER_STRING_CAGE_CONFIG.hitStartEffectFrame
+        - SPIDER_STRING_CAGE_CONFIG.warningSpriteFrames
+    ) * SPIDER_STRING_CAGE_CONFIG.effectFrameDuration
+    + 1;
 }
 
 function createTestEnemyInPlayerColumn(): EnemyState {

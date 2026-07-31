@@ -44,21 +44,16 @@ export type BossSkill1EffectState = {
   hitDone?: boolean;
 };
 
-export type SpiderStringCageSegmentKind = "ground" | "air" | "mixed";
+export type SpiderStringCagePulseKind = "ground" | "air" | "sides";
 
 export type SpiderStringCageState = {
-  segmentIndex: number;
-  safeColumn: number;
-  previousSafeColumn: number | null;
-  columns: number;
+  pulseIndex: number;
+  kind: SpiderStringCagePulseKind;
+  safeLaneStart: number;
+  delay: number;
   elapsed: number;
-  warningFrames: number;
-  hitFrames: number;
-  afterFrames: number;
-  frame: number;
   damage: number;
   hitPlayer: boolean;
-  kind: SpiderStringCageSegmentKind;
 };
 
 export type SpiderStringPillarState = {

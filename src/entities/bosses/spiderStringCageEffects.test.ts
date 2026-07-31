@@ -2,238 +2,369 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
   GROUND_Y,
   SPIDER_STRING_CAGE_CONFIG,
-  SPIDER_STRING_ULTIMATE_WEB_SHEET,
+  SPIDER_STRING_ULTIMATE_PILLAR_SHEET,
   WIDTH,
 } from "../../constants";
 import * as collisionDebug from "../../game/collisionDebug";
 import { resetState, state } from "../../game/state";
 import { setCanvas } from "../../rendering/context";
 import type { SpiderStringCageState } from "../../types/game-state";
+import { createBossEncounter } from "./encounter";
+import { BOSS_ARCHETYPE_IDS } from "./registry";
 import {
   drawSpiderStringCageEffects,
+  spawnSpiderStringCageEffect,
   updateSpiderStringCageEffects,
 } from "./spiderStringCageEffects";
 
 type TestContext = CanvasRenderingContext2D & {
-  beginPath: ReturnType<typeof vi.fn>;
-  clip: ReturnType<typeof vi.fn>;
   drawImage: ReturnType<typeof vi.fn>;
-  rect: ReturnType<typeof vi.fn>;
   scale: ReturnType<typeof vi.fn>;
   translate: ReturnType<typeof vi.fn>;
 };
 
-const originalWebImage = SPIDER_STRING_ULTIMATE_WEB_SHEET.image;
-const SAFE_COLUMN = 2;
-const DRAW_IMAGE_SOURCE_ARGUMENT_COUNT = 5;
-const DRAW_IMAGE_DESTINATION_WIDTH_ARGUMENT = 7;
-const FIRST_HIT_FRAME = 2;
-const LAST_HIT_FRAME = 6;
-const FADE_FRAME = 7;
-const SPAN_EDGE_COUNT = 2;
+const originalPillarImage = SPIDER_STRING_ULTIMATE_PILLAR_SHEET.image;
+const DRAW_IMAGE_SOURCE_X_ARGUMENT = 1;
+const PHASE_THREE = 3;
+const EXPECTED_POST_EFFECT_RECOVERY_FRAMES = 24;
 
 describe("spider string cage effects", () => {
   beforeEach(() => {
     resetState();
-    vi.spyOn(collisionDebug, "recordCollisionDebugPoint").mockImplementation(() => {});
     vi.spyOn(collisionDebug, "recordCollisionDebugRect").mockImplementation(() => {});
   });
 
   afterEach(() => {
     setCanvas(null);
-    SPIDER_STRING_ULTIMATE_WEB_SHEET.image = originalWebImage;
+    SPIDER_STRING_ULTIMATE_PILLAR_SHEET.image = originalPillarImage;
     vi.restoreAllMocks();
   });
 
-  it("draws two continuous web spans that converge on the safe segment", () => {
-    const context = createContext();
-    const webImage = {} as HTMLImageElement;
-    setCanvas({ getContext: () => context } as unknown as HTMLCanvasElement);
-    SPIDER_STRING_ULTIMATE_WEB_SHEET.image = webImage;
-    state.spiderStringCages.push(createCage());
+  it("schedules ground, air, and repeated two-sided pulses with reachable gaps", () => {
+    state.player.x = 0;
 
-    drawSpiderStringCageEffects();
+    spawnSpiderStringCageEffect(createPhaseThreeBoss());
 
-    const columnW = WIDTH / SPIDER_STRING_CAGE_CONFIG.columns;
-    const safeLeft = SAFE_COLUMN * columnW + SPIDER_STRING_CAGE_CONFIG.safePaddingX;
-    const safeRight = (SAFE_COLUMN + 1) * columnW
-      - SPIDER_STRING_CAGE_CONFIG.safePaddingX;
-    const drawY = GROUND_Y
-      - SPIDER_STRING_CAGE_CONFIG.webDrawH
-      + SPIDER_STRING_CAGE_CONFIG.groundDrawYOffset;
-    const spanW = safeLeft;
-    const visualSpanW = spanW
-      + SPIDER_STRING_CAGE_CONFIG.safePaddingX * SPAN_EDGE_COUNT;
-    const drawW = SPIDER_STRING_CAGE_CONFIG.webDrawW * visualSpanW / columnW;
-    const centerY = drawY + SPIDER_STRING_CAGE_CONFIG.webDrawH / 2;
+    const pulses = state.spiderStringCages;
+    const expectedKinds = [
+      ...SPIDER_STRING_CAGE_CONFIG.groundPulseStartFrames.map(() => "ground"),
+      ...SPIDER_STRING_CAGE_CONFIG.airPulseStartFrames.map(() => "air"),
+      ...SPIDER_STRING_CAGE_CONFIG.sidePulseStartFrames.map(() => "sides"),
+    ];
+    const expectedDelays = [
+      ...SPIDER_STRING_CAGE_CONFIG.groundPulseStartFrames,
+      ...SPIDER_STRING_CAGE_CONFIG.airPulseStartFrames,
+      ...SPIDER_STRING_CAGE_CONFIG.sidePulseStartFrames,
+    ];
+    const playerLane = playerLaneIndex();
+    const firstPulse = pulses[0];
+    const sidePulses = pulses.filter((pulse) => pulse.kind === "sides");
+    const safeGapW = laneWidth() * SPIDER_STRING_CAGE_CONFIG.safeLaneCount;
 
-    expect(context.rect.mock.calls).toEqual([
-      [0, drawY, safeLeft, SPIDER_STRING_CAGE_CONFIG.webDrawH],
-      [
-        safeRight,
-        drawY,
-        WIDTH - safeRight,
-        SPIDER_STRING_CAGE_CONFIG.webDrawH,
-      ],
-    ]);
-    expect(context.clip).toHaveBeenCalledTimes(2);
-    expect(context.translate.mock.calls).toEqual([
-      [safeLeft / 2, centerY],
-      [(safeRight + WIDTH) / 2, centerY],
-    ]);
-    expect(context.scale.mock.calls).toEqual([
-      [1, 1],
-      [-1, 1],
-    ]);
-    expect(context.drawImage).toHaveBeenCalledTimes(2);
-    expect(context.drawImage.mock.calls.map(
-      (call) => call.slice(0, DRAW_IMAGE_SOURCE_ARGUMENT_COUNT),
-    )).toEqual([
-      [
-        webImage,
-        0,
-        0,
-        SPIDER_STRING_ULTIMATE_WEB_SHEET.frameW,
-        SPIDER_STRING_ULTIMATE_WEB_SHEET.frameH,
-      ],
-      [
-        webImage,
-        0,
-        0,
-        SPIDER_STRING_ULTIMATE_WEB_SHEET.frameW,
-        SPIDER_STRING_ULTIMATE_WEB_SHEET.frameH,
-      ],
-    ]);
-    expect(context.drawImage.mock.calls.map(
-      (call) => call.slice(DRAW_IMAGE_SOURCE_ARGUMENT_COUNT),
-    )).toEqual([
-      [-drawW / 2, -SPIDER_STRING_CAGE_CONFIG.webDrawH / 2, drawW, SPIDER_STRING_CAGE_CONFIG.webDrawH],
-      [-drawW / 2, -SPIDER_STRING_CAGE_CONFIG.webDrawH / 2, drawW, SPIDER_STRING_CAGE_CONFIG.webDrawH],
-    ]);
+    expect(pulses.map((pulse) => pulse.kind)).toEqual(expectedKinds);
+    expect(pulses.map((pulse) => pulse.delay)).toEqual(expectedDelays);
+    expect(playerLane).toBeGreaterThanOrEqual(firstPulse.safeLaneStart);
+    expect(playerLane).toBeLessThan(
+      firstPulse.safeLaneStart + SPIDER_STRING_CAGE_CONFIG.safeLaneCount,
+    );
+    expect(safeGapW).toBeGreaterThan(state.player.w);
+    expect(pulses.slice(1).every((pulse, index) => (
+      Math.abs(pulse.safeLaneStart - pulses[index].safeLaneStart) <= 1
+    ))).toBe(true);
+    expect(sidePulses.every((pulse) => pulse.safeLaneStart > 0)).toBe(true);
+    expect(sidePulses.every((pulse) => (
+      pulse.safeLaneStart + SPIDER_STRING_CAGE_CONFIG.safeLaneCount
+        < SPIDER_STRING_CAGE_CONFIG.laneCount
+    ))).toBe(true);
+    expect(new Set(sidePulses.map((pulse) => pulse.safeLaneStart)).size).toBe(2);
   });
 
-  it("clips asymmetric edge spans to the actual dangerous boundaries", () => {
+  it("maps warning, growth, hit, and fade stages across all eight frames", () => {
     const context = createContext();
     setCanvas({ getContext: () => context } as unknown as HTMLCanvasElement);
-    SPIDER_STRING_ULTIMATE_WEB_SHEET.image = {} as HTMLImageElement;
-    state.spiderStringCages.push(createCage({ safeColumn: 0 }));
+    SPIDER_STRING_ULTIMATE_PILLAR_SHEET.image = {} as HTMLImageElement;
+    state.spiderStringCages.push(createPulse());
 
-    drawSpiderStringCageEffects();
-
-    const columnW = WIDTH / SPIDER_STRING_CAGE_CONFIG.columns;
-    const safeLeft = SPIDER_STRING_CAGE_CONFIG.safePaddingX;
-    const safeRight = columnW - SPIDER_STRING_CAGE_CONFIG.safePaddingX;
-    const drawY = GROUND_Y
-      - SPIDER_STRING_CAGE_CONFIG.webDrawH
-      + SPIDER_STRING_CAGE_CONFIG.groundDrawYOffset;
-    const visualPadding = SPIDER_STRING_CAGE_CONFIG.safePaddingX * SPAN_EDGE_COUNT;
-    const expectedDrawWidths = [safeLeft, WIDTH - safeRight].map(
-      (spanW) => SPIDER_STRING_CAGE_CONFIG.webDrawW
-        * (spanW + visualPadding)
-        / columnW,
+    const warningFrames = advanceAndCollectDrawnFrames(
+      context,
+      SPIDER_STRING_CAGE_CONFIG.warningFrames,
+    );
+    const activeFrames = advanceAndCollectDrawnFrames(
+      context,
+      activeAnimationFrames(),
     );
 
-    expect(context.rect.mock.calls).toEqual([
-      [0, drawY, safeLeft, SPIDER_STRING_CAGE_CONFIG.webDrawH],
-      [
-        safeRight,
-        drawY,
-        WIDTH - safeRight,
-        SPIDER_STRING_CAGE_CONFIG.webDrawH,
-      ],
-    ]);
-    expect(context.drawImage.mock.calls.map(
-      (call) => call[DRAW_IMAGE_DESTINATION_WIDTH_ARGUMENT],
-    )).toEqual(expectedDrawWidths);
+    expect(uniqueSorted(warningFrames)).toEqual(
+      frameRange(0, SPIDER_STRING_CAGE_CONFIG.warningSpriteFrames - 1),
+    );
+    expect(uniqueSorted(activeFrames)).toEqual(
+      frameRange(
+        SPIDER_STRING_CAGE_CONFIG.warningSpriteFrames,
+        SPIDER_STRING_ULTIMATE_PILLAR_SHEET.count - 1,
+      ),
+    );
+    expect(state.spiderStringCages).toHaveLength(1);
+
+    updateSpiderStringCageEffects();
+
+    expect(state.spiderStringCages).toEqual([]);
   });
 
-  it("maps warning, hit, and fade phases to their intended frame ranges", () => {
+  it("keeps future pulses hidden until their scheduled warning begins", () => {
+    const context = createContext();
+    setCanvas({ getContext: () => context } as unknown as HTMLCanvasElement);
+    SPIDER_STRING_ULTIMATE_PILLAR_SHEET.image = {} as HTMLImageElement;
+    const pulse = createPulse({ delay: 1 });
+    state.spiderStringCages.push(pulse);
+
+    drawSpiderStringCageEffects();
+    expect(context.drawImage).not.toHaveBeenCalled();
+
+    updateSpiderStringCageEffects();
+    drawSpiderStringCageEffects();
+
+    expect(pulse.delay).toBe(0);
+    expect(context.drawImage).not.toHaveBeenCalled();
+
+    updateSpiderStringCageEffects();
+    drawSpiderStringCageEffects();
+
+    expect(pulse.delay).toBe(0);
+    expect(context.drawImage).toHaveBeenCalledTimes(dangerLaneCount());
+  });
+
+  it("removes the final pulse at frame 288 and leaves the recovery window clear", () => {
+    spawnSpiderStringCageEffect(createPhaseThreeBoss());
+    const lastEffectEndFrame = Math.max(
+      ...SPIDER_STRING_CAGE_CONFIG.sidePulseStartFrames,
+    ) + SPIDER_STRING_CAGE_CONFIG.warningFrames + activeAnimationFrames();
+
+    advanceCageEffects(lastEffectEndFrame);
+    expect(state.spiderStringCages).not.toEqual([]);
+
+    updateSpiderStringCageEffects();
+
+    expect(state.spiderStringCages).toEqual([]);
+    expect(SPIDER_STRING_CAGE_CONFIG.castDuration - lastEffectEndFrame).toBe(
+      EXPECTED_POST_EFFECT_RECOVERY_FRAMES,
+    );
+  });
+
+  it("fits the player's full hitbox inside the first gap at a lane boundary", () => {
     state.player.x = WIDTH / 2 - state.player.w / 2;
-    state.spiderStringCages.push(createCage());
+    spawnSpiderStringCageEffect(createPhaseThreeBoss());
+    const firstPulse = state.spiderStringCages[0];
+    firstPulse.elapsed = elapsedBeforeFirstHitFrame();
+    const hpBefore = state.player.hp;
 
-    const warningFrames = advanceAndCollectFrames(SPIDER_STRING_CAGE_CONFIG.firstWarningFrames);
-    const hitFrames = advanceAndCollectFrames(SPIDER_STRING_CAGE_CONFIG.hitFrames);
     updateSpiderStringCageEffects();
 
-    expect(uniqueSorted(warningFrames)).toEqual([0, 1]);
-    expect(uniqueSorted(hitFrames)).toEqual(frameRange(FIRST_HIT_FRAME, LAST_HIT_FRAME));
-    expect(state.spiderStringCages[0].frame).toBe(FADE_FRAME);
+    expect(state.player.hp).toBe(hpBefore);
+    expect(firstPulse.hitPlayer).toBe(false);
   });
 
-  it("records dangerous columns and active height bands only during the hit window", () => {
-    const cage = createCage({
-      elapsed: SPIDER_STRING_CAGE_CONFIG.firstWarningFrames - 1,
-      kind: "mixed",
-    });
-    const columnW = WIDTH / cage.columns;
-    state.player.x = (SAFE_COLUMN + 0.5) * columnW - state.player.w / 2;
-    state.spiderStringCages.push(cage);
-    const recordPoint = vi.mocked(collisionDebug.recordCollisionDebugPoint);
-    const recordRect = vi.mocked(collisionDebug.recordCollisionDebugRect);
+  it("bottom-anchors ground pillars and vertically flips ceiling pillars", () => {
+    const context = createContext();
+    const image = {} as HTMLImageElement;
+    setCanvas({ getContext: () => context } as unknown as HTMLCanvasElement);
+    SPIDER_STRING_ULTIMATE_PILLAR_SHEET.image = image;
+    state.spiderStringCages.push(createPulse({ kind: "ground", elapsed: 1 }));
 
-    updateSpiderStringCageEffects();
-    expect(recordPoint).not.toHaveBeenCalled();
-    expect(recordRect).not.toHaveBeenCalled();
+    drawSpiderStringCageEffects();
 
-    updateSpiderStringCageEffects();
-
-    const safeLeft = SAFE_COLUMN * columnW + SPIDER_STRING_CAGE_CONFIG.safePaddingX;
-    const safeRight = (SAFE_COLUMN + 1) * columnW
-      - SPIDER_STRING_CAGE_CONFIG.safePaddingX;
-    const groundY = GROUND_Y - SPIDER_STRING_CAGE_CONFIG.groundBandTopOffset;
-    const groundH = SPIDER_STRING_CAGE_CONFIG.groundBandTopOffset
-      + SPIDER_STRING_CAGE_CONFIG.groundBandBottomOffset;
-    const airY = GROUND_Y - SPIDER_STRING_CAGE_CONFIG.airBandTopOffset;
-    const airH = SPIDER_STRING_CAGE_CONFIG.airBandTopOffset
-      - SPIDER_STRING_CAGE_CONFIG.airBandBottomOffset;
-    expect(recordRect.mock.calls).toEqual([
-      [{ x: 0, y: groundY, w: safeLeft, h: groundH }, "enemyAttack"],
-      [{ x: safeRight, y: groundY, w: WIDTH - safeRight, h: groundH }, "enemyAttack"],
-      [{ x: 0, y: airY, w: safeLeft, h: airH }, "enemyAttack"],
-      [{ x: safeRight, y: airY, w: WIDTH - safeRight, h: airH }, "enemyAttack"],
-    ]);
-    expect(recordPoint).toHaveBeenCalledWith(
-      state.player.x + state.player.w / 2,
-      state.player.y + state.player.h,
-      "enemyAttack",
+    expect(context.drawImage).toHaveBeenCalledTimes(dangerLaneCount());
+    expect(context.scale.mock.calls.filter((call) => call[1] === -1)).toEqual([]);
+    expect(context.scale.mock.calls.filter((call) => call[1] === 1)).toHaveLength(
+      dangerLaneCount(),
     );
 
-    cage.hitPlayer = true;
-    recordPoint.mockClear();
-    recordRect.mockClear();
+    context.drawImage.mockClear();
+    context.scale.mockClear();
+    context.translate.mockClear();
+    state.spiderStringCages[0] = createPulse({ kind: "air", elapsed: 1 });
+    drawSpiderStringCageEffects();
+
+    const drawY = GROUND_Y
+      - SPIDER_STRING_CAGE_CONFIG.drawH
+      + SPIDER_STRING_CAGE_CONFIG.effectOriginPadding;
+    expect(context.drawImage).toHaveBeenCalledTimes(dangerLaneCount());
+    expect(context.scale.mock.calls.filter((call) => call[1] === -1)).toHaveLength(
+      dangerLaneCount(),
+    );
+    expect(context.translate).toHaveBeenCalledWith(
+      0,
+      drawY * 2 + SPIDER_STRING_CAGE_CONFIG.drawH,
+    );
+  });
+
+  it("alternates upward and downward pillars across both sides of the final gap", () => {
+    const context = createContext();
+    setCanvas({ getContext: () => context } as unknown as HTMLCanvasElement);
+    SPIDER_STRING_ULTIMATE_PILLAR_SHEET.image = {} as HTMLImageElement;
+    state.spiderStringCages.push(createPulse({
+      pulseIndex: 6,
+      kind: "sides",
+      safeLaneStart: 3,
+      elapsed: 1,
+    }));
+
+    drawSpiderStringCageEffects();
+
+    expect(context.drawImage).toHaveBeenCalledTimes(dangerLaneCount());
+    expect(context.scale.mock.calls.filter((call) => call[1] === -1)).toHaveLength(
+      dangerLaneCount() / 2,
+    );
+    expect(context.scale.mock.calls.filter((call) => call[1] === 1)).toHaveLength(
+      dangerLaneCount(),
+    );
+  });
+
+  it("leaves the declared gap safe and damages each pulse only once", () => {
+    const pulse = createPulse({ elapsed: elapsedBeforeFirstHitFrame(), damage: 10 });
+    state.spiderStringCages.push(pulse);
+    movePlayerToSafeGap(pulse);
+    const hpBeforeSafeGap = state.player.hp;
+
     updateSpiderStringCageEffects();
-    expect(recordPoint).not.toHaveBeenCalled();
-    expect(recordRect).not.toHaveBeenCalled();
+
+    expect(state.player.hp).toBe(hpBeforeSafeGap);
+    expect(state.player.spiderSilkSlowTimer).toBe(0);
+    expect(collisionDebug.recordCollisionDebugRect).toHaveBeenCalledTimes(
+      dangerLaneCount(),
+    );
+
+    vi.mocked(collisionDebug.recordCollisionDebugRect).mockClear();
+    movePlayerToDangerLane(pulse);
+    updateSpiderStringCageEffects();
+
+    expect(state.player.hp).toBe(hpBeforeSafeGap - pulse.damage);
+    expect(state.player.spiderSilkSlowTimer).toBe(SPIDER_STRING_CAGE_CONFIG.slowFrames);
+    expect(pulse.hitPlayer).toBe(true);
+
+    const hpAfterHit = state.player.hp;
+    state.player.invincible = 0;
+    updateSpiderStringCageEffects();
+
+    expect(state.player.hp).toBe(hpAfterHit);
+    expect(collisionDebug.recordCollisionDebugRect).toHaveBeenCalledTimes(
+      dangerLaneCount() * 2,
+    );
+  });
+
+  it("honors player invincibility and applies no slow when damage is blocked", () => {
+    const pulse = createPulse({ elapsed: elapsedBeforeFirstHitFrame(), damage: 10 });
+    state.spiderStringCages.push(pulse);
+    movePlayerToDangerLane(pulse);
+    state.player.invincible = 12;
+    const hpBefore = state.player.hp;
+
+    updateSpiderStringCageEffects();
+
+    expect(state.player.hp).toBe(hpBefore);
+    expect(state.player.spiderSilkSlowTimer).toBe(0);
+    expect(pulse.hitPlayer).toBe(true);
+  });
+
+  it("records real pillar hitboxes only during active hit frames", () => {
+    const pulse = createPulse({ elapsed: SPIDER_STRING_CAGE_CONFIG.warningFrames - 1 });
+    state.spiderStringCages.push(pulse);
+
+    updateSpiderStringCageEffects();
+    expect(collisionDebug.recordCollisionDebugRect).not.toHaveBeenCalled();
+
+    pulse.elapsed = elapsedBeforeFirstHitFrame();
+    updateSpiderStringCageEffects();
+
+    expect(collisionDebug.recordCollisionDebugRect).toHaveBeenCalledTimes(
+      dangerLaneCount(),
+    );
   });
 });
 
-function createCage(
+function createPhaseThreeBoss() {
+  const boss = createBossEncounter({
+    id: BOSS_ARCHETYPE_IDS.spiderString,
+    bossKills: 0,
+    elapsedSeconds: 0,
+    animSeed: 0,
+  });
+  boss.phase = PHASE_THREE;
+  return boss;
+}
+
+function createPulse(
   overrides: Partial<SpiderStringCageState> = {},
 ): SpiderStringCageState {
   return {
-    segmentIndex: 0,
-    safeColumn: SAFE_COLUMN,
-    previousSafeColumn: null,
-    columns: SPIDER_STRING_CAGE_CONFIG.columns,
+    pulseIndex: 0,
+    kind: "ground",
+    safeLaneStart: 3,
+    delay: 0,
     elapsed: 0,
-    warningFrames: SPIDER_STRING_CAGE_CONFIG.firstWarningFrames,
-    hitFrames: SPIDER_STRING_CAGE_CONFIG.hitFrames,
-    afterFrames: SPIDER_STRING_CAGE_CONFIG.gapFrames,
-    frame: 0,
     damage: 0,
     hitPlayer: false,
-    kind: "ground",
     ...overrides,
   };
 }
 
-function advanceAndCollectFrames(frames: number) {
+function elapsedBeforeFirstHitFrame() {
+  return SPIDER_STRING_CAGE_CONFIG.warningFrames
+    + (
+      SPIDER_STRING_CAGE_CONFIG.hitStartEffectFrame
+        - SPIDER_STRING_CAGE_CONFIG.warningSpriteFrames
+    ) * SPIDER_STRING_CAGE_CONFIG.effectFrameDuration;
+}
+
+function activeAnimationFrames() {
+  return (
+    SPIDER_STRING_ULTIMATE_PILLAR_SHEET.count
+      - SPIDER_STRING_CAGE_CONFIG.warningSpriteFrames
+  ) * SPIDER_STRING_CAGE_CONFIG.effectFrameDuration;
+}
+
+function dangerLaneCount() {
+  return SPIDER_STRING_CAGE_CONFIG.laneCount - SPIDER_STRING_CAGE_CONFIG.safeLaneCount;
+}
+
+function laneWidth() {
+  return WIDTH / SPIDER_STRING_CAGE_CONFIG.laneCount;
+}
+
+function playerLaneIndex() {
+  return Math.floor((state.player.x + state.player.w / 2) / laneWidth());
+}
+
+function movePlayerToSafeGap(pulse: SpiderStringCageState) {
+  const centerLane = pulse.safeLaneStart + SPIDER_STRING_CAGE_CONFIG.safeLaneCount / 2;
+  state.player.x = centerLane * laneWidth() - state.player.w / 2;
+  state.player.y = GROUND_Y - state.player.h;
+}
+
+function movePlayerToDangerLane(pulse: SpiderStringCageState) {
+  const lane = pulse.safeLaneStart === 0
+    ? SPIDER_STRING_CAGE_CONFIG.laneCount - 1
+    : 0;
+  state.player.x = (lane + 0.5) * laneWidth() - state.player.w / 2;
+  state.player.y = GROUND_Y - state.player.h;
+  state.player.invincible = 0;
+}
+
+function advanceAndCollectDrawnFrames(context: TestContext, frames: number) {
   const result: number[] = [];
-  for (let i = 0; i < frames; i += 1) {
+  for (let frame = 0; frame < frames; frame += 1) {
     updateSpiderStringCageEffects();
-    result.push(state.spiderStringCages[0].frame);
+    context.drawImage.mockClear();
+    drawSpiderStringCageEffects();
+    const sourceX = context.drawImage.mock.calls[0]?.[DRAW_IMAGE_SOURCE_X_ARGUMENT];
+    if (typeof sourceX === "number") {
+      result.push(sourceX / SPIDER_STRING_ULTIMATE_PILLAR_SHEET.frameW);
+    }
   }
   return result;
+}
+
+function advanceCageEffects(frames: number) {
+  for (let frame = 0; frame < frames; frame += 1) updateSpiderStringCageEffects();
 }
 
 function uniqueSorted(frames: number[]) {
@@ -247,13 +378,17 @@ function frameRange(first: number, last: number) {
 function createContext(): TestContext {
   return {
     beginPath: vi.fn(),
-    clip: vi.fn(),
     drawImage: vi.fn(),
-    rect: vi.fn(),
+    ellipse: vi.fn(),
+    fill: vi.fn(),
+    lineTo: vi.fn(),
+    moveTo: vi.fn(),
     restore: vi.fn(),
     save: vi.fn(),
     scale: vi.fn(),
+    setLineDash: vi.fn(),
     setTransform: vi.fn(),
+    stroke: vi.fn(),
     translate: vi.fn(),
     filter: "none",
     globalAlpha: 1,
