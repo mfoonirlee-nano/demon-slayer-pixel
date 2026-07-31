@@ -69,3 +69,54 @@ export const PLAYER_SHEETS: Record<PlayerAnimationState, PlayerSheet> = {
     anchorY: 0.982,
   },
 };
+
+function moonTideSheet(
+  state: PlayerAnimationState,
+  src: string,
+): PlayerSheet {
+  return {
+    ...PLAYER_SHEETS[state],
+    src,
+    image: null,
+    ...MOON_TIDE_DRAW_SIZES[state],
+  };
+}
+
+const MOON_TIDE_DRAW_SIZES: Record<
+  PlayerAnimationState,
+  Pick<PlayerSheet, "drawW" | "drawH">
+> = {
+  [PLAYER_ANIMATION_STATES.idle]: { drawW: 128, drawH: 160 },
+  [PLAYER_ANIMATION_STATES.run]: { drawW: 169, drawH: 158 },
+  [PLAYER_ANIMATION_STATES.jump]: { drawW: 192, drawH: 180 },
+  [PLAYER_ANIMATION_STATES.attack]: { drawW: 261, drawH: 163 },
+  [PLAYER_ANIMATION_STATES.movingAttack]: { drawW: 261, drawH: 163 },
+  [PLAYER_ANIMATION_STATES.fallAttack]: { drawW: 203, drawH: 178 },
+};
+
+export const MOON_TIDE_PLAYER_SHEETS: Record<PlayerAnimationState, PlayerSheet> = {
+  [PLAYER_ANIMATION_STATES.idle]: moonTideSheet(
+    PLAYER_ANIMATION_STATES.idle,
+    "assets/sprites/player/moon_tide/player_moon_tide_idle.png",
+  ),
+  [PLAYER_ANIMATION_STATES.run]: moonTideSheet(
+    PLAYER_ANIMATION_STATES.run,
+    "assets/sprites/player/moon_tide/player_moon_tide_run.png",
+  ),
+  [PLAYER_ANIMATION_STATES.jump]: moonTideSheet(
+    PLAYER_ANIMATION_STATES.jump,
+    "assets/sprites/player/moon_tide/player_moon_tide_jump.png",
+  ),
+  [PLAYER_ANIMATION_STATES.attack]: moonTideSheet(
+    PLAYER_ANIMATION_STATES.attack,
+    "assets/sprites/player/moon_tide/player_moon_tide_attack.png",
+  ),
+  [PLAYER_ANIMATION_STATES.movingAttack]: moonTideSheet(
+    PLAYER_ANIMATION_STATES.movingAttack,
+    "assets/sprites/player/moon_tide/player_moon_tide_moving_attack.png",
+  ),
+  [PLAYER_ANIMATION_STATES.fallAttack]: moonTideSheet(
+    PLAYER_ANIMATION_STATES.fallAttack,
+    "assets/sprites/player/moon_tide/player_moon_tide_fall_attack.png",
+  ),
+};

@@ -1,6 +1,6 @@
 import { state } from "../../game/state";
 import { ctx } from "../../rendering/context";
-import { PLAYER_COMBAT, PLAYER_SHEETS } from "../../constants";
+import { MOON_TIDE_PLAYER_SHEETS, PLAYER_COMBAT } from "../../constants";
 import { drawSheetFrame, drawSkillFrame, type SpriteFrameEffect } from "../../rendering/graphics";
 import type {
   UltimateAfterimageSlashState,
@@ -225,7 +225,7 @@ function drawUltimatePlayerGhost(ghost: UltimatePlayerGhostState, effect?: Sprit
   const drawX = ghost.x - ghost.facing * PLAYER_GHOST_OFFSET_X[ghost.action];
   if (ghost.source === "player" && ghost.animationState) {
     drawSheetFrame(
-      PLAYER_SHEETS[ghost.animationState],
+      MOON_TIDE_PLAYER_SHEETS[ghost.animationState],
       ghost.frame,
       drawX,
       ghost.y,

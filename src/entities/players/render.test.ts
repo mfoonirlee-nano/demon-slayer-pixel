@@ -3,6 +3,7 @@ import {
   BINDER_TALISMAN_SHEET,
   BINDER_TALISMAN_KEY_SCRAMBLE_EFFECT_SHEET,
   BINDER_TALISMAN_STUN_EFFECT_SHEET,
+  MOON_TIDE_PLAYER_SHEETS,
   PLAYER_ANIMATION_STATES,
   PLAYER_COMBAT,
   PLAYER_DRAW,
@@ -26,6 +27,14 @@ const EXPECTED_ULTIMATE_CAST_FRAME_DURATION = 5;
 const TEST_IMAGE = {} as HTMLImageElement;
 const RUN_IMAGE = {} as HTMLImageElement;
 const MOVING_ATTACK_IMAGE = {} as HTMLImageElement;
+const MOON_TIDE_IMAGES: Record<keyof typeof MOON_TIDE_PLAYER_SHEETS, HTMLImageElement> = {
+  [PLAYER_ANIMATION_STATES.idle]: {} as HTMLImageElement,
+  [PLAYER_ANIMATION_STATES.run]: {} as HTMLImageElement,
+  [PLAYER_ANIMATION_STATES.jump]: {} as HTMLImageElement,
+  [PLAYER_ANIMATION_STATES.attack]: {} as HTMLImageElement,
+  [PLAYER_ANIMATION_STATES.movingAttack]: {} as HTMLImageElement,
+  [PLAYER_ANIMATION_STATES.fallAttack]: {} as HTMLImageElement,
+};
 
 function createMockContext(): MockCanvasContext {
   const context = {
@@ -57,6 +66,9 @@ describe("player render", () => {
     PLAYER_SHEETS[PLAYER_ANIMATION_STATES.idle].image = TEST_IMAGE;
     PLAYER_SHEETS[PLAYER_ANIMATION_STATES.run].image = RUN_IMAGE;
     PLAYER_SHEETS[PLAYER_ANIMATION_STATES.movingAttack].image = MOVING_ATTACK_IMAGE;
+    for (const stateName of Object.values(PLAYER_ANIMATION_STATES)) {
+      MOON_TIDE_PLAYER_SHEETS[stateName].image = MOON_TIDE_IMAGES[stateName];
+    }
     BINDER_TALISMAN_SHEET.image = TEST_IMAGE;
     BINDER_TALISMAN_KEY_SCRAMBLE_EFFECT_SHEET.image = TEST_IMAGE;
     BINDER_TALISMAN_STUN_EFFECT_SHEET.image = TEST_IMAGE;
@@ -67,6 +79,9 @@ describe("player render", () => {
     PLAYER_SHEETS[PLAYER_ANIMATION_STATES.idle].image = null;
     PLAYER_SHEETS[PLAYER_ANIMATION_STATES.run].image = null;
     PLAYER_SHEETS[PLAYER_ANIMATION_STATES.movingAttack].image = null;
+    for (const sheet of Object.values(MOON_TIDE_PLAYER_SHEETS)) {
+      sheet.image = null;
+    }
     BINDER_TALISMAN_SHEET.image = null;
     BINDER_TALISMAN_KEY_SCRAMBLE_EFFECT_SHEET.image = null;
     BINDER_TALISMAN_STUN_EFFECT_SHEET.image = null;
@@ -145,6 +160,55 @@ describe("player render", () => {
     drawPlayer();
 
     expect(context.drawImage.mock.calls[0]?.[0]).toBe(MOVING_ATTACK_IMAGE);
+  });
+
+  it.each([
+    {
+      stateName: PLAYER_ANIMATION_STATES.idle,
+      configure: () => {},
+    },
+    {
+      stateName: PLAYER_ANIMATION_STATES.run,
+      configure: () => {
+        state.player.vx = state.player.speed;
+      },
+    },
+    {
+      stateName: PLAYER_ANIMATION_STATES.jump,
+      configure: () => {
+        state.player.y -= 100;
+      },
+    },
+    {
+      stateName: PLAYER_ANIMATION_STATES.attack,
+      configure: () => {
+        state.player.attackTimer = state.player.attackDuration;
+      },
+    },
+    {
+      stateName: PLAYER_ANIMATION_STATES.movingAttack,
+      configure: () => {
+        state.player.attackFromRun = true;
+        state.player.attackTimer = state.player.attackDuration;
+      },
+    },
+    {
+      stateName: PLAYER_ANIMATION_STATES.fallAttack,
+      configure: () => {
+        state.player.y -= 100;
+        state.player.fallAttackTimer = 1;
+      },
+    },
+  ])("renders the $stateName-specific Moon Tide sheet during the active buff", ({ stateName, configure }) => {
+    const context = createMockContext();
+    installMockContext(context);
+    state.player.ultimateLevel = 1;
+    state.player.ultimateTimer = 30;
+    configure();
+
+    drawPlayer();
+
+    expect(context.drawImage.mock.calls[0]?.[0]).toBe(MOON_TIDE_IMAGES[stateName]);
   });
 
   it("locks the run frame to traveled distance instead of global elapsed", () => {

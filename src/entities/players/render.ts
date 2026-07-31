@@ -5,6 +5,7 @@ import {
   BINDER_TALISMAN_SHEET,
   BINDER_TALISMAN_KEY_SCRAMBLE_EFFECT_SHEET,
   BINDER_TALISMAN_STUN_EFFECT_SHEET,
+  MOON_TIDE_PLAYER_SHEETS,
   PLAYER_ANIMATION_STATES,
   PLAYER_COMBAT,
   PLAYER_DRAW,
@@ -76,6 +77,11 @@ const PLAYER_BINDING_SLOW_EFFECT = {
   lineWidth: 2,
   accentLineWidth: 1,
 } as const;
+
+function activePlayerSheet(stateName: keyof typeof PLAYER_SHEETS) {
+  const sheets = moonTideActive() ? MOON_TIDE_PLAYER_SHEETS : PLAYER_SHEETS;
+  return sheets[stateName];
+}
 
 function drawWithBindingSlowFilter(isSlowed: boolean, draw: () => void) {
   if (!isSlowed || !ctx) {
@@ -226,7 +232,7 @@ function drawRenderSnapshot(
 ) {
   if (snapshot.source === "player" && snapshot.animationState) {
     drawSheetFrame(
-      PLAYER_SHEETS[snapshot.animationState],
+      activePlayerSheet(snapshot.animationState),
       snapshot.frame,
       snapshot.x,
       snapshot.y,
@@ -378,7 +384,7 @@ export function drawPlayer() {
         ? PLAYER_ANIMATION_STATES.run
         : PLAYER_ANIMATION_STATES.idle;
 
-  const sheet = PLAYER_SHEETS[stateName];
+  const sheet = activePlayerSheet(stateName);
   const { drawW, drawH, animSpeed, anchorX = 0.5, anchorY = 1, flipX } = sheet;
   const action = playerGhostAction(stateName);
   let frame = frameIndex(sheet.count, moonTidePlayerAnimationFrameSpeed(action, animSpeed), state.elapsed);

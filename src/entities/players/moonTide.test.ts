@@ -1,5 +1,10 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { PLAYER_ANIMATION_STATES, PLAYER_COMBAT, PLAYER_SHEETS } from "../../constants";
+import {
+  MOON_TIDE_PLAYER_SHEETS,
+  PLAYER_ANIMATION_STATES,
+  PLAYER_COMBAT,
+  PLAYER_SHEETS,
+} from "../../constants";
 import { keys } from "../../game/input";
 import { resetState, state } from "../../game/state";
 import { setCanvas } from "../../rendering/context";
@@ -105,6 +110,7 @@ describe("moon tide player ghosts", () => {
 
   afterEach(() => {
     PLAYER_SHEETS[PLAYER_ANIMATION_STATES.idle].image = null;
+    MOON_TIDE_PLAYER_SHEETS[PLAYER_ANIMATION_STATES.idle].image = null;
     setCanvas(null);
   });
 
@@ -228,7 +234,7 @@ describe("moon tide player ghosts", () => {
 
   it("draws active player ghosts with one batched filter setup", () => {
     const context = createMockContext();
-    const idleSheet = PLAYER_SHEETS[PLAYER_ANIMATION_STATES.idle];
+    const idleSheet = MOON_TIDE_PLAYER_SHEETS[PLAYER_ANIMATION_STATES.idle];
     idleSheet.image = {} as HTMLImageElement;
     installMockContext(context);
 
@@ -252,6 +258,7 @@ describe("moon tide player ghosts", () => {
     drawUltimatePlayerGhosts();
 
     expect(context.drawImage).toHaveBeenCalledTimes(2);
+    expect(context.drawImage.mock.calls[0]?.[0]).toBe(idleSheet.image);
     expect(context.filterValues).toHaveLength(1);
     expect(context.filterValues[0]).toContain("drop-shadow");
     expect(context.filterValues[0]).toContain("invert(60%)");

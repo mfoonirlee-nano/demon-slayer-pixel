@@ -73,6 +73,7 @@ import {
   MIRROR_NIGHTMARE_SHEET,
   MIRROR_SHARD_SHEET,
   MOUNTAIN_SPRITES,
+  MOON_TIDE_PLAYER_SHEETS,
   PLATFORM_SPRITES,
   PLAYER_SHEETS,
   RUNNER_SHEETS,
@@ -106,6 +107,7 @@ export function spriteImageLoadTargets(): ImageLoadTarget[] {
   return [
     ...spriteSheetTargets([
       ...Object.values(PLAYER_SHEETS),
+      ...Object.values(MOON_TIDE_PLAYER_SHEETS),
       ...ENEMY_SHEETS,
       ...Object.values(CRAWLER_SHEETS),
       ...Object.values(CASTER_SHEETS),

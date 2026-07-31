@@ -102,8 +102,16 @@
 | `player_attack.png` | `6144x480` | 8 | `768x480` | `attack` | 普攻按 `BASIC_ATTACK.frames` 线性播放完整 8 帧 |
 | `player_moving_attack.png` | `6144x480` | 8 | `768x480` | `movingAttack` | 移动中起手的普攻；低身前冲起势，低身恢复后接回跑步 |
 | `player_fall_attack.png` | `5120x560` | 8 | `640x560` | `fallAttack` | 前 5 帧为空中下刺，后 3 帧为落地恢复 |
+| `moon_tide/player_moon_tide_idle.png` | `3072x480` | 8 | `384x480` | 大招强化期 `idle` | 拔刀蓄势，贴身月潮绕刃循环 |
+| `moon_tide/player_moon_tide_run.png` | `3584x420` | 8 | `448x420` | 大招强化期 `run` | 低身水步追击，按实际水平移动距离推进 |
+| `moon_tide/player_moon_tide_jump.png` | `2688x420` | 6 | `448x420` | 大招强化期 `jump` | 水步起跳、流线滞空、控水落地准备 |
+| `moon_tide/player_moon_tide_attack.png` | `6144x480` | 8 | `768x480` | 大招强化期 `attack` | 站定压缩拔刀，4-5 帧为连续半月潮刃峰值 |
+| `moon_tide/player_moon_tide_moving_attack.png` | `6144x480` | 8 | `768x480` | 大招强化期 `movingAttack` | 从水步进入滑斩，低身恢复后接回追击 |
+| `moon_tide/player_moon_tide_fall_attack.png` | `5120x560` | 8 | `640x560` | 大招强化期 `fallAttack` | 前 5 帧旋潮下刺，后 3 帧为落地潮爆恢复 |
 
 玩家运行时图集以 `assets/art/player-concept.png` 为角色身份基准：深蓝短披风、潮纹衣摆、金属护具、月形腰饰和蓝白潮流刀光。所有玩家运行时图集源方向统一朝右；朝左由 `drawSheetFrame()` 根据玩家 `facing` 镜像绘制。跑步帧按实际水平移动距离推进，并在离开移动状态时重置入口相位。普攻帧由 `attackTimer` 映射到完整图集，不使用全局 elapsed 循环；从跑步中起手时锁定 `movingAttack`，静止或空中起手时保留 `attack`。下落攻击由 `fallAttackTimer` 映射到 0-4 帧，由 `fallAttackRecoveryTimer` 映射到 5-7 帧。
+
+`MOON_TIDE_PLAYER_SHEETS` 在 `ultimateTimer > 0` 的强化持续期覆盖上述六种基础动作，30 帧开启动作仍使用 `ultimate_skill/skill.png`。强化图与常态图保持相同帧数、单帧尺寸、播放顺序、锚点和朝向，因此不改变攻击关键帧、移动距离、跳跃轨迹、碰撞或命中范围；只按素材可见内容使用 `idle=128x160`、`run=169x158`、`jump=192x180`、`attack/movingAttack=261x163`、`fallAttack=203x178` 的绘制框，让贴身潮流和新姿态在运行时与常态角色保持相近主体体量。强化结束后立即恢复常态图，已生成的玩家残影继续使用强化帧淡出。
 
 ### 技能和技能特效
 

@@ -7,6 +7,7 @@ import {
   MIST_BONE_CAGE_CAST_SHEET,
   MIST_BONE_DART_SHEET,
   MIST_BONE_LINE_CAST_SHEET,
+  MOON_TIDE_PLAYER_SHEETS,
   PLAYER_ANIMATION_STATES,
   PLAYER_SHEETS,
 } from "../constants";
@@ -18,6 +19,31 @@ describe("sprite manifest", () => {
     const movingAttack = PLAYER_SHEETS[PLAYER_ANIMATION_STATES.movingAttack];
 
     expect(loadedSources.filter((src) => src === movingAttack.src)).toHaveLength(1);
+  });
+
+  it("preloads every Moon Tide player action sheet exactly once", () => {
+    const loadedSources = spriteImageLoadTargets().map((target) => target.src);
+
+    for (const sheet of Object.values(MOON_TIDE_PLAYER_SHEETS)) {
+      expect(loadedSources.filter((src) => src === sheet.src)).toHaveLength(1);
+    }
+  });
+
+  it("keeps Moon Tide player timing and anchors aligned with the normal actions", () => {
+    for (const stateName of Object.values(PLAYER_ANIMATION_STATES)) {
+      const normalSheet = PLAYER_SHEETS[stateName];
+      const moonTideSheet = MOON_TIDE_PLAYER_SHEETS[stateName];
+
+      expect(moonTideSheet).toMatchObject({
+        frameW: normalSheet.frameW,
+        frameH: normalSheet.frameH,
+        count: normalSheet.count,
+        animSpeed: normalSheet.animSpeed,
+        anchorY: normalSheet.anchorY,
+      });
+      expect(moonTideSheet.anchorX).toBe(normalSheet.anchorX);
+      expect(moonTideSheet.flipX).toBe(normalSheet.flipX);
+    }
   });
 
   it("preloads every act landmark exactly once", () => {
