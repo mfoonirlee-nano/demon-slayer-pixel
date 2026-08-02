@@ -283,16 +283,11 @@ function createPillar(
 
 function createContext(): TestContext {
   return {
-    beginPath: vi.fn(),
     drawImage: vi.fn(),
-    ellipse: vi.fn(),
-    fill: vi.fn(),
     restore: vi.fn(),
     save: vi.fn(),
     scale: vi.fn(),
-    setLineDash: vi.fn(),
     setTransform: vi.fn(),
-    stroke: vi.fn(),
     translate: vi.fn(),
     filter: "none",
     globalAlpha: 1,

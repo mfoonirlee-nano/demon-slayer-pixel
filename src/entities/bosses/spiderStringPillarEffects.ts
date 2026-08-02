@@ -12,16 +12,6 @@ import type { BossState, SpiderStringPillarState } from "../../types/game-state"
 import { hurtPlayer } from "../player";
 import { bossAttackDamage } from "./shared";
 
-const DELAY_WARNING_PROGRESS = 0.25;
-const WARNING_STROKE_ALPHA_BASE = 0.28;
-const WARNING_STROKE_ALPHA_SCALE = 0.42;
-const WARNING_FILL_ALPHA_BASE = 0.14;
-const WARNING_FILL_ALPHA_SCALE = 0.3;
-const WARNING_DASH_LENGTH = 7;
-const WARNING_RADIUS_X_SCALE = 0.72;
-const WARNING_RADIUS_Y_BASE = 7;
-const WARNING_RADIUS_Y_SCALE = 6;
-const FULL_CIRCLE = Math.PI * 2;
 const PILLAR_ACTIVE_SPRITE_FRAMES = SPIDER_STRING_PILLAR_EFFECT_SHEET.count
   - SPIDER_STRING_PILLAR_CONFIG.warningSpriteFrames;
 const PILLAR_ANIMATION_FRAMES = PILLAR_ACTIVE_SPRITE_FRAMES
@@ -100,12 +90,7 @@ export function drawSpiderStringPillarEffects() {
   if (!ctx) return;
 
   for (const pillar of state.spiderStringPillars) {
-    if (pillar.delay > 0 || pillar.elapsed <= pillar.warningFrames) {
-      drawPillar(pillar);
-      drawPillarWarning(pillar);
-    } else {
-      drawPillar(pillar);
-    }
+    drawPillar(pillar);
   }
 }
 
@@ -127,48 +112,6 @@ function effectFrame(pillar: SpiderStringPillarState, activeElapsed: number) {
     SPIDER_STRING_PILLAR_CONFIG.warningSpriteFrames
       + Math.floor(activeElapsed / SPIDER_STRING_PILLAR_CONFIG.frameDuration),
   );
-}
-
-function drawPillarWarning(pillar: SpiderStringPillarState) {
-  if (!ctx) return;
-  const progress = pillar.delay > 0
-    ? DELAY_WARNING_PROGRESS
-    : clamp(pillar.elapsed / pillar.warningFrames, 0, 1);
-  const centerX = pillar.x + pillar.w / 2;
-  const bottomY = pillar.y + pillar.h;
-
-  ctx.save();
-  ctx.globalAlpha = WARNING_FILL_ALPHA_BASE + progress * WARNING_FILL_ALPHA_SCALE;
-  ctx.fillStyle = "#d7d0e7";
-  ctx.beginPath();
-  ctx.ellipse(
-    centerX,
-    bottomY,
-    pillar.w * WARNING_RADIUS_X_SCALE,
-    WARNING_RADIUS_Y_BASE + progress * WARNING_RADIUS_Y_SCALE,
-    0,
-    0,
-    FULL_CIRCLE,
-  );
-  ctx.fill();
-
-  ctx.globalAlpha = WARNING_STROKE_ALPHA_BASE + progress * WARNING_STROKE_ALPHA_SCALE;
-  ctx.strokeStyle = "#f1ebff";
-  ctx.lineWidth = 2;
-  ctx.setLineDash([WARNING_DASH_LENGTH, WARNING_DASH_LENGTH]);
-  ctx.beginPath();
-  ctx.ellipse(
-    centerX,
-    bottomY,
-    pillar.w * WARNING_RADIUS_X_SCALE,
-    WARNING_RADIUS_Y_BASE + progress * WARNING_RADIUS_Y_SCALE,
-    0,
-    0,
-    FULL_CIRCLE,
-  );
-  ctx.stroke();
-  ctx.setLineDash([]);
-  ctx.restore();
 }
 
 function drawPillar(pillar: SpiderStringPillarState) {

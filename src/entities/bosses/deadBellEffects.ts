@@ -16,12 +16,7 @@ const WAVE_CLEANUP_EXTRA_FRAMES = 14;
 const WAVE_FADE_EXTRA_FRAMES = 18;
 const WAVE_FADE_MIN_ALPHA = 0.28;
 const WAVE_WARNING_ALPHA = 0.52;
-const BLADE_WARNING_ALPHA_BASE = 0.2;
-const BLADE_WARNING_ALPHA_GAIN = 0.35;
-const BLADE_WARNING_FILL_ALPHA = 0.12;
-const BLADE_WARNING_FILL_ALPHA_GAIN = 0.08;
-const BLADE_WARNING_DASH_LENGTH = 12;
-const BLADE_WARNING_DASH_GAP = 10;
+const BLADE_WARNING_SPRITE_FRAMES = 2;
 
 export function updateDeadBellEffects() {
   updateDeadBellWaves();
@@ -81,6 +76,14 @@ function updateDeadBellBlades() {
   for (let i = state.deadBellBlades.length - 1; i >= 0; i -= 1) {
     const blade = state.deadBellBlades[i] as DeadBellBladeState;
     if (blade.delay > 0) {
+      blade.frame = Math.min(
+        BLADE_WARNING_SPRITE_FRAMES - 1,
+        Math.floor(
+          (blade.warningFrames - blade.delay)
+            * BLADE_WARNING_SPRITE_FRAMES
+            / blade.warningFrames,
+        ),
+      );
       blade.delay -= 1;
       continue;
     }
@@ -90,7 +93,8 @@ function updateDeadBellBlades() {
     blade.x += blade.vx;
     blade.frame = Math.min(
       DEAD_BELL_BLADE_SHEET.count - 1,
-      Math.floor(blade.elapsed / DEAD_BELL_CONFIG.bladeFrameDuration),
+      (blade.warningFrames > 0 ? BLADE_WARNING_SPRITE_FRAMES : 0)
+        + Math.floor(blade.elapsed / DEAD_BELL_CONFIG.bladeFrameDuration),
     );
 
     if (hitbox(state.player, blade)) {
@@ -135,33 +139,6 @@ function drawDeadBellWaves() {
 function drawDeadBellBlades() {
   if (!ctx) return;
   for (const blade of state.deadBellBlades) {
-    if (blade.delay > 0) {
-      const warningProgress = clamp(
-        1 - blade.delay / Math.max(1, blade.warningFrames),
-        0,
-        1,
-      );
-      ctx.save();
-      ctx.globalAlpha = BLADE_WARNING_FILL_ALPHA
-        + warningProgress * BLADE_WARNING_FILL_ALPHA_GAIN;
-      ctx.fillStyle = "#9c2f28";
-      ctx.fillRect(0, blade.y, WIDTH, blade.h);
-      ctx.globalAlpha = BLADE_WARNING_ALPHA_BASE
-        + warningProgress * BLADE_WARNING_ALPHA_GAIN;
-      ctx.strokeStyle = "#d7b66d";
-      ctx.lineWidth = 2;
-      ctx.setLineDash([BLADE_WARNING_DASH_LENGTH, BLADE_WARNING_DASH_GAP]);
-      ctx.beginPath();
-      ctx.moveTo(0, blade.y);
-      ctx.lineTo(WIDTH, blade.y);
-      ctx.moveTo(0, blade.y + blade.h);
-      ctx.lineTo(WIDTH, blade.y + blade.h);
-      ctx.stroke();
-      ctx.setLineDash([]);
-      ctx.restore();
-      continue;
-    }
-
     const drawX = blade.x + blade.w / 2 - DEAD_BELL_CONFIG.bladeDrawW / 2;
     const drawY = blade.y + blade.h / 2 - DEAD_BELL_CONFIG.bladeDrawH / 2;
     drawSheetFrame(

@@ -6,22 +6,13 @@ import { drawSheetFrame } from "../../rendering/graphics";
 import type { MistBoneSpikeState } from "../../types/game-state";
 import { hurtPlayer } from "../player";
 
-const DELAY_WARNING_PROGRESS = 0.25;
-const WARNING_STROKE_ALPHA_BASE = 0.24;
-const WARNING_STROKE_ALPHA_SCALE = 0.36;
-const WARNING_DASH_LENGTH = 8;
-const WARNING_OUTER_RADIUS_X_SCALE = 0.72;
-const WARNING_OUTER_RADIUS_Y_BASE = 9;
-const WARNING_OUTER_RADIUS_Y_SCALE = 5;
-const WARNING_FILL_ALPHA_BASE = 0.18;
-const WARNING_FILL_ALPHA_SCALE = 0.22;
-const WARNING_INNER_RADIUS_X_SCALE = 0.52;
-const WARNING_INNER_RADIUS_Y_BASE = 6;
-const WARNING_INNER_RADIUS_Y_SCALE = 4;
 const SPIKE_BOTTOM_OFFSET = 0;
 const SPIKE_FADE_EXTRA_FRAMES = 8;
 const SPIKE_MIN_FADE = 0.35;
-const SPIKE_ANIMATION_FRAMES = MIST_BONE_SPIKES_SHEET.count * MIST_BONE_CONFIG.spikeFrameDuration;
+const SPIKE_ACTIVE_SPRITE_FRAMES = MIST_BONE_SPIKES_SHEET.count
+  - MIST_BONE_CONFIG.spikeWarningSpriteFrames;
+const SPIKE_ANIMATION_FRAMES = MIST_BONE_SPIKES_SHEET.count
+  * MIST_BONE_CONFIG.spikeFrameDuration;
 
 export function updateMistBoneEffects() {
   for (let i = state.mistBoneSpikes.length - 1; i >= 0; i -= 1) {
@@ -39,10 +30,7 @@ export function updateMistBoneEffects() {
       continue;
     }
 
-    spike.frame = Math.min(
-      MIST_BONE_SPIKES_SHEET.count - 1,
-      Math.floor(Math.max(0, activeElapsed) / MIST_BONE_CONFIG.spikeFrameDuration),
-    );
+    spike.frame = spikeFrame(spike, activeElapsed);
 
     if (!spike.hitPlayer && activeElapsed >= 0 && hitbox(state.player, spike)) {
       spike.hitPlayer = true;
@@ -54,53 +42,29 @@ export function updateMistBoneEffects() {
 export function drawMistBoneEffects() {
   if (!ctx) return;
   for (const spike of state.mistBoneSpikes) {
-    if (spike.delay > 0 || spike.elapsed <= spike.warningFrames) {
-      drawMistBoneWarning(spike);
-    } else {
-      drawMistBoneSpike(spike);
-    }
+    drawMistBoneSpike(spike);
   }
 }
 
-function drawMistBoneWarning(spike: MistBoneSpikeState) {
-  if (!ctx) return;
-  const t = spike.delay > 0
-    ? DELAY_WARNING_PROGRESS
-    : clamp(spike.elapsed / spike.warningFrames, 0, 1);
-  const centerX = spike.x + spike.w / 2;
-  const centerY = spike.y + spike.h;
+function spikeFrame(spike: MistBoneSpikeState, activeElapsed: number) {
+  if (activeElapsed < 0) {
+    return Math.min(
+      MIST_BONE_CONFIG.spikeWarningSpriteFrames - 1,
+      Math.floor(
+        Math.max(0, spike.elapsed - 1)
+          * MIST_BONE_CONFIG.spikeWarningSpriteFrames
+          / spike.warningFrames,
+      ),
+    );
+  }
 
-  ctx.save();
-  ctx.globalAlpha = WARNING_STROKE_ALPHA_BASE + t * WARNING_STROKE_ALPHA_SCALE;
-  ctx.strokeStyle = "#d8e7ea";
-  ctx.lineWidth = 2;
-  ctx.setLineDash([WARNING_DASH_LENGTH, WARNING_DASH_LENGTH]);
-  ctx.beginPath();
-  ctx.ellipse(
-    centerX,
-    centerY,
-    spike.w * WARNING_OUTER_RADIUS_X_SCALE,
-    WARNING_OUTER_RADIUS_Y_BASE + t * WARNING_OUTER_RADIUS_Y_SCALE,
-    0,
-    0,
-    Math.PI * 2,
+  return Math.min(
+    MIST_BONE_SPIKES_SHEET.count - 1,
+    MIST_BONE_CONFIG.spikeWarningSpriteFrames
+      + Math.floor(
+        activeElapsed * SPIKE_ACTIVE_SPRITE_FRAMES / SPIKE_ANIMATION_FRAMES,
+      ),
   );
-  ctx.stroke();
-  ctx.setLineDash([]);
-  ctx.globalAlpha = WARNING_FILL_ALPHA_BASE + t * WARNING_FILL_ALPHA_SCALE;
-  ctx.fillStyle = "#cdd6d0";
-  ctx.beginPath();
-  ctx.ellipse(
-    centerX,
-    centerY,
-    spike.w * WARNING_INNER_RADIUS_X_SCALE,
-    WARNING_INNER_RADIUS_Y_BASE + t * WARNING_INNER_RADIUS_Y_SCALE,
-    0,
-    0,
-    Math.PI * 2,
-  );
-  ctx.fill();
-  ctx.restore();
 }
 
 function drawMistBoneSpike(spike: MistBoneSpikeState) {

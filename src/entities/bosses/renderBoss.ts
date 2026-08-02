@@ -30,26 +30,14 @@ import {
 } from "../../constants";
 import { state } from "../../game/state";
 import { frameIndex } from "../../game/utils";
-import { ctx } from "../../rendering/context";
 import { drawSheetFrame } from "../../rendering/graphics";
 import type { BossVisualFrameState } from "../../types/game-state";
-import { bossCastDuration } from "./attackTiming";
+import { bossCastDuration, spiderRushWindupFrames } from "./attackTiming";
 import { BOSS_ARCHETYPE_IDS, bossArchetypeForId } from "./registry";
 import type { LiveBoss } from "./types";
 
-const DEAD_BELL_CUE_CENTER_Y_SCALE = 0.42;
-const COUNTER_CUE_ALPHA_BASE = 0.35;
-const COUNTER_CUE_ALPHA_SCALE = 0.18;
-const COMBO_CUE_ALPHA_BASE = 0.42;
-const COMBO_CUE_ALPHA_SCALE = 0.25;
-const COUNTER_CUE_LINE_WIDTH = 2;
-const COMBO_CUE_LINE_WIDTH = 3;
-const COUNTER_CUE_DASH = 8;
-const COMBO_CUE_DASH = 3;
-const COMBO_CUE_GAP = 10;
-const COUNTER_CUE_RADIUS = 56;
-const COMBO_CUE_RADIUS = 72;
-const CUE_CROSS_HALF_WIDTH = 46;
+const SPIDER_RUSH_WINDUP_SPRITE_FRAMES = 3;
+const DEAD_BELL_REPRISAL_WARNING_SPRITE_FRAMES = 3;
 
 export function drawBoss() {
   const boss = state.boss;
@@ -65,7 +53,6 @@ export function drawBoss() {
     pose.h,
     pose.facing,
   );
-  drawDeadBellBeatCue(boss);
 }
 
 export function resolveBossVisualFrame(
@@ -121,6 +108,62 @@ export function resolveBossVisualFrame(
       drawW,
       drawH,
       boss.castFacing,
+    );
+  }
+
+  if (boss.id === BOSS_ARCHETYPE_IDS.spiderString && boss.actionState === "windup") {
+    const windupFrames = spiderRushWindupFrames(boss.phase);
+    const frame = Math.min(
+      SPIDER_RUSH_WINDUP_SPRITE_FRAMES - 1,
+      Math.floor(
+        Math.min(boss.actionTimer, windupFrames - 1)
+          * SPIDER_RUSH_WINDUP_SPRITE_FRAMES
+          / windupFrames,
+      ),
+    );
+    return visualFrame(
+      SPIDER_STRING_ATTACK_SHEET,
+      frame,
+      centerX - SPIDER_STRING_ATTACK_CONFIG.drawW / 2,
+      feetY
+        - SPIDER_STRING_ATTACK_CONFIG.drawH
+        + SPIDER_STRING_ATTACK_CONFIG.drawBottomPadding,
+      SPIDER_STRING_ATTACK_CONFIG.drawW,
+      SPIDER_STRING_ATTACK_CONFIG.drawH,
+      boss.castFacing,
+    );
+  }
+
+  if (
+    boss.id === BOSS_ARCHETYPE_IDS.deadBell
+    && (boss.deadBellReprisalTimer ?? 0) > 0
+  ) {
+    const warningFrames = DEAD_BELL_CONFIG.reprisalWarningFrames;
+    const activeFrames = DEAD_BELL_CONFIG.reprisalActiveFrames;
+    const elapsed = warningFrames + activeFrames - (boss.deadBellReprisalTimer ?? 0);
+    const activeSpriteFrames = archetype.sheets.cast.count
+      - DEAD_BELL_REPRISAL_WARNING_SPRITE_FRAMES;
+    const frame = elapsed < warningFrames
+      ? Math.min(
+        DEAD_BELL_REPRISAL_WARNING_SPRITE_FRAMES - 1,
+        Math.floor(
+          elapsed * DEAD_BELL_REPRISAL_WARNING_SPRITE_FRAMES / warningFrames,
+        ),
+      )
+      : DEAD_BELL_REPRISAL_WARNING_SPRITE_FRAMES + Math.min(
+        activeSpriteFrames - 1,
+        Math.floor(
+          (elapsed - warningFrames) * activeSpriteFrames / activeFrames,
+        ),
+      );
+    return visualFrame(
+      archetype.sheets.cast,
+      frame,
+      centerX - archetype.castDrawW / 2,
+      feetY - archetype.castDrawH + archetype.castBottomPadding,
+      archetype.castDrawW,
+      archetype.castDrawH,
+      boss.facing,
     );
   }
 
@@ -280,35 +323,4 @@ function bossCastFrameDuration(boss: LiveBoss) {
     && boss.skillMode === "spiderStringPillars"
   ) return SPIDER_STRING_PILLAR_CONFIG.castFrameDuration;
   return BOSS_SKILL1_CONFIG.castFrameDuration;
-}
-
-function drawDeadBellBeatCue(boss: LiveBoss) {
-  if (!ctx || boss.id !== BOSS_ARCHETYPE_IDS.deadBell) return;
-
-  const comboStopBeat = (boss.skillMode === "deadBellCombo" || boss.skillMode === "deadBellDuet")
-    && boss.castTimer > DEAD_BELL_CONFIG.comboCastDuration - DEAD_BELL_CONFIG.comboSpawnAtFrame;
-  const counterWindow = boss.recoveryTimer > 0;
-  if (!comboStopBeat && !counterWindow) return;
-
-  const centerX = boss.x + boss.w / 2;
-  const centerY = boss.y + boss.h * DEAD_BELL_CUE_CENTER_Y_SCALE;
-  const t = counterWindow
-    ? boss.recoveryTimer / DEAD_BELL_CONFIG.recoveryFrames
-    : boss.castTimer / DEAD_BELL_CONFIG.comboCastDuration;
-  ctx.save();
-  ctx.globalAlpha = counterWindow
-    ? COUNTER_CUE_ALPHA_BASE + t * COUNTER_CUE_ALPHA_SCALE
-    : COMBO_CUE_ALPHA_BASE + (1 - t) * COMBO_CUE_ALPHA_SCALE;
-  ctx.strokeStyle = counterWindow ? "#f0d08a" : "#c94238";
-  ctx.lineWidth = counterWindow ? COUNTER_CUE_LINE_WIDTH : COMBO_CUE_LINE_WIDTH;
-  ctx.setLineDash(counterWindow ? [COUNTER_CUE_DASH, COUNTER_CUE_DASH] : [COMBO_CUE_DASH, COMBO_CUE_GAP]);
-  ctx.beginPath();
-  ctx.arc(centerX, centerY, counterWindow ? COUNTER_CUE_RADIUS : COMBO_CUE_RADIUS, 0, Math.PI * 2);
-  ctx.stroke();
-  ctx.setLineDash([]);
-  ctx.beginPath();
-  ctx.moveTo(centerX - CUE_CROSS_HALF_WIDTH, centerY);
-  ctx.lineTo(centerX + CUE_CROSS_HALF_WIDTH, centerY);
-  ctx.stroke();
-  ctx.restore();
 }

@@ -43,7 +43,6 @@ import { drawWardenAuraIndicators } from "../entities/enemies/warden";
 import {
   drawBloodMoonEffects,
   drawBoss,
-  drawBossAttackTelegraphs,
   drawBossDefeatSplitEffect,
   drawBossSkill1Effects,
   drawDeadBellEffects,
@@ -464,7 +463,6 @@ function loop(ts: number) {
   drawBruteFireballEffects();
   drawProjectiles();
   drawParticles();
-  drawBossAttackTelegraphs();
 
   if (isCollisionDebugEnabled) {
     recordPersistentCollisionShapes();

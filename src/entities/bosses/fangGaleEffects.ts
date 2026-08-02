@@ -1,15 +1,10 @@
 import { FANG_GALE_CONFIG, FANG_GALE_WAVE_SHEET, WIDTH } from "../../constants";
 import { state } from "../../game/state";
-import { clamp, hitbox } from "../../game/utils";
+import { hitbox } from "../../game/utils";
 import { ctx } from "../../rendering/context";
 import { drawSheetFrame } from "../../rendering/graphics";
 import type { FangGaleWaveState } from "../../types/game-state";
 import { hurtPlayer } from "../player";
-
-const WARNING_ALPHA_BASE = 0.25;
-const WARNING_ALPHA_GAIN = 0.36;
-const WARNING_DASH_LENGTH = 14;
-const WARNING_DASH_GAP = 10;
 
 export function updateFangGaleEffects() {
   for (let i = state.fangGaleWaves.length - 1; i >= 0; i -= 1) {
@@ -17,11 +12,24 @@ export function updateFangGaleEffects() {
     wave.elapsed += 1;
     wave.life -= 1;
 
-    if (wave.elapsed > wave.warningFrames) {
+    if (wave.elapsed <= wave.warningFrames) {
+      wave.frame = Math.min(
+        FANG_GALE_CONFIG.waveWarningSpriteFrames - 1,
+        Math.floor(
+          Math.max(0, wave.elapsed - 1)
+            * FANG_GALE_CONFIG.waveWarningSpriteFrames
+            / wave.warningFrames,
+        ),
+      );
+    } else {
       wave.x += wave.vx;
       wave.frame = Math.min(
         FANG_GALE_WAVE_SHEET.count - 1,
-        Math.floor((wave.elapsed - wave.warningFrames) / FANG_GALE_CONFIG.waveFrameDuration),
+        FANG_GALE_CONFIG.waveWarningSpriteFrames
+          + Math.floor(
+            (wave.elapsed - wave.warningFrames)
+              / FANG_GALE_CONFIG.waveFrameDuration,
+          ),
       );
     }
 
@@ -40,32 +48,8 @@ export function updateFangGaleEffects() {
 export function drawFangGaleEffects() {
   if (!ctx) return;
   for (const wave of state.fangGaleWaves) {
-    if (wave.elapsed <= wave.warningFrames) {
-      drawFangWarning(wave);
-    } else {
-      drawFangWave(wave);
-    }
+    drawFangWave(wave);
   }
-}
-
-function drawFangWarning(wave: FangGaleWaveState) {
-  if (!ctx) return;
-  const t = clamp(wave.elapsed / wave.warningFrames, 0, 1);
-  const y = wave.y + wave.h / 2;
-  const startX = wave.facing > 0 ? wave.x : wave.x + wave.w;
-  const endX = wave.facing > 0 ? WIDTH : 0;
-
-  ctx.save();
-  ctx.globalAlpha = WARNING_ALPHA_BASE + t * WARNING_ALPHA_GAIN;
-  ctx.strokeStyle = "#e6e2d7";
-  ctx.lineWidth = 2;
-  ctx.setLineDash([WARNING_DASH_LENGTH, WARNING_DASH_GAP]);
-  ctx.beginPath();
-  ctx.moveTo(startX, y);
-  ctx.lineTo(endX, y);
-  ctx.stroke();
-  ctx.setLineDash([]);
-  ctx.restore();
 }
 
 function drawFangWave(wave: FangGaleWaveState) {

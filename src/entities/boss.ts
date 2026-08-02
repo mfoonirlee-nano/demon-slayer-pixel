@@ -32,7 +32,6 @@ export { drawMirrorDreamEffects, updateMirrorDreamEffects } from "./bosses/mirro
 export { drawMistBoneEffects, updateMistBoneEffects } from "./bosses/mistBoneEffects";
 export { drawLanternEmberEffects, updateLanternEmberEffects } from "./bosses/lanternEmberEffects";
 export { drawBloodMoonEffects, updateBloodMoonEffects } from "./bosses/bloodMoonEffects";
-export { drawBossAttackTelegraphs } from "./bosses/attackTelegraphs";
 
 export function spawnBoss(id?: BossArchetypeId, options: { awakened?: boolean } = {}) {
   state.boss = createBossEncounter({

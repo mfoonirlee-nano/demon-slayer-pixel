@@ -16,13 +16,7 @@ import type { BloodMoonEffectState } from "../../types/game-state";
 
 const EFFECT_FADE_MIN_ALPHA = 0.24;
 const EFFECT_WARNING_ALPHA = 0.42;
-const WARNING_ALPHA_BASE = 0.26;
-const WARNING_ALPHA_GAIN = 0.36;
-const MANY_FACES_WARNING_LINE_WIDTH = 3;
-const MIRROR_FANG_WARNING_DASH_LENGTH = 18;
-const MIRROR_FANG_WARNING_DASH_GAP = 10;
-const DEFAULT_WARNING_DASH_LENGTH = 8;
-const DEFAULT_WARNING_DASH_GAP = 7;
+const EFFECT_WARNING_SPRITE_FRAMES = 2;
 
 function bloodMoonEffectSpec(kind: BloodMoonEffectState["kind"]) {
   if (kind === "mirrorFang") {
@@ -88,11 +82,24 @@ export function updateBloodMoonEffects() {
     effect.life -= 1;
     if (effect.hitPlayerCd > 0) effect.hitPlayerCd -= 1;
 
-    const activeElapsed = Math.max(0, effect.elapsed - effect.warningFrames);
-    effect.frame = Math.min(
-      spec.sheet.count - 1,
-      Math.floor(activeElapsed / spec.frameDuration),
-    );
+    const warningSpriteFrames = effect.warningFrames > 0
+      ? Math.min(EFFECT_WARNING_SPRITE_FRAMES, spec.sheet.count - 1)
+      : 0;
+    effect.frame = effect.elapsed <= effect.warningFrames
+      ? Math.min(
+        warningSpriteFrames - 1,
+        Math.floor(
+          Math.max(0, effect.elapsed - 1)
+            * warningSpriteFrames
+            / effect.warningFrames,
+        ),
+      )
+      : Math.min(
+        spec.sheet.count - 1,
+        warningSpriteFrames + Math.floor(
+          (effect.elapsed - effect.warningFrames) / spec.frameDuration,
+        ),
+      );
 
     if (effect.kind === "mirrorFang" && effect.elapsed > effect.warningFrames) {
       effect.x += effect.vx;
@@ -120,7 +127,6 @@ export function drawBloodMoonEffects() {
   if (!ctx) return;
   for (const effect of state.bloodMoonEffects) {
     if (effect.delay > 0) continue;
-    drawBloodMoonEffectWarning(effect);
 
     const spec = bloodMoonEffectSpec(effect.kind);
     if (!spec.sheet.image) continue;
@@ -144,33 +150,4 @@ export function drawBloodMoonEffects() {
     );
     ctx.restore();
   }
-}
-
-function drawBloodMoonEffectWarning(effect: BloodMoonEffectState) {
-  if (!ctx || effect.warningFrames <= 0 || effect.elapsed > effect.warningFrames) return;
-  const progress = clamp(effect.elapsed / effect.warningFrames, 0, 1);
-  ctx.save();
-  ctx.globalAlpha = WARNING_ALPHA_BASE + progress * WARNING_ALPHA_GAIN;
-  ctx.strokeStyle = effect.kind === "mirrorFang" ? "#f0d08a" : "#e04038";
-  ctx.fillStyle = effect.kind === "manyFaces"
-    ? "rgba(150, 16, 28, 0.18)"
-    : "rgba(210, 42, 42, 0.14)";
-  ctx.lineWidth = effect.kind === "manyFaces" ? MANY_FACES_WARNING_LINE_WIDTH : 2;
-  ctx.setLineDash(effect.kind === "mirrorFang"
-    ? [MIRROR_FANG_WARNING_DASH_LENGTH, MIRROR_FANG_WARNING_DASH_GAP]
-    : [DEFAULT_WARNING_DASH_LENGTH, DEFAULT_WARNING_DASH_GAP]);
-
-  if (effect.kind === "mirrorFang") {
-    const y = effect.y + effect.h / 2;
-    ctx.beginPath();
-    ctx.moveTo(0, y);
-    ctx.lineTo(WIDTH, y);
-    ctx.stroke();
-  } else {
-    ctx.fillRect(effect.x, effect.y, effect.w, effect.h);
-    ctx.strokeRect(effect.x, effect.y, effect.w, effect.h);
-  }
-
-  ctx.setLineDash([]);
-  ctx.restore();
 }

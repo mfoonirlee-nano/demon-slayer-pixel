@@ -21,11 +21,6 @@ import type { LiveBoss } from "./types";
 type CagePillarDirection = "up" | "down";
 type CagePillarRect = { x: number; y: number; w: number; h: number };
 
-const FULL_CIRCLE = Math.PI * 2;
-const WARNING_DASH_LENGTH = 8;
-const WARNING_LINE_WIDTH = 2;
-const WARNING_RADIUS_X = 38;
-const WARNING_RADIUS_Y = 9;
 const SIDE_SAFE_LANE_MIN = 1;
 const SIDE_SAFE_LANE_MAX = SPIDER_STRING_CAGE_CONFIG.laneCount
   - SPIDER_STRING_CAGE_CONFIG.safeLaneCount
@@ -140,7 +135,6 @@ export function drawSpiderStringCageEffects() {
     }
     visitDangerPillars(pulse, (pillar, direction) => {
       drawCagePillar(pillar, direction, frame);
-      if (isWarning) drawCagePillarWarning(pillar, direction);
     });
     ctx.restore();
   }
@@ -313,40 +307,5 @@ function drawCagePillar(
     SPIDER_STRING_CAGE_CONFIG.drawW,
     SPIDER_STRING_CAGE_CONFIG.drawH,
   );
-  ctx.restore();
-}
-
-function drawCagePillarWarning(
-  pillar: CagePillarRect,
-  direction: CagePillarDirection,
-) {
-  if (!ctx) return;
-  const centerX = pillar.x + pillar.w / 2;
-  const topY = pillar.y;
-  const originY = direction === "up" ? GROUND_Y : topY;
-  const targetY = direction === "up" ? topY : GROUND_Y;
-
-  ctx.save();
-  ctx.strokeStyle = "#f4efff";
-  ctx.fillStyle = "#a92d3c";
-  ctx.lineWidth = WARNING_LINE_WIDTH;
-  ctx.setLineDash([WARNING_DASH_LENGTH, WARNING_DASH_LENGTH]);
-  ctx.beginPath();
-  ctx.moveTo(centerX, originY);
-  ctx.lineTo(centerX, targetY);
-  ctx.stroke();
-  ctx.setLineDash([]);
-  ctx.beginPath();
-  ctx.ellipse(
-    centerX,
-    originY,
-    WARNING_RADIUS_X,
-    WARNING_RADIUS_Y,
-    0,
-    0,
-    FULL_CIRCLE,
-  );
-  ctx.fill();
-  ctx.stroke();
   ctx.restore();
 }
