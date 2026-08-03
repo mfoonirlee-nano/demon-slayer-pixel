@@ -1,4 +1,4 @@
-import { BOSS_CONFIG, GROUND_Y, MIRROR_AFTERIMAGE_SHEET, MIRROR_DREAM_CONFIG, MIRROR_NIGHTMARE_SHEET, MIRROR_SHARD_SHEET, WIDTH } from "../../constants";
+import { BOSS_CONFIG, GROUND_Y, MIRROR_AFTERIMAGE_DRAW_WIDTH, MIRROR_AFTERIMAGE_SHEET, MIRROR_DREAM_CONFIG, MIRROR_NIGHTMARE_SHEET, MIRROR_SHARD_SHEET, WIDTH } from "../../constants";
 import { playSfx } from "../../game/audio";
 import { state } from "../../game/state";
 import { clamp, hitbox } from "../../game/utils";
@@ -93,7 +93,7 @@ export function drawMirrorDreamEffects() {
 
 function drawMirrorAfterimages() {
   if (!ctx) return;
-  const drawW = MIRROR_DREAM_CONFIG.afterimageDrawW * BOSS_CONFIG.bodyDrawScale;
+  const drawW = MIRROR_AFTERIMAGE_DRAW_WIDTH;
   const drawH = MIRROR_DREAM_CONFIG.afterimageDrawH * BOSS_CONFIG.bodyDrawScale;
   const bottomPadding = MIRROR_DREAM_CONFIG.afterimageBottomPadding * BOSS_CONFIG.bodyDrawScale;
   for (const afterimage of state.mirrorAfterimages) {

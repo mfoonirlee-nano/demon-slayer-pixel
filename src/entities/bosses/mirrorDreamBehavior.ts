@@ -1,4 +1,4 @@
-import { MIRROR_DREAM_CONFIG, WIDTH } from "../../constants";
+import { MIRROR_AFTERIMAGE_DRAW_WIDTH, MIRROR_DREAM_CONFIG, WIDTH } from "../../constants";
 import { state } from "../../game/state";
 import { clamp } from "../../game/utils";
 import { playSfx } from "../../game/audio";
@@ -113,7 +113,7 @@ function startMirrorDreamCast(boss: LiveBoss, forcedSkillMode?: BossSkillMode) {
   boss.castFacing = toPlayer >= 0 ? 1 : -1;
   boss.facing = boss.castFacing;
   boss.skillMode = forcedSkillMode ?? nextMirrorDreamSkill(boss);
-  boss.mirrorTeleportTargetX = mirrorSkillTeleports(boss.skillMode)
+  boss.mirrorTeleportTargetX = boss.skillMode === "mirrorAfterimage"
     ? mirrorTeleportTargetX(boss)
     : undefined;
   boss.castTimer = MIRROR_DREAM_CONFIG.castDuration;
@@ -193,6 +193,7 @@ function spawnMirrorTrueImageShift(boss: LiveBoss) {
   }
 
   boss.facing = originalFacing;
+  boss.mirrorTeleportTargetX = mirrorTeleportTargetX(boss, trueImageTeleportPlayerOffset());
   teleportMirrorDreamBoss(boss);
   spawnMirrorAfterimage(boss, TRUE_IMAGE_SHIFT_FIRST_BREAK_FRAME, boss.x + boss.w / 2);
 }
@@ -202,13 +203,58 @@ function trueImageShiftCenters(boss: LiveBoss) {
     MIRROR_DREAM_CONFIG.nightmareMaxImages,
     MIRROR_DREAM_CONFIG.nightmareBaseImages + boss.phase,
   );
-  const playerCenter = state.player.x + state.player.w / 2;
   const spacing = MIRROR_DREAM_CONFIG.nightmareSpacing * TRUE_IMAGE_SHIFT_SPACING_SCALE;
-  const half = (count - 1) / 2;
+  return mirrorImageCenters(count, spacing);
+}
 
-  return Array.from({ length: count }, (_, index) => (
-    clamp(playerCenter + (index - half) * spacing, boss.w / 2, WIDTH - boss.w / 2)
-  ));
+function mirrorImageCenters(count: number, spacing: number) {
+  const playerCenter = state.player.x + state.player.w / 2;
+  const innerOffset = mirrorImagePlayerOffset();
+  const pairedImageCount = Math.floor(count / 2);
+  const hasExtraImage = count % 2 === 1;
+  // Odd formations put their extra image toward the roomier screen side so the center remains a safe lane.
+  const extraImageOnLeft = hasExtraImage && playerCenter > WIDTH / 2;
+  const leftImageCount = pairedImageCount + (extraImageOnLeft ? 1 : 0);
+  const rightImageCount = count - leftImageCount;
+  const centers: number[] = [];
+
+  for (let index = leftImageCount - 1; index >= 0; index -= 1) {
+    centers.push(safeMirrorImageCenter(
+      playerCenter - innerOffset - index * spacing,
+      -1,
+    ));
+  }
+  for (let index = 0; index < rightImageCount; index += 1) {
+    centers.push(safeMirrorImageCenter(
+      playerCenter + innerOffset + index * spacing,
+      1,
+    ));
+  }
+  return centers;
+}
+
+function mirrorImagePlayerOffset() {
+  return (
+    (MIRROR_AFTERIMAGE_DRAW_WIDTH + state.player.w) / 2
+    + MIRROR_DREAM_CONFIG.nightmarePlayerClearance
+  );
+}
+
+function trueImageTeleportPlayerOffset() {
+  return mirrorImagePlayerOffset()
+    + MIRROR_DREAM_CONFIG.nightmareSpacing * TRUE_IMAGE_SHIFT_SPACING_SCALE / 2;
+}
+
+function safeMirrorImageCenter(centerX: number, side: -1 | 1) {
+  const clampedCenter = clamp(
+    centerX,
+    MIRROR_AFTERIMAGE_DRAW_WIDTH / 2,
+    WIDTH - MIRROR_AFTERIMAGE_DRAW_WIDTH / 2,
+  );
+  // If screen clamping would push an image into the player lane, preserve its off-screen spacing instead.
+  return side === -1
+    ? Math.min(clampedCenter, centerX)
+    : Math.max(clampedCenter, centerX);
 }
 
 function spawnMirrorAfterimage(boss: LiveBoss, spawnAt: number | undefined, centerX = boss.x + boss.w / 2) {
@@ -243,11 +289,14 @@ function teleportMirrorDreamBoss(boss: LiveBoss) {
   boss.castFacing = boss.facing;
 }
 
-function mirrorTeleportTargetX(boss: LiveBoss) {
+function mirrorTeleportTargetX(
+  boss: LiveBoss,
+  playerOffset: number = MIRROR_DREAM_CONFIG.teleportPlayerOffset,
+) {
   const playerCenter = state.player.x + state.player.w / 2;
   const bossCenter = boss.x + boss.w / 2;
   const side = bossCenter < playerCenter ? 1 : -1;
-  const preferredCenter = playerCenter + side * MIRROR_DREAM_CONFIG.teleportPlayerOffset;
+  const preferredCenter = playerCenter + side * playerOffset;
   const fallbackCenter = playerCenter - side * MIRROR_DREAM_CONFIG.teleportAwayOffset;
   const minCenter = boss.w / 2;
   const maxCenter = WIDTH - boss.w / 2;
@@ -257,21 +306,16 @@ function mirrorTeleportTargetX(boss: LiveBoss) {
   return clamp(targetCenter - boss.w / 2, 0, WIDTH - boss.w);
 }
 
-function mirrorSkillTeleports(skillMode: BossSkillMode) {
-  return skillMode === "mirrorAfterimage" || skillMode === "mirrorTrueImageShift";
-}
-
 function spawnMirrorNightmareImages(boss: LiveBoss) {
   const count = Math.min(
     MIRROR_DREAM_CONFIG.nightmareMaxImages,
     MIRROR_DREAM_CONFIG.nightmareBaseImages + boss.phase,
   );
   const playerCenter = state.player.x + state.player.w / 2;
-  const half = (count - 1) / 2;
+  const centers = mirrorImageCenters(count, MIRROR_DREAM_CONFIG.nightmareSpacing);
 
-  for (let i = 0; i < count; i += 1) {
-    const offset = (i - half) * MIRROR_DREAM_CONFIG.nightmareSpacing;
-    const centerX = clamp(playerCenter + offset, boss.w / 2, WIDTH - boss.w / 2);
+  for (let i = 0; i < centers.length; i += 1) {
+    const centerX = centers[i];
     const spawnAt = MIRROR_DREAM_CONFIG.nightmareFirstBreakFrame + i * MIRROR_DREAM_CONFIG.nightmareBreakDelay;
     boss.facing = centerX < playerCenter ? 1 : -1;
     spawnMirrorAfterimage(boss, spawnAt, centerX);

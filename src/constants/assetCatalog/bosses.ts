@@ -1,4 +1,5 @@
 import type { SpriteSheet } from "../../types/assets";
+import { BOSS_BODY_DRAW_SCALE } from "../combat";
 
 export * from "./mistBone";
 
@@ -543,12 +544,17 @@ export const MIRROR_DREAM_CONFIG = {
   nightmareBaseImages: 2,
   nightmareMaxImages: 4,
   nightmareSpacing: 122,
+  nightmarePlayerClearance: 12,
   nightmareFirstBreakFrame: 20,
   nightmareBreakDelay: 18,
   nightmareBreakFadeFrames: 28,
   damageBase: 10,
   damagePhase: 2,
 } as const;
+
+export const MIRROR_AFTERIMAGE_DRAW_WIDTH = (
+  MIRROR_DREAM_CONFIG.afterimageDrawW * BOSS_BODY_DRAW_SCALE
+);
 
 export const BOSS_SKILL1_CONFIG = {
   castDuration: 54,
