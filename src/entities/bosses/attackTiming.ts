@@ -28,7 +28,9 @@ export function bossCastDuration(boss: LiveBoss) {
       : DEAD_BELL_CONFIG.castDuration;
   }
   if (boss.id === BOSS_ARCHETYPE_IDS.fangGale) {
-    if (boss.actionState === "windup") return fangChainWindupFrames(boss.phase);
+    if (boss.actionState === "windup") {
+      return fangChainWindupFrames(boss.fangPatternPhase ?? boss.phase);
+    }
     return boss.skillMode === "fangGaleStorm"
       ? FANG_GALE_CONFIG.stormCastDuration
       : FANG_GALE_CONFIG.castDuration;

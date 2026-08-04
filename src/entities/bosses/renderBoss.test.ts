@@ -9,6 +9,11 @@ import {
   DEAD_BELL_CAST_SHEET,
   DEAD_BELL_CONFIG,
   FANG_GALE_WINDUP_SHEET,
+  FANG_GALE_CONFIG,
+  FANG_GALE_FINAL_BITE_SHEET,
+  FANG_GALE_RECOVER_SHEET,
+  FANG_GALE_RETREAT_SHEET,
+  FANG_GALE_TURN_SHEET,
   GROUND_Y,
   LANTERN_EMBER_FIRELINE_CAST_SHEET,
   LANTERN_EMBER_BUFF_CAST_SHEET,
@@ -29,11 +34,16 @@ import type { SpriteSheet } from "../../types/assets";
 import type { BossArchetypeId, BossSkillMode } from "../../types/game-state";
 import { createBossEncounter } from "./encounter";
 import { BOSS_ARCHETYPE_IDS } from "./registry";
-import { bossCastDuration, spiderRushWindupFrames } from "./attackTiming";
+import {
+  bossCastDuration,
+  fangChainWindupFrames,
+  spiderRushWindupFrames,
+} from "./attackTiming";
 import { drawBoss, resolveBossVisualFrame } from "./renderBoss";
 
 const originalFirelineCastImage = LANTERN_EMBER_FIRELINE_CAST_SHEET.image;
 const originalSummonImage = LANTERN_EMBER_SUMMON_SHEET.image;
+const AWAKENED_FINAL_PHASE = 4;
 const CAST_CASES = [
   {
     id: BOSS_ARCHETYPE_IDS.spiderString,
@@ -200,6 +210,50 @@ describe("boss casting visuals", () => {
     });
 
     expect(frames).toEqual([0, 1, 2]);
+  });
+
+  it("uses dedicated Fang Gale sequences for retreat, turning, final bite, and recovery", () => {
+    const boss = createBossEncounter({
+      id: BOSS_ARCHETYPE_IDS.fangGale,
+      bossKills: 0,
+      elapsedSeconds: 0,
+      awakened: true,
+    });
+    boss.entering = false;
+    boss.phase = AWAKENED_FINAL_PHASE;
+    boss.fangPatternPhase = AWAKENED_FINAL_PHASE;
+    boss.skillMode = "fangGaleStorm";
+
+    boss.actionState = "retreat";
+    boss.actionTimer = 0;
+    expect(resolveBossVisualFrame(boss, 0)).toMatchObject({
+      sheet: FANG_GALE_RETREAT_SHEET,
+      frame: 0,
+    });
+
+    boss.actionState = "windup";
+    boss.castTimer = fangChainWindupFrames(AWAKENED_FINAL_PHASE);
+    expect(resolveBossVisualFrame(boss, 0)).toMatchObject({
+      sheet: FANG_GALE_TURN_SHEET,
+      frame: 0,
+    });
+    boss.castTimer = 1;
+    expect(resolveBossVisualFrame(boss, 0)).toMatchObject({
+      sheet: FANG_GALE_TURN_SHEET,
+      frame: FANG_GALE_TURN_SHEET.count - 1,
+    });
+
+    boss.actionState = "dash";
+    boss.castTimer = 0;
+    boss.comboStep = 3;
+    expect(resolveBossVisualFrame(boss, 0).sheet).toBe(FANG_GALE_FINAL_BITE_SHEET);
+
+    boss.actionState = "recover";
+    boss.recoveryTimer = FANG_GALE_CONFIG.stormRecoveryFrames;
+    expect(resolveBossVisualFrame(boss, 0)).toMatchObject({
+      sheet: FANG_GALE_RECOVER_SHEET,
+      frame: 0,
+    });
   });
 
   it("uses the bell sequence for Dead Bell's reprisal warning and active window", () => {

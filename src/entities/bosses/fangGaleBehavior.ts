@@ -1,7 +1,8 @@
 import { FANG_GALE_CONFIG, WIDTH } from "../../constants";
 import { playSfx } from "../../game/audio";
+import { recordCollisionDebugRect } from "../../game/collisionDebug";
 import { state } from "../../game/state";
-import { clamp, hitbox } from "../../game/utils";
+import { clamp, rectsOverlap } from "../../game/utils";
 import type { BossSkillMode } from "../../types/game-state";
 import { hurtPlayer } from "../player";
 import { bossCastDuration, fangChainWindupFrames } from "./attackTiming";
@@ -11,54 +12,25 @@ import type { LiveBoss } from "./types";
 const STEERING_PHASE_FORCE = 0.01;
 const MAX_VELOCITY_PHASE_BONUS = 0.24;
 const CAST_SFX_PITCH = 1.08;
-const WAVE_PHASE = 2;
-const MIN_STORM_COOLDOWN = 188;
-const MIN_WAVE_COOLDOWN = 150;
-const MIN_DASH_COOLDOWN = 134;
-const STORM_PHASE_ONE_CHANCE = 0.12;
-const STORM_PHASE_TWO_CHANCE = 0.22;
-const STORM_PHASE_THREE_CHANCE = 0.34;
-const WAVE_PHASE_TWO_CHANCE = 0.44;
-const WAVE_PHASE_THREE_CHANCE = 0.66;
-const WAVE_PHASE_FOUR_CHANCE = 0.78;
-const COOLDOWN_PHASE_TWO_MULTIPLIER = 0.9;
-const COOLDOWN_PHASE_THREE_MULTIPLIER = 0.78;
-const COOLDOWN_PHASE_FOUR_MULTIPLIER = 0.68;
-const STORM_CHANCE_BY_PHASE = [
-  STORM_PHASE_ONE_CHANCE,
-  STORM_PHASE_TWO_CHANCE,
-  STORM_PHASE_THREE_CHANCE,
-  1,
-] as const;
-const WAVE_CHANCE_BY_PHASE = [
-  0,
-  WAVE_PHASE_TWO_CHANCE,
-  WAVE_PHASE_THREE_CHANCE,
-  WAVE_PHASE_FOUR_CHANCE,
-] as const;
-const COOLDOWN_MULTIPLIER_BY_PHASE = [
-  1,
-  COOLDOWN_PHASE_TWO_MULTIPLIER,
-  COOLDOWN_PHASE_THREE_MULTIPLIER,
-  COOLDOWN_PHASE_FOUR_MULTIPLIER,
-] as const;
-const STORM_WAVE_SFX_PITCH = 1.12;
 const DASH_PHASE_SPEED_BONUS = 0.28;
 const STORM_DASH_SFX_PITCH = 1.16;
-const STORM_CHAIN_WAVE_SFX_PITCH = 1.06;
 const STORM_CHAIN_WARNING_SFX_PITCH = 1.16;
-const MAX_STORM_COMBO_STEP = 3;
 const WAVE_FORWARD_OFFSET = 42;
 const WAVE_CENTER_Y_SCALE = 0.56;
 
 export function updateFangGaleBoss(boss: LiveBoss) {
+  if (boss.actionState === "retreat") {
+    updateFangRetreat(boss);
+    return;
+  }
+
   if (boss.actionState === "dash") {
     updateFangDash(boss);
     return;
   }
 
   if (boss.actionState === "windup") {
-    updateFangStormWindup(boss);
+    updateFangChainWindup(boss);
     return;
   }
 
@@ -68,28 +40,22 @@ export function updateFangGaleBoss(boss: LiveBoss) {
     if (boss.recoveryTimer <= 0) {
       boss.actionState = "move";
       boss.actionTimer = 0;
+      boss.skillCd = fangPostRecoveryCooldown(boss.fangPatternPhase ?? boss.phase);
+      boss.fangPatternPhase = undefined;
+      boss.comboStep = undefined;
     }
-    damagePlayerOnContact(boss);
     return;
   }
 
   if (boss.castTimer > 0) {
-    const castDuration = bossCastDuration(boss);
-    const framesSinceCastStart = castDuration - boss.castTimer;
     boss.vx = 0;
     boss.castTimer -= 1;
-
-    if (!boss.skillEffectSpawned && framesSinceCastStart >= FANG_GALE_CONFIG.spawnAtFrame) {
-      boss.skillEffectSpawned = true;
-      spawnFangWavePattern(boss);
-    }
     if (boss.castTimer <= 0) startFangDash(boss);
-    damagePlayerOnContact(boss);
     return;
   }
 
-  if (boss.skillCd <= 0) {
-    startFangCast(boss);
+  if (boss.skillCd <= 0 && boss.aiTimer <= 0) {
+    startFangPattern(boss);
     return;
   }
 
@@ -111,17 +77,44 @@ function moveFangGaleBoss(boss: LiveBoss) {
   boss.x = clamp(boss.x + boss.vx, 0, WIDTH - boss.w);
 }
 
-function startFangCast(boss: LiveBoss) {
-  const toPlayer = state.player.x + state.player.w / 2 - (boss.x + boss.w / 2);
-  boss.castFacing = toPlayer >= 0 ? 1 : -1;
-  boss.facing = boss.castFacing;
+function startFangPattern(boss: LiveBoss) {
   boss.skillMode = nextFangSkill(boss);
+  // Lock the pattern so an HP phase change cannot alter its remaining hits or timing.
+  boss.fangPatternPhase = boss.phase;
+  if (boss.skillMode !== "fangGaleDash" && boss.phase >= 2) {
+    boss.actionState = "retreat";
+    boss.actionTimer = 0;
+    boss.aiTimer = FANG_GALE_CONFIG.retreatFrames;
+    setFangRetreatVelocity(boss);
+    return;
+  }
+  startFangCast(boss);
+}
+
+function updateFangRetreat(boss: LiveBoss) {
+  setFangRetreatVelocity(boss);
+  boss.x = clamp(boss.x + boss.vx, 0, WIDTH - boss.w);
+  if (boss.aiTimer <= 0) startFangCast(boss);
+}
+
+function faceFangTowardPlayer(boss: LiveBoss) {
+  boss.castFacing = fangDirectionToPlayer(boss);
+  boss.facing = boss.castFacing;
+}
+
+function setFangRetreatVelocity(boss: LiveBoss) {
+  faceFangTowardPlayer(boss);
+  boss.vx = -boss.castFacing * FANG_GALE_CONFIG.retreatSpeed;
+}
+
+function startFangCast(boss: LiveBoss) {
+  faceFangTowardPlayer(boss);
   boss.castTimer = bossCastDuration(boss);
   boss.skillEffectSpawned = false;
   boss.skillHitDone = false;
   boss.actionState = "cast";
   boss.actionTimer = 0;
-  boss.skillCd = fangSkillCooldown(boss.skillMode, boss.phase);
+  boss.skillCd = 0;
   boss.vx = 0;
 
   playSfx("bossCast", CAST_SFX_PITCH);
@@ -129,60 +122,60 @@ function startFangCast(boss: LiveBoss) {
 
 function nextFangSkill(boss: LiveBoss): BossSkillMode {
   const roll = Math.random();
-  const phaseIndex = fangPhaseIndex(boss.phase);
-  if (boss.awakened && roll < STORM_CHANCE_BY_PHASE[phaseIndex]) return "fangGaleStorm";
-  if (boss.phase >= WAVE_PHASE && roll < WAVE_CHANCE_BY_PHASE[phaseIndex]) return "fangGaleWave";
-  return "fangGaleDash";
-}
-
-function fangSkillCooldown(skillMode: BossSkillMode, phase: number) {
-  const multiplier = COOLDOWN_MULTIPLIER_BY_PHASE[fangPhaseIndex(phase)];
-  if (skillMode === "fangGaleStorm") {
-    return Math.max(MIN_STORM_COOLDOWN, Math.round(FANG_GALE_CONFIG.stormCooldown * multiplier));
+  if (boss.awakened) {
+    const weights = FANG_GALE_CONFIG.awakenedSkillWeights[
+      Math.min(
+        FANG_GALE_CONFIG.awakenedSkillWeights.length - 1,
+        Math.max(0, boss.phase - 1),
+      )
+    ];
+    if (roll < weights.dash) return "fangGaleDash";
+    if (roll < weights.dash + weights.wave) return "fangGaleWave";
+    return "fangGaleStorm";
   }
-  if (skillMode === "fangGaleWave") {
-    return Math.max(MIN_WAVE_COOLDOWN, Math.round(FANG_GALE_CONFIG.waveCooldown * multiplier));
-  }
-  return Math.max(MIN_DASH_COOLDOWN, Math.round(FANG_GALE_CONFIG.dashCooldown * multiplier));
+
+  const weights = FANG_GALE_CONFIG.normalSkillWeights[
+    Math.min(
+      FANG_GALE_CONFIG.normalSkillWeights.length - 1,
+      Math.max(0, boss.phase - 1),
+    )
+  ];
+  return roll < weights.dash ? "fangGaleDash" : "fangGaleWave";
 }
 
-function fangPhaseIndex(phase: number) {
-  return Math.min(COOLDOWN_MULTIPLIER_BY_PHASE.length - 1, Math.max(0, phase - 1));
-}
-
-function spawnFangWavePattern(boss: LiveBoss) {
-  if (boss.skillMode === "fangGaleDash") return;
-  spawnFangWave(boss, boss.castFacing);
-  if (boss.skillMode === "fangGaleStorm") spawnFangWave(boss, -boss.castFacing);
-  playSfx("bossBlade", boss.skillMode === "fangGaleStorm" ? STORM_WAVE_SFX_PITCH : 1);
+function fangPostRecoveryCooldown(phase: number) {
+  const index = Math.min(
+    FANG_GALE_CONFIG.postRecoveryCooldowns.length - 1,
+    Math.max(0, phase - 1),
+  );
+  return FANG_GALE_CONFIG.postRecoveryCooldowns[index];
 }
 
 function startFangDash(boss: LiveBoss) {
-  boss.comboStep = boss.skillMode === "fangGaleStorm" ? 1 : 0;
+  boss.comboStep = 1;
   startFangDashSegment(boss);
 }
 
 function startFangDashSegment(boss: LiveBoss) {
   const storm = boss.skillMode === "fangGaleStorm";
-  const speed = storm ? FANG_GALE_CONFIG.stormDashSpeed : FANG_GALE_CONFIG.dashSpeed;
+  const finalStormDash = storm && boss.comboStep === FANG_GALE_CONFIG.stormDashCount;
+  const baseSpeed = storm ? FANG_GALE_CONFIG.stormDashSpeed : FANG_GALE_CONFIG.dashSpeed;
+  const phase = boss.fangPatternPhase ?? boss.phase;
+  const phaseSpeed = baseSpeed + phase * DASH_PHASE_SPEED_BONUS;
+  const speed = finalStormDash
+    ? phaseSpeed * FANG_GALE_CONFIG.stormFinalDashSpeedMultiplier
+    : phaseSpeed;
   boss.actionState = "dash";
   boss.actionTimer = 0;
   boss.aiTimer = storm ? FANG_GALE_CONFIG.stormDashFrames : FANG_GALE_CONFIG.dashFrames;
   boss.skillHitDone = false;
-  boss.vx = boss.castFacing * (speed + boss.phase * DASH_PHASE_SPEED_BONUS);
+  boss.vx = boss.castFacing * speed;
   playSfx("bossBlade", storm ? STORM_DASH_SFX_PITCH : 1);
 }
 
-function updateFangStormWindup(boss: LiveBoss) {
-  const framesSinceWindupStart = fangChainWindupFrames(boss.phase) - boss.castTimer;
+function updateFangChainWindup(boss: LiveBoss) {
   boss.vx = 0;
   boss.castTimer -= 1;
-
-  if (!boss.skillEffectSpawned && framesSinceWindupStart >= FANG_GALE_CONFIG.chainSpawnAtFrame) {
-    boss.skillEffectSpawned = true;
-    spawnFangWave(boss, boss.castFacing);
-    playSfx("bossBlade", STORM_CHAIN_WAVE_SFX_PITCH);
-  }
   if (boss.castTimer <= 0) startFangDashSegment(boss);
 }
 
@@ -194,20 +187,28 @@ function updateFangDash(boss: LiveBoss) {
     boss.aiTimer = 0;
   }
 
-  if (!boss.skillHitDone && hitbox(state.player, boss)) {
+  const dashHitbox = fangDashHitbox(boss);
+  recordCollisionDebugRect(dashHitbox, "enemyAttack");
+  if (!boss.skillHitDone && rectsOverlap(state.player, dashHitbox)) {
     boss.skillHitDone = true;
+    const phase = boss.fangPatternPhase ?? boss.phase;
     hurtPlayer(
       bossAttackDamage(
-        FANG_GALE_CONFIG.dashDamageBase + boss.phase * FANG_GALE_CONFIG.dashDamagePhase,
+        FANG_GALE_CONFIG.dashDamageBase + phase * FANG_GALE_CONFIG.dashDamagePhase,
       ),
       boss.vx,
     );
   }
 
   if (boss.aiTimer <= 0) {
-    if (boss.skillMode === "fangGaleStorm" && (boss.comboStep ?? 1) < MAX_STORM_COMBO_STEP) {
-      startFangStormChainWindup(boss);
+    if ((boss.comboStep ?? 1) < fangComboLength(boss)) {
+      startFangChainWindup(boss);
       return;
+    }
+    if (boss.skillMode === "fangGaleWave") {
+      const facing = fangDirectionToPlayer(boss);
+      spawnFangWave(boss, facing);
+      playSfx("bossBlade");
     }
     boss.actionState = "recover";
     boss.actionTimer = 0;
@@ -219,11 +220,22 @@ function updateFangDash(boss: LiveBoss) {
   }
 }
 
-function startFangStormChainWindup(boss: LiveBoss) {
+function fangDashHitbox(boss: LiveBoss) {
+  return {
+    x: boss.x + boss.w / 2 - FANG_GALE_CONFIG.dashHitW / 2,
+    y: boss.y + boss.h - FANG_GALE_CONFIG.dashHitH,
+    w: FANG_GALE_CONFIG.dashHitW,
+    h: FANG_GALE_CONFIG.dashHitH,
+  };
+}
+
+function startFangChainWindup(boss: LiveBoss) {
   boss.comboStep = (boss.comboStep ?? 1) + 1;
-  boss.castFacing *= -1;
+  boss.castFacing = boss.skillMode === "fangGaleStorm"
+    ? -boss.castFacing
+    : fangDirectionToPlayer(boss);
   boss.facing = boss.castFacing;
-  boss.castTimer = fangChainWindupFrames(boss.phase);
+  boss.castTimer = fangChainWindupFrames(boss.fangPatternPhase ?? boss.phase);
   boss.skillEffectSpawned = false;
   boss.skillHitDone = false;
   boss.actionState = "windup";
@@ -232,25 +244,42 @@ function startFangStormChainWindup(boss: LiveBoss) {
   playSfx("bossCast", STORM_CHAIN_WARNING_SFX_PITCH);
 }
 
+function fangComboLength(boss: LiveBoss) {
+  if (boss.skillMode === "fangGaleStorm") return FANG_GALE_CONFIG.stormDashCount;
+  if (
+    boss.skillMode === "fangGaleWave"
+    && (boss.fangPatternPhase ?? boss.phase) >= FANG_GALE_CONFIG.waveComboPhase
+  ) {
+    return FANG_GALE_CONFIG.waveDashCount;
+  }
+  return 1;
+}
+
+function fangDirectionToPlayer(boss: LiveBoss) {
+  const toPlayer = state.player.x + state.player.w / 2 - (boss.x + boss.w / 2);
+  if (toPlayer === 0) return -boss.castFacing || 1;
+  return toPlayer > 0 ? 1 : -1;
+}
+
 function spawnFangWave(boss: LiveBoss, facing: number) {
   const w = FANG_GALE_CONFIG.waveHitW;
   const h = FANG_GALE_CONFIG.waveHitH;
   const centerX = boss.x + boss.w / 2 + facing * WAVE_FORWARD_OFFSET;
   const centerY = boss.y + boss.h * WAVE_CENTER_Y_SCALE;
-  const storm = boss.skillMode === "fangGaleStorm";
+  const phase = boss.fangPatternPhase ?? boss.phase;
   state.fangGaleWaves.push({
     x: centerX - w / 2,
     y: centerY - h / 2,
     w,
     h,
-    vx: facing * (storm ? FANG_GALE_CONFIG.stormWaveSpeed : FANG_GALE_CONFIG.waveSpeed),
+    vx: facing * FANG_GALE_CONFIG.waveSpeed,
     facing,
     warningFrames: FANG_GALE_CONFIG.waveWarningFrames,
     elapsed: 0,
     frame: 0,
     life: FANG_GALE_CONFIG.waveLife,
     damage: bossAttackDamage(
-      FANG_GALE_CONFIG.waveDamageBase + boss.phase * FANG_GALE_CONFIG.waveDamagePhase,
+      FANG_GALE_CONFIG.waveDamageBase + phase * FANG_GALE_CONFIG.waveDamagePhase,
     ),
   });
 }

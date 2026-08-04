@@ -1,6 +1,7 @@
 import { FANG_GALE_CONFIG, FANG_GALE_WAVE_SHEET, WIDTH } from "../../constants";
+import { recordCollisionDebugRect } from "../../game/collisionDebug";
 import { state } from "../../game/state";
-import { hitbox } from "../../game/utils";
+import { rectsOverlap } from "../../game/utils";
 import { ctx } from "../../rendering/context";
 import { drawSheetFrame } from "../../rendering/graphics";
 import type { FangGaleWaveState } from "../../types/game-state";
@@ -33,10 +34,14 @@ export function updateFangGaleEffects() {
       );
     }
 
-    if (wave.elapsed > wave.warningFrames && hitbox(state.player, wave)) {
-      hurtPlayer(wave.damage, wave.vx);
-      state.fangGaleWaves.splice(i, 1);
-      continue;
+    if (wave.elapsed > wave.warningFrames) {
+      const damageRect = { x: wave.x, y: wave.y, w: wave.w, h: wave.h };
+      recordCollisionDebugRect(damageRect, "enemyAttack");
+      if (rectsOverlap(state.player, damageRect)) {
+        hurtPlayer(wave.damage, wave.vx);
+        state.fangGaleWaves.splice(i, 1);
+        continue;
+      }
     }
 
     const offLeft = wave.vx < 0 && wave.x + wave.w < -FANG_GALE_CONFIG.waveDrawW;

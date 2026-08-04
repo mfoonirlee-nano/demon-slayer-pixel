@@ -87,7 +87,14 @@ export type BossArchetypeId =
   | "lantern-ember"
   | "dead-bell"
   | "blood-moon-many-faces";
-export type BossActionState = "move" | "attack" | "cast" | "windup" | "dash" | "recover";
+export type BossActionState =
+  | "move"
+  | "attack"
+  | "cast"
+  | "retreat"
+  | "windup"
+  | "dash"
+  | "recover";
 export type BossSkillEffectKind = "spiderString";
 export type BloodMoonEffectKind =
   | "spiderMist"

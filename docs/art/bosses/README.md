@@ -26,7 +26,7 @@ Boss 需要保持比普通敌人更强的轮廓识别和阶段变化。设计重
 | `moonbound_spider_string` | 血月眷属 · 蛛弦 | 1 | 7 | 当前 Boss 素材、玩法、HUD 名称已接入 | [spider-string.md](spider-string.md) |
 | `moonbound_mist_bone` | 血月眷属 · 雾骨 | 2 | 8 | 普攻、差异化施法、飞行骨钉与地刺行为已接入 | [mist-bone.md](mist-bone.md) |
 | `moonbound_mirror_dream` | 血月眷属 · 镜魇 | 3 | 9 | 素材和注册表已接入；碎镜、假身和噩梦代理行为已接入 | [mirror-dream.md](mirror-dream.md) |
-| `moonbound_fang_gale` | 血月眷属 · 牙岚 | 4 | 10 | 素材和注册表已接入；冲刺和风牙裂行为已接入 | [fang-gale.md](fang-gale.md) |
+| `moonbound_fang_gale` | 血月眷属 · 牙岚 | 4 | 10 | 后撤、连闪、终段扑咬、恢复和风牙裂行为/素材已接入 | [fang-gale.md](fang-gale.md) |
 | `moonbound_lantern_ember` | 血月眷属 · 灯烬 | 5 | 11 | 素材和注册表已接入；召唤、火线、强化和蚀醒区域行为已接入 | [lantern-ember.md](lantern-ember.md) |
 | `moonbound_dead_bell` | 血月眷属 · 枯铃 | 6 | 12 | 素材和注册表已接入；声波环、横向音刃和停拍组合已接入 | [dead-bell.md](dead-bell.md) |
 | `grand_boss_blood_moon_many_faces` | 终幕之妖 · 万相血月 | 13 | — | 素材和注册表已接入；`bossKills >= 12` 触发，胜利 UI 未接 | [blood-moon-many-faces.md](blood-moon-many-faces.md) |

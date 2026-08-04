@@ -2,6 +2,7 @@ import type { SpriteSheet } from "../../types/assets";
 import { BOSS_BODY_DRAW_SCALE } from "../combat";
 
 export * from "./mistBone";
+export * from "./fangGale";
 
 export const BOSS_SHEET: SpriteSheet = {
   src: "assets/sprites/boss/spider-string/boss.png",
@@ -55,38 +56,6 @@ export const DEAD_BELL_BLADE_SHEET: SpriteSheet = {
   src: "assets/sprites/boss/dead_bell/dead_bell_blade.png",
   frameW: 420,
   frameH: 180,
-  count: 6,
-  image: null,
-};
-
-export const FANG_GALE_SHEET: SpriteSheet = {
-  src: "assets/sprites/boss/fang-gale/fang_gale_move.png",
-  frameW: 350,
-  frameH: 419,
-  count: 4,
-  image: null,
-};
-
-export const FANG_GALE_WINDUP_SHEET: SpriteSheet = {
-  src: "assets/sprites/boss/fang-gale/fang_gale_windup.png",
-  frameW: 400,
-  frameH: 400,
-  count: 6,
-  image: null,
-};
-
-export const FANG_GALE_BITE_SHEET: SpriteSheet = {
-  src: "assets/sprites/boss/fang-gale/fang_gale_bite.png",
-  frameW: 400,
-  frameH: 400,
-  count: 6,
-  image: null,
-};
-
-export const FANG_GALE_WAVE_SHEET: SpriteSheet = {
-  src: "assets/sprites/boss/fang-gale/fang_gale_wave.png",
-  frameW: 400,
-  frameH: 350,
   count: 6,
   image: null,
 };

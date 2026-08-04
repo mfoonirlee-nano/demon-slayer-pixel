@@ -1,16 +1,21 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { FANG_GALE_CONFIG, FANG_GALE_WAVE_SHEET } from "../../constants";
+import * as collisionDebug from "../../game/collisionDebug";
 import { resetState, state } from "../../game/state";
 import { setCanvas } from "../../rendering/context";
 import type { FangGaleWaveState } from "../../types/game-state";
 import { drawFangGaleEffects, updateFangGaleEffects } from "./fangGaleEffects";
 
 const originalWaveImage = FANG_GALE_WAVE_SHEET.image;
+const EXPECTED_WAVE_HIT_W = 64;
+const EXPECTED_WAVE_HIT_H = 48;
+const WAVE_LOWER_CORE_OFFSET = 42;
 
 describe("fang gale effects", () => {
   afterEach(() => {
     FANG_GALE_WAVE_SHEET.image = originalWaveImage;
     setCanvas(null);
+    vi.restoreAllMocks();
   });
 
   it("charges through local wave frames before the wind blade starts moving", () => {
@@ -68,6 +73,61 @@ describe("fang gale effects", () => {
 
     updateFangGaleEffects();
     expect(wave.frame).toBe(FANG_GALE_CONFIG.waveWarningSpriteFrames + 1);
+  });
+
+  it("records and collides with the wind blade core instead of its visual fringe", () => {
+    resetState();
+    const recordRect = vi.spyOn(collisionDebug, "recordCollisionDebugRect")
+      .mockImplementation(() => {});
+    const wave = createWave();
+    wave.elapsed = wave.warningFrames;
+    wave.vx = 0;
+    state.fangGaleWaves.push(wave);
+    state.player.x = wave.x + EXPECTED_WAVE_HIT_W;
+    state.player.y = wave.y;
+    const hpBefore = state.player.hp;
+
+    updateFangGaleEffects();
+
+    expect(state.player.hp).toBe(hpBefore);
+    expect(state.fangGaleWaves).toContain(wave);
+    expect(recordRect).toHaveBeenCalledWith(
+      {
+        x: wave.x,
+        y: wave.y,
+        w: EXPECTED_WAVE_HIT_W,
+        h: EXPECTED_WAVE_HIT_H,
+      },
+      "enemyAttack",
+    );
+  });
+
+  it("keeps warning frames free of active collision debug boxes", () => {
+    resetState();
+    const recordRect = vi.spyOn(collisionDebug, "recordCollisionDebugRect")
+      .mockImplementation(() => {});
+    state.fangGaleWaves.push(createWave());
+
+    updateFangGaleEffects();
+
+    expect(recordRect).not.toHaveBeenCalled();
+  });
+
+  it("hits through the full height of the wind blade core", () => {
+    resetState();
+    const wave = createWave();
+    wave.elapsed = wave.warningFrames;
+    wave.vx = 0;
+    state.fangGaleWaves.push(wave);
+    state.player.x = wave.x;
+    state.player.y = wave.y + WAVE_LOWER_CORE_OFFSET;
+    state.player.h = 12;
+    const hpBefore = state.player.hp;
+
+    updateFangGaleEffects();
+
+    expect(state.player.hp).toBeLessThan(hpBefore);
+    expect(state.fangGaleWaves).not.toContain(wave);
   });
 });
 

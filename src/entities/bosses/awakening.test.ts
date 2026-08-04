@@ -1,7 +1,6 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import {
   DEAD_BELL_CONFIG,
-  FANG_GALE_CONFIG,
   GROUND_Y,
   LANTERN_EMBER_CONFIG,
   MIRROR_DREAM_CONFIG,
@@ -20,6 +19,7 @@ import type { LiveBoss } from "./types";
 
 const DEAD_BELL_DUET_WAVE_COUNT = 3;
 const DEAD_BELL_DUET_BLADE_COUNT = 2;
+const FANG_GALE_STORM_ROLL = 0.8;
 
 describe("boss awakening behavior", () => {
   it("lets debug-style boss spawns force awakened mode without changing the final boss", () => {
@@ -59,14 +59,19 @@ describe("boss awakening behavior", () => {
   });
 
   it("adds Fang Gale's awakened storm chain", () => {
+    const randomSpy = vi.spyOn(Math, "random").mockReturnValue(FANG_GALE_STORM_ROLL);
     const boss = readyBoss(BOSS_ARCHETYPE_IDS.fangGale, true);
     boss.phase = 4;
 
-    updateFangGaleBoss(boss);
-    advanceBoss(updateFangGaleBoss, boss, FANG_GALE_CONFIG.spawnAtFrame + 2);
+    try {
+      updateFangGaleBoss(boss);
 
-    expect(boss.skillMode).toBe("fangGaleStorm");
-    expect(state.fangGaleWaves).toHaveLength(2);
+      expect(boss.skillMode).toBe("fangGaleStorm");
+      expect(boss.actionState).toBe("retreat");
+      expect(state.fangGaleWaves).toHaveLength(0);
+    } finally {
+      randomSpy.mockRestore();
+    }
   });
 
   it("adds Lantern Ember's awakened grid and ash zone", () => {

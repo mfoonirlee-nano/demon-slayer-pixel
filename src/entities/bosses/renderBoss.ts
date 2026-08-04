@@ -12,6 +12,10 @@ import {
   DEAD_BELL_CONFIG,
   FANG_GALE_BITE_SHEET,
   FANG_GALE_CONFIG,
+  FANG_GALE_FINAL_BITE_SHEET,
+  FANG_GALE_RECOVER_SHEET,
+  FANG_GALE_RETREAT_SHEET,
+  FANG_GALE_TURN_SHEET,
   LANTERN_EMBER_CONFIG,
   LANTERN_EMBER_BUFF_CAST_SHEET,
   LANTERN_EMBER_FIRELINE_CAST_SHEET,
@@ -80,10 +84,22 @@ export function resolveBossVisualFrame(
     );
   }
 
+  if (boss.id === BOSS_ARCHETYPE_IDS.fangGale && boss.actionState === "retreat") {
+    const frame = proportionalFrame(
+      FANG_GALE_RETREAT_SHEET.count,
+      boss.actionTimer,
+      FANG_GALE_CONFIG.retreatFrames,
+    );
+    return fangGaleActionVisualFrame(
+      boss,
+      FANG_GALE_RETREAT_SHEET,
+      frame,
+    );
+  }
+
   if (boss.castTimer > 0) {
     const castSheet = bossCastSheet(boss);
     const castDuration = bossCastDuration(boss);
-    const frameDuration = bossCastFrameDuration(boss);
     const pillarCast = boss.id === BOSS_ARCHETYPE_IDS.spiderString
       && boss.skillMode === "spiderStringPillars";
     const drawW = pillarCast
@@ -96,10 +112,12 @@ export function resolveBossVisualFrame(
       ? SPIDER_STRING_PILLAR_CONFIG.castDrawBottomPadding
       : archetype.castBottomPadding;
     const framesSinceCastStart = castDuration - boss.castTimer;
-    const frame = Math.min(
-      castSheet.count - 1,
-      Math.floor(framesSinceCastStart / frameDuration),
-    );
+    const frame = boss.id === BOSS_ARCHETYPE_IDS.fangGale
+      ? proportionalFrame(castSheet.count, framesSinceCastStart, castDuration)
+      : Math.min(
+          castSheet.count - 1,
+          Math.floor(framesSinceCastStart / bossCastFrameDuration(boss)),
+        );
     return visualFrame(
       castSheet,
       frame,
@@ -208,22 +226,39 @@ export function resolveBossVisualFrame(
   }
 
   if (boss.id === BOSS_ARCHETYPE_IDS.fangGale && boss.actionState === "dash") {
+    const dashSheet = boss.skillMode === "fangGaleStorm"
+      && boss.comboStep === FANG_GALE_CONFIG.stormDashCount
+      ? FANG_GALE_FINAL_BITE_SHEET
+      : FANG_GALE_BITE_SHEET;
     const dashDuration = boss.skillMode === "fangGaleStorm"
       ? FANG_GALE_CONFIG.stormDashFrames
       : FANG_GALE_CONFIG.dashFrames;
-    const frameDuration = Math.max(1, Math.ceil(dashDuration / FANG_GALE_BITE_SHEET.count));
-    const frame = Math.min(
-      FANG_GALE_BITE_SHEET.count - 1,
-      Math.floor(Math.min(boss.actionTimer, dashDuration - 1) / frameDuration),
+    const frame = proportionalFrame(
+      dashSheet.count,
+      boss.actionTimer,
+      dashDuration,
     );
-    return visualFrame(
-      FANG_GALE_BITE_SHEET,
+    return fangGaleActionVisualFrame(
+      boss,
+      dashSheet,
       frame,
-      centerX - archetype.castDrawW / 2,
-      feetY - archetype.castDrawH + archetype.castBottomPadding,
-      archetype.castDrawW,
-      archetype.castDrawH,
-      boss.facing,
+    );
+  }
+
+  if (boss.id === BOSS_ARCHETYPE_IDS.fangGale && boss.recoveryTimer > 0) {
+    const recoveryDuration = boss.skillMode === "fangGaleStorm"
+      ? FANG_GALE_CONFIG.stormRecoveryFrames
+      : FANG_GALE_CONFIG.recoveryFrames;
+    const elapsed = recoveryDuration - boss.recoveryTimer;
+    const frame = proportionalFrame(
+      FANG_GALE_RECOVER_SHEET.count,
+      elapsed,
+      recoveryDuration,
+    );
+    return fangGaleActionVisualFrame(
+      boss,
+      FANG_GALE_RECOVER_SHEET,
+      frame,
     );
   }
 
@@ -276,9 +311,38 @@ function visualFrame(
   return { sheet, frame, x, y, w, h, facing };
 }
 
+function fangGaleActionVisualFrame(
+  boss: LiveBoss,
+  sheet: BossVisualFrameState["sheet"],
+  frame: number,
+) {
+  const archetype = bossArchetypeForId(boss.id);
+  const centerX = boss.x + boss.w / 2;
+  const feetY = boss.y + boss.h;
+  return visualFrame(
+    sheet,
+    frame,
+    centerX - archetype.castDrawW / 2,
+    feetY - archetype.castDrawH + archetype.castBottomPadding,
+    archetype.castDrawW,
+    archetype.castDrawH,
+    boss.facing,
+  );
+}
+
+function proportionalFrame(frameCount: number, elapsed: number, duration: number) {
+  return Math.min(
+    frameCount - 1,
+    Math.floor(Math.min(elapsed, duration - 1) * frameCount / duration),
+  );
+}
+
 function bossCastSheet(boss: LiveBoss) {
   const archetype = bossArchetypeForId(boss.id);
   if (boss.id === BOSS_ARCHETYPE_IDS.bloodMoon) return bloodMoonCastSheet(boss);
+  if (boss.id === BOSS_ARCHETYPE_IDS.fangGale && boss.actionState === "windup") {
+    return FANG_GALE_TURN_SHEET;
+  }
   if (boss.id === BOSS_ARCHETYPE_IDS.spiderString && boss.skillMode === "spiderStringCage") {
     return SPIDER_STRING_ULTIMATE_CAST_SHEET;
   }
@@ -310,7 +374,6 @@ function bloodMoonCastSheet(boss: LiveBoss) {
 
 function bossCastFrameDuration(boss: LiveBoss) {
   if (boss.id === BOSS_ARCHETYPE_IDS.deadBell) return DEAD_BELL_CONFIG.castFrameDuration;
-  if (boss.id === BOSS_ARCHETYPE_IDS.fangGale) return FANG_GALE_CONFIG.castFrameDuration;
   if (boss.id === BOSS_ARCHETYPE_IDS.lanternEmber) return LANTERN_EMBER_CONFIG.castFrameDuration;
   if (boss.id === BOSS_ARCHETYPE_IDS.mistBone) return MIST_BONE_CONFIG.castFrameDuration;
   if (boss.id === BOSS_ARCHETYPE_IDS.mirrorDream) return MIRROR_DREAM_CONFIG.castFrameDuration;

@@ -321,6 +321,7 @@ export type BossState = {
   awakened: boolean;
   spawnedAt: number;
   comboStep?: number;
+  fangPatternPhase?: number;
   phaseShiftTimer?: number;
   spiderStringCageUsed?: boolean;
   spiderStringCageCd?: number;
