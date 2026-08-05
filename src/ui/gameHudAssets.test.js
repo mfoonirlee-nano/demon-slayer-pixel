@@ -3,7 +3,11 @@ import { readFileSync } from "node:fs";
 import { URL } from "node:url";
 import { inflateSync } from "node:zlib";
 import { describe, expect, it } from "vitest";
-import { RESIDUAL_SPIRIT_PICKUP_SPRITE, UI_SPRITES } from "../constants";
+import {
+  RESIDUAL_SPIRIT_BEAD_CHARGE_SHEET,
+  RESIDUAL_SPIRIT_PICKUP_SPRITE,
+  UI_SPRITES,
+} from "../constants";
 import { HUD_SKILL_METER_FRAME } from "./gameHudLayout";
 
 const PNG_SIGNATURE = "89504e470d0a1a0a";
@@ -168,6 +172,41 @@ function expectTransparentPngAsset(asset) {
   expect(png.alpha.some((alpha) => alpha > 0)).toBe(true);
 }
 
+function expectTransparentSpriteSheet(asset) {
+  const png = readPngAlpha(asset.src);
+  expect({ width: png.width, height: png.height }).toEqual({
+    width: asset.frameW * asset.columns,
+    height: asset.frameH * asset.rows,
+  });
+
+  for (let row = 0; row < asset.rows; row += 1) {
+    for (let column = 0; column < asset.columns; column += 1) {
+      const visiblePixels = [];
+      for (let y = 0; y < asset.frameH; y += 1) {
+        for (let x = 0; x < asset.frameW; x += 1) {
+          const sourceX = column * asset.frameW + x;
+          const sourceY = row * asset.frameH + y;
+          if (png.alpha[sourceY * png.width + sourceX] > 0) visiblePixels.push({ x, y });
+        }
+      }
+
+      expect(visiblePixels.length).toBeGreaterThan(0);
+      expect(Math.min(...visiblePixels.map(({ x }) => x))).toBeGreaterThanOrEqual(
+        asset.frameGutter,
+      );
+      expect(Math.max(...visiblePixels.map(({ x }) => x))).toBeLessThan(
+        asset.frameW - asset.frameGutter,
+      );
+      expect(Math.min(...visiblePixels.map(({ y }) => y))).toBeGreaterThanOrEqual(
+        asset.frameGutter,
+      );
+      expect(Math.max(...visiblePixels.map(({ y }) => y))).toBeLessThan(
+        asset.frameH - asset.frameGutter,
+      );
+    }
+  }
+}
+
 describe("game HUD sprite geometry", () => {
   it("keeps the skill meter inner slot continuous across the middle/right join", () => {
     const frame = HUD_SKILL_METER_FRAME;
@@ -185,5 +224,7 @@ describe("game HUD sprite geometry", () => {
   it("keeps generated residual-spirit assets on their transparent PNG contracts", () => {
     expectTransparentPngAsset(UI_SPRITES.residualSpiritVesselFrame);
     expectTransparentPngAsset(RESIDUAL_SPIRIT_PICKUP_SPRITE);
+    expectTransparentPngAsset(RESIDUAL_SPIRIT_BEAD_CHARGE_SHEET);
+    expectTransparentSpriteSheet(RESIDUAL_SPIRIT_BEAD_CHARGE_SHEET);
   });
 });

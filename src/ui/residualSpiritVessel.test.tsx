@@ -2,6 +2,7 @@ import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
 import {
   ResidualSpiritVessel,
+  residualSpiritBeadChargeStage,
   residualSpiritBeadFillRatios,
 } from "./residualSpiritVessel";
 
@@ -10,6 +11,14 @@ const PARTIAL_BEAD_VALUE = 15;
 const FOUR_BEADS_VALUE = 40;
 const OVER_CAP_VALUE = 80;
 const BEAD_COUNT = 6;
+const LOW_CHARGE_START = 0.1;
+const LOW_CHARGE_END = 0.3;
+const MEDIUM_CHARGE_START = 0.4;
+const MEDIUM_CHARGE_END = 0.6;
+const HIGH_CHARGE_START = 0.7;
+const HIGH_CHARGE_END = 0.9;
+const FULL_CHARGE_STAGE = 3;
+const CHARGED_BEAD_COUNT = 3;
 
 describe("residual-spirit vessel", () => {
   it("fills six beads in order, with partial spirit preserved", () => {
@@ -23,7 +32,20 @@ describe("residual-spirit vessel", () => {
       .toEqual([1, 1, 1, 1, 1, 1]);
   });
 
-  it("renders the generated frame, six spirit sprites, count, key hint, and channel state", () => {
+  it("maps nonzero partial charge into three readable stages before full", () => {
+    expect([
+      residualSpiritBeadChargeStage(0),
+      residualSpiritBeadChargeStage(LOW_CHARGE_START),
+      residualSpiritBeadChargeStage(LOW_CHARGE_END),
+      residualSpiritBeadChargeStage(MEDIUM_CHARGE_START),
+      residualSpiritBeadChargeStage(MEDIUM_CHARGE_END),
+      residualSpiritBeadChargeStage(HIGH_CHARGE_START),
+      residualSpiritBeadChargeStage(HIGH_CHARGE_END),
+      residualSpiritBeadChargeStage(1),
+    ]).toEqual([null, 0, 0, 1, 1, 2, 2, FULL_CHARGE_STAGE]);
+  });
+
+  it("renders animated charge pearls with a clear partial marker", () => {
     const markup = renderToStaticMarkup(
       <ResidualSpiritVessel
         value={25}
@@ -35,9 +57,15 @@ describe("residual-spirit vessel", () => {
     );
 
     expect(markup).toContain("residual-spirit-vessel-frame.png");
-    expect(markup.match(/<img[^>]*residual-spirit\.png/g)).toHaveLength(BEAD_COUNT);
-    expect(markup.match(/residual-spirit-bead-soul/g)).toHaveLength(BEAD_COUNT);
-    expect(markup).toContain("--residual-spirit-delay:-700ms");
+    expect(markup).toContain("residual-spirit-bead-charge-sheet.png");
+    expect(markup).not.toContain("sprites/pickups/residual-spirit.png");
+    expect(markup.match(/class="residual-spirit-bead(?: |")/g)).toHaveLength(BEAD_COUNT);
+    expect(markup.match(/residual-spirit-bead--full/g)).toHaveLength(2);
+    expect(markup.match(/residual-spirit-bead--partial/g)).toHaveLength(1);
+    expect(markup.match(/residual-spirit-bead-soul/g)).toHaveLength(CHARGED_BEAD_COUNT);
+    expect(markup.match(/residual-spirit-bead-charge-marker/g)).toHaveLength(1);
+    expect(markup).toContain('data-charge-stage="1"');
+    expect(markup).toContain("--residual-spirit-charge-level:50%");
     expect(markup).toContain("25/60");
     expect(markup).toContain(">H</kbd>");
     expect(markup).toContain("residual-spirit-vessel--healing");

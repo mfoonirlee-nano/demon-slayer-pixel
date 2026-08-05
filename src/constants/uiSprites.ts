@@ -1,3 +1,18 @@
+export const RESIDUAL_SPIRIT_BEAD_CHARGE_SHEET = {
+  src: "assets/sprites/ui/system/hud/residual-spirit-bead-charge-sheet.png",
+  w: 96,
+  h: 96,
+  frameW: 24,
+  frameH: 24,
+  columns: 4,
+  rows: 4,
+  frameGutter: 3,
+  displayFrameW: 8,
+  displayFrameH: 8,
+  frameDurationMs: 200,
+  healingFrameDurationMs: 100,
+} as const;
+
 export const UI_SPRITES = {
   ultimateFrame: { src: "assets/sprites/ui/system/hud/ultimate-frame.png", w: 216, h: 216, displayW: 72, displayH: 72 },
   currentSkillFrame: { src: "assets/sprites/ui/system/hud/current-skill-frame.png", w: 108, h: 108, displayW: 36, displayH: 36 },

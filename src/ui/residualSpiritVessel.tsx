@@ -1,15 +1,20 @@
 import type { CSSProperties } from "react";
 import { resolveStaticAssetUrl } from "../assets/staticAssetUrl";
-import { RESIDUAL_SPIRIT_PICKUP_SPRITE } from "../constants";
+import { RESIDUAL_SPIRIT_BEAD_CHARGE_SHEET } from "../constants";
 import type { Language } from "../i18n/language";
 import { UiSprite, uiSpriteDisplaySize } from "./uiSprite";
 
 const RESIDUAL_SPIRIT_BEAD_COUNT = 6;
-const RESIDUAL_SPIRIT_PHASE_STEP_MS = 140;
 const FULL_CIRCLE_DEGREES = 360;
 const PERCENT_SCALE = 100;
-const RESIDUAL_SPIRIT_PICKUP_SRC = resolveStaticAssetUrl(
-  RESIDUAL_SPIRIT_PICKUP_SPRITE.src,
+const LAST_CHARGE_STAGE = RESIDUAL_SPIRIT_BEAD_CHARGE_SHEET.rows - 1;
+const LAST_PARTIAL_CHARGE_STAGE = LAST_CHARGE_STAGE - 1;
+const RESIDUAL_SPIRIT_BEAD_CYCLE_MS = RESIDUAL_SPIRIT_BEAD_CHARGE_SHEET.columns
+  * RESIDUAL_SPIRIT_BEAD_CHARGE_SHEET.frameDurationMs;
+const RESIDUAL_SPIRIT_BEAD_HEALING_CYCLE_MS = RESIDUAL_SPIRIT_BEAD_CHARGE_SHEET.columns
+  * RESIDUAL_SPIRIT_BEAD_CHARGE_SHEET.healingFrameDurationMs;
+const RESIDUAL_SPIRIT_BEAD_SHEET_SRC = resolveStaticAssetUrl(
+  RESIDUAL_SPIRIT_BEAD_CHARGE_SHEET.src,
 );
 
 function clamp(value: number, min: number, max: number) {
@@ -25,6 +30,15 @@ export function residualSpiritBeadFillRatios(value: number, max: number) {
   return Array.from(
     { length: RESIDUAL_SPIRIT_BEAD_COUNT },
     (_, index) => clamp(filledBeads - index, 0, 1),
+  );
+}
+
+export function residualSpiritBeadChargeStage(ratio: number) {
+  if (!Number.isFinite(ratio) || ratio <= 0) return null;
+  if (ratio >= 1) return LAST_CHARGE_STAGE;
+  return Math.min(
+    LAST_PARTIAL_CHARGE_STAGE,
+    Math.floor(ratio * LAST_CHARGE_STAGE),
   );
 }
 
@@ -102,30 +116,67 @@ export function ResidualSpiritVessel({
         width: frameSize.w,
         height: frameSize.h,
         "--residual-spirit-heal-angle": `${healProgress * FULL_CIRCLE_DEGREES}deg`,
+        "--residual-spirit-bead-sheet": `url("${RESIDUAL_SPIRIT_BEAD_SHEET_SRC}")`,
+        "--residual-spirit-bead-sheet-width": `${
+          RESIDUAL_SPIRIT_BEAD_CHARGE_SHEET.columns
+            * RESIDUAL_SPIRIT_BEAD_CHARGE_SHEET.displayFrameW
+        }px`,
+        "--residual-spirit-bead-sheet-height": `${
+          RESIDUAL_SPIRIT_BEAD_CHARGE_SHEET.rows
+            * RESIDUAL_SPIRIT_BEAD_CHARGE_SHEET.displayFrameH
+        }px`,
+        "--residual-spirit-bead-frame-width": `${
+          RESIDUAL_SPIRIT_BEAD_CHARGE_SHEET.displayFrameW
+        }px`,
+        "--residual-spirit-bead-frame-height": `${
+          RESIDUAL_SPIRIT_BEAD_CHARGE_SHEET.displayFrameH
+        }px`,
+        "--residual-spirit-bead-cycle": `${RESIDUAL_SPIRIT_BEAD_CYCLE_MS}ms`,
+        "--residual-spirit-bead-healing-cycle": `${RESIDUAL_SPIRIT_BEAD_HEALING_CYCLE_MS}ms`,
         ...style,
       } as CSSProperties}
     >
       <span className="residual-spirit-channel-seal" aria-hidden="true" />
       <span className="residual-spirit-beads" aria-hidden="true">
-        {fillRatios.map((ratio, index) => (
-          <span className="residual-spirit-bead" key={index}>
+        {fillRatios.map((ratio, index) => {
+          const chargeStage = residualSpiritBeadChargeStage(ratio);
+          const chargeState = ratio >= 1 ? "full" : ratio > 0 ? "partial" : "empty";
+          const animationDelay = -Math.round(
+            index * RESIDUAL_SPIRIT_BEAD_CYCLE_MS / RESIDUAL_SPIRIT_BEAD_COUNT,
+          );
+
+          return (
             <span
-              className="residual-spirit-bead-fill"
+              className={`residual-spirit-bead residual-spirit-bead--${chargeState}`}
               data-fill={ratio}
-              style={{ height: `${ratio * PERCENT_SCALE}%` }}
+              key={index}
             >
-              <img
-                className="residual-spirit-bead-soul"
-                src={RESIDUAL_SPIRIT_PICKUP_SRC}
-                alt=""
-                draggable={false}
-                style={{
-                  "--residual-spirit-delay": `${-index * RESIDUAL_SPIRIT_PHASE_STEP_MS}ms`,
-                } as CSSProperties}
-              />
+              {chargeStage === null ? null : (
+                <span className="residual-spirit-bead-charge">
+                  <span
+                    className="residual-spirit-bead-soul"
+                    data-animation-phase={index}
+                    data-charge-stage={chargeStage}
+                    style={{
+                      "--residual-spirit-delay": `${animationDelay}ms`,
+                      "--residual-spirit-charge-stage-y": `${
+                        chargeStage / LAST_CHARGE_STAGE * PERCENT_SCALE
+                      }%`,
+                    } as CSSProperties}
+                  />
+                </span>
+              )}
+              {chargeState === "partial" ? (
+                <span
+                  className="residual-spirit-bead-charge-marker"
+                  style={{
+                    "--residual-spirit-charge-level": `${ratio * PERCENT_SCALE}%`,
+                  } as CSSProperties}
+                />
+              ) : null}
             </span>
-          </span>
-        ))}
+          );
+        })}
       </span>
       <UiSprite
         id="residualSpiritVesselFrame"

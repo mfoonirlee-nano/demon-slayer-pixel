@@ -62,6 +62,7 @@
   height: 6px;
   overflow: hidden;
   border-radius: 50%;
+  background: rgba(2, 8, 24, 0.82);
 }
 
 .residual-spirit-bead:nth-child(1) {
@@ -94,62 +95,82 @@
   left: 50px;
 }
 
-.residual-spirit-bead-fill {
+.residual-spirit-bead--partial {
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 239, 166, 0.72),
+    0 0 3px rgba(112, 225, 255, 0.75);
+}
+
+.residual-spirit-bead-charge {
   position: absolute;
-  right: 0;
-  bottom: 0;
-  left: 0;
+  inset: 0;
   overflow: hidden;
-  background: rgba(128, 238, 255, 0.5);
-  box-shadow: 0 0 4px rgba(120, 235, 255, 0.92);
-  transition: height 120ms steps(3, end);
 }
 
 .residual-spirit-bead-soul {
   position: absolute;
   bottom: -1px;
   left: -1px;
-  width: 8px;
-  height: 8px;
-  object-fit: contain;
+  width: var(--residual-spirit-bead-frame-width);
+  height: var(--residual-spirit-bead-frame-height);
+  background-image: var(--residual-spirit-bead-sheet);
+  background-repeat: no-repeat;
+  background-position: 0 var(--residual-spirit-charge-stage-y);
+  background-size:
+    var(--residual-spirit-bead-sheet-width)
+    var(--residual-spirit-bead-sheet-height);
   image-rendering: pixelated;
   image-rendering: crisp-edges;
-  transform-origin: 50% 75%;
-  animation:
-    residual-spirit-wisp-drift 840ms steps(4, end) var(--residual-spirit-delay) infinite,
-    residual-spirit-wisp-flicker 560ms steps(2, end) var(--residual-spirit-delay) infinite alternate;
-  will-change: transform, opacity;
+  animation: residual-spirit-bead-play var(--residual-spirit-bead-cycle) step-end
+    var(--residual-spirit-delay) infinite;
+  will-change: background-position;
 }
 
 .residual-spirit-vessel--healing .residual-spirit-bead-soul {
-  animation-duration: 420ms, 280ms;
+  animation-duration: var(--residual-spirit-bead-healing-cycle);
 }
 
-@keyframes residual-spirit-wisp-drift {
+@keyframes residual-spirit-bead-play {
   0%,
+  24.99% {
+    background-position-x: 0;
+  }
+
+  25%,
+  49.99% {
+    background-position-x: 33.333333%;
+  }
+
+  50%,
+  74.99% {
+    background-position-x: 66.666667%;
+  }
+
+  75%,
   100% {
-    transform: translate(0, 0);
-  }
-
-  25% {
-    transform: translate(1px, -1px);
-  }
-
-  50% {
-    transform: translate(0, -2px);
-  }
-
-  75% {
-    transform: translate(-1px, -1px);
+    background-position-x: 100%;
   }
 }
 
-@keyframes residual-spirit-wisp-flicker {
-  0% {
-    opacity: 0.72;
+.residual-spirit-bead-charge-marker {
+  position: absolute;
+  z-index: 2;
+  right: 1px;
+  bottom: calc(var(--residual-spirit-charge-level) - 1px);
+  left: 1px;
+  height: 1px;
+  background: #fff0a6;
+  box-shadow: 0 0 2px #a9f4ff;
+  animation: residual-spirit-charge-marker-pulse 480ms steps(2, end) infinite alternate;
+  transition: bottom 120ms steps(3, end);
+}
+
+@keyframes residual-spirit-charge-marker-pulse {
+  from {
+    opacity: 0.68;
   }
 
-  100% {
+  to {
     opacity: 1;
   }
 }
@@ -224,12 +245,13 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .residual-spirit-bead-fill {
-    transition: none;
-  }
-
   .residual-spirit-bead-soul {
     animation: none;
+  }
+
+  .residual-spirit-bead-charge-marker {
+    animation: none;
+    transition: none;
   }
 }
 
