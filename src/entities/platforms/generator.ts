@@ -16,7 +16,6 @@ import type {
 } from "../../types/game-state";
 import { platformSpeedForRun, segmentWeightsForAct, type SegmentKind } from "./actTuning";
 import { selectPlatformSpriteForAct, type PlatformSpriteKind } from "./actPlatformSprites";
-import { spawnChestOnPlatform, spawnCrystalOnPlatform } from "./collectibles";
 import {
   clamp,
   farReachableLayer,
@@ -34,7 +33,6 @@ const FULL_CIRCLE_RADIANS = Math.PI * 2;
 const SAME_LAYER_LONG_STREAK_WEIGHT = 0.08;
 const SAME_LAYER_SHORT_STREAK_WEIGHT = 0.22;
 const WIDE_PLATFORM_MIN_WIDTH = 190;
-const RISKY_CRYSTAL_CHANCE_BONUS = 0.18;
 const HIGH_RISE_THRESHOLD = 58;
 const MEDIUM_RISE_THRESHOLD = 24;
 const FALL_THRESHOLD = 36;
@@ -58,7 +56,6 @@ type SegmentSpawnResult = {
 let lastLayer: PlatformLayer = "low";
 let sameLayerStreak = 0;
 let tension = 0;
-let rewardDebt = 0;
 let lowLayerDrought = 0;
 let recentKinds: SegmentKind[] = [];
 
@@ -66,7 +63,6 @@ export function resetMapGenerator() {
   lastLayer = "low";
   sameLayerStreak = 0;
   tension = 0;
-  rewardDebt = 0;
   lowLayerDrought = 0;
   recentKinds = [];
 }
@@ -208,30 +204,6 @@ function placePlatform(platform: PlatformState): PlatformState {
   return platform;
 }
 
-function consumeChestSlot(platform: PlatformState): boolean {
-  if (rewardDebt >= MAP_GENERATION_CONFIG.reward.chestDebtThreshold) {
-    spawnChestOnPlatform(platform);
-    rewardDebt = 0;
-    return true;
-  }
-  return false;
-}
-
-function maybeSpawnReward(platform: PlatformState, risky: boolean) {
-  if (consumeChestSlot(platform)) return;
-
-  const chance = risky
-    ? PLATFORM_CONFIG.crystalSpawnChance + RISKY_CRYSTAL_CHANCE_BONUS
-    : PLATFORM_CONFIG.crystalSpawnChance;
-  if (
-    rewardDebt >= MAP_GENERATION_CONFIG.reward.crystalDebtThreshold
-    || Math.random() < chance
-  ) {
-    spawnCrystalOnPlatform(platform);
-    rewardDebt = Math.max(0, rewardDebt - MAP_GENERATION_CONFIG.reward.crystalDebtThreshold);
-  }
-}
-
 // --- Segment generator ---
 
 function firstPlatformX(): number {
@@ -314,7 +286,7 @@ function pickSegmentKind(): SegmentKind {
     weights.safeBridge *= 2.4;
     weights.gapJump *= 0.28;
     weights.hoverPair *= 0.25;
-    weights.rewardRisk *= 0.3;
+    weights.riskFork *= 0.3;
   }
 
   for (const kind of recentKinds) {
@@ -329,7 +301,7 @@ function pickSegmentKind(): SegmentKind {
     weights.zigzag *= 0.45;
     weights.gapJump *= 0.45;
     weights.hoverPair *= 0.25;
-    weights.rewardRisk *= 0.35;
+    weights.riskFork *= 0.35;
   }
 
   return weightedPick(weights);
@@ -375,7 +347,6 @@ function spawnLowRecoverySegment(): SegmentSpawnResult {
 
   const lastPlatform = platforms[platforms.length - 1];
   rememberLastPlatform(lastPlatform);
-  maybeSpawnReward(lastPlatform, false);
   return { kind: "stairDown", difficulty: "medium", platforms };
 }
 
@@ -413,7 +384,6 @@ function spawnBreatherSegment(): SegmentSpawnResult {
   const y = layerY(spawnLayer);
   const platform = placePlatform(makePlatform(firstPlatformX(), y, platformWidth("wide"), platformVx(), false, false, "wide"));
   rememberLastPlatform(platform);
-  maybeSpawnReward(platform, false);
   return { kind: "breather", difficulty: "easy", platforms: [platform] };
 }
 
@@ -438,7 +408,6 @@ function spawnStairSegment(kind: "stairUp" | "stairDown"): SegmentSpawnResult {
 
   const lastPlatform = platforms[platforms.length - 1];
   rememberLastPlatform(lastPlatform);
-  maybeSpawnReward(lastPlatform, kind === "stairUp");
   return { kind, difficulty: kind === "stairUp" ? "medium" : "easy", platforms };
 }
 
@@ -459,7 +428,6 @@ function spawnZigzagSegment(): SegmentSpawnResult {
   }
 
   rememberLastPlatform(platforms[platforms.length - 1]);
-  maybeSpawnReward(platforms[1], true);
   return { kind: "zigzag", difficulty: "hard", platforms };
 }
 
@@ -483,12 +451,10 @@ function spawnHoverPairSegment(): SegmentSpawnResult {
   }
 
   rememberLastPlatform(platforms[platforms.length - 1]);
-  maybeSpawnReward(platforms[platforms.length - 1], true);
   return { kind: "hoverPair", difficulty: "hard", platforms };
 }
 
-function spawnRewardRiskSegment(): SegmentSpawnResult {
-  rewardDebt += MAP_GENERATION_CONFIG.reward.riskyBonusDebt;
+function spawnRiskForkSegment(): SegmentSpawnResult {
   const vx = platformVx();
   const platforms: PlatformState[] = [];
   const safeY = layerY(pickVariedLayer(lastLayer));
@@ -500,7 +466,7 @@ function spawnRewardRiskSegment(): SegmentSpawnResult {
     MAP_GENERATION_CONFIG.segment.riskGapMin,
     MAP_GENERATION_CONFIG.segment.riskGapMax,
   );
-  const risky = addPlatform(
+  addPlatform(
     platforms,
     safe.x + safe.w + gap,
     riskyY,
@@ -511,8 +477,7 @@ function spawnRewardRiskSegment(): SegmentSpawnResult {
   );
 
   rememberLastPlatform(safe);
-  maybeSpawnReward(risky, true);
-  return { kind: "rewardRisk", difficulty: "hard", platforms };
+  return { kind: "riskFork", difficulty: "hard", platforms };
 }
 
 function spawnSegmentKind(kind: SegmentKind): SegmentSpawnResult {
@@ -522,7 +487,7 @@ function spawnSegmentKind(kind: SegmentKind): SegmentSpawnResult {
   if (kind === "zigzag") return spawnZigzagSegment();
   if (kind === "gapJump") return spawnChainCluster();
   if (kind === "hoverPair") return spawnHoverPairSegment();
-  return spawnRewardRiskSegment();
+  return spawnRiskForkSegment();
 }
 
 function spawnPatternSegment(): SegmentSpawnResult {
@@ -542,8 +507,6 @@ function spawnNormalPlatform(): SegmentSpawnResult {
   const vx = platformVx();
   const platform = placePlatform(makePlatform(firstPlatformX(), y, w, vx, isHover, false));
   rememberLastPlatform(platform);
-
-  maybeSpawnReward(platform, isHover || nextLayer === "high" || nextLayer === "top");
 
   return {
     kind: "safeBridge",
@@ -566,10 +529,6 @@ function spawnChainCluster(): SegmentSpawnResult {
     const platform = placePlatform(makePlatform(x, y, w, vx, false, true));
     platforms.push(platform);
 
-    if (i === count - 1) {
-      maybeSpawnReward(platform, true);
-    }
-
     const step = nextReachableStep(y, direction, true);
     x = platform.x + platform.w + step.gap;
     y = step.y;
@@ -582,15 +541,11 @@ function spawnChainCluster(): SegmentSpawnResult {
 
 // Public API called by runtime.ts instead of spawnPlatform()
 export function spawnNextMapSegment() {
-  rewardDebt += MAP_GENERATION_CONFIG.reward.debtPerSegment;
-
   const result = spawnPatternSegment();
   applySegmentAftermath(result);
 }
 
 export function spawnMapSegmentOfKind(kind: SegmentKind) {
-  rewardDebt += MAP_GENERATION_CONFIG.reward.debtPerSegment;
-
   const result = spawnSegmentKind(kind);
   applySegmentAftermath(result);
 }

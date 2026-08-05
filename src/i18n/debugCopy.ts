@@ -48,7 +48,7 @@ const DEBUG_PLATFORM_LABELS: Record<Language, Record<SegmentKind, string>> = {
     zigzag: "折线路",
     gapJump: "间隙跳台",
     hoverPair: "浮台组",
-    rewardRisk: "风险奖励",
+    riskFork: "风险岔路",
   },
   en: {
     safeBridge: "Safe Bridge",
@@ -58,7 +58,7 @@ const DEBUG_PLATFORM_LABELS: Record<Language, Record<SegmentKind, string>> = {
     zigzag: "Zigzag",
     gapJump: "Gap Jump",
     hoverPair: "Hover Pair",
-    rewardRisk: "Risk Reward",
+    riskFork: "Risk Fork",
   },
 };
 

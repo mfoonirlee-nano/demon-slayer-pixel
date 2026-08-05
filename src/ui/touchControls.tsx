@@ -19,6 +19,7 @@ export function TouchControls() {
         <button className={`touch-btn attack-btn flex h-[56px] w-[56px] items-center justify-center rounded-full border-2 border-[rgba(116,236,255,0.95)] bg-[rgba(16,31,56,0.58)] ${actionTextClass} text-[#e8f6ff] shadow-[0_1px_0_rgba(0,0,0,0.25)]`} data-key="j" aria-label={message(language, "touch.attack")}>{message(language, "touch.attackShort")}</button>
         <button className={`touch-btn skill-btn flex h-[56px] w-[56px] items-center justify-center rounded-full border-2 border-[rgba(118,255,228,0.95)] bg-[rgba(16,31,56,0.58)] ${actionTextClass} text-[#e8f6ff] shadow-[0_1px_0_rgba(0,0,0,0.25)]`} data-key="k" aria-label={message(language, "touch.skill")}>{message(language, "touch.skillShort")}</button>
         <button className={`touch-btn ultimate-btn flex h-[56px] w-[56px] items-center justify-center rounded-full border-2 border-[rgba(255,212,112,0.95)] bg-[rgba(56,24,16,0.58)] ${actionTextClass} text-[#fff1c7] shadow-[0_1px_0_rgba(0,0,0,0.25)]`} data-key="l" aria-label={message(language, "touch.ultimate")}>{message(language, "touch.ultimateShort")}</button>
+        <button className={`touch-btn heal-btn col-start-2 flex h-[50px] w-[50px] items-center justify-center rounded-full border-2 border-[rgba(143,234,255,0.9)] bg-[rgba(20,35,62,0.64)] ${actionTextClass} text-[#d8f8ff] shadow-[0_1px_0_rgba(0,0,0,0.25)]`} data-key="h" aria-label={message(language, "touch.heal")}>{message(language, "touch.healShort")}</button>
       </div>
     </div>
   );

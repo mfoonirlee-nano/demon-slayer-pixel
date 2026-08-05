@@ -47,11 +47,12 @@
 | `state.spawnTimer` | 普通敌人刷怪计时器 |
 | `state.bossSpawnTimer` | Boss 出场或重生计时器 |
 | `state.platformSpawnTimer` | 下一个地图片段生成计时器 |
-| `state.crystals` / `state.chests` | 当前奖励物列表 |
+| `state.residualSpirits` | 敌人死亡后尚未拾取的残灵列表 |
 
 React HUD 通过 `getStateSnapshot()` 暴露：
 
 - 玩家生命、分数、基础攻击、攻击加成、总攻击。
+- 当前残灵储量、储存上限、引灵剩余时间和完整引灵时长。
 - 技能能量、技能格数、当前技能索引。
 - 大招能量、是否就绪。
 - Boss 当前生命、最大生命、阶段。
@@ -60,6 +61,7 @@ React HUD 通过 `getStateSnapshot()` 暴露：
 
 - `src/constants/world.ts`
 - `src/constants/runtime.ts`
+- `src/constants/residualSpirit.ts`
 - `src/types/game-state.ts`
 - `src/state.ts`
 - `src/runtime.ts`

@@ -12,6 +12,7 @@ import { DeathScreen } from "./deathScreen";
 import { PauseScreen } from "./pauseScreen";
 import { RewardOverlay } from "./rewardOverlay";
 import { PlayerStatusBar } from "./playerStatusBar";
+import { ResidualSpiritVessel } from "./residualSpiritVessel";
 import { VictoryScreen } from "./victoryScreen";
 import { getSkill, romanLevel, skillIconSrc } from "./uiDisplay";
 import { UiSprite, uiSpriteDisplaySize } from "./uiSprite";
@@ -22,6 +23,8 @@ import {
   HUD_HP_METER_PLACEMENT,
   HUD_SKILL_METER_FRAME,
   HUD_SKILL_METER_PLACEMENT,
+  HUD_RESIDUAL_SPIRIT_LEFT,
+  HUD_RESIDUAL_SPIRIT_TOP,
   HUD_ULTIMATE_FRAME_TOP,
   type HudMeterFrame,
   type HudMeterPlacement,
@@ -320,6 +323,17 @@ export function GameHud() {
                 <span>--</span>
               )}
             </UiSprite>
+            <ResidualSpiritVessel
+              value={player.residualSpirit}
+              max={player.residualSpiritMax}
+              healTimer={player.residualSpiritHealTimer}
+              healDuration={player.residualSpiritHealDuration}
+              language={language}
+              style={{
+                left: HUD_RESIDUAL_SPIRIT_LEFT,
+                top: HUD_RESIDUAL_SPIRIT_TOP,
+              }}
+            />
           </div>
           <div className="player-hud-bars">
             <HudMeter
@@ -355,6 +369,16 @@ export function GameHud() {
           />
         </div>
       </div>
+
+      <ResidualSpiritVessel
+        value={player.residualSpirit}
+        max={player.residualSpiritMax}
+        healTimer={player.residualSpiritHealTimer}
+        healDuration={player.residualSpiritHealDuration}
+        language={language}
+        compact
+        className="pointer-events-none absolute left-2 top-2 z-10 md:hidden"
+      />
 
       {boss ? (
         <div

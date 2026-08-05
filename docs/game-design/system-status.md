@@ -30,14 +30,14 @@
 | 蚀醒形态 Boss | 未实现 | 第 7-12 幕同序蚀醒：基础 Boss + 一招蚀醒妖术 + 多一阶段 + 强化召唤，复用基础精灵 | 目标设计，未实现 | P4 | `docs/numeric-system/boss-archetypes.md` |
 | 终幕万相血月 | `bossKills >= 12` 后出场；5 阶段换相借招、专属施法/特效和击败后停止 Boss 重生已接入 | 第 13 幕击败出胜利结算，不进任何轮换池；死亡动画状态机和通关后进阶待接 | 部分实现 | P4 | `docs/art/bosses/blood-moon-many-faces.md` |
 | 通关后进阶难度 | 未实现 | 血月试炼可叠加难度层（横向解锁，不给局外永久战力） | 目标设计，未实现 | P5 | `docs/numeric-system/endgame-ascension.md` |
-| 地图生成 | 片段式平台生成、张力、奖励预算、低层恢复和防重叠已实现 | 按幕数调整片段权重和平台速度，保留喘息片段 | 部分实现 | P2 | `src/entities/platform.ts`、`docs/map-generation.md` |
-| 奖励拾取 | 分数、技能能量、大招能量、XP、攻击/治疗水晶、宝箱和 Boss 装备三选一已实现 | 继续按试玩数据校准奖励密度，保持装备与升级覆盖层依次展示 | 已实现 | P2 | `src/entities/platform.ts`、`src/entities/enemies/defeat.ts`、`docs/numeric-system/rewards.md` |
+| 地图生成 | 片段式平台生成、张力、低层恢复和防重叠已实现；地图不再维护奖励预算 | 按幕数调整片段权重和平台速度，保留喘息片段 | 部分实现 | P2 | `src/entities/platform.ts`、`docs/map-generation.md` |
+| 奖励拾取 | 分数、技能能量、大招能量、XP、敌人残灵掉落/储存/主动治疗和 Boss 装备三选一已实现；收集残灵不直接回血 | 按试玩数据校准残灵供给与引灵决策压力，保持装备与升级覆盖层依次展示 | 已实现 | P2 | `src/entities/residualSpirit.ts`、`src/entities/enemies/defeat.ts`、`docs/numeric-system/rewards.md` |
 | 经验升级 | 单局 XP、角色等级、普通技能/大招成长、升级三选一和奖励暂停已实现；正常每幕普通战斗 +1 级、Boss +1 级 | 继续用实际试玩数据校准清怪时点和候选池体验 | 已实现 | P2 | `src/systems/progression.ts`、`docs/numeric-system/progression.md` |
 | 装备系统 | 18 件普通品质装备、Boss 三选一、`blade/garb/talisman` 三槽位、暂停页换装和集中属性派生已接入 | 按 `actBand` 接入精良/觉醒品质与更完整的掉落权重 | 部分实现 | P2 | `docs/numeric-system/equipment.md` |
-| HUD | 生命、技能图标/能量、大招球、Boss 血条、等级/XP/幕数和限时或常驻被动状态图标条已实现；回涡二段跳使用技能图标显示 | 补选择队列状态并继续校准移动端信息密度 | 部分实现 | P2 | `src/ui/gameHud.tsx`、`src/game/gameStore.ts`、`src/systems/playerStatuses.ts` |
+| HUD | 生命、技能图标/能量、大招球、六珠灵龛残灵储量/引灵进度、Boss 血条、等级/XP/幕数和限时或常驻被动状态图标条已实现；回涡二段跳使用技能图标显示 | 补选择队列状态并继续校准移动端信息密度 | 部分实现 | P2 | `src/ui/gameHud.tsx`、`src/game/gameStore.ts`、`src/systems/playerStatuses.ts` |
 | Pause overlay | 暂停面板、技能说明、关键数值已实现 | 统一 overlay 规范、输入规则和移动端布局 | 部分实现 | P3 | `src/App.tsx` |
 | Death overlay | 死亡动画、生存时间、`R` 重开已实现 | 增加主要死亡原因和简短复盘提示 | 部分实现 | P3 | `src/App.tsx` |
-| 移动端触控 | 移动、跳跃、攻击、技能、大招、暂停按钮已实现 | 增加选择 overlay 的触屏输入规范 | 部分实现 | P3 | `src/App.tsx`、`src/input.ts` |
+| 移动端触控 | 移动、跳跃、攻击、技能、大招、引灵治疗和暂停按钮已实现 | 增加选择 overlay 的触屏输入规范 | 部分实现 | P3 | `src/App.tsx`、`src/input.ts` |
 | 音效 | 1 个 Boss 击败 WAV、23 个敌人 WAV 与 29 个玩家 WAV 已接入；Web Audio tone 作为回退，主音量/音效音量已接入 | 继续补其他 Boss 采样、BGM 和 Boss 音乐 | 部分实现 | P4 | `src/game/audio.ts`、`src/game/audioSamples.ts`、`docs/music-direction.md` |
 | 美术素材 | 玩家、技能、多个敌人、当前 Boss、地图、UI 素材已接入 | 未实现敌人和 Boss 继续按 art brief 制作，禁止临时图形占位 | 部分实现 | P3 | `assets/sprites/`、`docs/art/README.md`、`docs/SPRITES.md` |
 | 平衡验收 | 当前主要靠人工试玩和文档公式 | 建立首 Boss 时间、升级频率、死亡原因、Boss 击杀率等验收指标 | 目标设计，未实现 | P0 | [balance-acceptance.md](balance-acceptance.md) |

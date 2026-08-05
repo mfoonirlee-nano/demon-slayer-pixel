@@ -28,6 +28,23 @@ describe("jump input", () => {
   });
 });
 
+describe("residual-spirit healing input", () => {
+  it("requires a release before another heal press", () => {
+    const onHeal = vi.fn();
+    setupInput({ onHeal });
+
+    window.dispatchEvent(new KeyboardEvent("keydown", { key: "h" }));
+    window.dispatchEvent(new KeyboardEvent("keydown", { key: "h", repeat: true }));
+
+    expect(onHeal).toHaveBeenCalledTimes(1);
+
+    window.dispatchEvent(new KeyboardEvent("keyup", { key: "h" }));
+    window.dispatchEvent(new KeyboardEvent("keydown", { key: "h" }));
+
+    expect(onHeal).toHaveBeenCalledTimes(2);
+  });
+});
+
 describe("debug input", () => {
   it("delegates Meta+D once per physical press without treating it as gameplay input", () => {
     const onToggleCollisionDebug = vi.fn();

@@ -9,3 +9,4 @@ export * from "./assetCatalog/scenery";
 export * from "./assetCatalog/actLandmarks";
 export * from "./assetCatalog/actPlatforms";
 export * from "./assetCatalog/actOccluders";
+export * from "./assetCatalog/pickups";

@@ -1,13 +1,11 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import {
   BASIC_ATTACK,
-  CHEST_CONFIG,
   CLOSE_ARC_BASIC_CRESCENT_CONFIG,
-  CRYSTAL_CONFIG,
-  CRYSTAL_TYPES_BY_KIND,
   FALL_ATTACK,
   GROUND_Y,
   LINE_PROJECTILE_EFFECT_CONFIG,
+  RESIDUAL_SPIRIT_CONFIG,
   SKILL_IDS,
 } from "../constants";
 import {
@@ -15,7 +13,6 @@ import {
   CORE_PLAYER_SKILL_EFFECT_SHEETS,
   lineProjectileEffectSheetForLevel,
 } from "../systems/skillCatalog";
-import type { PlatformState } from "../types/game-state";
 import {
   updateCloseArcBasicCrescentEffects,
   updateCloseArcEffects,
@@ -31,7 +28,7 @@ import {
   damageDashRepositionTravel,
 } from "../entities/particles/playerSkillSpawn";
 import { updatePlayerSkillEffects } from "../entities/particles/playerSkillRuntime";
-import { updateChests, updateCrystals } from "../entities/platforms/collectibles";
+import { updateResidualSpirits } from "../entities/residualSpirit";
 import { attackBox, triggerAttack, updatePlayer } from "../entities/player";
 import { keys } from "./input";
 import { resetState, state } from "./state";
@@ -51,8 +48,8 @@ const GENERIC_EFFECT_PREVIOUS_X = 100;
 const GENERIC_EFFECT_PREVIOUS_Y = 200;
 const LINE_EFFECT_START_X = 200;
 const CLOSE_ARC_EFFECT_START_X = 300;
-const CRYSTAL_OFFSET_X = 40;
-const CHEST_OFFSET_X = 100;
+const RESIDUAL_SPIRIT_X = 340;
+const RESIDUAL_SPIRIT_Y = 180;
 const DASH_TRAVEL_X = 24;
 const DASH_TRAVEL_Y = 6;
 
@@ -299,53 +296,23 @@ describe("collision debug hooks", () => {
     ]);
   });
 
-  it("records crystal and chest pickup rectangles", () => {
-    const platform = {
-      x: 300,
-      y: 400,
-      baseY: 400,
-      w: 180,
-      h: 20,
-      vx: 0,
+  it("records residual-spirit pickup rectangles", () => {
+    state.residualSpirits.push({
+      x: RESIDUAL_SPIRIT_X,
+      y: RESIDUAL_SPIRIT_Y,
+      amount: 3,
       phase: 0,
-      style: "stone",
-      kind: "normal",
-      spriteIndex: 0,
-      spriteAct: null,
-      trim: 0,
-      notch: 0,
-      hoverAmplitude: 0,
-    } satisfies PlatformState;
-    state.platforms.push(platform);
-    state.crystals.push({
-      platform,
-      offsetX: CRYSTAL_OFFSET_X,
-      type: CRYSTAL_TYPES_BY_KIND.attack,
-      size: CRYSTAL_CONFIG.size,
-      phase: 0,
-    });
-    state.chests.push({
-      platform,
-      offsetX: CHEST_OFFSET_X,
-      phase: 0,
-      collected: false,
+      lifetime: RESIDUAL_SPIRIT_CONFIG.pickup.lifetimeSeconds,
     });
 
-    updateCrystals(0);
-    updateChests(0);
+    updateResidualSpirits(0);
 
     expect(pickupRects()).toEqual([
       {
-        x: platform.x + CRYSTAL_OFFSET_X - CRYSTAL_CONFIG.size / 2,
-        y: platform.y - CRYSTAL_CONFIG.floatYOffset - CRYSTAL_CONFIG.size / 2,
-        w: CRYSTAL_CONFIG.size,
-        h: CRYSTAL_CONFIG.size,
-      },
-      {
-        x: platform.x + CHEST_OFFSET_X - CHEST_CONFIG.size / 2,
-        y: platform.y - CHEST_CONFIG.floatYOffset - CHEST_CONFIG.size / 2,
-        w: CHEST_CONFIG.size,
-        h: CHEST_CONFIG.size,
+        x: RESIDUAL_SPIRIT_X - RESIDUAL_SPIRIT_CONFIG.pickup.collisionSize / 2,
+        y: RESIDUAL_SPIRIT_Y - RESIDUAL_SPIRIT_CONFIG.pickup.collisionSize / 2,
+        w: RESIDUAL_SPIRIT_CONFIG.pickup.collisionSize,
+        h: RESIDUAL_SPIRIT_CONFIG.pickup.collisionSize,
       },
     ]);
   });

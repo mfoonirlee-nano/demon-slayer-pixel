@@ -88,7 +88,7 @@ const DEBUG_PLATFORM_OPTIONS: SegmentKind[] = [
   "zigzag",
   "gapJump",
   "hoverPair",
-  "rewardRisk",
+  "riskFork",
 ];
 
 let runtimeActions: DebugRuntimeActions = {

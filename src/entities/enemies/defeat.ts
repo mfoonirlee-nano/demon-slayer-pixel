@@ -7,6 +7,8 @@ import type { EnemyDefeatRewardKind } from "./common";
 import { enemyArchetypeForSheet } from "./registry";
 import { addEnemyRunXp, enemyXp } from "../../systems/progression";
 import { grantSkillEnergy, grantUltimateEnergy, recordEnemyDefeatEquipmentEffects } from "../../systems/equipment";
+import { residualSpiritDropAmount } from "../../systems/residualSpirit";
+import { spawnResidualSpirit } from "../residualSpirit";
 
 const SPLITLING_SKILL_ENERGY_GAIN = 2;
 const SPLITLING_ULTIMATE_ENERGY_GAIN = 0.5;
@@ -19,6 +21,8 @@ function gainEnergy(skillAmount: number, ultimateAmount: number) {
 
 function applyEnemyDefeatReward(enemy: EnemyState, reward: EnemyDefeatRewardKind) {
   if (reward === "none") return;
+
+  spawnResidualSpirit(enemy, residualSpiritDropAmount(enemy));
 
   if (enemy.splitterVariant === "child") {
     gainEnergy(SPLITLING_SKILL_ENERGY_GAIN, SPLITLING_ULTIMATE_ENERGY_GAIN);

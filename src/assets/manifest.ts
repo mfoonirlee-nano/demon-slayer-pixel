@@ -84,6 +84,7 @@ import {
   PLATFORM_SPRITES,
   PLAYER_SHEETS,
   RUNNER_SHEETS,
+  RESIDUAL_SPIRIT_PICKUP_SPRITE,
   STAR_SPRITES,
   SPLITTER_SHEETS,
   STONE_TOWER_SMALL_SPRITES,
@@ -211,6 +212,7 @@ export function spriteImageLoadTargets(): ImageLoadTarget[] {
       ...playerSkillEffectSheets(),
       ...ultimateSkillSheets(),
       ...allPlayerSkills(),
+      RESIDUAL_SPIRIT_PICKUP_SPRITE,
     ]),
     ...Object.values(GROUND_TILE_SPRITES.sets).map(occlusionImageTarget),
   ];

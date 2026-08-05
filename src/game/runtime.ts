@@ -71,14 +71,11 @@ import {
   nextMapSpawnInterval,
   resetMapGenerator,
   updatePlatforms,
-  updateCrystals,
-  updateChests,
   drawPlatformOcclusion,
   drawPlatforms,
-  drawCrystals,
-  drawChests,
 } from "../entities/platform";
 import { updateProjectiles, drawProjectiles } from "../entities/projectile";
+import { drawResidualSpirits, updateResidualSpirits } from "../entities/residualSpirit";
 import {
   updateParticles,
   updateSkillBursts,
@@ -123,6 +120,7 @@ import { chooseBossEquipment as chooseBossEquipmentReward, equipEquipment as equ
 import { equipSkillSlot as equipSkillSlotInState, setSkillLevel as setSkillLevelInState, SKILL_SLOT_COUNT } from "../systems/loadout";
 import { updateEnemyDirector } from "../systems/enemyDirector";
 import { markSpritesReady } from "../systems/runLifecycle";
+import { beginResidualSpiritHealing, updateResidualSpiritHealing } from "../systems/residualSpirit";
 
 let frameId = 0;
 
@@ -367,9 +365,9 @@ function loop(ts: number) {
 
       updateBindingZones();
       updatePlayer(dt);
+      updateResidualSpiritHealing(state, dt);
       updatePlatforms(dt);
-      updateCrystals(dt);
-      updateChests(dt);
+      updateResidualSpirits(dt);
       updateEnemies();
       updateBruteFireballEffects();
       updateBoss();
@@ -404,8 +402,7 @@ function loop(ts: number) {
   drawNearForeground();
   drawGroundTileBase();
   drawPlatforms();
-  drawCrystals();
-  drawChests();
+  drawResidualSpirits();
   drawBindingZonesBack();
   drawUltimateTrails();
   drawUltimateEffects();
@@ -491,6 +488,7 @@ export function startGame(options: { onStateChange?: (snapshot: GameSnapshot) =>
     onAttack: () => runCombatAction(triggerAttack),
     onSkill: () => runCombatAction(castSelectedSkill),
     onUltimate: () => runCombatAction(castUltimateSkill),
+    onHeal: () => runCombatAction(() => beginResidualSpiritHealing(state)),
     onSwitchSkill: (index) => runCombatAction(() => selectSkill(index)),
     onRestart: restart,
     onPause: togglePause,

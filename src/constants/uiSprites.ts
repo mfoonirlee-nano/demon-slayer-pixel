@@ -1,6 +1,13 @@
 export const UI_SPRITES = {
   ultimateFrame: { src: "assets/sprites/ui/system/hud/ultimate-frame.png", w: 216, h: 216, displayW: 72, displayH: 72 },
   currentSkillFrame: { src: "assets/sprites/ui/system/hud/current-skill-frame.png", w: 108, h: 108, displayW: 36, displayH: 36 },
+  residualSpiritVesselFrame: {
+    src: "assets/sprites/ui/system/hud/residual-spirit-vessel-frame.png",
+    w: 192,
+    h: 99,
+    displayW: 64,
+    displayH: 33,
+  },
   hudHpBarLeft: { src: "assets/sprites/ui/system/hud/hud-hp-bar-left.png", w: 78, h: 60, displayW: 26, displayH: 20 },
   hudHpBarMid: { src: "assets/sprites/ui/system/hud/hud-hp-bar-mid.png", w: 72, h: 60, displayW: 24, displayH: 20 },
   hudHpBarRight: { src: "assets/sprites/ui/system/hud/hud-hp-bar-right.png", w: 76, h: 73, displayW: 25, displayH: 24 },

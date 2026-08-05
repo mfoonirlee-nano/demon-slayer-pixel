@@ -11,11 +11,10 @@ import type {
 } from "./domain";
 import type {
   BossState,
-  ChestState,
-  CrystalState,
   EnemyState,
   PlayerState,
   PlatformState,
+  ResidualSpiritState,
 } from "./entities";
 import type {
   BindingZoneState,
@@ -116,6 +115,7 @@ export type GameState = {
   moon: MoonState;
   spritesReady: boolean;
   player: PlayerState;
+  residualSpirits: ResidualSpiritState[];
   enemies: EnemyState[];
   particles: ParticleState[];
   projectiles: ProjectileState[];
@@ -123,7 +123,6 @@ export type GameState = {
   bruteGuardReflections: BruteGuardReflectionState[];
   bindingZones: BindingZoneState[];
   platforms: PlatformState[];
-  chests: ChestState[];
   skillBursts: SkillBurstState[];
   hitBursts: HitBurstState[];
   lineProjectileEffects: LineProjectileEffectState[];
@@ -151,5 +150,4 @@ export type GameState = {
   lanternEmberAwakenedGrids: LanternEmberAwakenedGridState[];
   lanternEmberAshZones: LanternEmberAshZoneState[];
   bloodMoonEffects: BloodMoonEffectState[];
-  crystals: CrystalState[];
 };

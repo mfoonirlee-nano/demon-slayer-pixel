@@ -21,7 +21,7 @@
 | [player.md](player.md) | 已实现 | 玩家、普攻、下落攻击、技能、大招、受伤与无敌 |
 | [enemies.md](enemies.md) | 部分实现 | 普通敌人的生成、全局成长、已接入 archetype 和仍缺少的幕数生成池 |
 | [boss.md](boss.md) | 已实现 | 当前 Boss 出场、阶段、AI、召唤、投射物和专属技能 |
-| [rewards.md](rewards.md) | 已实现 | 得分、技能能量、大招能量、水晶、宝箱和奖励预算 |
+| [rewards.md](rewards.md) | 已实现 | 得分、技能能量、大招能量、残灵掉落/储存和主动治疗 |
 | [runtime-scaling.md](runtime-scaling.md) | 已实现 | 时间缩放、刷怪节奏、Boss 出场计时和平台生成 |
 | [act-and-threat.md](act-and-threat.md) | 目标设计，未实现 | Boss 击杀驱动幕数、统一威胁值和注册表边界 |
 | [enemy-archetypes.md](enemy-archetypes.md) | 目标设计，部分未实现 | 敌人类型、生成权重、技能解锁和素材接入边界 |

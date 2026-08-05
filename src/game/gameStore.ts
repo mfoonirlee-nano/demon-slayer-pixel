@@ -1,6 +1,6 @@
 import { atom } from "jotai";
 import { createStore } from "jotai/vanilla";
-import { PLAYER_DEFAULTS, RUN_LEVEL_PACING } from "../constants";
+import { PLAYER_DEFAULTS, RESIDUAL_SPIRIT_CONFIG, RUN_LEVEL_PACING } from "../constants";
 import {
   INITIAL_EQUIPPED_SKILL_IDS,
   INITIAL_SKILL_LEVELS,
@@ -37,6 +37,10 @@ export type BossSnapshot = {
 export type PlayerSnapshot = {
   hp: number;
   maxHp: number;
+  residualSpirit: number;
+  residualSpiritMax: number;
+  residualSpiritHealTimer: number;
+  residualSpiritHealDuration: number;
   score: number;
   runLevel: number;
   runXp: number;
@@ -106,6 +110,10 @@ const initialSnapshot: GameSnapshot = {
   player: {
     hp: PLAYER_DEFAULTS.maxHp,
     maxHp: PLAYER_DEFAULTS.maxHp,
+    residualSpirit: 0,
+    residualSpiritMax: RESIDUAL_SPIRIT_CONFIG.maxStored,
+    residualSpiritHealTimer: 0,
+    residualSpiritHealDuration: RESIDUAL_SPIRIT_CONFIG.healChannelSeconds,
     score: 0,
     runLevel: initialRunLevel,
     runXp: 0,

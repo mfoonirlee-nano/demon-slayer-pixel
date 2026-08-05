@@ -1,4 +1,4 @@
-import type { CrystalType, PlatformStyle } from "../types/game-state";
+import type { PlatformStyle } from "../types/game-state";
 import type { PlayerAnimationState, SkillId } from "../types/assets";
 
 export const PLAYER_ANIMATION_STATES = {
@@ -35,11 +35,3 @@ export const PLATFORM_STYLE_VALUES: PlatformStyle[] = [
   PLATFORM_STYLES.shrine,
   PLATFORM_STYLES.ruin,
 ];
-
-export const CRYSTAL_TYPES = {
-  attack: "atk",
-  health: "hp",
-} as const satisfies {
-  attack: CrystalType;
-  health: CrystalType;
-};

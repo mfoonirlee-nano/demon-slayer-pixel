@@ -52,6 +52,24 @@ describe("resetState", () => {
     expect(snapshot.threatScalar).toBeGreaterThan(1);
   });
 
+  it("resets and exposes residual-spirit storage and healing progress", () => {
+    resetState();
+    state.player.residualSpirit = 27;
+    state.player.residualSpiritHealTimer = 0.25;
+
+    expect(getStateSnapshot().player).toMatchObject({
+      residualSpirit: 27,
+      residualSpiritMax: 60,
+      residualSpiritHealTimer: 0.25,
+      residualSpiritHealDuration: 0.6,
+    });
+
+    resetState();
+    expect(state.player.residualSpirit).toBe(0);
+    expect(state.player.residualSpiritHealTimer).toBe(0);
+    expect(state.residualSpirits).toEqual([]);
+  });
+
   it("does not mark the ultimate ready before it is learned", () => {
     resetState();
     state.player.ultimateEnergy = state.player.ultimateEnergyMax;

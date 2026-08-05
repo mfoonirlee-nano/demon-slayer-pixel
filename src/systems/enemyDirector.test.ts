@@ -21,7 +21,6 @@ import {
   bossApproachGroundTransitionSeconds,
   bossGateForAct,
   bossPreludeWaitSeconds,
-  rewardValuesForAct,
   threatScalarForRun,
 } from "./runProgression";
 
@@ -44,11 +43,6 @@ const AWAKENED_EXTRA_BOSS_KILLS = 2;
 const AWAKENED_THREAT_PER_BOSS = 0.34;
 const AWAKENED_TIME_BONUS = 0.15;
 const BASE_THREAT_SCALAR = 1;
-const EARLY_REWARD_HEALTH_CRYSTALS = 24;
-const MID_REWARD_ATTACK_CRYSTALS = 4;
-const MID_REWARD_CHEST_HEAL = 60;
-const FINAL_REWARD_HEALTH_CRYSTALS = 32;
-const FINAL_REWARD_CHEST_HEAL = 64;
 const ACT_ONE_MIN_WAVES = 3;
 const ACT_ONE_UNCOMPRESSED_MIN_ELAPSED = 45;
 const ACT_ONE_UNCOMPRESSED_MAX_ELAPSED = 75;
@@ -169,19 +163,6 @@ describe("act progression", () => {
         + AWAKENED_EXTRA_BOSS_KILLS * AWAKENED_THREAT_PER_BOSS
         + AWAKENED_TIME_BONUS,
     );
-  });
-
-  it("uses act-band reward values", () => {
-    expect(rewardValuesForAct(ACT_ONE)).toMatchObject({ attackCrystal: 2, healthCrystal: EARLY_REWARD_HEALTH_CRYSTALS });
-    expect(rewardValuesForAct(ACT_SEVEN)).toMatchObject({
-      attackCrystal: MID_REWARD_ATTACK_CRYSTALS,
-      chestHeal: MID_REWARD_CHEST_HEAL,
-    });
-    expect(rewardValuesForAct(FINAL_ACT)).toMatchObject({
-      attackCrystal: MID_REWARD_ATTACK_CRYSTALS,
-      healthCrystal: FINAL_REWARD_HEALTH_CRYSTALS,
-      chestHeal: FINAL_REWARD_CHEST_HEAL,
-    });
   });
 
   it("adds act growth on top of per-kill enemy stats", () => {

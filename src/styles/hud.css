@@ -27,6 +27,170 @@
   place-items: center;
 }
 
+.residual-spirit-vessel {
+  --residual-spirit-heal-angle: 0deg;
+  position: absolute;
+  color: #dffbff;
+  filter: drop-shadow(0 2px 2px rgba(0, 0, 0, 0.78));
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
+  isolation: isolate;
+}
+
+.residual-spirit-vessel--compact {
+  transform: scale(0.88);
+  transform-origin: top left;
+}
+
+.residual-spirit-vessel-frame {
+  position: absolute;
+  z-index: 3;
+  inset: 0;
+  pointer-events: none;
+}
+
+.residual-spirit-beads {
+  position: absolute;
+  z-index: 2;
+  inset: 0;
+  pointer-events: none;
+}
+
+.residual-spirit-bead {
+  position: absolute;
+  width: 6px;
+  height: 6px;
+  overflow: hidden;
+  border-radius: 50%;
+}
+
+.residual-spirit-bead:nth-child(1) {
+  top: 11px;
+  left: 7px;
+}
+
+.residual-spirit-bead:nth-child(2) {
+  top: 13px;
+  left: 15px;
+}
+
+.residual-spirit-bead:nth-child(3) {
+  top: 14px;
+  left: 25px;
+}
+
+.residual-spirit-bead:nth-child(4) {
+  top: 14px;
+  left: 33px;
+}
+
+.residual-spirit-bead:nth-child(5) {
+  top: 13px;
+  left: 43px;
+}
+
+.residual-spirit-bead:nth-child(6) {
+  top: 11px;
+  left: 50px;
+}
+
+.residual-spirit-bead-fill {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  overflow: hidden;
+  background: rgba(128, 238, 255, 0.5);
+  box-shadow: 0 0 4px rgba(120, 235, 255, 0.92);
+  transition: height 120ms steps(3, end);
+}
+
+.residual-spirit-bead-fill img {
+  position: absolute;
+  bottom: -1px;
+  left: -1px;
+  width: 8px;
+  height: 8px;
+  object-fit: contain;
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
+}
+
+.residual-spirit-channel-seal {
+  position: absolute;
+  z-index: 4;
+  top: 21px;
+  left: 28px;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: conic-gradient(
+    from -90deg,
+    rgba(149, 243, 255, 0.95) 0deg var(--residual-spirit-heal-angle),
+    rgba(4, 17, 34, 0.78) var(--residual-spirit-heal-angle) 360deg
+  );
+  opacity: 0;
+}
+
+.residual-spirit-vessel--healing .residual-spirit-channel-seal {
+  opacity: 1;
+  box-shadow: 0 0 5px rgba(111, 226, 255, 0.88);
+}
+
+.residual-spirit-channel-seal::after {
+  position: absolute;
+  inset: 2px;
+  border-radius: 50%;
+  background: #071226;
+  content: "";
+}
+
+.residual-spirit-count {
+  position: absolute;
+  z-index: 4;
+  right: 10px;
+  bottom: -5px;
+  color: #dffbff;
+  font-size: 6px;
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: -0.25px;
+  text-shadow:
+    1px 0 #02070c,
+    -1px 0 #02070c,
+    0 1px #02070c,
+    0 -1px #02070c;
+}
+
+.residual-spirit-key-hint {
+  position: absolute;
+  z-index: 4;
+  right: 1px;
+  bottom: -6px;
+  width: 7px;
+  height: 7px;
+  border: 1px solid rgba(155, 217, 230, 0.75);
+  background: rgba(4, 15, 29, 0.88);
+  color: #bcecf5;
+  font-family: inherit;
+  font-size: 5px;
+  font-weight: 700;
+  line-height: 6px;
+  text-align: center;
+  text-shadow: 0 1px #02070c;
+}
+
+.residual-spirit-vessel--healing .residual-spirit-count,
+.residual-spirit-vessel--healing .residual-spirit-key-hint {
+  color: #fff4ca;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .residual-spirit-bead-fill {
+    transition: none;
+  }
+}
+
 .player-hud-bars {
   position: absolute;
   inset: 0 auto auto 0;

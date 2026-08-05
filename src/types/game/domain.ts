@@ -1,7 +1,6 @@
 import type { SkillId } from "../assets";
 
 export type PlatformStyle = "stone" | "moss" | "shrine" | "ruin";
-export type CrystalType = "atk" | "hp";
 export type PlatformKind = "normal" | "hover" | "chain";
 export type PlatformLayer = "low" | "mid" | "high" | "top";
 export type ChaserPhase = "charge" | "reenter";

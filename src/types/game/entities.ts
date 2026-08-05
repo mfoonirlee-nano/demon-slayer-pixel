@@ -9,7 +9,6 @@ import type {
   CasterAiPhase,
   ChaserPhase,
   CrawlerPhase,
-  CrystalType,
   DuelistPhase,
   EnemyAiState,
   EnemyId,
@@ -62,11 +61,12 @@ export type EnemySpawnOccluderState = {
   alpha: number;
 };
 
-export type ChestState = {
-  platform: PlatformState;
-  offsetX: number;
+export type ResidualSpiritState = {
+  x: number;
+  y: number;
+  amount: number;
   phase: number;
-  collected: boolean;
+  lifetime: number;
 };
 
 export type PlayerState = {
@@ -81,6 +81,8 @@ export type PlayerState = {
   facing: number;
   hp: number;
   maxHp: number;
+  residualSpirit: number;
+  residualSpiritHealTimer: number;
   invincible: number;
   attackTimer: number;
   attackDuration: number;
@@ -335,11 +337,3 @@ export type BossState = {
   armorBreakTimer?: number;
   armorBreakMultiplier?: number;
 } | null;
-
-export type CrystalState = {
-  platform: PlatformState;
-  offsetX: number;
-  type: CrystalType;
-  size: number;
-  phase: number;
-};

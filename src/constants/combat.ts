@@ -100,14 +100,6 @@ export const PLAYER_DEFAULTS = {
   maxUltimateEnergy: 100,
 } as const;
 
-export const PLAYER_LIMITS = {
-  maxHp: 100,
-  maxSkillEnergy: 90,
-  maxSkillCharges: 3,
-  maxUltimateEnergy: 100,
-  attackBonusCap: 24,
-} as const;
-
 export const PLAYER_COMBAT = {
   runAnimationCycleDistance: 128,
   skillBurstLife: 40,

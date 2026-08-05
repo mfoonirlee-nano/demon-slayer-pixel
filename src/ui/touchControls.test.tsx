@@ -18,10 +18,12 @@ describe("TouchControls localization", () => {
 
     expect(markup).toContain('aria-label="Move left"');
     expect(markup).toContain('aria-label="Use ultimate"');
+    expect(markup).toContain('aria-label="Spend residual spirit to heal"');
     expect(markup).toContain(">JMP</button>");
     expect(markup).toContain(">ATK</button>");
     expect(markup).toContain(">SKL</button>");
     expect(markup).toContain(">ULT</button>");
+    expect(markup).toContain(">HEAL</button>");
     expect(markup).not.toMatch(/[向左右下落攻击准备跳跃释放技能大招]/u);
   });
 });

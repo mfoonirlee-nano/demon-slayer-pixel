@@ -8,7 +8,7 @@ export type SegmentKind =
   | "zigzag"
   | "gapJump"
   | "hoverPair"
-  | "rewardRisk";
+  | "riskFork";
 
 const PLATFORM_TIME_PRESSURE_CAP_SECONDS = 210;
 const PLATFORM_SCROLL_SPEED_MULTIPLIER = 0.72;
@@ -27,7 +27,7 @@ const SEGMENT_WEIGHTS: Record<"act1" | "act2to3" | "act4to6" | "awakened" | "fin
     zigzag: 0.2,
     gapJump: 0.2,
     hoverPair: 0,
-    rewardRisk: 0.2,
+    riskFork: 0.2,
   },
   act2to3: {
     breather: 1.1,
@@ -37,7 +37,7 @@ const SEGMENT_WEIGHTS: Record<"act1" | "act2to3" | "act4to6" | "awakened" | "fin
     zigzag: 0.8,
     gapJump: 1.1,
     hoverPair: 0.4,
-    rewardRisk: 0.7,
+    riskFork: 0.7,
   },
   act4to6: {
     breather: 0.9,
@@ -47,7 +47,7 @@ const SEGMENT_WEIGHTS: Record<"act1" | "act2to3" | "act4to6" | "awakened" | "fin
     zigzag: 1.5,
     gapJump: 1.5,
     hoverPair: 1.2,
-    rewardRisk: 1.3,
+    riskFork: 1.3,
   },
   awakened: {
     breather: 0.8,
@@ -57,7 +57,7 @@ const SEGMENT_WEIGHTS: Record<"act1" | "act2to3" | "act4to6" | "awakened" | "fin
     zigzag: 1.6,
     gapJump: 1.7,
     hoverPair: 1.4,
-    rewardRisk: 1.5,
+    riskFork: 1.5,
   },
   final: {
     breather: 1,
@@ -67,7 +67,7 @@ const SEGMENT_WEIGHTS: Record<"act1" | "act2to3" | "act4to6" | "awakened" | "fin
     zigzag: 1,
     gapJump: 1,
     hoverPair: 0.8,
-    rewardRisk: 0.6,
+    riskFork: 0.6,
   },
 };
 

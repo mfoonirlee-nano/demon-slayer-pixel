@@ -103,7 +103,7 @@ interval = base * (1 + random * jitter)
 | `zigzag` | 三个平台上下折返 |
 | `gapJump` | 链式跳跃平台 |
 | `hoverPair` | 两个错相位悬浮平台 |
-| `rewardRisk` | 安全主路加高风险奖励平台 |
+| `riskFork` | 安全主路加高风险支路平台；不单独投放奖励 |
 
 当前未使用的运行时平台间隔常量：
 

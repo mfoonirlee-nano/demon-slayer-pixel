@@ -27,7 +27,7 @@ const PLATFORMS: SegmentKind[] = [
   "zigzag",
   "gapJump",
   "hoverPair",
-  "rewardRisk",
+  "riskFork",
 ];
 
 describe("debug presentation copy", () => {

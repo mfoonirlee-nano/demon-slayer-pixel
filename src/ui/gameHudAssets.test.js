@@ -25,6 +25,11 @@ const MAX_ALPHA = 255;
 const PNG_FILTER_AVERAGE = 3;
 const PNG_FILTER_PAETH = 4;
 const OPAQUE_ALPHA_THRESHOLD = 128;
+const RESIDUAL_SPIRIT_PICKUP = {
+  src: "assets/sprites/pickups/residual-spirit.png",
+  w: 96,
+  h: 96,
+};
 
 function readPngAlpha(src) {
   const fileUrl = new URL(`../../${src}`, import.meta.url);
@@ -89,7 +94,7 @@ function readPngAlpha(src) {
       : transparency?.[pixels[index]] ?? MAX_ALPHA;
   }
 
-  return { width, height, alpha };
+  return { width, height, colorType, alpha };
 }
 
 function unfilterRow(filter, row, pixels, offset, stride, bytesPerPixel) {
@@ -152,6 +157,24 @@ function innerOpening(mask) {
   return { top, bottom, height: bottom - top + 1 };
 }
 
+function expectTransparentRgbaAsset(asset) {
+  const png = readPngAlpha(asset.src);
+  expect({ width: png.width, height: png.height }).toEqual({
+    width: asset.w,
+    height: asset.h,
+  });
+  expect(png.colorType).toBe(PNG_RGBA_COLOR);
+
+  const cornerIndexes = [
+    0,
+    png.width - 1,
+    (png.height - 1) * png.width,
+    png.width * png.height - 1,
+  ];
+  expect(cornerIndexes.map((index) => png.alpha[index])).toEqual([0, 0, 0, 0]);
+  expect(png.alpha.some((alpha) => alpha > 0)).toBe(true);
+}
+
 describe("game HUD sprite geometry", () => {
   it("keeps the skill meter inner slot continuous across the middle/right join", () => {
     const frame = HUD_SKILL_METER_FRAME;
@@ -164,5 +187,10 @@ describe("game HUD sprite geometry", () => {
     expect(innerOpening(midMask)).toEqual({ top: 6, bottom: 12, height: 7 });
     expect(innerOpening(rightMask)).toEqual(innerOpening(midMask));
     expect(rightMask).toEqual(midMask);
+  });
+
+  it("keeps generated residual-spirit assets on their transparent RGBA contracts", () => {
+    expectTransparentRgbaAsset(UI_SPRITES.residualSpiritVesselFrame);
+    expectTransparentRgbaAsset(RESIDUAL_SPIRIT_PICKUP);
   });
 });

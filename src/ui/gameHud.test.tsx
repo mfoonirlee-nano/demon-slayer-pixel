@@ -13,6 +13,7 @@ const ACTIVE_PERCENT = 0.5;
 const FIRST_CHARGED_STAGE = 1;
 const HALF_CHARGED_STAGE = 4;
 const FULL_CHARGED_STAGE = 7;
+const RESIDUAL_SPIRIT_PRESENTATION_COUNT = 2;
 
 describe("ultimate charge stages", () => {
   it.each([
@@ -87,5 +88,14 @@ describe("player resource meter transitions", () => {
     const markup = renderToStaticMarkup(<GameHud />);
 
     expect(markup.match(/hud-skill-bar-right\.png/g)).toHaveLength(1);
+  });
+
+  it("renders the residual-spirit vessel for desktop and compact mobile HUDs", () => {
+    const markup = renderToStaticMarkup(<GameHud />);
+
+    expect(markup.match(/role="meter"/g)).toHaveLength(RESIDUAL_SPIRIT_PRESENTATION_COUNT);
+    expect(markup).toContain("residual-spirit-vessel-frame.png");
+    expect(markup).toContain("residual-spirit-vessel--compact");
+    expect(markup).toContain("md:hidden");
   });
 });

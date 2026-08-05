@@ -1,0 +1,30 @@
+export const RESIDUAL_SPIRIT_CONFIG = {
+  maxStored: 60,
+  healCost: 20,
+  healRatio: 0.15,
+  healChannelSeconds: 0.6,
+  dropByTier: {
+    1: 3,
+    2: 4,
+    3: 5,
+    4: 5,
+  },
+  eliteDrop: 8,
+  splitlingDrop: 1,
+  pickup: {
+    collisionSize: 24,
+    lifetimeSeconds: 12,
+    magnetRadius: 150,
+    magnetSpeed: 180,
+    bobAmplitude: 3,
+    bobSpeed: 4,
+    auraPadding: 4,
+    auraAlpha: 0.2,
+    pickupBurstPower: 1.4,
+    pickupTone: {
+      frequency: 620,
+      duration: 0.09,
+      volume: 0.05,
+    },
+  },
+} as const;

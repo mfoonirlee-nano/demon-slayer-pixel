@@ -7,6 +7,10 @@ import {
   HUD_HP_METER_PLACEMENT,
   HUD_SKILL_METER_FRAME,
   HUD_SKILL_METER_PLACEMENT,
+  HUD_RESIDUAL_SPIRIT_HEIGHT,
+  HUD_RESIDUAL_SPIRIT_LEFT,
+  HUD_RESIDUAL_SPIRIT_TOP,
+  HUD_RESIDUAL_SPIRIT_WIDTH,
   HUD_STATUS_BAR_ICON_SIZE,
   HUD_STATUS_BAR_LEFT,
   HUD_STATUS_BAR_TOP,
@@ -84,5 +88,26 @@ describe("game HUD layout", () => {
     expect(HUD_STATUS_BAR_LEFT).toBe(skillFrameRight);
     expect(HUD_STATUS_BAR_TOP).toBe(skillMeterArtworkBottom);
     expect(HUD_STATUS_BAR_ICON_SIZE).toBe(PREVIOUS_STATUS_ICON_DISPLAY_SIZE * STATUS_ICON_SCALE);
+  });
+
+  it("places the residual-spirit vessel under the ability frames and beside statuses", () => {
+    expect({
+      left: HUD_RESIDUAL_SPIRIT_LEFT,
+      top: HUD_RESIDUAL_SPIRIT_TOP,
+      width: HUD_RESIDUAL_SPIRIT_WIDTH,
+      height: HUD_RESIDUAL_SPIRIT_HEIGHT,
+    }).toEqual({ left: 28, top: 63, width: 64, height: 33 });
+    expect(HUD_RESIDUAL_SPIRIT_LEFT + HUD_RESIDUAL_SPIRIT_WIDTH)
+      .toBeLessThanOrEqual(HUD_STATUS_BAR_LEFT);
+  });
+
+  it("registers the generated three-times HUD vessel frame", () => {
+    expect(UI_SPRITES.residualSpiritVesselFrame).toEqual({
+      src: "assets/sprites/ui/system/hud/residual-spirit-vessel-frame.png",
+      w: 192,
+      h: 99,
+      displayW: 64,
+      displayH: 33,
+    });
   });
 });

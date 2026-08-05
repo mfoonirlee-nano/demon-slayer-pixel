@@ -1,4 +1,4 @@
-import { CRYSTAL_TYPES, PLATFORM_STYLE_VALUES } from "./ids";
+import { PLATFORM_STYLE_VALUES } from "./ids";
 
 export const PLATFORM_CONFIG = {
   spawnOffsetX: 40,
@@ -12,7 +12,6 @@ export const PLATFORM_CONFIG = {
   notchChance: 0.5,
   notchBase: 1,
   notchVariants: 3,
-  crystalSpawnChance: 0.45,
   phaseSpeed: 3,
   despawnMargin: 20,
 } as const;
@@ -62,26 +61,6 @@ export const HOVER_CONFIG = {
   chance: 0.20,
 } as const;
 
-// Chest pickup (bigger reward than crystal, spawns on any layer)
-export const CHEST_CONFIG = {
-  spawnEvery: 6,        // every N platform spawns (approximate)
-  spawnVariance: 3,     // ± variance
-  offsetBase: 16,
-  attackBonusGain: 6,
-  healAmount: 48,
-  size: 14,
-  floatYOffset: 22,
-  floatAmplitude: 3,
-  phaseSpeed: 2.2,
-  glowBase: 0.5,
-  glowAmplitude: 0.3,
-  hitBurstPower: 2.2,
-  tones: {
-    attack: { frequency: 680, duration: 0.14, volume: 0.06 },
-    health: { frequency: 520, duration: 0.14, volume: 0.06 },
-  },
-} as const;
-
 export const MAP_GENERATION_CONFIG = {
   difficultyRampSeconds: 120,
   themedSpriteChance: 0.4,
@@ -113,12 +92,6 @@ export const MAP_GENERATION_CONFIG = {
     hardGain: 1.15,
     highThreshold: 2.4,
   },
-  reward: {
-    debtPerSegment: 1,
-    riskyBonusDebt: 0.8,
-    chestDebtThreshold: 4.8,
-    crystalDebtThreshold: 1.7,
-  },
   reachability: {
     minGap: 54,
     baseMaxGap: 126,
@@ -146,63 +119,7 @@ export const MAP_GENERATION_CONFIG = {
   },
 } as const;
 
-export const CHEST_VISUAL = {
-  baseColor: "#8b6914",
-  lidColor: "#c49a20",
-  rimColor: "#f0c040",
-  lockColor: "#f5e070",
-  glowColorRgb: "240,190,40",
-  burstColor: "#f0c040",
-} as const;
-
 export const PLATFORM_STYLE_LIST = PLATFORM_STYLE_VALUES;
-
-export const CRYSTAL_CONFIG = {
-  attackTypeChance: 0.55,
-  offsetBase: 16,
-  minTravelWidth: 24,
-  offsetPadding: 32,
-  size: 10,
-  floatYOffset: 18,
-  floatAmplitude: 2,
-  glowBase: 0.45,
-  glowAmplitude: 0.2,
-  glowPhaseMultiplier: 1.7,
-  phaseSpeed: 4,
-  attackBonusGain: 2,
-  healAmount: 24,
-  hitBurstPower: {
-    attack: 1.6,
-    health: 1.4,
-  },
-  tones: {
-    attack: { frequency: 560, duration: 0.08, volume: 0.045 },
-    health: { frequency: 440, duration: 0.08, volume: 0.045 },
-  },
-  draw: {
-    outerOffset: 7,
-    outerSize: 14,
-    attackCoreOffset: { x: 3, y: 5 },
-    attackCoreSize: { w: 6, h: 10 },
-    attackCrossOffset: { x: 5, y: 3 },
-    attackCrossSize: { w: 10, h: 6 },
-    healthCoreOffset: { x: 2, y: 5 },
-    healthCoreSize: { w: 4, h: 10 },
-    healthCrossOffset: { x: 5, y: 2 },
-    healthCrossSize: { w: 10, h: 4 },
-  },
-} as const;
-
-export const CRYSTAL_VISUAL = {
-  attackGlowColorRgb: "118,200,255",
-  attackCoreColor: "#d9f4ff",
-  healthGlowColorRgb: "108,245,180",
-  healthCoreColor: "#dcffe9",
-  pickupBurstColors: {
-    attack: "#82d6ff",
-    health: "#6ff3b6",
-  },
-} as const;
 
 export const PLATFORM_VISUAL = {
   shrine: {
@@ -268,5 +185,3 @@ export const PLATFORM_VISUAL = {
     detailHeight: 5,
   },
 } as const;
-
-export const CRYSTAL_TYPES_BY_KIND = CRYSTAL_TYPES;

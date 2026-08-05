@@ -3,6 +3,7 @@ import {
   GROUND_Y,
   PLAYER_COMBAT,
   PLAYER_DEFAULTS,
+  RESIDUAL_SPIRIT_CONFIG,
   RUN_LEVEL_PACING,
 } from "../constants";
 import { bossArchetypeForId } from "../entities/bosses/registry";
@@ -44,6 +45,8 @@ export function createInitialPlayerState(): PlayerState {
     facing: PLAYER_DEFAULTS.facing,
     hp: PLAYER_DEFAULTS.maxHp,
     maxHp: PLAYER_DEFAULTS.maxHp,
+    residualSpirit: 0,
+    residualSpiritHealTimer: 0,
     invincible: 0,
     attackTimer: 0,
     attackDuration: BASIC_ATTACK.frames,
@@ -148,6 +151,7 @@ export function createInitialState(): GameState {
     moon: createInitialMoonState(),
     spritesReady: false,
     player: createInitialPlayerState(),
+    residualSpirits: [],
     enemies: [],
     particles: [],
     projectiles: [],
@@ -155,7 +159,6 @@ export function createInitialState(): GameState {
     bruteGuardReflections: [],
     bindingZones: [],
     platforms: [],
-    chests: [],
     skillBursts: [],
     hitBursts: [],
     lineProjectileEffects: [],
@@ -183,7 +186,6 @@ export function createInitialState(): GameState {
     lanternEmberAwakenedGrids: [],
     lanternEmberAshZones: [],
     bloodMoonEffects: [],
-    crystals: [],
   };
 }
 
@@ -197,10 +199,9 @@ function resetCollection<T>(collection: T[], nextItems: T[] = []) {
 export function resetState() {
   const next = createInitialState();
   state.player = next.player;
+  resetCollection(state.residualSpirits, next.residualSpirits);
   resetCollection(state.enemies, next.enemies);
   resetCollection(state.platforms, next.platforms);
-  resetCollection(state.chests, next.chests);
-  resetCollection(state.crystals, next.crystals);
   resetCollection(state.particles, next.particles);
   resetCollection(state.skillBursts, next.skillBursts);
   resetCollection(state.hitBursts, next.hitBursts);
@@ -298,6 +299,10 @@ export function getStateSnapshot(manualPaused = false, paused = manualPaused): G
     player: {
       hp: state.player.hp,
       maxHp: state.player.maxHp,
+      residualSpirit: state.player.residualSpirit,
+      residualSpiritMax: RESIDUAL_SPIRIT_CONFIG.maxStored,
+      residualSpiritHealTimer: state.player.residualSpiritHealTimer,
+      residualSpiritHealDuration: RESIDUAL_SPIRIT_CONFIG.healChannelSeconds,
       score: state.player.score,
       runLevel: state.player.runLevel,
       runXp: state.player.runXp,

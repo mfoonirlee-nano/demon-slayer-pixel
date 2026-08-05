@@ -16,7 +16,6 @@ const INTRO_LAST_ACT = 6;
 const AWAKENED_FIRST_ACT = 7;
 const AWAKENED_LAST_ACT = 12;
 const EARLY_ACT_LAST = 2;
-const MID_ACT_LAST = 4;
 const PRELUDE_BASE_WAIT_SECONDS = 3;
 export const ACT_TIMING_SCALE = 0.75;
 
@@ -49,19 +48,6 @@ const BOSS_GATE_BY_BAND: Record<ActBand, BossGate> = {
 };
 const FIRST_ACT_BOSS_GATE = compressedBossGate(UNCOMPRESSED_FIRST_ACT_BOSS_GATE);
 const ADVANCED_INTRO_BOSS_GATE = compressedBossGate(UNCOMPRESSED_ADVANCED_INTRO_BOSS_GATE);
-
-const REWARD_VALUES_BY_BAND: Record<"early" | "mid" | ActBand, {
-  attackCrystal: number;
-  healthCrystal: number;
-  chestAttack: number;
-  chestHeal: number;
-}> = {
-  early: { attackCrystal: 2, healthCrystal: 24, chestAttack: 6, chestHeal: 48 },
-  mid: { attackCrystal: 3, healthCrystal: 26, chestAttack: 8, chestHeal: 52 },
-  intro: { attackCrystal: 3, healthCrystal: 28, chestAttack: 8, chestHeal: 56 },
-  awakened: { attackCrystal: 4, healthCrystal: 30, chestAttack: 10, chestHeal: 60 },
-  final: { attackCrystal: 4, healthCrystal: 32, chestAttack: 10, chestHeal: 64 },
-};
 
 export function clampAct(act: number) {
   return Math.min(MAX_ACT, Math.max(1, Math.floor(act)));
@@ -133,11 +119,4 @@ export function bossApproachGroundTransitionSeconds(act: number) {
     bossPreludeWaitSeconds(act),
     groundTransitionSeconds,
   );
-}
-
-export function rewardValuesForAct(act: number) {
-  const clampedAct = clampAct(act);
-  if (clampedAct <= EARLY_ACT_LAST) return REWARD_VALUES_BY_BAND.early;
-  if (clampedAct <= MID_ACT_LAST) return REWARD_VALUES_BY_BAND.mid;
-  return REWARD_VALUES_BY_BAND[actBandForAct(clampedAct)];
 }

@@ -9,6 +9,7 @@ const PREVENT_DEFAULT_KEYS = [
   "j",
   "k",
   "l",
+  "h",
   "1",
   "2",
   "3",
@@ -28,6 +29,7 @@ type InputHandlers = {
   onAttack?: () => void;
   onSkill?: () => void;
   onUltimate?: () => void;
+  onHeal?: () => void;
   onSwitchSkill?: (index: number) => void;
   onRestart?: () => void;
   onPause?: () => void;
@@ -100,6 +102,7 @@ function handleInputPress(key: string) {
   if (handlers.onAttack && k === "j") handlers.onAttack();
   if (handlers.onSkill && k === "k") handlers.onSkill();
   if (handlers.onUltimate && k === "l") handlers.onUltimate();
+  if (handlers.onHeal && !alreadyPressed && k === "h") handlers.onHeal();
   if (handlers.onSwitchSkill && SKILL_SWITCH_KEYS.includes(k as (typeof SKILL_SWITCH_KEYS)[number])) {
     handlers.onSwitchSkill(Number(k) - SKILL_KEY_OFFSET);
   }

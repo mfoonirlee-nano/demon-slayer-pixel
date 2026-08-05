@@ -13,6 +13,10 @@ function makePlayer(overrides: Partial<GameSnapshot["player"]> = {}): GameSnapsh
   return {
     hp: 100,
     maxHp: 100,
+    residualSpirit: 0,
+    residualSpiritMax: 60,
+    residualSpiritHealTimer: 0,
+    residualSpiritHealDuration: 0.6,
     score: 0,
     runLevel: 1,
     runXp: 0,

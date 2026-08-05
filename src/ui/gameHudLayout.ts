@@ -26,6 +26,12 @@ export type HudMeterPlacement = {
 export const HUD_ULTIMATE_FRAME_TOP = 0;
 export const HUD_CURRENT_SKILL_FRAME_LEFT = 60;
 export const HUD_CURRENT_SKILL_FRAME_TOP = 36;
+export const HUD_RESIDUAL_SPIRIT_LEFT = 28;
+export const HUD_RESIDUAL_SPIRIT_TOP = 63;
+export const HUD_RESIDUAL_SPIRIT_WIDTH =
+  UI_SPRITES.residualSpiritVesselFrame.displayW;
+export const HUD_RESIDUAL_SPIRIT_HEIGHT =
+  UI_SPRITES.residualSpiritVesselFrame.displayH;
 
 export const HUD_HP_METER_FRAME: HudMeterFrame = {
   left: "hudHpBarLeft",
