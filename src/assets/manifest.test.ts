@@ -10,6 +10,7 @@ import {
   MOON_TIDE_PLAYER_SHEETS,
   PLAYER_ANIMATION_STATES,
   PLAYER_SHEETS,
+  RESIDUAL_SPIRIT_PICKUP_SPRITE,
   SPIDER_STRING_ATTACK_SHEET,
   SPIDER_STRING_PILLAR_CAST_SHEET,
   SPIDER_STRING_PILLAR_EFFECT_SHEET,
@@ -90,5 +91,12 @@ describe("sprite manifest", () => {
     for (const action of spiderStringActions) {
       expect(loadedSources.filter((src) => src === action.src)).toHaveLength(1);
     }
+  });
+
+  it("preloads the residual-spirit pickup exactly once", () => {
+    const loadedSources = spriteImageLoadTargets().map((target) => target.src);
+
+    expect(loadedSources.filter((src) => src === RESIDUAL_SPIRIT_PICKUP_SPRITE.src))
+      .toHaveLength(1);
   });
 });
