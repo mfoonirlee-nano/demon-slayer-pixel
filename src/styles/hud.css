@@ -105,7 +105,7 @@
   transition: height 120ms steps(3, end);
 }
 
-.residual-spirit-bead-fill img {
+.residual-spirit-bead-soul {
   position: absolute;
   bottom: -1px;
   left: -1px;
@@ -114,6 +114,44 @@
   object-fit: contain;
   image-rendering: pixelated;
   image-rendering: crisp-edges;
+  transform-origin: 50% 75%;
+  animation:
+    residual-spirit-wisp-drift 840ms steps(4, end) var(--residual-spirit-delay) infinite,
+    residual-spirit-wisp-flicker 560ms steps(2, end) var(--residual-spirit-delay) infinite alternate;
+  will-change: transform, opacity;
+}
+
+.residual-spirit-vessel--healing .residual-spirit-bead-soul {
+  animation-duration: 420ms, 280ms;
+}
+
+@keyframes residual-spirit-wisp-drift {
+  0%,
+  100% {
+    transform: translate(0, 0);
+  }
+
+  25% {
+    transform: translate(1px, -1px);
+  }
+
+  50% {
+    transform: translate(0, -2px);
+  }
+
+  75% {
+    transform: translate(-1px, -1px);
+  }
+}
+
+@keyframes residual-spirit-wisp-flicker {
+  0% {
+    opacity: 0.72;
+  }
+
+  100% {
+    opacity: 1;
+  }
 }
 
 .residual-spirit-channel-seal {
@@ -188,6 +226,10 @@
 @media (prefers-reduced-motion: reduce) {
   .residual-spirit-bead-fill {
     transition: none;
+  }
+
+  .residual-spirit-bead-soul {
+    animation: none;
   }
 }
 

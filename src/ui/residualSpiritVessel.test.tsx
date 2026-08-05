@@ -36,6 +36,8 @@ describe("residual-spirit vessel", () => {
 
     expect(markup).toContain("residual-spirit-vessel-frame.png");
     expect(markup.match(/<img[^>]*residual-spirit\.png/g)).toHaveLength(BEAD_COUNT);
+    expect(markup.match(/residual-spirit-bead-soul/g)).toHaveLength(BEAD_COUNT);
+    expect(markup).toContain("--residual-spirit-delay:-700ms");
     expect(markup).toContain("25/60");
     expect(markup).toContain(">H</kbd>");
     expect(markup).toContain("residual-spirit-vessel--healing");

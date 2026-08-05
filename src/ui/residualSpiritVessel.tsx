@@ -5,6 +5,7 @@ import type { Language } from "../i18n/language";
 import { UiSprite, uiSpriteDisplaySize } from "./uiSprite";
 
 const RESIDUAL_SPIRIT_BEAD_COUNT = 6;
+const RESIDUAL_SPIRIT_PHASE_STEP_MS = 140;
 const FULL_CIRCLE_DEGREES = 360;
 const PERCENT_SCALE = 100;
 const RESIDUAL_SPIRIT_PICKUP_SRC = resolveStaticAssetUrl(
@@ -113,7 +114,15 @@ export function ResidualSpiritVessel({
               data-fill={ratio}
               style={{ height: `${ratio * PERCENT_SCALE}%` }}
             >
-              <img src={RESIDUAL_SPIRIT_PICKUP_SRC} alt="" draggable={false} />
+              <img
+                className="residual-spirit-bead-soul"
+                src={RESIDUAL_SPIRIT_PICKUP_SRC}
+                alt=""
+                draggable={false}
+                style={{
+                  "--residual-spirit-delay": `${-index * RESIDUAL_SPIRIT_PHASE_STEP_MS}ms`,
+                } as CSSProperties}
+              />
             </span>
           </span>
         ))}
