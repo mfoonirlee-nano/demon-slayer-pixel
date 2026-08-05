@@ -3,7 +3,7 @@ import { readFileSync } from "node:fs";
 import { URL } from "node:url";
 import { inflateSync } from "node:zlib";
 import { describe, expect, it } from "vitest";
-import { UI_SPRITES } from "../constants";
+import { RESIDUAL_SPIRIT_PICKUP_SPRITE, UI_SPRITES } from "../constants";
 import { HUD_SKILL_METER_FRAME } from "./gameHudLayout";
 
 const PNG_SIGNATURE = "89504e470d0a1a0a";
@@ -25,12 +25,6 @@ const MAX_ALPHA = 255;
 const PNG_FILTER_AVERAGE = 3;
 const PNG_FILTER_PAETH = 4;
 const OPAQUE_ALPHA_THRESHOLD = 128;
-const RESIDUAL_SPIRIT_PICKUP = {
-  src: "assets/sprites/pickups/residual-spirit.png",
-  w: 96,
-  h: 96,
-};
-
 function readPngAlpha(src) {
   const fileUrl = new URL(`../../${src}`, import.meta.url);
   const buffer = readFileSync(fileUrl);
@@ -190,6 +184,6 @@ describe("game HUD sprite geometry", () => {
 
   it("keeps generated residual-spirit assets on their transparent PNG contracts", () => {
     expectTransparentPngAsset(UI_SPRITES.residualSpiritVesselFrame);
-    expectTransparentPngAsset(RESIDUAL_SPIRIT_PICKUP);
+    expectTransparentPngAsset(RESIDUAL_SPIRIT_PICKUP_SPRITE);
   });
 });

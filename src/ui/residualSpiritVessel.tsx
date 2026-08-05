@@ -1,5 +1,6 @@
 import type { CSSProperties } from "react";
 import { resolveStaticAssetUrl } from "../assets/staticAssetUrl";
+import { RESIDUAL_SPIRIT_PICKUP_SPRITE } from "../constants";
 import type { Language } from "../i18n/language";
 import { UiSprite, uiSpriteDisplaySize } from "./uiSprite";
 
@@ -7,7 +8,7 @@ const RESIDUAL_SPIRIT_BEAD_COUNT = 6;
 const FULL_CIRCLE_DEGREES = 360;
 const PERCENT_SCALE = 100;
 const RESIDUAL_SPIRIT_PICKUP_SRC = resolveStaticAssetUrl(
-  "assets/sprites/pickups/residual-spirit.png",
+  RESIDUAL_SPIRIT_PICKUP_SPRITE.src,
 );
 
 function clamp(value: number, min: number, max: number) {

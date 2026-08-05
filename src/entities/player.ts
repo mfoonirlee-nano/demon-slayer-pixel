@@ -133,11 +133,6 @@ export function gainUltimateEnergy(amount: number) {
   grantUltimateEnergy(state, amount);
 }
 
-export function healPlayer(amount: number) {
-  const p = state.player;
-  p.hp = Math.min(p.maxHp, p.hp + amount);
-}
-
 export function selectSkill(index: number) {
   selectSkillSlot(state, index);
 }
