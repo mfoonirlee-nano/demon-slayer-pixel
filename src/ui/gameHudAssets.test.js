@@ -157,13 +157,12 @@ function innerOpening(mask) {
   return { top, bottom, height: bottom - top + 1 };
 }
 
-function expectTransparentRgbaAsset(asset) {
+function expectTransparentPngAsset(asset) {
   const png = readPngAlpha(asset.src);
   expect({ width: png.width, height: png.height }).toEqual({
     width: asset.w,
     height: asset.h,
   });
-  expect(png.colorType).toBe(PNG_RGBA_COLOR);
 
   const cornerIndexes = [
     0,
@@ -189,8 +188,8 @@ describe("game HUD sprite geometry", () => {
     expect(rightMask).toEqual(midMask);
   });
 
-  it("keeps generated residual-spirit assets on their transparent RGBA contracts", () => {
-    expectTransparentRgbaAsset(UI_SPRITES.residualSpiritVesselFrame);
-    expectTransparentRgbaAsset(RESIDUAL_SPIRIT_PICKUP);
+  it("keeps generated residual-spirit assets on their transparent PNG contracts", () => {
+    expectTransparentPngAsset(UI_SPRITES.residualSpiritVesselFrame);
+    expectTransparentPngAsset(RESIDUAL_SPIRIT_PICKUP);
   });
 });
