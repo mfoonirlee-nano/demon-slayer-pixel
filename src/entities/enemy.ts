@@ -96,7 +96,8 @@ function sideForPattern(pattern: SpawnPattern): number {
 function isPlatformSpawnCandidate(platform: PlatformState) {
   return platform.x >= WIDTH
     && platform.x <= WIDTH + PLATFORM_SPAWN_MAX_DISTANCE
-    && platform.kind !== "hover";
+    && platform.kind !== "hover"
+    && platform.reservedForTreasure !== true;
 }
 
 function platformSpawnCandidate() {

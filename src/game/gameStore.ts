@@ -17,6 +17,7 @@ import type {
   EquipmentSlot,
   PlayerStatusSnapshot,
   SkillLevel,
+  TreasureChoiceState,
   UltimateLevel,
   UpgradeChoiceState,
 } from "../types/game-state";
@@ -71,7 +72,14 @@ export type EquipmentSnapshot = {
   equipped: Record<EquipmentSlot, EquipmentItemState | null>;
 };
 
-export type ActiveOverlay = "none" | "pause" | "upgrade" | "bossEquipment" | "death" | "victory";
+export type ActiveOverlay =
+  | "none"
+  | "pause"
+  | "upgrade"
+  | "bossEquipment"
+  | "treasure"
+  | "death"
+  | "victory";
 
 export type GameSnapshot = {
   elapsed: number;
@@ -91,6 +99,7 @@ export type GameSnapshot = {
   equipment: EquipmentSnapshot;
   pendingUpgradeChoices: UpgradeChoiceState[];
   pendingEquipmentChoices: EquipmentChoiceState[];
+  pendingTreasureChoices: TreasureChoiceState[];
 };
 
 const initialSnapshot: GameSnapshot = {
@@ -148,6 +157,7 @@ const initialSnapshot: GameSnapshot = {
   },
   pendingUpgradeChoices: [],
   pendingEquipmentChoices: [],
+  pendingTreasureChoices: [],
 };
 
 export const gameStore = createStore();

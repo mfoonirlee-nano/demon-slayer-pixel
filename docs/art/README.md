@@ -9,5 +9,6 @@
 | 主题 | 文档 |
 | --- | --- |
 | 玩家原画设定 | [player.md](player.md) |
+| 月潮灵匣原画设定 | [moon-tide-treasure.md](moon-tide-treasure.md) |
 | 敌人原画设定 | [enemies/README.md](enemies/README.md) |
 | Boss 原画设定 | [bosses/README.md](bosses/README.md) |

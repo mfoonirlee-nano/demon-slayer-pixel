@@ -8,6 +8,7 @@ import {
   MIST_BONE_DART_SHEET,
   MIST_BONE_LINE_CAST_SHEET,
   MOON_TIDE_PLAYER_SHEETS,
+  MOON_TIDE_TREASURE_SPRITE,
   PLAYER_ANIMATION_STATES,
   PLAYER_SHEETS,
   RESIDUAL_SPIRIT_PICKUP_SPRITE,
@@ -97,6 +98,13 @@ describe("sprite manifest", () => {
     const loadedSources = spriteImageLoadTargets().map((target) => target.src);
 
     expect(loadedSources.filter((src) => src === RESIDUAL_SPIRIT_PICKUP_SPRITE.src))
+      .toHaveLength(1);
+  });
+
+  it("preloads the Moon-Tide treasure sequence exactly once", () => {
+    const loadedSources = spriteImageLoadTargets().map((target) => target.src);
+
+    expect(loadedSources.filter((src) => src === MOON_TIDE_TREASURE_SPRITE.src))
       .toHaveLength(1);
   });
 });

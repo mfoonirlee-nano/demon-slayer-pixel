@@ -30,11 +30,11 @@
 | 蚀醒形态 Boss | 未实现 | 第 7-12 幕同序蚀醒：基础 Boss + 一招蚀醒妖术 + 多一阶段 + 强化召唤，复用基础精灵 | 目标设计，未实现 | P4 | `docs/numeric-system/boss-archetypes.md` |
 | 终幕万相血月 | `bossKills >= 12` 后出场；5 阶段换相借招、专属施法/特效和击败后停止 Boss 重生已接入 | 第 13 幕击败出胜利结算，不进任何轮换池；死亡动画状态机和通关后进阶待接 | 部分实现 | P4 | `docs/art/bosses/blood-moon-many-faces.md` |
 | 通关后进阶难度 | 未实现 | 血月试炼可叠加难度层（横向解锁，不给局外永久战力） | 目标设计，未实现 | P5 | `docs/numeric-system/endgame-ascension.md` |
-| 地图生成 | 片段式平台生成、张力、低层恢复和防重叠已实现；地图不再维护奖励预算 | 按幕数调整片段权重和平台速度，保留喘息片段 | 部分实现 | P2 | `src/entities/platform.ts`、`docs/map-generation.md` |
-| 奖励拾取 | 分数、技能能量、大招能量、XP、敌人残灵掉落/储存/主动治疗和 Boss 装备三选一已实现；收集残灵不直接回血 | 按试玩数据校准残灵供给与引灵决策压力，保持装备与升级覆盖层依次展示 | 已实现 | P2 | `src/entities/residualSpirit.ts`、`src/entities/enemies/defeat.ts`、`docs/numeric-system/rewards.md` |
+| 地图生成 | 片段式平台生成、张力、低层恢复、防重叠和月潮灵匣专用的可达高台支路已实现；地图不维护奖励预算 | 按幕数调整片段权重和平台速度，保留喘息片段，并继续根据领取率校准高台路线风险 | 部分实现 | P2 | `src/entities/platform.ts`、`src/entities/platforms/treasureRoute.ts`、`docs/map-generation.md` |
+| 奖励拾取 | 分数、技能能量、大招能量、XP、敌人残灵、Boss 装备三选一和每幕一次的月潮灵匣动态三选一已实现；灵匣会按幕数与玩家资源缺口生成实际有效奖励 | 按试玩数据校准残灵供给、灵匣领取率和动态候选分布，保持三类奖励覆盖层依次展示 | 已实现 | P2 | `src/entities/residualSpirit.ts`、`src/systems/highPlatformTreasure.ts`、`src/systems/treasureRewards.ts`、`docs/numeric-system/rewards.md` |
 | 经验升级 | 单局 XP、角色等级、普通技能/大招成长、升级三选一和奖励暂停已实现；正常每幕普通战斗 +1 级、Boss +1 级 | 继续用实际试玩数据校准清怪时点和候选池体验 | 已实现 | P2 | `src/systems/progression.ts`、`docs/numeric-system/progression.md` |
 | 装备系统 | 18 件普通品质装备、Boss 三选一、`blade/garb/talisman` 三槽位、暂停页换装和集中属性派生已接入 | 按 `actBand` 接入精良/觉醒品质与更完整的掉落权重 | 部分实现 | P2 | `docs/numeric-system/equipment.md` |
-| HUD | 生命、技能图标/能量、大招球、六珠灵龛残灵储量/引灵进度、Boss 血条、等级/XP/幕数和限时或常驻被动状态图标条已实现；回涡二段跳使用技能图标显示 | 补选择队列状态并继续校准移动端信息密度 | 部分实现 | P2 | `src/ui/gameHud.tsx`、`src/game/gameStore.ts`、`src/systems/playerStatuses.ts` |
+| HUD | 生命、技能图标/能量、大招球、六珠灵龛残灵储量/引灵进度、Boss 血条、等级/XP/幕数、状态图标和 Boss/灵匣/升级奖励队列已实现；回涡二段跳使用技能图标显示 | 继续校准移动端信息密度和灵匣卡片的实际试玩可读性 | 部分实现 | P2 | `src/ui/gameHud.tsx`、`src/ui/rewardOverlay.tsx`、`src/game/gameStore.ts`、`src/systems/playerStatuses.ts` |
 | Pause overlay | 暂停面板、技能说明、关键数值已实现 | 统一 overlay 规范、输入规则和移动端布局 | 部分实现 | P3 | `src/App.tsx` |
 | Death overlay | 死亡动画、生存时间、`R` 重开已实现 | 增加主要死亡原因和简短复盘提示 | 部分实现 | P3 | `src/App.tsx` |
 | 移动端触控 | 移动、跳跃、攻击、技能、大招、引灵治疗和暂停按钮已实现 | 增加选择 overlay 的触屏输入规范 | 部分实现 | P3 | `src/App.tsx`、`src/input.ts` |
@@ -48,7 +48,7 @@
 2. 敌人已有多个状态机，但生成池仍缺少按幕配置和预算模型。
 3. 地图生成已经比较完整，但还没有读取幕数/威胁值。
 4. XP 和装备闭环已经接入，但仍缺少实际试玩 telemetry 来校准不同清怪效率下的升级时点。
-5. UI overlay 之间缺少统一队列规则；升级三选一和装备三选一不能同时覆盖。
+5. 月潮灵匣的附着率、登高尝试率、领取率和动态候选分布仍缺少实际试玩遥测校准。
 6. 13 幕骨架（6 基础 + 6 蚀醒 + 终幕）只有设计文档，没有 Boss 注册表、蚀醒叠加逻辑或终幕换相；通关后进阶难度尚未设计落地点。
 
 ## Status Source Rule

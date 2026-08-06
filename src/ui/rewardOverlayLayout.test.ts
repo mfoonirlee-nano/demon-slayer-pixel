@@ -19,6 +19,7 @@ const UPGRADE_MIN_TEXT_GAP_BELOW_ICON = 12;
 const UPGRADE_MIN_CARD_SCALE = 0.82;
 const UPGRADE_MIN_PANEL_BOTTOM_PADDING = 44;
 const UPGRADE_MIN_TEXT_BOTTOM = 60;
+const TREASURE_MAX_TITLE_TOP = 24;
 
 describe("reward overlay layout", () => {
   it("keeps boss equipment cards inside the displayed panel", () => {
@@ -82,6 +83,16 @@ describe("reward overlay layout", () => {
     expect(layout.cardContent.insetX).toBeGreaterThanOrEqual(UPGRADE_MIN_TEXT_INSET_X);
     expect(layout.cardContent.top).toBeGreaterThan(layout.cardBoxH / CARD_BODY_QUARTER_DIVISOR);
     expect(layout.cardContent.bottom).toBeGreaterThanOrEqual(UPGRADE_MIN_TEXT_BOTTOM);
+    expect(layout.cardContent.top + layout.cardContent.bottom).toBeLessThan(layout.cardBoxH);
+  });
+
+  it("fits treasure choices in the moon-tide reward frame", () => {
+    const layout = getRewardOverlayLayout("treasure", CHOICE_COUNT);
+
+    expect(layout.titleTop).toBeLessThanOrEqual(TREASURE_MAX_TITLE_TOP);
+    expect(layout.panelSprite).toBe("upgradeRewardPanel");
+    expect(layout.cardRowTop + layout.cardBoxH).toBeLessThanOrEqual(layout.panelDisplaySize.h);
+    expect(layout.cardContent.top).toBeGreaterThan(layout.cardIcon!.top + layout.cardIcon!.size);
     expect(layout.cardContent.top + layout.cardContent.bottom).toBeLessThan(layout.cardBoxH);
   });
 });

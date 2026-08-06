@@ -9,6 +9,12 @@ const HALF = 0.5;
 const DEFAULT_HIT_JITTER_RATIO = 0.25;
 const DEFAULT_OVERLAP_MAX_JITTER = 8;
 const DEFAULT_NEAREST_HIT_JITTER = 6;
+const RNG_INCREMENT = 0x6d2b79f5;
+const RNG_FIRST_SHIFT = 15;
+const RNG_SECOND_SHIFT = 7;
+const RNG_SECOND_MASK = 61;
+const RNG_FINAL_SHIFT = 14;
+const RNG_UNIT_DIVISOR = 4_294_967_296;
 
 export type RectLike = {
   x: number;
@@ -44,6 +50,34 @@ export function hitbox(a: RectLike, b: RectLike) {
 
 export function clamp(value: number, min: number, max: number) {
   return Math.max(min, Math.min(max, value));
+}
+
+export function seededRandom(seed: number) {
+  let value = seed >>> 0;
+  return () => {
+    value += RNG_INCREMENT;
+    let next = value;
+    next = Math.imul(next ^ (next >>> RNG_FIRST_SHIFT), next | 1);
+    next ^= next + Math.imul(next ^ (next >>> RNG_SECOND_SHIFT), next | RNG_SECOND_MASK);
+    return ((next ^ (next >>> RNG_FINAL_SHIFT)) >>> 0) / RNG_UNIT_DIVISOR;
+  };
+}
+
+export function weightedRandomPick<T>(
+  items: readonly T[],
+  weightFor: (item: T) => number,
+  rng: () => number,
+): T | null {
+  let total = 0;
+  for (const item of items) total += Math.max(0, weightFor(item));
+  if (total <= 0) return items[0] ?? null;
+
+  let roll = rng() * total;
+  for (const item of items) {
+    roll -= Math.max(0, weightFor(item));
+    if (roll <= 0) return item;
+  }
+  return items[items.length - 1] ?? null;
 }
 
 export function overlapHitPoint(a: RectLike, b: RectLike, jitterRatio = DEFAULT_HIT_JITTER_RATIO, maxJitter = DEFAULT_OVERLAP_MAX_JITTER) {

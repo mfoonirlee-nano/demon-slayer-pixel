@@ -18,6 +18,7 @@ import { spawnEnemyBySheetIndex } from "../entities/enemy";
 import { setCanvas } from "../rendering/context";
 import { drawNearForeground } from "../rendering/nearForeground";
 import { createBossEquipmentChoices } from "../systems/equipment";
+import { addRunXp, xpToNextLevel } from "../systems/progression";
 import {
   gameStore,
   isCollisionDebugEnabledAtom,
@@ -25,7 +26,12 @@ import {
 } from "./gameStore";
 import { setupInput } from "./input";
 import { resetState, state } from "./state";
-import { startGame, stopGame, updateUltimateCastFreezeFrame } from "./runtime";
+import {
+  chooseTreasureReward,
+  startGame,
+  stopGame,
+  updateUltimateCastFreezeFrame,
+} from "./runtime";
 
 vi.mock("../rendering/background", () => ({
   drawBackground: vi.fn(),
@@ -60,12 +66,15 @@ const ULTIMATE_FREEZE_ELAPSED = 42;
 const ULTIMATE_FREEZE_PLATFORM_SPAWN_TIMER = 3;
 const SPAWN_OCCLUDER_TEST_PADDING = 200;
 const SPAWN_OCCLUDER_TEST_SIZE = 400;
+const TREASURE_HEALTH_AFTER = 50;
+const UPGRADE_CHOICE_COUNT = 3;
 
 function createMockContext(): MockCanvasContext {
   return {
     drawImage: vi.fn(),
     beginPath: vi.fn(),
     clip: vi.fn(),
+    fillRect: vi.fn(),
     filter: "none",
     globalAlpha: 1,
     globalCompositeOperation: "source-over",
@@ -188,6 +197,114 @@ describe("game runtime", () => {
     expect(state.player.vy).toBe(ULTIMATE_FREEZE_VELOCITY_Y);
     expect(state.elapsed).toBe(ULTIMATE_FREEZE_ELAPSED);
     expect(state.platformSpawnTimer).toBe(ULTIMATE_FREEZE_PLATFORM_SPAWN_TIMER);
+  });
+
+  it("freezes gameplay while the treasure choice overlay is unresolved", () => {
+    const frameQueue: { callback?: FrameRequestCallback } = {};
+    vi.stubGlobal("requestAnimationFrame", vi.fn((callback: FrameRequestCallback) => {
+      frameQueue.callback = callback;
+      return 1;
+    }));
+    vi.stubGlobal("cancelAnimationFrame", vi.fn());
+    setCanvas({ getContext: () => createMockContext() } as unknown as HTMLCanvasElement);
+    state.spritesReady = true;
+    startGame();
+    state.elapsed = ULTIMATE_FREEZE_ELAPSED;
+    state.pendingTreasureChoices = [{
+      id: "treasure-freeze",
+      kind: "health",
+      amount: 10,
+      before: 40,
+      after: 50,
+    }];
+    state.player.vx = ULTIMATE_FREEZE_VELOCITY_X;
+    const startX = state.player.x;
+
+    frameQueue.callback?.(TEST_FRAME_TIME);
+
+    expect(state.elapsed).toBe(ULTIMATE_FREEZE_ELAPSED);
+    expect(state.player.x).toBe(startX);
+    expect(state.player.vx).toBe(ULTIMATE_FREEZE_VELOCITY_X);
+  });
+
+  it("finishes a same-frame treasure reveal before an already queued level upgrade", () => {
+    const frameQueue: { callback?: FrameRequestCallback } = {};
+    vi.stubGlobal("requestAnimationFrame", vi.fn((callback: FrameRequestCallback) => {
+      frameQueue.callback = callback;
+      return 1;
+    }));
+    vi.stubGlobal("cancelAnimationFrame", vi.fn());
+    const snapshots: GameSnapshot[] = [];
+    setCanvas({ getContext: () => createMockContext() } as unknown as HTMLCanvasElement);
+    state.spritesReady = true;
+    startGame({ onStateChange: (snapshot) => snapshots.push(snapshot) });
+    addRunXp(state, xpToNextLevel(state.player.runLevel));
+    state.treasureReveal = {
+      choices: [{
+        id: "treasure-after-upgrade",
+        kind: "health",
+        amount: 10,
+        before: 40,
+        after: 50,
+      }],
+      duration: 0.01,
+      elapsed: 0,
+      queued: false,
+      x: 400,
+      y: 180,
+    };
+
+    frameQueue.callback?.(TEST_FRAME_TIME);
+    expect(snapshots[snapshots.length - 1]?.activeOverlay).toBe("none");
+    frameQueue.callback?.(TEST_FRAME_TIME * 2);
+
+    expect(state.pendingUpgradeChoices).toHaveLength(UPGRADE_CHOICE_COUNT);
+    expect(state.pendingTreasureChoices).toHaveLength(1);
+    expect(snapshots[snapshots.length - 1]?.activeOverlay).toBe("treasure");
+  });
+
+  it("settles a treasure overlay callback only once", () => {
+    state.player.hp = 40;
+    state.pendingTreasureChoices = [{
+      id: "treasure-health",
+      kind: "health",
+      amount: 10,
+      before: 40,
+      after: 50,
+    }];
+
+    chooseTreasureReward(0);
+    chooseTreasureReward(0);
+
+    expect(state.player.hp).toBe(TREASURE_HEALTH_AFTER);
+    expect(state.pendingTreasureChoices).toEqual([]);
+  });
+
+  it("allows restart only after the run ends, not through an unresolved treasure choice", () => {
+    vi.stubGlobal("requestAnimationFrame", vi.fn(() => 1));
+    vi.stubGlobal("cancelAnimationFrame", vi.fn());
+    setCanvas({ getContext: () => createMockContext() } as unknown as HTMLCanvasElement);
+    state.spritesReady = true;
+    startGame();
+    state.elapsed = ULTIMATE_FREEZE_ELAPSED;
+    state.pendingTreasureChoices = [{
+      id: "treasure-restart-guard",
+      kind: "health",
+      amount: 10,
+      before: 40,
+      after: 50,
+    }];
+
+    vi.mocked(setupInput).mock.calls[0][0].onRestart?.();
+
+    expect(state.elapsed).toBe(ULTIMATE_FREEZE_ELAPSED);
+    expect(state.pendingTreasureChoices).toHaveLength(1);
+
+    state.gameOver = true;
+    vi.mocked(setupInput).mock.calls[0][0].onRestart?.();
+
+    expect(state.elapsed).toBe(0);
+    expect(state.pendingTreasureChoices).toEqual([]);
   });
 
   it("plays the boss split before showing rewards while gameplay stays frozen", () => {

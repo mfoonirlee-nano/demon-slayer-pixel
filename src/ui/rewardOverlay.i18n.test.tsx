@@ -7,7 +7,11 @@ import { gameSnapshotAtom, gameStore } from "../game/gameStore";
 import { localizeEquipmentItem } from "../i18n/equipmentCopy";
 import { languageAtom } from "../i18n/language";
 import { equipmentItem } from "../systems/equipment";
-import type { EquipmentChoiceState, UpgradeChoiceState } from "../types/game-state";
+import type {
+  EquipmentChoiceState,
+  TreasureChoiceState,
+  UpgradeChoiceState,
+} from "../types/game-state";
 import { RewardOverlay } from "./rewardOverlay";
 
 const CHINESE_UPGRADE: UpgradeChoiceState = {
@@ -100,5 +104,67 @@ describe("RewardOverlay localization", () => {
 
     expect(markup).toContain("2-piece: Gain 15% dodge chance.");
     expect(markup).toContain("3-piece: Shadowglide triggers grant +10 skill energy.");
+  });
+
+  it("shows treasure resource gains, live transitions, and a level-up hint", () => {
+    const store = createStore();
+    store.set(languageAtom, "en");
+    const choices: TreasureChoiceState[] = [
+      { id: "health", kind: "health", amount: 15, before: 10, after: 25 },
+      { id: "xp", kind: "runXp", amount: 24, before: 80, after: 104 },
+    ];
+    const baseSnapshot = gameStore.get(gameSnapshotAtom);
+    const snapshot = {
+      ...baseSnapshot,
+      activeOverlay: "treasure" as const,
+      pendingTreasureChoices: choices,
+      player: { ...baseSnapshot.player, xpToNext: 100 },
+    };
+
+    const markup = renderToStaticMarkup(
+      <Provider store={store}>
+        <RewardOverlay snapshot={snapshot} />
+      </Provider>,
+    );
+
+    expect(markup).toContain("Moon-Tide Coffer");
+    expect(markup).toContain("Life Tide");
+    expect(markup).toContain("+15");
+    expect(markup).toContain("10 → 25");
+    expect(markup).not.toContain("80 → 104");
+    expect(markup).toContain("Levels you up, then opens an upgrade choice");
+  });
+
+  it("identifies the equipped item replaced by a treasure relic", () => {
+    const store = createStore();
+    store.set(languageAtom, "en");
+    const current = equipmentItem("flow_blade", "common");
+    const replacement = equipmentItem("burst_blade", "common");
+    if (!current || !replacement) throw new Error("Expected blade equipment");
+    const choice: TreasureChoiceState = {
+      id: "replacement",
+      kind: "equipment",
+      equipment: { ...replacement, previousTier: null, reason: "replacement" },
+      replacedEquippedId: current.id,
+    };
+    const baseSnapshot = gameStore.get(gameSnapshotAtom);
+    const snapshot = {
+      ...baseSnapshot,
+      activeOverlay: "treasure" as const,
+      equipment: {
+        ...baseSnapshot.equipment,
+        equipped: { ...baseSnapshot.equipment.equipped, blade: current },
+      },
+      pendingTreasureChoices: [choice],
+    };
+
+    const markup = renderToStaticMarkup(
+      <Provider store={store}>
+        <RewardOverlay snapshot={snapshot} />
+      </Provider>,
+    );
+
+    expect(markup).toContain("Moonbreak Blade");
+    expect(markup).toContain("Replace current Blade: Flow Blade");
   });
 });

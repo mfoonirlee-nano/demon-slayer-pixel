@@ -81,6 +81,7 @@ import {
   MIRROR_SHARD_SHEET,
   MOUNTAIN_SPRITES,
   MOON_TIDE_PLAYER_SHEETS,
+  MOON_TIDE_TREASURE_SPRITE,
   PLATFORM_SPRITES,
   PLAYER_SHEETS,
   RUNNER_SHEETS,
@@ -213,6 +214,7 @@ export function spriteImageLoadTargets(): ImageLoadTarget[] {
       ...ultimateSkillSheets(),
       ...allPlayerSkills(),
       RESIDUAL_SPIRIT_PICKUP_SPRITE,
+      MOON_TIDE_TREASURE_SPRITE,
     ]),
     ...Object.values(GROUND_TILE_SPRITES.sets).map(occlusionImageTarget),
   ];

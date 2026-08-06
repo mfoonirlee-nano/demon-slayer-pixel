@@ -12,3 +12,4 @@ export * from "./ui";
 export * from "./uiSprites";
 export * from "./statusEffects";
 export * from "./residualSpirit";
+export * from "./treasure";

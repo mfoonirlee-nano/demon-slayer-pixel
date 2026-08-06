@@ -1,7 +1,11 @@
 import { type CSSProperties, useEffect, useState } from "react";
 import { useAtomValue } from "jotai";
 import { resolveStaticAssetUrl } from "../assets/staticAssetUrl";
-import { chooseBossEquipment, chooseUpgradeReward } from "../game/runtime";
+import {
+  chooseBossEquipment,
+  chooseTreasureReward,
+  chooseUpgradeReward,
+} from "../game/runtime";
 import type { GameSnapshot } from "../game/gameStore";
 import {
   equipmentFamilyLabel,
@@ -14,7 +18,12 @@ import { languageAtom, type Language } from "../i18n/language";
 import { message, type MessageKey } from "../i18n/messages";
 import { localizeUpgradeChoice } from "../i18n/upgradeCopy";
 import { playerSkillColor } from "../systems/skillCatalog";
-import type { EquipmentChoiceState, UpgradeChoiceState, UpgradeChoiceType } from "../types/game-state";
+import type {
+  EquipmentChoiceState,
+  TreasureChoiceState,
+  UpgradeChoiceState,
+  UpgradeChoiceType,
+} from "../types/game-state";
 import {
   equipmentRewardMetrics,
   upgradeRewardMetrics,
@@ -22,7 +31,11 @@ import {
   type RewardMetricTone,
 } from "./rewardChoiceDetails";
 import { equipmentIconSrc, equipmentSlotBadgeSrc, skillIconSrc } from "./uiDisplay";
-import { getRewardOverlayLayout } from "./rewardOverlayLayout";
+import {
+  getRewardOverlayLayout,
+  type RewardOverlayKind,
+} from "./rewardOverlayLayout";
+import { TreasureRewardCard } from "./treasureRewardCard";
 import { UiSprite } from "./uiSprite";
 
 const ULTIMATE_SKILL_ICON_SRC = resolveStaticAssetUrl(
@@ -35,6 +48,15 @@ export const REWARD_OVERLAY_CARD_CLASS = "reward-overlay-card";
 
 const BOSS_ICON_BADGE_MIN_SIZE = 12;
 const BOSS_ICON_BADGE_SIZE_RATIO = 0.34;
+const REWARD_COMMIT_KEYS = new Set(["Enter", "1", "2", "3"]);
+
+export function isRewardCommitKey(key: string) {
+  return REWARD_COMMIT_KEYS.has(key);
+}
+
+export function shouldIgnoreRepeatedRewardCommit(key: string, repeat: boolean) {
+  return repeat && isRewardCommitKey(key);
+}
 
 const REWARD_METRIC_TONE_COLORS: Record<RewardMetricTone, string> = {
   damage: "#ffd46e",
@@ -134,28 +156,59 @@ function RewardMetricList({ metrics, accent }: { metrics: RewardChoiceMetric[]; 
   );
 }
 
+function chooseReward(kind: RewardOverlayKind, index: number) {
+  if (kind === "bossEquipment") {
+    chooseBossEquipment(index);
+    return;
+  }
+  if (kind === "treasure") {
+    chooseTreasureReward(index);
+    return;
+  }
+  chooseUpgradeReward(index);
+}
+
 export function RewardOverlay({ snapshot }: { snapshot: GameSnapshot }) {
   const language = useAtomValue(languageAtom);
-  const isBossReward = snapshot.activeOverlay === "bossEquipment";
-  const choices = isBossReward ? snapshot.pendingEquipmentChoices : snapshot.pendingUpgradeChoices;
+  const overlayKind: RewardOverlayKind = snapshot.activeOverlay === "bossEquipment"
+    ? "bossEquipment"
+    : snapshot.activeOverlay === "treasure"
+      ? "treasure"
+      : "upgrade";
+  const isBossReward = overlayKind === "bossEquipment";
+  const isTreasureReward = overlayKind === "treasure";
+  const choices = isBossReward
+    ? snapshot.pendingEquipmentChoices
+    : isTreasureReward
+      ? snapshot.pendingTreasureChoices
+      : snapshot.pendingUpgradeChoices;
   const choiceCount = choices.length;
   const choiceIds = choices.map((choice) => choice.id).join("|");
   const [selectedIndex, setSelectedIndex] = useState(0);
   const selectedChoiceIndex = choiceCount > 0 ? Math.min(selectedIndex, choiceCount - 1) : 0;
-  const layout = getRewardOverlayLayout(isBossReward ? "bossEquipment" : "upgrade", choices.length);
+  const layout = getRewardOverlayLayout(overlayKind, choices.length);
   const title = message(
     language,
-    isBossReward ? "reward.title.equipment" : "reward.title.upgrade",
+    isBossReward
+      ? "reward.title.equipment"
+      : isTreasureReward
+        ? "reward.title.treasure"
+        : "reward.title.upgrade",
   );
 
   useEffect(() => {
     setSelectedIndex(0);
-  }, [choiceIds, isBossReward]);
+  }, [choiceIds, overlayKind]);
 
   useEffect(() => {
     const handleRewardKey = (event: KeyboardEvent) => {
       const key = event.key;
       if (choiceCount <= 0) return;
+      if (shouldIgnoreRepeatedRewardCommit(key, event.repeat)) {
+        event.preventDefault();
+        event.stopPropagation();
+        return;
+      }
 
       if (key === "ArrowLeft" || key === "ArrowRight") {
         event.preventDefault();
@@ -171,11 +224,7 @@ export function RewardOverlay({ snapshot }: { snapshot: GameSnapshot }) {
       if (key === "Enter") {
         event.preventDefault();
         event.stopPropagation();
-        if (isBossReward) {
-          chooseBossEquipment(selectedChoiceIndex);
-        } else {
-          chooseUpgradeReward(selectedChoiceIndex);
-        }
+        chooseReward(overlayKind, selectedChoiceIndex);
         return;
       }
 
@@ -184,25 +233,22 @@ export function RewardOverlay({ snapshot }: { snapshot: GameSnapshot }) {
       if (index >= choiceCount) return;
       event.preventDefault();
       event.stopPropagation();
-      if (isBossReward) {
-        chooseBossEquipment(index);
-      } else {
-        chooseUpgradeReward(index);
-      }
+      chooseReward(overlayKind, index);
     };
 
     window.addEventListener("keydown", handleRewardKey, { capture: true });
     return () => window.removeEventListener("keydown", handleRewardKey, { capture: true });
-  }, [choiceCount, isBossReward, selectedChoiceIndex]);
+  }, [choiceCount, overlayKind, selectedChoiceIndex]);
 
   return (
     <div
-      className={`${REWARD_OVERLAY_BACKDROP_CLASS} absolute inset-0 z-40 flex items-center justify-center bg-[rgba(4,7,16,0.78)] px-4 text-white`}
+      className={`${REWARD_OVERLAY_BACKDROP_CLASS} ${isTreasureReward ? "reward-overlay-treasure" : ""} absolute inset-0 z-40 flex items-center justify-center bg-[rgba(4,7,16,0.78)] px-4 text-white`}
     >
       <div
         className={`${REWARD_OVERLAY_PANEL_CLASS} relative`}
         style={{ width: layout.overlayW, height: layout.overlayH }}
       >
+        {isTreasureReward ? <div className="reward-treasure-panel-aura" aria-hidden="true" /> : null}
         <UiSprite
           id={layout.panelSprite}
           width={layout.panelDisplaySize.w}
@@ -212,7 +258,12 @@ export function RewardOverlay({ snapshot }: { snapshot: GameSnapshot }) {
         />
 
         <div className="absolute inset-x-0 text-center" style={{ top: layout.titleTop }}>
-          <div className={`text-[14px] font-bold leading-none ${isBossReward ? "text-[#ffd46e]" : "text-[#26d5ff]"}`}>{title}</div>
+          <div className={`text-[14px] font-bold leading-none ${isBossReward ? "text-[#ffd46e]" : isTreasureReward ? "text-[#ffe099]" : "text-[#26d5ff]"}`}>{title}</div>
+          {isTreasureReward ? (
+            <div className="mt-1 text-[7px] leading-none text-[#8ee9ff]">
+              {message(language, "reward.treasure.subtitle")}
+            </div>
+          ) : null}
         </div>
 
         <div
@@ -227,12 +278,15 @@ export function RewardOverlay({ snapshot }: { snapshot: GameSnapshot }) {
             const item = isBossReward
               ? localizeEquipmentItem(language, choice as EquipmentChoiceState)
               : null;
-            const upgrade = isBossReward
+            const upgrade = isBossReward || isTreasureReward
               ? null
               : localizeUpgradeChoice(
                 language,
                 choice as typeof snapshot.pendingUpgradeChoices[number],
               );
+            const treasure = isTreasureReward
+              ? choice as TreasureChoiceState
+              : null;
             const upgradeStyle = upgrade ? UPGRADE_CHOICE_STYLE[upgrade.type] : null;
             const upgradeAccent = upgrade && upgradeStyle
               ? upgrade.skillId
@@ -262,24 +316,32 @@ export function RewardOverlay({ snapshot }: { snapshot: GameSnapshot }) {
             return (
               <button
                 key={choice.id}
-                className={`${REWARD_OVERLAY_CARD_CLASS} relative border-0 bg-transparent p-0 text-left`}
+                className={`${REWARD_OVERLAY_CARD_CLASS} ${isTreasureReward ? "reward-treasure-card" : ""} relative border-0 bg-transparent p-0 text-left`}
+                data-selected={selected}
                 style={{
                   "--reward-card-index": index,
                   width: layout.cardBoxW,
                   height: layout.cardBoxH,
                 } as CSSProperties}
-                onClick={() => {
-                  if (isBossReward) chooseBossEquipment(index);
-                  else chooseUpgradeReward(index);
-                }}
+                onClick={() => chooseReward(overlayKind, index)}
+                onFocus={() => setSelectedIndex(index)}
+                onPointerEnter={() => setSelectedIndex(index)}
               >
                 <UiSprite
                   id={choiceCardSprite}
                   width={choiceCardSize.w}
                   height={choiceCardSize.h}
-                  className="relative mx-auto"
+                  className={`relative mx-auto ${isTreasureReward ? "reward-treasure-card-shell" : ""}`}
                 >
-                  {item && layout.cardIcon ? (
+                  {treasure ? (
+                    <TreasureRewardCard
+                      choice={treasure}
+                      language={language}
+                      layout={layout}
+                      selected={selected}
+                      snapshot={snapshot}
+                    />
+                  ) : item && layout.cardIcon ? (
                     <div
                       className="absolute left-1/2 z-10 flex -translate-x-1/2 items-center justify-center overflow-hidden rounded-full border bg-[rgba(3,10,22,0.86)]"
                       style={{

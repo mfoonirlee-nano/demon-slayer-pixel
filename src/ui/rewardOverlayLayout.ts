@@ -1,7 +1,7 @@
 import { type UiSpriteId } from "../constants";
 import { uiSpriteDisplaySize } from "./uiSprite";
 
-export type RewardOverlayKind = "upgrade" | "bossEquipment";
+export type RewardOverlayKind = "upgrade" | "bossEquipment" | "treasure";
 
 type RewardLayoutConfig = {
   activeCardSprite: UiSpriteId;
@@ -61,6 +61,25 @@ const REWARD_LAYOUTS: Record<RewardOverlayKind, RewardLayoutConfig> = {
     panelBottomPadding: 44,
     panelSprite: "bossRewardPanel",
     titleTop: 28,
+  },
+  treasure: {
+    activeCardSprite: "upgradeChoiceCardActive",
+    cardContentSource: {
+      bottom: 72,
+      insetX: 28,
+      top: 104,
+    },
+    cardIconSource: {
+      iconSize: 44,
+      size: 56,
+      top: 22,
+    },
+    cardRowTop: 52,
+    cardSprite: "upgradeChoiceCard",
+    columnGap: 10,
+    panelBottomPadding: 44,
+    panelSprite: "upgradeRewardPanel",
+    titleTop: 22,
   },
 };
 

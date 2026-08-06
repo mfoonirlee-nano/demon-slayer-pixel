@@ -43,10 +43,11 @@ export function selectPlatformSpriteForAct(
   act: number,
   kind: PlatformSpriteKind,
   width: number,
+  random: () => number = Math.random,
 ): PlatformSpriteRef {
   const pool = platformSpritePoolForAct(act, kind);
   const candidates = pool.themed.length > 0
-    && Math.random() < MAP_GENERATION_CONFIG.themedSpriteChance
+    && random() < MAP_GENERATION_CONFIG.themedSpriteChance
     ? pool.themed
     : pool.common;
   const sheet = candidates[0].sheet;

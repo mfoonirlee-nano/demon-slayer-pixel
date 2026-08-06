@@ -71,6 +71,22 @@ export function createBossEquipmentChoices(state: GameState): EquipmentChoiceSta
   return choices;
 }
 
+export function createTreasureEquipmentChoices(state: GameState): EquipmentChoiceState[] {
+  const tier = equipmentTierForState(state);
+
+  return EQUIPMENT_CHOICE_IDS.flatMap((itemId) => {
+    if (hasEquipment(state, itemId)) return [];
+    if (equipmentRequiresUltimate(itemId, tier) && state.player.ultimateLevel <= 0) return [];
+
+    const item = equipmentItemForTier(itemId, tier);
+    return [{
+      ...item,
+      previousTier: null,
+      reason: state.equippedEquipment[item.slot] ? "replacement" : "new",
+    } satisfies EquipmentChoiceState];
+  });
+}
+
 export function queueBossEquipmentChoices(
   state: GameState,
   options: { placeholderReward?: boolean } = {},

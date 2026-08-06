@@ -38,11 +38,21 @@ export function grantSkillEnergy(state: GameState, amount: number) {
 }
 
 export function grantUltimateEnergy(state: GameState, amount: number) {
+  const granted = previewUltimateEnergyGain(state, amount);
+  if (granted <= 0) return 0;
+  state.player.ultimateEnergy += granted;
+  return granted;
+}
+
+export function previewUltimateEnergyGain(state: GameState, amount: number) {
   const player = state.player;
-  if (amount <= 0) return;
-  if (player.ultimateLevel <= 0) return;
-  if (player.ultimateTimer > 0 || player.ultimateCastTimer > 0) return;
+  if (amount <= 0) return 0;
+  if (player.ultimateLevel <= 0) return 0;
+  if (player.ultimateTimer > 0 || player.ultimateCastTimer > 0) return 0;
   const tempoTier = equippedTier(state, "talisman", "tempo_talisman");
   const multiplier = tempoTier ? TEMPO_TALISMAN_ULTIMATE_GAIN_MULTIPLIER[tempoTier] : 1;
-  player.ultimateEnergy = Math.min(player.ultimateEnergyMax, player.ultimateEnergy + amount * multiplier);
+  return Math.min(
+    player.ultimateEnergyMax - player.ultimateEnergy,
+    amount * multiplier,
+  );
 }

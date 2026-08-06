@@ -9,6 +9,8 @@ import {
   applyUpgradeChoice,
   enemyXp,
   hasLearnedUltimate,
+  grantNonBossRunXp,
+  nonBossRunXpHeadroom,
   skillDamageMultiplier,
   xpToNextLevel,
 } from "./progression";
@@ -19,6 +21,9 @@ const ELITE_RUNNER_XP = 15;
 const UPGRADE_CHOICE_COUNT = 3;
 const MAX_UNLEARNED_CHOICE_COUNT = 2;
 const MAX_TEST_SKILL_LEVEL = 3;
+const INITIAL_NON_BOSS_XP_HEADROOM = 869;
+const LARGE_NON_BOSS_XP_GRANT = 10_000;
+const EXPECTED_CAPPED_RUN_XP = 569;
 
 describe("run progression skills", () => {
   it("starts each run with the three default normal skills learned and equipped", () => {
@@ -246,5 +251,18 @@ describe("run progression skills", () => {
     expect(state.player.runLevel).toBe(2);
     expect(state.player.runXp).toBe(xpToNextLevel(2) - 1);
     expect(state.pendingUpgradeChoices).toEqual([]);
+  });
+
+  it("clips a single large non-Boss XP grant before the Boss-reserved level", () => {
+    const state = createInitialState();
+
+    expect(nonBossRunXpHeadroom(state)).toBe(INITIAL_NON_BOSS_XP_HEADROOM);
+    expect(grantNonBossRunXp(state, LARGE_NON_BOSS_XP_GRANT)).toBe(
+      INITIAL_NON_BOSS_XP_HEADROOM,
+    );
+
+    expect(state.player.runLevel).toBe(2);
+    expect(state.player.runXp).toBe(EXPECTED_CAPPED_RUN_XP);
+    expect(state.pendingUpgradeChoices).toHaveLength(UPGRADE_CHOICE_COUNT);
   });
 });

@@ -17,6 +17,14 @@ import type {
   ResidualSpiritState,
 } from "./entities";
 import type {
+  HighPlatformTreasureState,
+  TreasureChoiceState,
+  TreasureDebugState,
+  TreasureOpportunityState,
+  TreasurePityState,
+  TreasureRevealState,
+} from "./treasure";
+import type {
   BindingZoneState,
   BloodMoonEffectState,
   BossDefeatSplitEffectState,
@@ -104,6 +112,12 @@ export type GameState = {
   enemyDirector: EnemyDirectorState;
   pendingUpgradeChoices: UpgradeChoiceState[];
   pendingEquipmentChoices: EquipmentChoiceState[];
+  pendingTreasureChoices: TreasureChoiceState[];
+  treasureOpportunity: TreasureOpportunityState;
+  highPlatformTreasure: HighPlatformTreasureState | null;
+  treasureReveal: TreasureRevealState | null;
+  treasurePity: TreasurePityState;
+  treasureDebug: TreasureDebugState | null;
   equipmentInventory: EquipmentInventoryEntry[];
   equippedEquipment: Record<EquipmentSlot, EquipmentItemId | null>;
   pendingVictoryAfterEquipment: boolean;

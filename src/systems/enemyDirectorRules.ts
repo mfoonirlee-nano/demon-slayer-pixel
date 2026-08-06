@@ -19,14 +19,9 @@ import {
   TIER_TWO_ENEMIES,
 } from "./enemyDirectorConfig";
 import { actForBossKills, clampAct, threatScalarForRun } from "./runProgression";
+import { seededRandom, weightedRandomPick } from "../game/utils";
 
 const RUN_SEED_MOD = 0x7fffffff;
-const RNG_INCREMENT = 0x6d2b79f5;
-const RNG_FIRST_SHIFT = 15;
-const RNG_SECOND_SHIFT = 7;
-const RNG_SECOND_MASK = 61;
-const RNG_FINAL_SHIFT = 14;
-const RNG_UNIT_DIVISOR = 4294967296;
 export const RECENT_ENEMY_LIMIT = 6;
 const DEFAULT_UNLOCKED_ENEMY_COUNT = 12;
 const DEFAULT_REGULAR_POOL_SIZE = 8;
@@ -122,34 +117,6 @@ export type EnemySpawnStats = {
 export function enemySpawnCost(enemyId: EnemyId, elite = false) {
   const baseCost = ENEMY_ARCHETYPES[enemyId].spawnCost;
   return elite ? baseCost * ELITE_SPAWN_COST_MULTIPLIER : baseCost;
-}
-
-export function seededRandom(seed: number) {
-  let value = seed >>> 0;
-  return () => {
-    value += RNG_INCREMENT;
-    let next = value;
-    next = Math.imul(next ^ (next >>> RNG_FIRST_SHIFT), next | 1);
-    next ^= next + Math.imul(next ^ (next >>> RNG_SECOND_SHIFT), next | RNG_SECOND_MASK);
-    return ((next ^ (next >>> RNG_FINAL_SHIFT)) >>> 0) / RNG_UNIT_DIVISOR;
-  };
-}
-
-export function weightedPick<T>(
-  items: readonly T[],
-  weightFor: (item: T) => number,
-  rng: () => number,
-): T | null {
-  let total = 0;
-  for (const item of items) total += Math.max(0, weightFor(item));
-  if (total <= 0) return items[0] ?? null;
-
-  let roll = rng() * total;
-  for (const item of items) {
-    roll -= Math.max(0, weightFor(item));
-    if (roll <= 0) return item;
-  }
-  return items[items.length - 1] ?? null;
 }
 
 function shuffled<T>(items: readonly T[], seed: number): T[] {
@@ -488,7 +455,7 @@ export function canSpawnBossSummon(
 }
 
 export function pickEnemyFromPool(pool: readonly EnemyPoolEntryState[], random = Math.random) {
-  return weightedPick(pool, (entry) => entry.weight, random)?.enemyId ?? "chaser";
+  return weightedRandomPick(pool, (entry) => entry.weight, random)?.enemyId ?? "chaser";
 }
 
 export function pickRegularEnemyId(director: EnemyDirectorState, random = Math.random) {

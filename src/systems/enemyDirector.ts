@@ -6,6 +6,7 @@ import type {
   WaveEntryRole,
   WaveEntryRuntimeState,
 } from "../types/game-state";
+import { seededRandom, weightedRandomPick } from "../game/utils";
 import { ELITE_ELIGIBLE_ENEMIES, ENEMY_ARCHETYPES, PROFILE_CONFIGS } from "./enemyDirectorConfig";
 import {
   activeSpawnCost,
@@ -15,8 +16,6 @@ import {
   enemySpawnCost,
   maxActiveSpawnCostForAct,
   RECENT_ENEMY_LIMIT,
-  seededRandom,
-  weightedPick,
 } from "./enemyDirectorRules";
 import {
   ACT_TIMING_SCALE,
@@ -167,7 +166,7 @@ function applyEliteUpgrades(
 
   while (remainingEliteEntries > 0) {
     const candidates = entries.filter((entry) => canUpgradeEntryToElite(entry, budgetedCost, maxCost));
-    const picked = weightedPick(candidates, eliteEntryWeight, rng);
+    const picked = weightedRandomPick(candidates, eliteEntryWeight, rng);
     if (!picked) return;
 
     picked.elite = true;
@@ -197,7 +196,7 @@ function ensureFinalEliteCandidateEntry(
   if (director.act !== FINAL_ACT || hasEliteCandidateEntry(entries)) return;
 
   const candidates = director.currentPool.filter((entry) => ELITE_ELIGIBLE_ENEMIES.includes(entry.enemyId));
-  const picked = weightedPick(candidates, (entry) => entry.weight, rng);
+  const picked = weightedRandomPick(candidates, (entry) => entry.weight, rng);
   if (!picked) return;
 
   const replacement = makeWaveEntry(
@@ -262,7 +261,7 @@ function pickPoolEnemy(
   predicate: (enemyId: EnemyId) => boolean = () => true,
 ) {
   const candidates = director.currentPool.filter((entry) => predicate(entry.enemyId));
-  return weightedPick(candidates, (entry) => entry.weight, rng)?.enemyId ?? null;
+  return weightedRandomPick(candidates, (entry) => entry.weight, rng)?.enemyId ?? null;
 }
 
 function roleForEnemy(enemyId: EnemyId, director: EnemyDirectorState): WaveEntryRole {

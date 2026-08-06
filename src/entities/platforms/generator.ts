@@ -28,6 +28,7 @@ import {
   weightedPick,
   yToLayer,
 } from "./helpers";
+import { createTreasureRoutePlatforms } from "./treasureRoute";
 
 const FULL_CIRCLE_RADIANS = Math.PI * 2;
 const SAME_LAYER_LONG_STREAK_WEIGHT = 0.08;
@@ -47,10 +48,15 @@ export type { SegmentKind };
 
 type SegmentDifficulty = "easy" | "medium" | "hard";
 
-type SegmentSpawnResult = {
+export type SegmentSpawnResult = {
   kind: SegmentKind;
   difficulty: SegmentDifficulty;
   platforms: PlatformState[];
+};
+
+export type TreasureRouteSpawnResult = SegmentSpawnResult & {
+  kind: "riskFork";
+  treasureHost: PlatformState;
 };
 // --- Map generator state (reset on game restart) ---
 let lastLayer: PlatformLayer = "low";
@@ -93,11 +99,11 @@ function pickVariedLayer(current: PlatformLayer): PlatformLayer {
 }
 
 
-function platformVx(): number {
+function platformVx(random: () => number = Math.random): number {
   return -platformSpeedForRun(
     state.bossKills,
     state.elapsed,
-    Math.random() * PLATFORM_CONFIG.randomSpeed,
+    random() * PLATFORM_CONFIG.randomSpeed,
   );
 }
 
@@ -126,9 +132,9 @@ export function nextMapSpawnInterval(): number {
   );
 }
 
-function randomStyle(): PlatformStyle {
+function randomStyle(random: () => number = Math.random): PlatformStyle {
   return PLATFORM_STYLE_LIST[
-    Math.floor(Math.random() * PLATFORM_STYLE_LIST.length)
+    Math.floor(random() * PLATFORM_STYLE_LIST.length)
   ] as PlatformStyle;
 }
 
@@ -141,10 +147,11 @@ function makePlatform(
   isHover: boolean,
   isChain: boolean,
   intendedSpriteKind?: PlatformSpriteKind,
+  random: () => number = Math.random,
 ): PlatformState {
   const spriteKind = intendedSpriteKind
     ?? (isChain ? "chain" : w >= WIDE_PLATFORM_MIN_WIDTH ? "wide" : "normal");
-  const spriteRef = selectPlatformSpriteForAct(state.enemyDirector.act, spriteKind, w);
+  const spriteRef = selectPlatformSpriteForAct(state.enemyDirector.act, spriteKind, w, random);
   const sprite = spriteRef.sheet.regions[spriteRef.regionIndex];
   const drawW = Math.round(sprite.sw * spriteRef.sheet.drawScale);
 
@@ -155,16 +162,16 @@ function makePlatform(
     w: drawW,
     h: PLATFORM_CONFIG.height,
     vx,
-    phase: Math.random() * FULL_CIRCLE_RADIANS,
-    style: randomStyle(),
+    phase: random() * FULL_CIRCLE_RADIANS,
+    style: randomStyle(random),
     kind: isChain ? "chain" : isHover ? "hover" : "normal",
     spriteIndex: spriteRef.regionIndex,
     spriteAct: spriteRef.spriteAct,
     hoverAmplitude: isHover ? HOVER_CONFIG.amplitude : 0,
-    trim: PLATFORM_CONFIG.trimBase + Math.floor(Math.random() * PLATFORM_CONFIG.trimVariants),
-    notch: Math.random() < PLATFORM_CONFIG.notchChance
+    trim: PLATFORM_CONFIG.trimBase + Math.floor(random() * PLATFORM_CONFIG.trimVariants),
+    notch: random() < PLATFORM_CONFIG.notchChance
       ? 0
-      : PLATFORM_CONFIG.notchBase + Math.floor(Math.random() * PLATFORM_CONFIG.notchVariants),
+      : PLATFORM_CONFIG.notchBase + Math.floor(random() * PLATFORM_CONFIG.notchVariants),
   };
 }
 
@@ -206,10 +213,11 @@ function placePlatform(platform: PlatformState): PlatformState {
 
 // --- Segment generator ---
 
-function firstPlatformX(): number {
+function firstPlatformX(random: () => number = Math.random): number {
   return WIDTH + PLATFORM_CONFIG.spawnOffsetX + randomBetween(
     -MAP_GENERATION_CONFIG.segment.firstPlatformJitterX,
     MAP_GENERATION_CONFIG.segment.firstPlatformJitterX,
+    random,
   );
 }
 
@@ -543,9 +551,35 @@ function spawnChainCluster(): SegmentSpawnResult {
 export function spawnNextMapSegment() {
   const result = spawnPatternSegment();
   applySegmentAftermath(result);
+  return result;
 }
 
 export function spawnMapSegmentOfKind(kind: SegmentKind) {
   const result = spawnSegmentKind(kind);
   applySegmentAftermath(result);
+  return result;
+}
+
+export function spawnTreasureRouteSegment(random: () => number = Math.random): TreasureRouteSpawnResult {
+  const route = createTreasureRoutePlatforms({
+    fromLayer: lastLayer,
+    vx: platformVx(random),
+    firstX: firstPlatformX(random),
+    existingPlatforms: state.platforms,
+    makePlatform,
+    canReachNextPlatform,
+    platformsOverlap: platformRectsOverlap,
+    random,
+  });
+  state.platforms.push(...route.platforms);
+
+  rememberLastPlatform(route.treasureHost);
+  const result: TreasureRouteSpawnResult = {
+    kind: "riskFork",
+    difficulty: "hard",
+    platforms: route.platforms,
+    treasureHost: route.treasureHost,
+  };
+  applySegmentAftermath(result);
+  return result;
 }

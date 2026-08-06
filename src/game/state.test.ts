@@ -1,4 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
+import { createBossEquipmentChoices } from "../systems/equipment";
+import { addRunXp, xpToNextLevel } from "../systems/progression";
 import { createInitialState, getStateSnapshot, resetState, state } from "./state";
 
 const DIRTY_VALUE = "dirty";
@@ -166,5 +168,23 @@ describe("resetState", () => {
       remainingFrames: 180,
       durationFrames: ULTIMATE_LEVEL_ONE_DURATION_FRAMES,
     });
+  });
+
+  it("prioritizes Boss equipment, then treasure, then level upgrades", () => {
+    resetState();
+    addRunXp(state, xpToNextLevel(state.player.runLevel));
+    state.pendingTreasureChoices = [{
+      id: "treasure",
+      kind: "health",
+      amount: 10,
+      before: 50,
+      after: 60,
+    }];
+
+    expect(getStateSnapshot().activeOverlay).toBe("treasure");
+
+    state.pendingEquipmentChoices = createBossEquipmentChoices(state);
+
+    expect(getStateSnapshot().activeOverlay).toBe("bossEquipment");
   });
 });

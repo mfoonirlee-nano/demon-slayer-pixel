@@ -236,6 +236,35 @@ describe("equipment system", () => {
     expect(equipmentSkillEnergyCost(state)).toBe(FINE_TEMPO_TALISMAN_SKILL_COST);
   });
 
+  it("clears unresolved treasure state when the final equipment choice ends the run", () => {
+    const state = createInitialState();
+    state.pendingVictoryAfterEquipment = true;
+    state.pendingEquipmentChoices = [choice("flow_blade", "awakened")];
+    const treasureChoice = {
+      id: "stale-treasure",
+      kind: "health" as const,
+      amount: 10,
+      before: 50,
+      after: 60,
+    };
+    state.pendingTreasureChoices = [treasureChoice];
+    state.treasureReveal = {
+      elapsed: 0.48,
+      duration: 0.48,
+      queued: true,
+      x: 400,
+      y: 180,
+      choices: [treasureChoice],
+    };
+
+    expect(chooseBossEquipment(state, 0)).toBe(true);
+
+    expect(state.runCleared).toBe(true);
+    expect(state.pendingTreasureChoices).toEqual([]);
+    expect(state.treasureReveal).toBeNull();
+    expect(state.highPlatformTreasure).toBeNull();
+  });
+
   it("overwrites lower owned tiers and resets same-slot runtime state", () => {
     const state = createInitialState();
     addAndEquip(state, "flow_blade", "common");

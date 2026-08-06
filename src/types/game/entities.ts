@@ -40,6 +40,7 @@ export type PlatformState = {
   notch: number;
   hoverAmplitude: number;
   baseY: number;
+  reservedForTreasure?: boolean;
 };
 
 export type EnemySpawnOccluderSource =

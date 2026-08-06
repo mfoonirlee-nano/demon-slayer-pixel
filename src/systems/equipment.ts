@@ -90,6 +90,7 @@ import {
   tierAtLeast,
 } from "./equipmentState";
 import { applyEquipmentStatChange } from "./equipmentStats";
+import { clearTreasureState } from "./runLifecycle";
 
 export {
   EQUIPMENT_CHOICE_IDS,
@@ -100,6 +101,7 @@ export {
 export {
   addEquipmentToInventory,
   createBossEquipmentChoices,
+  createTreasureEquipmentChoices,
   equipmentItem,
   equipmentTierForActBand,
   equipmentTierForState,
@@ -110,6 +112,7 @@ export {
   equipmentSkillEnergyCost,
   grantSkillEnergy,
   grantUltimateEnergy,
+  previewUltimateEnergyGain,
   skillEnergyCostForTalisman,
   syncSkillChargesForEquipment,
 } from "./equipmentResources";
@@ -150,6 +153,7 @@ export function chooseBossEquipment(state: GameState, index: number) {
   if (state.pendingVictoryAfterEquipment) {
     state.pendingVictoryAfterEquipment = false;
     state.pendingUpgradeChoices = [];
+    clearTreasureState(state);
     state.gameOver = true;
     state.runCleared = true;
   }

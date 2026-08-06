@@ -266,6 +266,17 @@ describe("enemy platform spawns", () => {
     expect(runner.y + runner.h).toBe(GROUND_Y);
   });
 
+  it("keeps regular enemies off platforms reserved for treasure", () => {
+    resetState();
+    state.platforms.push(platform({ reservedForTreasure: true }));
+
+    expect(spawnEnemyById("runner", "regular", "left")).toBe(true);
+
+    const runner = state.enemies[0];
+    expect(runner.y + runner.h).toBe(GROUND_Y);
+    expect(runner.onPlatform).toBeNull();
+  });
+
   it("applies gravity to platform-spawned enemies once their platform no longer supports them", () => {
     resetState();
     state.platforms.push(platform());

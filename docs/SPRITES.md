@@ -24,7 +24,7 @@
 - `assets/sprites/tree/`: 树木图集。
 - `assets/sprites/ground/`: 草地和石地瓦片。
 - `assets/sprites/platform/`: 通用平台和逐幕 Boss 主题平台图集。
-- `assets/sprites/pickups/`: 敌人掉落的可拾取物单图。
+- `assets/sprites/pickups/`: 敌人掉落物与场景奖励的单图或短序列图集。
 - `assets/sprites/ui/`: 状态条、开始/暂停/结束界面、大招能量球等 UI 素材。
 
 ## 关键运行时规格
@@ -101,7 +101,9 @@
 
 `pickups/residual-spirit.png` 是一张 `96x96` 透明 PNG 单图，四边保留透明 gutter，运行时按 `24x24` 绘制。可见内容是单个蓝白月潮残灵光团，主体边缘保持清晰像素块；浮动、呼吸亮度和弱光晕由运行时程序叠加，不烘入大面积半透明烟雾。
 
-该拾取物通过素材 manifest 预加载，尺寸和绘制尺寸由拾取物资源常量维护。HUD 灵龛外框与灵珠充能图集由 React 直接读取：外框登记在 `UI_SPRITES`，图集登记在 `RESIDUAL_SPIRIT_BEAD_CHARGE_SHEET`，两者都不加入 Canvas 图片 manifest。
+`pickups/moon-tide-treasure.png` 是一张 `512x128` RGBA 横向图集，固定 `4` 帧、单帧 `128x128`，运行时按 `84x84` 绘制并以平台表面为底部锚点。四帧依次是休眠闭匣、月印点亮、半启匣和完全开启；各帧可见内容的下边界统一为源图 `y=122`（exclusive，最后可见像素为 `y=121`），透明 gutter 不得裁掉屋檐、月冠或最终帧的三团灵火。该图集只承载灵匣本体，右缘箭头、弱光柱、平台边缘辉光、驻留进度环、飞散光点和开匣闪光由 Canvas 运行时绘制。
+
+残灵与月潮灵匣都通过素材 manifest 预加载，尺寸和绘制尺寸由拾取物资源常量维护。HUD 灵龛外框与灵珠充能图集由 React 直接读取：外框登记在 `UI_SPRITES`，图集登记在 `RESIDUAL_SPIRIT_BEAD_CHARGE_SHEET`，两者都不加入 Canvas 图片 manifest。
 
 ### 玩家动画
 

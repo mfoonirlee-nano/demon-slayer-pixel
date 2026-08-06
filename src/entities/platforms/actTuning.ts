@@ -1,14 +1,7 @@
 import { PLATFORM_CONFIG } from "../../constants";
+import type { SegmentKind } from "../../types/game-state";
 
-export type SegmentKind =
-  | "breather"
-  | "safeBridge"
-  | "stairUp"
-  | "stairDown"
-  | "zigzag"
-  | "gapJump"
-  | "hoverPair"
-  | "riskFork";
+export type { SegmentKind };
 
 const PLATFORM_TIME_PRESSURE_CAP_SECONDS = 210;
 const PLATFORM_SCROLL_SPEED_MULTIPLIER = 0.72;

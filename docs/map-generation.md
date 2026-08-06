@@ -4,7 +4,7 @@
 
 ## 概览
 
-地图仍然是无限横向卷轴，但生成入口已经从“普通平台 / 链式平台二选一”改为“片段 Pattern 生成”。每次触发会选择一个带玩法意图的片段，再生成 1 到 3 个平台。当前实现的地图生成器不投放奖励物；残灵由玩家击杀敌人后独立掉落。计划中的每幕高台秘藏使用独立预算和控制器，见 [numeric-system/high-platform-treasure.md](numeric-system/high-platform-treasure.md)。
+地图仍然是无限横向卷轴，但生成入口已经从“普通平台 / 链式平台二选一”改为“片段 Pattern 生成”。每次触发会选择一个带玩法意图的片段，再生成 1 到 3 个平台。当前实现的地图生成器不投放奖励物；残灵由玩家击杀敌人后独立掉落。每幕高台秘藏使用独立预算和控制器，地图侧只提供承载平台和专用路线，见 [numeric-system/high-platform-treasure.md](numeric-system/high-platform-treasure.md)。
 
 核心目标：
 
@@ -98,16 +98,17 @@ Boss 存在时会额外增加 `0.25s`，避免 Boss 战和极端地形同时过�
 
 残灵掉落、拾取和储存由 `src/entities/residualSpirit.ts`、`src/entities/enemies/defeat.ts` 和 `src/systems/residualSpirit.ts` 负责。它们不参与片段选择，不会反向改写平台权重。
 
-## 计划中的高台秘藏边界
+## 高台秘藏地图边界
 
-> 实现状态：目标设计，未实现。
-
-高台秘藏不会恢复“每个平台独立掷奖励概率”的旧路径。计划中的边界是：
+高台秘藏不会恢复“每个平台独立掷奖励概率”的旧路径。地图侧边界是：
 
 - 宝藏控制器按每幕预算决定何时需要奖励路线。
+- `spawnNextMapSegment()` 和显式片段入口返回本次生成结果，供宝藏控制器检查新平台。
 - 地图生成器只返回或生成满足可达性、层级、宽度和静止约束的承载平台。
-- 首选 `riskFork` 风险支路，其次是 `stairUp`、`zigzag` 或 `gapJump` 的高点。
-- 常规等待超限时，地图生成器可以生成一次“安全主路 + 高台奖励支路”的受约束变体。
+- 普通片段只从 `stairUp`、`zigzag` 或 `gapJump` 的高点选择宿主；普通 `riskFork` 不直接附着宝藏。
+- 常规等待超限时，`spawnTreasureRouteSegment()` 生成一次带显式 `treasureHost` 标记的受约束路线：安全主路加 `high / top` 的静止宽平台奖励支路。
+- 专用路线按既有跳跃约束选择每一级间距，并将整组平台避让已有平台，避免避让过程把内部跳距拉长到不可达。
+- 奖励宿主宽度至少为 `120px`，生成后会标记为宝藏保留平台，不参与普通敌人的平台出生选择。
 - 宝藏类别、动态数值、玩家状态权重、保底和三选一均不属于地图模块。
 
 完整状态机、动态公式和验收口径见 [高台秘藏](numeric-system/high-platform-treasure.md)。

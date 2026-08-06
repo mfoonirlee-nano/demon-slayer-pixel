@@ -2,7 +2,7 @@ import type { BossArchetype } from "../entities/bosses/registry";
 import { BOSS_ARCHETYPE_IDS } from "../entities/bosses/registry";
 import { GROUND_TILE_SPRITES } from "../constants/assetCatalog/scenery";
 import { BOSS_CONFIG } from "../constants/combat";
-import type { ActBand } from "../types/game-state";
+import type { ActBand, EnemyDirectorState } from "../types/game-state";
 
 const MAX_ACT = 13;
 const TIME_PRESSURE_CAP_SECONDS = 360;
@@ -17,7 +17,14 @@ const AWAKENED_FIRST_ACT = 7;
 const AWAKENED_LAST_ACT = 12;
 const EARLY_ACT_LAST = 2;
 const PRELUDE_BASE_WAIT_SECONDS = 3;
+const TREASURE_BOSS_APPROACH_LOCKOUT_SECONDS = 10;
+const TREASURE_MINIMUM_CLIMB_WINDOW_SECONDS = 10;
 export const ACT_TIMING_SCALE = 0.75;
+
+type TreasureTimingDirectorState = Pick<
+  EnemyDirectorState,
+  "act" | "elapsedInAct" | "bossPrelude"
+>;
 
 type BossGate = { minWaves: number; minElapsed: number; maxElapsed: number };
 
@@ -119,4 +126,36 @@ export function bossApproachGroundTransitionSeconds(act: number) {
     bossPreludeWaitSeconds(act),
     groundTransitionSeconds,
   );
+}
+
+export function isPastActMidpoint(director: TreasureTimingDirectorState) {
+  return director.elapsedInAct >= bossGateForAct(director.act).minElapsed / 2;
+}
+
+function treasureClaimLockoutStart(director: TreasureTimingDirectorState) {
+  const approachSeconds = bossApproachGroundTransitionSeconds(director.act);
+  // Preserve an early-prelude claim window even if the approach duration is shortened later.
+  const lockoutSeconds = Math.min(TREASURE_BOSS_APPROACH_LOCKOUT_SECONDS, approachSeconds / 2);
+  return approachSeconds - lockoutSeconds;
+}
+
+export function isTreasureClaimWindowOpen(
+  director: TreasureTimingDirectorState,
+  bossActive: boolean,
+) {
+  if (bossActive) return false;
+  if (!director.bossPrelude) return true;
+
+  return director.bossPrelude.elapsed < treasureClaimLockoutStart(director);
+}
+
+export function isTreasureAttachWindowOpen(
+  director: TreasureTimingDirectorState,
+  bossActive: boolean,
+) {
+  if (!isTreasureClaimWindowOpen(director, bossActive)) return false;
+  if (!director.bossPrelude) return true;
+
+  return director.bossPrelude.elapsed
+    < treasureClaimLockoutStart(director) - TREASURE_MINIMUM_CLIMB_WINDOW_SECONDS;
 }

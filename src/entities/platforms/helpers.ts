@@ -2,9 +2,9 @@ import { PLATFORM_LAYERS, PLATFORM_SPRITES } from "../../constants";
 import type { PlatformSpriteSheet } from "../../constants";
 import type { PlatformLayer } from "../../types/game-state";
 
-export function layerY(layer: PlatformLayer): number {
+export function layerY(layer: PlatformLayer, random: () => number = Math.random): number {
   const range = PLATFORM_LAYERS[layer];
-  return range.yMin + Math.random() * (range.yMax - range.yMin);
+  return range.yMin + random() * (range.yMax - range.yMin);
 }
 
 export function yToLayer(y: number): PlatformLayer {
@@ -41,8 +41,8 @@ export function lerp(from: number, to: number, t: number): number {
   return from + (to - from) * t;
 }
 
-export function randomBetween(min: number, max: number): number {
-  return min + Math.random() * (max - min);
+export function randomBetween(min: number, max: number, random: () => number = Math.random): number {
+  return min + random() * (max - min);
 }
 
 export function weightedPick<T extends string>(weights: Record<T, number>): T {
@@ -58,11 +58,6 @@ export function weightedPick<T extends string>(weights: Record<T, number>): T {
   return Object.keys(weights)[0] as T;
 }
 
-function randomSpriteIndex(kind: "normal" | "chain" | "wide"): number {
-  const pool = PLATFORM_SPRITES[kind];
-  return pool[Math.floor(Math.random() * pool.length)];
-}
-
 export function nearestSpriteIndex(
   sheet: PlatformSpriteSheet,
   kind: "normal" | "chain" | "wide",
@@ -76,6 +71,11 @@ export function nearestSpriteIndex(
   }, pool[0]);
 }
 
-export function platformWidth(kind: "normal" | "chain" | "wide"): number {
-  return Math.round(PLATFORM_SPRITES.regions[randomSpriteIndex(kind)].sw * PLATFORM_SPRITES.drawScale);
+export function platformWidth(
+  kind: "normal" | "chain" | "wide",
+  random: () => number = Math.random,
+): number {
+  const pool = PLATFORM_SPRITES[kind];
+  const spriteIndex = pool[Math.floor(random() * pool.length)];
+  return Math.round(PLATFORM_SPRITES.regions[spriteIndex].sw * PLATFORM_SPRITES.drawScale);
 }

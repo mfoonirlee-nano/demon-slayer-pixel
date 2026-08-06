@@ -14,6 +14,11 @@ import { equipmentItem } from "../systems/equipment";
 import { createEnemyDirectorState } from "../systems/enemyDirector";
 import { activePlayerStatuses } from "../systems/playerStatuses";
 import {
+  createInitialTreasureOpportunity,
+  createInitialTreasurePity,
+  isTreasureRevealAnimating,
+} from "../systems/treasureState";
+import {
   actBandForAct,
   actForBossKills,
   threatScalarForRun,
@@ -136,6 +141,12 @@ export function createInitialState(): GameState {
     enemyDirector: createEnemyDirectorState(),
     pendingUpgradeChoices: [],
     pendingEquipmentChoices: [],
+    pendingTreasureChoices: [],
+    treasureOpportunity: createInitialTreasureOpportunity(),
+    highPlatformTreasure: null,
+    treasureReveal: null,
+    treasurePity: createInitialTreasurePity(),
+    treasureDebug: null,
     equipmentInventory: [],
     equippedEquipment: {
       blade: null,
@@ -239,6 +250,12 @@ export function resetState() {
   state.enemyDirector = next.enemyDirector;
   resetCollection(state.pendingUpgradeChoices, next.pendingUpgradeChoices);
   resetCollection(state.pendingEquipmentChoices, next.pendingEquipmentChoices);
+  resetCollection(state.pendingTreasureChoices, next.pendingTreasureChoices);
+  state.treasureOpportunity = next.treasureOpportunity;
+  state.highPlatformTreasure = next.highPlatformTreasure;
+  state.treasureReveal = next.treasureReveal;
+  state.treasurePity = next.treasurePity;
+  state.treasureDebug = next.treasureDebug;
   resetCollection(state.equipmentInventory, next.equipmentInventory);
   state.equippedEquipment = next.equippedEquipment;
   state.pendingVictoryAfterEquipment = next.pendingVictoryAfterEquipment;
@@ -265,11 +282,15 @@ export function getStateSnapshot(manualPaused = false, paused = manualPaused): G
       ? state.runCleared ? "victory" : "death"
       : state.pendingEquipmentChoices.length > 0
         ? "bossEquipment"
-        : state.pendingUpgradeChoices.length > 0
-          ? "upgrade"
-          : manualPaused
-            ? "pause"
-            : "none";
+        : isTreasureRevealAnimating(state)
+          ? "none"
+          : state.pendingTreasureChoices.length > 0
+            ? "treasure"
+            : state.pendingUpgradeChoices.length > 0
+              ? "upgrade"
+              : manualPaused
+                ? "pause"
+                : "none";
   return {
     elapsed: state.elapsed,
     act,
@@ -349,5 +370,6 @@ export function getStateSnapshot(manualPaused = false, paused = manualPaused): G
     },
     pendingUpgradeChoices: [...state.pendingUpgradeChoices],
     pendingEquipmentChoices: [...state.pendingEquipmentChoices],
+    pendingTreasureChoices: [...state.pendingTreasureChoices],
   };
 }

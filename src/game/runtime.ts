@@ -24,6 +24,7 @@ import { getCoverProgress } from "./coverProgress";
 import { setupInput, teardownInput } from "./input";
 import { drawBackground, drawGroundTileBase, drawGroundTileOcclusion } from "../rendering/background";
 import { drawNearForeground } from "../rendering/nearForeground";
+import { playSfx } from "./audio";
 
 import { updatePlayer, drawPlayer, triggerAttack, castSelectedSkill, castUltimateSkill, selectSkill, tryJump } from "../entities/player";
 import {
@@ -68,12 +69,18 @@ import {
 import {
   spawnMapSegmentOfKind,
   spawnNextMapSegment,
+  spawnTreasureRouteSegment,
   nextMapSpawnInterval,
   resetMapGenerator,
   updatePlatforms,
   drawPlatformOcclusion,
   drawPlatforms,
 } from "../entities/platform";
+import {
+  drawHighPlatformTreasure,
+  drawTreasureDirectionMarker,
+  drawTreasureTelegraph,
+} from "../entities/highPlatformTreasure";
 import { updateProjectiles, drawProjectiles } from "../entities/projectile";
 import { drawResidualSpirits, updateResidualSpirits } from "../entities/residualSpirit";
 import {
@@ -120,7 +127,16 @@ import { chooseBossEquipment as chooseBossEquipmentReward, equipEquipment as equ
 import { equipSkillSlot as equipSkillSlotInState, setSkillLevel as setSkillLevelInState, SKILL_SLOT_COUNT } from "../systems/loadout";
 import { updateEnemyDirector } from "../systems/enemyDirector";
 import { markSpritesReady } from "../systems/runLifecycle";
+import { isTreasureRevealAnimating } from "../systems/treasureState";
 import { beginResidualSpiritHealing, updateResidualSpiritHealing } from "../systems/residualSpirit";
+import {
+  observeTreasureMapSegment,
+  createTreasureRouteRandom,
+  shouldSpawnForcedTreasureRoute,
+  updateHighPlatformTreasure,
+  updateTreasureReveal,
+} from "../systems/highPlatformTreasure";
+import { applyTreasureChoice } from "../systems/treasureRewards";
 
 let frameId = 0;
 
@@ -164,11 +180,22 @@ let manualPaused = false;
 let publishState: (snapshot: GameSnapshot) => void = () => {};
 
 function hasBlockingOverlay() {
-  return state.pendingEquipmentChoices.length > 0 || state.pendingUpgradeChoices.length > 0;
+  return state.pendingEquipmentChoices.length > 0
+    || state.pendingTreasureChoices.length > 0
+    || state.pendingUpgradeChoices.length > 0;
+}
+
+function canAdvanceTreasureReveal() {
+  return isTreasureRevealAnimating(state)
+    && state.pendingEquipmentChoices.length === 0
+    && !state.gameOver;
 }
 
 function isPaused() {
-  return manualPaused || hasBlockingOverlay() || state.bossDefeatSplitEffect !== null;
+  return manualPaused
+    || hasBlockingOverlay()
+    || state.bossDefeatSplitEffect !== null
+    || state.treasureReveal !== null;
 }
 
 function publishCurrentState() {
@@ -196,7 +223,7 @@ function syncDebugInfiniteUltimateCharge() {
 
 function togglePause() {
   if (state.gameOver || !state.spritesReady) return;
-  if (hasBlockingOverlay() || state.bossDefeatSplitEffect) return;
+  if (hasBlockingOverlay() || state.bossDefeatSplitEffect || state.treasureReveal) return;
   manualPaused = !manualPaused;
   publishCurrentState();
 }
@@ -206,6 +233,7 @@ function queueNextFrame() {
 }
 
 function restart() {
+  if (!state.gameOver) return;
   manualPaused = false;
   resetState();
   resetMapGenerator();
@@ -240,6 +268,13 @@ export function chooseUpgradeReward(index: number) {
 
 export function chooseBossEquipment(index: number) {
   if (chooseBossEquipmentReward(state, index)) publishCurrentState();
+}
+
+export function chooseTreasureReward(index: number) {
+  if (!applyTreasureChoice(state, index)) return;
+  state.treasureReveal = null;
+  playSfx("treasureConfirm");
+  publishCurrentState();
 }
 
 export function equipSkillSlot(slotIndex: number, skillId: SkillId) {
@@ -307,7 +342,14 @@ function loop(ts: number) {
   if (!running || !ctx) return;
   const bossDefeatFreezeActive = state.bossDefeatSplitEffect !== null;
   // Rewards or victory may already be queued, but this RAF must continue until the split finishes.
-  if (manualPaused || (hasBlockingOverlay() && !bossDefeatFreezeActive)) {
+  if (
+    manualPaused
+    || (
+      hasBlockingOverlay()
+      && !bossDefeatFreezeActive
+      && !canAdvanceTreasureReveal()
+    )
+  ) {
     state.last = ts;
     queueNextFrame();
     return;
@@ -332,9 +374,11 @@ function loop(ts: number) {
     return;
   }
 
-  if (!state.gameOver || bossDefeatFreezeActive) {
+  if (!state.gameOver || bossDefeatFreezeActive || state.treasureReveal !== null) {
     if (bossDefeatFreezeActive) {
       updateBossDefeatSplitEffect();
+    } else if (state.treasureReveal) {
+      updateTreasureReveal(state, dt);
     } else if (isUltimateCastFreezeActive()) {
       updateUltimateCastFreezeFrame();
     } else {
@@ -359,7 +403,10 @@ function loop(ts: number) {
 
       if (canAutoSpawnEntities()) state.platformSpawnTimer -= dt;
       if (canAutoSpawnEntities() && state.platformSpawnTimer <= 0) {
-        spawnNextMapSegment();
+        const segment = shouldSpawnForcedTreasureRoute(state)
+          ? spawnTreasureRouteSegment(createTreasureRouteRandom(state))
+          : spawnNextMapSegment();
+        observeTreasureMapSegment(state, segment);
         state.platformSpawnTimer = nextMapSpawnInterval();
       }
 
@@ -367,33 +414,38 @@ function loop(ts: number) {
       updatePlayer(dt);
       updateResidualSpiritHealing(state, dt);
       updatePlatforms(dt);
-      updateResidualSpirits(dt);
-      updateEnemies();
-      updateBruteFireballEffects();
-      updateBoss();
-      updateBossSkill1Effects();
-      updateSpiderStringCageEffects();
-      updateSpiderStringPillarEffects();
-      updateDeadBellEffects();
-      updateMistBoneEffects();
-      updateMirrorDreamEffects();
-      updateFangGaleEffects();
-      updateLanternEmberEffects();
-      updateBloodMoonEffects();
-      updateProjectiles();
-      updateParticles();
-      updateSkillBursts();
-      updateHitBursts();
-      updateLineProjectileEffects();
-      updateCloseArcEffects();
-      updateCloseArcBasicCrescentEffects();
-      updateHuntBladeReachEffects();
-      updateGuardCounterEffect();
-      updatePlayerSkillEffects();
-      updateUltimateEffects();
-      updateUltimateTrails();
-      updateUltimateAfterimageSlashes();
-      updateUltimatePlayerGhosts();
+      const treasureEvents = updateHighPlatformTreasure(state, dt);
+      if (treasureEvents.telegraph) playSfx("treasureTelegraph");
+      if (treasureEvents.claimed) playSfx("treasureOpen");
+      if (!treasureEvents.claimed) {
+        updateResidualSpirits(dt);
+        updateEnemies();
+        updateBruteFireballEffects();
+        updateBoss();
+        updateBossSkill1Effects();
+        updateSpiderStringCageEffects();
+        updateSpiderStringPillarEffects();
+        updateDeadBellEffects();
+        updateMistBoneEffects();
+        updateMirrorDreamEffects();
+        updateFangGaleEffects();
+        updateLanternEmberEffects();
+        updateBloodMoonEffects();
+        updateProjectiles();
+        updateParticles();
+        updateSkillBursts();
+        updateHitBursts();
+        updateLineProjectileEffects();
+        updateCloseArcEffects();
+        updateCloseArcBasicCrescentEffects();
+        updateHuntBladeReachEffects();
+        updateGuardCounterEffect();
+        updatePlayerSkillEffects();
+        updateUltimateEffects();
+        updateUltimateTrails();
+        updateUltimateAfterimageSlashes();
+        updateUltimatePlayerGhosts();
+      }
     }
   }
 
@@ -402,6 +454,7 @@ function loop(ts: number) {
   drawNearForeground();
   drawGroundTileBase();
   drawPlatforms();
+  drawTreasureTelegraph();
   drawResidualSpirits();
   drawBindingZonesBack();
   drawUltimateTrails();
@@ -433,6 +486,7 @@ function loop(ts: number) {
 
   drawUltimatePlayerGhosts();
   drawPlayer();
+  drawHighPlatformTreasure();
   drawHuntBladeReachEffects();
   drawPlatformOcclusion();
   drawGuardCounterEffect();
@@ -460,6 +514,7 @@ function loop(ts: number) {
   drawBruteFireballEffects();
   drawProjectiles();
   drawParticles();
+  drawTreasureDirectionMarker();
 
   if (isCollisionDebugEnabled) {
     recordPersistentCollisionShapes();

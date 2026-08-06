@@ -1,6 +1,7 @@
 import { hasSfxSample, playSfxSample, preloadSfxSamples } from "./audioSamples";
 import type { GameSfx, ToneStep } from "./audioTypes";
 import { playerDynamicSfxPattern } from "./playerAudioPatterns";
+import { treasureSfxPattern } from "./treasureAudioPatterns";
 
 export type { GameSfx } from "./audioTypes";
 
@@ -78,6 +79,9 @@ const SFX_MIN_GAPS: Record<GameSfx, number> = {
   enemyBurrow: 0.14,
   enemyEmerge: 0.14,
   enemyHurt: 0.08,
+  treasureTelegraph: 0.8,
+  treasureOpen: 0.3,
+  treasureConfirm: 0.18,
   bossHurt: 0.08,
   bossSpawn: 1,
   bossPhaseShift: 0.4,
@@ -228,6 +232,11 @@ export function playSfx(sfx: GameSfx, pitch = 1) {
   const dynamicPlayerPattern = playerDynamicSfxPattern(sfx);
   if (dynamicPlayerPattern) {
     playPattern(sfx, dynamicPlayerPattern, SFX_MIN_GAPS[sfx], pitch);
+    return;
+  }
+  const treasurePattern = treasureSfxPattern(sfx);
+  if (treasurePattern) {
+    playPattern(sfx, treasurePattern, SFX_MIN_GAPS[sfx], pitch);
     return;
   }
 

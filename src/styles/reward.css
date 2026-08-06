@@ -12,6 +12,44 @@
   animation-delay: calc(var(--reward-card-index, 0) * 45ms + 120ms);
 }
 
+.reward-overlay-treasure {
+  background:
+    radial-gradient(circle at 50% 43%, rgba(61, 219, 255, 0.13), transparent 37%),
+    rgba(2, 6, 17, 0.84);
+}
+
+.reward-treasure-panel-aura {
+  animation: reward-treasure-aura 2.8s ease-in-out infinite;
+  background:
+    radial-gradient(circle, rgba(255, 218, 122, 0.2) 0 2%, transparent 3%),
+    radial-gradient(circle at 45% 50%, transparent 0 11%, rgba(100, 230, 255, 0.18) 12% 13%, transparent 14%);
+  background-size: 83px 71px, 100% 100%;
+  filter: blur(0.2px);
+  inset: -18px;
+  pointer-events: none;
+  position: absolute;
+}
+
+.reward-treasure-card-shell {
+  transition: filter 120ms ease-out, transform 120ms ease-out;
+}
+
+.reward-treasure-card[data-selected="true"] .reward-treasure-card-shell {
+  filter: drop-shadow(0 0 10px rgba(75, 222, 255, 0.45)) drop-shadow(0 0 5px rgba(255, 210, 111, 0.32));
+  transform: translateY(-3px);
+}
+
+.reward-treasure-icon {
+  animation: reward-treasure-icon-pulse 1.8s ease-in-out infinite;
+}
+
+.reward-treasure-gain {
+  background: linear-gradient(180deg, #fff9d4 0%, #ffd36f 52%, #79eaff 100%);
+  background-clip: text;
+  color: transparent;
+  text-shadow: 0 0 10px rgba(255, 210, 111, 0.35);
+}
+
 @keyframes reward-backdrop-in {
   from {
     opacity: 0;
@@ -52,11 +90,43 @@
   }
 }
 
+@keyframes reward-treasure-aura {
+  0%,
+  100% {
+    opacity: 0.52;
+    transform: scale(0.985);
+  }
+
+  50% {
+    opacity: 0.92;
+    transform: scale(1.015);
+  }
+}
+
+@keyframes reward-treasure-icon-pulse {
+  0%,
+  100% {
+    filter: brightness(0.96) drop-shadow(0 0 2px rgba(87, 224, 255, 0.45));
+    transform: scale(0.96);
+  }
+
+  50% {
+    filter: brightness(1.14) drop-shadow(0 0 7px rgba(255, 215, 118, 0.68));
+    transform: scale(1.04);
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .reward-overlay-backdrop,
   .reward-overlay-panel,
-  .reward-overlay-card {
+  .reward-overlay-card,
+  .reward-treasure-panel-aura,
+  .reward-treasure-icon {
     animation-duration: 1ms;
     animation-delay: 0ms;
+  }
+
+  .reward-treasure-card-shell {
+    transition-duration: 1ms;
   }
 }

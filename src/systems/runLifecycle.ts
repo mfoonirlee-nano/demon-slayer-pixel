@@ -1,8 +1,24 @@
 import type { GameState } from "../types/game-state";
 import { applyEquipmentStatChange } from "./equipmentStats";
+import {
+  createInitialTreasureOpportunity,
+  createInitialTreasurePity,
+} from "./treasureState";
 
 export function markSpritesReady(state: GameState) {
   state.spritesReady = true;
+}
+
+export function clearTreasureState(state: GameState) {
+  if (state.highPlatformTreasure) {
+    state.highPlatformTreasure.host.reservedForTreasure = false;
+  }
+  state.pendingTreasureChoices = [];
+  state.highPlatformTreasure = null;
+  state.treasureReveal = null;
+  state.treasureOpportunity = createInitialTreasureOpportunity();
+  state.treasurePity = createInitialTreasurePity();
+  state.treasureDebug = null;
 }
 
 export function endRun(state: GameState) {
@@ -10,6 +26,7 @@ export function endRun(state: GameState) {
   state.runCleared = false;
   state.pendingEquipmentChoices = [];
   state.pendingUpgradeChoices = [];
+  clearTreasureState(state);
   state.equipmentInventory = [];
   state.bossDefeatSplitEffect = null;
   state.equippedEquipment = {
@@ -26,5 +43,6 @@ export function clearRun(state: GameState) {
   state.runCleared = true;
   state.pendingEquipmentChoices = [];
   state.pendingUpgradeChoices = [];
+  clearTreasureState(state);
   state.pendingVictoryAfterEquipment = false;
 }

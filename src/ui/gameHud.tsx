@@ -487,7 +487,9 @@ export function GameHud() {
       {snapshot.activeOverlay === "victory" ? <VictoryScreen elapsed={elapsed} /> : null}
 
       {snapshot.activeOverlay === "pause" ? <PauseScreen snapshot={snapshot} /> : null}
-      {snapshot.activeOverlay === "upgrade" || snapshot.activeOverlay === "bossEquipment" ? (
+      {snapshot.activeOverlay === "upgrade"
+      || snapshot.activeOverlay === "bossEquipment"
+      || snapshot.activeOverlay === "treasure" ? (
         <RewardOverlay snapshot={snapshot} />
       ) : null}
     </>

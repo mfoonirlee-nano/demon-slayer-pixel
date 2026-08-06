@@ -148,6 +148,38 @@ export function addRunXp(state: GameState, amount: number) {
   processPendingLevelUps(state);
 }
 
+function nonBossLevelCap(state: GameState) {
+  return RUN_LEVEL_PACING.initialLevel
+    + state.bossKills * RUN_LEVEL_PACING.levelsPerAct
+    + RUN_LEVEL_PACING.enemyLevelsPerAct;
+}
+
+export function nonBossRunXpHeadroom(state: GameState) {
+  const levelCap = nonBossLevelCap(state);
+  if (state.player.runLevel > levelCap) return 0;
+
+  let projectedLevel = state.player.runLevel;
+  let projectedXp = state.player.runXp;
+  let headroom = 0;
+
+  while (projectedLevel < levelCap) {
+    headroom += Math.max(0, xpToNextLevel(projectedLevel) - projectedXp);
+    projectedLevel += 1;
+    projectedXp = 0;
+  }
+
+  return headroom + Math.max(0, xpToNextLevel(levelCap) - 1 - projectedXp);
+}
+
+export function grantNonBossRunXp(state: GameState, amount: number) {
+  const granted = Math.min(
+    Math.max(0, Math.floor(amount)),
+    nonBossRunXpHeadroom(state),
+  );
+  if (granted > 0) addRunXp(state, granted);
+  return granted;
+}
+
 export function addEnemyRunXp(state: GameState, amount: number) {
   const levelCap = RUN_LEVEL_PACING.initialLevel
     + state.bossKills * RUN_LEVEL_PACING.levelsPerAct
@@ -161,7 +193,7 @@ export function addEnemyRunXp(state: GameState, amount: number) {
     return;
   }
 
-  addRunXp(state, amount);
+  grantNonBossRunXp(state, amount);
 }
 
 export function applyUpgradeChoice(state: GameState, index: number) {

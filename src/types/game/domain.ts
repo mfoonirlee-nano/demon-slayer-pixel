@@ -3,6 +3,15 @@ import type { SkillId } from "../assets";
 export type PlatformStyle = "stone" | "moss" | "shrine" | "ruin";
 export type PlatformKind = "normal" | "hover" | "chain";
 export type PlatformLayer = "low" | "mid" | "high" | "top";
+export type SegmentKind =
+  | "breather"
+  | "safeBridge"
+  | "stairUp"
+  | "stairDown"
+  | "zigzag"
+  | "gapJump"
+  | "hoverPair"
+  | "riskFork";
 export type ChaserPhase = "charge" | "reenter";
 export type CrawlerPhase = "move" | "windup" | "lunge" | "leap" | "recover";
 export type RunnerPhase = "approach" | "windup" | "dash" | "recover";
