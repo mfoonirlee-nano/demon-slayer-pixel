@@ -4,7 +4,7 @@
 
 ## Purpose
 
-记录当前得分、技能能量、大招能量和残灵规则。经验成长和每幕升级节奏见 [progression.md](progression.md)，装备掉落见 [equipment.md](equipment.md)。
+记录当前得分、技能能量、大招能量和残灵规则。经验成长和每幕升级节奏见 [progression.md](progression.md)，装备掉落见 [equipment.md](equipment.md)。计划中的高台动态奖励见 [high-platform-treasure.md](high-platform-treasure.md)。
 
 ## Current State
 
@@ -78,6 +78,14 @@ ultimateEnergy = min(ultimateEnergyMax, ultimateEnergy + gain)
 ## Removed Reward Path
 
 旧版平台攻击/生命水晶、攻击/治疗宝箱、`rewardDebt` 奖励预算和平台奖励投放均已移除。`riskFork` 只表示“安全主路 + 高风险支路”的地形结构，不再承载或提高奖励概率。
+
+## Planned High-Platform Treasure
+
+> 实现状态：目标设计，未实现。
+
+计划中的高台秘藏不是恢复旧版随机平台奖励。它每幕最多提供一次明确预告的高台支路机会，并在领取后从生命、技能能量、大招能量、残灵、XP 和具体装备中生成动态选择。
+
+恢复量同时读取幕数与当前资源缺口；出现概率使用玩家可见状态计算，不沿用固定权重表。生命、技能、大招和残灵的实际结算必须继续调用现有容量与同步 helper，XP 必须服从非 Boss 每幕升级边界。完整公式和队列规则见 [high-platform-treasure.md](high-platform-treasure.md)。
 
 ## Code Sources
 
