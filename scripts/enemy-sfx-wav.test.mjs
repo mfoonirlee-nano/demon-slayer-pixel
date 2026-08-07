@@ -36,7 +36,15 @@ const PLAYER_SKILL_LINE_MIN_LOW_FREQUENCY_ENERGY_RATIO = 0.5;
 const PLAYER_SFX_DIRECTORY = path.join(process.cwd(), "assets/audio/sfx/players");
 const ENEMY_SFX_DIRECTORY = path.join(process.cwd(), "assets/audio/sfx/enemies");
 const BOSS_SFX_DIRECTORY = path.join(process.cwd(), "assets/audio/sfx/bosses");
-const EXPECTED_BOSS_SFX_FILES = ["bossKill.wav"];
+const EXPECTED_BOSS_SFX_FILES = [
+  "bossKill.wav",
+  "bossMistBoneCast.wav",
+  "bossMistBoneCharge.wav",
+  "bossMistBoneDart.wav",
+  "bossMistBoneDeath.wav",
+  "bossMistBoneSpike.wav",
+  "bossMistBoneWarning.wav",
+];
 const EXPECTED_PLAYER_SFX_FILES = [
   "playerAttackHit.wav",
   "playerAttackStart.wav",
@@ -154,11 +162,13 @@ describe("SFX WAV validation", () => {
     }
   });
 
-  it("ships the boss defeat cue as a valid WAV", () => {
+  it("ships every boss cue as a valid WAV", () => {
     const files = readdirSync(BOSS_SFX_DIRECTORY).filter((file) => file.endsWith(".wav")).sort();
     expect(files).toEqual(EXPECTED_BOSS_SFX_FILES);
 
-    expectValidWav(path.join(BOSS_SFX_DIRECTORY, files[0]));
+    for (const file of files) {
+      expectValidWav(path.join(BOSS_SFX_DIRECTORY, file));
+    }
   });
 
   it("keeps the basic attack cue front-loaded like a sword swing", () => {

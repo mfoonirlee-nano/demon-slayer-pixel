@@ -64,7 +64,15 @@ const EXPECTED_PLAYER_SFX = [
   "playerUltimateEnd",
   "playerUltimateImpact",
 ] as const;
-const EXPECTED_BOSS_SFX = ["bossKill"] as const;
+const EXPECTED_BOSS_SFX = [
+  "bossMistBoneCast",
+  "bossMistBoneDart",
+  "bossMistBoneWarning",
+  "bossMistBoneSpike",
+  "bossMistBoneCharge",
+  "bossMistBoneDeath",
+  "bossKill",
+] as const;
 const TEST_CONTEXT_TIME = 3;
 const TEST_PITCH = 0.84;
 const TEST_VOLUME = 0.2;
@@ -109,6 +117,7 @@ describe("audio samples", () => {
 
     preloadSfxSamples(context);
     await vi.waitFor(() => {
+      expect(hasSfxSample("bossMistBoneCast")).toBe(true);
       expect(hasSfxSample("bossKill")).toBe(true);
       expect(hasSfxSample("enemyHurt")).toBe(true);
       expect(hasSfxSample("playerSkillLine")).toBe(true);
@@ -144,8 +153,10 @@ describe("player audio samples", () => {
 });
 
 describe("boss audio samples", () => {
-  it("maps the boss defeat sound to a WAV asset", () => {
+  it("maps the generic defeat and Mist Bone action sounds to WAV assets", () => {
     expect(Object.keys(BOSS_SFX_SAMPLE_URLS)).toEqual(EXPECTED_BOSS_SFX);
-    expect(BOSS_SFX_SAMPLE_URLS.bossKill).toMatch(/\.wav$/);
+    for (const url of Object.values(BOSS_SFX_SAMPLE_URLS)) {
+      expect(url).toMatch(/\.wav$/);
+    }
   });
 });

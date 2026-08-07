@@ -10,12 +10,33 @@ import { BOSS_ARCHETYPE_IDS } from "./registry";
 const FAR_FUTURE_COOLDOWN = 999;
 const BOSS_X = 200;
 const PLAYER_X = 430;
+const PHASE_TWO_HP_RATIO = 0.5;
 const PHASE_THREE_HP_RATIO = 0.2;
 const PHASE_THREE = 3;
 const MAX_DART_TRAVEL_FRAMES = 20;
 const MIST_BONE_PHASE_ONE_DART_DAMAGE = 9;
 
 describe("mist bone boss behavior", () => {
+  it("lays a thin slowing fog field under its phase-one burial spike", () => {
+    const boss = readyMistBone();
+    boss.skillCd = 0;
+
+    updateBoss();
+    advanceBossFrames(MIST_BONE_CONFIG.spawnAtFrame + 1);
+
+    expect(state.mistBoneSpikes).toHaveLength(1);
+    expect(state.mistBoneFogs).toEqual([
+      expect.objectContaining({
+        kind: "thin",
+        x: PLAYER_X + state.player.w / 2,
+        y: GROUND_Y,
+        radiusX: MIST_BONE_CONFIG.thinFogRadiusX,
+        radiusY: MIST_BONE_CONFIG.thinFogRadiusY,
+        life: MIST_BONE_CONFIG.thinFogLife,
+      }),
+    ]);
+  });
+
   it("uses a sprite-backed bone dart attack between special casts", () => {
     const boss = readyMistBone();
 
@@ -83,6 +104,68 @@ describe("mist bone boss behavior", () => {
 
     expect(boss.actionState).toBe("cast");
     expect(boss.skillMode).toBe("mistBoneSpike");
+  });
+
+  it("follows its phase-three spike line with a release-locked chase", () => {
+    const boss = readyMistBone();
+    boss.hp = boss.hpMax * PHASE_THREE_HP_RATIO;
+    boss.skillCd = 0;
+
+    updateBoss();
+    expect(boss.castFacing).toBe(1);
+    state.player.x = 0;
+    advanceBossFrames(MIST_BONE_CONFIG.spawnAtFrame + 1);
+
+    expect(boss.skillMode).toBe("mistBoneLine");
+    expect(state.mistBoneFogs).toContainEqual(expect.objectContaining({
+      kind: "thin",
+      x: state.player.w / 2,
+    }));
+    expect(boss.castFacing).toBe(1);
+    expect(boss.mistBoneChaseFacing).toBe(-1);
+
+    state.player.x = PLAYER_X;
+    advanceBossFrames(boss.castTimer);
+
+    expect(boss.actionState).toBe("dash");
+    expect(boss.vx).toBe(-MIST_BONE_CONFIG.chaseSpeed);
+    expect(boss.castFacing).toBe(-1);
+
+    state.player.x = boss.x;
+    state.player.y = boss.y;
+    state.player.invincible = 0;
+    const hpBeforeHit = state.player.hp;
+    updateBoss();
+
+    expect(state.player.hp).toBeLessThan(hpBeforeHit);
+    expect(boss.skillHitDone).toBe(true);
+
+    state.player.invincible = 0;
+    const hpAfterHit = state.player.hp;
+    updateBoss();
+    expect(state.player.hp).toBe(hpAfterHit);
+
+    boss.x = 1;
+    updateBoss();
+
+    expect(boss.actionState).toBe("recover");
+    expect(boss.recoveryTimer).toBe(MIST_BONE_CONFIG.chaseRecoveryFrames);
+    expect(boss.vx).toBe(0);
+  });
+
+  it("keeps the phase-two spike line on its normal recovery", () => {
+    const boss = readyMistBone();
+    boss.hp = boss.hpMax * PHASE_TWO_HP_RATIO;
+    boss.skillCd = 0;
+
+    updateBoss();
+    expect(boss.skillMode).toBe("mistBoneLine");
+
+    advanceBossFrames(MIST_BONE_CONFIG.castDuration);
+
+    expect(boss.phase).toBe(2);
+    expect(boss.actionState).toBe("recover");
+    expect(boss.recoveryTimer).toBe(MIST_BONE_CONFIG.recoveryFrames);
   });
 });
 

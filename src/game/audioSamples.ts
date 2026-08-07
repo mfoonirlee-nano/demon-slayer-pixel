@@ -68,6 +68,12 @@ export const ENEMY_SFX_SAMPLE_URLS = {
 } satisfies Partial<Record<GameSfx, string>>;
 
 export const BOSS_SFX_SAMPLE_URLS = {
+  bossMistBoneCast: sfxSampleUrl("bosses", "bossMistBoneCast"),
+  bossMistBoneDart: sfxSampleUrl("bosses", "bossMistBoneDart"),
+  bossMistBoneWarning: sfxSampleUrl("bosses", "bossMistBoneWarning"),
+  bossMistBoneSpike: sfxSampleUrl("bosses", "bossMistBoneSpike"),
+  bossMistBoneCharge: sfxSampleUrl("bosses", "bossMistBoneCharge"),
+  bossMistBoneDeath: sfxSampleUrl("bosses", "bossMistBoneDeath"),
   bossKill: sfxSampleUrl("bosses", "bossKill"),
 } satisfies Partial<Record<GameSfx, string>>;
 

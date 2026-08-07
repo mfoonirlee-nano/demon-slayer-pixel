@@ -1,11 +1,12 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import type { GameSfx } from "./audioTypes";
 
-const EXPECTED_SAMPLE_COUNT = 53;
+const EXPECTED_SAMPLE_COUNT = 59;
 const EXPECTED_OSCILLATOR_COUNT = 3;
 const ENCODED_AUDIO_BYTE_LENGTH = 8;
 const EXPECTED_SAMPLE_VOLUME = 0.16;
 const SAMPLE_MIN_GAP = 0.12;
+const MIST_BONE_DART_SAMPLE_INTERVAL = 0.1;
 const DRAGON_ROAR_FALLBACK_OSCILLATOR_COUNT = 3;
 const DRAGON_ROAR_FALLBACK_MAX_START_FREQUENCY = 300;
 const DRAGON_ROAR_FALLBACK_MIN_DURATION_SECONDS = 0.22;
@@ -127,6 +128,52 @@ describe("audio fallback", () => {
     expect(contexts[0]!.createBufferSource).toHaveBeenCalledTimes(2);
   });
 
+  it("allows the Mist Bone dart sample to keep its multi-shot cadence", async () => {
+    const decodedBuffer = {} as AudioBuffer;
+    const contexts: FakeAudioContext[] = [];
+    class FakeAudioContext {
+      state = "running";
+      currentTime = 1;
+      destination = {};
+      resume = vi.fn();
+      createOscillator = vi.fn(oscillatorNode);
+      createGain = vi.fn(gainNode);
+      createBufferSource = vi.fn(() => ({
+        buffer: null as AudioBuffer | null,
+        playbackRate: { value: 1 },
+        connect: vi.fn(),
+        start: vi.fn(),
+      }));
+      decodeAudioData = vi.fn().mockResolvedValue(decodedBuffer);
+
+      constructor() {
+        contexts.push(this);
+      }
+    }
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValue({
+      ok: true,
+      arrayBuffer: vi.fn().mockResolvedValue(new ArrayBuffer(ENCODED_AUDIO_BYTE_LENGTH)),
+    }));
+    vi.stubGlobal("window", {
+      AudioContext: FakeAudioContext,
+      localStorage: {
+        getItem: vi.fn(() => null),
+        setItem: vi.fn(),
+      },
+    });
+
+    const { ensureAudio, playSfx } = await import("./audio");
+    const { hasSfxSample } = await import("./audioSamples");
+    ensureAudio();
+    await vi.waitFor(() => expect(hasSfxSample("bossMistBoneDart")).toBe(true));
+
+    playSfx("bossMistBoneDart");
+    contexts[0]!.currentTime += MIST_BONE_DART_SAMPLE_INTERVAL;
+    playSfx("bossMistBoneDart");
+
+    expect(contexts[0]!.createBufferSource).toHaveBeenCalledTimes(2);
+  });
+
   it("keeps an oscillator fallback for every player sample before decoding", async () => {
     const createOscillator = vi.fn(oscillatorNode);
     class FakeAudioContext {
@@ -151,6 +198,36 @@ describe("audio fallback", () => {
     ensureAudio();
 
     for (const sfx of Object.keys(PLAYER_SFX_SAMPLE_URLS) as GameSfx[]) {
+      createOscillator.mockClear();
+      playSfx(sfx);
+      expect(createOscillator, `${sfx} should keep a fallback tone`).toHaveBeenCalled();
+    }
+  });
+
+  it("keeps an oscillator fallback for every boss sample before decoding", async () => {
+    const createOscillator = vi.fn(oscillatorNode);
+    class FakeAudioContext {
+      state = "running";
+      currentTime = 1;
+      destination = {};
+      resume = vi.fn();
+      createOscillator = createOscillator;
+      createGain = vi.fn(gainNode);
+    }
+    vi.stubGlobal("fetch", vi.fn(() => new Promise<Response>(() => undefined)));
+    vi.stubGlobal("window", {
+      AudioContext: FakeAudioContext,
+      localStorage: {
+        getItem: vi.fn(() => null),
+        setItem: vi.fn(),
+      },
+    });
+
+    const { ensureAudio, playSfx } = await import("./audio");
+    const { BOSS_SFX_SAMPLE_URLS } = await import("./audioSamples");
+    ensureAudio();
+
+    for (const sfx of Object.keys(BOSS_SFX_SAMPLE_URLS) as GameSfx[]) {
       createOscillator.mockClear();
       playSfx(sfx);
       expect(createOscillator, `${sfx} should keep a fallback tone`).toHaveBeenCalled();

@@ -20,6 +20,15 @@ import type { LiveBoss } from "./types";
 const DEAD_BELL_DUET_WAVE_COUNT = 3;
 const DEAD_BELL_DUET_BLADE_COUNT = 2;
 const FANG_GALE_STORM_ROLL = 0.8;
+const MIST_BONE_AWAKENED_ACT = 8;
+const PAIR_DIVISOR = 2;
+const MIST_BONE_CAGE_HALF = (MIST_BONE_CONFIG.cageCount - 1) / PAIR_DIVISOR;
+const MIST_BONE_CAGE_DELAYS = Array.from(
+  { length: MIST_BONE_CONFIG.cageCount },
+  (_, index) => (
+    MIST_BONE_CAGE_HALF - Math.abs(index - MIST_BONE_CAGE_HALF)
+  ) * MIST_BONE_CONFIG.spikeDelayStep,
+);
 
 describe("boss awakening behavior", () => {
   it("lets debug-style boss spawns force awakened mode without changing the final boss", () => {
@@ -34,15 +43,43 @@ describe("boss awakening behavior", () => {
     expect(state.boss?.awakened).toBe(false);
   });
 
-  it("adds Mist Bone's awakened cage pattern", () => {
+  it("turns Mist Bone's awakened cage into a fog-covered outside-in burial", () => {
     const boss = readyBoss(BOSS_ARCHETYPE_IDS.mistBone, true);
     boss.phase = 4;
+    state.enemyDirector.act = MIST_BONE_AWAKENED_ACT;
 
     updateMistBoneBoss(boss);
     advanceBoss(updateMistBoneBoss, boss, MIST_BONE_CONFIG.spawnAtFrame + 2);
 
     expect(boss.skillMode).toBe("mistBoneCage");
     expect(state.mistBoneSpikes).toHaveLength(MIST_BONE_CONFIG.cageCount);
+    expect(state.mistBoneSpikes.map((spike) => spike.delay)).toEqual(
+      MIST_BONE_CAGE_DELAYS,
+    );
+    expect(state.mistBoneFogs).toEqual([
+      expect.objectContaining({
+        kind: "burial",
+        x: state.player.x + state.player.w / 2,
+        y: GROUND_Y,
+      }),
+    ]);
+    expect(state.enemies).toHaveLength(2);
+    expect(state.enemies.filter((enemy) => enemy.id === "warden")).toHaveLength(1);
+    expect(state.enemies.filter((enemy) => enemy.id !== "warden")).toHaveLength(1);
+    expect(state.enemies.every((enemy) => enemy.spawnSource === "boss")).toBe(true);
+    expect(state.enemies.every((enemy) => enemy.growthStage === "awakened")).toBe(true);
+    const summonIds = state.enemies.map((enemy) => enemy.id).sort();
+
+    boss.actionState = "move";
+    boss.castTimer = 0;
+    boss.recoveryTimer = 0;
+    boss.skillCd = 0;
+    boss.skillEffectSpawned = false;
+    boss.mistBonePatternStep = 3;
+    updateMistBoneBoss(boss);
+    advanceBoss(updateMistBoneBoss, boss, MIST_BONE_CONFIG.spawnAtFrame + 2);
+
+    expect(state.enemies.map((enemy) => enemy.id).sort()).toEqual(summonIds);
   });
 
   it("starts Mirror Dream's true image shift on awakened phase changes", () => {
@@ -131,6 +168,7 @@ function readyBoss(id: LiveBoss["id"], awakened: boolean) {
   state.player.x = 540;
   state.player.y = GROUND_Y - state.player.h;
   state.player.onPlatform = null;
+  state.boss = boss;
   return boss;
 }
 

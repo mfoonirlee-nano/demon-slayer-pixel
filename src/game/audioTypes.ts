@@ -66,6 +66,12 @@ export type GameSfx =
   | "bossFire"
   | "bossBuff"
   | "bossUltimate"
+  | "bossMistBoneCast"
+  | "bossMistBoneDart"
+  | "bossMistBoneWarning"
+  | "bossMistBoneSpike"
+  | "bossMistBoneCharge"
+  | "bossMistBoneDeath"
   | "bossKill";
 
 export type ToneStep = {

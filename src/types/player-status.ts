@@ -45,7 +45,8 @@ export type PlayerStatusId =
   | "binder_talisman_key_scramble"
   | "binder_talisman_stun"
   | "binder_talisman_stunned"
-  | "lantern_ash_zone";
+  | "lantern_ash_zone"
+  | "mist_bone_fog_slow";
 
 export type PlayerStatusSnapshot = {
   id: PlayerStatusId;

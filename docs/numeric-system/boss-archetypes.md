@@ -74,7 +74,7 @@ Boss 出场节奏（13 幕是固定遭遇序列，Boss 在场时常规刷怪暂�
 | ID | Display Name | 玩法定位 | 基础幕 | 蚀醒幕 | 美术设定 |
 | --- | --- | --- | ---: | ---: | --- |
 | `moonbound_spider_string` | 血月眷属 · 蛛弦 | 追猎 + 召唤 + 单向蛛网技 | `1` | `7` | [spider-string.md](../art/bosses/spider-string.md) |
-| `moonbound_mist_bone` | 血月眷属 · 雾骨 | 区域封锁 + 骨刺弹幕（延迟爆发） | `2` | `8` | [mist-bone.md](../art/bosses/mist-bone.md) |
+| `moonbound_mist_bone` | 血月眷属 · 雾骨 | 薄雾减速 + 骨刺封锁（延迟爆发）+ P3 锁向追击 | `2` | `8` | [mist-bone.md](../art/bosses/mist-bone.md) |
 | `moonbound_mirror_dream` | 血月眷属 · 镜魇 | 分身干扰 + 反射投射物 | `3` | `9` | [mirror-dream.md](../art/bosses/mirror-dream.md) |
 | `moonbound_fang_gale` | 血月眷属 · 牙岚 | 高速冲刺 + 近身连击 | `4` | `10` | [fang-gale.md](../art/bosses/fang-gale.md) |
 | `moonbound_lantern_ember` | 血月眷属 · 灯烬 | 召唤强化 + 火线封路 | `5` | `11` | [lantern-ember.md](../art/bosses/lantern-ember.md) |
@@ -109,7 +109,7 @@ function awakenedOverlay(base, act) {
 | 蚀醒 Boss | 幕 | 蚀醒妖术新招 | 玩家应对 |
 | --- | ---: | --- | --- |
 | 蛛弦·蚀醒 | 7 | 千丝牢笼：地面上刺、空中下砸，再从安全缝左右连续落下强化蛛丝柱 | 读柱位预警，沿相邻 pulse 至少重叠一条 lane 的两 lane 安全缝移动 |
-| 雾骨·蚀醒 | 8 | 浓雾葬：短时遮蔽视野 + 多点延迟骨刺连爆 | 记预警点，雾中靠落点记忆 |
+| 雾骨·蚀醒 | 8 | 浓雾葬：短时局部遮蔽视野 + 七点由外向内延迟骨刺连爆；P4 合围召来蚀醒 `warden` 与普通同伴 | 记预警点，雾中靠落点记忆；优先处理守望者的支援链 |
 | 镜魇·蚀醒 | 9 | 真影错位：每阶段开始真假身互换；空闲时对玩家刚释放的普通技能进行一次 `30%` 反射判定，成功后有 `24` 帧镜影预警；镜像弹继承原技能的主色及相对范围、速度、伤害强弱；自身施法、收招及同帧起手时不触发且不补发 | 阶段切换瞬间重新辨真身；观察镜影预警，Boss 招式窗口内可安全释放技能 |
 | 牙岚·蚀醒 | 10 | 岚牙连闪：三段跨场冲刺连段 | 连续读三次起手方向，找跳/反击窗口 |
 | 灯烬·蚀醒 | 11 | 燎原灯阵：火线连成移动网格 + 灰烬减速区叠加 | 走网格缝隙，避免被灰烬粘住 |

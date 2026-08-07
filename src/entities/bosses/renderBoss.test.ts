@@ -19,8 +19,11 @@ import {
   LANTERN_EMBER_BUFF_CAST_SHEET,
   LANTERN_EMBER_SUMMON_SHEET,
   MIRROR_DREAM_CAST_SHEET,
+  MIST_BONE_SHEET,
+  MIST_BONE_ATTACK_SHEET,
   MIST_BONE_CAGE_CAST_SHEET,
   MIST_BONE_CAST_SHEET,
+  MIST_BONE_CONFIG,
   MIST_BONE_LINE_CAST_SHEET,
   SPIDER_STRING_ATTACK_CONFIG,
   SPIDER_STRING_ATTACK_SHEET,
@@ -43,6 +46,7 @@ import { drawBoss, resolveBossVisualFrame } from "./renderBoss";
 
 const originalFirelineCastImage = LANTERN_EMBER_FIRELINE_CAST_SHEET.image;
 const originalSummonImage = LANTERN_EMBER_SUMMON_SHEET.image;
+const originalMistBoneImage = MIST_BONE_SHEET.image;
 const AWAKENED_FINAL_PHASE = 4;
 const CAST_CASES = [
   {
@@ -119,6 +123,7 @@ describe("boss casting visuals", () => {
     setCanvas(null);
     LANTERN_EMBER_FIRELINE_CAST_SHEET.image = originalFirelineCastImage;
     LANTERN_EMBER_SUMMON_SHEET.image = originalSummonImage;
+    MIST_BONE_SHEET.image = originalMistBoneImage;
   });
 
   it("uses the fireline cast pose for Lantern Ember's awakened grid", () => {
@@ -164,6 +169,47 @@ describe("boss casting visuals", () => {
       frame: 3,
       w: SPIDER_STRING_ATTACK_CONFIG.drawW,
       h: SPIDER_STRING_ATTACK_CONFIG.drawH,
+    });
+  });
+
+  it("wraps awakened Mist Bone in dense fog and a cold bone glow", () => {
+    resetState();
+    const context = createContext();
+    const drawnFilters: string[] = [];
+    context.drawImage.mockImplementation(() => drawnFilters.push(context.filter));
+    MIST_BONE_SHEET.image = {} as HTMLImageElement;
+    setCanvas({ getContext: () => context } as unknown as HTMLCanvasElement);
+    state.boss = createBossEncounter({
+      id: BOSS_ARCHETYPE_IDS.mistBone,
+      bossKills: 0,
+      elapsedSeconds: 0,
+      awakened: true,
+    });
+    state.boss.entering = false;
+    state.boss.y = GROUND_Y - state.boss.h;
+
+    drawBoss();
+
+    expect(context.ellipse).toHaveBeenCalled();
+    expect(context.fill).toHaveBeenCalled();
+    expect(drawnFilters).toContainEqual(expect.stringContaining("drop-shadow"));
+  });
+
+  it("uses Mist Bone's attack sequence during its phase-three chase", () => {
+    const boss = createBossEncounter({
+      id: BOSS_ARCHETYPE_IDS.mistBone,
+      bossKills: 0,
+      elapsedSeconds: 0,
+    });
+    boss.entering = false;
+    boss.actionState = "dash";
+    boss.skillMode = "mistBoneLine";
+    boss.actionTimer = Math.floor(MIST_BONE_CONFIG.chaseFrames / 2);
+    boss.castFacing = -1;
+
+    expect(resolveBossVisualFrame(boss, 0)).toMatchObject({
+      sheet: MIST_BONE_ATTACK_SHEET,
+      facing: -1,
     });
   });
 
@@ -321,7 +367,11 @@ describe("boss casting visuals", () => {
 
 function createContext() {
   return {
+    beginPath: vi.fn(),
     drawImage: vi.fn(),
+    ellipse: vi.fn(),
+    fill: vi.fn(),
+    fillStyle: "",
     restore: vi.fn(),
     save: vi.fn(),
     scale: vi.fn(),
@@ -333,5 +383,7 @@ function createContext() {
     imageSmoothingEnabled: false,
   } as unknown as CanvasRenderingContext2D & {
     drawImage: ReturnType<typeof vi.fn>;
+    ellipse: ReturnType<typeof vi.fn>;
+    fill: ReturnType<typeof vi.fn>;
   };
 }

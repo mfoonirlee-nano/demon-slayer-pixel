@@ -55,6 +55,18 @@ export const MIST_BONE_CONFIG = {
   cageSpacing: 74,
   damageBase: 10,
   damagePhase: 2,
+  thinFogRadiusX: 156,
+  thinFogRadiusY: 52,
+  thinFogLife: 210,
+  thinFogMoveScale: 0.78,
+  burialFogRadiusX: 330,
+  burialFogRadiusY: 210,
+  burialFogLife: 126,
+  chaseMinPhase: 3,
+  chaseFrames: 26,
+  chaseSpeed: 8,
+  chaseRecoveryFrames: 38,
+  supportMinPhase: 4,
 } as const;
 
 const FANG_GALE_PHASE_ONE_CHASE_COOLDOWN = 72;

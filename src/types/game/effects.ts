@@ -21,12 +21,41 @@ export type BossVisualFrameState = {
   facing: number;
 };
 
-export type BossDefeatSplitEffectState = {
+type BossDefeatEffectBaseState = {
   pose: BossVisualFrameState;
-  cutAngle: number;
   life: number;
   maxLife: number;
 };
+
+export type MistBoneDefeatFragmentState = {
+  column: number;
+  row: number;
+  velocityX: number;
+  velocityY: number;
+  angularVelocity: number;
+};
+
+export type MistBoneDefeatFogWispState = {
+  offsetX: number;
+  offsetY: number;
+  radiusX: number;
+  radiusY: number;
+  velocityX: number;
+  velocityY: number;
+  phase: number;
+};
+
+export type BossDefeatSplitEffectState = BossDefeatEffectBaseState & (
+  | {
+    kind: "split";
+    cutAngle: number;
+  }
+  | {
+    kind: "mistBoneScatter";
+    fragments: MistBoneDefeatFragmentState[];
+    fogWisps: MistBoneDefeatFogWispState[];
+  }
+);
 
 export type BossSkill1EffectState = {
   kind?: BossSkillEffectKind;
@@ -153,6 +182,17 @@ export type MistBoneSpikeState = {
   life: number;
   damage: number;
   hitPlayer: boolean;
+};
+
+export type MistBoneFogState = {
+  kind: "thin" | "burial";
+  x: number;
+  y: number;
+  radiusX: number;
+  radiusY: number;
+  life: number;
+  maxLife: number;
+  elapsed: number;
 };
 
 export type FangGaleWaveState = {

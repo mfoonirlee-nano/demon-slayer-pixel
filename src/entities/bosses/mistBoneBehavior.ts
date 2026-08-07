@@ -1,8 +1,11 @@
 import { GROUND_Y, MIST_BONE_CONFIG, WIDTH } from "../../constants";
+import { recordCollisionDebugRect } from "../../game/collisionDebug";
+import { canAutoSpawnEntities } from "../../game/debug";
 import { playSfx } from "../../game/audio";
 import { state } from "../../game/state";
-import { clamp } from "../../game/utils";
+import { clamp, rectsOverlap } from "../../game/utils";
 import type { BossSkillMode } from "../../types/game-state";
+import { spawnBossSummonEnemy, spawnEnemyById } from "../enemy";
 import { bossAttackDamage, damagePlayerOnContact } from "./shared";
 import type { LiveBoss } from "./types";
 
@@ -29,6 +32,11 @@ const AWAKENED_PATTERN_SEQUENCE = [
 ] as const satisfies readonly BossSkillMode[];
 
 export function updateMistBoneBoss(boss: LiveBoss) {
+  if (boss.actionState === "dash" && boss.skillMode === "mistBoneLine") {
+    updateMistBoneChase(boss);
+    return;
+  }
+
   if (boss.actionState === "attack") {
     updateMistBoneAttack(boss);
     return;
@@ -41,7 +49,7 @@ export function updateMistBoneBoss(boss: LiveBoss) {
       boss.actionState = "move";
       boss.actionTimer = 0;
     }
-    damagePlayerOnContact(boss);
+    if (!isMistBoneChase(boss)) damagePlayerOnContact(boss);
     return;
   }
 
@@ -55,6 +63,10 @@ export function updateMistBoneBoss(boss: LiveBoss) {
       spawnMistBonePattern(boss);
     }
     if (boss.castTimer <= 0) {
+      if (isMistBoneChase(boss)) {
+        startMistBoneChase(boss);
+        return;
+      }
       boss.actionState = "recover";
       boss.actionTimer = 0;
       boss.recoveryTimer = MIST_BONE_CONFIG.recoveryFrames;
@@ -118,7 +130,7 @@ function startMistBoneAttack(boss: LiveBoss) {
       - Math.max(0, boss.phase - 1) * MIST_BONE_CONFIG.attackCooldownPhaseReduction,
   );
   boss.vx = 0;
-  playSfx("bossCast", ATTACK_SFX_PITCH);
+  playSfx("bossMistBoneCast", ATTACK_SFX_PITCH);
 }
 
 function spawnMistBoneDart(boss: LiveBoss) {
@@ -140,7 +152,7 @@ function spawnMistBoneDart(boss: LiveBoss) {
     frame: 0,
     elapsed: 0,
   });
-  playSfx("bossProjectile", DART_SFX_PITCH);
+  playSfx("bossMistBoneDart", DART_SFX_PITCH);
 }
 
 function moveMistBoneBoss(boss: LiveBoss) {
@@ -178,10 +190,12 @@ function startMistBoneCast(boss: LiveBoss) {
   boss.actionState = "cast";
   boss.actionTimer = 0;
   boss.comboStep = undefined;
+  boss.skillHitDone = false;
+  boss.mistBoneChaseFacing = undefined;
   boss.skillCd = mistBoneSkillCooldown(boss.skillMode, boss.phase);
   boss.vx = 0;
 
-  playSfx("bossCast", CAST_SFX_PITCH);
+  playSfx("bossMistBoneCast", CAST_SFX_PITCH);
 }
 
 function nextMistBoneSkill(boss: LiveBoss): BossSkillMode {
@@ -208,9 +222,23 @@ function spawnMistBonePattern(boss: LiveBoss) {
   } else if (boss.skillMode === "mistBoneLine") {
     spawnMistBoneLine(boss);
   } else {
+    spawnMistBoneThinFogAtPlayer();
     spawnMistBoneSpikeAtPlayer(boss, 0);
   }
-  playSfx("bossWave", PATTERN_SFX_PITCH);
+  playSfx("bossMistBoneWarning", PATTERN_SFX_PITCH);
+}
+
+function spawnMistBoneThinFogAtPlayer() {
+  state.mistBoneFogs.push({
+    kind: "thin",
+    x: state.player.x + state.player.w / 2,
+    y: state.player.onPlatform?.y ?? GROUND_Y,
+    radiusX: MIST_BONE_CONFIG.thinFogRadiusX,
+    radiusY: MIST_BONE_CONFIG.thinFogRadiusY,
+    life: MIST_BONE_CONFIG.thinFogLife,
+    maxLife: MIST_BONE_CONFIG.thinFogLife,
+    elapsed: 0,
+  });
 }
 
 function spawnMistBoneLine(boss: LiveBoss) {
@@ -220,6 +248,9 @@ function spawnMistBoneLine(boss: LiveBoss) {
   );
   const playerCenter = state.player.x + state.player.w / 2;
   const half = (count - 1) / 2;
+  const toPlayer = playerCenter - (boss.x + boss.w / 2);
+  boss.mistBoneChaseFacing = toPlayer >= 0 ? 1 : -1;
+  spawnMistBoneThinFogAtPlayer();
 
   for (let i = 0; i < count; i += 1) {
     const centerX = playerCenter + (i - half) * MIST_BONE_CONFIG.lineSpacing;
@@ -231,11 +262,84 @@ function spawnMistBoneCage(boss: LiveBoss) {
   const playerCenter = state.player.x + state.player.w / 2;
   const half = (MIST_BONE_CONFIG.cageCount - 1) / 2;
 
+  state.mistBoneFogs.push({
+    kind: "burial",
+    x: playerCenter,
+    y: state.player.onPlatform?.y ?? GROUND_Y,
+    radiusX: MIST_BONE_CONFIG.burialFogRadiusX,
+    radiusY: MIST_BONE_CONFIG.burialFogRadiusY,
+    life: MIST_BONE_CONFIG.burialFogLife,
+    maxLife: MIST_BONE_CONFIG.burialFogLife,
+    elapsed: 0,
+  });
+
   for (let i = 0; i < MIST_BONE_CONFIG.cageCount; i += 1) {
     const centerX = playerCenter + (i - half) * MIST_BONE_CONFIG.cageSpacing;
     const inwardDelay = (half - Math.abs(i - half)) * MIST_BONE_CONFIG.spikeDelayStep;
     spawnMistBoneSpike(boss, centerX, inwardDelay);
   }
+
+  spawnAwakenedMistBoneSupport(boss);
+}
+
+function spawnAwakenedMistBoneSupport(boss: LiveBoss) {
+  if (
+    !boss.awakened
+    || boss.phase < MIST_BONE_CONFIG.supportMinPhase
+    || !canAutoSpawnEntities()
+  ) return;
+  const spawnedWarden = spawnEnemyById(
+    "warden",
+    "boss",
+    "random_edge",
+    { growthStage: "awakened" },
+  );
+  if (!spawnedWarden) return;
+
+  if (!spawnBossSummonEnemy()) {
+    spawnEnemyById(
+      "chaser",
+      "boss",
+      "random_edge",
+      { growthStage: "awakened" },
+    );
+  }
+  playSfx("bossSummon");
+}
+
+function isMistBoneChase(boss: LiveBoss) {
+  return boss.skillMode === "mistBoneLine"
+    && boss.phase >= MIST_BONE_CONFIG.chaseMinPhase;
+}
+
+function startMistBoneChase(boss: LiveBoss) {
+  const chaseFacing = boss.mistBoneChaseFacing ?? boss.castFacing;
+  boss.castFacing = chaseFacing;
+  boss.facing = chaseFacing;
+  boss.actionState = "dash";
+  boss.actionTimer = 0;
+  boss.aiTimer = MIST_BONE_CONFIG.chaseFrames;
+  boss.skillHitDone = false;
+  boss.vx = chaseFacing * MIST_BONE_CONFIG.chaseSpeed;
+  playSfx("bossMistBoneCharge");
+}
+
+function updateMistBoneChase(boss: LiveBoss) {
+  const nextX = boss.x + boss.vx;
+  boss.x = clamp(nextX, 0, WIDTH - boss.w);
+  if (boss.x !== nextX) boss.aiTimer = 0;
+
+  recordCollisionDebugRect(boss, "enemyAttack");
+  if (!boss.skillHitDone && rectsOverlap(state.player, boss)) {
+    boss.skillHitDone = true;
+    damagePlayerOnContact(boss);
+  }
+
+  if (boss.aiTimer > 0) return;
+  boss.actionState = "recover";
+  boss.actionTimer = 0;
+  boss.recoveryTimer = MIST_BONE_CONFIG.chaseRecoveryFrames;
+  boss.vx = 0;
 }
 
 function spawnMistBoneSpikeAtPlayer(boss: LiveBoss, delay: number) {

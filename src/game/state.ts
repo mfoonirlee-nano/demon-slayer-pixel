@@ -188,6 +188,7 @@ export function createInitialState(): GameState {
     spiderStringPillars: [],
     deadBellWaves: [],
     deadBellBlades: [],
+    mistBoneFogs: [],
     mistBoneSpikes: [],
     mirrorShards: [],
     mirrorAfterimages: [],
@@ -231,6 +232,7 @@ export function resetState() {
   resetCollection(state.spiderStringPillars, next.spiderStringPillars);
   resetCollection(state.deadBellWaves, next.deadBellWaves);
   resetCollection(state.deadBellBlades, next.deadBellBlades);
+  resetCollection(state.mistBoneFogs, next.mistBoneFogs);
   resetCollection(state.mistBoneSpikes, next.mistBoneSpikes);
   resetCollection(state.mirrorShards, next.mirrorShards);
   resetCollection(state.mirrorAfterimages, next.mirrorAfterimages);

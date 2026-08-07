@@ -333,6 +333,7 @@ export type BossState = {
   mirrorTrueImageShiftPhase?: number;
   mirrorTeleportTargetX?: number;
   mistBonePatternStep?: number;
+  mistBoneChaseFacing?: number;
   lanternPatternStep?: number;
   lanternPatternPhase?: number;
   deadBellReprisalTimer?: number;

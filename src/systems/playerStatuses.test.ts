@@ -12,6 +12,8 @@ const BOSS_PAIR_EXECUTE_THRESHOLD_HP = 50;
 const ASH_ZONE_DURATION = 160;
 const SHORT_ASH_ZONE_REMAINING = 40;
 const LONG_ASH_ZONE_REMAINING = 120;
+const MIST_FOG_DURATION = 210;
+const MIST_FOG_REMAINING = 150;
 
 type StatusView = {
   id: string;
@@ -81,6 +83,19 @@ function ashZone(life: number, x = playerFootX(), y = playerFootY()) {
     elapsed: ASH_ZONE_DURATION - life,
     frame: 0,
     damage: 2,
+  };
+}
+
+function mistFog(life: number, x = playerFootX(), y = playerFootY()) {
+  return {
+    kind: "thin" as const,
+    x,
+    y,
+    radiusX: 156,
+    radiusY: 52,
+    life,
+    maxLife: MIST_FOG_DURATION,
+    elapsed: MIST_FOG_DURATION - life,
   };
 }
 
@@ -424,6 +439,7 @@ describe("player status snapshot", () => {
       ashZone(SHORT_ASH_ZONE_REMAINING),
       ashZone(LONG_ASH_ZONE_REMAINING),
     );
+    state.mistBoneFogs.push(mistFog(MIST_FOG_REMAINING));
 
     expect(status("spider_silk_slow")).toMatchObject({ remainingFrames: 27, durationFrames: 54 });
     expect(status("binder_talisman_slow")).toMatchObject({ remainingFrames: 105, durationFrames: 210 });
@@ -433,10 +449,15 @@ describe("player status snapshot", () => {
     expect(status("binder_talisman_stunned")).toMatchObject({ remainingFrames: 11, durationFrames: 22 });
     expect(statuses().filter(({ id }) => id === "lantern_ash_zone")).toHaveLength(1);
     expect(status("lantern_ash_zone")).toMatchObject({ remainingFrames: 120, durationFrames: 160 });
+    expect(status("mist_bone_fog_slow")).toMatchObject({
+      remainingFrames: MIST_FOG_REMAINING,
+      durationFrames: MIST_FOG_DURATION,
+    });
 
     state.player.x += 300;
 
     expect(status("lantern_ash_zone")).toBeUndefined();
+    expect(status("mist_bone_fog_slow")).toBeUndefined();
   });
 
   it("keeps mixed status order stable and every status id unique", () => {

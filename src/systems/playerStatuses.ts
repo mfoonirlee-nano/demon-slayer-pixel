@@ -8,6 +8,7 @@ import {
   SPIDER_STRING_CAGE_CONFIG,
 } from "../constants";
 import { activeLanternAshZoneForPlayer } from "../entities/players/lanternAshZone";
+import { activeMistBoneFogForPlayer } from "../entities/players/mistBoneFog";
 import type { GameState, PlayerStatusSnapshot } from "../types/game-state";
 import {
   burstBladeExecuteHpRatio,
@@ -411,6 +412,15 @@ function pushEnemyDebuffs(state: GameState, statuses: PlayerStatusSnapshot[]) {
   const ashZone = activeLanternAshZoneForPlayer(state);
   if (ashZone && ashZone.life > 0) {
     statuses.push(timedStatus("lantern_ash_zone", ashZone.life, ashZone.maxLife));
+  }
+
+  const mistBoneFog = activeMistBoneFogForPlayer(state);
+  if (mistBoneFog) {
+    statuses.push(timedStatus(
+      "mist_bone_fog_slow",
+      mistBoneFog.life,
+      mistBoneFog.maxLife,
+    ));
   }
 }
 

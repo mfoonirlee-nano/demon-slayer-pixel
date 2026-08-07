@@ -1,8 +1,8 @@
 import { hasSfxSample, playSfxSample, preloadSfxSamples } from "./audioSamples";
 import type { GameSfx, ToneStep } from "./audioTypes";
+import { bossMistBoneSfxPattern, MIST_BONE_SFX_MIN_GAPS } from "./bossAudioPatterns";
 import { playerDynamicSfxPattern } from "./playerAudioPatterns";
 import { treasureSfxPattern } from "./treasureAudioPatterns";
-
 export type { GameSfx } from "./audioTypes";
 
 const AUDIO_CONFIG = {
@@ -13,6 +13,7 @@ const AUDIO_CONFIG = {
 };
 const DEFAULT_PATTERN_MIN_GAP = 0.03;
 const AUDIO_SAMPLE_MIN_GAP = 0.12;
+const AUDIO_SAMPLE_MIN_GAP_OVERRIDES: Partial<Record<GameSfx, number>> = { bossMistBoneDart: 0.08 };
 const AUDIO_SAMPLE_VOLUME = 0.16;
 const AUDIO_VOLUME_STORAGE_KEY = "moonlit-tide-audio-volume";
 const DEFAULT_AUDIO_VOLUME_SETTINGS = {
@@ -94,6 +95,7 @@ const SFX_MIN_GAPS: Record<GameSfx, number> = {
   bossFire: 0.14,
   bossBuff: 0.14,
   bossUltimate: 0.3,
+  ...MIST_BONE_SFX_MIN_GAPS,
   bossKill: 1,
 };
 
@@ -222,7 +224,7 @@ function clampAudioVolume(value: number) {
 
 export function playSfx(sfx: GameSfx, pitch = 1) {
   if (audioCtx && hasSfxSample(sfx)) {
-    const minGap = Math.max(AUDIO_SAMPLE_MIN_GAP, SFX_MIN_GAPS[sfx]);
+    const minGap = Math.max(AUDIO_SAMPLE_MIN_GAP_OVERRIDES[sfx] ?? AUDIO_SAMPLE_MIN_GAP, SFX_MIN_GAPS[sfx]);
     if (!claimSfxPlayback(sfx, minGap)) return;
     const volume = AUDIO_SAMPLE_VOLUME * audioVolumeSettings.master * audioVolumeSettings.sfx;
     playSfxSample(audioCtx, sfx, pitch, volume);
@@ -239,6 +241,8 @@ export function playSfx(sfx: GameSfx, pitch = 1) {
     playPattern(sfx, treasurePattern, SFX_MIN_GAPS[sfx], pitch);
     return;
   }
+  const mistBonePattern = bossMistBoneSfxPattern(sfx);
+  if (mistBonePattern) return playPattern(sfx, mistBonePattern, SFX_MIN_GAPS[sfx], pitch);
 
   switch (sfx) {
     case "playerRunStep":

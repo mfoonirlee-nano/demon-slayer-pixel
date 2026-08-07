@@ -47,6 +47,7 @@ import type {
   LineProjectileEffectState,
   MirrorAfterimageState,
   MirrorShardState,
+  MistBoneFogState,
   MistBoneSpikeState,
   ParticleState,
   PlayerSkillEffectState,
@@ -154,6 +155,7 @@ export type GameState = {
   spiderStringPillars: SpiderStringPillarState[];
   deadBellWaves: DeadBellWaveState[];
   deadBellBlades: DeadBellBladeState[];
+  mistBoneFogs: MistBoneFogState[];
   mistBoneSpikes: MistBoneSpikeState[];
   mirrorShards: MirrorShardState[];
   mirrorAfterimages: MirrorAfterimageState[];

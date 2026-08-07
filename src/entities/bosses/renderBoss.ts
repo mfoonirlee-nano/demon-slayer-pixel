@@ -34,7 +34,9 @@ import {
 } from "../../constants";
 import { state } from "../../game/state";
 import { frameIndex } from "../../game/utils";
+import { ctx } from "../../rendering/context";
 import { drawSheetFrame } from "../../rendering/graphics";
+import type { SpriteFrameEffect } from "../../rendering/graphics";
 import type { BossVisualFrameState } from "../../types/game-state";
 import { bossCastDuration, spiderRushWindupFrames } from "./attackTiming";
 import { BOSS_ARCHETYPE_IDS, bossArchetypeForId } from "./registry";
@@ -42,12 +44,27 @@ import type { LiveBoss } from "./types";
 
 const SPIDER_RUSH_WINDUP_SPRITE_FRAMES = 3;
 const DEAD_BELL_REPRISAL_WARNING_SPRITE_FRAMES = 3;
+const AWAKENED_MIST_WISP_COUNT = 4;
+const AWAKENED_MIST_WISP_RADIUS_X_SCALE = 0.82;
+const AWAKENED_MIST_WISP_RADIUS_Y_SCALE = 0.22;
+const AWAKENED_MIST_WISP_DRIFT_X = 9;
+const AWAKENED_MIST_WISP_DRIFT_Y = 5;
+const AWAKENED_MIST_WISP_PHASE_STEP = 1.4;
+const AWAKENED_MIST_WISP_SPEED = 0.035;
+const AWAKENED_MIST_CENTER_Y_SCALE = 0.68;
+const AWAKENED_MIST_COLOR = "rgba(184, 211, 219, 0.2)";
+const AWAKENED_MIST_BONE_EFFECT: SpriteFrameEffect = {
+  filter: "saturate(0.82) brightness(1.12) drop-shadow(0 0 7px rgba(164, 224, 238, 0.9))",
+  tint: { color: "#b7e8f1", alpha: 0.18 },
+};
 
 export function drawBoss() {
   const boss = state.boss;
   if (!boss) return;
 
   const pose = resolveBossVisualFrame(boss, state.elapsed);
+  const awakenedMistBone = boss.id === BOSS_ARCHETYPE_IDS.mistBone && boss.awakened;
+  if (awakenedMistBone) drawAwakenedMistBoneAura(boss);
   drawSheetFrame(
     pose.sheet,
     pose.frame,
@@ -56,7 +73,35 @@ export function drawBoss() {
     pose.w,
     pose.h,
     pose.facing,
+    awakenedMistBone ? AWAKENED_MIST_BONE_EFFECT : undefined,
   );
+}
+
+function drawAwakenedMistBoneAura(boss: LiveBoss) {
+  if (!ctx) return;
+  const centerX = boss.x + boss.w / 2;
+  const centerY = boss.y + boss.h * AWAKENED_MIST_CENTER_Y_SCALE;
+  const radiusX = boss.w * AWAKENED_MIST_WISP_RADIUS_X_SCALE;
+  const radiusY = boss.h * AWAKENED_MIST_WISP_RADIUS_Y_SCALE;
+
+  ctx.save();
+  ctx.fillStyle = AWAKENED_MIST_COLOR;
+  for (let index = 0; index < AWAKENED_MIST_WISP_COUNT; index += 1) {
+    const phase = state.elapsed * AWAKENED_MIST_WISP_SPEED
+      + index * AWAKENED_MIST_WISP_PHASE_STEP;
+    ctx.beginPath();
+    ctx.ellipse(
+      centerX + Math.sin(phase) * AWAKENED_MIST_WISP_DRIFT_X,
+      centerY + Math.cos(phase) * AWAKENED_MIST_WISP_DRIFT_Y,
+      radiusX,
+      radiusY,
+      0,
+      0,
+      Math.PI * 2,
+    );
+    ctx.fill();
+  }
+  ctx.restore();
 }
 
 export function resolveBossVisualFrame(
@@ -206,14 +251,23 @@ export function resolveBossVisualFrame(
     );
   }
 
-  if (boss.id === BOSS_ARCHETYPE_IDS.mistBone && boss.actionState === "attack") {
-    const frame = Math.min(
-      MIST_BONE_ATTACK_SHEET.count - 1,
-      Math.floor(
-        Math.min(boss.actionTimer, MIST_BONE_CONFIG.attackDuration - 1)
-          / MIST_BONE_CONFIG.attackFrameDuration,
-      ),
-    );
+  if (
+    boss.id === BOSS_ARCHETYPE_IDS.mistBone
+    && (boss.actionState === "attack" || boss.actionState === "dash")
+  ) {
+    const frame = boss.actionState === "dash"
+      ? proportionalFrame(
+        MIST_BONE_ATTACK_SHEET.count,
+        boss.actionTimer,
+        MIST_BONE_CONFIG.chaseFrames,
+      )
+      : Math.min(
+        MIST_BONE_ATTACK_SHEET.count - 1,
+        Math.floor(
+          Math.min(boss.actionTimer, MIST_BONE_CONFIG.attackDuration - 1)
+            / MIST_BONE_CONFIG.attackFrameDuration,
+        ),
+      );
     return visualFrame(
       MIST_BONE_ATTACK_SHEET,
       frame,

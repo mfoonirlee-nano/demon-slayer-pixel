@@ -52,3 +52,28 @@ export const BOSS_DEFEAT_SPLIT_VISUAL = {
   clipExtentScale: 2,
   easingExponent: 3,
 } as const;
+
+export const MIST_BONE_DEFEAT_VISUAL = {
+  fragmentColumns: 3,
+  fragmentRows: 4,
+  fragmentHorizontalSpeed: 1.7,
+  fragmentHorizontalJitter: 0.75,
+  fragmentLiftMin: 1.1,
+  fragmentLiftRange: 1.7,
+  fragmentGravity: 0.09,
+  fragmentMaxAngularSpeed: 0.055,
+  fogWispCount: 9,
+  fogSpreadXRatio: 0.55,
+  fogSpreadYRatio: 0.42,
+  fogRadiusXMin: 34,
+  fogRadiusXRange: 28,
+  fogRadiusYMin: 12,
+  fogRadiusYRange: 14,
+  fogWindSpeedMin: 1.35,
+  fogWindSpeedRange: 0.9,
+  fogVerticalDrift: 0.34,
+  fogSway: 5,
+  fogSwayRate: 0.08,
+  fogColor: "190,211,216",
+  fogAlpha: 0.38,
+} as const;

@@ -50,6 +50,7 @@ const STATUS_NAMES: Record<Language, Record<PlayerStatusId, string>> = {
     binder_talisman_stun: "缚符周期眩晕",
     binder_talisman_stunned: "符咒眩晕",
     lantern_ash_zone: "灯烬灰域",
+    mist_bone_fog_slow: "雾骨薄雾迟滞",
   },
   en: {
     line_projectile_knockback: "Tidal Dragon Passive Knockback",
@@ -99,6 +100,7 @@ const STATUS_NAMES: Record<Language, Record<PlayerStatusId, string>> = {
     binder_talisman_stun: "Binder Talisman Stun Curse",
     binder_talisman_stunned: "Talisman Stunned",
     lantern_ash_zone: "Lantern Ash Zone",
+    mist_bone_fog_slow: "Mist Bone Fog Slow",
   },
 };
 

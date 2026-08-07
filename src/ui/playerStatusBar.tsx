@@ -86,6 +86,7 @@ export const PLAYER_STATUS_PRESENTATIONS = {
   binder_talisman_stun: debuff("stun"),
   binder_talisman_stunned: debuff("stun"),
   lantern_ash_zone: debuff("hazard"),
+  mist_bone_fog_slow: debuff("slow"),
 } satisfies Record<PlayerStatusId, PlayerStatusPresentation>;
 
 export const PLAYER_STATUS_ICON_PATHS = Object.fromEntries(

@@ -37,6 +37,10 @@ export function defeatBoss() {
   spawnBossDefeatSplitEffect(state.boss);
   const defeatedBossId = state.boss.id;
   const clearsRun = defeatedBossId === BOSS_ARCHETYPE_IDS.bloodMoon;
+  if (defeatedBossId === BOSS_ARCHETYPE_IDS.mistBone) {
+    state.mistBoneFogs.length = 0;
+    state.mistBoneSpikes.length = 0;
+  }
   state.player.score += PLAYER_COMBAT.bossKillScore;
   recordBossCoverKill();
   gainBossKillEnergy();
@@ -49,7 +53,11 @@ export function defeatBoss() {
   } else {
     queueBossEquipmentChoices(state);
   }
-  playSfx("bossKill");
+  playSfx(
+    defeatedBossId === BOSS_ARCHETYPE_IDS.mistBone
+      ? "bossMistBoneDeath"
+      : "bossKill",
+  );
   state.bossKills += 1;
   state.boss = null;
   clearBossSummons();

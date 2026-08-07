@@ -1,5 +1,6 @@
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { BOSS_DEFEAT_SPLIT_VISUAL } from "../../constants";
+import { playSfx } from "../../game/audio";
 import { getStateSnapshot, resetState, state } from "../../game/state";
 import { EQUIPMENT_CHOICE_IDS, chooseBossEquipment } from "../../systems/equipment";
 import { addRunXp, xpToNextLevel } from "../../systems/progression";
@@ -7,6 +8,8 @@ import { spawnBoss } from "../boss";
 import { updateBossDefeatSplitEffect } from "./bossDefeatSplitEffect";
 import { defeatBoss } from "./defeat";
 import { BOSS_ARCHETYPE_IDS } from "./registry";
+
+vi.mock("../../game/audio", () => ({ playSfx: vi.fn() }));
 
 const BOSS_REWARD_CHOICE_COUNT = 3;
 const FINAL_BOSS_START_KILLS = 12;
@@ -17,6 +20,10 @@ const LEVEL_AFTER_FIRST_BOSS = 2;
 const LEVEL_AFTER_BANKED_FINAL_REWARDS = 4;
 
 describe("boss defeat progression", () => {
+  afterEach(() => {
+    vi.clearAllMocks();
+  });
+
   it("grants one run level, equipment, and continues after a non-final boss", () => {
     resetState();
     state.bossKills = 0;
@@ -126,6 +133,45 @@ describe("boss defeat progression", () => {
     expect(state.player.runLevel).toBe(LEVEL_AFTER_BANKED_FINAL_REWARDS);
     expect(state.player.runXp).toBe(0);
     expect(state.pendingUpgradeChoices).toEqual([]);
+  });
+
+  it("clears Mist Bone hazards and uses its own death sound after capturing the lethal pose", () => {
+    resetState();
+    spawnBoss(BOSS_ARCHETYPE_IDS.mistBone);
+    if (!state.boss) throw new Error("Boss did not spawn");
+    state.mistBoneFogs.push({
+      kind: "thin",
+      x: 100,
+      y: 300,
+      radiusX: 120,
+      radiusY: 40,
+      life: 60,
+      maxLife: 60,
+      elapsed: 0,
+    });
+    state.mistBoneSpikes.push({
+      x: 100,
+      y: 300,
+      w: 40,
+      h: 80,
+      delay: 0,
+      warningFrames: 20,
+      elapsed: 0,
+      frame: 0,
+      life: 60,
+      damage: 8,
+      hitPlayer: false,
+    });
+    state.boss.hp = 0;
+    vi.mocked(playSfx).mockClear();
+
+    expect(defeatBoss()).toBe(true);
+
+    expect(state.bossDefeatSplitEffect).toMatchObject({ kind: "mistBoneScatter" });
+    expect(state.mistBoneFogs).toEqual([]);
+    expect(state.mistBoneSpikes).toEqual([]);
+    expect(playSfx).toHaveBeenCalledOnce();
+    expect(playSfx).toHaveBeenCalledWith("bossMistBoneDeath");
   });
 });
 
