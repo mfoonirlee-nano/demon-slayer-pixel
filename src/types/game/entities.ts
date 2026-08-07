@@ -105,6 +105,8 @@ export type PlayerState = {
   skillTimer: number;
   skillEffectSpawned: boolean;
   skillCastDamageMultiplier: number;
+  // Player updates before Bosses; this transient edge is cleared at the next player update.
+  skillReleasedThisFrameId: SkillId | null;
   vortexControlAirJumpsUsed: number;
   dashReposition: {
     startX: number;

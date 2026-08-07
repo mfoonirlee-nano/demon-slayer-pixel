@@ -22,6 +22,8 @@
 
 玩家的起跳判定、回涡 Lv3 装备后二段跳次数和地面/平台落地重置统一由 `src/entities/players/jumping.ts` 管理，`src/entities/player.ts` 只编排重力更新与落地结果。`src/game/input.ts` 以按下边沿触发跳跃，长按产生的重复 `keydown` 不会自动消耗空中追加跳跃。
 
+普通技能在真正生成技能效果的释放帧写入 `player.skillReleasedThisFrameId`。正常玩法固定先执行 `updatePlayer(dt)`、再执行 `updateBoss()`，因此镜魇能在同一帧读取并消费这条瞬时边沿；下一次玩家更新会先清空它。该事件不排队：镜魇处于施法、收招或即将起手自身招式时，本次反射机会直接失效，之后不会补发。大招使用独立的 `ultimateCastTimer` / `ultimateTimer` 路径，不属于这条普通技能事件。
+
 ### 5. 配置与类型分层
 重构后，仓库把常量配置与类型定义从运行时逻辑中拆出：
 - `src/constants/` 负责游戏配置、资源元数据、运行时调参与领域标识。

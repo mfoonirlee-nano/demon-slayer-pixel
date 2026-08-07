@@ -143,7 +143,7 @@ export type ProjectileKind =
   | "binderTalisman"
   | "leaperSpike"
   | "gliderSonicBlade";
-export type MirrorShardKind = "shard" | "nightmare";
+export type MirrorShardKind = "shard" | "nightmare" | "reflection";
 export type SkillLevel = 1 | 2 | 3;
 export type UltimateLevel = 0 | 1 | 2 | 3;
 export type EquipmentSlot = "blade" | "garb" | "talisman";

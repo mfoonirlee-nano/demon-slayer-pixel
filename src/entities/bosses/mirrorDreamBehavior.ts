@@ -3,8 +3,15 @@ import { state } from "../../game/state";
 import { clamp } from "../../game/utils";
 import { playSfx } from "../../game/audio";
 import { bossAttackDamage, damagePlayerOnContact } from "./shared";
+import { mirrorShardProfile } from "./mirrorDreamShardProfile";
 import type { LiveBoss } from "./types";
-import type { BossSkillMode, MirrorAfterimageState, MirrorShardState } from "../../types/game-state";
+import type { SkillId } from "../../types/assets";
+import type {
+  BossSkillMode,
+  MirrorAfterimageState,
+  MirrorShardIdentity,
+  MirrorShardState,
+} from "../../types/game-state";
 
 const RETREAT_PHASE_FORCE = 0.006;
 const STEERING_PHASE_FORCE = 0.005;
@@ -36,8 +43,11 @@ const TRUE_IMAGE_SHIFT_FIRST_BREAK_FRAME = 16;
 const TRUE_IMAGE_SHIFT_BREAK_DELAY = 10;
 const TRUE_IMAGE_SHIFT_SPACING_SCALE = 0.82;
 const TRUE_IMAGE_SHIFT_SFX_PITCH = 0.74;
+const PLAYER_SKILL_REFLECTION_SFX_PITCH = 1.32;
 
 export function updateMirrorDreamBoss(boss: LiveBoss) {
+  const releasedSkillId = consumeReleasedPlayerSkill();
+
   if (boss.recoveryTimer > 0) {
     boss.recoveryTimer -= 1;
     boss.vx *= MIRROR_DREAM_CONFIG.drag;
@@ -78,8 +88,33 @@ export function updateMirrorDreamBoss(boss: LiveBoss) {
     return;
   }
 
+  maybeReflectReleasedPlayerSkill(boss, releasedSkillId);
   moveMirrorDreamBoss(boss);
   damagePlayerOnContact(boss);
+}
+
+function consumeReleasedPlayerSkill() {
+  // Consume before cast/recovery returns so a blocked release cannot fire after the Boss becomes idle.
+  const releasedSkillId = state.player.skillReleasedThisFrameId;
+  state.player.skillReleasedThisFrameId = null;
+  return releasedSkillId;
+}
+
+function maybeReflectReleasedPlayerSkill(boss: LiveBoss, releasedSkillId: SkillId | null) {
+  if (!releasedSkillId || !boss.awakened || boss.actionState !== "move") return;
+  if (Math.random() >= MIRROR_DREAM_CONFIG.playerSkillReflectionChance) return;
+
+  spawnMirrorAfterimage(
+    boss,
+    MIRROR_DREAM_CONFIG.playerSkillReflectionWarningFrames,
+    boss.x + boss.w / 2,
+    releasedSkillId,
+  );
+  boss.skillCd = Math.max(
+    boss.skillCd,
+    MIRROR_DREAM_CONFIG.playerSkillReflectionWarningFrames + 1,
+  );
+  playSfx("bossMirror", PLAYER_SKILL_REFLECTION_SFX_PITCH);
 }
 
 function moveMirrorDreamBoss(boss: LiveBoss) {
@@ -109,6 +144,7 @@ function moveMirrorDreamBoss(boss: LiveBoss) {
 }
 
 function startMirrorDreamCast(boss: LiveBoss, forcedSkillMode?: BossSkillMode) {
+  cancelPendingPlayerSkillReflections();
   const toPlayer = state.player.x + state.player.w / 2 - (boss.x + boss.w / 2);
   boss.castFacing = toPlayer >= 0 ? 1 : -1;
   boss.facing = boss.castFacing;
@@ -124,6 +160,15 @@ function startMirrorDreamCast(boss: LiveBoss, forcedSkillMode?: BossSkillMode) {
   boss.vx = 0;
 
   playSfx("bossCast", CAST_SFX_PITCH);
+}
+
+function cancelPendingPlayerSkillReflections() {
+  for (let i = state.mirrorAfterimages.length - 1; i >= 0; i -= 1) {
+    const afterimage = state.mirrorAfterimages[i] as MirrorAfterimageState;
+    if (afterimage.reflectedSkillId && !afterimage.spawned) {
+      state.mirrorAfterimages.splice(i, 1);
+    }
+  }
 }
 
 function shouldStartTrueImageShift(boss: LiveBoss) {
@@ -257,11 +302,17 @@ function safeMirrorImageCenter(centerX: number, side: -1 | 1) {
     : Math.max(clampedCenter, centerX);
 }
 
-function spawnMirrorAfterimage(boss: LiveBoss, spawnAt: number | undefined, centerX = boss.x + boss.w / 2) {
+function spawnMirrorAfterimage(
+  boss: LiveBoss,
+  spawnAt: number | undefined,
+  centerX = boss.x + boss.w / 2,
+  reflectedSkillId?: SkillId,
+) {
   const life = spawnAt === undefined
     ? MIRROR_DREAM_CONFIG.afterimageLife
     : spawnAt + MIRROR_DREAM_CONFIG.nightmareBreakFadeFrames;
   state.mirrorAfterimages.push({
+    ...(reflectedSkillId ? { reflectedSkillId } : {}),
     x: centerX - boss.w / 2,
     y: boss.y,
     w: boss.w,
@@ -331,8 +382,7 @@ function spawnMirrorShardFromBoss(boss: LiveBoss) {
   const dir = boss.castFacing;
   const travelFrames = Math.max(MIN_SHARD_TRAVEL_FRAMES, Math.abs(targetX - startX) / MIRROR_DREAM_CONFIG.shardSpeed);
   const vy = clamp((targetY - startY) / travelFrames, -SHARD_MAX_VERTICAL_SPEED, SHARD_MAX_VERTICAL_SPEED);
-  spawnMirrorShard({
-    kind: "shard",
+  spawnMirrorShard({ kind: "shard" }, {
     centerX: startX,
     centerY: startY,
     vx: dir * (MIRROR_DREAM_CONFIG.shardSpeed + boss.phase * SHARD_PHASE_SPEED_BONUS),
@@ -353,21 +403,23 @@ export function spawnMirrorNightmareShard(afterimage: MirrorAfterimageState) {
   const dx = targetX - centerX;
   const dy = targetY - centerY;
   const distance = Math.max(1, Math.hypot(dx, dy));
-  const speed = MIRROR_DREAM_CONFIG.nightmareSpeed;
-  spawnMirrorShard({
-    kind: "nightmare",
+  const identity: MirrorShardIdentity = afterimage.reflectedSkillId
+    ? { kind: "reflection", reflectedSkillId: afterimage.reflectedSkillId }
+    : { kind: "nightmare" };
+  const profile = mirrorShardProfile(identity);
+  const speed = MIRROR_DREAM_CONFIG.nightmareSpeed * profile.speedScale;
+  spawnMirrorShard(identity, {
     centerX,
     centerY,
     vx: dx / distance * speed,
     vy: dy / distance * speed,
-    damage: afterimage.damage,
+    damage: afterimage.damage * profile.damageScale,
     bouncesRemaining: 0,
   });
   playSfx("bossMirror", NIGHTMARE_SHARD_SFX_PITCH);
 }
 
-function spawnMirrorShard(params: {
-  kind: MirrorShardState["kind"];
+function spawnMirrorShard(identity: MirrorShardIdentity, params: {
   centerX: number;
   centerY: number;
   vx: number;
@@ -375,27 +427,21 @@ function spawnMirrorShard(params: {
   damage: number;
   bouncesRemaining: number;
 }) {
-  const hitW = params.kind === "nightmare"
-    ? MIRROR_DREAM_CONFIG.nightmareHitW
-    : MIRROR_DREAM_CONFIG.shardHitW;
-  const hitH = params.kind === "nightmare"
-    ? MIRROR_DREAM_CONFIG.nightmareHitH
-    : MIRROR_DREAM_CONFIG.shardHitH;
-  state.mirrorShards.push({
-    kind: params.kind,
-    x: params.centerX - hitW / 2,
-    y: params.centerY - hitH / 2,
-    w: hitW,
-    h: hitH,
+  const profile = mirrorShardProfile(identity);
+  const shard: MirrorShardState = {
+    ...identity,
+    x: params.centerX - profile.hitW / 2,
+    y: params.centerY - profile.hitH / 2,
+    w: profile.hitW,
+    h: profile.hitH,
     vx: params.vx,
     vy: params.vy,
     facing: params.vx >= 0 ? 1 : -1,
     frame: 0,
     elapsed: 0,
-    life: params.kind === "nightmare"
-      ? MIRROR_DREAM_CONFIG.nightmareLife
-      : MIRROR_DREAM_CONFIG.shardLife,
+    life: profile.life,
     damage: params.damage,
     bouncesRemaining: params.bouncesRemaining,
-  });
+  };
+  state.mirrorShards.push(shard);
 }

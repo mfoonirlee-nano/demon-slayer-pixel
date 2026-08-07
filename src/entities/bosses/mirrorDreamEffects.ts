@@ -1,4 +1,4 @@
-import { BOSS_CONFIG, GROUND_Y, MIRROR_AFTERIMAGE_DRAW_WIDTH, MIRROR_AFTERIMAGE_SHEET, MIRROR_DREAM_CONFIG, MIRROR_NIGHTMARE_SHEET, MIRROR_SHARD_SHEET, WIDTH } from "../../constants";
+import { BOSS_CONFIG, GROUND_Y, MIRROR_AFTERIMAGE_DRAW_WIDTH, MIRROR_AFTERIMAGE_SHEET, MIRROR_DREAM_CONFIG, WIDTH } from "../../constants";
 import { playSfx } from "../../game/audio";
 import { state } from "../../game/state";
 import { clamp, hitbox } from "../../game/utils";
@@ -6,6 +6,7 @@ import { ctx } from "../../rendering/context";
 import { drawSheetFrame } from "../../rendering/graphics";
 import { hurtPlayer } from "../player";
 import { spawnMirrorNightmareShard } from "./mirrorDreamBehavior";
+import { mirrorShardProfile } from "./mirrorDreamShardProfile";
 import type { MirrorAfterimageState, MirrorShardState } from "../../types/game-state";
 
 const SHARD_BOUNCE_FRAME = 4;
@@ -45,25 +46,25 @@ function updateMirrorAfterimages() {
 function updateMirrorShards() {
   for (let i = state.mirrorShards.length - 1; i >= 0; i -= 1) {
     const shard = state.mirrorShards[i] as MirrorShardState;
-    const sheet = shard.kind === "nightmare" ? MIRROR_NIGHTMARE_SHEET : MIRROR_SHARD_SHEET;
-    const frameDuration = shard.kind === "nightmare"
-      ? MIRROR_DREAM_CONFIG.nightmareFrameDuration
-      : MIRROR_DREAM_CONFIG.shardFrameDuration;
+    const profile = mirrorShardProfile(shard);
 
     shard.elapsed += 1;
     shard.life -= 1;
     shard.x += shard.vx;
     shard.y += shard.vy;
-    shard.frame = Math.min(sheet.count - 1, Math.floor(shard.elapsed / frameDuration));
+    shard.frame = Math.min(
+      profile.sheet.count - 1,
+      Math.floor(shard.elapsed / profile.frameDuration),
+    );
 
     const hitLeftWall = shard.x <= 0 && shard.vx < 0;
     const hitRightWall = shard.x + shard.w >= WIDTH && shard.vx > 0;
-    if (shard.kind === "shard" && shard.bouncesRemaining > 0 && (hitLeftWall || hitRightWall)) {
+    if (profile.canBounce && shard.bouncesRemaining > 0 && (hitLeftWall || hitRightWall)) {
       shard.x = clamp(shard.x, 0, WIDTH - shard.w);
       shard.vx *= -1;
       shard.facing = shard.vx >= 0 ? 1 : -1;
       shard.bouncesRemaining -= 1;
-      shard.frame = Math.min(MIRROR_SHARD_SHEET.count - 1, SHARD_BOUNCE_FRAME);
+      shard.frame = Math.min(profile.sheet.count - 1, SHARD_BOUNCE_FRAME);
       playSfx("bossMirror", SHARD_BOUNCE_SFX_PITCH);
     }
 
@@ -73,13 +74,10 @@ function updateMirrorShards() {
       continue;
     }
 
-    const drawW = shard.kind === "nightmare"
-      ? MIRROR_DREAM_CONFIG.nightmareDrawW
-      : MIRROR_DREAM_CONFIG.shardDrawW;
-    const offLeft = shard.x + shard.w < -drawW;
-    const offRight = shard.x > WIDTH + drawW;
-    const offTop = shard.y + shard.h < -drawW;
-    const offBottom = shard.y > GROUND_Y + drawW;
+    const offLeft = shard.x + shard.w < -profile.drawW;
+    const offRight = shard.x > WIDTH + profile.drawW;
+    const offTop = shard.y + shard.h < -profile.drawW;
+    const offBottom = shard.y > GROUND_Y + profile.drawW;
     if (shard.life <= 0 || offLeft || offRight || offTop || offBottom) {
       state.mirrorShards.splice(i, 1);
     }
@@ -120,23 +118,23 @@ function drawMirrorAfterimages() {
 function drawMirrorShards() {
   if (!ctx) return;
   for (const shard of state.mirrorShards) {
-    const sheet = shard.kind === "nightmare" ? MIRROR_NIGHTMARE_SHEET : MIRROR_SHARD_SHEET;
-    const drawW = shard.kind === "nightmare"
-      ? MIRROR_DREAM_CONFIG.nightmareDrawW
-      : MIRROR_DREAM_CONFIG.shardDrawW;
-    const drawH = shard.kind === "nightmare"
-      ? MIRROR_DREAM_CONFIG.nightmareDrawH
-      : MIRROR_DREAM_CONFIG.shardDrawH;
+    const profile = mirrorShardProfile(shard);
     const centerX = shard.x + shard.w / 2;
     const centerY = shard.y + shard.h / 2;
+    ctx.save();
+    if (profile.glowColor) {
+      ctx.shadowColor = profile.glowColor;
+      ctx.shadowBlur = MIRROR_DREAM_CONFIG.playerSkillReflectionGlowBlur;
+    }
     drawSheetFrame(
-      sheet,
+      profile.sheet,
       shard.frame,
-      centerX - drawW / 2,
-      centerY - drawH / 2,
-      drawW,
-      drawH,
+      centerX - profile.drawW / 2,
+      centerY - profile.drawH / 2,
+      profile.drawW,
+      profile.drawH,
       shard.facing,
     );
+    ctx.restore();
   }
 }

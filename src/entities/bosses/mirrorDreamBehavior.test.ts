@@ -1,9 +1,12 @@
-import { describe, expect, it, vi } from "vitest";
-import { MIRROR_AFTERIMAGE_DRAW_WIDTH, MIRROR_DREAM_CONFIG, WIDTH } from "../../constants";
+import { afterEach, describe, expect, it, vi } from "vitest";
+import { MIRROR_AFTERIMAGE_DRAW_WIDTH, MIRROR_DREAM_CONFIG, SKILL_IDS, WIDTH } from "../../constants";
 import { resetState, state } from "../../game/state";
 import { createBossEncounter } from "./encounter";
 import { updateMirrorDreamBoss } from "./mirrorDreamBehavior";
+import { updateMirrorDreamEffects } from "./mirrorDreamEffects";
 import { BOSS_ARCHETYPE_IDS } from "./registry";
+import type { SkillId } from "../../types/assets";
+import type { LiveBoss } from "./types";
 
 const PHASE_TWO = 2;
 const PHASE_THREE = 3;
@@ -13,6 +16,12 @@ const BOSS_START_X = 180;
 const PLAYER_CAST_MOVEMENT = 64;
 const MIRROR_IMAGE_PATTERN_RANDOM_ROLL = 0.1;
 const MIRROR_SHARD_RANDOM_ROLL = 0.8;
+const REFLECTION_SUCCESS_ROLL = 0;
+const REFLECTION_MISS_ROLL = 0.99;
+
+afterEach(() => {
+  vi.restoreAllMocks();
+});
 
 describe("mirror dream boss behavior", () => {
   it("shortens skill cooldowns in later phases", () => {
@@ -74,7 +83,161 @@ describe("mirror dream boss behavior", () => {
       );
     }
   });
+
+  it("reflects an awakened player's released skill once after a readable warning", () => {
+    const boss = createIdleMirrorDreamBoss({ awakened: true });
+    state.player.skillReleasedThisFrameId = SKILL_IDS.lineProjectile;
+    const randomSpy = vi.spyOn(Math, "random").mockReturnValue(REFLECTION_SUCCESS_ROLL);
+
+    updateMirrorDreamBoss(boss);
+    updateMirrorDreamBoss(boss);
+
+    expect(randomSpy).toHaveBeenCalledTimes(1);
+    expect(state.player.skillReleasedThisFrameId).toBeNull();
+    expect(state.mirrorAfterimages).toHaveLength(1);
+    expect(state.mirrorAfterimages[0]).toMatchObject({
+      spawnAt: MIRROR_DREAM_CONFIG.playerSkillReflectionWarningFrames,
+      reflectedSkillId: SKILL_IDS.lineProjectile,
+    });
+
+    for (let frame = 0; frame < MIRROR_DREAM_CONFIG.playerSkillReflectionWarningFrames; frame += 1) {
+      updateMirrorDreamEffects();
+    }
+
+    expect(state.mirrorShards).toHaveLength(1);
+    expect(state.mirrorShards[0]).toMatchObject({
+      kind: "reflection",
+      reflectedSkillId: SKILL_IDS.lineProjectile,
+    });
+    expect(state.mirrorShards[0]?.vx).toBeGreaterThan(0);
+  });
+
+  it("carries the released skill's range and damage profile into the reflection", () => {
+    vi.spyOn(Math, "random").mockReturnValue(REFLECTION_SUCCESS_ROLL);
+
+    const lineProjectileReflection = spawnReflectedPlayerSkill(SKILL_IDS.lineProjectile);
+    const vortexReflection = spawnReflectedPlayerSkill(SKILL_IDS.vortexControl);
+
+    expect(lineProjectileReflection.reflectedSkillId).toBe(SKILL_IDS.lineProjectile);
+    expect(vortexReflection.reflectedSkillId).toBe(SKILL_IDS.vortexControl);
+    expect(lineProjectileReflection.w).toBeLessThan(vortexReflection.w);
+    expect(Math.hypot(lineProjectileReflection.vx, lineProjectileReflection.vy)).toBeGreaterThan(
+      Math.hypot(vortexReflection.vx, vortexReflection.vy),
+    );
+    expect(lineProjectileReflection.damage).toBeGreaterThan(vortexReflection.damage);
+  });
+
+  it("does not reroll a missed reflection for the same release", () => {
+    const boss = createIdleMirrorDreamBoss({ awakened: true });
+    state.player.skillReleasedThisFrameId = SKILL_IDS.closeArc;
+    const randomSpy = vi.spyOn(Math, "random").mockReturnValue(REFLECTION_MISS_ROLL);
+
+    updateMirrorDreamBoss(boss);
+    updateMirrorDreamBoss(boss);
+
+    expect(randomSpy).toHaveBeenCalledTimes(1);
+    expect(state.player.skillReleasedThisFrameId).toBeNull();
+    expect(state.mirrorAfterimages).toHaveLength(0);
+  });
+
+  it("prioritizes its own cast when both releases would start on the same frame", () => {
+    const boss = createIdleMirrorDreamBoss({ awakened: true });
+    boss.skillCd = 0;
+    state.player.skillReleasedThisFrameId = SKILL_IDS.antiAirMulti;
+    const randomSpy = vi.spyOn(Math, "random").mockReturnValue(REFLECTION_SUCCESS_ROLL);
+
+    updateMirrorDreamBoss(boss);
+
+    expect(randomSpy).toHaveBeenCalledTimes(1);
+    expect(state.player.skillReleasedThisFrameId).toBeNull();
+    expect(state.mirrorAfterimages).toHaveLength(0);
+    expect(boss.castTimer).toBe(MIRROR_DREAM_CONFIG.castDuration);
+    expect(boss.actionState).toBe("cast");
+  });
+
+  it("cancels a pending reflection if a phase cast starts during its warning", () => {
+    const boss = createIdleMirrorDreamBoss({ awakened: true });
+    state.player.skillReleasedThisFrameId = SKILL_IDS.vortexControl;
+    vi.spyOn(Math, "random").mockReturnValue(REFLECTION_SUCCESS_ROLL);
+
+    updateMirrorDreamBoss(boss);
+    expect(state.mirrorAfterimages).toHaveLength(1);
+
+    boss.phase = PHASE_TWO;
+    updateMirrorDreamBoss(boss);
+
+    expect(boss.skillMode).toBe("mirrorTrueImageShift");
+    expect(boss.actionState).toBe("cast");
+    expect(state.mirrorAfterimages).toHaveLength(0);
+  });
+
+  it("consumes without deferring a skill released while Mirror Dream is casting", () => {
+    const boss = createIdleMirrorDreamBoss({ awakened: true });
+    boss.actionState = "cast";
+    boss.castTimer = 1;
+    boss.skillEffectSpawned = true;
+    state.player.skillReleasedThisFrameId = SKILL_IDS.verticalWave;
+    const randomSpy = vi.spyOn(Math, "random").mockReturnValue(REFLECTION_SUCCESS_ROLL);
+
+    updateMirrorDreamBoss(boss);
+    boss.recoveryTimer = 0;
+    boss.actionState = "move";
+    updateMirrorDreamBoss(boss);
+
+    expect(randomSpy).not.toHaveBeenCalled();
+    expect(state.player.skillReleasedThisFrameId).toBeNull();
+    expect(state.mirrorAfterimages).toHaveLength(0);
+  });
+
+  it("does not reflect during recovery or from the base form", () => {
+    const recoveringBoss = createIdleMirrorDreamBoss({ awakened: true });
+    recoveringBoss.actionState = "recover";
+    recoveringBoss.recoveryTimer = 2;
+    state.player.skillReleasedThisFrameId = SKILL_IDS.returningBlade;
+    const randomSpy = vi.spyOn(Math, "random").mockReturnValue(REFLECTION_SUCCESS_ROLL);
+
+    updateMirrorDreamBoss(recoveringBoss);
+
+    expect(randomSpy).not.toHaveBeenCalled();
+    expect(state.mirrorAfterimages).toHaveLength(0);
+
+    const baseBoss = createIdleMirrorDreamBoss();
+    randomSpy.mockClear();
+    state.player.skillReleasedThisFrameId = SKILL_IDS.returningBlade;
+    updateMirrorDreamBoss(baseBoss);
+
+    expect(randomSpy).not.toHaveBeenCalled();
+    expect(state.mirrorAfterimages).toHaveLength(0);
+  });
 });
+
+function createIdleMirrorDreamBoss(options: { awakened?: boolean } = {}): LiveBoss {
+  resetState();
+  const boss = createBossEncounter({
+    id: BOSS_ARCHETYPE_IDS.mirrorDream,
+    bossKills: 0,
+    elapsedSeconds: 0,
+    animSeed: 0,
+    awakened: options.awakened,
+  });
+  boss.entering = false;
+  boss.x = BOSS_START_X;
+  boss.skillCd = MIRROR_DREAM_CONFIG.initialCooldown;
+  state.player.x = 540;
+  return boss;
+}
+
+function spawnReflectedPlayerSkill(skillId: SkillId) {
+  const boss = createIdleMirrorDreamBoss({ awakened: true });
+  state.player.skillReleasedThisFrameId = skillId;
+  updateMirrorDreamBoss(boss);
+  for (let frame = 0; frame < MIRROR_DREAM_CONFIG.playerSkillReflectionWarningFrames; frame += 1) {
+    updateMirrorDreamEffects();
+  }
+  const shard = state.mirrorShards[0];
+  if (!shard) throw new Error(`Expected reflected shard for ${skillId}`);
+  return shard;
+}
 
 function spawnMirrorImagePattern(options: {
   phase?: number;

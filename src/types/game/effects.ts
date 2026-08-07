@@ -100,8 +100,17 @@ export type DeadBellBladeState = {
   damage: number;
 };
 
-export type MirrorShardState = {
-  kind: MirrorShardKind;
+export type MirrorShardIdentity =
+  | {
+    kind: Exclude<MirrorShardKind, "reflection">;
+    reflectedSkillId?: never;
+  }
+  | {
+    kind: "reflection";
+    reflectedSkillId: SkillId;
+  };
+
+export type MirrorShardState = MirrorShardIdentity & {
   x: number;
   y: number;
   w: number;
@@ -117,6 +126,7 @@ export type MirrorShardState = {
 };
 
 export type MirrorAfterimageState = {
+  reflectedSkillId?: SkillId;
   x: number;
   y: number;
   w: number;

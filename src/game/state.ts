@@ -73,6 +73,7 @@ export function createInitialPlayerState(): PlayerState {
     skillTimer: 0,
     skillEffectSpawned: false,
     skillCastDamageMultiplier: 1,
+    skillReleasedThisFrameId: null,
     vortexControlAirJumpsUsed: 0,
     dashReposition: null,
     ultimateEnergy: 0,

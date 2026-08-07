@@ -389,6 +389,8 @@ export function tryJump() {
 
 export function updatePlayer(deltaSeconds = 0) {
   const p = state.player;
+  // Boss reactions may inspect only releases produced later in this update, never an older cast.
+  p.skillReleasedThisFrameId = null;
   activeGuardCounterRect();
   if (p.ultimateCastTimer > 0) {
     p.runStepDistance = 0;

@@ -215,6 +215,7 @@ export function updateSkillCastRelease(): boolean {
       const elapsed = total - p.skillTimer;
       if (elapsed >= playerSkillReleaseFrame(skill)) {
         p.skillEffectSpawned = true;
+        p.skillReleasedThisFrameId = skill.id;
         const cx = p.x + p.w / 2;
         const feetY = p.y + p.h;
         if (skill.id === SKILL_IDS.lineProjectile) {

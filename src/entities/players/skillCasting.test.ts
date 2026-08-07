@@ -168,6 +168,26 @@ describe("player skill casting", () => {
     expect(state.lineProjectileEffects).toHaveLength(1);
   });
 
+  it("publishes a one-frame event when a player skill actually releases", () => {
+    resetState();
+    state.player.skillEnergy = state.player.skillEnergyMax;
+    state.player.skillIndex = 0;
+    const lineProjectile = skillById(SKILL_IDS.lineProjectile);
+    const releaseFrame = playerSkillReleaseFrame(lineProjectile);
+
+    castSelectedSkill();
+    for (let frame = 1; frame < releaseFrame; frame += 1) {
+      updateSkillCastRelease();
+      expect(state.player.skillReleasedThisFrameId).toBeNull();
+    }
+
+    updateSkillCastRelease();
+    expect(state.player.skillReleasedThisFrameId).toBe(SKILL_IDS.lineProjectile);
+
+    updatePlayer();
+    expect(state.player.skillReleasedThisFrameId).toBeNull();
+  });
+
   it("does not activate guard counter before its release frame", () => {
     resetState();
     state.player.skillEnergy = state.player.skillEnergyMax;
