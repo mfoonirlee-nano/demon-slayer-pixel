@@ -1,6 +1,7 @@
 # 待办
 
 增加落叶效果
+增加天气效果
 
 ## `crawler` awakened / final 高阶突进行为
 
