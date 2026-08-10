@@ -1,6 +1,17 @@
 import { describe, expect, it } from "vitest";
 
-import { TORII_SPRITES } from "./scenery";
+import { FALLING_LEAF_SHEET, TORII_SPRITES } from "./scenery";
+
+describe("falling leaf sprite sheet", () => {
+  it("keeps the eight centered tumble frames in one horizontal strip", () => {
+    expect(FALLING_LEAF_SHEET).toMatchObject({
+      src: "assets/sprites/scenery/weather/falling-leaf-tumble.png",
+      frameW: 24,
+      frameH: 24,
+      count: 8,
+    });
+  });
+});
 
 describe("torii sprite regions", () => {
   it("maps all twelve high-definition torii variants in the 3072x2048 atlas", () => {

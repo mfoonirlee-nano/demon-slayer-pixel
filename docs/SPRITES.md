@@ -7,7 +7,7 @@
 ## 图片生成入口
 
 - 创建、重绘或编辑位图内容时，先完整执行 [`workflows/imagegen-project-asset.md`](../workflows/imagegen-project-asset.md)。该 workflow 是生成工具、可信产物、后处理和阻塞条件的唯一操作规范。
-- 本文只维护运行时资源目录、图集规格和接入契约；视觉意图从 [`docs/art/README.md`](art/README.md) 进入对应角色、敌人或 Boss brief。
+- 本文只维护运行时资源目录、图集规格和接入契约；视觉意图从 [`docs/art/README.md`](art/README.md) 进入对应角色、敌人、Boss 或环境 brief。
 - 最终运行时素材必须落到 `assets/sprites/` 的对应目录，并在替换前后核对精确宽高、alpha、透明边缘、可见内容 bbox、帧数和单帧尺寸。
 - 只有图集规格或用途变化时才修改运行时常量、manifest 和本文；单纯换图且契约不变时直接保留现有元数据。
 
@@ -20,6 +20,7 @@
 - `assets/sprites/background/`: 天空、山脉、石塔、鸟居等背景/近景素材。
 - `assets/sprites/scenery/boss-landmarks/`: 第 1-13 幕按 Boss 特征区分的中景地标。
 - `assets/sprites/scenery/act-occluders/`: 可遮挡敌人出生的逐幕主题树木、岩簇和通用竹石素材。
+- `assets/sprites/scenery/weather/`: 不参与碰撞的场景气候序列帧素材。
 - `assets/sprites/cloud/`: 大云和小云图集。
 - `assets/sprites/tree/`: 树木图集。
 - `assets/sprites/ground/`: 草地和石地瓦片。
@@ -28,6 +29,12 @@
 - `assets/sprites/ui/`: 状态条、开始/暂停/结束界面、大招能量球等 UI 素材。
 
 ## 关键运行时规格
+
+### 场景气候：落叶
+
+`scenery/weather/falling-leaf-tumble.png` 是 `192x24` RGBA 横向图集，固定 `8` 帧、单帧 `24x24`。八帧保存同一片枫叶从正面、四分之三侧、薄边、背面到反向姿态并回到起始姿态的连续翻滚；每帧可见 bbox 中心固定在 `(12, 12)`，四边至少保留 `3px` 全透明 gutter。叶片颜色使用低饱和铜褐、冷赭和暗酒红，配暗靛轮廓与极弱月蓝边光，避免与鲜红攻击预警或玩家的高亮月潮蓝混淆。视觉约束见 [`docs/art/environment.md`](art/environment.md)。
+
+`FALLING_LEAF_SHEET` 将其登记为标准 `SpriteSheet` 并交由素材 manifest 预加载。运行时只裁切完整帧，不再用 Canvas 几何拼出叶片：近景以原生 `24x24` 绘制，远景以整数半缩放 `12x12` 绘制；位置、阵风、透明度和选帧仍由确定性的场景时钟控制，因此暂停和战斗冻结不会让气候层偷跑。
 
 ### 逐幕 Boss 地标
 

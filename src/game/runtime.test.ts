@@ -15,7 +15,9 @@ import {
 import { createBossEncounter } from "../entities/bosses/encounter";
 import { BOSS_ARCHETYPE_IDS } from "../entities/bosses/registry";
 import { spawnEnemyBySheetIndex } from "../entities/enemy";
+import { drawBackground } from "../rendering/background";
 import { setCanvas } from "../rendering/context";
+import { drawFallingLeaves } from "../rendering/fallingLeaves";
 import { drawNearForeground } from "../rendering/nearForeground";
 import { createBossEquipmentChoices } from "../systems/equipment";
 import { addRunXp, xpToNextLevel } from "../systems/progression";
@@ -41,6 +43,10 @@ vi.mock("../rendering/background", () => ({
 
 vi.mock("../rendering/nearForeground", () => ({
   drawNearForeground: vi.fn(),
+}));
+
+vi.mock("../rendering/fallingLeaves", () => ({
+  drawFallingLeaves: vi.fn(),
 }));
 
 vi.mock("./input", () => ({
@@ -95,6 +101,7 @@ describe("game runtime", () => {
     gameStore.set(isCollisionDebugEnabledAtom, false);
     vi.clearAllMocks();
     vi.mocked(drawNearForeground).mockReset();
+    vi.mocked(drawFallingLeaves).mockReset();
   });
 
   afterEach(() => {
@@ -442,6 +449,48 @@ describe("game runtime", () => {
     state.player.onPlatform = platform;
     const afterLanding = drawFrame();
     expect(afterLanding.platformDrawIndex).toBeGreaterThan(afterLanding.playerDrawIndex);
+  });
+
+  it("layers falling leaves around the foreground scenery but below the player", () => {
+    const frameQueue: { callback?: FrameRequestCallback } = {};
+    vi.stubGlobal("requestAnimationFrame", vi.fn((callback: FrameRequestCallback) => {
+      frameQueue.callback = callback;
+      return 1;
+    }));
+    vi.stubGlobal("cancelAnimationFrame", vi.fn());
+    const drawOrder: string[] = [];
+    const context = createMockContext();
+    context.drawImage.mockImplementation((image: CanvasImageSource) => {
+      if (image === PLAYER_IMAGE) drawOrder.push("player");
+    });
+    setCanvas({ getContext: () => context } as unknown as HTMLCanvasElement);
+    vi.mocked(drawBackground).mockImplementationOnce(() => {
+      drawOrder.push("background");
+    });
+    vi.mocked(drawNearForeground).mockImplementation(() => {
+      drawOrder.push("foreground");
+    });
+    vi.mocked(drawFallingLeaves).mockImplementation(({ layer }) => {
+      drawOrder.push(`${layer}Leaves`);
+    });
+    PLAYER_SHEETS[PLAYER_ANIMATION_STATES.idle].image = PLAYER_IMAGE;
+    state.spritesReady = true;
+
+    startGame();
+    state.gameOver = true;
+    frameQueue.callback?.(TEST_FRAME_TIME);
+
+    expect(drawOrder).toEqual([
+      "background",
+      "farLeaves",
+      "foreground",
+      "nearLeaves",
+      "player",
+    ]);
+    expect(vi.mocked(drawFallingLeaves).mock.calls.map(([options]) => options.layer)).toEqual([
+      "far",
+      "near",
+    ]);
   });
 
   it("draws a covered enemy behind the near foreground until it emerges", () => {

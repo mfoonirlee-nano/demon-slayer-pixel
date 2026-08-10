@@ -1,8 +1,9 @@
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it } from "vitest";
 
 import {
   ACT_LANDMARK_SPRITES,
   ACT_OCCLUDER_SPRITES,
+  FALLING_LEAF_SHEET,
   MIST_BONE_ATTACK_SHEET,
   MIST_BONE_CAGE_CAST_SHEET,
   MIST_BONE_DART_SHEET,
@@ -17,6 +18,10 @@ import {
   SPIDER_STRING_PILLAR_EFFECT_SHEET,
 } from "../constants";
 import { spriteImageLoadTargets } from "./manifest";
+
+afterEach(() => {
+  FALLING_LEAF_SHEET.image = null;
+});
 
 describe("sprite manifest", () => {
   it("preloads the moving attack sheet exactly once", () => {
@@ -65,6 +70,16 @@ describe("sprite manifest", () => {
     for (const occluder of ACT_OCCLUDER_SPRITES) {
       expect(loadedSources.filter((src) => src === occluder.src)).toHaveLength(1);
     }
+  });
+
+  it("preloads the falling-leaf animation exactly once and updates its image", () => {
+    const targets = spriteImageLoadTargets();
+    const matchingTargets = targets.filter((target) => target.src === FALLING_LEAF_SHEET.src);
+    const image = {} as HTMLImageElement;
+
+    expect(matchingTargets).toHaveLength(1);
+    matchingTargets[0].setImage(image);
+    expect(FALLING_LEAF_SHEET.image).toBe(image);
   });
 
   it("preloads every Mist Bone action asset exactly once", () => {

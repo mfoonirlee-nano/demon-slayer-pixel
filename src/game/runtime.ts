@@ -23,6 +23,7 @@ import { loadSprites } from "../assets";
 import { getCoverProgress } from "./coverProgress";
 import { setupInput, teardownInput } from "./input";
 import { drawBackground, drawGroundTileBase, drawGroundTileOcclusion } from "../rendering/background";
+import { drawFallingLeaves } from "../rendering/fallingLeaves";
 import { drawNearForeground } from "../rendering/nearForeground";
 import { playSfx } from "./audio";
 
@@ -450,8 +451,18 @@ function loop(ts: number) {
   }
 
   drawBackground();
+  drawFallingLeaves({
+    elapsed: state.elapsed,
+    seed: state.enemyDirector.runSeed,
+    layer: "far",
+  });
   drawEnemyLayer(isEnemyBehindSpawnOccluder);
   drawNearForeground();
+  drawFallingLeaves({
+    elapsed: state.elapsed,
+    seed: state.enemyDirector.runSeed,
+    layer: "near",
+  });
   drawGroundTileBase();
   drawPlatforms();
   drawTreasureTelegraph();

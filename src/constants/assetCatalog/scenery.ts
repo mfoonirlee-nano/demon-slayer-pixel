@@ -1,3 +1,5 @@
+import type { SpriteSheet } from "../../types/assets";
+
 type SpriteRegion = { sx: number; sy: number; sw: number; sh: number };
 export type PlatformSpriteRegion = SpriteRegion & { surfaceY: number };
 export type PlatformSpriteSheet = {
@@ -77,6 +79,14 @@ export const COVER_MOON_PHASE_SPRITES: {
   frameW: 160,
   frameH: 160,
   frames: 8,
+};
+
+export const FALLING_LEAF_SHEET: SpriteSheet = {
+  src: "assets/sprites/scenery/weather/falling-leaf-tumble.png",
+  frameW: 24,
+  frameH: 24,
+  count: 8,
+  image: null,
 };
 
 export const TREE_SPRITES: {
