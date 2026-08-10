@@ -25,6 +25,12 @@ import {
   MIST_BONE_CONFIG,
   MIST_BONE_LINE_CAST_SHEET,
   MIRROR_DREAM_CONFIG,
+  MIRROR_DREAM_AWAKENED_CRACKS_SHEET,
+  MIRROR_DREAM_CAST_AWAKENED_CRACKS_SHEET,
+  MIRROR_DREAM_CAST_SHEET,
+  MIRROR_DREAM_RECOVER_AWAKENED_CRACKS_SHEET,
+  MIRROR_DREAM_RECOVER_SHEET,
+  MIRROR_DREAM_SHEET,
   SPIDER_STRING_ATTACK_CONFIG,
   SPIDER_STRING_ATTACK_SHEET,
   SPIDER_STRING_CAGE_CONFIG,
@@ -57,14 +63,25 @@ const AWAKENED_MIST_BONE_EFFECT: SpriteFrameEffect = {
   filter: "saturate(0.82) brightness(1.12) drop-shadow(0 0 7px rgba(164, 224, 238, 0.9))",
   tint: { color: "#b7e8f1", alpha: 0.18 },
 };
+const AWAKENED_MIRROR_DREAM_EFFECT: SpriteFrameEffect = {
+  filter: "saturate(0.92) contrast(1.08) brightness(1.04) drop-shadow(0 0 4px rgba(174, 225, 246, 0.82))",
+};
+const AWAKENED_MIRROR_CRACK_ALPHA = 0.58;
+const MIRROR_DREAM_DASH_POSE_FRAME = 1;
 
 export function drawBoss() {
   const boss = state.boss;
   if (!boss) return;
 
   const pose = resolveBossVisualFrame(boss, state.elapsed);
-  const awakenedMistBone = boss.id === BOSS_ARCHETYPE_IDS.mistBone && boss.awakened;
-  if (awakenedMistBone) drawAwakenedMistBoneAura(boss);
+  const isAwakenedMistBone = boss.id === BOSS_ARCHETYPE_IDS.mistBone && boss.awakened;
+  const isAwakenedMirrorDream = boss.id === BOSS_ARCHETYPE_IDS.mirrorDream && boss.awakened;
+  if (isAwakenedMistBone) drawAwakenedMistBoneAura(boss);
+  const effect = isAwakenedMistBone
+    ? AWAKENED_MIST_BONE_EFFECT
+    : isAwakenedMirrorDream
+      ? AWAKENED_MIRROR_DREAM_EFFECT
+      : undefined;
   drawSheetFrame(
     pose.sheet,
     pose.frame,
@@ -73,8 +90,39 @@ export function drawBoss() {
     pose.w,
     pose.h,
     pose.facing,
-    awakenedMistBone ? AWAKENED_MIST_BONE_EFFECT : undefined,
+    effect,
   );
+  if (isAwakenedMirrorDream) drawAwakenedMirrorDreamCracks(pose);
+}
+
+function drawAwakenedMirrorDreamCracks(pose: BossVisualFrameState) {
+  if (!ctx) return;
+  const cracks = awakenedMirrorDreamCrackSheet(pose.sheet);
+  if (!cracks) return;
+
+  ctx.save();
+  ctx.globalAlpha *= AWAKENED_MIRROR_CRACK_ALPHA;
+  drawSheetFrame(
+    cracks,
+    pose.frame,
+    pose.x,
+    pose.y,
+    pose.w,
+    pose.h,
+    pose.facing,
+  );
+  ctx.restore();
+}
+
+function awakenedMirrorDreamCrackSheet(sheet: BossVisualFrameState["sheet"]) {
+  if (sheet === MIRROR_DREAM_SHEET) return MIRROR_DREAM_AWAKENED_CRACKS_SHEET;
+  if (sheet === MIRROR_DREAM_CAST_SHEET) {
+    return MIRROR_DREAM_CAST_AWAKENED_CRACKS_SHEET;
+  }
+  if (sheet === MIRROR_DREAM_RECOVER_SHEET) {
+    return MIRROR_DREAM_RECOVER_AWAKENED_CRACKS_SHEET;
+  }
+  return null;
 }
 
 function drawAwakenedMistBoneAura(boss: LiveBoss) {
@@ -172,6 +220,38 @@ export function resolveBossVisualFrame(
       drawH,
       boss.castFacing,
     );
+  }
+
+  if (boss.id === BOSS_ARCHETYPE_IDS.mirrorDream) {
+    if (boss.actionState === "dash") {
+      return visualFrame(
+        archetype.sheets.move,
+        MIRROR_DREAM_DASH_POSE_FRAME,
+        centerX - archetype.drawW / 2,
+        feetY - archetype.drawH,
+        archetype.drawW,
+        archetype.drawH,
+        boss.facing,
+      );
+    }
+    if (boss.mirrorNightmareDash?.stage === "recover" && boss.recoveryTimer > 0) {
+      const elapsed = MIRROR_DREAM_CONFIG.nightmareDashRecoveryFrames
+        - boss.recoveryTimer;
+      const frame = proportionalFrame(
+        MIRROR_DREAM_RECOVER_SHEET.count,
+        elapsed,
+        MIRROR_DREAM_CONFIG.nightmareDashRecoveryFrames,
+      );
+      return visualFrame(
+        MIRROR_DREAM_RECOVER_SHEET,
+        frame,
+        centerX - archetype.castDrawW / 2,
+        feetY - archetype.castDrawH + archetype.castBottomPadding,
+        archetype.castDrawW,
+        archetype.castDrawH,
+        boss.facing,
+      );
+    }
   }
 
   if (boss.id === BOSS_ARCHETYPE_IDS.spiderString && boss.actionState === "windup") {

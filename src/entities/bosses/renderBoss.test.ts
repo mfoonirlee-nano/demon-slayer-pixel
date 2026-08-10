@@ -18,7 +18,13 @@ import {
   LANTERN_EMBER_FIRELINE_CAST_SHEET,
   LANTERN_EMBER_BUFF_CAST_SHEET,
   LANTERN_EMBER_SUMMON_SHEET,
+  MIRROR_DREAM_SHEET,
+  MIRROR_DREAM_AWAKENED_CRACKS_SHEET,
   MIRROR_DREAM_CAST_SHEET,
+  MIRROR_DREAM_CAST_AWAKENED_CRACKS_SHEET,
+  MIRROR_DREAM_CONFIG,
+  MIRROR_DREAM_RECOVER_AWAKENED_CRACKS_SHEET,
+  MIRROR_DREAM_RECOVER_SHEET,
   MIST_BONE_SHEET,
   MIST_BONE_ATTACK_SHEET,
   MIST_BONE_CAGE_CAST_SHEET,
@@ -47,7 +53,18 @@ import { drawBoss, resolveBossVisualFrame } from "./renderBoss";
 const originalFirelineCastImage = LANTERN_EMBER_FIRELINE_CAST_SHEET.image;
 const originalSummonImage = LANTERN_EMBER_SUMMON_SHEET.image;
 const originalMistBoneImage = MIST_BONE_SHEET.image;
+const originalMirrorDreamImage = MIRROR_DREAM_SHEET.image;
+const originalMirrorDreamCastImage = MIRROR_DREAM_CAST_SHEET.image;
+const originalMirrorDreamRecoverImage = MIRROR_DREAM_RECOVER_SHEET.image;
+const originalMirrorDreamAwakenedCracksImage = MIRROR_DREAM_AWAKENED_CRACKS_SHEET.image;
+const originalMirrorDreamCastAwakenedCracksImage = (
+  MIRROR_DREAM_CAST_AWAKENED_CRACKS_SHEET.image
+);
+const originalMirrorDreamRecoverAwakenedCracksImage = (
+  MIRROR_DREAM_RECOVER_AWAKENED_CRACKS_SHEET.image
+);
 const AWAKENED_FINAL_PHASE = 4;
+const MIRROR_DREAM_DASH_POSE_FRAME = 1;
 const CAST_CASES = [
   {
     id: BOSS_ARCHETYPE_IDS.spiderString,
@@ -124,6 +141,16 @@ describe("boss casting visuals", () => {
     LANTERN_EMBER_FIRELINE_CAST_SHEET.image = originalFirelineCastImage;
     LANTERN_EMBER_SUMMON_SHEET.image = originalSummonImage;
     MIST_BONE_SHEET.image = originalMistBoneImage;
+    MIRROR_DREAM_SHEET.image = originalMirrorDreamImage;
+    MIRROR_DREAM_CAST_SHEET.image = originalMirrorDreamCastImage;
+    MIRROR_DREAM_RECOVER_SHEET.image = originalMirrorDreamRecoverImage;
+    MIRROR_DREAM_AWAKENED_CRACKS_SHEET.image = originalMirrorDreamAwakenedCracksImage;
+    MIRROR_DREAM_CAST_AWAKENED_CRACKS_SHEET.image = (
+      originalMirrorDreamCastAwakenedCracksImage
+    );
+    MIRROR_DREAM_RECOVER_AWAKENED_CRACKS_SHEET.image = (
+      originalMirrorDreamRecoverAwakenedCracksImage
+    );
   });
 
   it("uses the fireline cast pose for Lantern Ember's awakened grid", () => {
@@ -193,6 +220,165 @@ describe("boss casting visuals", () => {
     expect(context.ellipse).toHaveBeenCalled();
     expect(context.fill).toHaveBeenCalled();
     expect(drawnFilters).toContainEqual(expect.stringContaining("drop-shadow"));
+  });
+
+  it("keeps awakened Mirror Dream's true body outlined across movement and casting", () => {
+    resetState();
+    const context = createContext();
+    const drawnFilters: string[] = [];
+    context.drawImage.mockImplementation(() => drawnFilters.push(context.filter));
+    MIRROR_DREAM_SHEET.image = {} as HTMLImageElement;
+    MIRROR_DREAM_CAST_SHEET.image = {} as HTMLImageElement;
+    MIRROR_DREAM_AWAKENED_CRACKS_SHEET.image = {} as HTMLImageElement;
+    MIRROR_DREAM_CAST_AWAKENED_CRACKS_SHEET.image = {} as HTMLImageElement;
+    setCanvas({ getContext: () => context } as unknown as HTMLCanvasElement);
+    state.boss = createBossEncounter({
+      id: BOSS_ARCHETYPE_IDS.mirrorDream,
+      bossKills: 0,
+      elapsedSeconds: 0,
+      awakened: true,
+    });
+    state.boss.entering = false;
+    state.boss.y = GROUND_Y - state.boss.h;
+
+    drawBoss();
+    state.boss.actionState = "cast";
+    state.boss.castTimer = 1;
+    drawBoss();
+
+    const bodyFilters = [drawnFilters[0], drawnFilters[2]];
+    expect(bodyFilters.every((filter) => (
+      filter.includes("contrast") && filter.includes("drop-shadow")
+    ))).toBe(true);
+  });
+
+  it("gives Mirror Dream's dash a fixed pose and animates its safe recovery", () => {
+    const boss = createBossEncounter({
+      id: BOSS_ARCHETYPE_IDS.mirrorDream,
+      bossKills: 0,
+      elapsedSeconds: 0,
+    });
+    boss.entering = false;
+    boss.actionState = "dash";
+    boss.mirrorNightmareDash = {
+      stage: "active",
+      targetX: boss.x,
+      framesRemaining: 1,
+    };
+
+    const dashPose = resolveBossVisualFrame(boss, 0);
+    boss.actionState = "recover";
+    boss.mirrorNightmareDash = { stage: "recover" };
+    const recoveryFrames = [
+      MIRROR_DREAM_CONFIG.nightmareDashRecoveryFrames,
+      Math.floor(MIRROR_DREAM_CONFIG.nightmareDashRecoveryFrames / 2),
+      1,
+    ].map((recoveryTimer) => {
+      boss.recoveryTimer = recoveryTimer;
+      return resolveBossVisualFrame(boss, 0);
+    });
+
+    expect(dashPose.sheet).toBe(MIRROR_DREAM_SHEET);
+    expect(dashPose.frame).toBe(MIRROR_DREAM_DASH_POSE_FRAME);
+    expect(recoveryFrames.map((pose) => pose.sheet)).toEqual([
+      MIRROR_DREAM_RECOVER_SHEET,
+      MIRROR_DREAM_RECOVER_SHEET,
+      MIRROR_DREAM_RECOVER_SHEET,
+    ]);
+    expect(recoveryFrames.map((pose) => pose.frame)).toEqual([0, 1, 2]);
+  });
+
+  it("layers frame-matched cracks over every awakened Mirror Dream body pose", () => {
+    resetState();
+    const context = createContext();
+    const bodyImages = {
+      move: {} as HTMLImageElement,
+      cast: {} as HTMLImageElement,
+      recover: {} as HTMLImageElement,
+    };
+    const crackImages = {
+      move: {} as HTMLImageElement,
+      cast: {} as HTMLImageElement,
+      recover: {} as HTMLImageElement,
+    };
+    MIRROR_DREAM_SHEET.image = bodyImages.move;
+    MIRROR_DREAM_CAST_SHEET.image = bodyImages.cast;
+    MIRROR_DREAM_RECOVER_SHEET.image = bodyImages.recover;
+    MIRROR_DREAM_AWAKENED_CRACKS_SHEET.image = crackImages.move;
+    MIRROR_DREAM_CAST_AWAKENED_CRACKS_SHEET.image = crackImages.cast;
+    MIRROR_DREAM_RECOVER_AWAKENED_CRACKS_SHEET.image = crackImages.recover;
+    setCanvas({ getContext: () => context } as unknown as HTMLCanvasElement);
+
+    const cases = [
+      { state: "move", body: bodyImages.move, cracks: crackImages.move },
+      { state: "cast", body: bodyImages.cast, cracks: crackImages.cast },
+      { state: "dash", body: bodyImages.move, cracks: crackImages.move },
+      { state: "recover", body: bodyImages.recover, cracks: crackImages.recover },
+    ] as const;
+
+    for (const visualCase of cases) {
+      context.drawImage.mockClear();
+      state.boss = createBossEncounter({
+        id: BOSS_ARCHETYPE_IDS.mirrorDream,
+        bossKills: 0,
+        elapsedSeconds: 0,
+        awakened: true,
+      });
+      state.boss.entering = false;
+      state.boss.y = GROUND_Y - state.boss.h;
+      if (visualCase.state === "cast") {
+        state.boss.actionState = "cast";
+        state.boss.skillMode = "mirrorNightmare";
+        state.boss.castTimer = 1;
+      } else if (visualCase.state === "dash") {
+        state.boss.actionState = "dash";
+        state.boss.mirrorNightmareDash = {
+          stage: "active",
+          targetX: state.boss.x,
+          framesRemaining: 1,
+        };
+      } else if (visualCase.state === "recover") {
+        state.boss.actionState = "recover";
+        state.boss.mirrorNightmareDash = { stage: "recover" };
+        state.boss.recoveryTimer = Math.floor(
+          MIRROR_DREAM_CONFIG.nightmareDashRecoveryFrames / 2,
+        );
+      }
+
+      const pose = resolveBossVisualFrame(state.boss, state.elapsed);
+      drawBoss();
+
+      expect(context.drawImage).toHaveBeenCalledTimes(2);
+      expect(context.drawImage.mock.calls.map((call) => call[0])).toEqual([
+        visualCase.body,
+        visualCase.cracks,
+      ]);
+      expect(context.drawImage.mock.calls[0][1]).toBe(pose.frame * pose.sheet.frameW);
+      expect(context.drawImage.mock.calls[1][1]).toBe(
+        pose.frame * contextSheetFrameWidth(visualCase.state),
+      );
+    }
+  });
+
+  it("does not draw awakened cracks over Mirror Dream's base form", () => {
+    resetState();
+    const context = createContext();
+    const bodyImage = {} as HTMLImageElement;
+    MIRROR_DREAM_SHEET.image = bodyImage;
+    MIRROR_DREAM_AWAKENED_CRACKS_SHEET.image = {} as HTMLImageElement;
+    setCanvas({ getContext: () => context } as unknown as HTMLCanvasElement);
+    state.boss = createBossEncounter({
+      id: BOSS_ARCHETYPE_IDS.mirrorDream,
+      bossKills: 0,
+      elapsedSeconds: 0,
+    });
+    state.boss.entering = false;
+    state.boss.y = GROUND_Y - state.boss.h;
+
+    drawBoss();
+
+    expect(context.drawImage).toHaveBeenCalledOnce();
+    expect(context.drawImage.mock.calls[0][0]).toBe(bodyImage);
   });
 
   it("uses Mist Bone's attack sequence during its phase-three chase", () => {
@@ -386,4 +572,10 @@ function createContext() {
     ellipse: ReturnType<typeof vi.fn>;
     fill: ReturnType<typeof vi.fn>;
   };
+}
+
+function contextSheetFrameWidth(stateName: "move" | "cast" | "dash" | "recover") {
+  if (stateName === "cast") return MIRROR_DREAM_CAST_AWAKENED_CRACKS_SHEET.frameW;
+  if (stateName === "recover") return MIRROR_DREAM_RECOVER_AWAKENED_CRACKS_SHEET.frameW;
+  return MIRROR_DREAM_AWAKENED_CRACKS_SHEET.frameW;
 }

@@ -4,6 +4,10 @@ import {
   ACT_LANDMARK_SPRITES,
   ACT_OCCLUDER_SPRITES,
   FALLING_LEAF_SHEET,
+  MIRROR_DREAM_AWAKENED_CRACKS_SHEET,
+  MIRROR_DREAM_CAST_AWAKENED_CRACKS_SHEET,
+  MIRROR_DREAM_RECOVER_AWAKENED_CRACKS_SHEET,
+  MIRROR_DREAM_RECOVER_SHEET,
   MIST_BONE_ATTACK_SHEET,
   MIST_BONE_CAGE_CAST_SHEET,
   MIST_BONE_DART_SHEET,
@@ -21,7 +25,15 @@ import { spriteImageLoadTargets } from "./manifest";
 
 afterEach(() => {
   FALLING_LEAF_SHEET.image = null;
+  for (const sheet of MIRROR_DREAM_RECOVERY_AND_CRACK_SHEETS) sheet.image = null;
 });
+
+const MIRROR_DREAM_RECOVERY_AND_CRACK_SHEETS = [
+  MIRROR_DREAM_RECOVER_SHEET,
+  MIRROR_DREAM_AWAKENED_CRACKS_SHEET,
+  MIRROR_DREAM_CAST_AWAKENED_CRACKS_SHEET,
+  MIRROR_DREAM_RECOVER_AWAKENED_CRACKS_SHEET,
+] as const;
 
 describe("sprite manifest", () => {
   it("preloads the moving attack sheet exactly once", () => {
@@ -80,6 +92,19 @@ describe("sprite manifest", () => {
     expect(matchingTargets).toHaveLength(1);
     matchingTargets[0].setImage(image);
     expect(FALLING_LEAF_SHEET.image).toBe(image);
+  });
+
+  it("preloads every Mirror Dream recovery and crack sequence exactly once", () => {
+    const targets = spriteImageLoadTargets();
+
+    for (const sheet of MIRROR_DREAM_RECOVERY_AND_CRACK_SHEETS) {
+      const matchingTargets = targets.filter((target) => target.src === sheet.src);
+      const image = {} as HTMLImageElement;
+
+      expect(matchingTargets).toHaveLength(1);
+      matchingTargets[0].setImage(image);
+      expect(sheet.image).toBe(image);
+    }
   });
 
   it("preloads every Mist Bone action asset exactly once", () => {

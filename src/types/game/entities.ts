@@ -298,6 +298,11 @@ export type EnemyState = {
   armorBreakMultiplier?: number;
 };
 
+export type MirrorNightmareDashState =
+  | { stage: "warning"; targetX: number }
+  | { stage: "active"; targetX: number; framesRemaining: number }
+  | { stage: "recover" };
+
 export type BossState = {
   id: BossArchetypeId;
   x: number;
@@ -332,6 +337,8 @@ export type BossState = {
   spiderStringCageCd?: number;
   mirrorTrueImageShiftPhase?: number;
   mirrorTeleportTargetX?: number;
+  mirrorNightmareDash?: MirrorNightmareDashState;
+  hasMirrorSplitterSummoned?: boolean;
   mistBonePatternStep?: number;
   mistBoneChaseFacing?: number;
   lanternPatternStep?: number;

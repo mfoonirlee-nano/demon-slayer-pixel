@@ -1,7 +1,11 @@
 import { MIRROR_AFTERIMAGE_DRAW_WIDTH, MIRROR_DREAM_CONFIG, WIDTH } from "../../constants";
+import { recordCollisionDebugRect } from "../../game/collisionDebug";
+import { canAutoSpawnEntities } from "../../game/debug";
 import { state } from "../../game/state";
-import { clamp } from "../../game/utils";
+import { clamp, rectsOverlap } from "../../game/utils";
 import { playSfx } from "../../game/audio";
+import { hurtPlayer } from "../player";
+import { spawnEnemyById } from "../enemy";
 import { bossAttackDamage, damagePlayerOnContact } from "./shared";
 import { mirrorShardProfile } from "./mirrorDreamShardProfile";
 import type { LiveBoss } from "./types";
@@ -9,9 +13,15 @@ import type { SkillId } from "../../types/assets";
 import type {
   BossSkillMode,
   MirrorAfterimageState,
+  MirrorNightmareDashState,
   MirrorShardIdentity,
   MirrorShardState,
 } from "../../types/game-state";
+
+type ActiveMirrorNightmareDash = Extract<
+  MirrorNightmareDashState,
+  { stage: "active" }
+>;
 
 const RETREAT_PHASE_FORCE = 0.006;
 const STEERING_PHASE_FORCE = 0.005;
@@ -28,6 +38,7 @@ const NIGHTMARE_MID_PHASE_CHANCE = 0.32;
 const AFTERIMAGE_CHANCE = 0.66;
 const AFTERIMAGE_SFX_PITCH = 1.12;
 const NIGHTMARE_SFX_PITCH = 0.82;
+const NIGHTMARE_DASH_SFX_PITCH = 1.18;
 const SHARD_FORWARD_OFFSET = 34;
 const SHARD_START_Y_SCALE = 0.36;
 const MIN_SHARD_TRAVEL_FRAMES = 28;
@@ -36,8 +47,6 @@ const SHARD_PHASE_SPEED_BONUS = 0.25;
 const SHARD_SFX_PITCH = 1.04;
 const NIGHTMARE_SHARD_START_Y_SCALE = 0.38;
 const NIGHTMARE_SHARD_SFX_PITCH = 1.22;
-const TRUE_IMAGE_SHIFT_PHASE = 4;
-const TRUE_IMAGE_SHIFT_RANDOM_CHANCE = 0.28;
 const TRUE_IMAGE_SHIFT_COOLDOWN_BONUS = 36;
 const TRUE_IMAGE_SHIFT_FIRST_BREAK_FRAME = 16;
 const TRUE_IMAGE_SHIFT_BREAK_DELAY = 10;
@@ -47,15 +56,23 @@ const PLAYER_SKILL_REFLECTION_SFX_PITCH = 1.32;
 
 export function updateMirrorDreamBoss(boss: LiveBoss) {
   const releasedSkillId = consumeReleasedPlayerSkill();
+  const dashState = boss.mirrorNightmareDash;
+
+  if (dashState?.stage === "active") {
+    updateMirrorNightmareDash(boss, dashState);
+    return;
+  }
 
   if (boss.recoveryTimer > 0) {
+    const isDashRecovery = dashState?.stage === "recover";
     boss.recoveryTimer -= 1;
     boss.vx *= MIRROR_DREAM_CONFIG.drag;
     if (boss.recoveryTimer <= 0) {
       boss.actionState = "move";
       boss.actionTimer = 0;
+      if (isDashRecovery) boss.mirrorNightmareDash = undefined;
     }
-    damagePlayerOnContact(boss);
+    if (!isDashRecovery) damagePlayerOnContact(boss);
     return;
   }
 
@@ -69,9 +86,14 @@ export function updateMirrorDreamBoss(boss: LiveBoss) {
       spawnMirrorDreamPattern(boss);
     }
     if (boss.castTimer <= 0) {
-      boss.actionState = "recover";
-      boss.actionTimer = 0;
-      boss.recoveryTimer = MIRROR_DREAM_CONFIG.recoveryFrames;
+      const pendingDash = boss.mirrorNightmareDash;
+      if (pendingDash?.stage === "warning") {
+        startMirrorNightmareDash(boss, pendingDash.targetX);
+      } else {
+        boss.actionState = "recover";
+        boss.actionTimer = 0;
+        boss.recoveryTimer = MIRROR_DREAM_CONFIG.recoveryFrames;
+      }
     }
     damagePlayerOnContact(boss);
     return;
@@ -145,6 +167,7 @@ function moveMirrorDreamBoss(boss: LiveBoss) {
 
 function startMirrorDreamCast(boss: LiveBoss, forcedSkillMode?: BossSkillMode) {
   cancelPendingPlayerSkillReflections();
+  boss.mirrorNightmareDash = undefined;
   const toPlayer = state.player.x + state.player.w / 2 - (boss.x + boss.w / 2);
   boss.castFacing = toPlayer >= 0 ? 1 : -1;
   boss.facing = boss.castFacing;
@@ -173,7 +196,6 @@ function cancelPendingPlayerSkillReflections() {
 
 function shouldStartTrueImageShift(boss: LiveBoss) {
   return boss.awakened
-    && boss.phase >= 2
     && boss.mirrorTrueImageShiftPhase !== boss.phase;
 }
 
@@ -191,9 +213,6 @@ function mirrorDreamSkillCooldown(boss: LiveBoss) {
 
 function nextMirrorDreamSkill(boss: LiveBoss): BossSkillMode {
   const roll = Math.random();
-  if (boss.awakened && (boss.phase >= TRUE_IMAGE_SHIFT_PHASE || roll < TRUE_IMAGE_SHIFT_RANDOM_CHANCE)) {
-    return "mirrorTrueImageShift";
-  }
   if (boss.phase >= NIGHTMARE_HIGH_PHASE && roll < NIGHTMARE_HIGH_PHASE_CHANCE) return "mirrorNightmare";
   if (boss.phase >= NIGHTMARE_MID_PHASE && roll < NIGHTMARE_MID_PHASE_CHANCE) return "mirrorNightmare";
   return roll < AFTERIMAGE_CHANCE ? "mirrorAfterimage" : "mirrorShard";
@@ -226,6 +245,7 @@ function spawnMirrorTrueImageShift(boss: LiveBoss) {
   const playerCenter = state.player.x + state.player.w / 2;
   const centers = trueImageShiftCenters(boss);
   const originalFacing = boss.facing;
+  const originalCenter = boss.x + boss.w / 2;
 
   for (let i = 0; i < centers.length; i += 1) {
     const centerX = centers[i];
@@ -238,9 +258,27 @@ function spawnMirrorTrueImageShift(boss: LiveBoss) {
   }
 
   boss.facing = originalFacing;
+  spawnMirrorAfterimage(boss, TRUE_IMAGE_SHIFT_FIRST_BREAK_FRAME, originalCenter);
   boss.mirrorTeleportTargetX = mirrorTeleportTargetX(boss, trueImageTeleportPlayerOffset());
   teleportMirrorDreamBoss(boss);
-  spawnMirrorAfterimage(boss, TRUE_IMAGE_SHIFT_FIRST_BREAK_FRAME, boss.x + boss.w / 2);
+  spawnAwakenedMirrorSupport(boss);
+}
+
+function spawnAwakenedMirrorSupport(boss: LiveBoss) {
+  if (
+    !boss.awakened
+    || boss.phase < MIRROR_DREAM_CONFIG.awakenedSupportPhase
+    || boss.hasMirrorSplitterSummoned
+    || !canAutoSpawnEntities()
+  ) return;
+  // A blocked support summon still consumes the encounter's one scripted attempt.
+  boss.hasMirrorSplitterSummoned = true;
+  if (spawnEnemyById(
+    "splitter",
+    "boss",
+    "random_edge",
+    { growthStage: "awakened" },
+  )) playSfx("bossSummon");
 }
 
 function trueImageShiftCenters(boss: LiveBoss) {
@@ -364,14 +402,102 @@ function spawnMirrorNightmareImages(boss: LiveBoss) {
   );
   const playerCenter = state.player.x + state.player.w / 2;
   const centers = mirrorImageCenters(count, MIRROR_DREAM_CONFIG.nightmareSpacing);
+  const dashPlan = boss.phase >= MIRROR_DREAM_CONFIG.nightmareDashPhase
+    ? mirrorNightmareDashPlan(boss, centers, playerCenter)
+    : null;
+  const firstBreakFrame = dashPlan
+    ? MIRROR_DREAM_CONFIG.nightmareDashFirstBreakFrame
+    : MIRROR_DREAM_CONFIG.nightmareFirstBreakFrame;
+  const breakDelay = dashPlan
+    ? MIRROR_DREAM_CONFIG.nightmareDashBreakDelay
+    : MIRROR_DREAM_CONFIG.nightmareBreakDelay;
 
+  let breakIndex = 0;
   for (let i = 0; i < centers.length; i += 1) {
     const centerX = centers[i];
-    const spawnAt = MIRROR_DREAM_CONFIG.nightmareFirstBreakFrame + i * MIRROR_DREAM_CONFIG.nightmareBreakDelay;
+    if (centerX === dashPlan?.startCenterX) continue;
+    const spawnAt = firstBreakFrame + breakIndex * breakDelay;
     boss.facing = centerX < playerCenter ? 1 : -1;
     spawnMirrorAfterimage(boss, spawnAt, centerX);
+    breakIndex += 1;
   }
+  if (dashPlan) prepareMirrorNightmareDash(boss, dashPlan);
+  else boss.facing = boss.castFacing;
+}
+
+function mirrorNightmareDashPlan(
+  boss: LiveBoss,
+  centers: readonly number[],
+  playerCenter: number,
+) {
+  const leftCenter = centers[0]!;
+  const rightCenter = centers[centers.length - 1]!;
+  const bossCenter = boss.x + boss.w / 2;
+  return bossCenter < playerCenter
+    ? { startCenterX: leftCenter, targetCenterX: rightCenter }
+    : { startCenterX: rightCenter, targetCenterX: leftCenter };
+}
+
+function prepareMirrorNightmareDash(
+  boss: LiveBoss,
+  plan: { startCenterX: number; targetCenterX: number },
+) {
+  boss.x = clamp(plan.startCenterX - boss.w / 2, 0, WIDTH - boss.w);
+  const targetX = clamp(plan.targetCenterX - boss.w / 2, 0, WIDTH - boss.w);
+  boss.mirrorNightmareDash = { stage: "warning", targetX };
+  boss.castFacing = targetX >= boss.x ? 1 : -1;
   boss.facing = boss.castFacing;
+  boss.skillHitDone = false;
+  boss.vx = 0;
+}
+
+function startMirrorNightmareDash(boss: LiveBoss, targetX: number) {
+  boss.actionState = "dash";
+  boss.actionTimer = 0;
+  boss.mirrorNightmareDash = {
+    stage: "active",
+    targetX,
+    framesRemaining: MIRROR_DREAM_CONFIG.nightmareDashFrames,
+  };
+  boss.vx = (targetX - boss.x) / MIRROR_DREAM_CONFIG.nightmareDashFrames;
+  boss.castFacing = boss.vx >= 0 ? 1 : -1;
+  boss.facing = boss.castFacing;
+  boss.skillHitDone = false;
+  playSfx("bossMirror", NIGHTMARE_DASH_SFX_PITCH);
+}
+
+function updateMirrorNightmareDash(boss: LiveBoss, dash: ActiveMirrorNightmareDash) {
+  boss.x = clamp(boss.x + boss.vx, 0, WIDTH - boss.w);
+  dash.framesRemaining -= 1;
+
+  const dashHitbox = {
+    x: boss.x + boss.w / 2 - MIRROR_DREAM_CONFIG.nightmareDashHitW / 2,
+    y: boss.y + boss.h - MIRROR_DREAM_CONFIG.nightmareDashHitH,
+    w: MIRROR_DREAM_CONFIG.nightmareDashHitW,
+    h: MIRROR_DREAM_CONFIG.nightmareDashHitH,
+  };
+  recordCollisionDebugRect(dashHitbox, "enemyAttack");
+  if (!boss.skillHitDone && rectsOverlap(state.player, dashHitbox)) {
+    boss.skillHitDone = true;
+    hurtPlayer(
+      bossAttackDamage(
+        MIRROR_DREAM_CONFIG.nightmareDashDamageBase
+          + boss.phase * MIRROR_DREAM_CONFIG.nightmareDashDamagePhase,
+      ),
+      boss.vx,
+    );
+  }
+
+  if (dash.framesRemaining <= 0) finishMirrorNightmareDash(boss, dash.targetX);
+}
+
+function finishMirrorNightmareDash(boss: LiveBoss, targetX: number) {
+  boss.x = targetX;
+  boss.mirrorNightmareDash = { stage: "recover" };
+  boss.actionState = "recover";
+  boss.actionTimer = 0;
+  boss.recoveryTimer = MIRROR_DREAM_CONFIG.nightmareDashRecoveryFrames;
+  boss.vx = 0;
 }
 
 function spawnMirrorShardFromBoss(boss: LiveBoss) {

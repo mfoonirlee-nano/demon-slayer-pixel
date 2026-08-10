@@ -1,8 +1,8 @@
 import type { SpriteSheet } from "../../types/assets";
-import { BOSS_BODY_DRAW_SCALE } from "../combat";
 
 export * from "./mistBone";
 export * from "./fangGale";
+export * from "./mirrorDream";
 
 export const BOSS_SHEET: SpriteSheet = {
   src: "assets/sprites/boss/spider-string/boss.png",
@@ -137,46 +137,6 @@ export const LANTERN_EMBER_ASH_ZONE_SHEET: SpriteSheet = {
   frameW: 360,
   frameH: 140,
   count: 8,
-  image: null,
-};
-
-export const MIRROR_DREAM_SHEET: SpriteSheet = {
-  src: "assets/sprites/boss/mirror-dream/mirror_dream.png",
-  frameW: 350,
-  frameH: 419,
-  count: 4,
-  image: null,
-};
-
-export const MIRROR_DREAM_CAST_SHEET: SpriteSheet = {
-  src: "assets/sprites/boss/mirror-dream/mirror_dream_cast.png",
-  frameW: 400,
-  frameH: 400,
-  count: 6,
-  image: null,
-};
-
-export const MIRROR_SHARD_SHEET: SpriteSheet = {
-  src: "assets/sprites/boss/mirror-dream/mirror_shard.png",
-  frameW: 400,
-  frameH: 350,
-  count: 6,
-  image: null,
-};
-
-export const MIRROR_AFTERIMAGE_SHEET: SpriteSheet = {
-  src: "assets/sprites/boss/mirror-dream/mirror_afterimage.png",
-  frameW: 400,
-  frameH: 400,
-  count: 6,
-  image: null,
-};
-
-export const MIRROR_NIGHTMARE_SHEET: SpriteSheet = {
-  src: "assets/sprites/boss/mirror-dream/mirror_nightmare.png",
-  frameW: 400,
-  frameH: 350,
-  count: 6,
   image: null,
 };
 
@@ -469,72 +429,6 @@ export const LANTERN_EMBER_CONFIG = {
   ashZoneDamagePhase: 1,
   ashZoneDamageInvincibleFrames: 10,
 } as const;
-
-export const MIRROR_DREAM_CONFIG = {
-  castDuration: 62,
-  spawnAtFrame: 30,
-  castFrameDuration: 9,
-  drawW: 176,
-  drawH: 208,
-  castDrawW: 228,
-  castDrawH: 228,
-  castBottomPadding: 0,
-  preferredDistance: 210,
-  closeDistance: 138,
-  steeringForce: 0.052,
-  retreatForce: 0.074,
-  drag: 0.9,
-  maxVelocity: 3.4,
-  skillCooldown: 218,
-  initialCooldown: 112,
-  recoveryFrames: 32,
-  shardSpeed: 7.2,
-  shardLife: 150,
-  shardDrawW: 116,
-  shardDrawH: 102,
-  shardHitW: 50,
-  shardHitH: 28,
-  shardFrameDuration: 6,
-  nightmareSpeed: 5.8,
-  nightmareLife: 104,
-  nightmareDrawW: 164,
-  nightmareDrawH: 144,
-  nightmareHitW: 70,
-  nightmareHitH: 36,
-  nightmareFrameDuration: 7,
-  afterimageDrawW: 220,
-  afterimageDrawH: 220,
-  afterimageBottomPadding: 22,
-  afterimageFrameDuration: 8,
-  afterimageLife: 76,
-  afterimageAlpha: 0.66,
-  teleportPlayerOffset: 148,
-  teleportAwayOffset: 236,
-  nightmareBaseImages: 2,
-  nightmareMaxImages: 4,
-  nightmareSpacing: 122,
-  nightmarePlayerClearance: 12,
-  nightmareFirstBreakFrame: 20,
-  nightmareBreakDelay: 18,
-  nightmareBreakFadeFrames: 28,
-  playerSkillReflectionChance: 0.3,
-  playerSkillReflectionWarningFrames: 24,
-  playerSkillReflectionRadiusBaseline: 92,
-  playerSkillReflectionDamageBaseline: 48,
-  playerSkillReflectionMinSizeScale: 0.78,
-  playerSkillReflectionMaxSizeScale: 1.28,
-  playerSkillReflectionMinSpeedScale: 0.82,
-  playerSkillReflectionMaxSpeedScale: 1.22,
-  playerSkillReflectionMinDamageScale: 0.75,
-  playerSkillReflectionMaxDamageScale: 1.25,
-  playerSkillReflectionGlowBlur: 10,
-  damageBase: 10,
-  damagePhase: 2,
-} as const;
-
-export const MIRROR_AFTERIMAGE_DRAW_WIDTH = (
-  MIRROR_DREAM_CONFIG.afterimageDrawW * BOSS_BODY_DRAW_SCALE
-);
 
 export const BOSS_SKILL1_CONFIG = {
   castDuration: 54,

@@ -1,4 +1,4 @@
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, assert, describe, expect, it, vi } from "vitest";
 import { MIRROR_AFTERIMAGE_DRAW_WIDTH, MIRROR_DREAM_CONFIG, SKILL_IDS, WIDTH } from "../../constants";
 import { resetState, state } from "../../game/state";
 import { createBossEncounter } from "./encounter";
@@ -10,6 +10,7 @@ import type { LiveBoss } from "./types";
 
 const PHASE_TWO = 2;
 const PHASE_THREE = 3;
+const PHASE_FOUR = 4;
 const PHASE_TWO_HIGH_HP_RATIO = 0.65;
 const PHASE_TWO_LOW_HP_RATIO = 0.35;
 const BOSS_START_X = 180;
@@ -18,6 +19,7 @@ const MIRROR_IMAGE_PATTERN_RANDOM_ROLL = 0.1;
 const MIRROR_SHARD_RANDOM_ROLL = 0.8;
 const REFLECTION_SUCCESS_ROLL = 0;
 const REFLECTION_MISS_ROLL = 0.99;
+const MIRROR_DASH_TEST_FRAME_LIMIT = 180;
 
 afterEach(() => {
   vi.restoreAllMocks();
@@ -46,6 +48,105 @@ describe("mirror dream boss behavior", () => {
     expectCollisionFreePlayerLane();
   });
 
+  it("turns the phase-three nightmare into one readable true-body dash", () => {
+    const boss = spawnMirrorImagePattern({ phase: PHASE_THREE });
+    const playerCenter = state.player.x + state.player.w / 2;
+    const dashStartCenter = boss.x + boss.w / 2;
+    assert(boss.mirrorNightmareDash?.stage === "warning");
+    const dashTargetCenter = boss.mirrorNightmareDash.targetX + boss.w / 2;
+    const hpBefore = state.player.hp;
+
+    expect(boss.skillMode).toBe("mirrorNightmare");
+    expect(Math.sign(dashStartCenter - playerCenter)).toBe(
+      -Math.sign(dashTargetCenter - playerCenter),
+    );
+    expect(state.mirrorAfterimages.every((image) => (
+      image.x + image.w / 2 !== dashStartCenter
+    ))).toBe(true);
+    expect(Math.min(...state.mirrorAfterimages.map((image) => image.spawnAt ?? Infinity))).toBe(
+      MIRROR_DREAM_CONFIG.nightmareDashFirstBreakFrame,
+    );
+
+    for (let frame = 0; frame < MIRROR_DASH_TEST_FRAME_LIMIT; frame += 1) {
+      if (boss.actionState === "dash") break;
+      updateMirrorDreamBoss(boss);
+    }
+
+    expect(boss.actionState).toBe("dash");
+    expect(state.player.hp).toBe(hpBefore);
+
+    let hitFrames = 0;
+    let previousHp = state.player.hp;
+    for (let frame = 0; frame < MIRROR_DASH_TEST_FRAME_LIMIT; frame += 1) {
+      if (boss.actionState === "recover") break;
+      state.player.invincible = 0;
+      updateMirrorDreamBoss(boss);
+      if (state.player.hp < previousHp) hitFrames += 1;
+      previousHp = state.player.hp;
+    }
+
+    expect(hitFrames).toBe(1);
+    expect(boss.actionState).toBe("recover");
+    expect(boss.recoveryTimer).toBeGreaterThan(0);
+    expect(boss.x).toBeCloseTo(dashTargetCenter - boss.w / 2);
+
+    boss.x = state.player.x;
+    state.player.invincible = 0;
+    const hpAtRecovery = state.player.hp;
+    updateMirrorDreamBoss(boss);
+
+    expect(state.player.hp).toBe(hpAtRecovery);
+  });
+
+  it("keeps the documented warning, dash, shard, and recovery cadence", () => {
+    const boss = createIdleMirrorDreamBoss();
+    boss.phase = PHASE_THREE;
+    boss.skillCd = 0;
+    vi.spyOn(Math, "random").mockReturnValue(MIRROR_IMAGE_PATTERN_RANDOM_ROLL);
+
+    updateMirrorDreamBoss(boss);
+    let warningFrames = 0;
+    for (let frame = 0; frame < MIRROR_DASH_TEST_FRAME_LIMIT; frame += 1) {
+      if (boss.actionState !== "cast") break;
+      updateMirrorDreamBoss(boss);
+      updateMirrorDreamEffects();
+      if (boss.skillEffectSpawned) warningFrames += 1;
+    }
+
+    expect(warningFrames).toBe(
+      MIRROR_DREAM_CONFIG.castDuration - MIRROR_DREAM_CONFIG.spawnAtFrame,
+    );
+    expect(boss.actionState).toBe("dash");
+    expect(state.mirrorShards).toHaveLength(0);
+
+    let dashFrames = 0;
+    let firstShardDashFrame: number | undefined;
+    for (let frame = 0; frame < MIRROR_DASH_TEST_FRAME_LIMIT; frame += 1) {
+      if (boss.actionState !== "dash") break;
+      updateMirrorDreamBoss(boss);
+      updateMirrorDreamEffects();
+      dashFrames += 1;
+      if (firstShardDashFrame === undefined && state.mirrorShards.length > 0) {
+        firstShardDashFrame = dashFrames;
+      }
+    }
+
+    expect(dashFrames).toBe(MIRROR_DREAM_CONFIG.nightmareDashFrames);
+    expect(firstShardDashFrame).toBe(
+      MIRROR_DREAM_CONFIG.nightmareDashFirstBreakFrame - warningFrames,
+    );
+
+    let recoveryFrames = 0;
+    for (let frame = 0; frame < MIRROR_DASH_TEST_FRAME_LIMIT; frame += 1) {
+      if (boss.mirrorNightmareDash?.stage !== "recover") break;
+      updateMirrorDreamBoss(boss);
+      recoveryFrames += 1;
+    }
+    expect(recoveryFrames).toBe(MIRROR_DREAM_CONFIG.nightmareDashRecoveryFrames);
+    expect(boss.mirrorNightmareDash).toBeUndefined();
+    expect(boss.actionState).toBe("move");
+  });
+
   it("keeps the player lane clear in an odd true-image formation", () => {
     const boss = spawnMirrorImagePattern({ awakened: true });
 
@@ -59,6 +160,39 @@ describe("mirror dream boss behavior", () => {
     expect(boss.skillMode).toBe("mirrorTrueImageShift");
     expect(state.mirrorAfterimages).toHaveLength(MIRROR_DREAM_CONFIG.nightmareMaxImages + 1);
     expectCollisionFreePlayerLane();
+  });
+
+  it("leaves the old body as a mirror without covering the shifted true body", () => {
+    const boss = spawnMirrorImagePattern({ awakened: true, phase: PHASE_TWO });
+    const originalCenter = BOSS_START_X + boss.w / 2;
+    const shiftedCenter = boss.x + boss.w / 2;
+    const mirrorCenters = state.mirrorAfterimages.map((image) => image.x + image.w / 2);
+
+    expect(mirrorCenters).toContain(originalCenter);
+    expect(mirrorCenters).not.toContain(shiftedCenter);
+  });
+
+  it("opens every awakened encounter with a true-image shift", () => {
+    const boss = createIdleMirrorDreamBoss({ awakened: true });
+    boss.mirrorTrueImageShiftPhase = undefined;
+
+    updateMirrorDreamBoss(boss);
+
+    expect(boss.skillMode).toBe("mirrorTrueImageShift");
+    expect(boss.mirrorTrueImageShiftPhase).toBe(1);
+    expect(boss.actionState).toBe("cast");
+  });
+
+  it("returns to the three base patterns after phase four's required shift", () => {
+    const boss = createIdleMirrorDreamBoss({ awakened: true });
+    boss.phase = PHASE_FOUR;
+    boss.mirrorTrueImageShiftPhase = PHASE_FOUR;
+    boss.skillCd = 0;
+    vi.spyOn(Math, "random").mockReturnValue(MIRROR_SHARD_RANDOM_ROLL);
+
+    updateMirrorDreamBoss(boss);
+
+    expect(boss.skillMode).toBe("mirrorShard");
   });
 
   it("re-centers the true-image lane when the player moves during casting", () => {
@@ -223,6 +357,7 @@ function createIdleMirrorDreamBoss(options: { awakened?: boolean } = {}): LiveBo
   boss.entering = false;
   boss.x = BOSS_START_X;
   boss.skillCd = MIRROR_DREAM_CONFIG.initialCooldown;
+  if (boss.awakened) boss.mirrorTrueImageShiftPhase = boss.phase;
   state.player.x = 540;
   return boss;
 }
