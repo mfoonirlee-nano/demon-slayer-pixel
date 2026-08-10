@@ -1,6 +1,7 @@
 import type { SkillId } from "../assets";
 import type {
   BinderAiPhase,
+  BloodMoonFace,
   BossActionState,
   BossArchetypeId,
   BossSkillMode,
@@ -354,4 +355,13 @@ export type BossState = {
   deadBellReprisalCueSequence?: number;
   armorBreakTimer?: number;
   armorBreakMultiplier?: number;
+  bloodMoonTrailSamples?: { x: number; surfaceY: number }[];
+  bloodMoonLanternStep?: number;
+  bloodMoonLanternPhase?: number;
+  bloodMoonSixfoldStep?: number;
+  bloodMoonSixfoldPhase?: number;
+  bloodMoonActiveFace?: BloodMoonFace;
+  bloodMoonFinalCueStep?: number;
+  bloodMoonFinalAttackStep?: number;
+  bloodMoonExposed?: boolean;
 } | null;

@@ -17,10 +17,20 @@ const PILLAR_ACTIVE_SPRITE_FRAMES = SPIDER_STRING_PILLAR_EFFECT_SHEET.count
 const PILLAR_ANIMATION_FRAMES = PILLAR_ACTIVE_SPRITE_FRAMES
   * SPIDER_STRING_PILLAR_CONFIG.frameDuration;
 
-export function spawnSpiderStringPillars(boss: BossState) {
+export function spawnSpiderStringPillars(
+  boss: BossState,
+  options: { count?: number } = {},
+) {
   if (!boss) return;
 
-  const { count, spacing, hitW, hitH, drawW } = SPIDER_STRING_PILLAR_CONFIG;
+  const { spacing, hitW, hitH, drawW } = SPIDER_STRING_PILLAR_CONFIG;
+  const count = Math.max(
+    1,
+    Math.min(
+      SPIDER_STRING_PILLAR_CONFIG.count,
+      Math.floor(options.count ?? SPIDER_STRING_PILLAR_CONFIG.count),
+    ),
+  );
   const playerCenterX = state.player.x + state.player.w / 2;
   const formationDrawW = drawW + (count - 1) * spacing;
   const formationDrawLeft = clamp(

@@ -1,10 +1,13 @@
-import { BLOOD_MOON_CONFIG, BOSS_CONFIG } from "../constants";
+import { BOSS_CONFIG } from "../constants";
 import { state } from "../game/state";
 import { playSfx } from "../game/audio";
 import type { BossArchetypeId } from "../types/game-state";
 import { BOSS_ARCHETYPE_IDS } from "./bosses/registry";
 import { bossPhaseForHp, createBossEncounter } from "./bosses/encounter";
-import { updateBloodMoonBoss } from "./bosses/bloodMoonBehavior";
+import {
+  beginBloodMoonPhaseShift,
+  updateBloodMoonBoss,
+} from "./bosses/bloodMoonBehavior";
 import { updateDeadBellBoss } from "./bosses/deadBellBehavior";
 import { updateFangGaleBoss } from "./bosses/fangGaleBehavior";
 import { updateLanternEmberBoss } from "./bosses/lanternEmberBehavior";
@@ -89,10 +92,7 @@ function updateBossPhase(boss: LiveBoss) {
   const previousPhase = boss.phase;
   boss.phase = bossPhaseForHp(boss);
   if (boss.id === BOSS_ARCHETYPE_IDS.bloodMoon && boss.phase > previousPhase) {
-    boss.phaseShiftTimer = BLOOD_MOON_CONFIG.phaseShiftFrames;
-    boss.actionState = "windup";
-    boss.actionTimer = 0;
-    boss.vx = 0;
+    beginBloodMoonPhaseShift(boss);
     playSfx("bossPhaseShift", 1 + boss.phase * BLOOD_MOON_PHASE_SHIFT_PITCH_STEP);
   }
 }

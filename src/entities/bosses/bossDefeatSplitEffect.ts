@@ -1,5 +1,6 @@
 import {
   BOSS_DEFEAT_SPLIT_VISUAL,
+  BLOOD_MOON_DEATH_SHEET,
   DEAD_BELL_AWAKENED_ECHO_BELL_SHEET,
   DEAD_BELL_CONFIG,
   DEAD_BELL_WAVE_SHEET,
@@ -14,7 +15,7 @@ import type {
   MistBoneDefeatFogWispState,
   MistBoneDefeatFragmentState,
 } from "../../types/game-state";
-import { BOSS_ARCHETYPE_IDS } from "./registry";
+import { BOSS_ARCHETYPE_IDS, bossArchetypeForId } from "./registry";
 import { deadBellWaveDrawSize } from "./deadBellEffects";
 import { resolveBossVisualFrame } from "./renderBoss";
 import type { LiveBoss } from "./types";
@@ -49,6 +50,14 @@ export function spawnBossDefeatSplitEffect(
     life: BOSS_DEFEAT_SPLIT_VISUAL.durationFrames,
     maxLife: BOSS_DEFEAT_SPLIT_VISUAL.durationFrames,
   };
+  if (boss.id === BOSS_ARCHETYPE_IDS.bloodMoon) {
+    state.bossDefeatSplitEffect = {
+      ...commonState,
+      kind: "bloodMoonDissolve",
+      pose: bloodMoonDeathPose(boss),
+    };
+    return;
+  }
   if (boss.id === BOSS_ARCHETYPE_IDS.mistBone) {
     state.bossDefeatSplitEffect = {
       ...commonState,
@@ -88,6 +97,11 @@ export function drawBossDefeatSplitEffect() {
   const effect = state.bossDefeatSplitEffect;
   if (!ctx || !effect) return;
 
+  if (effect.kind === "bloodMoonDissolve") {
+    drawBloodMoonDissolve(effect);
+    return;
+  }
+
   if (effect.kind === "mistBoneScatter") {
     drawMistBoneScatter(effect);
     return;
@@ -100,6 +114,43 @@ export function drawBossDefeatSplitEffect() {
 
   drawSplitHalf(effect, -1);
   drawSplitHalf(effect, 1);
+}
+
+function bloodMoonDeathPose(boss: LiveBoss): BossVisualFrameState {
+  const archetype = bossArchetypeForId(boss.id);
+  const w = archetype.castDrawW;
+  const h = w * BLOOD_MOON_DEATH_SHEET.frameH / BLOOD_MOON_DEATH_SHEET.frameW;
+  const centerX = boss.x + boss.w / 2;
+  const feetY = boss.y + boss.h;
+  return {
+    sheet: BLOOD_MOON_DEATH_SHEET,
+    frame: 0,
+    x: centerX - w / 2,
+    y: feetY - h + archetype.castBottomPadding,
+    w,
+    h,
+    facing: boss.facing,
+  };
+}
+
+function drawBloodMoonDissolve(
+  effect: Extract<BossDefeatSplitEffectState, { kind: "bloodMoonDissolve" }>,
+) {
+  if (!ctx) return;
+  const elapsed = effect.maxLife - effect.life;
+  const frame = Math.min(
+    BLOOD_MOON_DEATH_SHEET.count - 1,
+    Math.floor(elapsed * BLOOD_MOON_DEATH_SHEET.count / effect.maxLife),
+  );
+  drawSheetFrame(
+    effect.pose.sheet,
+    frame,
+    effect.pose.x,
+    effect.pose.y,
+    effect.pose.w,
+    effect.pose.h,
+    effect.pose.facing,
+  );
 }
 
 function drawSplitHalf(effect: BossDefeatSplitEffectState, side: -1 | 1) {

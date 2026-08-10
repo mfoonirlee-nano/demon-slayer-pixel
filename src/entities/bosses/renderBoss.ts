@@ -1,13 +1,5 @@
 import {
-  BLOOD_MOON_CONFIG,
-  BLOOD_MOON_LANTERN_BELL_CAST_SHEET,
-  BLOOD_MOON_MANY_FACES_CAST_SHEET,
-  BLOOD_MOON_MIRROR_FANG_CAST_SHEET,
-  BLOOD_MOON_PHASE_SHIFT_SHEET,
-  BLOOD_MOON_RECOVER_SHEET,
   BOSS_CONFIG,
-  BLOOD_MOON_SIXFOLD_CAST_SHEET,
-  BLOOD_MOON_SPIDER_MIST_CAST_SHEET,
   BOSS_SKILL1_CONFIG,
   DEAD_BELL_AWAKENED_ECHO_BELL_SHEET,
   DEAD_BELL_CONFIG,
@@ -47,6 +39,7 @@ import { drawSheetFrame } from "../../rendering/graphics";
 import type { SpriteFrameEffect } from "../../rendering/graphics";
 import type { BossVisualFrameState } from "../../types/game-state";
 import { bossCastDuration, spiderRushWindupFrames } from "./attackTiming";
+import { resolveBloodMoonActionVisual } from "./bloodMoonVisuals";
 import { BOSS_ARCHETYPE_IDS, bossArchetypeForId } from "./registry";
 import type { LiveBoss } from "./types";
 
@@ -197,21 +190,9 @@ export function resolveBossVisualFrame(
   const centerX = boss.x + boss.w / 2;
   const feetY = boss.y + boss.h;
 
-  if (boss.id === BOSS_ARCHETYPE_IDS.bloodMoon && (boss.phaseShiftTimer ?? 0) > 0) {
-    const elapsed = BLOOD_MOON_CONFIG.phaseShiftFrames - (boss.phaseShiftTimer ?? 0);
-    const frame = Math.min(
-      BLOOD_MOON_PHASE_SHIFT_SHEET.count - 1,
-      Math.floor(elapsed / BLOOD_MOON_CONFIG.phaseShiftFrameDuration),
-    );
-    return visualFrame(
-      BLOOD_MOON_PHASE_SHIFT_SHEET,
-      frame,
-      centerX - archetype.castDrawW / 2,
-      feetY - archetype.castDrawH + archetype.castBottomPadding,
-      archetype.castDrawW,
-      archetype.castDrawH,
-      boss.facing,
-    );
+  if (boss.id === BOSS_ARCHETYPE_IDS.bloodMoon) {
+    const bloodMoonVisual = resolveBloodMoonActionVisual(boss);
+    if (bloodMoonVisual) return bloodMoonVisual;
   }
 
   if (boss.id === BOSS_ARCHETYPE_IDS.fangGale && boss.actionState === "retreat") {
@@ -452,26 +433,6 @@ export function resolveBossVisualFrame(
     );
   }
 
-  if (boss.id === BOSS_ARCHETYPE_IDS.bloodMoon && boss.recoveryTimer > 0) {
-    const recoveryDuration = boss.skillMode === "bloodMoonManyFaces"
-      ? BLOOD_MOON_CONFIG.finalRecoveryFrames
-      : BLOOD_MOON_CONFIG.recoveryFrames;
-    const elapsed = recoveryDuration - boss.recoveryTimer;
-    const frame = Math.min(
-      BLOOD_MOON_RECOVER_SHEET.count - 1,
-      Math.floor(elapsed / BLOOD_MOON_CONFIG.recoverFrameDuration),
-    );
-    return visualFrame(
-      BLOOD_MOON_RECOVER_SHEET,
-      frame,
-      centerX - archetype.castDrawW / 2,
-      feetY - archetype.castDrawH + archetype.castBottomPadding,
-      archetype.castDrawW,
-      archetype.castDrawH,
-      boss.facing,
-    );
-  }
-
   const frame = frameIndex(
     archetype.sheets.move.count,
     BOSS_CONFIG.baseAnimSpeed - boss.phase,
@@ -535,7 +496,6 @@ function deadBellRecoveryVisualDuration(boss: LiveBoss) {
 
 function bossCastSheet(boss: LiveBoss) {
   const archetype = bossArchetypeForId(boss.id);
-  if (boss.id === BOSS_ARCHETYPE_IDS.bloodMoon) return bloodMoonCastSheet(boss);
   if (boss.id === BOSS_ARCHETYPE_IDS.fangGale && boss.actionState === "windup") {
     return FANG_GALE_TURN_SHEET;
   }
@@ -560,20 +520,11 @@ function bossCastSheet(boss: LiveBoss) {
   return LANTERN_EMBER_SUMMON_SHEET;
 }
 
-function bloodMoonCastSheet(boss: LiveBoss) {
-  if (boss.skillMode === "bloodMoonMirrorFang") return BLOOD_MOON_MIRROR_FANG_CAST_SHEET;
-  if (boss.skillMode === "bloodMoonLanternBell") return BLOOD_MOON_LANTERN_BELL_CAST_SHEET;
-  if (boss.skillMode === "bloodMoonSixfold") return BLOOD_MOON_SIXFOLD_CAST_SHEET;
-  if (boss.skillMode === "bloodMoonManyFaces") return BLOOD_MOON_MANY_FACES_CAST_SHEET;
-  return BLOOD_MOON_SPIDER_MIST_CAST_SHEET;
-}
-
 function bossCastFrameDuration(boss: LiveBoss) {
   if (boss.id === BOSS_ARCHETYPE_IDS.deadBell) return DEAD_BELL_CONFIG.castFrameDuration;
   if (boss.id === BOSS_ARCHETYPE_IDS.lanternEmber) return LANTERN_EMBER_CONFIG.castFrameDuration;
   if (boss.id === BOSS_ARCHETYPE_IDS.mistBone) return MIST_BONE_CONFIG.castFrameDuration;
   if (boss.id === BOSS_ARCHETYPE_IDS.mirrorDream) return MIRROR_DREAM_CONFIG.castFrameDuration;
-  if (boss.id === BOSS_ARCHETYPE_IDS.bloodMoon) return BLOOD_MOON_CONFIG.castFrameDuration;
   if (boss.id === BOSS_ARCHETYPE_IDS.spiderString && boss.skillMode === "spiderStringCage") {
     return SPIDER_STRING_CAGE_CONFIG.castFrameDuration;
   }

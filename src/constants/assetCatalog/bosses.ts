@@ -197,6 +197,22 @@ export const BLOOD_MOON_DEATH_SHEET: SpriteSheet = {
   image: null,
 };
 
+export const BLOOD_MOON_PHASE_RUNES_SHEET: SpriteSheet = {
+  src: "assets/sprites/boss/blood-moon-many-faces/blood_moon_phase_runes.png",
+  frameW: 160,
+  frameH: 160,
+  count: 12,
+  image: null,
+};
+
+export const BLOOD_MOON_FINAL_STAGGER_SHEET: SpriteSheet = {
+  src: "assets/sprites/boss/blood-moon-many-faces/blood_moon_final_stagger.png",
+  frameW: 400,
+  frameH: 400,
+  count: 4,
+  image: null,
+};
+
 export const BLOOD_MOON_SPIDER_MIST_CAST_SHEET: SpriteSheet = {
   src: "assets/sprites/boss/blood-moon-many-faces/blood_moon_spider_mist_cast.png",
   frameW: 400,
@@ -261,36 +277,23 @@ export const BLOOD_MOON_LANTERN_BELL_EFFECT_SHEET: SpriteSheet = {
   image: null,
 };
 
-export const BLOOD_MOON_SIXFOLD_EFFECT_SHEET: SpriteSheet = {
-  src: "assets/sprites/boss/blood-moon-many-faces/blood_moon_sixfold_effect.png",
-  frameW: 420,
-  frameH: 350,
-  count: 8,
-  image: null,
-};
-
-export const BLOOD_MOON_MANY_FACES_EFFECT_SHEET: SpriteSheet = {
-  src: "assets/sprites/boss/blood-moon-many-faces/blood_moon_many_faces_effect.png",
-  frameW: 480,
-  frameH: 420,
-  count: 12,
-  image: null,
-};
+const BLOOD_MOON_TRAIL_FIRST_SAMPLE_FRAME = 6;
+const BLOOD_MOON_TRAIL_SECOND_SAMPLE_FRAME = 18;
+const BLOOD_MOON_TRAIL_THIRD_SAMPLE_FRAME = 30;
 
 export const BLOOD_MOON_CONFIG = {
   castDuration: 72,
-  finalCastDuration: 92,
+  finalCastDuration: 252,
   spawnAtFrame: 34,
-  finalSpawnAtFrame: 42,
-  castFrameDuration: 9,
   phaseShiftFrames: 42,
-  phaseShiftFrameDuration: 7,
+  phaseEntryCooldown: 60,
   recoveryFrames: 48,
-  finalRecoveryFrames: 104,
-  recoverFrameDuration: 8,
+  finalSettleFrames: 64,
+  finalExposureFrames: 108,
+  staggerFrameDuration: 8,
   initialCooldown: 124,
   skillCooldown: 204,
-  finalSkillCooldown: 286,
+  finalSkillCooldown: 540,
   drawW: 188,
   drawH: 224,
   castDrawW: 236,
@@ -305,6 +308,24 @@ export const BLOOD_MOON_CONFIG = {
   preferredDistance: 190,
   closeDistance: 130,
   summonMaxEnemies: 4,
+  trailSampleFrames: [
+    BLOOD_MOON_TRAIL_FIRST_SAMPLE_FRAME,
+    BLOOD_MOON_TRAIL_SECOND_SAMPLE_FRAME,
+    BLOOD_MOON_TRAIL_THIRD_SAMPLE_FRAME,
+  ],
+  trailStaggerFrames: 10,
+  mirrorDecoyVerticalGap: 50,
+  mirrorTrueDelayFrames: 12,
+  reviewPillarCount: 3,
+  reviewDamageScale: 0.86,
+  finalDamageScale: 0.72,
+  finalCueInterval: 40,
+  finalAttackOffset: 14,
+  runeLife: 52,
+  runeDimFrames: 10,
+  runeDrawW: 92,
+  runeDrawH: 92,
+  runeYOffset: 42,
   spiderMistWarningFrames: 30,
   spiderMistLife: 92,
   spiderMistFrameDuration: 7,
@@ -321,26 +342,13 @@ export const BLOOD_MOON_CONFIG = {
   mirrorFangHitW: 210,
   mirrorFangHitH: 38,
   mirrorFangSpeed: 8.6,
+  mirrorTrialSpeed: 18,
   mirrorFangDamageBase: 10,
   lanternBellLife: 72,
   lanternBellFrameDuration: 7,
   lanternBellDrawW: 240,
   lanternBellDrawH: 200,
-  sixfoldLife: 88,
-  sixfoldFrameDuration: 7,
-  sixfoldDrawW: 250,
-  sixfoldDrawH: 208,
-  manyFacesDelayFrames: 42,
-  manyFacesWarningFrames: 44,
-  manyFacesLife: 142,
-  manyFacesFrameDuration: 5,
-  manyFacesDrawW: 300,
-  manyFacesDrawH: 260,
-  manyFacesHitW: 220,
-  manyFacesHitH: 140,
-  manyFacesDamageBase: 13,
   damagePhase: 2,
-  hitPlayerCooldown: 24,
 } as const;
 
 export const DEAD_BELL_CONFIG = {

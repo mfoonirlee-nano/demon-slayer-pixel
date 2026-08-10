@@ -104,12 +104,13 @@ export type BossActionState =
   | "dash"
   | "recover";
 export type BossSkillEffectKind = "spiderString";
-export type BloodMoonEffectKind =
-  | "spiderMist"
-  | "mirrorFang"
-  | "lanternBell"
-  | "sixfold"
-  | "manyFaces";
+export type BloodMoonFace =
+  | "spider"
+  | "bone"
+  | "mirror"
+  | "fang"
+  | "lantern"
+  | "bell";
 export type BossSkillMode =
   | "spiderString"
   | "spiderStringPillars"

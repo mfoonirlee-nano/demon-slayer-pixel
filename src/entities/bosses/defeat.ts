@@ -17,6 +17,7 @@ import { advanceEnemyDirectorToAct } from "../../systems/enemyDirector";
 import { clearRun } from "../../systems/runLifecycle";
 import { BOSS_ARCHETYPE_IDS } from "./registry";
 import { spawnBossDefeatSplitEffect } from "./bossDefeatSplitEffect";
+import { clearBloodMoonHazards } from "./bloodMoonHazards";
 
 function gainBossKillEnergy() {
   grantSkillEnergy(state, PLAYER_COMBAT.bossEnergyGain);
@@ -37,7 +38,9 @@ export function defeatBoss() {
   spawnBossDefeatSplitEffect(state.boss);
   const defeatedBossId = state.boss.id;
   const clearsRun = defeatedBossId === BOSS_ARCHETYPE_IDS.bloodMoon;
-  if (defeatedBossId === BOSS_ARCHETYPE_IDS.mistBone) {
+  if (defeatedBossId === BOSS_ARCHETYPE_IDS.bloodMoon) {
+    clearBloodMoonHazards({ clearSummons: true });
+  } else if (defeatedBossId === BOSS_ARCHETYPE_IDS.mistBone) {
     state.mistBoneFogs.length = 0;
     state.mistBoneSpikes.length = 0;
   } else if (defeatedBossId === BOSS_ARCHETYPE_IDS.deadBell) {

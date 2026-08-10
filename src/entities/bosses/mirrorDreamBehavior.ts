@@ -500,7 +500,7 @@ function finishMirrorNightmareDash(boss: LiveBoss, targetX: number) {
   boss.vx = 0;
 }
 
-function spawnMirrorShardFromBoss(boss: LiveBoss) {
+export function spawnMirrorShardFromBoss(boss: LiveBoss) {
   const startX = boss.x + boss.w / 2 + boss.castFacing * SHARD_FORWARD_OFFSET;
   const startY = boss.y + boss.h * SHARD_START_Y_SCALE;
   const targetX = state.player.x + state.player.w / 2;

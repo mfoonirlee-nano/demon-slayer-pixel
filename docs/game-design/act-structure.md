@@ -36,7 +36,7 @@ actBand =
 | 10 | 牙岚·蚀醒 | 加强 | + 三段跨场冲刺连段 | 常规池 8，觉醒 profile shuffle cycle | 90-120s | 25-40% |
 | 11 | 灯烬·蚀醒 | 加强 | + 火线成移动网格 + 灰烬叠加 | 常规池 8，觉醒 profile shuffle cycle | 100-130s | 25-40% |
 | 12 | 枯铃·蚀醒 | 加强 | + 第二裂铃、双频错相、`30/42/54` 帧停拍协议和预算内控场支援 | 常规池 8，觉醒 profile shuffle cycle | 100-130s | 20-35% |
-| 13 | 万相血月 Blood Moon | 终极 | 5 阶段换相，每阶段借一名血月眷属的招式 | 排除基础怪，其余 9 种全进；Boss 召唤物 ≤ 4 | 150-240s | 15-30% |
+| 13 | 万相血月 Blood Moon | 终极 | 五相接力：前三相成对借招，P4 固定六术轮转，P5 六相终招 | 排除基础怪，其余 9 种全进；Boss 召唤物 ≤ 4 | 150-240s | 15-30% |
 
 **清版一次（1→13 全通）目标时长：约 18-22 分钟**（含 Boss 间小怪波次）。大多数尝试会在中途阵亡，长期时长来自反复挑战、局内构筑差异和通关后进阶难度（见 [balance-acceptance.md](balance-acceptance.md) 与 [../numeric-system/endgame-ascension.md](../numeric-system/endgame-ascension.md)）。
 

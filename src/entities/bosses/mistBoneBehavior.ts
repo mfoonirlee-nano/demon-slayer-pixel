@@ -342,7 +342,7 @@ function updateMistBoneChase(boss: LiveBoss) {
   boss.vx = 0;
 }
 
-function spawnMistBoneSpikeAtPlayer(boss: LiveBoss, delay: number) {
+export function spawnMistBoneSpikeAtPlayer(boss: LiveBoss, delay: number) {
   const centerX = state.player.x + state.player.w / 2;
   spawnMistBoneSpike(boss, centerX, delay);
 }

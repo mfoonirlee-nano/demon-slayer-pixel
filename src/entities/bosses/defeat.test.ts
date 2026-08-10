@@ -6,8 +6,14 @@ import { EQUIPMENT_CHOICE_IDS, chooseBossEquipment } from "../../systems/equipme
 import { addRunXp, xpToNextLevel } from "../../systems/progression";
 import { spawnBoss } from "../boss";
 import { updateBossDefeatSplitEffect } from "./bossDefeatSplitEffect";
+import { cueBloodMoonFace } from "./bloodMoonPatterns";
+import { spawnDeadBellWave } from "./deadBellBehavior";
 import { defeatBoss } from "./defeat";
+import { spawnLanternFireline } from "./lanternEmberBehavior";
+import { spawnMirrorShardFromBoss } from "./mirrorDreamBehavior";
+import { spawnMistBoneSpikeAtPlayer } from "./mistBoneBehavior";
 import { BOSS_ARCHETYPE_IDS } from "./registry";
+import { spawnSpiderStringPillars } from "./spiderStringPillarEffects";
 
 vi.mock("../../game/audio", () => ({ playSfx: vi.fn() }));
 
@@ -18,6 +24,7 @@ const SECOND_ACT = 2;
 const PARTIAL_LEVEL_XP = 200;
 const LEVEL_AFTER_FIRST_BOSS = 2;
 const LEVEL_AFTER_BANKED_FINAL_REWARDS = 4;
+const REVIEW_WAVE_RADIUS = 180;
 
 describe("boss defeat progression", () => {
   afterEach(() => {
@@ -133,6 +140,41 @@ describe("boss defeat progression", () => {
     expect(state.player.runLevel).toBe(LEVEL_AFTER_BANKED_FINAL_REWARDS);
     expect(state.player.runXp).toBe(0);
     expect(state.pendingUpgradeChoices).toEqual([]);
+  });
+
+  it("clears every borrowed face attack on the final hit before victory can be reversed", () => {
+    resetState();
+    state.bossKills = FINAL_BOSS_START_KILLS;
+    spawnBoss(BOSS_ARCHETYPE_IDS.bloodMoon);
+    const boss = state.boss;
+    if (!boss) throw new Error("Blood Moon did not spawn");
+    boss.entering = false;
+    spawnSpiderStringPillars(boss, { count: 1 });
+    spawnMistBoneSpikeAtPlayer(boss, 0);
+    spawnMirrorShardFromBoss(boss);
+    spawnLanternFireline(boss);
+    spawnDeadBellWave(boss, 0, REVIEW_WAVE_RADIUS);
+    cueBloodMoonFace(boss, "bell");
+    expect([
+      state.spiderStringPillars,
+      state.mistBoneSpikes,
+      state.mirrorShards,
+      state.lanternEmberFirelines,
+      state.deadBellWaves,
+      state.bloodMoonEffects,
+    ].every(({ length }) => length > 0)).toBe(true);
+    boss.hp = 0;
+    vi.mocked(playSfx).mockClear();
+
+    expect(defeatBoss()).toBe(true);
+
+    expect(state.bossDefeatSplitEffect).toMatchObject({ kind: "bloodMoonDissolve" });
+    expect(state.spiderStringPillars).toEqual([]);
+    expect(state.mistBoneSpikes).toEqual([]);
+    expect(state.mirrorShards).toEqual([]);
+    expect(state.lanternEmberFirelines).toEqual([]);
+    expect(state.deadBellWaves).toEqual([]);
+    expect(state.bloodMoonEffects).toEqual([]);
   });
 
   it("clears Mist Bone hazards and uses its own death sound after capturing the lethal pose", () => {

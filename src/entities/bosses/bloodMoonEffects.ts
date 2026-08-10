@@ -1,9 +1,8 @@
 import {
   BLOOD_MOON_CONFIG,
   BLOOD_MOON_LANTERN_BELL_EFFECT_SHEET,
-  BLOOD_MOON_MANY_FACES_EFFECT_SHEET,
   BLOOD_MOON_MIRROR_FANG_EFFECT_SHEET,
-  BLOOD_MOON_SIXFOLD_EFFECT_SHEET,
+  BLOOD_MOON_PHASE_RUNES_SHEET,
   BLOOD_MOON_SPIDER_MIST_EFFECT_SHEET,
   WIDTH,
 } from "../../constants";
@@ -12,13 +11,32 @@ import { clamp, hitbox } from "../../game/utils";
 import { ctx } from "../../rendering/context";
 import { drawSheetFrame } from "../../rendering/graphics";
 import { hurtPlayer } from "../player";
-import type { BloodMoonEffectState } from "../../types/game-state";
+import type { BloodMoonEffectState, BloodMoonFace } from "../../types/game-state";
 
 const EFFECT_FADE_MIN_ALPHA = 0.24;
 const EFFECT_WARNING_ALPHA = 0.42;
 const EFFECT_WARNING_SPRITE_FRAMES = 2;
+const DECOY_ALPHA = 0.28;
+const RUNE_FACE_INDEX: Record<BloodMoonFace, number> = {
+  spider: 0,
+  bone: 1,
+  mirror: 2,
+  fang: 3,
+  lantern: 4,
+  bell: 5,
+};
 
 function bloodMoonEffectSpec(kind: BloodMoonEffectState["kind"]) {
+  if (kind === "phaseRune") {
+    return {
+      sheet: BLOOD_MOON_PHASE_RUNES_SHEET,
+      frameDuration: BLOOD_MOON_CONFIG.runeDimFrames,
+      drawW: BLOOD_MOON_CONFIG.runeDrawW,
+      drawH: BLOOD_MOON_CONFIG.runeDrawH,
+      groundAligned: false,
+      bottomPadding: 0,
+    };
+  }
   if (kind === "mirrorFang") {
     return {
       sheet: BLOOD_MOON_MIRROR_FANG_EFFECT_SHEET,
@@ -35,26 +53,6 @@ function bloodMoonEffectSpec(kind: BloodMoonEffectState["kind"]) {
       frameDuration: BLOOD_MOON_CONFIG.lanternBellFrameDuration,
       drawW: BLOOD_MOON_CONFIG.lanternBellDrawW,
       drawH: BLOOD_MOON_CONFIG.lanternBellDrawH,
-      groundAligned: false,
-      bottomPadding: 0,
-    };
-  }
-  if (kind === "sixfold") {
-    return {
-      sheet: BLOOD_MOON_SIXFOLD_EFFECT_SHEET,
-      frameDuration: BLOOD_MOON_CONFIG.sixfoldFrameDuration,
-      drawW: BLOOD_MOON_CONFIG.sixfoldDrawW,
-      drawH: BLOOD_MOON_CONFIG.sixfoldDrawH,
-      groundAligned: false,
-      bottomPadding: 0,
-    };
-  }
-  if (kind === "manyFaces") {
-    return {
-      sheet: BLOOD_MOON_MANY_FACES_EFFECT_SHEET,
-      frameDuration: BLOOD_MOON_CONFIG.manyFacesFrameDuration,
-      drawW: BLOOD_MOON_CONFIG.manyFacesDrawW,
-      drawH: BLOOD_MOON_CONFIG.manyFacesDrawH,
       groundAligned: false,
       bottomPadding: 0,
     };
@@ -80,26 +78,44 @@ export function updateBloodMoonEffects() {
     const spec = bloodMoonEffectSpec(effect.kind);
     effect.elapsed += 1;
     effect.life -= 1;
-    if (effect.hitPlayerCd > 0) effect.hitPlayerCd -= 1;
 
     const warningSpriteFrames = effect.warningFrames > 0
       ? Math.min(EFFECT_WARNING_SPRITE_FRAMES, spec.sheet.count - 1)
       : 0;
-    effect.frame = effect.elapsed <= effect.warningFrames
-      ? Math.min(
-        warningSpriteFrames - 1,
-        Math.floor(
-          Math.max(0, effect.elapsed - 1)
-            * warningSpriteFrames
-            / effect.warningFrames,
-        ),
-      )
-      : Math.min(
-        spec.sheet.count - 1,
-        warningSpriteFrames + Math.floor(
-          (effect.elapsed - effect.warningFrames) / spec.frameDuration,
-        ),
+    if (effect.kind === "phaseRune") {
+      const runeIndex = RUNE_FACE_INDEX[effect.runeFace];
+      const brightFrame = effect.elapsed > BLOOD_MOON_CONFIG.runeDimFrames ? 1 : 0;
+      effect.frame = runeIndex * 2 + brightFrame;
+    } else if (
+      effect.kind === "mirrorFang"
+      && effect.elapsed > effect.warningFrames
+    ) {
+      const activeElapsed = effect.elapsed - effect.warningFrames - 1;
+      const loopFrameCount = Math.max(
+        1,
+        spec.sheet.count - warningSpriteFrames - 1,
       );
+      effect.frame = effect.life <= spec.frameDuration
+        ? spec.sheet.count - 1
+        : warningSpriteFrames
+          + Math.floor(activeElapsed / spec.frameDuration) % loopFrameCount;
+    } else {
+      effect.frame = effect.elapsed <= effect.warningFrames
+        ? Math.min(
+          warningSpriteFrames - 1,
+          Math.floor(
+            Math.max(0, effect.elapsed - 1)
+              * warningSpriteFrames
+              / effect.warningFrames,
+          ),
+        )
+        : Math.min(
+          spec.sheet.count - 1,
+          warningSpriteFrames + Math.floor(
+            (effect.elapsed - effect.warningFrames) / spec.frameDuration,
+          ),
+        );
+    }
 
     if (effect.kind === "mirrorFang" && effect.elapsed > effect.warningFrames) {
       effect.x += effect.vx;
@@ -107,19 +123,25 @@ export function updateBloodMoonEffects() {
 
     if (
       effect.damage > 0
+      && !(effect.kind === "mirrorFang" && effect.decoy)
+      && !(effect.kind === "mirrorFang" && effect.life <= spec.frameDuration)
       && effect.elapsed > effect.warningFrames
       && !effect.hitDone
-      && effect.hitPlayerCd <= 0
       && hitbox(state.player, effect)
     ) {
       hurtPlayer(effect.damage, effect.vx || effect.x - (state.player.x + state.player.w / 2));
       effect.hitDone = true;
-      effect.hitPlayerCd = BLOOD_MOON_CONFIG.hitPlayerCooldown;
     }
 
     const offLeft = effect.kind === "mirrorFang" && effect.x + effect.w < -spec.drawW;
     const offRight = effect.kind === "mirrorFang" && effect.x > WIDTH + spec.drawW;
-    if (effect.life <= 0 || offLeft || offRight) state.bloodMoonEffects.splice(i, 1);
+    const animationFrames = spec.sheet.count - warningSpriteFrames;
+    const animationFinished = effect.kind !== "phaseRune"
+      && effect.kind !== "mirrorFang"
+      && effect.elapsed >= effect.warningFrames + animationFrames * spec.frameDuration;
+    if (effect.life <= 0 || animationFinished || offLeft || offRight) {
+      state.bloodMoonEffects.splice(i, 1);
+    }
   }
 }
 
@@ -138,7 +160,11 @@ export function drawBloodMoonEffects() {
     const fade = clamp(effect.life / Math.max(1, effect.life + effect.elapsed), EFFECT_FADE_MIN_ALPHA, 1);
 
     ctx.save();
-    ctx.globalAlpha = effect.elapsed <= effect.warningFrames ? EFFECT_WARNING_ALPHA : fade;
+    const baseAlpha = effect.elapsed <= effect.warningFrames ? EFFECT_WARNING_ALPHA : fade;
+    const decoyAlpha = effect.kind === "mirrorFang" && effect.decoy
+      ? DECOY_ALPHA
+      : 1;
+    ctx.globalAlpha = baseAlpha * decoyAlpha;
     drawSheetFrame(
       spec.sheet,
       effect.frame,

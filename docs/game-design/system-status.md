@@ -28,7 +28,7 @@
 | 幕数与威胁值 | `act = bossKills + 1`（上限 13）和分段 `threatScalar` 已接入敌人、Boss、平台与奖励 | 继续按试玩数据校准逐幕威胁曲线 | 已实现 | P1 | `src/systems/runProgression.ts`、`docs/numeric-system/act-and-threat.md` |
 | 13 幕闯关阶梯 | 1-6 基础 Boss、7-12 蚀醒形态和第 13 幕终幕 Boss 已接入；击败终幕进入通关结算 | 继续校准逐幕时长、Boss 击杀率和幕间喘息 | 已实现 | P4 | [act-structure.md](act-structure.md) |
 | 蚀醒形态 Boss | 已有多名蚀醒 Boss 运行时叠加；雾骨·蚀醒已接入冷骨光、环身浓雾、局部遮蔽、由外向内延迟骨刺，以及 `warden` + 普通同伴支援；枯铃·蚀醒已接入持续第二裂铃、逐阶段强制双调和预算内 `binder` / `warden` 支援 | 第 7-12 幕继续保持“基础 Boss + 一招蚀醒妖术 + 多一阶段 + 强化召唤”的统一边界 | 部分实现 | P4 | `src/entities/bosses/encounter.ts`、`src/entities/bosses/mistBoneBehavior.ts`、`src/entities/bosses/deadBellBehavior.ts`、`docs/numeric-system/boss-archetypes.md` |
-| 终幕万相血月 | `bossKills >= 12` 后出场；5 阶段换相借招、专属施法/特效和击败后停止 Boss 重生已接入 | 第 13 幕击败出胜利结算，不进任何轮换池；死亡动画状态机和通关后进阶待接 | 部分实现 | P4 | `docs/art/bosses/blood-moon-many-faces.md` |
+| 终幕万相血月 | `bossKills >= 12` 后出场；五相接力、六术符印、破月硬直、原子换相、安全清场、专属死亡与胜利结算已接入 | 不进任何轮换池；继续按 15-30% 熟练通关率试玩调参，通关后进阶待接 | 已实现 | P4 | `docs/art/bosses/blood-moon-many-faces.md` |
 | 通关后进阶难度 | 未实现 | 血月试炼可叠加难度层（横向解锁，不给局外永久战力） | 目标设计，未实现 | P5 | `docs/numeric-system/endgame-ascension.md` |
 | 地图生成 | 片段式平台生成、张力、低层恢复、防重叠和月潮灵匣专用的可达高台支路已实现；地图不维护奖励预算 | 按幕数调整片段权重和平台速度，保留喘息片段，并继续根据领取率校准高台路线风险 | 部分实现 | P2 | `src/entities/platform.ts`、`src/entities/platforms/treasureRoute.ts`、`docs/map-generation.md` |
 | 奖励拾取 | 分数、技能能量、大招能量、XP、敌人残灵、Boss 装备三选一和每幕一次的月潮灵匣动态三选一已实现；灵匣会按幕数与玩家资源缺口生成实际有效奖励 | 按试玩数据校准残灵供给、灵匣领取率和动态候选分布，保持三类奖励覆盖层依次展示 | 已实现 | P2 | `src/entities/residualSpirit.ts`、`src/systems/highPlatformTreasure.ts`、`src/systems/treasureRewards.ts`、`docs/numeric-system/rewards.md` |

@@ -2,7 +2,7 @@ import type { PlayerAnimationState, SkillId, SpriteSheet } from "../assets";
 import type {
   ActBand,
   BinderTalismanDebuff,
-  BloodMoonEffectKind,
+  BloodMoonFace,
   BossSkillEffectKind,
   BruteFireballPhase,
   MirrorShardKind,
@@ -68,6 +68,9 @@ export type BossDefeatSplitEffectState = BossDefeatEffectBaseState & (
     kind: "deadBellSilence";
     cutAngle: number;
     frozenWaves: DeadBellDefeatWaveState[];
+  }
+  | {
+    kind: "bloodMoonDissolve";
   }
 );
 
@@ -289,8 +292,7 @@ export type LanternEmberAshZoneState = {
   damage: number;
 };
 
-export type BloodMoonEffectState = {
-  kind: BloodMoonEffectKind;
+type BloodMoonEffectBaseState = {
   x: number;
   y: number;
   w: number;
@@ -303,9 +305,26 @@ export type BloodMoonEffectState = {
   frame: number;
   life: number;
   damage: number;
-  hitPlayerCd: number;
   hitDone: boolean;
 };
+
+export type BloodMoonEffectState = BloodMoonEffectBaseState & (
+  | {
+    kind: "spiderMist" | "lanternBell";
+    decoy?: never;
+    runeFace?: never;
+  }
+  | {
+    kind: "mirrorFang";
+    decoy: boolean;
+    runeFace?: never;
+  }
+  | {
+    kind: "phaseRune";
+    decoy?: never;
+    runeFace: BloodMoonFace;
+  }
+);
 
 export type BindingZoneState = {
   x: number;

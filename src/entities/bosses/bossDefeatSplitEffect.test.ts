@@ -1,5 +1,6 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import {
+  BLOOD_MOON_DEATH_SHEET,
   BOSS_DEFEAT_SPLIT_VISUAL,
   BOSS_SHEET,
   MIST_BONE_DEFEAT_VISUAL,
@@ -20,8 +21,11 @@ const SNAPSHOT_ACTION_TIMER = 17;
 const UPDATES_BEFORE_EXPIRY = BOSS_DEFEAT_SPLIT_VISUAL.durationFrames - 1;
 const EXPECTED_MIST_BONE_FRAGMENT_COUNT = 12;
 const EXPECTED_MIST_BONE_FOG_WISP_COUNT = 9;
+const BLOOD_MOON_DEATH_FRAME_DURATION = BOSS_DEFEAT_SPLIT_VISUAL.durationFrames
+  / BLOOD_MOON_DEATH_SHEET.count;
 const originalBossImage = BOSS_SHEET.image;
 const originalMistBoneImage = MIST_BONE_SHEET.image;
+const originalBloodMoonDeathImage = BLOOD_MOON_DEATH_SHEET.image;
 
 describe("boss defeat split effect", () => {
   afterEach(() => {
@@ -29,6 +33,7 @@ describe("boss defeat split effect", () => {
     setCanvas(null);
     BOSS_SHEET.image = originalBossImage;
     MIST_BONE_SHEET.image = originalMistBoneImage;
+    BLOOD_MOON_DEATH_SHEET.image = originalBloodMoonDeathImage;
   });
 
   it("snapshots the lethal pose and chooses one stable random cut direction", () => {
@@ -157,6 +162,42 @@ describe("boss defeat split effect", () => {
     expect(
       context.translate.mock.calls[MIST_BONE_DEFEAT_VISUAL.fragmentColumns - 1][0],
     ).toBeLessThan(leftFragmentInitialX);
+  });
+
+  it("plays Blood Moon's authored collapse in sequence instead of cutting its snapshot", () => {
+    const context = createContext();
+    const deathImage = {} as HTMLImageElement;
+    const random = vi.fn(() => RANDOM_CUT_ROLL);
+    BLOOD_MOON_DEATH_SHEET.image = deathImage;
+    setCanvas({ getContext: () => context } as unknown as HTMLCanvasElement);
+    const boss = createBossEncounter({
+      id: BOSS_ARCHETYPE_IDS.bloodMoon,
+      bossKills: 12,
+      elapsedSeconds: 0,
+      animSeed: 0,
+    });
+    boss.entering = false;
+
+    spawnBossDefeatSplitEffect(boss, 0, random);
+
+    expect(random).not.toHaveBeenCalled();
+    expect(state.bossDefeatSplitEffect).toMatchObject({
+      kind: "bloodMoonDissolve",
+      pose: { sheet: BLOOD_MOON_DEATH_SHEET },
+    });
+
+    drawBossDefeatSplitEffect();
+    expect(context.clip).not.toHaveBeenCalled();
+    expect(context.drawImage).toHaveBeenCalledOnce();
+    expect(context.drawImage.mock.calls[0][0]).toBe(deathImage);
+    expect(context.drawImage.mock.calls[0][1]).toBe(0);
+
+    context.drawImage.mockClear();
+    for (let frame = 0; frame < BLOOD_MOON_DEATH_FRAME_DURATION; frame += 1) {
+      updateBossDefeatSplitEffect();
+    }
+    drawBossDefeatSplitEffect();
+    expect(context.drawImage.mock.calls[0][1]).toBe(BLOOD_MOON_DEATH_SHEET.frameW);
   });
 });
 
