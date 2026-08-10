@@ -61,6 +61,37 @@ describe("boss hazard collision debug records", () => {
     expect(recordRing).not.toHaveBeenCalled();
   });
 
+  it("records a Dead Bell blade only while its visible flight frames can damage", () => {
+    state.player.x = 10_000;
+    state.deadBellBlades.push({
+      x: 400,
+      y: 330,
+      w: DEAD_BELL_CONFIG.bladeHitW,
+      h: DEAD_BELL_CONFIG.bladeHitH,
+      vx: DEAD_BELL_CONFIG.bladeSpeed,
+      facing: 1,
+      delay: 0,
+      warningFrames: 0,
+      elapsed: 0,
+      frame: 0,
+      life: 14,
+      damage: 1,
+    });
+    const recordRect = vi.mocked(collisionDebug.recordCollisionDebugRect);
+    recordRect.mockClear();
+
+    updateDeadBellEffects();
+
+    expect(recordRect).toHaveBeenCalledOnce();
+    expect(state.deadBellBlades[0]).toMatchObject({ life: 13, frame: 2 });
+
+    recordRect.mockClear();
+    updateDeadBellEffects();
+
+    expect(recordRect).not.toHaveBeenCalled();
+    expect(state.deadBellBlades[0]).toMatchObject({ life: 12, frame: 4 });
+  });
+
   it("records the Spider String effect's current temporary AABB", () => {
     const effect = spiderStringEffect();
     state.player.x = 10_000;
@@ -99,6 +130,8 @@ function deadBellWave(
     delay: 0,
     elapsed: 0,
     frame: 0,
+    tone: "low",
+    awakened: false,
     damage: 1,
     hitPlayer: false,
     ...overrides,

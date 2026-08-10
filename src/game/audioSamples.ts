@@ -68,6 +68,14 @@ export const ENEMY_SFX_SAMPLE_URLS = {
 } satisfies Partial<Record<GameSfx, string>>;
 
 export const BOSS_SFX_SAMPLE_URLS = {
+  bossDeadBellCast: sfxSampleUrl("bosses", "bossDeadBellCast"),
+  bossDeadBellLowToll: sfxSampleUrl("bosses", "bossDeadBellLowToll"),
+  bossDeadBellHighToll: sfxSampleUrl("bosses", "bossDeadBellHighToll"),
+  bossDeadBellBlade: sfxSampleUrl("bosses", "bossDeadBellBlade"),
+  bossDeadBellSilence: sfxSampleUrl("bosses", "bossDeadBellSilence"),
+  bossDeadBellReprisal: sfxSampleUrl("bosses", "bossDeadBellReprisal"),
+  bossDeadBellBreak: sfxSampleUrl("bosses", "bossDeadBellBreak"),
+  bossDeadBellDeath: sfxSampleUrl("bosses", "bossDeadBellDeath"),
   bossMistBoneCast: sfxSampleUrl("bosses", "bossMistBoneCast"),
   bossMistBoneDart: sfxSampleUrl("bosses", "bossMistBoneDart"),
   bossMistBoneWarning: sfxSampleUrl("bosses", "bossMistBoneWarning"),

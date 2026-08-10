@@ -28,7 +28,7 @@ Boss 需要保持比普通敌人更强的轮廓识别和阶段变化。设计重
 | `moonbound_mirror_dream` | 血月眷属 · 镜魇 | 3 | 9 | 碎镜、假身、P3 真身突进/落地恢复、逐阶段错位反射、`splitter` 支援和蚀醒逐帧裂纹已接入 | [mirror-dream.md](mirror-dream.md) |
 | `moonbound_fang_gale` | 血月眷属 · 牙岚 | 4 | 10 | 后撤、连闪、终段扑咬、恢复和风牙裂行为/素材已接入 | [fang-gale.md](fang-gale.md) |
 | `moonbound_lantern_ember` | 血月眷属 · 灯烬 | 5 | 11 | 素材和注册表已接入；召唤、火线、强化和蚀醒区域行为已接入 | [lantern-ember.md](lantern-ember.md) |
-| `moonbound_dead_bell` | 血月眷属 · 枯铃 | 6 | 12 | 素材和注册表已接入；声波环、横向音刃和停拍组合已接入 | [dead-bell.md](dead-bell.md) |
+| `moonbound_dead_bell` | 血月眷属 · 枯铃 | 6 | 12 | 确定性节拍、双频停拍、恢复/第二裂铃素材、预算内支援、专属音效与死亡收尾已接入；设定短句 UI 未接 | [dead-bell.md](dead-bell.md) |
 | `grand_boss_blood_moon_many_faces` | 终幕之妖 · 万相血月 | 13 | — | 素材和注册表已接入；`bossKills >= 12` 触发，胜利 UI 未接 | [blood-moon-many-faces.md](blood-moon-many-faces.md) |
 
 蚀醒形态优先复用基础 Boss 精灵 + 蚀醒视觉态（变色 / 特效密度提升 / 关键物件状态变化），只有蚀醒招新特效需要少量新素材。

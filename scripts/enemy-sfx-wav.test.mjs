@@ -33,10 +33,23 @@ const PLAYER_SKILL_LINE_TAIL_START_SECONDS = 0.35;
 const PLAYER_SKILL_LINE_MIN_TAIL_ENERGY_RATIO = 0.12;
 const PLAYER_SKILL_LINE_LOW_PASS_CUTOFF_HZ = 500;
 const PLAYER_SKILL_LINE_MIN_LOW_FREQUENCY_ENERGY_RATIO = 0.5;
+const DEAD_BELL_TOLL_LOW_PASS_CUTOFF_HZ = 250;
+const DEAD_BELL_LOW_TOLL_MIN_LOW_FREQUENCY_ENERGY_RATIO = 0.75;
+const DEAD_BELL_HIGH_TOLL_MAX_LOW_FREQUENCY_ENERGY_RATIO = 0.5;
+const DEAD_BELL_SILENCE_TAIL_START_SECONDS = 0.1;
+const DEAD_BELL_SILENCE_MAX_TAIL_ENERGY_RATIO = 0.005;
 const PLAYER_SFX_DIRECTORY = path.join(process.cwd(), "assets/audio/sfx/players");
 const ENEMY_SFX_DIRECTORY = path.join(process.cwd(), "assets/audio/sfx/enemies");
 const BOSS_SFX_DIRECTORY = path.join(process.cwd(), "assets/audio/sfx/bosses");
 const EXPECTED_BOSS_SFX_FILES = [
+  "bossDeadBellBlade.wav",
+  "bossDeadBellBreak.wav",
+  "bossDeadBellCast.wav",
+  "bossDeadBellDeath.wav",
+  "bossDeadBellHighToll.wav",
+  "bossDeadBellLowToll.wav",
+  "bossDeadBellReprisal.wav",
+  "bossDeadBellSilence.wav",
   "bossKill.wav",
   "bossMistBoneCast.wav",
   "bossMistBoneCharge.wav",
@@ -169,6 +182,28 @@ describe("SFX WAV validation", () => {
     for (const file of files) {
       expectValidWav(path.join(BOSS_SFX_DIRECTORY, file));
     }
+  });
+
+  it("separates the Dead Bell toll registers and cuts the silence cue short", () => {
+    const lowToll = decodePcm16(readFileSync(
+      path.join(BOSS_SFX_DIRECTORY, "bossDeadBellLowToll.wav"),
+    ));
+    const highToll = decodePcm16(readFileSync(
+      path.join(BOSS_SFX_DIRECTORY, "bossDeadBellHighToll.wav"),
+    ));
+    const silence = decodePcm16(readFileSync(
+      path.join(BOSS_SFX_DIRECTORY, "bossDeadBellSilence.wav"),
+    ));
+
+    expect.soft(measureLowPassEnergyRatio(lowToll, DEAD_BELL_TOLL_LOW_PASS_CUTOFF_HZ))
+      .toBeGreaterThanOrEqual(DEAD_BELL_LOW_TOLL_MIN_LOW_FREQUENCY_ENERGY_RATIO);
+    expect.soft(measureLowPassEnergyRatio(highToll, DEAD_BELL_TOLL_LOW_PASS_CUTOFF_HZ))
+      .toBeLessThanOrEqual(DEAD_BELL_HIGH_TOLL_MAX_LOW_FREQUENCY_ENERGY_RATIO);
+    expect.soft(measureEnergyRatioInRange(
+      silence,
+      DEAD_BELL_SILENCE_TAIL_START_SECONDS,
+      silence.length / SAMPLE_RATE,
+    )).toBeLessThanOrEqual(DEAD_BELL_SILENCE_MAX_TAIL_ENERGY_RATIO);
   });
 
   it("keeps the basic attack cue front-loaded like a sword swing", () => {

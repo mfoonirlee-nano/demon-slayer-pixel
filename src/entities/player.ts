@@ -103,6 +103,7 @@ export function triggerAttack() {
   ) return;
 
   if (!onGround(p, p.onPlatform) && playerFallAttackKeyDown()) {
+    p.offenseActionSequence += 1;
     p.fallAttackTimer = 1;
     p.vy = Math.max(p.vy, FALL_ATTACK.startVelocity);
     p.onPlatform = null;
@@ -111,6 +112,7 @@ export function triggerAttack() {
   }
 
   const frames = Math.max(1, Math.round(moonTideAttackFrames() * equipmentBasicAttackFrameMultiplier(state)));
+  p.offenseActionSequence += 1;
   p.attackFromRun = Boolean(onGround(p, p.onPlatform)) && Math.abs(p.vx) > PLAYER_COMBAT.movementIdleThreshold;
   beginBasicAttackEquipmentEffects(state);
   state.player.attackDuration = frames;

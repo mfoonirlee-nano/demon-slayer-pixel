@@ -2,41 +2,51 @@ import { DEAD_BELL_CONFIG, GROUND_Y, WIDTH } from "../../constants";
 import { state } from "../../game/state";
 import { clamp } from "../../game/utils";
 import { playSfx } from "../../game/audio";
+import { canAutoSpawnEntities } from "../../game/debug";
+import type { BossSkillMode, DeadBellWaveTone } from "../../types/game-state";
+import { spawnBossSummonEnemy, spawnEnemyById } from "../enemy";
 import { hurtPlayer } from "../player";
 import { bossCastDuration } from "./attackTiming";
 import { bossAttackDamage, damagePlayerOnContact } from "./shared";
 import type { LiveBoss } from "./types";
 
 const RECOVERY_DRAG = 0.82;
-const SHORT_RECOVERY_SCALE = 0.55;
 const MOVE_STEERING_BASE = 0.045;
 const MOVE_STEERING_PHASE = 0.012;
 const MOVE_DRAG = 0.9;
 const MOVE_MAX_SPEED_BASE = 3.2;
 const MOVE_MAX_SPEED_PHASE = 0.35;
-const COMBO_PHASE = 3;
-const DOUBLE_PHASE = 2;
-const MIN_SKILL_COOLDOWN = 160;
 const SKILL_COOLDOWN_PHASE_REDUCTION = 18;
-const CAST_SFX_PITCH = 0.9;
 const DOUBLE_WAVE_RADIUS_BONUS = 34;
 const DELAYED_BLADE_WARNING_SCALE = 0.55;
 const COMBO_WAVE_RADIUS_BONUS = 46;
 const COMBO_LOWER_BLADE_DELAY_BONUS = 18;
 const PLAYER_BLADE_BOTTOM_SCALE = 1.4;
 const BLADE_DAMAGE_BONUS = 2;
-const DELAYED_BLADE_SFX_PITCH = 0.92;
-const DUET_PHASE = 4;
-const DUET_RANDOM_CHANCE = 0.3;
 const DUET_COOLDOWN = 330;
 const DUET_WAVE_DELAY_SCALE = 0.55;
 const DUET_THIRD_WAVE_DELAY_BONUS = 18;
 const DUET_WAVE_RADIUS_BONUS = 70;
 const DUET_UPPER_BLADE_DELAY = 16;
 const DUET_LOWER_BLADE_DELAY = 42;
-const DUET_REPRISAL_RECOVERY_BONUS = 18;
 const DUET_REPRISAL_DAMAGE_BONUS = 5;
-const DUET_REPRISAL_SFX_PITCH = 0.82;
+const FIRST_PHASE = 1;
+const DOUBLE_PATTERN_PHASE = 2;
+const COMBO_PATTERN_PHASE = 3;
+const AWAKENED_FINAL_PHASE = 4;
+const AWAKENED_SUPPORT_SPECIALIST_INTERVAL = 2;
+const BASE_PATTERN_SEQUENCES = {
+  1: ["deadBellSingle"],
+  2: ["deadBellDouble", "deadBellSingle"],
+  3: ["deadBellCombo", "deadBellDouble", "deadBellSingle"],
+  4: ["deadBellCombo", "deadBellDouble", "deadBellSingle"],
+} as const satisfies Record<number, readonly BossSkillMode[]>;
+const AWAKENED_PHASE_FOUR_SEQUENCE = [
+  "deadBellCombo",
+  "deadBellDouble",
+  "deadBellSingle",
+  "deadBellDuet",
+] as const satisfies readonly BossSkillMode[];
 
 export function updateDeadBellBoss(boss: LiveBoss) {
   if (boss.recoveryTimer > 0) {
@@ -47,7 +57,6 @@ export function updateDeadBellBoss(boss: LiveBoss) {
       boss.actionState = "move";
       boss.actionTimer = 0;
     }
-    damagePlayerOnContact(boss);
     return;
   }
 
@@ -72,13 +81,17 @@ export function updateDeadBellBoss(boss: LiveBoss) {
         boss.deadBellReprisalTimer = DEAD_BELL_CONFIG.reprisalWarningFrames
           + DEAD_BELL_CONFIG.reprisalActiveFrames;
         boss.deadBellReprisalHit = false;
+        boss.deadBellOffenseSequenceSnapshot = state.player.offenseActionSequence;
+        boss.deadBellReprisalCueSequence = undefined;
+        playSfx("bossDeadBellSilence");
       }
+      return;
     }
     damagePlayerOnContact(boss);
     return;
   }
 
-  if (boss.skillCd <= 0) {
+  if (boss.skillCd <= 0 && boss.aiTimer <= 0) {
     startDeadBellCast(boss);
     return;
   }
@@ -111,47 +124,108 @@ function startDeadBellCast(boss: LiveBoss) {
   boss.skillEffectSpawned = false;
   boss.actionState = "cast";
   boss.actionTimer = 0;
-  boss.skillCd = boss.skillMode === "deadBellDuet"
-    ? DUET_COOLDOWN
-    : boss.skillMode === "deadBellCombo"
-      ? DEAD_BELL_CONFIG.comboCooldown
-      : Math.max(MIN_SKILL_COOLDOWN, DEAD_BELL_CONFIG.skillCooldown - boss.phase * SKILL_COOLDOWN_PHASE_REDUCTION);
+  boss.skillCd = deadBellSkillCooldown(boss);
   boss.vx = 0;
   boss.deadBellReprisalTimer = 0;
   boss.deadBellReprisalHit = false;
+  boss.deadBellReprisalCueSequence = undefined;
 
-  playSfx("bossCast", CAST_SFX_PITCH);
+  attemptDeadBellSupportSummon(boss);
+  playSfx("bossDeadBellCast");
 }
 
 function nextDeadBellSkill(boss: LiveBoss) {
-  if (boss.awakened && (boss.phase >= DUET_PHASE || Math.random() < DUET_RANDOM_CHANCE)) {
+  if (boss.deadBellPatternPhase !== boss.phase) {
+    boss.deadBellPatternPhase = boss.phase;
+    boss.deadBellPatternStep = 0;
+    boss.deadBellSupportStep = 0;
+  }
+
+  if (boss.awakened && boss.deadBellDuetPhase !== boss.phase) {
+    boss.deadBellDuetPhase = boss.phase;
     return "deadBellDuet";
   }
-  if (boss.phase >= COMBO_PHASE) return "deadBellCombo";
-  if (boss.phase >= DOUBLE_PHASE) return "deadBellDouble";
-  return "deadBellSingle";
+
+  const phaseKey = Math.min(
+    AWAKENED_FINAL_PHASE,
+    Math.max(FIRST_PHASE, boss.phase),
+  ) as keyof typeof BASE_PATTERN_SEQUENCES;
+  const sequence = boss.awakened && boss.phase >= AWAKENED_FINAL_PHASE
+    ? AWAKENED_PHASE_FOUR_SEQUENCE
+    : BASE_PATTERN_SEQUENCES[phaseKey];
+  const patternStep = boss.deadBellPatternStep ?? 0;
+  boss.deadBellPatternStep = patternStep + 1;
+  return sequence[patternStep % sequence.length];
 }
 
 function isDeadBellLongCast(skillMode: LiveBoss["skillMode"]) {
   return skillMode === "deadBellCombo" || skillMode === "deadBellDuet";
 }
 
+function deadBellSkillCooldown(boss: LiveBoss) {
+  if (boss.skillMode === "deadBellDuet") return DUET_COOLDOWN;
+  const standardCooldown = boss.skillMode === "deadBellCombo"
+    ? DEAD_BELL_CONFIG.comboCooldown
+    : Math.max(
+      DEAD_BELL_CONFIG.minimumSkillCooldown,
+      DEAD_BELL_CONFIG.skillCooldown - boss.phase * SKILL_COOLDOWN_PHASE_REDUCTION,
+    );
+  if (!boss.awakened) return standardCooldown;
+  return Math.max(
+    DEAD_BELL_CONFIG.awakenedMinimumSkillCooldown,
+    standardCooldown - DEAD_BELL_CONFIG.awakenedCooldownReduction,
+  );
+}
+
 function deadBellRecoveryFrames(boss: LiveBoss) {
   if (boss.skillMode === "deadBellDuet") {
-    return DEAD_BELL_CONFIG.recoveryFrames + DUET_REPRISAL_RECOVERY_BONUS;
+    return DEAD_BELL_CONFIG.reprisalWarningFrames
+      + DEAD_BELL_CONFIG.reprisalActiveFrames
+      + DEAD_BELL_CONFIG.counterFrames;
   }
   if (boss.skillMode === "deadBellCombo") return DEAD_BELL_CONFIG.recoveryFrames;
-  return Math.floor(DEAD_BELL_CONFIG.recoveryFrames * SHORT_RECOVERY_SCALE);
+  return DEAD_BELL_CONFIG.shortRecoveryFrames;
 }
 
 function updateDeadBellReprisal(boss: LiveBoss) {
   if (boss.skillMode !== "deadBellDuet" || (boss.deadBellReprisalTimer ?? 0) <= 0) return;
 
-  const reprisalActive = (boss.deadBellReprisalTimer ?? 0)
-    <= DEAD_BELL_CONFIG.reprisalActiveFrames;
-  if (reprisalActive && !boss.deadBellReprisalHit && isPlayerUsingOffense()) {
+  const reprisalTimer = boss.deadBellReprisalTimer ?? 0;
+  const reprisalActive = reprisalTimer <= DEAD_BELL_CONFIG.reprisalActiveFrames;
+  const activeBoundary = reprisalTimer === DEAD_BELL_CONFIG.reprisalActiveFrames;
+  if (!reprisalActive) {
+    boss.deadBellOffenseSequenceSnapshot = state.player.offenseActionSequence;
+  } else if (
+    activeBoundary
+    && boss.deadBellReprisalCueSequence !== state.player.offenseActionSequence
+  ) {
+    boss.deadBellReprisalCueSequence = state.player.offenseActionSequence;
+    playSfx("bossDeadBellReprisal");
+  }
+
+  const offenseSequence = state.player.offenseActionSequence;
+  const offenseStartedDuringActive = offenseSequence
+    > (boss.deadBellOffenseSequenceSnapshot ?? 0);
+  if (
+    reprisalActive
+    && !boss.deadBellReprisalHit
+    && offenseStartedDuringActive
+  ) {
+    if (boss.deadBellReprisalCueSequence !== offenseSequence) {
+      boss.deadBellReprisalCueSequence = offenseSequence;
+      playSfx("bossDeadBellReprisal");
+    }
+    if (state.player.invincible > 0) {
+      // Keep both clocks on this beat so startup invulnerability cannot erase a violation.
+      boss.recoveryTimer += 1;
+      return;
+    }
     boss.deadBellReprisalHit = true;
     boss.deadBellReprisalTimer = 0;
+    boss.recoveryTimer = Math.min(
+      boss.recoveryTimer,
+      DEAD_BELL_CONFIG.counterFrames + 1,
+    );
     const bossCenter = boss.x + boss.w / 2;
     const playerCenter = state.player.x + state.player.w / 2;
     hurtPlayer(
@@ -162,19 +236,13 @@ function updateDeadBellReprisal(boss: LiveBoss) {
       ),
       bossCenter - playerCenter,
     );
-    playSfx("bossPhaseShift", DUET_REPRISAL_SFX_PITCH);
     return;
   }
 
-  boss.deadBellReprisalTimer = Math.max(0, (boss.deadBellReprisalTimer ?? 0) - 1);
-}
-
-function isPlayerUsingOffense() {
-  const player = state.player;
-  return player.attackTimer > 0
-    || player.fallAttackTimer > 0
-    || player.skillTimer > 0
-    || player.ultimateCastTimer > 0;
+  boss.deadBellReprisalTimer = Math.max(0, reprisalTimer - 1);
+  if (reprisalActive && boss.deadBellReprisalTimer === 0) {
+    playSfx("bossDeadBellBreak");
+  }
 }
 
 function spawnDeadBellPattern(boss: LiveBoss) {
@@ -206,22 +274,36 @@ function spawnDeadBellPattern(boss: LiveBoss) {
 }
 
 function spawnDeadBellDuet(boss: LiveBoss) {
-  spawnDeadBellWave(boss, 0, DEAD_BELL_CONFIG.waveMaxRadius);
+  spawnDeadBellWave(boss, 0, DEAD_BELL_CONFIG.waveMaxRadius, "low");
   spawnDeadBellWave(
     boss,
     Math.floor(DEAD_BELL_CONFIG.delayedWaveFrames * DUET_WAVE_DELAY_SCALE),
     DEAD_BELL_CONFIG.waveMaxRadius + DOUBLE_WAVE_RADIUS_BONUS,
+    "high",
   );
-  spawnDeadBellWave(
-    boss,
-    DEAD_BELL_CONFIG.delayedWaveFrames + DUET_THIRD_WAVE_DELAY_BONUS,
-    DEAD_BELL_CONFIG.waveMaxRadius + DUET_WAVE_RADIUS_BONUS,
-  );
-  spawnDeadBellBlade(boss, DEAD_BELL_CONFIG.upperBladeY, DUET_UPPER_BLADE_DELAY);
-  spawnDeadBellBlade(boss, DEAD_BELL_CONFIG.lowerBladeY, DUET_LOWER_BLADE_DELAY);
+  if (boss.phase >= COMBO_PATTERN_PHASE) {
+    spawnDeadBellWave(
+      boss,
+      DEAD_BELL_CONFIG.delayedWaveFrames + DUET_THIRD_WAVE_DELAY_BONUS,
+      DEAD_BELL_CONFIG.waveMaxRadius + DUET_WAVE_RADIUS_BONUS,
+      "low",
+    );
+  }
+  if (boss.phase >= DOUBLE_PATTERN_PHASE) {
+    const primaryLane = playerBladeLane();
+    spawnDeadBellBlade(boss, primaryLane, DUET_UPPER_BLADE_DELAY);
+    if (boss.phase >= COMBO_PATTERN_PHASE) {
+      spawnDeadBellBlade(boss, oppositeBladeLane(primaryLane), DUET_LOWER_BLADE_DELAY);
+    }
+  }
 }
 
-export function spawnDeadBellWave(boss: LiveBoss, delay: number, maxRadius: number) {
+export function spawnDeadBellWave(
+  boss: LiveBoss,
+  delay: number,
+  maxRadius: number,
+  tone: DeadBellWaveTone = "low",
+) {
   state.deadBellWaves.push({
     x: boss.x + boss.w / 2,
     y: boss.y + boss.h / 2,
@@ -229,16 +311,21 @@ export function spawnDeadBellWave(boss: LiveBoss, delay: number, maxRadius: numb
     maxRadius,
     thickness: DEAD_BELL_CONFIG.waveThickness,
     warningFrames: DEAD_BELL_CONFIG.waveWarningFrames,
-    expandFrames: DEAD_BELL_CONFIG.waveExpandFrames,
+    expandFrames: tone === "high"
+      ? Math.floor(
+        DEAD_BELL_CONFIG.waveExpandFrames * DEAD_BELL_CONFIG.highToneExpandScale,
+      )
+      : DEAD_BELL_CONFIG.waveExpandFrames,
     delay,
     elapsed: 0,
     frame: 0,
+    tone,
+    awakened: boss.awakened,
     damage: bossAttackDamage(
       DEAD_BELL_CONFIG.damageBase + boss.phase * DEAD_BELL_CONFIG.damagePhase,
     ),
     hitPlayer: false,
   });
-  playSfx("bossWave");
 }
 
 export function playerBladeLane() {
@@ -247,6 +334,13 @@ export function playerBladeLane() {
     DEAD_BELL_CONFIG.upperBladeY,
     GROUND_Y - DEAD_BELL_CONFIG.bladeHitH * PLAYER_BLADE_BOTTOM_SCALE,
   );
+}
+
+function oppositeBladeLane(primaryLane: number) {
+  const laneMidpoint = (DEAD_BELL_CONFIG.upperBladeY + DEAD_BELL_CONFIG.lowerBladeY) / 2;
+  return primaryLane <= laneMidpoint
+    ? DEAD_BELL_CONFIG.lowerBladeY
+    : DEAD_BELL_CONFIG.upperBladeY;
 }
 
 export function spawnDeadBellBlade(boss: LiveBoss, centerY: number, delay: number) {
@@ -259,8 +353,8 @@ export function spawnDeadBellBlade(boss: LiveBoss, centerY: number, delay: numbe
     h,
     vx: boss.castFacing * DEAD_BELL_CONFIG.bladeSpeed,
     facing: boss.castFacing,
-    delay,
-    warningFrames: delay,
+    delay: Math.max(delay, DEAD_BELL_CONFIG.bladeWarningFrames),
+    warningFrames: DEAD_BELL_CONFIG.bladeWarningFrames,
     elapsed: 0,
     frame: 0,
     life: DEAD_BELL_CONFIG.bladeLife,
@@ -270,5 +364,25 @@ export function spawnDeadBellBlade(boss: LiveBoss, centerY: number, delay: numbe
         + BLADE_DAMAGE_BONUS,
     ),
   });
-  playSfx("bossBlade", delay > 0 ? DELAYED_BLADE_SFX_PITCH : 1);
+}
+
+function attemptDeadBellSupportSummon(boss: LiveBoss) {
+  if (boss.phase < COMBO_PATTERN_PHASE || boss.skillMode !== "deadBellCombo") return;
+
+  // Each combo owns one support slot; a rejected slot waits for the next full cycle.
+  const supportStep = boss.deadBellSupportStep ?? 0;
+  boss.deadBellSupportStep = supportStep + 1;
+  if (!canAutoSpawnEntities()) return;
+
+  const usesAwakenedSpecialist = boss.awakened
+    && supportStep % AWAKENED_SUPPORT_SPECIALIST_INTERVAL === 0;
+  const spawned = usesAwakenedSpecialist
+    ? spawnEnemyById(
+      boss.phase === AWAKENED_FINAL_PHASE ? "warden" : "binder",
+      "boss",
+      "random_edge",
+      { growthStage: "awakened" },
+    )
+    : spawnBossSummonEnemy();
+  if (spawned) playSfx("bossSummon");
 }

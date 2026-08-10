@@ -1,5 +1,8 @@
 import {
   BOSS_DEFEAT_SPLIT_VISUAL,
+  DEAD_BELL_AWAKENED_ECHO_BELL_SHEET,
+  DEAD_BELL_CONFIG,
+  DEAD_BELL_WAVE_SHEET,
   MIST_BONE_DEFEAT_VISUAL,
 } from "../../constants";
 import { state } from "../../game/state";
@@ -12,10 +15,28 @@ import type {
   MistBoneDefeatFragmentState,
 } from "../../types/game-state";
 import { BOSS_ARCHETYPE_IDS } from "./registry";
+import { deadBellWaveDrawSize } from "./deadBellEffects";
 import { resolveBossVisualFrame } from "./renderBoss";
 import type { LiveBoss } from "./types";
 
 type RandomSource = () => number;
+
+const DEAD_BELL_DEFEAT_MAX_WAVES = 3;
+const DEAD_BELL_DEFEAT_FALLBACK_RADIUS = 86;
+const DEAD_BELL_DEFEAT_FALLBACK_FRAME = 2;
+const DEAD_BELL_DEFEAT_WAVE_SHRINK = 0.18;
+const DEAD_BELL_DEFEAT_WAVE_ALPHA = 0.78;
+const DEAD_BELL_DEFEAT_BELL_OFFSET_X = 48;
+const DEAD_BELL_DEFEAT_BELL_OFFSET_Y_RATIO = 0.38;
+const DEAD_BELL_DEFEAT_BELL_SEPARATION = 28;
+const DEAD_BELL_DEFEAT_BELL_DROP = 38;
+const DEAD_BELL_DEFEAT_BELL_TILT = 0.42;
+const DEAD_BELL_DEFEAT_HIGH_TONE_EFFECT = {
+  filter: "saturate(1.15) contrast(1.12) drop-shadow(0 0 4px rgba(176, 42, 25, 0.9))",
+} as const;
+const DEAD_BELL_DEFEAT_AWAKENED_LOW_TONE_EFFECT = {
+  filter: "contrast(1.12) brightness(0.9) drop-shadow(0 0 4px rgba(132, 34, 23, 0.82))",
+} as const;
 
 export function spawnBossDefeatSplitEffect(
   boss: LiveBoss,
@@ -34,6 +55,16 @@ export function spawnBossDefeatSplitEffect(
       kind: "mistBoneScatter",
       fragments: createMistBoneFragments(random),
       fogWisps: createMistBoneFogWisps(pose, random),
+    };
+    return;
+  }
+
+  if (boss.id === BOSS_ARCHETYPE_IDS.deadBell) {
+    state.bossDefeatSplitEffect = {
+      ...commonState,
+      kind: "deadBellSilence",
+      cutAngle: random() * Math.PI,
+      frozenWaves: captureDeadBellDefeatWaves(boss),
     };
     return;
   }
@@ -62,12 +93,17 @@ export function drawBossDefeatSplitEffect() {
     return;
   }
 
+  if (effect.kind === "deadBellSilence") {
+    drawDeadBellFrozenWaves(effect);
+    drawDeadBellFragments(effect);
+  }
+
   drawSplitHalf(effect, -1);
   drawSplitHalf(effect, 1);
 }
 
 function drawSplitHalf(effect: BossDefeatSplitEffectState, side: -1 | 1) {
-  if (!ctx || effect.kind !== "split") return;
+  if (!ctx || (effect.kind !== "split" && effect.kind !== "deadBellSilence")) return;
 
   const { pose } = effect;
   const progress = 1 - effect.life / effect.maxLife;
@@ -107,6 +143,97 @@ function drawSplitHalf(effect: BossDefeatSplitEffectState, side: -1 | 1) {
     pose.facing,
   );
   ctx.restore();
+}
+
+function captureDeadBellDefeatWaves(boss: LiveBoss) {
+  const activeWaves = state.deadBellWaves
+    .filter((wave) => wave.delay <= 0 && wave.elapsed > wave.warningFrames)
+    .slice(-DEAD_BELL_DEFEAT_MAX_WAVES)
+    .map(({ x, y, radius, frame, tone, awakened }) => ({
+      x,
+      y,
+      radius,
+      frame,
+      tone,
+      awakened,
+    }));
+  if (activeWaves.length > 0) return activeWaves;
+
+  return [{
+    x: boss.x + boss.w / 2,
+    y: boss.y + boss.h / 2,
+    radius: DEAD_BELL_DEFEAT_FALLBACK_RADIUS,
+    frame: DEAD_BELL_DEFEAT_FALLBACK_FRAME,
+    tone: boss.awakened ? "high" as const : "low" as const,
+    awakened: boss.awakened,
+  }];
+}
+
+function drawDeadBellFrozenWaves(
+  effect: Extract<BossDefeatSplitEffectState, { kind: "deadBellSilence" }>,
+) {
+  if (!ctx) return;
+  const progress = 1 - effect.life / effect.maxLife;
+  const radiusScale = 1 - progress * DEAD_BELL_DEFEAT_WAVE_SHRINK;
+  ctx.save();
+  ctx.globalAlpha *= DEAD_BELL_DEFEAT_WAVE_ALPHA * (1 - progress) ** 2;
+  for (const wave of effect.frozenWaves) {
+    const radius = wave.radius * radiusScale;
+    const { w, h } = deadBellWaveDrawSize(wave.frame, radius);
+    drawSheetFrame(
+      DEAD_BELL_WAVE_SHEET,
+      wave.frame,
+      wave.x - w / 2,
+      wave.y - h / 2,
+      w,
+      h,
+      1,
+      wave.tone === "high"
+        ? DEAD_BELL_DEFEAT_HIGH_TONE_EFFECT
+        : wave.awakened
+          ? DEAD_BELL_DEFEAT_AWAKENED_LOW_TONE_EFFECT
+          : undefined,
+    );
+  }
+  ctx.restore();
+}
+
+function drawDeadBellFragments(
+  effect: Extract<BossDefeatSplitEffectState, { kind: "deadBellSilence" }>,
+) {
+  if (!ctx) return;
+  const progress = 1 - effect.life / effect.maxLife;
+  const centerX = effect.pose.x + effect.pose.w / 2
+    + effect.pose.facing * DEAD_BELL_DEFEAT_BELL_OFFSET_X;
+  const centerY = effect.pose.y + effect.pose.h * DEAD_BELL_DEFEAT_BELL_OFFSET_Y_RATIO;
+  for (const side of [-1, 1] as const) {
+    ctx.save();
+    ctx.globalAlpha = splitAlpha(progress);
+    ctx.translate(
+      centerX + side * easeOut(progress) * DEAD_BELL_DEFEAT_BELL_SEPARATION,
+      centerY + progress * progress * DEAD_BELL_DEFEAT_BELL_DROP,
+    );
+    ctx.rotate(side * progress * DEAD_BELL_DEFEAT_BELL_TILT);
+    ctx.beginPath();
+    ctx.rect(
+      side < 0 ? -DEAD_BELL_CONFIG.awakenedEchoDrawW / 2 : 0,
+      -DEAD_BELL_CONFIG.awakenedEchoDrawH / 2,
+      DEAD_BELL_CONFIG.awakenedEchoDrawW / 2,
+      DEAD_BELL_CONFIG.awakenedEchoDrawH,
+    );
+    ctx.clip();
+    drawSheetFrame(
+      DEAD_BELL_AWAKENED_ECHO_BELL_SHEET,
+      0,
+      -DEAD_BELL_CONFIG.awakenedEchoDrawW / 2,
+      -DEAD_BELL_CONFIG.awakenedEchoDrawH / 2,
+      DEAD_BELL_CONFIG.awakenedEchoDrawW,
+      DEAD_BELL_CONFIG.awakenedEchoDrawH,
+      effect.pose.facing,
+      DEAD_BELL_DEFEAT_HIGH_TONE_EFFECT,
+    );
+    ctx.restore();
+  }
 }
 
 function createMistBoneFragments(random: RandomSource): MistBoneDefeatFragmentState[] {

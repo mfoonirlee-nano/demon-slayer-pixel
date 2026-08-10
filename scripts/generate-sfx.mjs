@@ -16,13 +16,14 @@ const PEAK_LIMIT_RATIO = 0.89;
 const PEAK_LIMIT = Math.floor(PCM_MAX * PEAK_LIMIT_RATIO);
 const TWO_PI = Math.PI * 2;
 const BASE_SEED = 0x4d4f4f4e;
-const EXPECTED_SOUND_COUNT = 59;
+const EXPECTED_SOUND_COUNT = 67;
 const START_FADE_SECONDS = 0.001;
 const END_FADE_SECONDS = 0.012;
 const MIN_PEAK_SPREAD_DB = 4;
 const CAST_RELEASE_RMS_ADVANTAGE_DB = 2;
 const IMPACT_RMS_ADVANTAGE_DB = 3;
 const PLAYER_HIT_RMS_ADVANTAGE_DB = 1;
+const DEAD_BELL_REPRISAL_RMS_ADVANTAGE_DB = 4;
 const OUTPUT_DIRECTORY = path.join(process.cwd(), "assets/audio/sfx");
 
 const rise = (power) => (progress) => Math.pow(progress, power);
@@ -484,6 +485,7 @@ function validateMixBalance(metrics) {
   validateRmsAdvantage(metrics, "playerFallAttackImpact", "playerFallAttackStart", IMPACT_RMS_ADVANTAGE_DB);
   validateRmsAdvantage(metrics, "playerSkillArmorBreakImpact", "playerSkillArmorBreak", CAST_RELEASE_RMS_ADVANTAGE_DB);
   validateRmsAdvantage(metrics, "playerUltimateImpact", "playerUltimateCast", CAST_RELEASE_RMS_ADVANTAGE_DB);
+  validateRmsAdvantage(metrics, "bossDeadBellReprisal", "bossDeadBellSilence", DEAD_BELL_REPRISAL_RMS_ADVANTAGE_DB);
 }
 
 function validateRmsAdvantage(metrics, louderName, quieterName, minimumDb) {

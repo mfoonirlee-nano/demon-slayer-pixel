@@ -44,6 +44,22 @@ export const DEAD_BELL_CAST_SHEET: SpriteSheet = {
   image: null,
 };
 
+export const DEAD_BELL_RECOVER_SHEET: SpriteSheet = {
+  src: "assets/sprites/boss/dead_bell/dead_bell_recover.png",
+  frameW: 400,
+  frameH: 400,
+  count: 3,
+  image: null,
+};
+
+export const DEAD_BELL_AWAKENED_ECHO_BELL_SHEET: SpriteSheet = {
+  src: "assets/sprites/boss/dead_bell/dead_bell_awakened_echo_bell.png",
+  frameW: 180,
+  frameH: 220,
+  count: 4,
+  image: null,
+};
+
 export const DEAD_BELL_WAVE_SHEET: SpriteSheet = {
   src: "assets/sprites/boss/dead_bell/dead_bell_wave.png",
   frameW: 400,
@@ -51,6 +67,15 @@ export const DEAD_BELL_WAVE_SHEET: SpriteSheet = {
   count: 6,
   image: null,
 };
+
+export const DEAD_BELL_WAVE_VISIBLE_BOUNDS = [
+  { w: 177, h: 88 },
+  { w: 235, h: 120 },
+  { w: 285, h: 160 },
+  { w: 329, h: 204 },
+  { w: 357, h: 246 },
+  { w: 371, h: 274 },
+] as const;
 
 export const DEAD_BELL_BLADE_SHEET: SpriteSheet = {
   src: "assets/sprites/boss/dead_bell/dead_bell_blade.png",
@@ -326,10 +351,16 @@ export const DEAD_BELL_CONFIG = {
   castFrameDuration: 9,
   drawW: 228,
   drawH: 228,
-  drawBottomPadding: 26,
+  drawBottomPadding: 0,
+  awakenedEchoFrameDuration: 9,
+  awakenedEchoDrawW: 106,
+  awakenedEchoDrawH: 130,
+  awakenedEchoHorizontalOffset: 68,
+  awakenedEchoBottomOffset: 70,
   waveDrawYOffset: 70,
   waveWarningFrames: 24,
   waveExpandFrames: 76,
+  highToneExpandScale: 0.88,
   waveFrameDuration: 10,
   waveStartRadius: 54,
   waveMaxRadius: 390,
@@ -346,14 +377,19 @@ export const DEAD_BELL_CONFIG = {
   bladeYOffset: 58,
   upperBladeY: 330,
   lowerBladeY: 424,
-  reprisalWarningFrames: 18,
+  reprisalWarningFrames: 30,
   reprisalActiveFrames: 42,
+  counterFrames: 54,
   damageBase: 11,
   damagePhase: 3,
   skillCooldown: 238,
   comboCooldown: 288,
+  minimumSkillCooldown: 160,
+  awakenedMinimumSkillCooldown: 148,
+  awakenedCooldownReduction: 12,
   initialCooldown: 120,
   recoveryFrames: 46,
+  shortRecoveryFrames: 26,
 } as const;
 
 export const LANTERN_EMBER_CONFIG = {

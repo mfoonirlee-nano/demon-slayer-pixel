@@ -40,6 +40,9 @@ export function defeatBoss() {
   if (defeatedBossId === BOSS_ARCHETYPE_IDS.mistBone) {
     state.mistBoneFogs.length = 0;
     state.mistBoneSpikes.length = 0;
+  } else if (defeatedBossId === BOSS_ARCHETYPE_IDS.deadBell) {
+    state.deadBellWaves.length = 0;
+    state.deadBellBlades.length = 0;
   }
   state.player.score += PLAYER_COMBAT.bossKillScore;
   recordBossCoverKill();
@@ -56,7 +59,9 @@ export function defeatBoss() {
   playSfx(
     defeatedBossId === BOSS_ARCHETYPE_IDS.mistBone
       ? "bossMistBoneDeath"
-      : "bossKill",
+      : defeatedBossId === BOSS_ARCHETYPE_IDS.deadBell
+        ? "bossDeadBellDeath"
+        : "bossKill",
   );
   state.bossKills += 1;
   state.boss = null;

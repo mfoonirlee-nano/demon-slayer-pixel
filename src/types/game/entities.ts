@@ -88,6 +88,7 @@ export type PlayerState = {
   attackTimer: number;
   attackDuration: number;
   attackFromRun: boolean;
+  offenseActionSequence: number;
   fallAttackTimer: number;
   fallAttackRecoveryTimer: number;
   score: number;
@@ -343,8 +344,14 @@ export type BossState = {
   mistBoneChaseFacing?: number;
   lanternPatternStep?: number;
   lanternPatternPhase?: number;
+  deadBellPatternStep?: number;
+  deadBellPatternPhase?: number;
+  deadBellDuetPhase?: number;
+  deadBellSupportStep?: number;
   deadBellReprisalTimer?: number;
   deadBellReprisalHit?: boolean;
+  deadBellOffenseSequenceSnapshot?: number;
+  deadBellReprisalCueSequence?: number;
   armorBreakTimer?: number;
   armorBreakMultiplier?: number;
 } | null;

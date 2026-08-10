@@ -3,6 +3,8 @@ import { afterEach, describe, expect, it } from "vitest";
 import {
   ACT_LANDMARK_SPRITES,
   ACT_OCCLUDER_SPRITES,
+  DEAD_BELL_AWAKENED_ECHO_BELL_SHEET,
+  DEAD_BELL_RECOVER_SHEET,
   FALLING_LEAF_SHEET,
   MIRROR_DREAM_AWAKENED_CRACKS_SHEET,
   MIRROR_DREAM_CAST_AWAKENED_CRACKS_SHEET,
@@ -117,6 +119,18 @@ describe("sprite manifest", () => {
     ];
 
     for (const action of mistBoneActions) {
+      expect(loadedSources.filter((src) => src === action.src)).toHaveLength(1);
+    }
+  });
+
+  it("preloads Dead Bell's recovery and awakened echo exactly once", () => {
+    const loadedSources = spriteImageLoadTargets().map((target) => target.src);
+    const deadBellActions = [
+      DEAD_BELL_RECOVER_SHEET,
+      DEAD_BELL_AWAKENED_ECHO_BELL_SHEET,
+    ];
+
+    for (const action of deadBellActions) {
       expect(loadedSources.filter((src) => src === action.src)).toHaveLength(1);
     }
   });

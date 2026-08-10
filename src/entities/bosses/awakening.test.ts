@@ -197,6 +197,7 @@ describe("boss awakening behavior", () => {
     expect(state.player.hp).toBe(hpBefore);
     expect(boss.deadBellReprisalHit).toBe(false);
 
+    state.player.offenseActionSequence += 1;
     updateDeadBellBoss(boss);
     expect(state.player.hp).toBeLessThan(hpBefore);
     expect(boss.deadBellReprisalHit).toBe(true);

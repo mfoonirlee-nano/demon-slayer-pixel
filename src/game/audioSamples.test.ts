@@ -65,6 +65,14 @@ const EXPECTED_PLAYER_SFX = [
   "playerUltimateImpact",
 ] as const;
 const EXPECTED_BOSS_SFX = [
+  "bossDeadBellCast",
+  "bossDeadBellLowToll",
+  "bossDeadBellHighToll",
+  "bossDeadBellBlade",
+  "bossDeadBellSilence",
+  "bossDeadBellReprisal",
+  "bossDeadBellBreak",
+  "bossDeadBellDeath",
   "bossMistBoneCast",
   "bossMistBoneDart",
   "bossMistBoneWarning",
@@ -153,7 +161,7 @@ describe("player audio samples", () => {
 });
 
 describe("boss audio samples", () => {
-  it("maps the generic defeat and Mist Bone action sounds to WAV assets", () => {
+  it("maps the generic defeat, Dead Bell, and Mist Bone sounds to WAV assets", () => {
     expect(Object.keys(BOSS_SFX_SAMPLE_URLS)).toEqual(EXPECTED_BOSS_SFX);
     for (const url of Object.values(BOSS_SFX_SAMPLE_URLS)) {
       expect(url).toMatch(/\.wav$/);

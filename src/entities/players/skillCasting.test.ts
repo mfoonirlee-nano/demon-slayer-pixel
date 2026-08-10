@@ -54,6 +54,26 @@ describe("player skill casting", () => {
     expect(state.player.ultimateEnergy).toBe(0);
   });
 
+  it("publishes monotonic offense edges only when skill and ultimate casts start", () => {
+    resetState();
+    state.player.skillEnergy = state.player.skillEnergyMax;
+
+    castSelectedSkill();
+    expect(state.player.offenseActionSequence).toBe(1);
+
+    castSelectedSkill();
+    expect(state.player.offenseActionSequence).toBe(1);
+
+    state.player.skillTimer = 0;
+    state.player.ultimateLevel = 1;
+    state.player.ultimateEnergy = state.player.ultimateEnergyMax;
+    castUltimateSkill();
+    expect(state.player.offenseActionSequence).toBe(2);
+
+    castUltimateSkill();
+    expect(state.player.offenseActionSequence).toBe(2);
+  });
+
   it("keeps the player position frozen while the ultimate cast animation plays", () => {
     resetState();
     state.player.ultimateLevel = 1;

@@ -56,6 +56,7 @@ export function createInitialPlayerState(): PlayerState {
     attackTimer: 0,
     attackDuration: BASIC_ATTACK.frames,
     attackFromRun: false,
+    offenseActionSequence: 0,
     fallAttackTimer: 0,
     fallAttackRecoveryTimer: 0,
     score: 0,

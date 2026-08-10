@@ -169,7 +169,12 @@ const actors = [
   boss("dead-bell", "血月眷属 · 枯铃", "dead-bell", [
     sheet("move", "assets/sprites/boss/dead_bell/dead_bell.png", 350, 419, 4, { primary: true }),
     sheet("cast", "assets/sprites/boss/dead_bell/dead_bell_cast.png", 400, 400, 6),
-  ], ["assets/sprites/boss/dead_bell/dead_bell_wave.png", "assets/sprites/boss/dead_bell/dead_bell_blade.png"]),
+    sheet("recover", "assets/sprites/boss/dead_bell/dead_bell_recover.png", 400, 400, 3),
+  ], [
+    "assets/sprites/boss/dead_bell/dead_bell_awakened_echo_bell.png",
+    "assets/sprites/boss/dead_bell/dead_bell_wave.png",
+    "assets/sprites/boss/dead_bell/dead_bell_blade.png",
+  ]),
   boss("blood-moon-many-faces", "终幕之妖 · 万相血月", "blood-moon-many-faces", [
     sheet("move", "assets/sprites/boss/blood-moon-many-faces/blood_moon.png", 350, 419, 4, { primary: true }),
     sheet("phaseShift", "assets/sprites/boss/blood-moon-many-faces/blood_moon_phase_shift.png", 400, 400, 6),

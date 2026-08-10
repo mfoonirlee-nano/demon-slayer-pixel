@@ -9,7 +9,9 @@ import {
   BLOOD_MOON_SIXFOLD_CAST_SHEET,
   BLOOD_MOON_SPIDER_MIST_CAST_SHEET,
   BOSS_SKILL1_CONFIG,
+  DEAD_BELL_AWAKENED_ECHO_BELL_SHEET,
   DEAD_BELL_CONFIG,
+  DEAD_BELL_RECOVER_SHEET,
   FANG_GALE_BITE_SHEET,
   FANG_GALE_CONFIG,
   FANG_GALE_FINAL_BITE_SHEET,
@@ -66,6 +68,12 @@ const AWAKENED_MIST_BONE_EFFECT: SpriteFrameEffect = {
 const AWAKENED_MIRROR_DREAM_EFFECT: SpriteFrameEffect = {
   filter: "saturate(0.92) contrast(1.08) brightness(1.04) drop-shadow(0 0 4px rgba(174, 225, 246, 0.82))",
 };
+const AWAKENED_DEAD_BELL_EFFECT: SpriteFrameEffect = {
+  filter: "saturate(0.92) contrast(1.12) brightness(0.98) drop-shadow(0 0 5px rgba(154, 38, 26, 0.88))",
+};
+const AWAKENED_DEAD_BELL_ECHO_EFFECT: SpriteFrameEffect = {
+  filter: "contrast(1.08) drop-shadow(0 0 5px rgba(190, 47, 28, 0.86))",
+};
 const AWAKENED_MIRROR_CRACK_ALPHA = 0.58;
 const MIRROR_DREAM_DASH_POSE_FRAME = 1;
 
@@ -76,12 +84,16 @@ export function drawBoss() {
   const pose = resolveBossVisualFrame(boss, state.elapsed);
   const isAwakenedMistBone = boss.id === BOSS_ARCHETYPE_IDS.mistBone && boss.awakened;
   const isAwakenedMirrorDream = boss.id === BOSS_ARCHETYPE_IDS.mirrorDream && boss.awakened;
+  const isAwakenedDeadBell = boss.id === BOSS_ARCHETYPE_IDS.deadBell && boss.awakened;
   if (isAwakenedMistBone) drawAwakenedMistBoneAura(boss);
+  if (isAwakenedDeadBell) drawAwakenedDeadBellEcho(boss);
   const effect = isAwakenedMistBone
     ? AWAKENED_MIST_BONE_EFFECT
     : isAwakenedMirrorDream
       ? AWAKENED_MIRROR_DREAM_EFFECT
-      : undefined;
+      : isAwakenedDeadBell
+        ? AWAKENED_DEAD_BELL_EFFECT
+        : undefined;
   drawSheetFrame(
     pose.sheet,
     pose.frame,
@@ -93,6 +105,31 @@ export function drawBoss() {
     effect,
   );
   if (isAwakenedMirrorDream) drawAwakenedMirrorDreamCracks(pose);
+}
+
+function drawAwakenedDeadBellEcho(boss: LiveBoss) {
+  const centerX = boss.x + boss.w / 2;
+  const feetY = boss.y + boss.h;
+  const frame = frameIndex(
+    DEAD_BELL_AWAKENED_ECHO_BELL_SHEET.count,
+    DEAD_BELL_CONFIG.awakenedEchoFrameDuration,
+    state.elapsed,
+    boss.animSeed,
+  );
+  drawSheetFrame(
+    DEAD_BELL_AWAKENED_ECHO_BELL_SHEET,
+    frame,
+    centerX
+      - boss.facing * DEAD_BELL_CONFIG.awakenedEchoHorizontalOffset
+      - DEAD_BELL_CONFIG.awakenedEchoDrawW / 2,
+    feetY
+      - DEAD_BELL_CONFIG.awakenedEchoBottomOffset
+      - DEAD_BELL_CONFIG.awakenedEchoDrawH,
+    DEAD_BELL_CONFIG.awakenedEchoDrawW,
+    DEAD_BELL_CONFIG.awakenedEchoDrawH,
+    boss.facing,
+    AWAKENED_DEAD_BELL_ECHO_EFFECT,
+  );
 }
 
 function drawAwakenedMirrorDreamCracks(pose: BossVisualFrameState) {
@@ -310,6 +347,25 @@ export function resolveBossVisualFrame(
     );
   }
 
+  if (boss.id === BOSS_ARCHETYPE_IDS.deadBell && boss.recoveryTimer > 0) {
+    const recoveryDuration = deadBellRecoveryVisualDuration(boss);
+    const elapsed = recoveryDuration - Math.min(recoveryDuration, boss.recoveryTimer);
+    const frame = proportionalFrame(
+      DEAD_BELL_RECOVER_SHEET.count,
+      elapsed,
+      recoveryDuration,
+    );
+    return visualFrame(
+      DEAD_BELL_RECOVER_SHEET,
+      frame,
+      centerX - archetype.castDrawW / 2,
+      feetY - archetype.castDrawH + archetype.castBottomPadding,
+      archetype.castDrawW,
+      archetype.castDrawH,
+      boss.facing,
+    );
+  }
+
   if (boss.id === BOSS_ARCHETYPE_IDS.spiderString && boss.actionState === "attack") {
     const frame = Math.min(
       SPIDER_STRING_ATTACK_SHEET.count - 1,
@@ -469,6 +525,12 @@ function proportionalFrame(frameCount: number, elapsed: number, duration: number
     frameCount - 1,
     Math.floor(Math.min(elapsed, duration - 1) * frameCount / duration),
   );
+}
+
+function deadBellRecoveryVisualDuration(boss: LiveBoss) {
+  if (boss.skillMode === "deadBellDuet") return DEAD_BELL_CONFIG.counterFrames;
+  if (boss.skillMode === "deadBellCombo") return DEAD_BELL_CONFIG.recoveryFrames;
+  return DEAD_BELL_CONFIG.shortRecoveryFrames;
 }
 
 function bossCastSheet(boss: LiveBoss) {

@@ -45,6 +45,15 @@ export type MistBoneDefeatFogWispState = {
   phase: number;
 };
 
+export type DeadBellDefeatWaveState = {
+  x: number;
+  y: number;
+  radius: number;
+  frame: number;
+  tone: DeadBellWaveTone;
+  awakened: boolean;
+};
+
 export type BossDefeatSplitEffectState = BossDefeatEffectBaseState & (
   | {
     kind: "split";
@@ -54,6 +63,11 @@ export type BossDefeatSplitEffectState = BossDefeatEffectBaseState & (
     kind: "mistBoneScatter";
     fragments: MistBoneDefeatFragmentState[];
     fogWisps: MistBoneDefeatFogWispState[];
+  }
+  | {
+    kind: "deadBellSilence";
+    cutAngle: number;
+    frozenWaves: DeadBellDefeatWaveState[];
   }
 );
 
@@ -99,6 +113,8 @@ export type SpiderStringPillarState = {
   hitPlayer: boolean;
 };
 
+export type DeadBellWaveTone = "low" | "high";
+
 export type DeadBellWaveState = {
   x: number;
   y: number;
@@ -110,6 +126,8 @@ export type DeadBellWaveState = {
   delay: number;
   elapsed: number;
   frame: number;
+  tone: DeadBellWaveTone;
+  awakened: boolean;
   damage: number;
   hitPlayer: boolean;
 };

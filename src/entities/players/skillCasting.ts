@@ -120,6 +120,7 @@ export function castSelectedSkill() {
     syncSkillCharges();
   }
   p.skillFlash = 0;
+  p.offenseActionSequence += 1;
   p.skillTimer = playerSkillCastFrames(skill);
   p.skillEffectSpawned = !(
     skill.id === SKILL_IDS.lineProjectile
@@ -167,6 +168,7 @@ export function castUltimateSkill() {
   if (p.ultimateEnergy < p.ultimateEnergyMax) return;
 
   p.ultimateEnergy = 0;
+  p.offenseActionSequence += 1;
   p.attackTimer = 0;
   state.huntBladeReachEffects.length = 0;
   p.ultimateEffectSpawned = false;
