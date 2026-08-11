@@ -74,6 +74,5 @@ export const MIST_BONE_DEFEAT_VISUAL = {
   fogVerticalDrift: 0.34,
   fogSway: 5,
   fogSwayRate: 0.08,
-  fogColor: "190,211,216",
   fogAlpha: 0.38,
 } as const;

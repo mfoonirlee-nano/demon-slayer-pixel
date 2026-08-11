@@ -1,11 +1,20 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { GROUND_Y, MIST_BONE_CONFIG, MIST_BONE_SPIKES_SHEET } from "../../constants";
+import {
+  GROUND_Y,
+  MIST_BONE_CONFIG,
+  MIST_BONE_FOG_ROLL_SHEET,
+  MIST_BONE_FOG_SHEETS,
+  MIST_BONE_FOG_VEIL_SHEET,
+  MIST_BONE_FOG_WISP_SHEET,
+  MIST_BONE_SPIKES_SHEET,
+} from "../../constants";
 import { playSfx } from "../../game/audio";
 import { resetState, state } from "../../game/state";
 import { setCanvas } from "../../rendering/context";
 import { drawMistBoneEffects, updateMistBoneEffects } from "./mistBoneEffects";
 
 const originalSpikeImage = MIST_BONE_SPIKES_SHEET.image;
+const originalFogImages = MIST_BONE_FOG_SHEETS.map((sheet) => sheet.image);
 
 vi.mock("../../game/audio", () => ({ playSfx: vi.fn() }));
 
@@ -14,13 +23,18 @@ describe("mist bone effects", () => {
     resetState();
     setCanvas(null);
     MIST_BONE_SPIKES_SHEET.image = originalSpikeImage;
+    MIST_BONE_FOG_SHEETS.forEach((sheet, index) => {
+      sheet.image = originalFogImages[index];
+    });
     vi.mocked(playSfx).mockClear();
   });
 
-  it("draws burial fog before the spike warnings that remain readable above it", () => {
-    const drawOrder: string[] = [];
+  it("layers three authored burial-fog sequences before readable spike warnings", () => {
+    const drawOrder: CanvasImageSource[] = [];
     const context = createContext(drawOrder);
-    MIST_BONE_SPIKES_SHEET.image = {} as HTMLImageElement;
+    const spikeImage = {} as HTMLImageElement;
+    const fogImages = setFogImages();
+    MIST_BONE_SPIKES_SHEET.image = spikeImage;
     setCanvas({ getContext: () => context } as unknown as HTMLCanvasElement);
     state.mistBoneFogs.push({
       kind: "burial",
@@ -48,8 +62,14 @@ describe("mist bone effects", () => {
 
     drawMistBoneEffects();
 
-    expect(context.ellipse).toHaveBeenCalled();
-    expect(drawOrder.indexOf("fog")).toBeLessThan(drawOrder.indexOf("spike"));
+    expect(context.ellipse).not.toHaveBeenCalled();
+    expect(context.fill).not.toHaveBeenCalled();
+    const firstSpikeDraw = drawOrder.indexOf(spikeImage);
+    expect(firstSpikeDraw).toBeGreaterThan(-1);
+    for (const fogImage of fogImages) {
+      expect(drawOrder).toContain(fogImage);
+      expect(drawOrder.lastIndexOf(fogImage)).toBeLessThan(firstSpikeDraw);
+    }
   });
 
   it("expires a thin fog field after its configured lifetime", () => {
@@ -164,12 +184,24 @@ describe("mist bone effects", () => {
   });
 });
 
-function createContext(drawOrder: string[]) {
+function setFogImages() {
+  const fogImages = [
+    {} as HTMLImageElement,
+    {} as HTMLImageElement,
+    {} as HTMLImageElement,
+  ] as const;
+  MIST_BONE_FOG_VEIL_SHEET.image = fogImages[0];
+  MIST_BONE_FOG_ROLL_SHEET.image = fogImages[1];
+  MIST_BONE_FOG_WISP_SHEET.image = fogImages[2];
+  return fogImages;
+}
+
+function createContext(drawOrder: CanvasImageSource[]) {
   return {
     beginPath: vi.fn(),
-    drawImage: vi.fn(() => drawOrder.push("spike")),
+    drawImage: vi.fn((image: CanvasImageSource) => drawOrder.push(image)),
     ellipse: vi.fn(),
-    fill: vi.fn(() => drawOrder.push("fog")),
+    fill: vi.fn(),
     fillStyle: "",
     filter: "none",
     globalAlpha: 1,
@@ -183,5 +215,6 @@ function createContext(drawOrder: string[]) {
   } as unknown as CanvasRenderingContext2D & {
     drawImage: ReturnType<typeof vi.fn>;
     ellipse: ReturnType<typeof vi.fn>;
+    fill: ReturnType<typeof vi.fn>;
   };
 }

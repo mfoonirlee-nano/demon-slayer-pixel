@@ -17,6 +17,7 @@ import type {
 } from "../../types/game-state";
 import { BOSS_ARCHETYPE_IDS, bossArchetypeForId } from "./registry";
 import { deadBellWaveDrawSize } from "./deadBellEffects";
+import { drawMistBoneFogSprite } from "./mistBoneFogVisuals";
 import { resolveBossVisualFrame } from "./renderBoss";
 import type { LiveBoss } from "./types";
 
@@ -32,6 +33,8 @@ const DEAD_BELL_DEFEAT_BELL_OFFSET_Y_RATIO = 0.38;
 const DEAD_BELL_DEFEAT_BELL_SEPARATION = 28;
 const DEAD_BELL_DEFEAT_BELL_DROP = 38;
 const DEAD_BELL_DEFEAT_BELL_TILT = 0.42;
+const MIST_BONE_DEFEAT_FOG_SPRITE_SCALE = 4;
+const MIST_BONE_DEFEAT_FOG_PHASE_FRAMES_PER_RADIAN = 9;
 const DEAD_BELL_DEFEAT_HIGH_TONE_EFFECT = {
   filter: "saturate(1.15) contrast(1.12) drop-shadow(0 0 4px rgba(176, 42, 25, 0.9))",
 } as const;
@@ -351,26 +354,26 @@ function drawMistBoneFogWisps(
 
   const centerX = effect.pose.x + effect.pose.w / 2;
   const centerY = effect.pose.y + effect.pose.h / 2;
-  ctx.save();
-  ctx.fillStyle = `rgb(${MIST_BONE_DEFEAT_VISUAL.fogColor})`;
-  ctx.globalAlpha = MIST_BONE_DEFEAT_VISUAL.fogAlpha * (1 - progress);
-  for (const wisp of effect.fogWisps) {
+  for (const [index, wisp] of effect.fogWisps.entries()) {
     const sway = Math.sin(
       wisp.phase + elapsedFrames * MIST_BONE_DEFEAT_VISUAL.fogSwayRate,
     ) * MIST_BONE_DEFEAT_VISUAL.fogSway;
-    ctx.beginPath();
-    ctx.ellipse(
-      centerX + wisp.offsetX + wisp.velocityX * elapsedFrames,
-      centerY + wisp.offsetY + wisp.velocityY * elapsedFrames + sway,
-      wisp.radiusX * (1 + progress),
-      wisp.radiusY * (1 + progress * 0.5),
-      0,
-      0,
-      Math.PI * 2,
-    );
-    ctx.fill();
+    drawMistBoneFogSprite({
+      variant: index,
+      centerX: centerX + wisp.offsetX + wisp.velocityX * elapsedFrames,
+      centerY: centerY + wisp.offsetY + wisp.velocityY * elapsedFrames + sway,
+      drawW: wisp.radiusX
+        * MIST_BONE_DEFEAT_FOG_SPRITE_SCALE
+        * (1 + progress),
+      drawH: wisp.radiusY
+        * MIST_BONE_DEFEAT_FOG_SPRITE_SCALE
+        * (1 + progress * 0.5),
+      elapsedFrames,
+      phaseOffset: wisp.phase * MIST_BONE_DEFEAT_FOG_PHASE_FRAMES_PER_RADIAN,
+      alpha: MIST_BONE_DEFEAT_VISUAL.fogAlpha * (1 - progress),
+      facing: index % 2 === 0 ? 1 : -1,
+    });
   }
-  ctx.restore();
 }
 
 function drawMistBoneFragments(

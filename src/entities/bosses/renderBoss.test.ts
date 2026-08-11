@@ -30,6 +30,7 @@ import {
   MIST_BONE_CAGE_CAST_SHEET,
   MIST_BONE_CAST_SHEET,
   MIST_BONE_CONFIG,
+  MIST_BONE_FOG_SHEETS,
   MIST_BONE_LINE_CAST_SHEET,
   SPIDER_STRING_ATTACK_CONFIG,
   SPIDER_STRING_ATTACK_SHEET,
@@ -53,6 +54,7 @@ import { drawBoss, resolveBossVisualFrame } from "./renderBoss";
 const originalFirelineCastImage = LANTERN_EMBER_FIRELINE_CAST_SHEET.image;
 const originalSummonImage = LANTERN_EMBER_SUMMON_SHEET.image;
 const originalMistBoneImage = MIST_BONE_SHEET.image;
+const originalMistBoneFogImages = MIST_BONE_FOG_SHEETS.map((sheet) => sheet.image);
 const originalMirrorDreamImage = MIRROR_DREAM_SHEET.image;
 const originalMirrorDreamCastImage = MIRROR_DREAM_CAST_SHEET.image;
 const originalMirrorDreamRecoverImage = MIRROR_DREAM_RECOVER_SHEET.image;
@@ -141,6 +143,7 @@ describe("boss casting visuals", () => {
     LANTERN_EMBER_FIRELINE_CAST_SHEET.image = originalFirelineCastImage;
     LANTERN_EMBER_SUMMON_SHEET.image = originalSummonImage;
     MIST_BONE_SHEET.image = originalMistBoneImage;
+    MIST_BONE_FOG_SHEETS.forEach((sheet, index) => { sheet.image = originalMistBoneFogImages[index]; });
     MIRROR_DREAM_SHEET.image = originalMirrorDreamImage;
     MIRROR_DREAM_CAST_SHEET.image = originalMirrorDreamCastImage;
     MIRROR_DREAM_RECOVER_SHEET.image = originalMirrorDreamRecoverImage;
@@ -199,12 +202,21 @@ describe("boss casting visuals", () => {
     });
   });
 
-  it("wraps awakened Mist Bone in dense fog and a cold bone glow", () => {
+  it("layers three authored fog sequences behind awakened Mist Bone's cold-glowing body", () => {
     resetState();
     const context = createContext();
-    const drawnFilters: string[] = [];
-    context.drawImage.mockImplementation(() => drawnFilters.push(context.filter));
-    MIST_BONE_SHEET.image = {} as HTMLImageElement;
+    const bodyImage = {} as HTMLImageElement;
+    const fogImages = MIST_BONE_FOG_SHEETS.map(() => ({} as HTMLImageElement));
+    MIST_BONE_FOG_SHEETS.forEach((sheet, index) => {
+      sheet.image = fogImages[index];
+    });
+    const drawOrder: CanvasImageSource[] = [];
+    const bodyFilters: string[] = [];
+    context.drawImage.mockImplementation((image: CanvasImageSource) => {
+      drawOrder.push(image);
+      if (image === bodyImage) bodyFilters.push(context.filter);
+    });
+    MIST_BONE_SHEET.image = bodyImage;
     setCanvas({ getContext: () => context } as unknown as HTMLCanvasElement);
     state.boss = createBossEncounter({
       id: BOSS_ARCHETYPE_IDS.mistBone,
@@ -217,9 +229,15 @@ describe("boss casting visuals", () => {
 
     drawBoss();
 
-    expect(context.ellipse).toHaveBeenCalled();
-    expect(context.fill).toHaveBeenCalled();
-    expect(drawnFilters).toContainEqual(expect.stringContaining("drop-shadow"));
+    expect(context.ellipse).not.toHaveBeenCalled();
+    expect(context.fill).not.toHaveBeenCalled();
+    const firstBodyDraw = drawOrder.indexOf(bodyImage);
+    expect(firstBodyDraw).toBeGreaterThan(-1);
+    for (const fogImage of fogImages) {
+      expect(drawOrder).toContain(fogImage);
+      expect(drawOrder.lastIndexOf(fogImage)).toBeLessThan(firstBodyDraw);
+    }
+    expect(bodyFilters).toContainEqual(expect.stringContaining("drop-shadow"));
   });
 
   it("keeps awakened Mirror Dream's true body outlined across movement and casting", () => {

@@ -207,8 +207,8 @@ export type MistBoneSpikeState = {
   life: number;
   damage: number;
   hitPlayer: boolean;
+  platformAnchor?: { platform: PlatformState; offsetX: number; offsetY: number };
 };
-
 export type MistBoneFogState = {
   kind: "thin" | "burial";
   x: number;
@@ -218,8 +218,9 @@ export type MistBoneFogState = {
   life: number;
   maxLife: number;
   elapsed: number;
+  phaseSeed?: number;
+  platformAnchor?: { platform: PlatformState; offsetX: number; offsetY: number };
 };
-
 export type FangGaleWaveState = {
   x: number;
   y: number;

@@ -4,7 +4,10 @@ import { canAutoSpawnEntities } from "../../game/debug";
 import { playSfx } from "../../game/audio";
 import { state } from "../../game/state";
 import { clamp, rectsOverlap } from "../../game/utils";
-import type { BossSkillMode } from "../../types/game-state";
+import type {
+  BossSkillMode,
+  MistBoneFogState,
+} from "../../types/game-state";
 import { spawnBossSummonEnemy, spawnEnemyById } from "../enemy";
 import { bossAttackDamage, damagePlayerOnContact } from "./shared";
 import type { LiveBoss } from "./types";
@@ -24,6 +27,9 @@ const LINE_MIN_COOLDOWN = 156;
 const SPIKE_MIN_COOLDOWN = 142;
 const SPIKE_COOLDOWN_BONUS = 18;
 const PATTERN_SFX_PITCH = 0.82;
+const FOG_PHASE_SEED_X_SCALE = 0.37;
+const FOG_PHASE_SEED_Y_SCALE = 0.13;
+const FOG_PHASE_SEED_TIME_SCALE = 60;
 const BASE_PATTERN_SEQUENCE = ["mistBoneLine", "mistBoneSpike"] as const satisfies readonly BossSkillMode[];
 const AWAKENED_PATTERN_SEQUENCE = [
   "mistBoneCage",
@@ -229,15 +235,19 @@ function spawnMistBonePattern(boss: LiveBoss) {
 }
 
 function spawnMistBoneThinFogAtPlayer() {
+  const x = state.player.x + state.player.w / 2;
+  const y = state.player.onPlatform?.y ?? GROUND_Y;
   state.mistBoneFogs.push({
     kind: "thin",
-    x: state.player.x + state.player.w / 2,
-    y: state.player.onPlatform?.y ?? GROUND_Y,
+    x,
+    y,
     radiusX: MIST_BONE_CONFIG.thinFogRadiusX,
     radiusY: MIST_BONE_CONFIG.thinFogRadiusY,
     life: MIST_BONE_CONFIG.thinFogLife,
     maxLife: MIST_BONE_CONFIG.thinFogLife,
     elapsed: 0,
+    phaseSeed: mistBoneFogPhaseSeed(x, y),
+    platformAnchor: mistBonePlatformAnchor(x, y),
   });
 }
 
@@ -261,16 +271,19 @@ function spawnMistBoneLine(boss: LiveBoss) {
 function spawnMistBoneCage(boss: LiveBoss) {
   const playerCenter = state.player.x + state.player.w / 2;
   const half = (MIST_BONE_CONFIG.cageCount - 1) / 2;
+  const surfaceY = state.player.onPlatform?.y ?? GROUND_Y;
 
   state.mistBoneFogs.push({
     kind: "burial",
     x: playerCenter,
-    y: state.player.onPlatform?.y ?? GROUND_Y,
+    y: surfaceY,
     radiusX: MIST_BONE_CONFIG.burialFogRadiusX,
     radiusY: MIST_BONE_CONFIG.burialFogRadiusY,
     life: MIST_BONE_CONFIG.burialFogLife,
     maxLife: MIST_BONE_CONFIG.burialFogLife,
     elapsed: 0,
+    phaseSeed: mistBoneFogPhaseSeed(playerCenter, surfaceY),
+    platformAnchor: mistBonePlatformAnchor(playerCenter, surfaceY),
   });
 
   for (let i = 0; i < MIST_BONE_CONFIG.cageCount; i += 1) {
@@ -366,5 +379,27 @@ function spawnMistBoneSpike(boss: LiveBoss, centerX: number, delay: number) {
       MIST_BONE_CONFIG.damageBase + boss.phase * MIST_BONE_CONFIG.damagePhase,
     ),
     hitPlayer: false,
+    platformAnchor: mistBonePlatformAnchor(x, laneY - h),
   });
+}
+
+function mistBonePlatformAnchor(
+  x: number,
+  y: number,
+): MistBoneFogState["platformAnchor"] {
+  const platform = state.player.onPlatform;
+  if (!platform || !state.platforms.includes(platform)) return undefined;
+  return {
+    platform,
+    offsetX: x - platform.x,
+    offsetY: y - platform.y,
+  };
+}
+
+function mistBoneFogPhaseSeed(x: number, y: number) {
+  return Math.abs(Math.floor(
+    x * FOG_PHASE_SEED_X_SCALE
+      + y * FOG_PHASE_SEED_Y_SCALE
+      + state.elapsed * FOG_PHASE_SEED_TIME_SCALE,
+  ));
 }

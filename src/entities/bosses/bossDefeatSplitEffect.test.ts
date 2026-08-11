@@ -4,6 +4,10 @@ import {
   BOSS_DEFEAT_SPLIT_VISUAL,
   BOSS_SHEET,
   MIST_BONE_DEFEAT_VISUAL,
+  MIST_BONE_FOG_ROLL_SHEET,
+  MIST_BONE_FOG_SHEETS,
+  MIST_BONE_FOG_VEIL_SHEET,
+  MIST_BONE_FOG_WISP_SHEET,
   MIST_BONE_SHEET,
 } from "../../constants";
 import { resetState, state } from "../../game/state";
@@ -25,6 +29,7 @@ const BLOOD_MOON_DEATH_FRAME_DURATION = BOSS_DEFEAT_SPLIT_VISUAL.durationFrames
   / BLOOD_MOON_DEATH_SHEET.count;
 const originalBossImage = BOSS_SHEET.image;
 const originalMistBoneImage = MIST_BONE_SHEET.image;
+const originalMistBoneFogImages = MIST_BONE_FOG_SHEETS.map((sheet) => sheet.image);
 const originalBloodMoonDeathImage = BLOOD_MOON_DEATH_SHEET.image;
 
 describe("boss defeat split effect", () => {
@@ -33,6 +38,9 @@ describe("boss defeat split effect", () => {
     setCanvas(null);
     BOSS_SHEET.image = originalBossImage;
     MIST_BONE_SHEET.image = originalMistBoneImage;
+    MIST_BONE_FOG_SHEETS.forEach((sheet, index) => {
+      sheet.image = originalMistBoneFogImages[index];
+    });
     BLOOD_MOON_DEATH_SHEET.image = originalBloodMoonDeathImage;
   });
 
@@ -112,8 +120,10 @@ describe("boss defeat split effect", () => {
   });
 
   it("scatters the captured Mist Bone pose into bone fragments while its fog blows away", () => {
-    const context = createContext();
+    const drawRecords: DrawRecord[] = [];
+    const context = createContext(drawRecords);
     const bossImage = {} as HTMLImageElement;
+    const fogImages = setMistBoneFogImages();
     MIST_BONE_SHEET.image = bossImage;
     setCanvas({ getContext: () => context } as unknown as HTMLCanvasElement);
     const boss = createBossEncounter({
@@ -145,23 +155,26 @@ describe("boss defeat split effect", () => {
     drawBossDefeatSplitEffect();
 
     expect(context.clip).not.toHaveBeenCalled();
-    expect(context.ellipse).toHaveBeenCalledTimes(EXPECTED_MIST_BONE_FOG_WISP_COUNT);
-    expect(context.drawImage).toHaveBeenCalledTimes(EXPECTED_MIST_BONE_FRAGMENT_COUNT);
-    expect(context.drawImage.mock.calls.every((call) => call[0] === bossImage)).toBe(true);
-    const lastFogDrawOrder = context.fill.mock.invocationCallOrder[
-      context.fill.mock.invocationCallOrder.length - 1
-    ];
-    expect(lastFogDrawOrder).toBeLessThan(
-      context.drawImage.mock.invocationCallOrder[0],
-    );
+    expect(context.ellipse).not.toHaveBeenCalled();
+    expect(context.fill).not.toHaveBeenCalled();
+    const fragmentDraws = drawRecords.filter((record) => record.image === bossImage);
+    expect(fragmentDraws).toHaveLength(EXPECTED_MIST_BONE_FRAGMENT_COUNT);
+    const firstFragmentDraw = drawRecords.findIndex((record) => record.image === bossImage);
+    expect(firstFragmentDraw).toBeGreaterThan(-1);
+    for (const fogImage of fogImages) {
+      const fogDraws = drawRecords
+        .map((record, index) => ({ image: record.image, index }))
+        .filter((record) => record.image === fogImage);
+      expect(fogDraws.length).toBeGreaterThan(0);
+      expect(fogDraws[fogDraws.length - 1].index).toBeLessThan(firstFragmentDraw);
+    }
     const centerX = effect.pose.x + effect.pose.w / 2;
     const fragmentDrawW = effect.pose.w / MIST_BONE_DEFEAT_VISUAL.fragmentColumns;
     const rightFragmentInitialX = centerX + fragmentDrawW;
     const leftFragmentInitialX = centerX - fragmentDrawW;
-    expect(context.translate.mock.calls[0][0]).toBeGreaterThan(rightFragmentInitialX);
-    expect(
-      context.translate.mock.calls[MIST_BONE_DEFEAT_VISUAL.fragmentColumns - 1][0],
-    ).toBeLessThan(leftFragmentInitialX);
+    expect(fragmentDraws[0].translateX).toBeGreaterThan(rightFragmentInitialX);
+    expect(fragmentDraws[MIST_BONE_DEFEAT_VISUAL.fragmentColumns - 1].translateX)
+      .toBeLessThan(leftFragmentInitialX);
   });
 
   it("plays Blood Moon's authored collapse in sequence instead of cutting its snapshot", () => {
@@ -201,11 +214,34 @@ describe("boss defeat split effect", () => {
   });
 });
 
-function createContext() {
+type DrawRecord = {
+  image: CanvasImageSource;
+  translateX: number;
+  translateY: number;
+};
+
+function setMistBoneFogImages() {
+  const fogImages = [
+    {} as HTMLImageElement,
+    {} as HTMLImageElement,
+    {} as HTMLImageElement,
+  ] as const;
+  MIST_BONE_FOG_VEIL_SHEET.image = fogImages[0];
+  MIST_BONE_FOG_ROLL_SHEET.image = fogImages[1];
+  MIST_BONE_FOG_WISP_SHEET.image = fogImages[2];
+  return fogImages;
+}
+
+function createContext(drawRecords: DrawRecord[] = []) {
+  let translateX = 0;
+  let translateY = 0;
+  const transformStack: { x: number; y: number }[] = [];
   return {
     beginPath: vi.fn(),
     clip: vi.fn(),
-    drawImage: vi.fn(),
+    drawImage: vi.fn((image: CanvasImageSource) => {
+      drawRecords.push({ image, translateX, translateY });
+    }),
     ellipse: vi.fn(),
     fill: vi.fn(),
     fillStyle: "",
@@ -214,12 +250,20 @@ function createContext() {
     globalCompositeOperation: "source-over",
     imageSmoothingEnabled: false,
     rect: vi.fn(),
-    restore: vi.fn(),
+    restore: vi.fn(() => {
+      const previous = transformStack.pop();
+      if (!previous) return;
+      translateX = previous.x;
+      translateY = previous.y;
+    }),
     rotate: vi.fn(),
-    save: vi.fn(),
+    save: vi.fn(() => transformStack.push({ x: translateX, y: translateY })),
     scale: vi.fn(),
     setTransform: vi.fn(),
-    translate: vi.fn(),
+    translate: vi.fn((x: number, y: number) => {
+      translateX += x;
+      translateY += y;
+    }),
   } as unknown as CanvasRenderingContext2D & {
     clip: ReturnType<typeof vi.fn>;
     drawImage: ReturnType<typeof vi.fn>;

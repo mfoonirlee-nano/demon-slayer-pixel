@@ -55,3 +55,33 @@ export const MIST_BONE_SPIKES_SHEET: SpriteSheet = {
   count: 6,
   image: null,
 };
+
+export const MIST_BONE_FOG_VEIL_SHEET: SpriteSheet = {
+  src: "assets/sprites/boss/mist-bone/mist_bone_fog_veil.png",
+  frameW: 256,
+  frameH: 160,
+  count: 6,
+  image: null,
+};
+
+export const MIST_BONE_FOG_ROLL_SHEET: SpriteSheet = {
+  src: "assets/sprites/boss/mist-bone/mist_bone_fog_roll.png",
+  frameW: 256,
+  frameH: 160,
+  count: 6,
+  image: null,
+};
+
+export const MIST_BONE_FOG_WISP_SHEET: SpriteSheet = {
+  src: "assets/sprites/boss/mist-bone/mist_bone_fog_wisp.png",
+  frameW: 256,
+  frameH: 160,
+  count: 6,
+  image: null,
+};
+
+export const MIST_BONE_FOG_SHEETS = [
+  MIST_BONE_FOG_VEIL_SHEET,
+  MIST_BONE_FOG_ROLL_SHEET,
+  MIST_BONE_FOG_WISP_SHEET,
+] as const;

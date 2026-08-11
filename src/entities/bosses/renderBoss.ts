@@ -40,20 +40,16 @@ import type { SpriteFrameEffect } from "../../rendering/graphics";
 import type { BossVisualFrameState } from "../../types/game-state";
 import { bossCastDuration, spiderRushWindupFrames } from "./attackTiming";
 import { resolveBloodMoonActionVisual } from "./bloodMoonVisuals";
+import { drawMistBoneFogStack } from "./mistBoneFogVisuals";
 import { BOSS_ARCHETYPE_IDS, bossArchetypeForId } from "./registry";
 import type { LiveBoss } from "./types";
 
 const SPIDER_RUSH_WINDUP_SPRITE_FRAMES = 3;
 const DEAD_BELL_REPRISAL_WARNING_SPRITE_FRAMES = 3;
-const AWAKENED_MIST_WISP_COUNT = 4;
-const AWAKENED_MIST_WISP_RADIUS_X_SCALE = 0.82;
-const AWAKENED_MIST_WISP_RADIUS_Y_SCALE = 0.22;
-const AWAKENED_MIST_WISP_DRIFT_X = 9;
-const AWAKENED_MIST_WISP_DRIFT_Y = 5;
-const AWAKENED_MIST_WISP_PHASE_STEP = 1.4;
-const AWAKENED_MIST_WISP_SPEED = 0.035;
-const AWAKENED_MIST_CENTER_Y_SCALE = 0.68;
-const AWAKENED_MIST_COLOR = "rgba(184, 211, 219, 0.2)";
+const GAMEPLAY_FRAMES_PER_SECOND = 60;
+const AWAKENED_MIST_AURA_WIDTH_SCALE = 1.08;
+const AWAKENED_MIST_AURA_HEIGHT_SCALE = 0.56;
+const AWAKENED_MIST_AURA_ALPHA = 0.82;
 const AWAKENED_MIST_BONE_EFFECT: SpriteFrameEffect = {
   filter: "saturate(0.82) brightness(1.12) drop-shadow(0 0 7px rgba(164, 224, 238, 0.9))",
   tint: { color: "#b7e8f1", alpha: 0.18 },
@@ -78,7 +74,7 @@ export function drawBoss() {
   const isAwakenedMistBone = boss.id === BOSS_ARCHETYPE_IDS.mistBone && boss.awakened;
   const isAwakenedMirrorDream = boss.id === BOSS_ARCHETYPE_IDS.mirrorDream && boss.awakened;
   const isAwakenedDeadBell = boss.id === BOSS_ARCHETYPE_IDS.deadBell && boss.awakened;
-  if (isAwakenedMistBone) drawAwakenedMistBoneAura(boss);
+  if (isAwakenedMistBone) drawAwakenedMistBoneAura(pose, boss.animSeed);
   if (isAwakenedDeadBell) drawAwakenedDeadBellEcho(boss);
   const effect = isAwakenedMistBone
     ? AWAKENED_MIST_BONE_EFFECT
@@ -155,31 +151,17 @@ function awakenedMirrorDreamCrackSheet(sheet: BossVisualFrameState["sheet"]) {
   return null;
 }
 
-function drawAwakenedMistBoneAura(boss: LiveBoss) {
-  if (!ctx) return;
-  const centerX = boss.x + boss.w / 2;
-  const centerY = boss.y + boss.h * AWAKENED_MIST_CENTER_Y_SCALE;
-  const radiusX = boss.w * AWAKENED_MIST_WISP_RADIUS_X_SCALE;
-  const radiusY = boss.h * AWAKENED_MIST_WISP_RADIUS_Y_SCALE;
-
-  ctx.save();
-  ctx.fillStyle = AWAKENED_MIST_COLOR;
-  for (let index = 0; index < AWAKENED_MIST_WISP_COUNT; index += 1) {
-    const phase = state.elapsed * AWAKENED_MIST_WISP_SPEED
-      + index * AWAKENED_MIST_WISP_PHASE_STEP;
-    ctx.beginPath();
-    ctx.ellipse(
-      centerX + Math.sin(phase) * AWAKENED_MIST_WISP_DRIFT_X,
-      centerY + Math.cos(phase) * AWAKENED_MIST_WISP_DRIFT_Y,
-      radiusX,
-      radiusY,
-      0,
-      0,
-      Math.PI * 2,
-    );
-    ctx.fill();
-  }
-  ctx.restore();
+function drawAwakenedMistBoneAura(pose: BossVisualFrameState, phaseSeed: number) {
+  drawMistBoneFogStack({
+    kind: "aura",
+    centerX: pose.x + pose.w / 2,
+    bottomY: pose.y + pose.h,
+    width: pose.w * AWAKENED_MIST_AURA_WIDTH_SCALE,
+    height: pose.h * AWAKENED_MIST_AURA_HEIGHT_SCALE,
+    elapsedFrames: state.elapsed * GAMEPLAY_FRAMES_PER_SECOND,
+    phaseSeed,
+    alpha: AWAKENED_MIST_AURA_ALPHA,
+  });
 }
 
 export function resolveBossVisualFrame(

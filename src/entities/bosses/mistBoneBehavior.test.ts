@@ -6,6 +6,7 @@ import { updateBoss } from "../boss";
 import { updateProjectiles } from "../projectile";
 import { createBossEncounter } from "./encounter";
 import { BOSS_ARCHETYPE_IDS } from "./registry";
+import { updateMistBoneEffects } from "./mistBoneEffects";
 
 const FAR_FUTURE_COOLDOWN = 999;
 const BOSS_X = 200;
@@ -15,6 +16,7 @@ const PHASE_THREE_HP_RATIO = 0.2;
 const PHASE_THREE = 3;
 const MAX_DART_TRAVEL_FRAMES = 20;
 const MIST_BONE_PHASE_ONE_DART_DAMAGE = 9;
+const PLATFORM_PLAYER_X_OFFSET = 40;
 
 describe("mist bone boss behavior", () => {
   it("lays a thin slowing fog field under its phase-one burial spike", () => {
@@ -35,6 +37,54 @@ describe("mist bone boss behavior", () => {
         life: MIST_BONE_CONFIG.thinFogLife,
       }),
     ]);
+  });
+
+  it("keeps platform-cast fog and spikes attached while their platform moves", () => {
+    const boss = readyMistBone();
+    const platform = {
+      x: PLAYER_X - PLATFORM_PLAYER_X_OFFSET,
+      y: 380,
+      baseY: 380,
+      w: 300,
+      h: 12,
+      vx: 0,
+      phase: 0,
+      style: "stone" as const,
+      kind: "normal" as const,
+      spriteIndex: 0,
+      spriteAct: null,
+      trim: 0,
+      notch: 0,
+      hoverAmplitude: 0,
+    };
+    state.platforms.push(platform);
+    state.player.onPlatform = platform;
+    state.player.y = platform.y - state.player.h;
+    boss.skillCd = 0;
+
+    updateBoss();
+    advanceBossFrames(MIST_BONE_CONFIG.spawnAtFrame + 1);
+
+    const fog = state.mistBoneFogs[0];
+    const spike = state.mistBoneSpikes[0];
+    const initialFog = { x: fog.x, y: fog.y };
+    const initialSpike = { x: spike.x, y: spike.y };
+    const initialPhaseSeed = fog.phaseSeed;
+    const movement = { x: 18, y: -9 };
+    platform.x += movement.x;
+    platform.y += movement.y;
+
+    updateMistBoneEffects();
+
+    expect(fog).toMatchObject({
+      x: initialFog.x + movement.x,
+      y: initialFog.y + movement.y,
+      phaseSeed: initialPhaseSeed,
+    });
+    expect(spike).toMatchObject({
+      x: initialSpike.x + movement.x,
+      y: initialSpike.y + movement.y,
+    });
   });
 
   it("uses a sprite-backed bone dart attack between special casts", () => {

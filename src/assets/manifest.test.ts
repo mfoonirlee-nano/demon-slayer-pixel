@@ -13,6 +13,7 @@ import {
   MIST_BONE_ATTACK_SHEET,
   MIST_BONE_CAGE_CAST_SHEET,
   MIST_BONE_DART_SHEET,
+  MIST_BONE_FOG_SHEETS,
   MIST_BONE_LINE_CAST_SHEET,
   MOON_TIDE_PLAYER_SHEETS,
   MOON_TIDE_TREASURE_SPRITE,
@@ -25,9 +26,14 @@ import {
 } from "../constants";
 import { spriteImageLoadTargets } from "./manifest";
 
+const originalMistBoneFogImages = MIST_BONE_FOG_SHEETS.map((sheet) => sheet.image);
+
 afterEach(() => {
   FALLING_LEAF_SHEET.image = null;
   for (const sheet of MIRROR_DREAM_RECOVERY_AND_CRACK_SHEETS) sheet.image = null;
+  MIST_BONE_FOG_SHEETS.forEach((sheet, index) => {
+    sheet.image = originalMistBoneFogImages[index];
+  });
 });
 
 const MIRROR_DREAM_RECOVERY_AND_CRACK_SHEETS = [
@@ -120,6 +126,19 @@ describe("sprite manifest", () => {
 
     for (const action of mistBoneActions) {
       expect(loadedSources.filter((src) => src === action.src)).toHaveLength(1);
+    }
+  });
+
+  it("preloads every Mist Bone fog sequence exactly once and updates its image", () => {
+    const targets = spriteImageLoadTargets();
+
+    for (const sheet of MIST_BONE_FOG_SHEETS) {
+      const matchingTargets = targets.filter((target) => target.src === sheet.src);
+      const image = {} as HTMLImageElement;
+
+      expect(matchingTargets).toHaveLength(1);
+      matchingTargets[0].setImage(image);
+      expect(sheet.image).toBe(image);
     }
   });
 
