@@ -175,7 +175,7 @@ export type MirrorShardState = MirrorShardIdentity & {
   bouncesRemaining: number;
 };
 
-export type MirrorAfterimageState = {
+type MirrorImageStateBase = {
   reflectedSkillId?: SkillId;
   x: number;
   y: number;
@@ -187,9 +187,13 @@ export type MirrorAfterimageState = {
   life: number;
   maxLife: number;
   spawnAt?: number;
-  spawned: boolean;
   damage: number;
 };
+
+export type MirrorAfterimageState = MirrorImageStateBase & (
+  | { stage: "afterimage" }
+  | { stage: "nightmareCast"; targetX: number; targetY: number }
+);
 
 export type MistBoneSpikeState = {
   x: number;

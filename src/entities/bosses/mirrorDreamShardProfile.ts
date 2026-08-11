@@ -1,6 +1,5 @@
 import {
   MIRROR_DREAM_CONFIG,
-  MIRROR_NIGHTMARE_SHEET,
   MIRROR_SHARD_SHEET,
 } from "../../constants";
 import { clamp } from "../../game/utils";
@@ -62,11 +61,11 @@ export function mirrorShardProfile(identity: MirrorShardIdentity): MirrorShardPr
   );
 
   return {
-    ...nightmareShardProfile(),
-    drawW: MIRROR_DREAM_CONFIG.nightmareDrawW * sizeScale,
-    drawH: MIRROR_DREAM_CONFIG.nightmareDrawH * sizeScale,
-    hitW: MIRROR_DREAM_CONFIG.nightmareHitW * sizeScale,
-    hitH: MIRROR_DREAM_CONFIG.nightmareHitH * sizeScale,
+    ...reflectionShardProfile(),
+    drawW: MIRROR_DREAM_CONFIG.playerSkillReflectionDrawW * sizeScale,
+    drawH: MIRROR_DREAM_CONFIG.playerSkillReflectionDrawH * sizeScale,
+    hitW: MIRROR_DREAM_CONFIG.playerSkillReflectionHitW * sizeScale,
+    hitH: MIRROR_DREAM_CONFIG.playerSkillReflectionHitH * sizeScale,
     speedScale,
     damageScale,
     glowColor: skill.color,
@@ -75,13 +74,29 @@ export function mirrorShardProfile(identity: MirrorShardIdentity): MirrorShardPr
 
 function nightmareShardProfile(): MirrorShardProfile {
   return {
-    sheet: MIRROR_NIGHTMARE_SHEET,
-    frameDuration: MIRROR_DREAM_CONFIG.nightmareFrameDuration,
-    drawW: MIRROR_DREAM_CONFIG.nightmareDrawW,
-    drawH: MIRROR_DREAM_CONFIG.nightmareDrawH,
-    hitW: MIRROR_DREAM_CONFIG.nightmareHitW,
-    hitH: MIRROR_DREAM_CONFIG.nightmareHitH,
-    life: MIRROR_DREAM_CONFIG.nightmareLife,
+    sheet: MIRROR_SHARD_SHEET,
+    frameDuration: MIRROR_DREAM_CONFIG.nightmareShardFrameDuration,
+    drawW: MIRROR_DREAM_CONFIG.nightmareShardDrawW,
+    drawH: MIRROR_DREAM_CONFIG.nightmareShardDrawH,
+    hitW: MIRROR_DREAM_CONFIG.nightmareShardHitW,
+    hitH: MIRROR_DREAM_CONFIG.nightmareShardHitH,
+    life: MIRROR_DREAM_CONFIG.nightmareShardLife,
+    speedScale: 1,
+    damageScale: MIRROR_DREAM_CONFIG.nightmareShardDamageScale,
+    canBounce: false,
+    glowColor: null,
+  };
+}
+
+function reflectionShardProfile(): MirrorShardProfile {
+  return {
+    sheet: MIRROR_SHARD_SHEET,
+    frameDuration: MIRROR_DREAM_CONFIG.playerSkillReflectionFrameDuration,
+    drawW: MIRROR_DREAM_CONFIG.playerSkillReflectionDrawW,
+    drawH: MIRROR_DREAM_CONFIG.playerSkillReflectionDrawH,
+    hitW: MIRROR_DREAM_CONFIG.playerSkillReflectionHitW,
+    hitH: MIRROR_DREAM_CONFIG.playerSkillReflectionHitH,
+    life: MIRROR_DREAM_CONFIG.playerSkillReflectionLife,
     speedScale: 1,
     damageScale: 1,
     canBounce: false,

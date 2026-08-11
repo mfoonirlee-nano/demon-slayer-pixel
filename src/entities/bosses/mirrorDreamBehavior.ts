@@ -22,6 +22,10 @@ type ActiveMirrorNightmareDash = Extract<
   MirrorNightmareDashState,
   { stage: "active" }
 >;
+type ActiveMirrorNightmareCast = Extract<
+  MirrorAfterimageState,
+  { stage: "nightmareCast" }
+>;
 
 const RETREAT_PHASE_FORCE = 0.006;
 const STEERING_PHASE_FORCE = 0.005;
@@ -45,7 +49,6 @@ const MIN_SHARD_TRAVEL_FRAMES = 28;
 const SHARD_MAX_VERTICAL_SPEED = 2.4;
 const SHARD_PHASE_SPEED_BONUS = 0.25;
 const SHARD_SFX_PITCH = 1.04;
-const NIGHTMARE_SHARD_START_Y_SCALE = 0.38;
 const NIGHTMARE_SHARD_SFX_PITCH = 1.22;
 const TRUE_IMAGE_SHIFT_COOLDOWN_BONUS = 36;
 const TRUE_IMAGE_SHIFT_FIRST_BREAK_FRAME = 16;
@@ -188,7 +191,7 @@ function startMirrorDreamCast(boss: LiveBoss, forcedSkillMode?: BossSkillMode) {
 function cancelPendingPlayerSkillReflections() {
   for (let i = state.mirrorAfterimages.length - 1; i >= 0; i -= 1) {
     const afterimage = state.mirrorAfterimages[i] as MirrorAfterimageState;
-    if (afterimage.reflectedSkillId && !afterimage.spawned) {
+    if (afterimage.reflectedSkillId && afterimage.stage === "afterimage") {
       state.mirrorAfterimages.splice(i, 1);
     }
   }
@@ -361,7 +364,7 @@ function spawnMirrorAfterimage(
     life,
     maxLife: life,
     spawnAt,
-    spawned: false,
+    stage: "afterimage",
     damage: bossAttackDamage(
       MIRROR_DREAM_CONFIG.damageBase + boss.phase * MIRROR_DREAM_CONFIG.damagePhase,
     ),
@@ -521,27 +524,35 @@ export function spawnMirrorShardFromBoss(boss: LiveBoss) {
   playSfx("bossMirror", SHARD_SFX_PITCH);
 }
 
-export function spawnMirrorNightmareShard(afterimage: MirrorAfterimageState) {
+export function spawnMirrorNightmareVolley(afterimage: ActiveMirrorNightmareCast) {
   const centerX = afterimage.x + afterimage.w / 2;
-  const centerY = afterimage.y + afterimage.h * NIGHTMARE_SHARD_START_Y_SCALE;
-  const targetX = state.player.x + state.player.w / 2;
-  const targetY = state.player.y + state.player.h / 2;
-  const dx = targetX - centerX;
-  const dy = targetY - centerY;
-  const distance = Math.max(1, Math.hypot(dx, dy));
+  const centerY = (
+    afterimage.y + afterimage.h * MIRROR_DREAM_CONFIG.nightmareShardStartYScale
+  );
+  const aimAngle = Math.atan2(afterimage.targetY - centerY, afterimage.targetX - centerX);
   const identity: MirrorShardIdentity = afterimage.reflectedSkillId
     ? { kind: "reflection", reflectedSkillId: afterimage.reflectedSkillId }
     : { kind: "nightmare" };
   const profile = mirrorShardProfile(identity);
-  const speed = MIRROR_DREAM_CONFIG.nightmareSpeed * profile.speedScale;
-  spawnMirrorShard(identity, {
-    centerX,
-    centerY,
-    vx: dx / distance * speed,
-    vy: dy / distance * speed,
-    damage: afterimage.damage * profile.damageScale,
-    bouncesRemaining: 0,
-  });
+  const speed = MIRROR_DREAM_CONFIG.nightmareShardSpeed * profile.speedScale;
+  const shardCount = afterimage.reflectedSkillId
+    ? 1
+    : MIRROR_DREAM_CONFIG.nightmareVolleyCount;
+
+  for (let index = 0; index < shardCount; index += 1) {
+    const angleOffset = (
+      index - (shardCount - 1) / 2
+    ) * MIRROR_DREAM_CONFIG.nightmareVolleySpreadRadians;
+    const angle = aimAngle + angleOffset;
+    spawnMirrorShard(identity, {
+      centerX,
+      centerY,
+      vx: Math.cos(angle) * speed,
+      vy: Math.sin(angle) * speed,
+      damage: afterimage.damage * profile.damageScale,
+      bouncesRemaining: 0,
+    });
+  }
   playSfx("bossMirror", NIGHTMARE_SHARD_SFX_PITCH);
 }
 

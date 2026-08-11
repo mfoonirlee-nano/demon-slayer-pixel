@@ -1,11 +1,19 @@
-import { BOSS_CONFIG, GROUND_Y, MIRROR_AFTERIMAGE_DRAW_WIDTH, MIRROR_AFTERIMAGE_SHEET, MIRROR_DREAM_CONFIG, WIDTH } from "../../constants";
+import {
+  BOSS_CONFIG,
+  GROUND_Y,
+  MIRROR_AFTERIMAGE_DRAW_WIDTH,
+  MIRROR_AFTERIMAGE_SHEET,
+  MIRROR_DREAM_CONFIG,
+  MIRROR_NIGHTMARE_SHEET,
+  WIDTH,
+} from "../../constants";
 import { playSfx } from "../../game/audio";
 import { state } from "../../game/state";
 import { clamp, hitbox } from "../../game/utils";
 import { ctx } from "../../rendering/context";
 import { drawSheetFrame } from "../../rendering/graphics";
 import { hurtPlayer } from "../player";
-import { spawnMirrorNightmareShard } from "./mirrorDreamBehavior";
+import { spawnMirrorNightmareVolley } from "./mirrorDreamBehavior";
 import { mirrorShardProfile } from "./mirrorDreamShardProfile";
 import type { MirrorAfterimageState, MirrorShardState } from "../../types/game-state";
 
@@ -13,15 +21,23 @@ const SHARD_BOUNCE_FRAME = 4;
 const SHARD_BOUNCE_SFX_PITCH = 1.28;
 const AFTERIMAGE_FADE_ALPHA_BASE = 0.24;
 const AFTERIMAGE_FADE_ALPHA_GAIN = 0.76;
+const NIGHTMARE_CAST_FRAMES = (
+  MIRROR_NIGHTMARE_SHEET.count * MIRROR_DREAM_CONFIG.nightmareCastFrameDuration
+);
 
 export function updateMirrorDreamEffects() {
-  updateMirrorAfterimages();
   updateMirrorShards();
+  updateMirrorAfterimages();
 }
 
 function updateMirrorAfterimages() {
   for (let i = state.mirrorAfterimages.length - 1; i >= 0; i -= 1) {
     const afterimage = state.mirrorAfterimages[i] as MirrorAfterimageState;
+    if (afterimage.stage === "nightmareCast") {
+      updateMirrorNightmareCast(afterimage, i);
+      continue;
+    }
+
     afterimage.elapsed += 1;
     afterimage.life -= 1;
     afterimage.frame = Math.min(
@@ -31,16 +47,49 @@ function updateMirrorAfterimages() {
 
     if (
       afterimage.spawnAt !== undefined
-      && !afterimage.spawned
       && afterimage.elapsed >= afterimage.spawnAt
     ) {
-      afterimage.spawned = true;
-      afterimage.life = Math.min(afterimage.life, MIRROR_DREAM_CONFIG.nightmareBreakFadeFrames);
-      spawnMirrorNightmareShard(afterimage);
+      state.mirrorAfterimages[i] = startMirrorNightmareCast(afterimage);
+      continue;
     }
 
     if (afterimage.life <= 0) state.mirrorAfterimages.splice(i, 1);
   }
+}
+
+function startMirrorNightmareCast(afterimage: MirrorAfterimageState) {
+  const targetX = state.player.x + state.player.w / 2;
+  const targetY = state.player.y + state.player.h / 2;
+  const centerX = afterimage.x + afterimage.w / 2;
+  return {
+    ...afterimage,
+    stage: "nightmareCast" as const,
+    targetX,
+    targetY,
+    facing: targetX >= centerX ? 1 : -1,
+    elapsed: 1,
+    frame: 0,
+    life: NIGHTMARE_CAST_FRAMES,
+    maxLife: NIGHTMARE_CAST_FRAMES,
+  };
+}
+
+function updateMirrorNightmareCast(
+  afterimage: Extract<MirrorAfterimageState, { stage: "nightmareCast" }>,
+  index: number,
+) {
+  if (afterimage.elapsed >= NIGHTMARE_CAST_FRAMES) {
+    spawnMirrorNightmareVolley(afterimage);
+    state.mirrorAfterimages.splice(index, 1);
+    return;
+  }
+
+  afterimage.elapsed += 1;
+  afterimage.life = NIGHTMARE_CAST_FRAMES - afterimage.elapsed + 1;
+  afterimage.frame = Math.min(
+    MIRROR_NIGHTMARE_SHEET.count - 1,
+    Math.floor((afterimage.elapsed - 1) / MIRROR_DREAM_CONFIG.nightmareCastFrameDuration),
+  );
 }
 
 function updateMirrorShards() {
@@ -95,6 +144,11 @@ function drawMirrorAfterimages() {
   const drawH = MIRROR_DREAM_CONFIG.afterimageDrawH * BOSS_CONFIG.bodyDrawScale;
   const bottomPadding = MIRROR_DREAM_CONFIG.afterimageBottomPadding * BOSS_CONFIG.bodyDrawScale;
   for (const afterimage of state.mirrorAfterimages) {
+    if (afterimage.stage === "nightmareCast") {
+      drawMirrorNightmareCast(afterimage);
+      continue;
+    }
+
     const centerX = afterimage.x + afterimage.w / 2;
     const feetY = afterimage.y + afterimage.h;
     const lifeT = clamp(afterimage.life / afterimage.maxLife, 0, 1);
@@ -113,6 +167,26 @@ function drawMirrorAfterimages() {
     );
     ctx.restore();
   }
+}
+
+function drawMirrorNightmareCast(
+  afterimage: Extract<MirrorAfterimageState, { stage: "nightmareCast" }>,
+) {
+  const centerX = afterimage.x + afterimage.w / 2;
+  const centerY = (
+    afterimage.y + afterimage.h * MIRROR_DREAM_CONFIG.nightmareShardStartYScale
+  );
+  const drawW = MIRROR_DREAM_CONFIG.nightmareCastDrawW;
+  const drawH = MIRROR_DREAM_CONFIG.nightmareCastDrawH;
+  drawSheetFrame(
+    MIRROR_NIGHTMARE_SHEET,
+    afterimage.frame,
+    centerX - drawW / 2,
+    centerY - drawH / 2,
+    drawW,
+    drawH,
+    afterimage.facing,
+  );
 }
 
 function drawMirrorShards() {
