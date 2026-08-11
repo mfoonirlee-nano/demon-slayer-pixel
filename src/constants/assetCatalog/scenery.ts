@@ -1,6 +1,14 @@
 import type { SpriteSheet } from "../../types/assets";
 
 type SpriteRegion = { sx: number; sy: number; sw: number; sh: number };
+type TreeSpriteCatalog = {
+  sourceScale: number;
+  sheets: Array<{
+    src: string;
+    image: HTMLImageElement | null;
+    variants: SpriteRegion[];
+  }>;
+};
 export type PlatformSpriteRegion = SpriteRegion & { surfaceY: number };
 export type PlatformSpriteSheet = {
   src: string;
@@ -89,42 +97,53 @@ export const FALLING_LEAF_SHEET: SpriteSheet = {
   image: null,
 };
 
-export const TREE_SPRITES: {
-  sheets: Array<{
-    src: string;
-    image: HTMLImageElement | null;
-    variants: SpriteRegion[];
-  }>;
-} = {
+export const TREE_SPRITES: TreeSpriteCatalog = {
+  sourceScale: 2,
   sheets: [
     {
       src: "assets/sprites/tree/tree_sprites.png",
       image: null,
       variants: [
-        { sx: 55, sy: 12, sw: 181, sh: 248 },
-        { sx: 778, sy: 14, sw: 227, sh: 246 },
-        { sx: 529, sy: 16, sw: 221, sh: 246 },
-        { sx: 1296, sy: 28, sw: 191, sh: 233 },
-        { sx: 1044, sy: 42, sw: 214, sh: 217 },
-        { sx: 287, sy: 43, sw: 201, sh: 218 },
-        { sx: 47, sy: 277, sw: 192, sh: 218 },
-        { sx: 788, sy: 277, sw: 212, sh: 218 },
-        { sx: 1045, sy: 283, sw: 199, sh: 211 },
-        { sx: 1283, sy: 283, sw: 219, sh: 213 },
-        { sx: 289, sy: 296, sw: 196, sh: 201 },
-        { sx: 528, sy: 330, sw: 213, sh: 164 },
-        { sx: 560, sy: 502, sw: 161, sh: 233 },
-        { sx: 44, sy: 519, sw: 162, sh: 215 },
-        { sx: 1045, sy: 529, sw: 202, sh: 206 },
-        { sx: 226, sy: 548, sw: 277, sh: 186 },
-        { sx: 809, sy: 553, sw: 178, sh: 182 },
-        { sx: 1291, sy: 595, sw: 208, sh: 138 },
-        { sx: 520, sy: 767, sw: 208, sh: 220 },
-        { sx: 1044, sy: 774, sw: 201, sh: 215 },
-        { sx: 300, sy: 787, sw: 156, sh: 200 },
-        { sx: 800, sy: 850, sw: 183, sh: 139 },
-        { sx: 1294, sy: 863, sw: 207, sh: 126 },
-        { sx: 25, sy: 872, sw: 212, sh: 115 },
+        { sx: 88, sy: 9, sw: 390, sh: 527 },
+        { sx: 1554, sy: 14, sw: 459, sh: 488 },
+        { sx: 1038, sy: 6, sw: 483, sh: 530 },
+        { sx: 2582, sy: 31, sw: 385, sh: 465 },
+        { sx: 2100, sy: 54, sw: 421, sh: 442 },
+        { sx: 563, sy: 66, sw: 430, sh: 468 },
+        { sx: 69, sy: 529, sw: 415, sh: 471 },
+        { sx: 1572, sy: 529, sw: 426, sh: 438 },
+        { sx: 2094, sy: 541, sw: 399, sh: 424 },
+        { sx: 2554, sy: 534, sw: 442, sh: 431 },
+        { sx: 550, sy: 554, sw: 432, sh: 443 },
+        { sx: 1030, sy: 619, sw: 469, sh: 367 },
+        { sx: 1096, sy: 1044, sw: 367, sh: 490 },
+        { sx: 35, sy: 1031, sw: 361, sh: 480 },
+        { sx: 2077, sy: 1054, sw: 432, sh: 420 },
+        { sx: 419, sy: 1076, sw: 643, sh: 430 },
+        { sx: 1599, sy: 1098, sw: 380, sh: 376 },
+        { sx: 2584, sy: 1181, sw: 442, sh: 290 },
+        { sx: 1049, sy: 1525, sw: 449, sh: 466 },
+        { sx: 2072, sy: 1536, sw: 437, sh: 450 },
+        { sx: 598, sy: 1541, sw: 346, sh: 440 },
+        { sx: 1580, sy: 1693, sw: 388, sh: 292 },
+        { sx: 2583, sy: 1720, sw: 445, sh: 266 },
+        { sx: 2, sy: 1724, sw: 484, sh: 257 },
+      ],
+    },
+  ],
+};
+
+export const TALL_TREE_SPRITES: TreeSpriteCatalog = {
+  sourceScale: 2,
+  sheets: [
+    {
+      src: "assets/sprites/tree/tree_tall_sprites.png",
+      image: null,
+      variants: [
+        { sx: 0, sy: 0, sw: 768, sh: 1024 },
+        { sx: 768, sy: 0, sw: 768, sh: 1024 },
+        { sx: 1536, sy: 0, sw: 768, sh: 1024 },
+        { sx: 2304, sy: 0, sw: 768, sh: 1024 },
       ],
     },
   ],

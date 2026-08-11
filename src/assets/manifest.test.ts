@@ -24,6 +24,8 @@ import {
   SPIDER_STRING_ATTACK_SHEET,
   SPIDER_STRING_PILLAR_CAST_SHEET,
   SPIDER_STRING_PILLAR_EFFECT_SHEET,
+  TALL_TREE_SPRITES,
+  TREE_SPRITES,
 } from "../constants";
 import { spriteImageLoadTargets } from "./manifest";
 
@@ -91,6 +93,14 @@ describe("sprite manifest", () => {
 
     for (const occluder of ACT_OCCLUDER_SPRITES) {
       expect(loadedSources.filter((src) => src === occluder.src)).toHaveLength(1);
+    }
+  });
+
+  it("preloads every regular and tall tree sheet exactly once", () => {
+    const loadedSources = spriteImageLoadTargets().map((target) => target.src);
+
+    for (const sheet of [...TREE_SPRITES.sheets, ...TALL_TREE_SPRITES.sheets]) {
+      expect(loadedSources.filter((src) => src === sheet.src)).toHaveLength(1);
     }
   });
 

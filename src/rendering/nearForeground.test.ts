@@ -1,15 +1,18 @@
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it } from "vitest";
 
 import {
   ACT_OCCLUDER_SPRITES,
   GROUND_Y,
+  TALL_TREE_SPRITES,
   TORII_SPRITES,
   TREE_SPRITES,
   WIDTH,
 } from "../constants";
 import { bossApproachGroundTransitionSeconds } from "../systems/runProgression";
+import { setCanvas } from "./context";
 import {
   BOSS_PRELUDE_TORII_DRAW_H,
+  drawNearForeground,
   resolveNearForegroundOccluders,
   resolveBossPreludeToriiPlacement,
 } from "./nearForeground";
@@ -23,6 +26,20 @@ const FINAL_ACT = 13;
 const ACTS = Array.from({ length: FINAL_ACT }, (_, index) => index + 1);
 const MAX_GROUNDED_ENEMY_DRAW_WIDTH = 142;
 const MAX_GROUNDED_ENEMY_DRAW_HEIGHT = 160;
+const SOURCE_DENSITY_EPSILON = 1e-9;
+const NEAR_FOREGROUND_PASS_COUNT = 3;
+const originalTreeImages = TREE_SPRITES.sheets.map((sheet) => sheet.image);
+const originalTallTreeImages = TALL_TREE_SPRITES.sheets.map((sheet) => sheet.image);
+
+afterEach(() => {
+  TREE_SPRITES.sheets.forEach((sheet, index) => {
+    sheet.image = originalTreeImages[index];
+  });
+  TALL_TREE_SPRITES.sheets.forEach((sheet, index) => {
+    sheet.image = originalTallTreeImages[index];
+  });
+  setCanvas(null);
+});
 
 describe("near foreground placement", () => {
   it("does not draw the torii outside the boss prelude", () => {
@@ -94,7 +111,7 @@ describe("near foreground placement", () => {
     expect(occluders.some((occluder) => occluder.x < WIDTH && occluder.x + occluder.drawW > 0)).toBe(true);
   });
 
-  it("does not upscale tree sprites beyond their source regions", () => {
+  it("preserves the catalogued source-density reserve for tree sprites", () => {
     const treeOccluders = resolveNearForegroundOccluders({
       elapsed: START_ELAPSED,
       bossPreludeElapsed: null,
@@ -107,9 +124,51 @@ describe("near foreground placement", () => {
       const region = sheet?.variants[occluder.variantIndex];
       if (!region) throw new Error("expected a source region for every tree occluder");
 
-      expect(occluder.drawH).toBeLessThanOrEqual(region.sh);
-      expect(occluder.drawW).toBeLessThanOrEqual(region.sw);
+      expect(occluder.drawH * TREE_SPRITES.sourceScale).toBeLessThanOrEqual(
+        region.sh + SOURCE_DENSITY_EPSILON,
+      );
+      expect(occluder.drawW * TREE_SPRITES.sourceScale).toBeLessThanOrEqual(
+        region.sw + SOURCE_DENSITY_EPSILON,
+      );
     }
+  });
+
+  it("draws tall trees behind the regular tree line without adding spawn occluders", () => {
+    const regularTreeImage = {} as HTMLImageElement;
+    const tallTreeImage = {} as HTMLImageElement;
+    const drawnImages: CanvasImageSource[] = [];
+    const context = {
+      drawImage: (image: CanvasImageSource) => drawnImages.push(image),
+      globalAlpha: 1,
+      imageSmoothingEnabled: true,
+      restore: () => undefined,
+      save: () => undefined,
+      setTransform: () => undefined,
+    } as unknown as CanvasRenderingContext2D;
+    const canvas = {
+      getContext: () => context,
+    } as unknown as HTMLCanvasElement;
+
+    TREE_SPRITES.sheets[0].image = regularTreeImage;
+    TALL_TREE_SPRITES.sheets[0].image = tallTreeImage;
+    setCanvas(canvas);
+    drawNearForeground();
+
+    const firstRegularTree = drawnImages.indexOf(regularTreeImage);
+    const lastTallTree = drawnImages.lastIndexOf(tallTreeImage);
+    const treeOccluders = resolveNearForegroundOccluders({
+      elapsed: START_ELAPSED,
+      bossPreludeElapsed: null,
+      act: ACT_ONE,
+    }).filter((occluder) => occluder.source === "tree");
+    const regularTreeVariantCount = TREE_SPRITES.sheets.reduce(
+      (count, sheet) => count + sheet.variants.length,
+      0,
+    );
+
+    expect(lastTallTree).toBeGreaterThanOrEqual(0);
+    expect(firstRegularTree).toBeGreaterThan(lastTallTree);
+    expect(treeOccluders).toHaveLength(regularTreeVariantCount * NEAR_FOREGROUND_PASS_COUNT);
   });
 
   it.each(ACTS)("adds drawable themed and generic enemy cover in Act %i", (act) => {

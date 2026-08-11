@@ -5,6 +5,7 @@ import {
   NEAR_FOREGROUND_SCROLL_SPEED,
   WIDTH,
   TREE_SPRITES,
+  TALL_TREE_SPRITES,
   STONE_TOWER_SPRITES,
   STONE_TOWER_SMALL_SPRITES,
   TORII_SPRITES,
@@ -55,13 +56,38 @@ const ACT_OCCLUDER_PLACEMENTS: Array<{
   { kind: "themed", baseX: 2260, bottomOffset: 9 },
 ];
 
-const TREE_LINE = Array.from({ length: TREE_COUNT }, (_, i) => ({
+type TreePlacement = {
+  variantSeed: number;
+  baseX: number;
+  bottomOffset: number;
+  drawH: number;
+  alpha: number;
+};
+
+const TREE_LINE: TreePlacement[] = Array.from({ length: TREE_COUNT }, (_, i) => ({
   variantSeed: i * TREE_VARIANT_SEED_STEP + TREE_VARIANT_SEED_OFFSET,
   baseX: i * TREE_BASE_X_STEP + ((i % TREE_BASE_X_GROUP_MOD) - TREE_BASE_X_GROUP_CENTER) * TREE_BASE_X_GROUP_OFFSET,
   bottomOffset: TREE_BOTTOM_OFFSET_BASE + (i % TREE_BOTTOM_OFFSET_MOD) * TREE_BOTTOM_OFFSET_STEP,
   drawH: TREE_DRAW_H_BASE + (i % TREE_DRAW_H_MOD) * TREE_DRAW_H_STEP,
   alpha: TREE_ALPHA_BASE + (i % TREE_ALPHA_MOD) * TREE_ALPHA_STEP,
 }));
+
+const TALL_TREE_LINE: TreePlacement[] = [
+  { variantSeed: 0, baseX: 145, bottomOffset: 11, drawH: 348, alpha: 0.76 },
+  { variantSeed: 1, baseX: 780, bottomOffset: 15, drawH: 388, alpha: 0.8 },
+  { variantSeed: 2, baseX: 1485, bottomOffset: 9, drawH: 326, alpha: 0.73 },
+  { variantSeed: 3, baseX: 2235, bottomOffset: 13, drawH: 360, alpha: 0.77 },
+];
+
+const TREE_OCCLUDER_VARIANTS = TREE_SPRITES.sheets.flatMap((sheet, sheetIndex) =>
+  sheet.variants.map((region, variantIndex) => ({ sheetIndex, variantIndex, region })),
+);
+const TREE_DRAW_VARIANTS = TREE_SPRITES.sheets.flatMap((sheet) =>
+  sheet.variants.map((region) => ({ sheet, region })),
+);
+const TALL_TREE_DRAW_VARIANTS = TALL_TREE_SPRITES.sheets.flatMap((sheet) =>
+  sheet.variants.map((region) => ({ sheet, region })),
+);
 
 const FOREGROUND_DECOR: Array<{
   variantSeed: number;
@@ -162,9 +188,9 @@ function nearForegroundOffset(elapsed: number) {
   return ((scroll % NEAR_FOREGROUND_PATTERN_WIDTH) + NEAR_FOREGROUND_PATTERN_WIDTH) % NEAR_FOREGROUND_PATTERN_WIDTH;
 }
 
-function treeDrawHeight(preferredDrawH: number, region: { sh: number }) {
-  // Tree frames vary in size; upscaling the smaller frames makes their details blurry.
-  return Math.min(preferredDrawH, region.sh);
+function treeDrawHeight(preferredDrawH: number, region: { sh: number }, sourceScale: number) {
+  // Preserve the catalog's source-density reserve when the canvas backing scale grows.
+  return Math.min(preferredDrawH, region.sh / sourceScale);
 }
 
 function pushOccluder(
@@ -191,14 +217,11 @@ function pushOccluder(
 }
 
 function pushTreeOccluders(occluders: NearForegroundOccluder[], pass: number, offset: number) {
-  const variants = TREE_SPRITES.sheets.flatMap((sheet, sheetIndex) =>
-    sheet.variants.map((region, variantIndex) => ({ sheetIndex, variantIndex, region })),
-  );
-  if (variants.length === 0) return;
+  if (TREE_OCCLUDER_VARIANTS.length === 0) return;
 
   for (const tree of TREE_LINE) {
-    const entry = variants[tree.variantSeed % variants.length];
-    const drawH = treeDrawHeight(tree.drawH, entry.region);
+    const entry = TREE_OCCLUDER_VARIANTS[tree.variantSeed % TREE_OCCLUDER_VARIANTS.length];
+    const drawH = treeDrawHeight(tree.drawH, entry.region, TREE_SPRITES.sourceScale);
     const x = tree.baseX + pass * NEAR_FOREGROUND_PATTERN_WIDTH - offset;
     const y = GROUND_Y + tree.bottomOffset - drawH;
     pushOccluder(
@@ -358,24 +381,50 @@ function occluderImageAndRegion(occluder: EnemySpawnOccluderState) {
   };
 }
 
-function drawTrees(context: CanvasRenderingContext2D, pass: number, offset: number) {
-  const variants = TREE_SPRITES.sheets.flatMap((sheet) =>
-    sheet.variants.map((region) => ({ sheet, region })),
-  );
-  if (variants.length === 0 || TREE_SPRITES.sheets.every((sheet) => !sheet.image)) return;
+function drawTreeLine(
+  context: CanvasRenderingContext2D,
+  pass: number,
+  offset: number,
+  variants: typeof TREE_DRAW_VARIANTS,
+  placements: TreePlacement[],
+  sourceScale: number,
+) {
+  if (variants.length === 0 || variants.every(({ sheet }) => !sheet.image)) return;
 
-  for (const tree of TREE_LINE) {
+  for (const tree of placements) {
     const entry = variants[tree.variantSeed % variants.length];
     const image = entry.sheet.image;
     if (!image) continue;
 
     const { region } = entry;
-    const drawH = treeDrawHeight(tree.drawH, region);
+    const drawH = treeDrawHeight(tree.drawH, region, sourceScale);
     const x = tree.baseX + pass * NEAR_FOREGROUND_PATTERN_WIDTH - offset;
     const y = GROUND_Y + tree.bottomOffset - drawH;
 
     drawRegion(context, image, region, x, y, drawH, tree.alpha);
   }
+}
+
+function drawTrees(context: CanvasRenderingContext2D, pass: number, offset: number) {
+  drawTreeLine(
+    context,
+    pass,
+    offset,
+    TREE_DRAW_VARIANTS,
+    TREE_LINE,
+    TREE_SPRITES.sourceScale,
+  );
+}
+
+function drawTallTrees(context: CanvasRenderingContext2D, pass: number, offset: number) {
+  drawTreeLine(
+    context,
+    pass,
+    offset,
+    TALL_TREE_DRAW_VARIANTS,
+    TALL_TREE_LINE,
+    TALL_TREE_SPRITES.sourceScale,
+  );
 }
 
 function drawActProps(
@@ -447,6 +496,9 @@ export function drawNearForeground() {
 
   const offset = nearForegroundOffset(state.elapsed);
 
+  for (let pass = NEAR_FOREGROUND_PASS_MIN; pass <= NEAR_FOREGROUND_PASS_MAX; pass += 1) {
+    drawTallTrees(context, pass, offset);
+  }
   for (let pass = NEAR_FOREGROUND_PASS_MIN; pass <= NEAR_FOREGROUND_PASS_MAX; pass += 1) {
     drawTrees(context, pass, offset);
   }

@@ -30,6 +30,14 @@
 
 ## 关键运行时规格
 
+### 高清树线与高树
+
+`tree/tree_sprites.png` 是 `3072x2048` 的 24 变体透明基础树图集。它以真正重绘的 `2x` 源像素密度替换旧 `1536x1024` 图集，保留松、杉、柳、枯木和灌木等原有轮廓身份；`TREE_SPRITES.sourceScale=2`，运行时仍按 `150/172/194/216/238/260px` 的偏好高度轮换，但每个变体最多绘制到 `region.sh / sourceScale`，因此大屏 backing scale 不会直接放大低密度源像素。24 个切片都使用硬边透明像素和独立 gutter，逻辑体量、底部锚点与敌人出生遮挡职责保持不变。
+
+`tree/tree_tall_sprites.png` 是 `3072x1024` 的 4 变体透明高树图集，固定横向 `4` 格、每格 `768x1024`。四棵树的可见 bbox 高度依次为 `962/947/963/950px`，可见下边界为源图 `y=1007/1008/1008/1007`（exclusive），四边保留透明 gutter。`TALL_TREE_SPRITES.sourceScale=2`；运行时每 `2688px` 近景循环以不等距位置绘制 4 棵，高度依次为 `348/388/326/360px`、alpha 为 `0.76/0.8/0.73/0.77`，并先于基础树线绘制。
+
+高树是纯背景剪影，不加入 `resolveNearForegroundOccluders()`，不会改变敌人出生遮挡选择或碰撞。素材只承载完整树体，不包含逐幕 Boss 符号、地面、阴影、雾或攻击提示；视觉边界见 [`docs/art/environment.md`](art/environment.md)。两张树图集都由素材 manifest 预加载。
+
 ### 场景气候：落叶
 
 `scenery/weather/falling-leaf-tumble.png` 是 `192x24` RGBA 横向图集，固定 `8` 帧、单帧 `24x24`。八帧保存同一片枫叶从正面、四分之三侧、薄边、背面到反向姿态并回到起始姿态的连续翻滚；每帧可见 bbox 中心固定在 `(12, 12)`，四边至少保留 `3px` 全透明 gutter。叶片颜色使用低饱和铜褐、冷赭和暗酒红，配暗靛轮廓与极弱月蓝边光，避免与鲜红攻击预警或玩家的高亮月潮蓝混淆。视觉约束见 [`docs/art/environment.md`](art/environment.md)。
