@@ -90,15 +90,15 @@ describe("game HUD layout", () => {
     expect(HUD_STATUS_BAR_ICON_SIZE).toBe(PREVIOUS_STATUS_ICON_DISPLAY_SIZE * STATUS_ICON_SCALE);
   });
 
-  it("places the residual-spirit vessel under the ability frames and beside statuses", () => {
+  it("centers the residual-spirit vessel directly below the ultimate frame", () => {
     expect({
       left: HUD_RESIDUAL_SPIRIT_LEFT,
       top: HUD_RESIDUAL_SPIRIT_TOP,
       width: HUD_RESIDUAL_SPIRIT_WIDTH,
       height: HUD_RESIDUAL_SPIRIT_HEIGHT,
-    }).toEqual({ left: 28, top: 63, width: 64, height: 33 });
-    expect(HUD_RESIDUAL_SPIRIT_LEFT + HUD_RESIDUAL_SPIRIT_WIDTH)
-      .toBeLessThanOrEqual(HUD_STATUS_BAR_LEFT);
+    }).toEqual({ left: 4, top: 63, width: 64, height: 33 });
+    expect(HUD_RESIDUAL_SPIRIT_LEFT + HUD_RESIDUAL_SPIRIT_WIDTH / 2)
+      .toBe(UI_SPRITES.ultimateFrame.displayW / 2);
   });
 
   it("registers the generated three-times HUD vessel frame", () => {
