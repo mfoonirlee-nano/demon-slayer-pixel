@@ -1,4 +1,5 @@
 import type { SpriteSheet } from "../../types/assets";
+import type { FallingLeafKind } from "../treeFoliage";
 
 type SpriteRegion = { sx: number; sy: number; sw: number; sh: number };
 type TreeSpriteCatalog = {
@@ -89,12 +90,35 @@ export const COVER_MOON_PHASE_SPRITES: {
   frames: 8,
 };
 
-export const FALLING_LEAF_SHEET: SpriteSheet = {
-  src: "assets/sprites/scenery/weather/falling-leaf-tumble.png",
-  frameW: 24,
-  frameH: 24,
-  count: 8,
-  image: null,
+export const FALLING_LEAF_SHEETS: Record<FallingLeafKind, SpriteSheet> = {
+  pine: {
+    src: "assets/sprites/scenery/weather/falling-leaf-pine-tumble.png",
+    frameW: 24,
+    frameH: 24,
+    count: 8,
+    image: null,
+  },
+  willow: {
+    src: "assets/sprites/scenery/weather/falling-leaf-willow-tumble.png",
+    frameW: 24,
+    frameH: 24,
+    count: 8,
+    image: null,
+  },
+  broadleaf: {
+    src: "assets/sprites/scenery/weather/falling-leaf-broadleaf-tumble.png",
+    frameW: 24,
+    frameH: 24,
+    count: 8,
+    image: null,
+  },
+  bamboo: {
+    src: "assets/sprites/scenery/weather/falling-leaf-bamboo-tumble.png",
+    frameW: 24,
+    frameH: 24,
+    count: 8,
+    image: null,
+  },
 };
 
 export const TREE_SPRITES: TreeSpriteCatalog = {

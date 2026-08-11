@@ -13,3 +13,4 @@ export * from "./uiSprites";
 export * from "./statusEffects";
 export * from "./residualSpirit";
 export * from "./treasure";
+export * from "./treeFoliage";

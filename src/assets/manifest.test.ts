@@ -5,7 +5,7 @@ import {
   ACT_OCCLUDER_SPRITES,
   DEAD_BELL_AWAKENED_ECHO_BELL_SHEET,
   DEAD_BELL_RECOVER_SHEET,
-  FALLING_LEAF_SHEET,
+  FALLING_LEAF_SHEETS,
   MIRROR_DREAM_AWAKENED_CRACKS_SHEET,
   MIRROR_DREAM_CAST_AWAKENED_CRACKS_SHEET,
   MIRROR_DREAM_RECOVER_AWAKENED_CRACKS_SHEET,
@@ -32,7 +32,7 @@ import { spriteImageLoadTargets } from "./manifest";
 const originalMistBoneFogImages = MIST_BONE_FOG_SHEETS.map((sheet) => sheet.image);
 
 afterEach(() => {
-  FALLING_LEAF_SHEET.image = null;
+  for (const sheet of Object.values(FALLING_LEAF_SHEETS)) sheet.image = null;
   RESIDUAL_SPIRIT_HEAL_EFFECT_SHEET.image = null;
   for (const sheet of MIRROR_DREAM_RECOVERY_AND_CRACK_SHEETS) sheet.image = null;
   MIST_BONE_FOG_SHEETS.forEach((sheet, index) => {
@@ -104,14 +104,17 @@ describe("sprite manifest", () => {
     }
   });
 
-  it("preloads the falling-leaf animation exactly once and updates its image", () => {
+  it("preloads every tree-matched falling-leaf animation exactly once", () => {
     const targets = spriteImageLoadTargets();
-    const matchingTargets = targets.filter((target) => target.src === FALLING_LEAF_SHEET.src);
-    const image = {} as HTMLImageElement;
 
-    expect(matchingTargets).toHaveLength(1);
-    matchingTargets[0].setImage(image);
-    expect(FALLING_LEAF_SHEET.image).toBe(image);
+    for (const sheet of Object.values(FALLING_LEAF_SHEETS)) {
+      const matchingTargets = targets.filter((target) => target.src === sheet.src);
+      const image = {} as HTMLImageElement;
+
+      expect(matchingTargets).toHaveLength(1);
+      matchingTargets[0].setImage(image);
+      expect(sheet.image).toBe(image);
+    }
   });
 
   it("preloads every Mirror Dream recovery and crack sequence exactly once", () => {

@@ -1,15 +1,42 @@
 import { describe, expect, it } from "vitest";
 
-import { FALLING_LEAF_SHEET, TORII_SPRITES } from "./scenery";
+import { FALLING_LEAF_SHEETS, TORII_SPRITES } from "./scenery";
 
-describe("falling leaf sprite sheet", () => {
-  it("keeps the eight centered tumble frames in one horizontal strip", () => {
-    expect(FALLING_LEAF_SHEET).toMatchObject({
-      src: "assets/sprites/scenery/weather/falling-leaf-tumble.png",
-      frameW: 24,
-      frameH: 24,
-      count: 8,
-    });
+describe("falling leaf sprite sheets", () => {
+  it("keeps four tree-matched leaf families on the same tumble contract", () => {
+    expect(Object.keys(FALLING_LEAF_SHEETS)).toEqual([
+      "pine",
+      "willow",
+      "broadleaf",
+      "bamboo",
+    ]);
+
+    expect(Object.values(FALLING_LEAF_SHEETS)).toEqual([
+      expect.objectContaining({
+        src: "assets/sprites/scenery/weather/falling-leaf-pine-tumble.png",
+        frameW: 24,
+        frameH: 24,
+        count: 8,
+      }),
+      expect.objectContaining({
+        src: "assets/sprites/scenery/weather/falling-leaf-willow-tumble.png",
+        frameW: 24,
+        frameH: 24,
+        count: 8,
+      }),
+      expect.objectContaining({
+        src: "assets/sprites/scenery/weather/falling-leaf-broadleaf-tumble.png",
+        frameW: 24,
+        frameH: 24,
+        count: 8,
+      }),
+      expect.objectContaining({
+        src: "assets/sprites/scenery/weather/falling-leaf-bamboo-tumble.png",
+        frameW: 24,
+        frameH: 24,
+        count: 8,
+      }),
+    ]);
   });
 });
 

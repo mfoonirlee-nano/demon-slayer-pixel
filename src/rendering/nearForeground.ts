@@ -12,7 +12,10 @@ import {
   FOREGROUND_SPRITES,
   ACT_OCCLUDER_BOTTOM_GUTTER,
   ACT_OCCLUDER_SPRITES,
+  REGULAR_TREE_FOLIAGE,
+  TALL_TREE_FOLIAGE,
   type ActOccluderKind,
+  type FallingLeafKind,
 } from "../constants";
 import { bossApproachGroundTransitionSeconds } from "../systems/runProgression";
 import type { EnemySpawnOccluderState, EnemySpawnOccluderSource } from "../types/game-state";
@@ -45,6 +48,7 @@ const BOSS_PRELUDE_TORII_START_PADDING = 48;
 const BOSS_PRELUDE_TORII_EXIT_PADDING = 48;
 const NEAR_FOREGROUND_PASS_MIN = -1;
 const NEAR_FOREGROUND_PASS_MAX = 1;
+const TREE_LEAF_SOURCE_VIEW_MARGIN = 64;
 
 const ACT_OCCLUDER_PLACEMENTS: Array<{
   kind: ActOccluderKind;
@@ -64,6 +68,8 @@ type TreePlacement = {
   alpha: number;
 };
 
+type TreeLayer = "regular" | "tall";
+
 const TREE_LINE: TreePlacement[] = Array.from({ length: TREE_COUNT }, (_, i) => ({
   variantSeed: i * TREE_VARIANT_SEED_STEP + TREE_VARIANT_SEED_OFFSET,
   baseX: i * TREE_BASE_X_STEP + ((i % TREE_BASE_X_GROUP_MOD) - TREE_BASE_X_GROUP_CENTER) * TREE_BASE_X_GROUP_OFFSET,
@@ -79,15 +85,44 @@ const TALL_TREE_LINE: TreePlacement[] = [
   { variantSeed: 3, baseX: 2235, bottomOffset: 13, drawH: 360, alpha: 0.77 },
 ];
 
-const TREE_OCCLUDER_VARIANTS = TREE_SPRITES.sheets.flatMap((sheet, sheetIndex) =>
-  sheet.variants.map((region, variantIndex) => ({ sheetIndex, variantIndex, region })),
-);
-const TREE_DRAW_VARIANTS = TREE_SPRITES.sheets.flatMap((sheet) =>
-  sheet.variants.map((region) => ({ sheet, region })),
-);
-const TALL_TREE_DRAW_VARIANTS = TALL_TREE_SPRITES.sheets.flatMap((sheet) =>
-  sheet.variants.map((region) => ({ sheet, region })),
-);
+function flattenTreeVariants(catalog: typeof TREE_SPRITES) {
+  let flatOffset = 0;
+  return catalog.sheets.flatMap((sheet, sheetIndex) => {
+    const entries = sheet.variants.map((region, variantIndex) => ({
+      sheet,
+      sheetIndex,
+      variantIndex,
+      flatVariantIndex: flatOffset + variantIndex,
+      region,
+    }));
+    flatOffset += entries.length;
+    return entries;
+  });
+}
+
+const TREE_VARIANTS = flattenTreeVariants(TREE_SPRITES);
+const TALL_TREE_VARIANTS = flattenTreeVariants(TALL_TREE_SPRITES);
+
+type TreeVariantEntry = typeof TREE_VARIANTS[number];
+
+type ResolvedTreePlacement = {
+  id: string;
+  treeLayer: TreeLayer;
+  entry: TreeVariantEntry;
+  x: number;
+  y: number;
+  drawH: number;
+  alpha: number;
+};
+
+export type TreeLeafSource = {
+  id: string;
+  treeLayer: TreeLayer;
+  kind: FallingLeafKind;
+  x: number;
+  y: number;
+  alpha: number;
+};
 
 const FOREGROUND_DECOR: Array<{
   variantSeed: number;
@@ -135,7 +170,6 @@ export type BossPreludeToriiPlacement = {
   drawH: number;
   alpha: number;
 };
-
 export type NearForegroundOccluder = EnemySpawnOccluderState;
 
 function clamp01(value: number) {
@@ -183,14 +217,78 @@ function drawRegion(
   context.restore();
 }
 
-function nearForegroundOffset(elapsed: number) {
+function nearForegroundScroll(elapsed: number) {
   const scroll = elapsed * NEAR_FOREGROUND_SCROLL_SPEED;
-  return ((scroll % NEAR_FOREGROUND_PATTERN_WIDTH) + NEAR_FOREGROUND_PATTERN_WIDTH) % NEAR_FOREGROUND_PATTERN_WIDTH;
+  const patternCycle = Math.floor(scroll / NEAR_FOREGROUND_PATTERN_WIDTH);
+  return {
+    offset: scroll - patternCycle * NEAR_FOREGROUND_PATTERN_WIDTH,
+    patternCycle,
+  };
+}
+
+function nearForegroundOffset(elapsed: number) {
+  return nearForegroundScroll(elapsed).offset;
 }
 
 function treeDrawHeight(preferredDrawH: number, region: { sh: number }, sourceScale: number) {
   // Preserve the catalog's source-density reserve when the canvas backing scale grows.
   return Math.min(preferredDrawH, region.sh / sourceScale);
+}
+
+function resolveTreePlacements(elapsed: number, treeLayer: TreeLayer): ResolvedTreePlacement[] {
+  const { offset, patternCycle } = nearForegroundScroll(elapsed);
+  const variants = treeLayer === "regular" ? TREE_VARIANTS : TALL_TREE_VARIANTS;
+  const placements = treeLayer === "regular" ? TREE_LINE : TALL_TREE_LINE;
+  const sourceScale = treeLayer === "regular"
+    ? TREE_SPRITES.sourceScale
+    : TALL_TREE_SPRITES.sourceScale;
+  if (variants.length === 0) return [];
+
+  const resolved: ResolvedTreePlacement[] = [];
+  for (let pass = NEAR_FOREGROUND_PASS_MIN; pass <= NEAR_FOREGROUND_PASS_MAX; pass += 1) {
+    for (const [placementIndex, tree] of placements.entries()) {
+      const entry = variants[tree.variantSeed % variants.length];
+      const drawH = treeDrawHeight(tree.drawH, entry.region, sourceScale);
+      resolved.push({
+        id: `${treeLayer}:${patternCycle + pass}:${placementIndex}`,
+        treeLayer,
+        entry,
+        x: tree.baseX + pass * NEAR_FOREGROUND_PATTERN_WIDTH - offset,
+        y: GROUND_Y + tree.bottomOffset - drawH,
+        drawH,
+        alpha: tree.alpha,
+      });
+    }
+  }
+  return resolved;
+}
+
+export function resolveTreeLeafSources(input: {
+  elapsed: number;
+  layer: "far" | "near";
+}): TreeLeafSource[] {
+  const treeLayer = input.layer === "far" ? "tall" : "regular";
+  const foliage = treeLayer === "tall" ? TALL_TREE_FOLIAGE : REGULAR_TREE_FOLIAGE;
+
+  return resolveTreePlacements(input.elapsed, treeLayer).flatMap((tree) => {
+    const profile = foliage[tree.entry.flatVariantIndex];
+    if (!profile) return [];
+
+    const sourceScale = tree.drawH / tree.entry.region.sh;
+    return profile.anchors.flatMap((anchor, anchorIndex) => {
+      const source: TreeLeafSource = {
+        id: `${tree.id}:canopy:${anchorIndex}`,
+        treeLayer,
+        kind: profile.kind,
+        x: tree.x + anchor.x * tree.entry.region.sw * sourceScale,
+        y: tree.y + anchor.y * tree.entry.region.sh * sourceScale,
+        alpha: tree.alpha,
+      };
+      const isNearView = source.x >= -TREE_LEAF_SOURCE_VIEW_MARGIN
+        && source.x <= WIDTH + TREE_LEAF_SOURCE_VIEW_MARGIN;
+      return isNearView ? [source] : [];
+    });
+  });
 }
 
 function pushOccluder(
@@ -216,22 +314,20 @@ function pushOccluder(
   });
 }
 
-function pushTreeOccluders(occluders: NearForegroundOccluder[], pass: number, offset: number) {
-  if (TREE_OCCLUDER_VARIANTS.length === 0) return;
-
-  for (const tree of TREE_LINE) {
-    const entry = TREE_OCCLUDER_VARIANTS[tree.variantSeed % TREE_OCCLUDER_VARIANTS.length];
-    const drawH = treeDrawHeight(tree.drawH, entry.region, TREE_SPRITES.sourceScale);
-    const x = tree.baseX + pass * NEAR_FOREGROUND_PATTERN_WIDTH - offset;
-    const y = GROUND_Y + tree.bottomOffset - drawH;
+function pushTreeOccluders(
+  occluders: NearForegroundOccluder[],
+  trees: ResolvedTreePlacement[],
+) {
+  for (const tree of trees) {
+    const { entry } = tree;
     pushOccluder(
       occluders,
       "tree",
       entry.region,
       entry.variantIndex,
-      x,
-      y,
-      drawH,
+      tree.x,
+      tree.y,
+      tree.drawH,
       tree.alpha,
       entry.sheetIndex,
     );
@@ -308,9 +404,7 @@ export function resolveNearForegroundOccluders(input: {
   const offset = nearForegroundOffset(input.elapsed);
   const occluders: NearForegroundOccluder[] = [];
 
-  for (let pass = NEAR_FOREGROUND_PASS_MIN; pass <= NEAR_FOREGROUND_PASS_MAX; pass += 1) {
-    pushTreeOccluders(occluders, pass, offset);
-  }
+  pushTreeOccluders(occluders, resolveTreePlacements(input.elapsed, "regular"));
   for (let pass = NEAR_FOREGROUND_PASS_MIN; pass <= NEAR_FOREGROUND_PASS_MAX; pass += 1) {
     pushActPropOccluders(occluders, input.act, pass, offset);
   }
@@ -383,48 +477,23 @@ function occluderImageAndRegion(occluder: EnemySpawnOccluderState) {
 
 function drawTreeLine(
   context: CanvasRenderingContext2D,
-  pass: number,
-  offset: number,
-  variants: typeof TREE_DRAW_VARIANTS,
-  placements: TreePlacement[],
-  sourceScale: number,
+  trees: ResolvedTreePlacement[],
 ) {
-  if (variants.length === 0 || variants.every(({ sheet }) => !sheet.image)) return;
-
-  for (const tree of placements) {
-    const entry = variants[tree.variantSeed % variants.length];
+  for (const tree of trees) {
+    const { entry } = tree;
     const image = entry.sheet.image;
     if (!image) continue;
 
-    const { region } = entry;
-    const drawH = treeDrawHeight(tree.drawH, region, sourceScale);
-    const x = tree.baseX + pass * NEAR_FOREGROUND_PATTERN_WIDTH - offset;
-    const y = GROUND_Y + tree.bottomOffset - drawH;
-
-    drawRegion(context, image, region, x, y, drawH, tree.alpha);
+    drawRegion(context, image, entry.region, tree.x, tree.y, tree.drawH, tree.alpha);
   }
 }
 
-function drawTrees(context: CanvasRenderingContext2D, pass: number, offset: number) {
-  drawTreeLine(
-    context,
-    pass,
-    offset,
-    TREE_DRAW_VARIANTS,
-    TREE_LINE,
-    TREE_SPRITES.sourceScale,
-  );
+function drawTrees(context: CanvasRenderingContext2D, elapsed: number) {
+  drawTreeLine(context, resolveTreePlacements(elapsed, "regular"));
 }
 
-function drawTallTrees(context: CanvasRenderingContext2D, pass: number, offset: number) {
-  drawTreeLine(
-    context,
-    pass,
-    offset,
-    TALL_TREE_DRAW_VARIANTS,
-    TALL_TREE_LINE,
-    TALL_TREE_SPRITES.sourceScale,
-  );
+function drawTallTrees(context: CanvasRenderingContext2D, elapsed: number) {
+  drawTreeLine(context, resolveTreePlacements(elapsed, "tall"));
 }
 
 function drawActProps(
@@ -495,13 +564,8 @@ export function drawNearForeground() {
   if (!context) return;
 
   const offset = nearForegroundOffset(state.elapsed);
-
-  for (let pass = NEAR_FOREGROUND_PASS_MIN; pass <= NEAR_FOREGROUND_PASS_MAX; pass += 1) {
-    drawTallTrees(context, pass, offset);
-  }
-  for (let pass = NEAR_FOREGROUND_PASS_MIN; pass <= NEAR_FOREGROUND_PASS_MAX; pass += 1) {
-    drawTrees(context, pass, offset);
-  }
+  drawTallTrees(context, state.elapsed);
+  drawTrees(context, state.elapsed);
   for (let pass = NEAR_FOREGROUND_PASS_MIN; pass <= NEAR_FOREGROUND_PASS_MAX; pass += 1) {
     drawActProps(context, state.enemyDirector.act, pass, offset);
   }

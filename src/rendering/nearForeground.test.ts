@@ -3,6 +3,7 @@ import { afterEach, describe, expect, it } from "vitest";
 import {
   ACT_OCCLUDER_SPRITES,
   GROUND_Y,
+  NEAR_FOREGROUND_SCROLL_SPEED,
   TALL_TREE_SPRITES,
   TORII_SPRITES,
   TREE_SPRITES,
@@ -15,6 +16,7 @@ import {
   drawNearForeground,
   resolveNearForegroundOccluders,
   resolveBossPreludeToriiPlacement,
+  resolveTreeLeafSources,
 } from "./nearForeground";
 
 const ACT_ONE = 1;
@@ -28,6 +30,15 @@ const MAX_GROUNDED_ENEMY_DRAW_WIDTH = 142;
 const MAX_GROUNDED_ENEMY_DRAW_HEIGHT = 160;
 const SOURCE_DENSITY_EPSILON = 1e-9;
 const NEAR_FOREGROUND_PASS_COUNT = 3;
+const TREE_PATTERN_SAMPLE_COUNT = 5;
+const TREE_PATTERN_SAMPLE_STEP_SECONDS = 40;
+const TREE_PATTERN_SAMPLE_TIMES = Array.from(
+  { length: TREE_PATTERN_SAMPLE_COUNT },
+  (_, index) => index * TREE_PATTERN_SAMPLE_STEP_SECONDS,
+);
+const TREE_PATTERN_WIDTH = 2688;
+const TREE_PATTERN_LOOP_SECONDS = TREE_PATTERN_WIDTH / NEAR_FOREGROUND_SCROLL_SPEED;
+const TREE_WRAP_SAMPLE_EPSILON = 0.01;
 const originalTreeImages = TREE_SPRITES.sheets.map((sheet) => sheet.image);
 const originalTallTreeImages = TALL_TREE_SPRITES.sheets.map((sheet) => sheet.image);
 
@@ -169,6 +180,52 @@ describe("near foreground placement", () => {
     expect(lastTallTree).toBeGreaterThanOrEqual(0);
     expect(firstRegularTree).toBeGreaterThan(lastTallTree);
     expect(treeOccluders).toHaveLength(regularTreeVariantCount * NEAR_FOREGROUND_PASS_COUNT);
+  });
+
+  it("exposes only real tree canopies as layer-matched falling-leaf sources", () => {
+    const farSources = resolveTreeLeafSources({ elapsed: START_ELAPSED, layer: "far" });
+    const nearSources = resolveTreeLeafSources({ elapsed: START_ELAPSED, layer: "near" });
+
+    expect(farSources.length).toBeGreaterThan(0);
+    expect(nearSources.length).toBeGreaterThan(0);
+    expect(farSources.every((source) => source.treeLayer === "tall")).toBe(true);
+    expect(nearSources.every((source) => source.treeLayer === "regular")).toBe(true);
+
+    for (const source of [...farSources, ...nearSources]) {
+      expect(Number.isFinite(source.x)).toBe(true);
+      expect(Number.isFinite(source.y)).toBe(true);
+      expect(source.y).toBeLessThan(GROUND_Y);
+    }
+  });
+
+  it("rotates every foliage family through the visible regular tree line", () => {
+    const kinds = new Set(TREE_PATTERN_SAMPLE_TIMES.flatMap((elapsed) => (
+      resolveTreeLeafSources({ elapsed, layer: "near" }).map((source) => source.kind)
+    )));
+
+    expect(kinds).toEqual(new Set(["pine", "willow", "broadleaf", "bamboo"]));
+  });
+
+  it("keeps tree-source identity continuous when the scenery pattern wraps", () => {
+    const before = resolveTreeLeafSources({
+      elapsed: TREE_PATTERN_LOOP_SECONDS - TREE_WRAP_SAMPLE_EPSILON,
+      layer: "near",
+    });
+    const after = resolveTreeLeafSources({
+      elapsed: TREE_PATTERN_LOOP_SECONDS + TREE_WRAP_SAMPLE_EPSILON,
+      layer: "near",
+    });
+    const beforeById = new Map(before.map((source) => [source.id, source]));
+    const sharedSources = after.filter((source) => beforeById.has(source.id));
+
+    expect(sharedSources.length).toBeGreaterThan(0);
+    for (const source of sharedSources) {
+      const previous = beforeById.get(source.id);
+      if (!previous) throw new Error("expected a matching source before the pattern wrap");
+      expect(source.x - previous.x).toBeCloseTo(
+        -TREE_WRAP_SAMPLE_EPSILON * 2 * NEAR_FOREGROUND_SCROLL_SPEED,
+      );
+    }
   });
 
   it.each(ACTS)("adds drawable themed and generic enemy cover in Act %i", (act) => {

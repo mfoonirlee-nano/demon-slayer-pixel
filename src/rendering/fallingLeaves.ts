@@ -1,6 +1,12 @@
-import { FALLING_LEAF_SHEET, GROUND_Y, WIDTH } from "../constants";
+import {
+  FALLING_LEAF_SHEETS,
+  FALLING_LEAF_KINDS,
+  GROUND_Y,
+  type FallingLeafKind,
+} from "../constants";
 import { seededRandom } from "../game/utils";
 import { ctx } from "./context";
+import { resolveTreeLeafSources, type TreeLeafSource } from "./nearForeground";
 
 export type FallingLeafLayer = "far" | "near";
 
@@ -9,6 +15,11 @@ export type FallingLeafRenderItem = {
   y: number;
   alpha: number;
   frame: number;
+  kind: FallingLeafKind;
+  sourceId: string;
+  releasedAt: number;
+  originX: number;
+  originY: number;
 };
 
 export type FallingLeafOptions = {
@@ -20,8 +31,8 @@ export type FallingLeafOptions = {
 type FallingLeafLayerConfig = {
   calmCount: number;
   gustCount: number;
-  fallSpeedMin: number;
-  fallSpeedRange: number;
+  cycleDurationMin: number;
+  cycleDurationRange: number;
   horizontalSpeedMin: number;
   horizontalSpeedRange: number;
   gustSpeedMin: number;
@@ -43,17 +54,33 @@ type FallingLeafLayerConfig = {
 type WindCycle = {
   strength: number;
   integratedStrength: number;
+  activeGust: {
+    index: number;
+    startedAt: number;
+    duration: number;
+  } | null;
 };
 
 const TWO_PI = Math.PI * 2;
-const LEAF_TOP = -8;
 const LEAF_GROUND_INSET = 6;
 const LEAF_BOTTOM = GROUND_Y - LEAF_GROUND_INSET;
-const LEAF_TRAVEL_HEIGHT = LEAF_BOTTOM - LEAF_TOP;
-const LEAF_VIEWPORT_MARGIN = 12;
-const LEAF_HORIZONTAL_SPAN = WIDTH + LEAF_VIEWPORT_MARGIN * 2;
 const GUST_VISIBILITY_THRESHOLD = 0.08;
 const VERTICAL_FLUTTER_RATE_SCALE = 0.7;
+const LEAF_SLOT_SEED_STEP = 0x6c8e9cf5;
+const LEAF_CYCLE_SEED_STEP = 0x9e3779b1;
+const LEAF_KIND_SEED_SALT = 0x42d4c3;
+const LEAF_GROUND_FADE_START = 0.82;
+const LEAF_MIN_END_ALPHA = 0.08;
+const LEAF_LIFT_RAMP_SECONDS = 0.3;
+const GUST_RELEASE_WINDOW_RATIO = 0.35;
+const GUST_VISIBILITY_DELAY_RATIO = Math.asin(GUST_VISIBILITY_THRESHOLD) / Math.PI;
+
+const LEAF_KIND_TUMBLE_RATE_SCALE: Record<FallingLeafKind, number> = {
+  pine: 0.82,
+  willow: 0.68,
+  broadleaf: 1,
+  bamboo: 1.16,
+};
 
 const WIND_TIMING = {
   firstStartMin: 1.2,
@@ -69,8 +96,8 @@ const LAYER_CONFIG: Record<FallingLeafLayer, FallingLeafLayerConfig> = {
   far: {
     calmCount: 6,
     gustCount: 7,
-    fallSpeedMin: 7,
-    fallSpeedRange: 5,
+    cycleDurationMin: 16,
+    cycleDurationRange: 6,
     horizontalSpeedMin: 18,
     horizontalSpeedRange: 8,
     gustSpeedMin: 52,
@@ -91,8 +118,8 @@ const LAYER_CONFIG: Record<FallingLeafLayer, FallingLeafLayerConfig> = {
   near: {
     calmCount: 4,
     gustCount: 5,
-    fallSpeedMin: 12,
-    fallSpeedRange: 6,
+    cycleDurationMin: 9,
+    cycleDurationRange: 4,
     horizontalSpeedMin: 26,
     horizontalSpeedRange: 10,
     gustSpeedMin: 58,
@@ -121,7 +148,9 @@ function resolveWindCycle(elapsed: number, seed: number): WindCycle {
   const firstStart = WIND_TIMING.firstStartMin + rng() * WIND_TIMING.firstStartRange;
   const interval = WIND_TIMING.intervalMin + rng() * WIND_TIMING.intervalRange;
   const duration = WIND_TIMING.durationMin + rng() * WIND_TIMING.durationRange;
-  if (elapsed < firstStart) return { strength: 0, integratedStrength: 0 };
+  if (elapsed < firstStart) {
+    return { strength: 0, integratedStrength: 0, activeGust: null };
+  }
 
   const elapsedSinceFirstGust = elapsed - firstStart;
   const completedCycles = Math.floor(elapsedSinceFirstGust / interval);
@@ -131,6 +160,7 @@ function resolveWindCycle(elapsed: number, seed: number): WindCycle {
     return {
       strength: 0,
       integratedStrength: (completedCycles + 1) * fullGustIntegral,
+      activeGust: null,
     };
   }
 
@@ -140,6 +170,11 @@ function resolveWindCycle(elapsed: number, seed: number): WindCycle {
   return {
     strength: Math.sin(Math.PI * gustProgress),
     integratedStrength: completedCycles * fullGustIntegral + partialGustIntegral,
+    activeGust: {
+      index: completedCycles,
+      startedAt: firstStart + completedCycles * interval,
+      duration,
+    },
   };
 }
 
@@ -147,12 +182,41 @@ function resolveLeaf(
   options: FallingLeafOptions,
   config: FallingLeafLayerConfig,
   wind: WindCycle,
-  rng: () => number,
+  index: number,
   isGustLeaf: boolean,
-): FallingLeafRenderItem {
-  const originX = rng() * LEAF_HORIZONTAL_SPAN;
-  const originY = rng() * LEAF_TRAVEL_HEIGHT;
-  const fallSpeed = config.fallSpeedMin + rng() * config.fallSpeedRange;
+): FallingLeafRenderItem | null {
+  const slotSeed = options.seed + config.seedSalt
+    + Math.imul(index + 1, LEAF_SLOT_SEED_STEP);
+  const rng = seededRandom(slotSeed);
+  const cycleDuration = config.cycleDurationMin + rng() * config.cycleDurationRange;
+  const cycleOffset = rng() * cycleDuration;
+  let cycleIndex: number;
+  let cycleAge: number;
+  let releasedAt: number;
+  if (isGustLeaf) {
+    const activeGust = wind.activeGust;
+    if (!activeGust) return null;
+
+    const gustLeafIndex = index - config.calmCount;
+    const releaseProgress = GUST_VISIBILITY_DELAY_RATIO
+      + gustLeafIndex / config.gustCount * GUST_RELEASE_WINDOW_RATIO;
+    releasedAt = activeGust.startedAt + activeGust.duration * releaseProgress;
+    if (options.elapsed < releasedAt) return null;
+    cycleIndex = activeGust.index;
+    cycleAge = options.elapsed - releasedAt;
+  } else {
+    const cyclePosition = (options.elapsed + cycleOffset) / cycleDuration;
+    cycleIndex = Math.floor(cyclePosition);
+    cycleAge = (cyclePosition - cycleIndex) * cycleDuration;
+    releasedAt = options.elapsed - cycleAge;
+  }
+  const sourceRng = seededRandom(slotSeed + Math.imul(cycleIndex, LEAF_CYCLE_SEED_STEP));
+  const sources = resolveTreeLeafSources({ elapsed: releasedAt, layer: options.layer });
+  if (sources.length === 0) return null;
+
+  const source = selectTreeSource(sources, index, options.seed + config.seedSalt, sourceRng);
+  const originX = source.x;
+  const originY = source.y;
   const horizontalSpeed = config.horizontalSpeedMin + rng() * config.horizontalSpeedRange;
   const gustSpeed = config.gustSpeedMin + rng() * config.gustSpeedRange;
   const sway = config.swayMin + rng() * config.swayRange;
@@ -160,32 +224,64 @@ function resolveLeaf(
   const phase = rng() * TWO_PI;
   const tumbleRate = config.tumbleRateMin + rng() * config.tumbleRateRange;
   const alpha = config.alphaMin + rng() * config.alphaRange;
-  const windTravel = wind.integratedStrength * gustSpeed;
-  const swayOffset = Math.sin(options.elapsed * swayRate + phase) * sway;
-  const x = -LEAF_VIEWPORT_MARGIN + positiveModulo(
-    originX - options.elapsed * horizontalSpeed - windTravel + swayOffset,
-    LEAF_HORIZONTAL_SPAN,
-  );
-  const flutterOffset = Math.sin(
-    options.elapsed * swayRate * VERTICAL_FLUTTER_RATE_SCALE + phase,
+  const releaseWind = resolveWindCycle(releasedAt, options.seed);
+  const windTravel = (wind.integratedStrength - releaseWind.integratedStrength) * gustSpeed;
+  const swayOffset = (
+    Math.sin(options.elapsed * swayRate + phase)
+    - Math.sin(releasedAt * swayRate + phase)
+  ) * sway;
+  const x = originX - cycleAge * horizontalSpeed - windTravel + swayOffset;
+  const flutterRate = swayRate * VERTICAL_FLUTTER_RATE_SCALE;
+  const flutterOffset = (
+    Math.sin(options.elapsed * flutterRate + phase)
+    - Math.sin(releasedAt * flutterRate + phase)
   ) * config.flutter;
-  const liftOffset = wind.strength * config.gustLift;
-  const y = LEAF_TOP + positiveModulo(
-    originY + options.elapsed * fallSpeed + flutterOffset - liftOffset,
-    LEAF_TRAVEL_HEIGHT,
+  const liftRamp = Math.min(1, cycleAge / LEAF_LIFT_RAMP_SECONDS);
+  const liftOffset = wind.strength * config.gustLift * liftRamp;
+  const cycleProgress = cycleAge / cycleDuration;
+  const y = Math.min(
+    LEAF_BOTTOM - 1,
+    originY + (LEAF_BOTTOM - originY) * cycleProgress + flutterOffset - liftOffset,
   );
-  const framePhase = phase / TWO_PI * FALLING_LEAF_SHEET.count;
+  const sheet = FALLING_LEAF_SHEETS[source.kind];
+  const framePhase = phase / TWO_PI * sheet.count;
   const frame = Math.floor(positiveModulo(
-    options.elapsed * tumbleRate + framePhase,
-    FALLING_LEAF_SHEET.count,
+    options.elapsed * tumbleRate * LEAF_KIND_TUMBLE_RATE_SCALE[source.kind] + framePhase,
+    sheet.count,
   ));
+  const fadeProgress = Math.max(
+    0,
+    (cycleProgress - LEAF_GROUND_FADE_START) / (1 - LEAF_GROUND_FADE_START),
+  );
+  const endFade = Math.max(LEAF_MIN_END_ALPHA, 1 - fadeProgress);
 
   return {
     x: Math.round(x),
     y: Math.round(y),
-    alpha: alpha * (isGustLeaf ? wind.strength : 1),
+    alpha: alpha * source.alpha * endFade * (isGustLeaf ? wind.strength : 1),
     frame,
+    kind: source.kind,
+    sourceId: source.id,
+    releasedAt,
+    originX,
+    originY,
   };
+}
+
+function selectTreeSource(
+  sources: TreeLeafSource[],
+  index: number,
+  seed: number,
+  rng: () => number,
+) {
+  const availableKinds = FALLING_LEAF_KINDS.filter((kind) => (
+    sources.some((source) => source.kind === kind)
+  ));
+  const kindRng = seededRandom(seed + LEAF_KIND_SEED_SALT);
+  const kindOffset = Math.floor(kindRng() * availableKinds.length);
+  const preferredKind = availableKinds[(index + kindOffset) % availableKinds.length];
+  const matchingSources = sources.filter((source) => source.kind === preferredKind);
+  return matchingSources[Math.floor(rng() * matchingSources.length)];
 }
 
 export function resolveFallingLeafRenderPlan(
@@ -195,33 +291,35 @@ export function resolveFallingLeafRenderPlan(
   const wind = resolveWindCycle(options.elapsed, options.seed);
   const gustCount = wind.strength > GUST_VISIBILITY_THRESHOLD ? config.gustCount : 0;
   const leafCount = config.calmCount + gustCount;
-  const rng = seededRandom(options.seed + config.seedSalt);
 
   return Array.from({ length: leafCount }, (_, index) => resolveLeaf(
     options,
     config,
     wind,
-    rng,
+    index,
     index >= config.calmCount,
-  ));
+  )).filter((leaf): leaf is FallingLeafRenderItem => leaf !== null);
 }
 
 export function drawFallingLeaves(options: FallingLeafOptions): void {
   const context = ctx;
-  const image = FALLING_LEAF_SHEET.image;
-  if (!context || !image) return;
+  if (!context) return;
 
   const drawSize = LAYER_CONFIG[options.layer].drawSize;
   const plan = resolveFallingLeafRenderPlan(options);
   context.save();
   for (const leaf of plan) {
+    const sheet = FALLING_LEAF_SHEETS[leaf.kind];
+    const image = sheet.image;
+    if (!image) continue;
+
     context.globalAlpha = leaf.alpha;
     context.drawImage(
       image,
-      leaf.frame * FALLING_LEAF_SHEET.frameW,
+      leaf.frame * sheet.frameW,
       0,
-      FALLING_LEAF_SHEET.frameW,
-      FALLING_LEAF_SHEET.frameH,
+      sheet.frameW,
+      sheet.frameH,
       leaf.x - drawSize / 2,
       leaf.y - drawSize / 2,
       drawSize,
