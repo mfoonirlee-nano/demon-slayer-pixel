@@ -84,6 +84,7 @@ import {
 } from "../entities/highPlatformTreasure";
 import { updateProjectiles, drawProjectiles } from "../entities/projectile";
 import { drawResidualSpirits, updateResidualSpirits } from "../entities/residualSpirit";
+import { drawResidualSpiritHealingEffect } from "../entities/players/residualSpiritHealingVisual";
 import {
   updateParticles,
   updateSkillBursts,
@@ -129,7 +130,11 @@ import { equipSkillSlot as equipSkillSlotInState, setSkillLevel as setSkillLevel
 import { updateEnemyDirector } from "../systems/enemyDirector";
 import { markSpritesReady } from "../systems/runLifecycle";
 import { isTreasureRevealAnimating } from "../systems/treasureState";
-import { beginResidualSpiritHealing, updateResidualSpiritHealing } from "../systems/residualSpirit";
+import {
+  beginResidualSpiritHealing,
+  updateResidualSpiritHealing,
+  updateResidualSpiritHealingCompletionVisual,
+} from "../systems/residualSpirit";
 import {
   observeTreasureMapSegment,
   createTreasureRouteRandom,
@@ -251,8 +256,9 @@ function isUltimateCastFreezeActive() {
   return state.player.ultimateCastTimer > 0;
 }
 
-export function updateUltimateCastFreezeFrame() {
+export function updateUltimateCastFreezeFrame(dt: number) {
   updatePlayer();
+  updateResidualSpiritHealingCompletionVisual(state, dt);
   // Gameplay remains frozen, but old visual bursts must not stay at peak density for the full cast.
   updateParticles();
   updateSkillBursts();
@@ -381,7 +387,7 @@ function loop(ts: number) {
     } else if (state.treasureReveal) {
       updateTreasureReveal(state, dt);
     } else if (isUltimateCastFreezeActive()) {
-      updateUltimateCastFreezeFrame();
+      updateUltimateCastFreezeFrame(dt);
     } else {
       state.elapsed += dt;
       if (canAutoSpawnEntities()) {
@@ -497,6 +503,7 @@ function loop(ts: number) {
 
   drawUltimatePlayerGhosts();
   drawPlayer();
+  drawResidualSpiritHealingEffect();
   drawHighPlatformTreasure();
   drawHuntBladeReachEffects();
   drawPlatformOcclusion();

@@ -60,6 +60,15 @@ describe("residual-spirit healing", () => {
     expect(state.player.hp).toBe(
       DAMAGED_HP + state.player.maxHp * RESIDUAL_SPIRIT_CONFIG.healRatio,
     );
+    expect(state.player.residualSpiritHealCompletionTimer).toBe(
+      RESIDUAL_SPIRIT_CONFIG.healCompletionVisualSeconds,
+    );
+
+    expect(updateResidualSpiritHealing(
+      state,
+      RESIDUAL_SPIRIT_CONFIG.healCompletionVisualSeconds,
+    )).toBe(false);
+    expect(state.player.residualSpiritHealCompletionTimer).toBe(0);
   });
 
   it("does not start at full health, without enough spirit, or while dead", () => {
@@ -81,5 +90,6 @@ describe("residual-spirit healing", () => {
 
     expect(updateResidualSpiritHealing(state, RESIDUAL_SPIRIT_CONFIG.healChannelSeconds)).toBe(false);
     expect(state.player.residualSpirit).toBe(RESIDUAL_SPIRIT_CONFIG.healCost);
+    expect(state.player.residualSpiritHealCompletionTimer).toBe(0);
   });
 });

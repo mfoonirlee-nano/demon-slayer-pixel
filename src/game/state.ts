@@ -52,6 +52,7 @@ export function createInitialPlayerState(): PlayerState {
     maxHp: PLAYER_DEFAULTS.maxHp,
     residualSpirit: 0,
     residualSpiritHealTimer: 0,
+    residualSpiritHealCompletionTimer: 0,
     invincible: 0,
     attackTimer: 0,
     attackDuration: BASIC_ATTACK.frames,

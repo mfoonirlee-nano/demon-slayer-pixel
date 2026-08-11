@@ -92,6 +92,7 @@ import {
   MOON_TIDE_TREASURE_SPRITE,
   PLATFORM_SPRITES,
   PLAYER_SHEETS,
+  RESIDUAL_SPIRIT_HEAL_EFFECT_SHEET,
   RUNNER_SHEETS,
   RESIDUAL_SPIRIT_PICKUP_SPRITE,
   STAR_SPRITES,
@@ -125,6 +126,7 @@ export function spriteImageLoadTargets(): ImageLoadTarget[] {
     ...spriteSheetTargets([
       ...Object.values(PLAYER_SHEETS),
       ...Object.values(MOON_TIDE_PLAYER_SHEETS),
+      RESIDUAL_SPIRIT_HEAL_EFFECT_SHEET,
       ...ENEMY_SHEETS,
       ...Object.values(CRAWLER_SHEETS),
       ...Object.values(CASTER_SHEETS),

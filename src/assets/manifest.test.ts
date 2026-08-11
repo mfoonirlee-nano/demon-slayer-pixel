@@ -19,6 +19,7 @@ import {
   MOON_TIDE_TREASURE_SPRITE,
   PLAYER_ANIMATION_STATES,
   PLAYER_SHEETS,
+  RESIDUAL_SPIRIT_HEAL_EFFECT_SHEET,
   RESIDUAL_SPIRIT_PICKUP_SPRITE,
   SPIDER_STRING_ATTACK_SHEET,
   SPIDER_STRING_PILLAR_CAST_SHEET,
@@ -30,6 +31,7 @@ const originalMistBoneFogImages = MIST_BONE_FOG_SHEETS.map((sheet) => sheet.imag
 
 afterEach(() => {
   FALLING_LEAF_SHEET.image = null;
+  RESIDUAL_SPIRIT_HEAL_EFFECT_SHEET.image = null;
   for (const sheet of MIRROR_DREAM_RECOVERY_AND_CRACK_SHEETS) sheet.image = null;
   MIST_BONE_FOG_SHEETS.forEach((sheet, index) => {
     sheet.image = originalMistBoneFogImages[index];
@@ -172,6 +174,18 @@ describe("sprite manifest", () => {
 
     expect(loadedSources.filter((src) => src === RESIDUAL_SPIRIT_PICKUP_SPRITE.src))
       .toHaveLength(1);
+  });
+
+  it("preloads the residual-spirit healing sequence exactly once and updates its image", () => {
+    const targets = spriteImageLoadTargets();
+    const matchingTargets = targets.filter(
+      (target) => target.src === RESIDUAL_SPIRIT_HEAL_EFFECT_SHEET.src,
+    );
+    const image = {} as HTMLImageElement;
+
+    expect(matchingTargets).toHaveLength(1);
+    matchingTargets[0].setImage(image);
+    expect(RESIDUAL_SPIRIT_HEAL_EFFECT_SHEET.image).toBe(image);
   });
 
   it("preloads the Moon-Tide treasure sequence exactly once", () => {

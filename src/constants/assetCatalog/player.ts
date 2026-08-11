@@ -1,5 +1,30 @@
 import { PLAYER_ANIMATION_STATES } from "../ids";
-import type { PlayerAnimationState, PlayerSheet } from "../../types/assets";
+import type {
+  PlayerAnimationState,
+  PlayerSheet,
+  SpriteSheet,
+} from "../../types/assets";
+
+type PlayerAttachedEffectSheet = SpriteSheet & {
+  drawW: number;
+  drawH: number;
+  anchorX: number;
+  anchorY: number;
+  channelFrameCount: number;
+};
+
+export const RESIDUAL_SPIRIT_HEAL_EFFECT_SHEET: PlayerAttachedEffectSheet = {
+  src: "assets/sprites/player/residual_spirit_heal_effect.png",
+  frameW: 240,
+  frameH: 240,
+  count: 8,
+  image: null,
+  drawW: 154,
+  drawH: 154,
+  anchorX: 0.5,
+  anchorY: 0.942,
+  channelFrameCount: 5,
+};
 
 export const PLAYER_SHEETS: Record<PlayerAnimationState, PlayerSheet> = {
   [PLAYER_ANIMATION_STATES.idle]: {

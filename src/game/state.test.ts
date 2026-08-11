@@ -58,6 +58,7 @@ describe("resetState", () => {
     resetState();
     state.player.residualSpirit = 27;
     state.player.residualSpiritHealTimer = 0.25;
+    state.player.residualSpiritHealCompletionTimer = 0.1;
 
     expect(getStateSnapshot().player).toMatchObject({
       residualSpirit: 27,
@@ -69,6 +70,7 @@ describe("resetState", () => {
     resetState();
     expect(state.player.residualSpirit).toBe(0);
     expect(state.player.residualSpiritHealTimer).toBe(0);
+    expect(state.player.residualSpiritHealCompletionTimer).toBe(0);
     expect(state.residualSpirits).toEqual([]);
   });
 

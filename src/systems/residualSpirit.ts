@@ -42,8 +42,20 @@ export function beginResidualSpiritHealing(gameState: GameState) {
   return true;
 }
 
+export function updateResidualSpiritHealingCompletionVisual(
+  gameState: GameState,
+  dt: number,
+) {
+  const player = gameState.player;
+  player.residualSpiritHealCompletionTimer = Math.max(
+    0,
+    player.residualSpiritHealCompletionTimer - dt,
+  );
+}
+
 export function updateResidualSpiritHealing(gameState: GameState, dt: number) {
   const player = gameState.player;
+  updateResidualSpiritHealingCompletionVisual(gameState, dt);
   if (player.residualSpiritHealTimer <= 0) return false;
 
   player.residualSpiritHealTimer = Math.max(0, player.residualSpiritHealTimer - dt);
@@ -54,6 +66,7 @@ export function updateResidualSpiritHealing(gameState: GameState, dt: number) {
     || player.hp >= player.maxHp
     || player.residualSpirit < RESIDUAL_SPIRIT_CONFIG.healCost
   ) {
+    player.residualSpiritHealCompletionTimer = 0;
     return false;
   }
 
@@ -62,5 +75,7 @@ export function updateResidualSpiritHealing(gameState: GameState, dt: number) {
     player.maxHp,
     player.hp + player.maxHp * RESIDUAL_SPIRIT_CONFIG.healRatio,
   );
+  player.residualSpiritHealCompletionTimer =
+    RESIDUAL_SPIRIT_CONFIG.healCompletionVisualSeconds;
   return true;
 }

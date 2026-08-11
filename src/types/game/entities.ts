@@ -85,6 +85,7 @@ export type PlayerState = {
   maxHp: number;
   residualSpirit: number;
   residualSpiritHealTimer: number;
+  residualSpiritHealCompletionTimer: number;
   invincible: number;
   attackTimer: number;
   attackDuration: number;

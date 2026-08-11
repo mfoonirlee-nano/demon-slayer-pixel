@@ -7,6 +7,8 @@ import {
   PLAYER_ANIMATION_STATES,
   PLAYER_COMBAT,
   PLAYER_SHEETS,
+  RESIDUAL_SPIRIT_CONFIG,
+  RUNTIME_CONFIG,
   WARDEN_BLOOD_MOON_BUFF_SHEET,
 } from "../constants";
 import {
@@ -65,6 +67,7 @@ const FOREGROUND_IMAGE = {} as HTMLImageElement;
 const ENEMY_BUFF_IMAGE = {} as HTMLImageElement;
 const BOSS_IMAGE = {} as HTMLImageElement;
 const TEST_FRAME_TIME = 16;
+const TEST_FRAME_SECONDS = TEST_FRAME_TIME / RUNTIME_CONFIG.msPerSecond;
 const ULTIMATE_FREEZE_SKILL_TIMER = 7;
 const ULTIMATE_FREEZE_VELOCITY_X = 4;
 const ULTIMATE_FREEZE_VELOCITY_Y = 5;
@@ -163,7 +166,7 @@ describe("game runtime", () => {
       strength: 1,
     });
 
-    updateUltimateCastFreezeFrame();
+    updateUltimateCastFreezeFrame(TEST_FRAME_SECONDS);
 
     expect(state.particles).toHaveLength(0);
     expect(state.hitBursts).toHaveLength(0);
@@ -184,9 +187,12 @@ describe("game runtime", () => {
     expect(gameStore.get(isCollisionDebugEnabledAtom)).toBe(true);
   });
 
-  it("advances the ultimate cast while gameplay timers and player physics stay frozen", () => {
+  it("advances completed healing visuals during the ultimate freeze without advancing gameplay", () => {
     state.player.ultimateCastTimer = PLAYER_COMBAT.ultimateCastFrames;
     state.player.skillTimer = ULTIMATE_FREEZE_SKILL_TIMER;
+    state.player.residualSpiritHealTimer = RESIDUAL_SPIRIT_CONFIG.healChannelSeconds;
+    state.player.residualSpiritHealCompletionTimer =
+      RESIDUAL_SPIRIT_CONFIG.healCompletionVisualSeconds;
     state.player.vx = ULTIMATE_FREEZE_VELOCITY_X;
     state.player.vy = ULTIMATE_FREEZE_VELOCITY_Y;
     state.elapsed = ULTIMATE_FREEZE_ELAPSED;
@@ -194,10 +200,16 @@ describe("game runtime", () => {
     const startX = state.player.x;
     const startY = state.player.y;
 
-    updateUltimateCastFreezeFrame();
+    updateUltimateCastFreezeFrame(TEST_FRAME_SECONDS);
 
     expect(state.player.ultimateCastTimer).toBe(PLAYER_COMBAT.ultimateCastFrames - 1);
     expect(state.player.skillTimer).toBe(ULTIMATE_FREEZE_SKILL_TIMER);
+    expect(state.player.residualSpiritHealTimer).toBe(
+      RESIDUAL_SPIRIT_CONFIG.healChannelSeconds,
+    );
+    expect(state.player.residualSpiritHealCompletionTimer).toBeCloseTo(
+      RESIDUAL_SPIRIT_CONFIG.healCompletionVisualSeconds - TEST_FRAME_SECONDS,
+    );
     expect(state.player.x).toBe(startX);
     expect(state.player.y).toBe(startY);
     expect(state.player.vx).toBe(ULTIMATE_FREEZE_VELOCITY_X);
