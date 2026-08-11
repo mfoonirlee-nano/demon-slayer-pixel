@@ -97,7 +97,7 @@ describe("boss awakening behavior", () => {
 
     expect(boss.skillMode).toBe("mirrorTrueImageShift");
     expect(boss.mirrorTrueImageShiftPhase).toBe(2);
-    expect(state.mirrorAfterimages.length).toBeGreaterThan(1);
+    expect(state.mirrorImages.length).toBeGreaterThan(1);
   });
 
   it("adds one awakened splitter to Mirror Dream's phase-three shift", () => {

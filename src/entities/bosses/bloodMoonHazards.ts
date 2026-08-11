@@ -16,7 +16,7 @@ export function clearBloodMoonHazards(
   state.mistBoneFogs.length = 0;
   state.mistBoneSpikes.length = 0;
   state.mirrorShards.length = 0;
-  state.mirrorAfterimages.length = 0;
+  state.mirrorImages.length = 0;
   state.fangGaleWaves.length = 0;
   state.lanternEmberLures.length = 0;
   state.lanternEmberFirelines.length = 0;

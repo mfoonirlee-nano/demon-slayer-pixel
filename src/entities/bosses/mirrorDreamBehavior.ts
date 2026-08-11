@@ -12,7 +12,7 @@ import type { LiveBoss } from "./types";
 import type { SkillId } from "../../types/assets";
 import type {
   BossSkillMode,
-  MirrorAfterimageState,
+  MirrorImageState,
   MirrorNightmareDashState,
   MirrorShardIdentity,
   MirrorShardState,
@@ -23,7 +23,7 @@ type ActiveMirrorNightmareDash = Extract<
   { stage: "active" }
 >;
 type ActiveMirrorNightmareCast = Extract<
-  MirrorAfterimageState,
+  MirrorImageState,
   { stage: "nightmareCast" }
 >;
 
@@ -189,10 +189,10 @@ function startMirrorDreamCast(boss: LiveBoss, forcedSkillMode?: BossSkillMode) {
 }
 
 function cancelPendingPlayerSkillReflections() {
-  for (let i = state.mirrorAfterimages.length - 1; i >= 0; i -= 1) {
-    const afterimage = state.mirrorAfterimages[i] as MirrorAfterimageState;
+  for (let i = state.mirrorImages.length - 1; i >= 0; i -= 1) {
+    const afterimage = state.mirrorImages[i] as MirrorImageState;
     if (afterimage.reflectedSkillId && afterimage.stage === "afterimage") {
-      state.mirrorAfterimages.splice(i, 1);
+      state.mirrorImages.splice(i, 1);
     }
   }
 }
@@ -352,7 +352,7 @@ function spawnMirrorAfterimage(
   const life = spawnAt === undefined
     ? MIRROR_DREAM_CONFIG.afterimageLife
     : spawnAt + MIRROR_DREAM_CONFIG.nightmareBreakFadeFrames;
-  state.mirrorAfterimages.push({
+  state.mirrorImages.push({
     ...(reflectedSkillId ? { reflectedSkillId } : {}),
     x: centerX - boss.w / 2,
     y: boss.y,
@@ -529,7 +529,9 @@ export function spawnMirrorNightmareVolley(afterimage: ActiveMirrorNightmareCast
   const centerY = (
     afterimage.y + afterimage.h * MIRROR_DREAM_CONFIG.nightmareShardStartYScale
   );
-  const aimAngle = Math.atan2(afterimage.targetY - centerY, afterimage.targetX - centerX);
+  const targetX = state.player.x + state.player.w / 2;
+  const targetY = state.player.y + state.player.h / 2;
+  const aimAngle = Math.atan2(targetY - centerY, targetX - centerX);
   const identity: MirrorShardIdentity = afterimage.reflectedSkillId
     ? { kind: "reflection", reflectedSkillId: afterimage.reflectedSkillId }
     : { kind: "nightmare" };

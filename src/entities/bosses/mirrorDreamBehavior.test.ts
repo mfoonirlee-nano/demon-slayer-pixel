@@ -57,26 +57,27 @@ describe("mirror dream boss behavior", () => {
     const boss = spawnMirrorImagePattern({ phase: PHASE_TWO });
 
     expect(boss.skillMode).toBe("mirrorNightmare");
-    expect(state.mirrorAfterimages).toHaveLength(MIRROR_DREAM_CONFIG.nightmareMaxImages);
+    expect(state.mirrorImages).toHaveLength(MIRROR_DREAM_CONFIG.nightmareMaxImages);
     expectCollisionFreePlayerLane();
   });
 
   it("plays each nightmare image in place before releasing a small-shard volley", () => {
     spawnMirrorImagePattern({ phase: PHASE_TWO });
-    const firstImage = [...state.mirrorAfterimages]
+    const firstImage = [...state.mirrorImages]
       .sort((left, right) => (left.spawnAt ?? Infinity) - (right.spawnAt ?? Infinity))[0];
     if (!firstImage?.spawnAt) throw new Error("Expected a scheduled nightmare image");
     const origin = {
       x: firstImage.x + firstImage.w / 2,
       y: firstImage.y + firstImage.h * MIRROR_DREAM_CONFIG.nightmareShardStartYScale,
     };
+    const initialTargetY = state.player.y + state.player.h / 2;
     const playerHpBeforeCast = state.player.hp;
 
     for (let frame = 0; frame < firstImage.spawnAt; frame += 1) {
       updateMirrorDreamEffects();
     }
 
-    const activeImage = state.mirrorAfterimages.find((image) => (
+    const activeImage = state.mirrorImages.find((image) => (
       image.x + image.w / 2 === origin.x
     ));
     assert(activeImage?.stage === "nightmareCast");
@@ -98,6 +99,7 @@ describe("mirror dream boss behavior", () => {
       Array.from({ length: MIRROR_NIGHTMARE_SHEET.count }, (_, frame) => frame),
     );
     expect(state.player.hp).toBe(playerHpBeforeCast);
+    state.player.y -= PLAYER_CAST_MOVEMENT;
 
     updateMirrorDreamEffects();
 
@@ -112,6 +114,12 @@ describe("mirror dream boss behavior", () => {
       shard.vx * targetDx + shard.vy * targetDy > 0
     ))).toBe(true);
     expect(new Set(state.mirrorShards.map((shard) => shard.vy)).size).toBeGreaterThan(1);
+    const centerShard = state.mirrorShards[Math.floor(state.mirrorShards.length / 2)];
+    if (!centerShard) throw new Error("Expected a center nightmare shard");
+    expect(centerShard.vx * targetDy - centerShard.vy * targetDx).toBeCloseTo(0);
+    expect(Math.abs(
+      centerShard.vx * (initialTargetY - origin.y) - centerShard.vy * targetDx,
+    )).toBeGreaterThan(1);
 
     const starts = state.mirrorShards.map(({ x, y }) => ({ x, y }));
     updateMirrorDreamEffects();
@@ -127,7 +135,7 @@ describe("mirror dream boss behavior", () => {
     setCanvas({ getContext: () => context } as unknown as HTMLCanvasElement);
     MIRROR_NIGHTMARE_SHEET.image = image;
     spawnMirrorImagePattern({ phase: PHASE_TWO });
-    const firstSpawnAt = Math.min(...state.mirrorAfterimages.map((item) => item.spawnAt ?? Infinity));
+    const firstSpawnAt = Math.min(...state.mirrorImages.map((item) => item.spawnAt ?? Infinity));
 
     for (let frame = 0; frame < firstSpawnAt; frame += 1) updateMirrorDreamEffects();
     drawMirrorDreamEffects();
@@ -159,10 +167,10 @@ describe("mirror dream boss behavior", () => {
     expect(Math.sign(dashStartCenter - playerCenter)).toBe(
       -Math.sign(dashTargetCenter - playerCenter),
     );
-    expect(state.mirrorAfterimages.every((image) => (
+    expect(state.mirrorImages.every((image) => (
       image.x + image.w / 2 !== dashStartCenter
     ))).toBe(true);
-    expect(Math.min(...state.mirrorAfterimages.map((image) => image.spawnAt ?? Infinity))).toBe(
+    expect(Math.min(...state.mirrorImages.map((image) => image.spawnAt ?? Infinity))).toBe(
       MIRROR_DREAM_CONFIG.nightmareDashFirstBreakFrame,
     );
 
@@ -228,7 +236,7 @@ describe("mirror dream boss behavior", () => {
 
     expect(dashFrames).toBe(MIRROR_DREAM_CONFIG.nightmareDashFrames);
     expect(state.mirrorShards).toHaveLength(0);
-    expect(state.mirrorAfterimages.some(({ stage }) => stage === "nightmareCast")).toBe(true);
+    expect(state.mirrorImages.some(({ stage }) => stage === "nightmareCast")).toBe(true);
 
     let recoveryFrames = 0;
     let firstVolleyRecoveryFrame: number | undefined;
@@ -263,7 +271,7 @@ describe("mirror dream boss behavior", () => {
     const boss = spawnMirrorImagePattern({ awakened: true, phase: PHASE_TWO });
 
     expect(boss.skillMode).toBe("mirrorTrueImageShift");
-    expect(state.mirrorAfterimages).toHaveLength(MIRROR_DREAM_CONFIG.nightmareMaxImages + 1);
+    expect(state.mirrorImages).toHaveLength(MIRROR_DREAM_CONFIG.nightmareMaxImages + 1);
     expectCollisionFreePlayerLane();
   });
 
@@ -271,7 +279,7 @@ describe("mirror dream boss behavior", () => {
     const boss = spawnMirrorImagePattern({ awakened: true, phase: PHASE_TWO });
     const originalCenter = BOSS_START_X + boss.w / 2;
     const shiftedCenter = boss.x + boss.w / 2;
-    const mirrorCenters = state.mirrorAfterimages.map((image) => image.x + image.w / 2);
+    const mirrorCenters = state.mirrorImages.map((image) => image.x + image.w / 2);
 
     expect(mirrorCenters).toContain(originalCenter);
     expect(mirrorCenters).not.toContain(shiftedCenter);
@@ -317,8 +325,8 @@ describe("mirror dream boss behavior", () => {
       spawnMirrorImagePattern({ phase: PHASE_TWO, playerX });
 
       expectCollisionFreePlayerLane();
-      expect(new Set(state.mirrorAfterimages.map((image) => image.x))).toHaveLength(
-        state.mirrorAfterimages.length,
+      expect(new Set(state.mirrorImages.map((image) => image.x))).toHaveLength(
+        state.mirrorImages.length,
       );
     }
   });
@@ -333,8 +341,8 @@ describe("mirror dream boss behavior", () => {
 
     expect(randomSpy).toHaveBeenCalledTimes(1);
     expect(state.player.skillReleasedThisFrameId).toBeNull();
-    expect(state.mirrorAfterimages).toHaveLength(1);
-    expect(state.mirrorAfterimages[0]).toMatchObject({
+    expect(state.mirrorImages).toHaveLength(1);
+    expect(state.mirrorImages[0]).toMatchObject({
       spawnAt: MIRROR_DREAM_CONFIG.playerSkillReflectionWarningFrames,
       reflectedSkillId: SKILL_IDS.lineProjectile,
     });
@@ -344,7 +352,7 @@ describe("mirror dream boss behavior", () => {
     }
 
     expect(state.mirrorShards).toHaveLength(0);
-    expect(state.mirrorAfterimages[0]?.stage).toBe("nightmareCast");
+    expect(state.mirrorImages[0]?.stage).toBe("nightmareCast");
     for (let frame = 0; frame < NIGHTMARE_CAST_FRAMES; frame += 1) {
       updateMirrorDreamEffects();
     }
@@ -382,7 +390,7 @@ describe("mirror dream boss behavior", () => {
 
     expect(randomSpy).toHaveBeenCalledTimes(1);
     expect(state.player.skillReleasedThisFrameId).toBeNull();
-    expect(state.mirrorAfterimages).toHaveLength(0);
+    expect(state.mirrorImages).toHaveLength(0);
   });
 
   it("prioritizes its own cast when both releases would start on the same frame", () => {
@@ -395,7 +403,7 @@ describe("mirror dream boss behavior", () => {
 
     expect(randomSpy).toHaveBeenCalledTimes(1);
     expect(state.player.skillReleasedThisFrameId).toBeNull();
-    expect(state.mirrorAfterimages).toHaveLength(0);
+    expect(state.mirrorImages).toHaveLength(0);
     expect(boss.castTimer).toBe(MIRROR_DREAM_CONFIG.castDuration);
     expect(boss.actionState).toBe("cast");
   });
@@ -406,14 +414,14 @@ describe("mirror dream boss behavior", () => {
     vi.spyOn(Math, "random").mockReturnValue(REFLECTION_SUCCESS_ROLL);
 
     updateMirrorDreamBoss(boss);
-    expect(state.mirrorAfterimages).toHaveLength(1);
+    expect(state.mirrorImages).toHaveLength(1);
 
     boss.phase = PHASE_TWO;
     updateMirrorDreamBoss(boss);
 
     expect(boss.skillMode).toBe("mirrorTrueImageShift");
     expect(boss.actionState).toBe("cast");
-    expect(state.mirrorAfterimages).toHaveLength(0);
+    expect(state.mirrorImages).toHaveLength(0);
   });
 
   it("consumes without deferring a skill released while Mirror Dream is casting", () => {
@@ -431,7 +439,7 @@ describe("mirror dream boss behavior", () => {
 
     expect(randomSpy).not.toHaveBeenCalled();
     expect(state.player.skillReleasedThisFrameId).toBeNull();
-    expect(state.mirrorAfterimages).toHaveLength(0);
+    expect(state.mirrorImages).toHaveLength(0);
   });
 
   it("does not reflect during recovery or from the base form", () => {
@@ -444,7 +452,7 @@ describe("mirror dream boss behavior", () => {
     updateMirrorDreamBoss(recoveringBoss);
 
     expect(randomSpy).not.toHaveBeenCalled();
-    expect(state.mirrorAfterimages).toHaveLength(0);
+    expect(state.mirrorImages).toHaveLength(0);
 
     const baseBoss = createIdleMirrorDreamBoss();
     randomSpy.mockClear();
@@ -452,7 +460,7 @@ describe("mirror dream boss behavior", () => {
     updateMirrorDreamBoss(baseBoss);
 
     expect(randomSpy).not.toHaveBeenCalled();
-    expect(state.mirrorAfterimages).toHaveLength(0);
+    expect(state.mirrorImages).toHaveLength(0);
   });
 });
 
@@ -521,14 +529,14 @@ function spawnMirrorImagePattern(options: {
 function expectCollisionFreePlayerLane() {
   const playerCenter = state.player.x + state.player.w / 2;
   const playerRight = state.player.x + state.player.w;
-  expect(state.mirrorAfterimages.every((image) => {
+  expect(state.mirrorImages.every((image) => {
     const imageCenter = image.x + image.w / 2;
     const imageLeft = imageCenter - MIRROR_AFTERIMAGE_DRAW_WIDTH / 2;
     const imageRight = imageCenter + MIRROR_AFTERIMAGE_DRAW_WIDTH / 2;
     return imageRight <= state.player.x || imageLeft >= playerRight;
   })).toBe(true);
-  expect(state.mirrorAfterimages.some((image) => image.x + image.w / 2 < playerCenter)).toBe(true);
-  expect(state.mirrorAfterimages.some((image) => image.x + image.w / 2 > playerCenter)).toBe(true);
+  expect(state.mirrorImages.some((image) => image.x + image.w / 2 < playerCenter)).toBe(true);
+  expect(state.mirrorImages.some((image) => image.x + image.w / 2 > playerCenter)).toBe(true);
 }
 
 function startCastAtPhaseAndHpRatio(phase: number, hpRatio: number) {

@@ -45,7 +45,7 @@ import type {
   LanternEmberFirelineState,
   LanternEmberLureState,
   LineProjectileEffectState,
-  MirrorAfterimageState,
+  MirrorImageState,
   MirrorShardState,
   MistBoneFogState,
   MistBoneSpikeState,
@@ -158,7 +158,7 @@ export type GameState = {
   mistBoneFogs: MistBoneFogState[];
   mistBoneSpikes: MistBoneSpikeState[];
   mirrorShards: MirrorShardState[];
-  mirrorAfterimages: MirrorAfterimageState[];
+  mirrorImages: MirrorImageState[];
   fangGaleWaves: FangGaleWaveState[];
   lanternEmberLures: LanternEmberLureState[];
   lanternEmberFirelines: LanternEmberFirelineState[];

@@ -192,7 +192,7 @@ export function createInitialState(): GameState {
     mistBoneFogs: [],
     mistBoneSpikes: [],
     mirrorShards: [],
-    mirrorAfterimages: [],
+    mirrorImages: [],
     fangGaleWaves: [],
     lanternEmberLures: [],
     lanternEmberFirelines: [],
@@ -236,7 +236,7 @@ export function resetState() {
   resetCollection(state.mistBoneFogs, next.mistBoneFogs);
   resetCollection(state.mistBoneSpikes, next.mistBoneSpikes);
   resetCollection(state.mirrorShards, next.mirrorShards);
-  resetCollection(state.mirrorAfterimages, next.mirrorAfterimages);
+  resetCollection(state.mirrorImages, next.mirrorImages);
   resetCollection(state.fangGaleWaves, next.fangGaleWaves);
   resetCollection(state.lanternEmberLures, next.lanternEmberLures);
   resetCollection(state.lanternEmberFirelines, next.lanternEmberFirelines);

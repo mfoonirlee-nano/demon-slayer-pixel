@@ -190,9 +190,9 @@ type MirrorImageStateBase = {
   damage: number;
 };
 
-export type MirrorAfterimageState = MirrorImageStateBase & (
+export type MirrorImageState = MirrorImageStateBase & (
   | { stage: "afterimage" }
-  | { stage: "nightmareCast"; targetX: number; targetY: number }
+  | { stage: "nightmareCast" }
 );
 
 export type MistBoneSpikeState = {
