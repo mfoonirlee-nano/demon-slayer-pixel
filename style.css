@@ -4,6 +4,7 @@
 @import "./src/styles/hud.css";
 @import "./src/styles/cover.css";
 @import "./src/styles/controls.css";
+@import "./src/styles/coverControls.css";
 @import "./src/styles/death.css";
 @import "./src/styles/reward.css";
 @import "./src/styles/touch.css";

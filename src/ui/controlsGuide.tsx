@@ -9,7 +9,7 @@ import {
 import { languageAtom } from "../i18n/language";
 import { message, type MessageKey } from "../i18n/messages";
 
-type ControlGuideVariant = "dialog" | "pause";
+type ControlGuideVariant = "cover" | "pause";
 type ControlTone = "default" | "spirit" | "ultimate";
 
 type ControlBinding = {
@@ -91,8 +91,12 @@ export const CONTROL_GROUPS: readonly ControlGroup[] = [
 ] as const;
 
 function ControlShortcut({ binding }: { binding: ControlBinding }) {
+  const shortcutLabel = binding.keyGroups
+    .map((keyGroup) => keyGroup.map(controlKeyLabel).join(" / "))
+    .join(` ${binding.connector ?? ""} `);
+
   return (
-    <span className="controls-guide-shortcut">
+    <span className="controls-guide-shortcut" aria-label={shortcutLabel}>
       {binding.keyGroups.map((keyGroup, groupIndex) => (
         <span key={keyGroup.join("-")} className="controls-guide-key-pair">
           {groupIndex > 0 ? (
@@ -115,7 +119,7 @@ function ControlShortcut({ binding }: { binding: ControlBinding }) {
 }
 
 export function ControlsGuide({
-  variant = "dialog",
+  variant = "cover",
   headingId = "controls-guide-title",
   actions,
 }: {
@@ -131,12 +135,16 @@ export function ControlsGuide({
       aria-labelledby={headingId}
     >
       <header className="controls-guide-header">
-        <span className="controls-guide-moon-mark" aria-hidden="true">◐</span>
+        <span className="controls-guide-moon-mark" aria-hidden="true">
+          {variant === "pause" ? "◐" : null}
+        </span>
         <div>
           <h2 id={headingId}>{message(language, "controls.title")}</h2>
           <p>{message(language, "controls.subtitle")}</p>
         </div>
-        <span className="controls-guide-moon-mark controls-guide-moon-mark--end" aria-hidden="true">◑</span>
+        <span className="controls-guide-moon-mark controls-guide-moon-mark--end" aria-hidden="true">
+          {variant === "pause" ? "◑" : null}
+        </span>
       </header>
 
       <div className="controls-guide-groups">

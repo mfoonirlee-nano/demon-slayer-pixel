@@ -90,4 +90,63 @@ describe("StartScreen controls entry", () => {
     expect(onCloseControls).toHaveBeenCalledOnce();
     expect(onStart).not.toHaveBeenCalled();
   });
+
+  it("renders the guide as part of the cover instead of reusing reward UI sprites", () => {
+    act(() => {
+      root.render(
+        <Provider store={createStore()}>
+          <StartScreen
+            assetsReady
+            startQueued={false}
+            controlsOpen
+            onOpenControls={() => undefined}
+            onCloseControls={() => undefined}
+            onStart={() => undefined}
+          />
+        </Provider>,
+      );
+    });
+
+    expect(container.querySelector(".controls-guide-dialog > .ui-sprite")).toBeNull();
+    expect(container.querySelector(".start-menu-button .ui-sprite")).toBeNull();
+  });
+
+  it("keeps keyboard focus inside the open guide", () => {
+    act(() => {
+      root.render(
+        <Provider store={createStore()}>
+          <StartScreen
+            assetsReady
+            startQueued={false}
+            controlsOpen
+            onOpenControls={() => undefined}
+            onCloseControls={() => undefined}
+            onStart={() => undefined}
+          />
+        </Provider>,
+      );
+    });
+
+    const buttons = [...container.querySelectorAll<HTMLButtonElement>("[role='dialog'] button")];
+    const backButton = buttons[0];
+    const startButton = buttons[1];
+    expect(document.activeElement).toBe(backButton);
+
+    act(() => {
+      backButton.dispatchEvent(new KeyboardEvent("keydown", {
+        bubbles: true,
+        key: "Tab",
+        shiftKey: true,
+      }));
+    });
+    expect(document.activeElement).toBe(startButton);
+
+    act(() => {
+      startButton.dispatchEvent(new KeyboardEvent("keydown", {
+        bubbles: true,
+        key: "Tab",
+      }));
+    });
+    expect(document.activeElement).toBe(backButton);
+  });
 });

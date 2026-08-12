@@ -1,4 +1,11 @@
-import { useEffect, useRef, useState, type CSSProperties, type RefObject } from "react";
+import {
+  useEffect,
+  useRef,
+  useState,
+  type CSSProperties,
+  type KeyboardEvent as ReactKeyboardEvent,
+  type RefObject,
+} from "react";
 import { useAtomValue } from "jotai";
 import { resolveStaticAssetUrl } from "../assets/staticAssetUrl";
 import {
@@ -13,7 +20,6 @@ import { getMoonPhaseGlowScale } from "../moon/phaseGlow";
 import { languageAtom, type Language } from "../i18n/language";
 import { message } from "../i18n/messages";
 import { ControlsGuide } from "./controlsGuide";
-import { UiSprite, uiSpriteDisplaySize } from "./uiSprite";
 
 type CustomCssProperties = CSSProperties & Record<`--${string}`, string>;
 
@@ -87,11 +93,6 @@ const COVER_MOON_SHADOW_BLUR_PEAK = 10;
 const COVER_MOON_SHADOW_ALPHA_REST = 0.26;
 const COVER_MOON_SHADOW_ALPHA_PEAK = 0.42;
 const COVER_MOON_PHASE_FLARE_RADIUS = 92;
-const START_MENU_BUTTON_W = 154;
-const START_MENU_BUTTON_H = 52;
-const CONTROLS_DIALOG_SPRITE = "upgradeRewardPanel";
-const CONTROLS_DIALOG_SIZE = uiSpriteDisplaySize(CONTROLS_DIALOG_SPRITE);
-
 function StartMenuButton({
   label,
   className = "",
@@ -114,14 +115,7 @@ function StartMenuButton({
         onClick();
       }}
     >
-      <UiSprite
-        id="buttonNormal"
-        width={START_MENU_BUTTON_W}
-        height={START_MENU_BUTTON_H}
-        className="start-menu-button-frame"
-      >
-        <span>{label}</span>
-      </UiSprite>
+      <span className="start-menu-button-label">{label}</span>
     </button>
   );
 }
@@ -395,6 +389,24 @@ export function StartScreen({
     onStart();
   };
 
+  const handleGuideKeyDown = (event: ReactKeyboardEvent<HTMLDivElement>) => {
+    if (event.key !== "Tab") return;
+
+    const dialog = event.currentTarget;
+    const buttons = [...dialog.querySelectorAll<HTMLButtonElement>("button:not([disabled])")];
+    if (buttons.length === 0) return;
+
+    const firstButton = buttons[0];
+    const lastButton = buttons[buttons.length - 1];
+    if (event.shiftKey && document.activeElement === firstButton) {
+      event.preventDefault();
+      lastButton.focus();
+    } else if (!event.shiftKey && document.activeElement === lastButton) {
+      event.preventDefault();
+      firstButton.focus();
+    }
+  };
+
   return (
     <div
       className="start-screen absolute inset-0 z-40 overflow-hidden text-left"
@@ -454,13 +466,9 @@ export function StartScreen({
             role="dialog"
             aria-modal="true"
             aria-labelledby="start-controls-guide-title"
+            onKeyDown={handleGuideKeyDown}
           >
-            <UiSprite
-              id={CONTROLS_DIALOG_SPRITE}
-              width={CONTROLS_DIALOG_SIZE.w}
-              height={CONTROLS_DIALOG_SIZE.h}
-              className="controls-guide-dialog-frame"
-            >
+            <div className="controls-guide-dialog-surface">
               <ControlsGuide
                 headingId="start-controls-guide-title"
                 actions={(
@@ -477,7 +485,7 @@ export function StartScreen({
                   </>
                 )}
               />
-            </UiSprite>
+            </div>
           </div>
         </div>
       ) : null}
