@@ -23,6 +23,14 @@ const MOTE_Y_AMPLITUDE = 22;
 const LARGE_MOTE_SIZE = 3;
 const MOTE_ALPHA = 0.35;
 const MOTE_ALPHA_VARIANT = 0.25;
+const TREASURE_MOTE_PALETTE = {
+  bright: "#ffd978",
+  tide: "#8deaff",
+} as const;
+const ARRIVAL_GLOW_MOTE_PALETTE = {
+  bright: "#e2f8ff",
+  tide: "#8deaff",
+} as const;
 const GLOW_PULSE_BASE = 0.58;
 const GLOW_PULSE_SPEED = 4;
 const GLOW_PULSE_AMPLITUDE = 0.2;
@@ -58,7 +66,7 @@ const CORE_FLASH_GROWTH = 72;
 const CORE_FLASH_Y_OFFSET = 55;
 const REVEAL_PHASE_SPEED = 12;
 const ACTIVE_MOTE_STRENGTH = 0.72;
-const ARRIVAL_GLOW_CENTER_INSET = 12;
+const ARRIVAL_GLOW_CENTER_OUTSET = 12;
 const ARRIVAL_GLOW_Y_OFFSET = 30;
 const ARRIVAL_GLOW_RADIUS = 96;
 const ARRIVAL_GLOW_PEAK_PROGRESS = 0.22;
@@ -86,7 +94,18 @@ function activeTreasurePosition() {
   };
 }
 
-function drawPixelMotes(x: number, y: number, phase: number, strength: number) {
+type MotePalette = {
+  bright: string;
+  tide: string;
+};
+
+function drawPixelMotes(
+  x: number,
+  y: number,
+  phase: number,
+  strength: number,
+  palette: MotePalette = TREASURE_MOTE_PALETTE,
+) {
   if (!ctx) return;
   for (let index = 0; index < MOTES; index += 1) {
     const orbit = phase * (MOTE_ORBIT_SPEED + index * MOTE_ORBIT_SPEED_STEP)
@@ -98,7 +117,7 @@ function drawPixelMotes(x: number, y: number, phase: number, strength: number) {
     );
     const size = index % MOTE_VARIANTS === 0 ? LARGE_MOTE_SIZE : 2;
     ctx.globalAlpha = strength * (MOTE_ALPHA + index % 2 * MOTE_ALPHA_VARIANT);
-    ctx.fillStyle = index % MOTE_VARIANTS === 0 ? "#ffd978" : "#8deaff";
+    ctx.fillStyle = index % MOTE_VARIANTS === 0 ? palette.bright : palette.tide;
     ctx.fillRect(moteX, moteY, size, size);
   }
 }
@@ -159,7 +178,7 @@ function drawTreasureArrivalGlow() {
   const strength = arrivalGlowStrength(progress);
   if (strength <= 0) return;
 
-  const x = WIDTH + ARRIVAL_GLOW_CENTER_INSET;
+  const x = WIDTH + ARRIVAL_GLOW_CENTER_OUTSET;
   const y = treasure.host.y - ARRIVAL_GLOW_Y_OFFSET;
   const gradient = ctx.createRadialGradient(x, y, 0, x, y, ARRIVAL_GLOW_RADIUS);
   gradient.addColorStop(0, "rgba(255, 220, 132, 0.56)");
@@ -196,6 +215,7 @@ function drawTreasureArrivalGlow() {
     y + MOTE_Y_OFFSET,
     progress * ARRIVAL_GLOW_MOTE_PHASE_SPEED,
     strength * ARRIVAL_GLOW_MOTE_STRENGTH,
+    ARRIVAL_GLOW_MOTE_PALETTE,
   );
   ctx.restore();
 }
