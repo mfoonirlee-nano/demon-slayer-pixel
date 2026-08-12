@@ -183,7 +183,7 @@ function attachTreasure(
     unlockElapsed: 0,
     claimHoldElapsed: 0,
     phase: 0,
-    telegraphPlayed: false,
+    arrivalGlowElapsed: null,
     seen: false,
     climbStarted: false,
   };
@@ -257,11 +257,18 @@ function updateAttachedTreasure(
   treasure.phase += dt;
   if (treasure.host.x <= WIDTH) treasure.seen = true;
   if (
-    !treasure.telegraphPlayed
-    && treasure.host.x <= WIDTH + HIGH_PLATFORM_TREASURE_CONFIG.host.beamHeight
+    treasure.arrivalGlowElapsed === null
+    && treasure.host.x
+      <= WIDTH + HIGH_PLATFORM_TREASURE_CONFIG.telegraph.arrivalLeadDistance
   ) {
-    treasure.telegraphPlayed = true;
+    treasure.arrivalGlowElapsed = 0;
     events.telegraph = true;
+  }
+  if (treasure.arrivalGlowElapsed !== null) {
+    treasure.arrivalGlowElapsed = Math.min(
+      HIGH_PLATFORM_TREASURE_CONFIG.telegraph.arrivalGlowDurationSeconds,
+      treasure.arrivalGlowElapsed + dt,
+    );
   }
   if (state.player.onPlatform === treasure.host) treasure.climbStarted = true;
 

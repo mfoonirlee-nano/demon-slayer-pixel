@@ -77,7 +77,7 @@ export type HighPlatformTreasureState = {
   unlockElapsed: number;
   claimHoldElapsed: number;
   phase: number;
-  telegraphPlayed: boolean;
+  arrivalGlowElapsed: number | null;
   seen: boolean;
   climbStarted: boolean;
 };

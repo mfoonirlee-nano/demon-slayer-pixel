@@ -7,6 +7,10 @@ export const HIGH_PLATFORM_TREASURE_CONFIG = {
     seedSalt: 10_007,
     routeSeedSalt: 12_277,
   },
+  telegraph: {
+    arrivalLeadDistance: 80,
+    arrivalGlowDurationSeconds: 0.58,
+  },
   host: {
     minimumWidth: 120,
     unlockDelaySeconds: 0.6,

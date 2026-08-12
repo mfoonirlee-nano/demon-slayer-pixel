@@ -79,7 +79,6 @@ import {
 } from "../entities/platform";
 import {
   drawHighPlatformTreasure,
-  drawTreasureDirectionMarker,
   drawTreasureTelegraph,
 } from "../entities/highPlatformTreasure";
 import { updateProjectiles, drawProjectiles } from "../entities/projectile";
@@ -532,7 +531,6 @@ function loop(ts: number) {
   drawBruteFireballEffects();
   drawProjectiles();
   drawParticles();
-  drawTreasureDirectionMarker();
 
   if (isCollisionDebugEnabled) {
     recordPersistentCollisionShapes();

@@ -106,6 +106,39 @@ describe("high-platform treasure opportunity", () => {
     expect(host.reservedForTreasure).toBe(true);
   });
 
+  it("starts one short arrival glow when the treasure reaches the screen edge", () => {
+    const state = createInitialState();
+    const leadDistance = HIGH_PLATFORM_TREASURE_CONFIG.telegraph.arrivalLeadDistance;
+    armOpportunity(state);
+    const host = platform({ x: WIDTH + leadDistance + 1 });
+    state.platforms.push(host);
+    observeTreasureMapSegment(state, {
+      kind: "stairUp",
+      platforms: [host],
+    });
+
+    let events = updateHighPlatformTreasure(state, TEST_TIME_STEP);
+    expect(events.telegraph).toBe(false);
+    expect(state.highPlatformTreasure?.arrivalGlowElapsed).toBeNull();
+
+    host.x = WIDTH + leadDistance;
+    events = updateHighPlatformTreasure(state, TEST_TIME_STEP);
+    expect(events.telegraph).toBe(true);
+    expect(state.highPlatformTreasure?.arrivalGlowElapsed).toBeCloseTo(TEST_TIME_STEP);
+
+    events = updateHighPlatformTreasure(
+      state,
+      HIGH_PLATFORM_TREASURE_CONFIG.telegraph.arrivalGlowDurationSeconds,
+    );
+    expect(events.telegraph).toBe(false);
+    expect(state.highPlatformTreasure?.arrivalGlowElapsed).toBe(
+      HIGH_PLATFORM_TREASURE_CONFIG.telegraph.arrivalGlowDurationSeconds,
+    );
+
+    events = updateHighPlatformTreasure(state, TEST_TIME_STEP);
+    expect(events.telegraph).toBe(false);
+  });
+
   it("never turns the normal risk-fork safe route into a treasure host", () => {
     const state = createInitialState();
     armOpportunity(state);

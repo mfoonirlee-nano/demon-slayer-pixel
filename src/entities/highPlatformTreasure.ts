@@ -10,9 +10,6 @@ import { ctx } from "../rendering/context";
 const HALF = 0.5;
 const FULL_CIRCLE = Math.PI * 2;
 const BEAM_WIDTH = 54;
-const EDGE_MARKER_INSET = 26;
-const EDGE_MARKER_X = WIDTH - EDGE_MARKER_INSET;
-const EDGE_MARKER_SIZE = 12;
 const MOTES = 8;
 const MOTE_ORBIT_SPEED = 0.8;
 const MOTE_ORBIT_SPEED_STEP = 0.04;
@@ -61,19 +58,17 @@ const CORE_FLASH_GROWTH = 72;
 const CORE_FLASH_Y_OFFSET = 55;
 const REVEAL_PHASE_SPEED = 12;
 const ACTIVE_MOTE_STRENGTH = 0.72;
-const MARKER_MIN_Y = 62;
-const MARKER_BOTTOM_INSET = 74;
-const MARKER_Y_OFFSET = 34;
-const MARKER_PULSE_BASE = 0.72;
-const MARKER_PULSE_SPEED = 6;
-const MARKER_PULSE_AMPLITUDE = 0.22;
-const MARKER_GLOW_ALPHA = 0.35;
-const MARKER_GLOW_HALF_SIZE = 17;
-const MARKER_GLOW_SIZE = 34;
-const MARKER_CORE_ALPHA = 0.85;
-const MARKER_TAIL_OFFSET = 18;
-const MARKER_TAIL_WIDTH = 10;
-const MARKER_TAIL_HEIGHT = 4;
+const ARRIVAL_GLOW_CENTER_INSET = 12;
+const ARRIVAL_GLOW_Y_OFFSET = 30;
+const ARRIVAL_GLOW_RADIUS = 96;
+const ARRIVAL_GLOW_PEAK_PROGRESS = 0.22;
+const ARRIVAL_GLOW_SILVER_STOP = 0.13;
+const ARRIVAL_GLOW_TIDE_STOP = 0.42;
+const ARRIVAL_GLOW_RING_ALPHA = 0.28;
+const ARRIVAL_GLOW_RING_RADIUS_X = 58;
+const ARRIVAL_GLOW_RING_RADIUS_Y = 43;
+const ARRIVAL_GLOW_MOTE_STRENGTH = 0.62;
+const ARRIVAL_GLOW_MOTE_PHASE_SPEED = 2.8;
 
 function activeTreasurePosition() {
   const treasure = state.highPlatformTreasure;
@@ -145,6 +140,66 @@ function drawPlatformGlow() {
   ctx.restore();
 }
 
+function arrivalGlowStrength(progress: number) {
+  if (progress <= 0 || progress >= 1) return 0;
+  if (progress < ARRIVAL_GLOW_PEAK_PROGRESS) {
+    return progress / ARRIVAL_GLOW_PEAK_PROGRESS;
+  }
+  const fade = 1
+    - (progress - ARRIVAL_GLOW_PEAK_PROGRESS) / (1 - ARRIVAL_GLOW_PEAK_PROGRESS);
+  return fade * fade;
+}
+
+function drawTreasureArrivalGlow() {
+  if (!ctx || !state.highPlatformTreasure) return;
+  const treasure = state.highPlatformTreasure;
+  if (treasure.dismissElapsed !== null || treasure.arrivalGlowElapsed === null) return;
+  const duration = HIGH_PLATFORM_TREASURE_CONFIG.telegraph.arrivalGlowDurationSeconds;
+  const progress = treasure.arrivalGlowElapsed / duration;
+  const strength = arrivalGlowStrength(progress);
+  if (strength <= 0) return;
+
+  const x = WIDTH + ARRIVAL_GLOW_CENTER_INSET;
+  const y = treasure.host.y - ARRIVAL_GLOW_Y_OFFSET;
+  const gradient = ctx.createRadialGradient(x, y, 0, x, y, ARRIVAL_GLOW_RADIUS);
+  gradient.addColorStop(0, "rgba(255, 220, 132, 0.56)");
+  gradient.addColorStop(ARRIVAL_GLOW_SILVER_STOP, "rgba(226, 248, 255, 0.50)");
+  gradient.addColorStop(ARRIVAL_GLOW_TIDE_STOP, "rgba(86, 216, 255, 0.32)");
+  gradient.addColorStop(1, "rgba(64, 155, 255, 0)");
+
+  ctx.save();
+  ctx.globalCompositeOperation = "screen";
+  ctx.globalAlpha = strength;
+  ctx.fillStyle = gradient;
+  ctx.fillRect(
+    x - ARRIVAL_GLOW_RADIUS,
+    y - ARRIVAL_GLOW_RADIUS,
+    ARRIVAL_GLOW_RADIUS * 2,
+    ARRIVAL_GLOW_RADIUS * 2,
+  );
+  ctx.globalAlpha = strength * ARRIVAL_GLOW_RING_ALPHA;
+  ctx.strokeStyle = "#bff5ff";
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.ellipse(
+    x,
+    y,
+    ARRIVAL_GLOW_RING_RADIUS_X,
+    ARRIVAL_GLOW_RING_RADIUS_Y,
+    0,
+    0,
+    FULL_CIRCLE,
+  );
+  ctx.stroke();
+  drawPixelMotes(
+    x,
+    y + MOTE_Y_OFFSET,
+    progress * ARRIVAL_GLOW_MOTE_PHASE_SPEED,
+    strength * ARRIVAL_GLOW_MOTE_STRENGTH,
+  );
+  ctx.restore();
+}
+
 export function drawTreasureTelegraph() {
   if (!ctx) return;
   const position = activeTreasurePosition();
@@ -153,8 +208,9 @@ export function drawTreasureTelegraph() {
     !position
     || !treasure
     || treasure.dismissElapsed !== null
-    || position.x > WIDTH + treasure.host.w
   ) return;
+  drawTreasureArrivalGlow();
+  if (position.x > WIDTH + treasure.host.w) return;
 
   const beamTop = position.y - HIGH_PLATFORM_TREASURE_CONFIG.host.beamHeight;
   const pulse = TELEGRAPH_PULSE_BASE
@@ -286,45 +342,5 @@ export function drawHighPlatformTreasure() {
   drawPixelMotes(x, y, phase, (reveal ? 1 : ACTIVE_MOTE_STRENGTH) * alpha);
   drawTreasureSprite(x, y, treasureFrame(), alpha);
   drawClaimHoldRing(x, y);
-  ctx.restore();
-}
-
-export function drawTreasureDirectionMarker() {
-  if (!ctx || !state.highPlatformTreasure) return;
-  const treasure = state.highPlatformTreasure;
-  if (treasure.dismissElapsed !== null) return;
-  if (treasure.host.x <= WIDTH) return;
-  const markerY = Math.max(
-    MARKER_MIN_Y,
-    Math.min(HEIGHT - MARKER_BOTTOM_INSET, treasure.host.y - MARKER_Y_OFFSET),
-  );
-  const pulse = MARKER_PULSE_BASE
-    + Math.sin(treasure.phase * MARKER_PULSE_SPEED) * MARKER_PULSE_AMPLITUDE;
-
-  ctx.save();
-  ctx.globalCompositeOperation = "screen";
-  ctx.globalAlpha = pulse * MARKER_GLOW_ALPHA;
-  ctx.fillStyle = "#ffd36a";
-  ctx.fillRect(
-    EDGE_MARKER_X - MARKER_GLOW_HALF_SIZE,
-    markerY - MARKER_GLOW_HALF_SIZE,
-    MARKER_GLOW_SIZE,
-    MARKER_GLOW_SIZE,
-  );
-  ctx.globalAlpha = pulse;
-  ctx.beginPath();
-  ctx.moveTo(EDGE_MARKER_X + EDGE_MARKER_SIZE, markerY);
-  ctx.lineTo(EDGE_MARKER_X - EDGE_MARKER_SIZE, markerY - EDGE_MARKER_SIZE);
-  ctx.lineTo(EDGE_MARKER_X - EDGE_MARKER_SIZE, markerY + EDGE_MARKER_SIZE);
-  ctx.closePath();
-  ctx.fill();
-  ctx.fillStyle = "#bff5ff";
-  ctx.globalAlpha = pulse * MARKER_CORE_ALPHA;
-  ctx.fillRect(
-    EDGE_MARKER_X - MARKER_TAIL_OFFSET,
-    markerY - 2,
-    MARKER_TAIL_WIDTH,
-    MARKER_TAIL_HEIGHT,
-  );
   ctx.restore();
 }
