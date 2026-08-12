@@ -102,6 +102,15 @@ describe("residual-spirit pickup flight", () => {
     expect(state.residualSpiritPickupFlights).toEqual([]);
   });
 
+  it("does not measure the HUD while no pickup flight is active", () => {
+    const querySelectorAll = vi.fn(() => []);
+    vi.stubGlobal("document", { querySelectorAll });
+
+    drawResidualSpiritPickupFlights();
+
+    expect(querySelectorAll).not.toHaveBeenCalled();
+  });
+
   it("draws a stream of light motes that converges on the vessel", () => {
     const context = createMockContext();
     setCanvas({ getContext: () => context } as unknown as HTMLCanvasElement);

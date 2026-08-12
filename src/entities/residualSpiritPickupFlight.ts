@@ -57,7 +57,7 @@ export function spawnResidualSpiritPickupFlight(
   if (amount <= 0) return;
 
   const config = RESIDUAL_SPIRIT_CONFIG.pickupFlight;
-  // Storage is already settled, so bounding presentation work cannot lose rewards.
+  // Keep recent feedback under burst collection; evicting old visuals cannot lose settled rewards.
   while (state.residualSpiritPickupFlights.length >= config.maxActive) {
     state.residualSpiritPickupFlights.shift();
   }
@@ -86,9 +86,14 @@ export function updateResidualSpiritPickupFlights(dt: number) {
 }
 
 export function drawResidualSpiritPickupFlights(
-  target = resolveVisibleResidualSpiritVesselIntakePoint(),
+  target?: { x: number; y: number } | null,
 ) {
-  if (!ctx || !target) return;
+  if (!ctx || state.residualSpiritPickupFlights.length === 0) return;
+
+  const destination = target === undefined
+    ? resolveVisibleResidualSpiritVesselIntakePoint()
+    : target;
+  if (!destination) return;
 
   const config = RESIDUAL_SPIRIT_CONFIG.pickupFlight;
   ctx.save();
@@ -101,7 +106,7 @@ export function drawResidualSpiritPickupFlights(
       const trailProgress = progress - index * config.trailProgressGap;
       if (trailProgress < 0) continue;
 
-      const point = flightPoint(flight, target, trailProgress);
+      const point = flightPoint(flight, destination, trailProgress);
       const size = Math.max(
         MIN_PARTICLE_SIZE,
         Math.round(config.coreSize - index * config.trailSizeStep),
