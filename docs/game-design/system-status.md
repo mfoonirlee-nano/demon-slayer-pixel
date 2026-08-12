@@ -18,7 +18,7 @@
 | 系统 | 当前实现状态 | 目标设计状态 | 状态 | 优先级 | 依据 |
 | --- | --- | --- | --- | --- | --- |
 | 应用架构 | React 外壳 + Canvas runtime + Jotai 快照已接入 | 保持当前分层，新增系统继续通过 runtime 状态和 React overlay 协作 | 已实现 | P0 | `src/App.tsx`、`src/runtime.ts`、`src/state.ts` |
-| 开始界面 | 封面、加载状态、任意键/点击开始、跨局累计加权击杀视觉进度已实现；`coverKills` 是权威累计值，`lastSeenCoverKills` 是已展示进度，开场只播放增长跃迁，满后停最终月相；运行时月亮复用同一进度和月相素材 | 补首次游玩提示和未来模式入口，不加入复杂菜单 | 已实现 | P4 | `src/ui/startScreen.tsx`、`src/game/coverProgress.ts`、`src/moon/` |
+| 开始界面 | 封面、加载状态、任意键/点击开始、按键说明入口和跨局累计加权击杀视觉进度已实现；按键说明与暂停页复用同一内容，`coverKills` 是权威累计值，`lastSeenCoverKills` 是已展示进度，开场只播放增长跃迁，满后停最终月相；运行时月亮复用同一进度和月相素材 | 后续只补未来模式入口，不加入复杂菜单 | 已实现 | P4 | `src/ui/startScreen.tsx`、`src/ui/controlsGuide.tsx`、`src/game/coverProgress.ts`、`src/moon/` |
 | 玩家移动 | 左右移动、跳跃、平台承载、移动端触控已实现；回涡 Lv3 装备后可二段跳并在落地时恢复，跳跃输入按按下边沿触发 | 保持当前手感，后续只围绕敌人与地图调参 | 已实现 | P0 | `src/entities/player.ts`、`src/entities/players/jumping.ts`、`src/game/input.ts` |
 | 普攻与下落攻击 | 普攻、下落攻击、命中、击退、粒子和音效已实现 | 补更明确的命中/击杀反馈规范 | 已实现 | P4 | `src/entities/player.ts`、`docs/numeric-system/player.md` |
 | 技能与大招 | 9 个普通技能、技能池装备、局内技能升级、常驻技能被动、技能能量和月潮大招已实现；回涡 Lv3 被动提供二段跳 | 继续围绕各技能 Lv3 专精形态补齐平衡与表现验收 | 已实现 | P3 | `src/constants/assetCatalog/skills.ts`、`src/entities/players/skillCasting.ts`、`src/systems/playerSkillPassives.ts` |
@@ -35,7 +35,7 @@
 | 经验升级 | 单局 XP、角色等级、普通技能/大招成长、升级三选一和奖励暂停已实现；正常每幕普通战斗 +1 级、Boss +1 级 | 继续用实际试玩数据校准清怪时点和候选池体验 | 已实现 | P2 | `src/systems/progression.ts`、`docs/numeric-system/progression.md` |
 | 装备系统 | 18 件普通品质装备、Boss 三选一、`blade/garb/talisman` 三槽位、暂停页换装和集中属性派生已接入 | 按 `actBand` 接入精良/觉醒品质与更完整的掉落权重 | 部分实现 | P2 | `docs/numeric-system/equipment.md` |
 | HUD | 生命、技能图标/能量、大招球、六珠灵龛残灵储量/引灵进度、Boss 血条、等级/XP/幕数、状态图标和 Boss/灵匣/升级奖励队列已实现；回涡二段跳使用技能图标显示 | 继续校准移动端信息密度和灵匣卡片的实际试玩可读性 | 部分实现 | P2 | `src/ui/gameHud.tsx`、`src/ui/rewardOverlay.tsx`、`src/game/gameStore.ts`、`src/systems/playerStatuses.ts` |
-| Pause overlay | 暂停面板、技能说明、关键数值已实现 | 统一 overlay 规范、输入规则和移动端布局 | 部分实现 | P3 | `src/App.tsx` |
+| Pause overlay | 五标签暂停面板、装备与技能配置、关键数值、设置和按键说明已实现；按键说明与开始页复用同一内容 | 继续统一 overlay 规范、输入规则和移动端布局 | 部分实现 | P3 | `src/ui/pauseScreen.tsx`、`src/ui/controlsGuide.tsx` |
 | Death overlay | 死亡动画、生存时间、`R` 重开已实现 | 增加主要死亡原因和简短复盘提示 | 部分实现 | P3 | `src/App.tsx` |
 | 移动端触控 | 移动、跳跃、攻击、技能、大招、引灵治疗和暂停按钮已实现 | 增加选择 overlay 的触屏输入规范 | 部分实现 | P3 | `src/App.tsx`、`src/input.ts` |
 | 音效 | 15 个 Boss WAV（1 个通用击败 + 6 个雾骨 + 8 个枯铃）、23 个敌人 WAV 与 29 个玩家 WAV 已接入；Web Audio tone 作为回退，主音量/音效音量已接入 | 继续补其余 Boss 专属采样、BGM 和 Boss 音乐 | 部分实现 | P4 | `src/game/audio.ts`、`src/game/audioSamples.ts`、`docs/music-direction.md` |

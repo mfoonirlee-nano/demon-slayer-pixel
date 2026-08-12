@@ -3,6 +3,7 @@ import { Provider, useAtomValue } from "jotai";
 import {
   WIDTH,
   HEIGHT,
+  MENU_CONTROL_KEYS,
 } from "../constants";
 import { loadSprites } from "../assets";
 import { setCanvas } from "../rendering/context";
@@ -168,16 +169,17 @@ function AppShell() {
 
     const handleKeyDown = (event: KeyboardEvent) => {
       if (controlsOpen) {
-        if (event.key === "Escape") {
+        if (event.key.toLowerCase() === MENU_CONTROL_KEYS.close) {
           event.preventDefault();
           setControlsOpen(false);
         }
         return;
       }
 
+      if (event.key === "Tab") return;
       const isButtonActivation = (event.key === "Enter" || event.key === " ")
         && event.target instanceof Element
-        && event.target.closest("button");
+        && event.target.closest("button") !== null;
       if (isButtonActivation) return;
       event.preventDefault();
       requestStart();

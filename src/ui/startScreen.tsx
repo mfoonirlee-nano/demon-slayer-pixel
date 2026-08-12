@@ -397,9 +397,7 @@ export function StartScreen({
 
   return (
     <div
-      className={`start-screen absolute inset-0 z-40 overflow-hidden text-left ${
-        controlsOpen ? "start-screen--controls-open" : ""
-      }`}
+      className="start-screen absolute inset-0 z-40 overflow-hidden text-left"
       onPointerDown={(event) => {
         if (controlsOpen) return;
         event.preventDefault();

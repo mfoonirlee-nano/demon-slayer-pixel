@@ -45,6 +45,20 @@ describe("App controls guide keyboard flow", () => {
     actEnvironment.IS_REACT_ACT_ENVIRONMENT = false;
   });
 
+  it("reserves Tab for focus navigation instead of starting the run", () => {
+    act(() => root.render(<App />));
+    const tabPress = new KeyboardEvent("keydown", {
+      cancelable: true,
+      key: "Tab",
+    });
+
+    act(() => window.dispatchEvent(tabPress));
+
+    expect(tabPress.defaultPrevented).toBe(false);
+    expect(ensureAudio).not.toHaveBeenCalled();
+    expect(container.querySelector(".start-screen")).not.toBeNull();
+  });
+
   it("keeps arbitrary keys from starting a run while the guide is open", () => {
     act(() => root.render(<App />));
 

@@ -1,7 +1,5 @@
 .start-menu-button {
   display: grid;
-  width: 154px;
-  height: 52px;
   place-items: center;
   color: #dff8ff;
   cursor: pointer;
@@ -68,8 +66,8 @@
 
 .controls-guide-dialog {
   position: relative;
-  width: 704px;
-  height: 415px;
+  width: max-content;
+  height: max-content;
   animation: controls-guide-dialog-in 190ms steps(4, end) both;
 }
 
@@ -222,7 +220,8 @@
 }
 
 .controls-guide-shortcut,
-.controls-guide-key-pair {
+.controls-guide-key-pair,
+.controls-guide-key-alternative {
   display: inline-flex;
   align-items: center;
 }

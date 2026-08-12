@@ -1,6 +1,7 @@
 import { type CSSProperties, useEffect, useState } from "react";
 import { useAtomValue } from "jotai";
 import { resolveStaticAssetUrl } from "../assets/staticAssetUrl";
+import { REWARD_CONTROL_KEYS } from "../constants";
 import {
   chooseBossEquipment,
   chooseTreasureReward,
@@ -48,10 +49,13 @@ export const REWARD_OVERLAY_CARD_CLASS = "reward-overlay-card";
 
 const BOSS_ICON_BADGE_MIN_SIZE = 12;
 const BOSS_ICON_BADGE_SIZE_RATIO = 0.34;
-const REWARD_COMMIT_KEYS = new Set(["Enter", "1", "2", "3"]);
+const REWARD_COMMIT_KEYS = new Set<string>([
+  REWARD_CONTROL_KEYS.confirm,
+  ...REWARD_CONTROL_KEYS.directChoice,
+]);
 
 export function isRewardCommitKey(key: string) {
-  return REWARD_COMMIT_KEYS.has(key);
+  return REWARD_COMMIT_KEYS.has(key.toLowerCase());
 }
 
 export function shouldIgnoreRepeatedRewardCommit(key: string, repeat: boolean) {
@@ -202,7 +206,7 @@ export function RewardOverlay({ snapshot }: { snapshot: GameSnapshot }) {
 
   useEffect(() => {
     const handleRewardKey = (event: KeyboardEvent) => {
-      const key = event.key;
+      const key = event.key.toLowerCase();
       if (choiceCount <= 0) return;
       if (shouldIgnoreRepeatedRewardCommit(key, event.repeat)) {
         event.preventDefault();
@@ -210,26 +214,26 @@ export function RewardOverlay({ snapshot }: { snapshot: GameSnapshot }) {
         return;
       }
 
-      if (key === "ArrowLeft" || key === "ArrowRight") {
+      if (key === REWARD_CONTROL_KEYS.previous || key === REWARD_CONTROL_KEYS.next) {
         event.preventDefault();
         event.stopPropagation();
         setSelectedIndex((current) => (
-          key === "ArrowLeft"
+          key === REWARD_CONTROL_KEYS.previous
             ? (current + choiceCount - 1) % choiceCount
             : (current + 1) % choiceCount
         ));
         return;
       }
 
-      if (key === "Enter") {
+      if (key === REWARD_CONTROL_KEYS.confirm) {
         event.preventDefault();
         event.stopPropagation();
         chooseReward(overlayKind, selectedChoiceIndex);
         return;
       }
 
-      if (key !== "1" && key !== "2" && key !== "3") return;
-      const index = Number(key) - 1;
+      const index = REWARD_CONTROL_KEYS.directChoice.findIndex((choiceKey) => choiceKey === key);
+      if (index < 0) return;
       if (index >= choiceCount) return;
       event.preventDefault();
       event.stopPropagation();

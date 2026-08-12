@@ -1,28 +1,26 @@
 import { ensureAudio } from "./audio";
+import {
+  COLLISION_DEBUG_CONTROL_KEY,
+  PLAYER_CONTROL_KEYS,
+  REWARD_CONTROL_KEYS,
+} from "../constants";
 
 const PREVENT_DEFAULT_KEYS = [
-  "a",
-  "d",
-  "s",
-  "w",
-  " ",
-  "j",
-  "k",
-  "l",
-  "h",
-  "1",
-  "2",
-  "3",
-  "r",
-  "p",
-  "escape",
-  "arrowleft",
-  "arrowright",
-  "arrowdown",
+  PLAYER_CONTROL_KEYS.moveLeft,
+  PLAYER_CONTROL_KEYS.moveRight,
+  ...PLAYER_CONTROL_KEYS.fallAttackModifier,
+  ...PLAYER_CONTROL_KEYS.jump,
+  PLAYER_CONTROL_KEYS.attack,
+  PLAYER_CONTROL_KEYS.skill,
+  PLAYER_CONTROL_KEYS.ultimate,
+  PLAYER_CONTROL_KEYS.heal,
+  ...PLAYER_CONTROL_KEYS.switchSkill,
+  PLAYER_CONTROL_KEYS.restart,
+  ...PLAYER_CONTROL_KEYS.pause,
+  REWARD_CONTROL_KEYS.previous,
+  REWARD_CONTROL_KEYS.next,
   "arrowup",
 ] as const;
-const SKILL_SWITCH_KEYS = ["1", "2", "3"] as const;
-const SKILL_KEY_OFFSET = 1;
 
 type InputHandlers = {
   onJump?: () => void;
@@ -53,7 +51,7 @@ export function setupInput(callbacks: InputHandlers) {
   const onKeyDown = (e: KeyboardEvent) => {
     const raw = e.key === " " ? " " : e.key.toLowerCase();
 
-    if (e.metaKey && raw === "d") {
+    if (e.metaKey && raw === COLLISION_DEBUG_CONTROL_KEY) {
       e.preventDefault();
       if (!e.repeat) handlers.onToggleCollisionDebug?.();
       return;
@@ -98,20 +96,27 @@ function handleInputPress(key: string) {
   keys.add(k);
   ensureAudio();
 
-  if (handlers.onJump && !alreadyPressed && (k === "w" || k === " ")) handlers.onJump();
-  if (handlers.onAttack && k === "j") handlers.onAttack();
-  if (handlers.onSkill && k === "k") handlers.onSkill();
-  if (handlers.onUltimate && k === "l") handlers.onUltimate();
-  if (handlers.onHeal && !alreadyPressed && k === "h") handlers.onHeal();
-  if (handlers.onSwitchSkill && SKILL_SWITCH_KEYS.includes(k as (typeof SKILL_SWITCH_KEYS)[number])) {
-    handlers.onSwitchSkill(Number(k) - SKILL_KEY_OFFSET);
+  if (handlers.onJump && !alreadyPressed && matchesKey(k, PLAYER_CONTROL_KEYS.jump)) {
+    handlers.onJump();
   }
-  if (handlers.onRestart && k === "r") handlers.onRestart();
-  if (handlers.onPause && (k === "escape" || k === "p")) handlers.onPause();
+  if (handlers.onAttack && k === PLAYER_CONTROL_KEYS.attack) handlers.onAttack();
+  if (handlers.onSkill && k === PLAYER_CONTROL_KEYS.skill) handlers.onSkill();
+  if (handlers.onUltimate && k === PLAYER_CONTROL_KEYS.ultimate) handlers.onUltimate();
+  if (handlers.onHeal && !alreadyPressed && k === PLAYER_CONTROL_KEYS.heal) handlers.onHeal();
+
+  const skillIndex = PLAYER_CONTROL_KEYS.switchSkill.findIndex((skillKey) => skillKey === k);
+  if (handlers.onSwitchSkill && skillIndex >= 0) handlers.onSwitchSkill(skillIndex);
+
+  if (handlers.onRestart && k === PLAYER_CONTROL_KEYS.restart) handlers.onRestart();
+  if (handlers.onPause && matchesKey(k, PLAYER_CONTROL_KEYS.pause)) handlers.onPause();
 }
 
 function handleInputRelease(key: string) {
   keys.delete(key.toLowerCase());
+}
+
+function matchesKey(key: string, bindings: readonly string[]) {
+  return bindings.some((binding) => binding === key);
 }
 
 function setupTouchControls() {

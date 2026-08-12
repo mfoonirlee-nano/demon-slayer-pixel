@@ -11,6 +11,34 @@ afterEach(() => {
   teardownInput();
 });
 
+describe("configured gameplay input", () => {
+  it("routes every action key to its matching handler", () => {
+    const handlers = {
+      onAttack: vi.fn(),
+      onSkill: vi.fn(),
+      onUltimate: vi.fn(),
+      onHeal: vi.fn(),
+      onSwitchSkill: vi.fn(),
+      onRestart: vi.fn(),
+      onPause: vi.fn(),
+    };
+    setupInput(handlers);
+
+    for (const key of ["j", "k", "l", "h", "1", "2", "3", "r", "Escape"]) {
+      window.dispatchEvent(new KeyboardEvent("keydown", { key }));
+      window.dispatchEvent(new KeyboardEvent("keyup", { key }));
+    }
+
+    expect(handlers.onAttack).toHaveBeenCalledOnce();
+    expect(handlers.onSkill).toHaveBeenCalledOnce();
+    expect(handlers.onUltimate).toHaveBeenCalledOnce();
+    expect(handlers.onHeal).toHaveBeenCalledOnce();
+    expect(handlers.onSwitchSkill.mock.calls).toEqual([[0], [1], [2]]);
+    expect(handlers.onRestart).toHaveBeenCalledOnce();
+    expect(handlers.onPause).toHaveBeenCalledOnce();
+  });
+});
+
 describe("jump input", () => {
   it("requires a release before another keyboard jump press", () => {
     const onJump = vi.fn();

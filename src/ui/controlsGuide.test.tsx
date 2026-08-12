@@ -32,7 +32,8 @@ describe("ControlsGuide", () => {
     expect(markup).toContain("奖励选择");
     expect(markup).toContain("结束后重开");
     expect(markup).toContain("<kbd>A</kbd>");
-    expect(markup).toContain("<kbd>S / ↓</kbd>");
+    expect(markup).toContain("<kbd>S</kbd>");
+    expect(markup).toContain("<kbd>↓</kbd>");
     expect(markup).toContain("<kbd>Enter</kbd>");
     expect(markup).not.toContain("Meta");
   });

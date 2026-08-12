@@ -1,5 +1,11 @@
 import type { ReactNode } from "react";
 import { useAtomValue } from "jotai";
+import {
+  controlKeyLabel,
+  PLAYER_CONTROL_KEYS,
+  REWARD_CONTROL_KEYS,
+  type ControlKey,
+} from "../constants";
 import { languageAtom } from "../i18n/language";
 import { message, type MessageKey } from "../i18n/messages";
 
@@ -7,8 +13,8 @@ type ControlGuideVariant = "dialog" | "pause";
 type ControlTone = "default" | "spirit" | "ultimate";
 
 type ControlBinding = {
-  keys: readonly string[];
-  connector?: "/" | "+" | "·";
+  keyGroups: readonly (readonly ControlKey[])[];
+  connector?: "+" | "·";
   labelKey: MessageKey;
   noteKey?: MessageKey;
   tone?: ControlTone;
@@ -23,10 +29,16 @@ export const CONTROL_GROUPS: readonly ControlGroup[] = [
   {
     titleKey: "controls.group.movement",
     bindings: [
-      { keys: ["A", "D"], connector: "/", labelKey: "controls.move" },
-      { keys: ["W", "Space"], connector: "/", labelKey: "controls.jump" },
       {
-        keys: ["S / ↓", "J"],
+        keyGroups: [[PLAYER_CONTROL_KEYS.moveLeft, PLAYER_CONTROL_KEYS.moveRight]],
+        labelKey: "controls.move",
+      },
+      { keyGroups: [PLAYER_CONTROL_KEYS.jump], labelKey: "controls.jump" },
+      {
+        keyGroups: [
+          PLAYER_CONTROL_KEYS.fallAttackModifier,
+          [PLAYER_CONTROL_KEYS.attack],
+        ],
         connector: "+",
         labelKey: "controls.fallAttack",
         noteKey: "controls.fallAttackHint",
@@ -36,16 +48,20 @@ export const CONTROL_GROUPS: readonly ControlGroup[] = [
   {
     titleKey: "controls.group.combat",
     bindings: [
-      { keys: ["J"], labelKey: "controls.attack" },
-      { keys: ["K"], labelKey: "controls.skill", tone: "spirit" },
+      { keyGroups: [[PLAYER_CONTROL_KEYS.attack]], labelKey: "controls.attack" },
       {
-        keys: ["L"],
+        keyGroups: [[PLAYER_CONTROL_KEYS.skill]],
+        labelKey: "controls.skill",
+        tone: "spirit",
+      },
+      {
+        keyGroups: [[PLAYER_CONTROL_KEYS.ultimate]],
         labelKey: "controls.ultimate",
         noteKey: "controls.ultimateHint",
         tone: "ultimate",
       },
       {
-        keys: ["H"],
+        keyGroups: [[PLAYER_CONTROL_KEYS.heal]],
         labelKey: "controls.heal",
         noteKey: "controls.healHint",
         tone: "spirit",
@@ -55,15 +71,21 @@ export const CONTROL_GROUPS: readonly ControlGroup[] = [
   {
     titleKey: "controls.group.tactics",
     bindings: [
-      { keys: ["1", "2", "3"], connector: "/", labelKey: "controls.switchSkill" },
-      { keys: ["Esc", "P"], connector: "/", labelKey: "controls.pause" },
       {
-        keys: ["← / →", "Enter"],
+        keyGroups: [PLAYER_CONTROL_KEYS.switchSkill],
+        labelKey: "controls.switchSkill",
+      },
+      { keyGroups: [PLAYER_CONTROL_KEYS.pause], labelKey: "controls.pause" },
+      {
+        keyGroups: [
+          [REWARD_CONTROL_KEYS.previous, REWARD_CONTROL_KEYS.next],
+          [REWARD_CONTROL_KEYS.confirm],
+        ],
         connector: "·",
         labelKey: "controls.reward",
         noteKey: "controls.rewardHint",
       },
-      { keys: ["R"], labelKey: "controls.restart" },
+      { keyGroups: [[PLAYER_CONTROL_KEYS.restart]], labelKey: "controls.restart" },
     ],
   },
 ] as const;
@@ -71,14 +93,21 @@ export const CONTROL_GROUPS: readonly ControlGroup[] = [
 function ControlShortcut({ binding }: { binding: ControlBinding }) {
   return (
     <span className="controls-guide-shortcut">
-      {binding.keys.map((keyLabel, index) => (
-        <span key={`${keyLabel}-${index}`} className="controls-guide-key-pair">
-          {index > 0 ? (
+      {binding.keyGroups.map((keyGroup, groupIndex) => (
+        <span key={keyGroup.join("-")} className="controls-guide-key-pair">
+          {groupIndex > 0 ? (
             <span className="controls-guide-key-connector" aria-hidden="true">
               {binding.connector}
             </span>
           ) : null}
-          <kbd>{keyLabel}</kbd>
+          {keyGroup.map((key, keyIndex) => (
+            <span key={key} className="controls-guide-key-alternative">
+              {keyIndex > 0 ? (
+                <span className="controls-guide-key-connector" aria-hidden="true">/</span>
+              ) : null}
+              <kbd>{controlKeyLabel(key)}</kbd>
+            </span>
+          ))}
         </span>
       ))}
     </span>

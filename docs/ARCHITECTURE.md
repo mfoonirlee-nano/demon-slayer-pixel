@@ -41,6 +41,7 @@
 - `src/game/state.ts`: 维护游戏全局运行时状态，并提供重置与快照方法。
 - `src/game/gameStore.ts`: 将运行时快照桥接到 Jotai。
 - `src/constants/`:
+  - `controls.ts`: 键盘、菜单、奖励页与触控按钮共用的按键绑定，以及界面显示标签。
   - `world.ts`: 画布尺寸、地面位置、重力等世界常量。
   - `assets.ts`: 技能、玩家/敌人/Boss、背景、云、地面、平台等精灵图元数据。
   - `combat.ts`: 战斗伤害、玩家默认值、Boss/敌人数值参数。
@@ -83,6 +84,8 @@
   - `projectile.ts`: 处理投射物。
 
 ## 输入与控制
+
+以下绑定统一定义在 `src/constants/controls.ts`，运行时输入、触控按钮和按键说明共同消费，避免玩法与界面各自维护一份键位表。
 
 - `A` / `D`：左右移动。
 - `W` / `Space`：跳跃。

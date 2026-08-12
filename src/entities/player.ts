@@ -6,6 +6,7 @@ import {
   GRAVITY,
   PLAYER_ANIMATION_STATES,
   PLAYER_COMBAT,
+  PLAYER_CONTROL_KEYS,
   PLAYER_SHEETS,
   SKILL_IDS,
   WIDTH,
@@ -81,13 +82,17 @@ const PLAYER_RUN_STEP_LEFT_PITCH = 0.98;
 const CLOSE_ARC_BASIC_CRESCENT_ATTACK_FRAME = { start: 3, end: 5 } as const;
 const BASIC_ATTACK_ANIMATION_FRAME_COUNT = PLAYER_SHEETS[PLAYER_ANIMATION_STATES.attack].count;
 
-function playerMovementKeyDown(key: "a" | "d") {
+function playerMovementKeyDown(direction: "moveLeft" | "moveRight") {
+  const key = PLAYER_CONTROL_KEYS[direction];
   if (!isBinderTalismanKeyScrambled()) return keys.has(key);
-  return keys.has(key === "a" ? "d" : "a");
+  const oppositeKey = direction === "moveLeft"
+    ? PLAYER_CONTROL_KEYS.moveRight
+    : PLAYER_CONTROL_KEYS.moveLeft;
+  return keys.has(oppositeKey);
 }
 
 function playerFallAttackKeyDown() {
-  return keys.has("s") || keys.has("arrowdown");
+  return PLAYER_CONTROL_KEYS.fallAttackModifier.some((key) => keys.has(key));
 }
 
 export function triggerAttack() {
@@ -412,8 +417,8 @@ export function updatePlayer(deltaSeconds = 0) {
   let previousDashX = p.x;
   let previousDashY = p.y;
   const stunned = isBinderTalismanStunned();
-  const movingLeft = playerMovementKeyDown("a");
-  const movingRight = playerMovementKeyDown("d");
+  const movingLeft = playerMovementKeyDown("moveLeft");
+  const movingRight = playerMovementKeyDown("moveRight");
   if (dashReposition) {
     p.vx = 0;
     p.facing = dashReposition.facing;
