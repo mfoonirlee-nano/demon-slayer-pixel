@@ -70,6 +70,7 @@ describe("residual-spirit vessel", () => {
     expect(markup).toContain(">H</kbd>");
     expect(markup).toContain("residual-spirit-vessel--healing");
     expect(markup).toContain("--residual-spirit-heal-angle:180deg");
+    expect(markup).toContain("data-residual-spirit-intake");
   });
 
   it("keeps the mobile presentation compact and omits the keyboard hint", () => {

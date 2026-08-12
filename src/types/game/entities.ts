@@ -75,7 +75,7 @@ export type ResidualSpiritPickupFlightState = {
   startX: number;
   startY: number;
   amount: number;
-  phase: number;
+  swayPhase: number;
   elapsed: number;
 };
 

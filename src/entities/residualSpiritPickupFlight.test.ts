@@ -2,7 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { RESIDUAL_SPIRIT_CONFIG } from "../constants";
 import { resetState, state } from "../game/state";
 import { setCanvas } from "../rendering/context";
-import { residualSpiritVesselIntakePoint } from "../ui/gameHudLayout";
+import { resolveVisibleResidualSpiritVesselIntakePoint } from "../ui/gameHudLayout";
 import {
   drawResidualSpiritPickupFlights,
   spawnResidualSpiritPickupFlight,
@@ -24,8 +24,19 @@ const START_X = 600;
 const START_Y = 400;
 const PICKUP_AMOUNT = 5;
 const PHASE_DIVISOR = 3;
-const PHASE = Math.PI / PHASE_DIVISOR;
+const SWAY_PHASE = Math.PI / PHASE_DIVISOR;
 const NEAR_ARRIVAL_PROGRESS = 0.98;
+const LOGICAL_TARGET = { x: 44, y: 96 };
+const OVERLAY_RECT = { left: 100, top: 50, width: 480, height: 270 };
+const HIDDEN_RECT = { left: 0, top: 0, width: 0, height: 0 };
+const VISIBLE_INTAKE_RECT = { left: 120, top: 96, width: 4, height: 4 };
+
+function fakeElement(rect: typeof OVERLAY_RECT, overlay?: object) {
+  return {
+    getBoundingClientRect: () => rect,
+    closest: () => overlay ?? null,
+  };
+}
 
 function createMockContext(): MockCanvasContext {
   const filledRects: FilledRect[] = [];
@@ -56,16 +67,25 @@ describe("residual-spirit pickup flight", () => {
 
   afterEach(() => {
     setCanvas(null);
+    vi.unstubAllGlobals();
   });
 
-  it("uses the visible desktop or compact vessel intake as its destination", () => {
-    expect(residualSpiritVesselIntakePoint(false)).toEqual({ x: 44, y: 96 });
-    expect(residualSpiritVesselIntakePoint(true)).toEqual({ x: 36.16, y: 30 });
+  it("maps the currently visible vessel intake into canvas coordinates", () => {
+    const overlay = fakeElement(OVERLAY_RECT);
+    const hiddenIntake = fakeElement(HIDDEN_RECT, overlay);
+    const visibleIntake = fakeElement(VISIBLE_INTAKE_RECT, overlay);
+    vi.stubGlobal("document", {
+      querySelectorAll: () => [hiddenIntake, visibleIntake],
+    });
+
+    expect(resolveVisibleResidualSpiritVesselIntakePoint()).toEqual(
+      LOGICAL_TARGET,
+    );
   });
 
   it("flies as a short-lived visual without changing stored spirit", () => {
     state.player.residualSpirit = PICKUP_AMOUNT;
-    spawnResidualSpiritPickupFlight(START_X, START_Y, PICKUP_AMOUNT, PHASE);
+    spawnResidualSpiritPickupFlight(START_X, START_Y, PICKUP_AMOUNT, SWAY_PHASE);
 
     updateResidualSpiritPickupFlights(
       RESIDUAL_SPIRIT_CONFIG.pickupFlight.durationSeconds / 2,
@@ -85,18 +105,19 @@ describe("residual-spirit pickup flight", () => {
   it("draws a stream of light motes that converges on the vessel", () => {
     const context = createMockContext();
     setCanvas({ getContext: () => context } as unknown as HTMLCanvasElement);
-    spawnResidualSpiritPickupFlight(START_X, START_Y, PICKUP_AMOUNT, PHASE);
+    spawnResidualSpiritPickupFlight(START_X, START_Y, PICKUP_AMOUNT, SWAY_PHASE);
     updateResidualSpiritPickupFlights(
       RESIDUAL_SPIRIT_CONFIG.pickupFlight.durationSeconds * NEAR_ARRIVAL_PROGRESS,
     );
 
-    drawResidualSpiritPickupFlights(false);
+    drawResidualSpiritPickupFlights(LOGICAL_TARGET);
 
     expect(context.filledRects.length).toBeGreaterThan(1);
     const core = rectCenter(
       context.filledRects[context.filledRects.length - 1] as FilledRect,
     );
-    const target = residualSpiritVesselIntakePoint(false);
-    expect(Math.hypot(core.x - target.x, core.y - target.y)).toBeLessThan(2);
+    expect(
+      Math.hypot(core.x - LOGICAL_TARGET.x, core.y - LOGICAL_TARGET.y),
+    ).toBeLessThan(2);
   });
 });

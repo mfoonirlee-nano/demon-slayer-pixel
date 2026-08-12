@@ -1,13 +1,13 @@
-import { UI_SPRITES, type UiSpriteId } from "../constants";
+import { HEIGHT, UI_SPRITES, WIDTH, type UiSpriteId } from "../constants";
 
 const STATUS_ICON_BASE_SIZE = 24;
 const STATUS_GAP_BASE_SIZE = 3;
 const STATUS_STACK_FONT_BASE_SIZE = 7;
 const STATUS_PROGRESS_BASE_HEIGHT = 2;
-const HUD_DESKTOP_BREAKPOINT_PX = 768;
 const RESIDUAL_SPIRIT_INTAKE_LEFT = 28;
 const RESIDUAL_SPIRIT_INTAKE_TOP = 21;
 const RESIDUAL_SPIRIT_INTAKE_SIZE = 8;
+const RESIDUAL_SPIRIT_INTAKE_SELECTOR = "[data-residual-spirit-intake]";
 export const HUD_STATUS_BAR_SCALE = 0.8;
 export const HUD_SCREEN_INSET = 8;
 export const HUD_RESIDUAL_SPIRIT_COMPACT_SCALE = 0.88;
@@ -45,29 +45,33 @@ export const HUD_RESIDUAL_SPIRIT_INTAKE = {
   size: RESIDUAL_SPIRIT_INTAKE_SIZE,
 } as const;
 
-export function residualSpiritVesselIntakePoint(compact: boolean) {
-  const intakeCenterX = HUD_RESIDUAL_SPIRIT_INTAKE.left
-    + HUD_RESIDUAL_SPIRIT_INTAKE.size / 2;
-  const intakeCenterY = HUD_RESIDUAL_SPIRIT_INTAKE.top
-    + HUD_RESIDUAL_SPIRIT_INTAKE.size / 2;
-  if (compact) {
+export function resolveVisibleResidualSpiritVesselIntakePoint() {
+  if (typeof document === "undefined") return null;
+
+  const intakes = document.querySelectorAll<HTMLElement>(
+    RESIDUAL_SPIRIT_INTAKE_SELECTOR,
+  );
+  for (const intake of intakes) {
+    const intakeRect = intake.getBoundingClientRect();
+    if (intakeRect.width <= 0 || intakeRect.height <= 0) continue;
+
+    const overlay = intake.closest<HTMLElement>(".game-overlay");
+    const overlayRect = overlay?.getBoundingClientRect();
+    if (!overlayRect || overlayRect.width <= 0 || overlayRect.height <= 0) {
+      continue;
+    }
+
     return {
-      x: HUD_SCREEN_INSET + intakeCenterX * HUD_RESIDUAL_SPIRIT_COMPACT_SCALE,
-      y: HUD_SCREEN_INSET + intakeCenterY * HUD_RESIDUAL_SPIRIT_COMPACT_SCALE,
+      x: (
+        intakeRect.left + intakeRect.width / 2 - overlayRect.left
+      ) * WIDTH / overlayRect.width,
+      y: (
+        intakeRect.top + intakeRect.height / 2 - overlayRect.top
+      ) * HEIGHT / overlayRect.height,
     };
   }
 
-  return {
-    x: HUD_SCREEN_INSET + HUD_RESIDUAL_SPIRIT_LEFT + intakeCenterX,
-    y: HUD_SCREEN_INSET + HUD_RESIDUAL_SPIRIT_TOP + intakeCenterY,
-  };
-}
-
-export function usesCompactGameHud() {
-  if (typeof window === "undefined" || typeof window.matchMedia !== "function") {
-    return false;
-  }
-  return !window.matchMedia(`(min-width: ${HUD_DESKTOP_BREAKPOINT_PX}px)`).matches;
+  return null;
 }
 
 export const HUD_HP_METER_FRAME: HudMeterFrame = {

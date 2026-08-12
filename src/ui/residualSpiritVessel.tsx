@@ -144,7 +144,11 @@ export function ResidualSpiritVessel({
         ...style,
       } as CSSProperties}
     >
-      <span className="residual-spirit-channel-seal" aria-hidden="true" />
+      <span
+        className="residual-spirit-channel-seal"
+        data-residual-spirit-intake
+        aria-hidden="true"
+      />
       <span className="residual-spirit-beads" aria-hidden="true">
         {fillRatios.map((ratio, index) => {
           const chargeStage = residualSpiritBeadChargeStage(ratio);

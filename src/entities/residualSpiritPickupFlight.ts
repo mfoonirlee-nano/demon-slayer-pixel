@@ -2,10 +2,7 @@ import { RESIDUAL_SPIRIT_CONFIG } from "../constants";
 import { state } from "../game/state";
 import { ctx } from "../rendering/context";
 import type { ResidualSpiritPickupFlightState } from "../types/game-state";
-import {
-  residualSpiritVesselIntakePoint,
-  usesCompactGameHud,
-} from "../ui/gameHudLayout";
+import { resolveVisibleResidualSpiritVesselIntakePoint } from "../ui/gameHudLayout";
 
 const FULL_ARC_RADIANS = Math.PI;
 const HALF = 0.5;
@@ -35,7 +32,7 @@ function flightPoint(
   const config = RESIDUAL_SPIRIT_CONFIG.pickupFlight;
   const arcHeight = Math.min(config.maxArcHeight, distance * config.arcHeightRatio);
   const sway = Math.min(config.maxSway, distance * config.swayRatio)
-    * Math.cos(flight.phase);
+    * Math.cos(flight.swayPhase);
 
   return {
     x: flight.startX + dx * progress + arc * sway,
@@ -55,11 +52,12 @@ export function spawnResidualSpiritPickupFlight(
   startX: number,
   startY: number,
   amount: number,
-  phase: number,
+  swayPhase: number,
 ) {
   if (amount <= 0) return;
 
   const config = RESIDUAL_SPIRIT_CONFIG.pickupFlight;
+  // Storage is already settled, so bounding presentation work cannot lose rewards.
   while (state.residualSpiritPickupFlights.length >= config.maxActive) {
     state.residualSpiritPickupFlights.shift();
   }
@@ -67,7 +65,7 @@ export function spawnResidualSpiritPickupFlight(
     startX,
     startY,
     amount,
-    phase,
+    swayPhase,
     elapsed: 0,
   });
 }
@@ -88,12 +86,11 @@ export function updateResidualSpiritPickupFlights(dt: number) {
 }
 
 export function drawResidualSpiritPickupFlights(
-  compact = usesCompactGameHud(),
+  target = resolveVisibleResidualSpiritVesselIntakePoint(),
 ) {
-  if (!ctx) return;
+  if (!ctx || !target) return;
 
   const config = RESIDUAL_SPIRIT_CONFIG.pickupFlight;
-  const target = residualSpiritVesselIntakePoint(compact);
   ctx.save();
   ctx.globalCompositeOperation = "lighter";
 
