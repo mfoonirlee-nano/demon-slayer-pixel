@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type CSSProperties } from "react";
+import { useEffect, useRef, useState, type CSSProperties, type RefObject } from "react";
 import { useAtomValue } from "jotai";
 import { resolveStaticAssetUrl } from "../assets/staticAssetUrl";
 import {
@@ -12,12 +12,17 @@ import {
 import { getMoonPhaseGlowScale } from "../moon/phaseGlow";
 import { languageAtom, type Language } from "../i18n/language";
 import { message } from "../i18n/messages";
+import { ControlsGuide } from "./controlsGuide";
+import { UiSprite, uiSpriteDisplaySize } from "./uiSprite";
 
 type CustomCssProperties = CSSProperties & Record<`--${string}`, string>;
 
 type StartScreenProps = {
   assetsReady: boolean;
   startQueued: boolean;
+  controlsOpen: boolean;
+  onOpenControls: () => void;
+  onCloseControls: () => void;
   onStart: () => void;
 };
 
@@ -82,6 +87,44 @@ const COVER_MOON_SHADOW_BLUR_PEAK = 10;
 const COVER_MOON_SHADOW_ALPHA_REST = 0.26;
 const COVER_MOON_SHADOW_ALPHA_PEAK = 0.42;
 const COVER_MOON_PHASE_FLARE_RADIUS = 92;
+const START_MENU_BUTTON_W = 154;
+const START_MENU_BUTTON_H = 52;
+const CONTROLS_DIALOG_SPRITE = "upgradeRewardPanel";
+const CONTROLS_DIALOG_SIZE = uiSpriteDisplaySize(CONTROLS_DIALOG_SPRITE);
+
+function StartMenuButton({
+  label,
+  className = "",
+  buttonRef,
+  onClick,
+}: {
+  label: string;
+  className?: string;
+  buttonRef?: RefObject<HTMLButtonElement | null>;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      ref={buttonRef}
+      type="button"
+      className={`start-menu-button ${className}`}
+      onPointerDown={(event) => event.stopPropagation()}
+      onClick={(event) => {
+        event.stopPropagation();
+        onClick();
+      }}
+    >
+      <UiSprite
+        id="buttonNormal"
+        width={START_MENU_BUTTON_W}
+        height={START_MENU_BUTTON_H}
+        className="start-menu-button-frame"
+      >
+        <span>{label}</span>
+      </UiSprite>
+    </button>
+  );
+}
 
 function lerp(from: number, to: number, progress: number) {
   return from + (to - from) * progress;
@@ -314,9 +357,19 @@ function CoverMoonPhase({ progress, transitionKind }: {
   );
 }
 
-export function StartScreen({ assetsReady, startQueued, onStart }: StartScreenProps) {
+export function StartScreen({
+  assetsReady,
+  startQueued,
+  controlsOpen,
+  onOpenControls,
+  onCloseControls,
+  onStart,
+}: StartScreenProps) {
   const language = useAtomValue(languageAtom);
   const prefersReducedMotion = usePrefersReducedMotion();
+  const openButtonRef = useRef<HTMLButtonElement>(null);
+  const closeButtonRef = useRef<HTMLButtonElement>(null);
+  const wasControlsOpenRef = useRef(controlsOpen);
   const { kills, progress, transitionKind } = useCoverProgress(prefersReducedMotion);
   const promptText = assetsReady
     ? message(language, "start.prompt")
@@ -328,17 +381,33 @@ export function StartScreen({ assetsReady, startQueued, onStart }: StartScreenPr
     ? "cover-stage"
     : `cover-stage cover-stage-transition-${transitionKind}`;
 
+  useEffect(() => {
+    if (controlsOpen) {
+      closeButtonRef.current?.focus();
+    } else if (wasControlsOpenRef.current) {
+      openButtonRef.current?.focus();
+    }
+    wasControlsOpenRef.current = controlsOpen;
+  }, [controlsOpen]);
+
+  const startFromGuide = () => {
+    onCloseControls();
+    onStart();
+  };
+
   return (
     <div
-      className="start-screen absolute inset-0 z-40 overflow-hidden text-left"
-      role="button"
-      tabIndex={0}
-      aria-label={promptText}
+      className={`start-screen absolute inset-0 z-40 overflow-hidden text-left ${
+        controlsOpen ? "start-screen--controls-open" : ""
+      }`}
       onPointerDown={(event) => {
+        if (controlsOpen) return;
         event.preventDefault();
         onStart();
       }}
-      onClick={onStart}
+      onClick={() => {
+        if (!controlsOpen) onStart();
+      }}
     >
       <div className={stageClassName} style={coverStyleFromProgress(progress)} aria-hidden="true">
         {COVER_LAYERS.map((layer) => (
@@ -354,7 +423,66 @@ export function StartScreen({ assetsReady, startQueued, onStart }: StartScreenPr
         <div className="cover-darkness" />
       </div>
       <CoverKillCounter value={kills} language={language} />
-      <div className={promptClassName}>{promptText}</div>
+      {!controlsOpen ? (
+        <StartMenuButton
+          buttonRef={openButtonRef}
+          label={message(language, "controls.open")}
+          className="start-controls-button"
+          onClick={onOpenControls}
+        />
+      ) : null}
+      {!controlsOpen ? (
+        <button
+          type="button"
+          className={promptClassName}
+          onPointerDown={(event) => event.stopPropagation()}
+          onClick={(event) => {
+            event.stopPropagation();
+            onStart();
+          }}
+        >
+          {promptText}
+        </button>
+      ) : null}
+      {controlsOpen ? (
+        <div
+          className="controls-guide-modal"
+          onPointerDown={(event) => event.stopPropagation()}
+          onClick={(event) => event.stopPropagation()}
+        >
+          <div className="controls-guide-backdrop" aria-hidden="true" onClick={onCloseControls} />
+          <div
+            className="controls-guide-dialog"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="start-controls-guide-title"
+          >
+            <UiSprite
+              id={CONTROLS_DIALOG_SPRITE}
+              width={CONTROLS_DIALOG_SIZE.w}
+              height={CONTROLS_DIALOG_SIZE.h}
+              className="controls-guide-dialog-frame"
+            >
+              <ControlsGuide
+                headingId="start-controls-guide-title"
+                actions={(
+                  <>
+                    <StartMenuButton
+                      buttonRef={closeButtonRef}
+                      label={message(language, "controls.close")}
+                      onClick={onCloseControls}
+                    />
+                    <StartMenuButton
+                      label={message(language, "controls.start")}
+                      onClick={startFromGuide}
+                    />
+                  </>
+                )}
+              />
+            </UiSprite>
+          </div>
+        </div>
+      ) : null}
     </div>
   );
 }

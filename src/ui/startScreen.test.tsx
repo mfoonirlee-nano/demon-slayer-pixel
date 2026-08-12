@@ -12,11 +12,19 @@ describe("StartScreen localization", () => {
 
     const markup = renderToStaticMarkup(
       <Provider store={store}>
-        <StartScreen assetsReady startQueued={false} onStart={() => undefined} />
+        <StartScreen
+          assetsReady
+          startQueued={false}
+          controlsOpen={false}
+          onOpenControls={() => undefined}
+          onCloseControls={() => undefined}
+          onStart={() => undefined}
+        />
       </Provider>,
     );
 
-    expect(markup).toContain("Press any key to start");
+    expect(markup).toContain("Press any key or click to start");
+    expect(markup).toContain("Controls");
     expect(markup).not.toContain("按任意键开始");
   });
 
@@ -26,7 +34,14 @@ describe("StartScreen localization", () => {
 
     const markup = renderToStaticMarkup(
       <Provider store={store}>
-        <StartScreen assetsReady={false} startQueued onStart={() => undefined} />
+        <StartScreen
+          assetsReady={false}
+          startQueued
+          controlsOpen={false}
+          onOpenControls={() => undefined}
+          onCloseControls={() => undefined}
+          onStart={() => undefined}
+        />
       </Provider>,
     );
 

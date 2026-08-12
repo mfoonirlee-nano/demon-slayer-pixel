@@ -1,0 +1,453 @@
+.start-menu-button {
+  display: grid;
+  width: 154px;
+  height: 52px;
+  place-items: center;
+  color: #dff8ff;
+  cursor: pointer;
+  filter: drop-shadow(0 3px 4px rgba(0, 4, 14, 0.82));
+}
+
+.start-menu-button-frame {
+  display: grid;
+  place-items: center;
+  transition:
+    filter 120ms steps(2, end),
+    transform 120ms steps(2, end);
+}
+
+.start-menu-button-frame > span {
+  padding-bottom: 2px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  line-height: 1;
+  text-shadow:
+    1px 0 #02070c,
+    -1px 0 #02070c,
+    0 1px #02070c,
+    0 -1px #02070c,
+    0 0 6px rgba(89, 220, 255, 0.58);
+}
+
+.start-menu-button:hover .start-menu-button-frame,
+.start-menu-button:focus-visible .start-menu-button-frame {
+  filter: brightness(1.2) drop-shadow(0 0 5px rgba(91, 222, 255, 0.52));
+  transform: translateY(-1px);
+}
+
+.start-menu-button:active .start-menu-button-frame {
+  filter: brightness(1.3);
+  transform: translateY(1px);
+}
+
+.start-controls-button {
+  position: absolute;
+  bottom: 68px;
+  left: 50%;
+  z-index: 8;
+  transform: translateX(-50%);
+}
+
+.controls-guide-modal {
+  position: absolute;
+  inset: 0;
+  z-index: 20;
+  display: grid;
+  place-items: center;
+  animation: controls-guide-backdrop-in 150ms steps(3, end) both;
+}
+
+.controls-guide-backdrop {
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(circle at 50% 44%, rgba(20, 68, 102, 0.2), transparent 42%),
+    rgba(1, 5, 14, 0.88);
+}
+
+.controls-guide-dialog {
+  position: relative;
+  width: 704px;
+  height: 415px;
+  animation: controls-guide-dialog-in 190ms steps(4, end) both;
+}
+
+.controls-guide-dialog-frame {
+  filter:
+    drop-shadow(0 0 12px rgba(53, 182, 224, 0.26))
+    drop-shadow(0 8px 0 rgba(0, 4, 12, 0.72));
+}
+
+.controls-guide {
+  position: absolute;
+  inset: 28px 36px 22px;
+  display: grid;
+  min-width: 0;
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  color: #d9f6ff;
+  text-align: left;
+}
+
+.controls-guide-header {
+  display: grid;
+  grid-template-columns: 26px minmax(0, 1fr) 26px;
+  align-items: center;
+  gap: 8px;
+  text-align: center;
+}
+
+.controls-guide-header h2 {
+  margin: 0;
+  color: #eafcff;
+  font-size: 19px;
+  font-weight: 800;
+  letter-spacing: 0.2em;
+  line-height: 1;
+  text-shadow:
+    2px 0 #04101e,
+    -2px 0 #04101e,
+    0 2px #04101e,
+    0 -2px #04101e,
+    0 0 9px rgba(89, 224, 255, 0.64);
+}
+
+.controls-guide-header p {
+  margin: 6px 0 0;
+  color: #7fc8dc;
+  font-size: 8px;
+  letter-spacing: 0.08em;
+  line-height: 1.2;
+}
+
+.controls-guide-moon-mark {
+  color: #77daf1;
+  font-size: 17px;
+  line-height: 1;
+  opacity: 0.78;
+  text-shadow: 0 0 7px rgba(80, 210, 255, 0.62);
+}
+
+.controls-guide-moon-mark--end {
+  color: #eac879;
+  text-shadow: 0 0 7px rgba(238, 178, 77, 0.48);
+}
+
+.controls-guide-groups {
+  display: grid;
+  min-height: 0;
+  margin-top: 10px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.controls-guide-group {
+  min-width: 0;
+  padding: 7px 7px 8px;
+  border: 1px solid rgba(94, 181, 210, 0.42);
+  background:
+    linear-gradient(180deg, rgba(11, 39, 65, 0.68), rgba(2, 13, 29, 0.76)),
+    repeating-linear-gradient(0deg, transparent 0 7px, rgba(101, 204, 232, 0.025) 8px);
+  box-shadow:
+    inset 0 0 0 1px rgba(4, 17, 32, 0.82),
+    inset 0 0 12px rgba(41, 157, 194, 0.08);
+}
+
+.controls-guide-group h3 {
+  position: relative;
+  margin: 0 0 6px;
+  color: #9cecff;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.2em;
+  line-height: 1.2;
+  text-align: center;
+  text-shadow: 0 1px 2px #02070c;
+}
+
+.controls-guide-group h3::before,
+.controls-guide-group h3::after {
+  display: inline-block;
+  width: 24px;
+  height: 1px;
+  margin: 0 6px 3px;
+  background: linear-gradient(90deg, transparent, rgba(107, 218, 240, 0.5));
+  content: "";
+}
+
+.controls-guide-group h3::after {
+  background: linear-gradient(90deg, rgba(107, 218, 240, 0.5), transparent);
+}
+
+.controls-guide-group dl {
+  display: grid;
+  margin: 0;
+  gap: 5px;
+}
+
+.controls-guide-binding {
+  display: grid;
+  min-height: 39px;
+  grid-template-columns: minmax(78px, auto) minmax(0, 1fr);
+  align-items: center;
+  gap: 6px;
+  padding: 4px 5px;
+  border-left: 1px solid rgba(86, 187, 216, 0.3);
+  background: linear-gradient(90deg, rgba(26, 75, 101, 0.22), transparent);
+}
+
+.controls-guide-binding dt,
+.controls-guide-binding dd {
+  min-width: 0;
+  margin: 0;
+}
+
+.controls-guide-binding dd {
+  color: #d9edf2;
+  font-size: 9px;
+  line-height: 1.15;
+}
+
+.controls-guide-binding dd > span,
+.controls-guide-binding dd > small {
+  display: block;
+}
+
+.controls-guide-binding dd > small {
+  margin-top: 3px;
+  color: #6ca7b9;
+  font-size: 6px;
+  letter-spacing: 0.02em;
+  line-height: 1.25;
+}
+
+.controls-guide-shortcut,
+.controls-guide-key-pair {
+  display: inline-flex;
+  align-items: center;
+}
+
+.controls-guide-shortcut {
+  min-width: 0;
+  flex-wrap: nowrap;
+  justify-content: flex-start;
+}
+
+.controls-guide-key-pair {
+  min-width: 0;
+}
+
+.controls-guide-shortcut kbd {
+  display: inline-flex;
+  min-width: 21px;
+  height: 20px;
+  align-items: center;
+  justify-content: center;
+  padding: 0 5px;
+  border: 1px solid rgba(164, 224, 240, 0.84);
+  border-bottom-color: rgba(80, 145, 171, 0.88);
+  background: linear-gradient(180deg, rgba(24, 58, 82, 0.96), rgba(5, 20, 38, 0.98));
+  box-shadow:
+    inset 0 1px rgba(220, 251, 255, 0.16),
+    0 2px 0 rgba(0, 4, 12, 0.72),
+    0 0 4px rgba(69, 195, 229, 0.14);
+  color: #effdff;
+  font-family: "Press Start 2P", monospace;
+  font-size: 7px;
+  line-height: 1;
+  white-space: nowrap;
+  text-shadow: 0 1px #01060d;
+}
+
+.controls-guide-key-connector {
+  flex: 0 0 auto;
+  margin: 0 3px;
+  color: #5c9cad;
+  font-size: 7px;
+  line-height: 1;
+}
+
+.controls-guide-binding--spirit dd > span {
+  color: #bdf7f2;
+}
+
+.controls-guide-binding--ultimate dd > span {
+  color: #ffe7a8;
+}
+
+.controls-guide-binding--ultimate .controls-guide-shortcut kbd {
+  border-color: rgba(242, 207, 116, 0.9);
+  background: linear-gradient(180deg, rgba(81, 57, 32, 0.96), rgba(31, 17, 20, 0.98));
+  box-shadow:
+    inset 0 1px rgba(255, 242, 196, 0.2),
+    0 2px 0 rgba(12, 4, 4, 0.8),
+    0 0 5px rgba(238, 178, 77, 0.2);
+  color: #fff2c5;
+}
+
+.controls-guide-footer {
+  display: grid;
+  justify-items: center;
+  gap: 5px;
+  padding-top: 6px;
+  text-align: center;
+}
+
+.controls-guide-footer > p {
+  margin: 0;
+  color: #81bbca;
+  font-size: 7px;
+  letter-spacing: 0.16em;
+  line-height: 1;
+  text-shadow: 0 1px #01060d;
+}
+
+.controls-guide-actions {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 20px;
+}
+
+.controls-guide-actions .start-menu-button {
+  color: #e8fbff;
+}
+
+.controls-guide-actions .start-menu-button:last-child {
+  color: #fff0bf;
+}
+
+.controls-guide--pause {
+  position: relative;
+  inset: auto;
+  height: 100%;
+  padding: 9px 2px 50px;
+}
+
+.controls-guide--pause .controls-guide-header h2 {
+  font-size: 14px;
+}
+
+.controls-guide--pause .controls-guide-header p {
+  margin-top: 4px;
+  font-size: 7px;
+}
+
+.controls-guide--pause .controls-guide-moon-mark {
+  font-size: 13px;
+}
+
+.controls-guide--pause .controls-guide-groups {
+  margin-top: 7px;
+  gap: 6px;
+}
+
+.controls-guide--pause .controls-guide-group {
+  padding: 5px;
+}
+
+.controls-guide--pause .controls-guide-group h3 {
+  margin-bottom: 4px;
+  font-size: 8px;
+}
+
+.controls-guide--pause .controls-guide-group h3::before,
+.controls-guide--pause .controls-guide-group h3::after {
+  width: 18px;
+  margin-inline: 4px;
+}
+
+.controls-guide--pause .controls-guide-group dl {
+  gap: 3px;
+}
+
+.controls-guide--pause .controls-guide-binding {
+  min-height: 33px;
+  grid-template-columns: minmax(70px, auto) minmax(0, 1fr);
+  gap: 4px;
+  padding: 3px 4px;
+}
+
+.controls-guide--pause .controls-guide-binding dd {
+  font-size: 8px;
+}
+
+.controls-guide--pause .controls-guide-binding dd > small {
+  margin-top: 2px;
+  font-size: 5px;
+}
+
+.controls-guide--pause .controls-guide-shortcut kbd {
+  min-width: 18px;
+  height: 17px;
+  padding-inline: 4px;
+  font-size: 6px;
+}
+
+.controls-guide--pause .controls-guide-key-connector {
+  margin-inline: 2px;
+  font-size: 6px;
+}
+
+.controls-guide--pause .controls-guide-footer {
+  gap: 0;
+  padding-top: 4px;
+}
+
+.controls-guide--pause .controls-guide-footer > p {
+  font-size: 6px;
+}
+
+:lang(en) .controls-guide-header h2 {
+  font-size: 15px;
+  letter-spacing: 0.08em;
+}
+
+:lang(en) .controls-guide-binding dd {
+  font-size: 8px;
+}
+
+:lang(en) .controls-guide-binding dd > small {
+  font-size: 5px;
+}
+
+:lang(en) .controls-guide--pause .controls-guide-header h2 {
+  font-size: 12px;
+}
+
+:lang(en) .controls-guide--pause .controls-guide-binding dd {
+  font-size: 7px;
+}
+
+@keyframes controls-guide-backdrop-in {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes controls-guide-dialog-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px) scale(0.98);
+  }
+
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .controls-guide-modal,
+  .controls-guide-dialog {
+    animation: none;
+  }
+
+  .start-menu-button-frame {
+    transition: none;
+  }
+}

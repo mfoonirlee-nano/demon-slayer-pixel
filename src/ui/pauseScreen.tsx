@@ -12,6 +12,7 @@ import { languageAtom } from "../i18n/language";
 import { message, type MessageKey } from "../i18n/messages";
 import { skillName } from "../i18n/skillCopy";
 import type { EquipmentSlot } from "../types/game-state";
+import { ControlsGuide } from "./controlsGuide";
 import {
   equipmentIconSrc,
   equipmentSlotBadgeSrc,
@@ -66,6 +67,7 @@ const PAUSE_TAB_LABEL_KEYS: Record<PauseTab, MessageKey> = {
   info: "pause.tab.info",
   equipment: "pause.tab.equipment",
   skills: "pause.tab.skills",
+  controls: "pause.tab.controls",
   settings: "pause.tab.settings",
 };
 
@@ -572,6 +574,10 @@ export function PauseScreen({ snapshot }: { snapshot: GameSnapshot }) {
 
             {activeTab === "settings" ? (
               <PauseSettings />
+            ) : null}
+
+            {activeTab === "controls" ? (
+              <ControlsGuide variant="pause" headingId="pause-controls-guide-title" />
             ) : null}
           </div>
         </div>

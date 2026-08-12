@@ -112,12 +112,19 @@
     0 -2px rgba(3, 8, 18, 0.9),
     0 0 10px rgba(244, 178, 94, 0.34);
   animation: start-prompt-breathe 2400ms ease-in-out infinite;
+  cursor: pointer;
   will-change: opacity, transform;
+}
+
+.start-prompt:focus-visible {
+  color: #fff4d3;
+  filter: brightness(1.12) drop-shadow(0 0 4px rgba(244, 178, 94, 0.32));
 }
 
 .start-prompt-loading {
   color: #8fc1d0;
   animation: none;
+  cursor: wait;
 }
 
 @property --scan-x {

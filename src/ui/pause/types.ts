@@ -1,7 +1,7 @@
 import type { SkillId } from "../../types/assets";
 import type { EquipmentItemId, EquipmentSlot } from "../../types/game-state";
 
-export type PauseTab = "info" | "equipment" | "skills" | "settings";
+export type PauseTab = "info" | "equipment" | "skills" | "controls" | "settings";
 
 export type EquipmentDetailTarget =
   | { type: "slot"; slot: EquipmentSlot }

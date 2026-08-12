@@ -116,6 +116,7 @@ function AppShell() {
   const [phase, setPhase] = useState<AppPhase>("menu");
   const [assetsReady, setAssetsReady] = useState(false);
   const [startQueued, setStartQueued] = useState(false);
+  const [controlsOpen, setControlsOpen] = useState(false);
   const viewportScale = useViewportGameScale();
   const backingScale = canvasBackingScale(viewportScale);
   const isPlaying = phase === "playing";
@@ -149,6 +150,7 @@ function AppShell() {
   const requestStart = useCallback(() => {
     if (phase !== "menu") return;
     ensureAudio();
+    setControlsOpen(false);
     setStartQueued(true);
     if (assetsReady) {
       setPhase("playing");
@@ -165,13 +167,25 @@ function AppShell() {
     if (phase !== "menu") return;
 
     const handleKeyDown = (event: KeyboardEvent) => {
+      if (controlsOpen) {
+        if (event.key === "Escape") {
+          event.preventDefault();
+          setControlsOpen(false);
+        }
+        return;
+      }
+
+      const isButtonActivation = (event.key === "Enter" || event.key === " ")
+        && event.target instanceof Element
+        && event.target.closest("button");
+      if (isButtonActivation) return;
       event.preventDefault();
       requestStart();
     };
 
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [phase, requestStart]);
+  }, [controlsOpen, phase, requestStart]);
 
   return (
     <main className="app-shell game-shell">
@@ -185,7 +199,14 @@ function AppShell() {
             </>
           ) : null}
           {phase === "menu" ? (
-            <StartScreen assetsReady={assetsReady} startQueued={startQueued} onStart={requestStart} />
+            <StartScreen
+              assetsReady={assetsReady}
+              startQueued={startQueued}
+              controlsOpen={controlsOpen}
+              onOpenControls={() => setControlsOpen(true)}
+              onCloseControls={() => setControlsOpen(false)}
+              onStart={requestStart}
+            />
           ) : null}
         </div>
       </section>

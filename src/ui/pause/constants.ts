@@ -7,7 +7,7 @@ import type { PauseTab } from "./types";
 export const EQUIPMENT_SLOTS: EquipmentSlot[] = ["blade", "garb", "talisman"];
 export const ALL_EQUIPMENT_ITEMS = EQUIPMENT_CHOICE_IDS.map((itemId) => EQUIPMENT_ITEMS[itemId]);
 export const PAUSE_SKILLS = allPlayerSkills();
-export const PAUSE_TABS: PauseTab[] = ["info", "equipment", "skills", "settings"];
+export const PAUSE_TABS: PauseTab[] = ["info", "equipment", "skills", "controls", "settings"];
 
 export const AUDIO_PERCENT_SCALE = 100;
 export const PAUSE_PANEL_SPRITE = "upgradeRewardPanel" satisfies UiSpriteId;
@@ -18,7 +18,7 @@ export const PAUSE_TAB_INSET_X = 36;
 export const PAUSE_PANEL_INSET_X = 36;
 export const PAUSE_PANEL_CONTENT_TOP = PAUSE_PANEL_TAB_TOP;
 export const PAUSE_PANEL_CONTENT_BOTTOM = 34;
-export const PAUSE_TAB_W = 148;
+export const PAUSE_TAB_W = 122;
 export const PAUSE_TAB_H = 42;
 export const PAUSE_TAB_GAP = 4;
 export const PAUSE_TAB_BODY_GAP = 4;

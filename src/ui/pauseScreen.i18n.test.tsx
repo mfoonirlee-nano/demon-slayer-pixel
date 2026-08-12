@@ -23,8 +23,10 @@ describe("PauseScreen localization", () => {
     const englishMarkup = renderPauseScreen("en");
 
     expect(chineseMarkup).toContain("基础信息");
+    expect(chineseMarkup).toContain("按键");
     expect(chineseMarkup).toContain("潮龙·破阵");
     expect(englishMarkup).toContain("Overview");
+    expect(englishMarkup).toContain("Controls");
     expect(englishMarkup).toContain("Tidal Dragon: Breakthrough");
     expect(englishMarkup).toContain("Skill Energy");
     expect(englishMarkup).not.toMatch(/[基础信息装备设置技能能量潮龙破阵]/u);
