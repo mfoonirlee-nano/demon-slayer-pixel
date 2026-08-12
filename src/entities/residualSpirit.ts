@@ -11,11 +11,59 @@ import { emitHitBurst } from "./particle";
 const FULL_CIRCLE_RADIANS = Math.PI * 2;
 const HALF = 0.5;
 const SPIRIT_BURST_COLOR = "#8feaff";
-const SPIRIT_AURA_COLOR_RGB = "116,224,255";
-const AURA_PULSE_BASE = 0.75;
-const AURA_PULSE_AMPLITUDE = 0.25;
-const AURA_ARM_RATIO = 0.36;
-const AURA_CORE_RATIO = 0.58;
+const OUTER_AURA_MID_STOP = 0.42;
+const INNER_AURA_MID_STOP = 0.32;
+const AURA_HORIZONTAL_DRIFT_SPEED = 1.37;
+const AURA_VERTICAL_DRIFT_SPEED = 0.83;
+
+type AuraLayerProfile = {
+  radiusRatio: number;
+  radiusPulse: number;
+  alphaBase: number;
+  alphaPulse: number;
+  phaseSpeed: number;
+  phaseOffset: number;
+  driftX: number;
+  driftY: number;
+  verticalOffset: number;
+  colorStops: ReadonlyArray<readonly [number, string]>;
+};
+
+const OUTER_AURA_PROFILE: AuraLayerProfile = {
+  radiusRatio: 1,
+  radiusPulse: 0.06,
+  alphaBase: 0.68,
+  alphaPulse: 0.16,
+  phaseSpeed: 0.43,
+  phaseOffset: 0.2,
+  driftX: 0.75,
+  driftY: 0.45,
+  verticalOffset: 1,
+  colorStops: [
+    [0, "rgba(157, 238, 255, 0.48)"],
+    [OUTER_AURA_MID_STOP, "rgba(80, 204, 255, 0.24)"],
+    [1, "rgba(80, 204, 255, 0)"],
+  ],
+};
+
+const INNER_AURA_PROFILE: AuraLayerProfile = {
+  radiusRatio: 0.64,
+  radiusPulse: 0.045,
+  alphaBase: 0.9,
+  alphaPulse: 0.12,
+  phaseSpeed: 0.71,
+  phaseOffset: 1.7,
+  driftX: 0.4,
+  driftY: 0.3,
+  verticalOffset: -1,
+  colorStops: [
+    [0, "rgba(231, 253, 255, 0.76)"],
+    [INNER_AURA_MID_STOP, "rgba(125, 235, 255, 0.42)"],
+    [1, "rgba(125, 235, 255, 0)"],
+  ],
+};
+
+const AURA_LAYER_PROFILES = [OUTER_AURA_PROFILE, INNER_AURA_PROFILE] as const;
 
 function residualSpiritPosition(spirit: ResidualSpiritState) {
   return {
@@ -33,6 +81,35 @@ function residualSpiritBox(spirit: ResidualSpiritState) {
     w: size,
     h: size,
   };
+}
+
+function drawAuraLayer(
+  context: CanvasRenderingContext2D,
+  x: number,
+  y: number,
+  baseRadius: number,
+  phase: number,
+  baseAlpha: number,
+  profile: AuraLayerProfile,
+) {
+  const layerPhase = phase * profile.phaseSpeed + profile.phaseOffset;
+  const pulse = Math.sin(layerPhase);
+  const radius = baseRadius * (profile.radiusRatio + pulse * profile.radiusPulse);
+  const centerX = x
+    + Math.sin(layerPhase * AURA_HORIZONTAL_DRIFT_SPEED) * profile.driftX;
+  const centerY = y
+    + profile.verticalOffset
+    + Math.cos(layerPhase * AURA_VERTICAL_DRIFT_SPEED) * profile.driftY;
+  const gradient = context.createRadialGradient(centerX, centerY, 0, centerX, centerY, radius);
+  for (const [offset, color] of profile.colorStops) {
+    gradient.addColorStop(offset, color);
+  }
+
+  context.globalAlpha = baseAlpha
+    * RESIDUAL_SPIRIT_CONFIG.pickup.auraAlpha
+    * (profile.alphaBase + pulse * profile.alphaPulse);
+  context.fillStyle = gradient;
+  context.fillRect(centerX - radius, centerY - radius, radius * 2, radius * 2);
 }
 
 export function spawnResidualSpirit(
@@ -109,18 +186,21 @@ export function drawResidualSpirits() {
     const position = residualSpiritPosition(spirit);
     const drawX = Math.round(position.x);
     const drawY = Math.round(position.y);
-    const pulse = AURA_PULSE_BASE + Math.sin(spirit.phase * HALF) * AURA_PULSE_AMPLITUDE;
-    const auraSize = sprite.drawW + RESIDUAL_SPIRIT_CONFIG.pickup.auraPadding * 2;
-    const auraArm = Math.round(auraSize * AURA_ARM_RATIO * HALF) / HALF;
-    const auraCore = Math.round(auraSize * AURA_CORE_RATIO * HALF) / HALF;
+    const auraRadius = sprite.drawW * HALF + RESIDUAL_SPIRIT_CONFIG.pickup.auraPadding;
 
     ctx.save();
     const baseAlpha = ctx.globalAlpha;
-    ctx.globalAlpha = baseAlpha * RESIDUAL_SPIRIT_CONFIG.pickup.auraAlpha * pulse;
-    ctx.fillStyle = `rgb(${SPIRIT_AURA_COLOR_RGB})`;
-    ctx.fillRect(drawX - auraArm * HALF, drawY - auraSize * HALF, auraArm, auraSize);
-    ctx.fillRect(drawX - auraSize * HALF, drawY - auraArm * HALF, auraSize, auraArm);
-    ctx.fillRect(drawX - auraCore * HALF, drawY - auraCore * HALF, auraCore, auraCore);
+    for (const profile of AURA_LAYER_PROFILES) {
+      drawAuraLayer(
+        ctx,
+        position.x,
+        position.y,
+        auraRadius,
+        spirit.phase,
+        baseAlpha,
+        profile,
+      );
+    }
     ctx.globalAlpha = baseAlpha;
     if (sprite.image) {
       ctx.drawImage(
