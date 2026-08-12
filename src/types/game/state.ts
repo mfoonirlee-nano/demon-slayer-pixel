@@ -14,6 +14,7 @@ import type {
   EnemyState,
   PlayerState,
   PlatformState,
+  ResidualSpiritPickupFlightState,
   ResidualSpiritState,
 } from "./entities";
 import type {
@@ -131,6 +132,7 @@ export type GameState = {
   spritesReady: boolean;
   player: PlayerState;
   residualSpirits: ResidualSpiritState[];
+  residualSpiritPickupFlights: ResidualSpiritPickupFlightState[];
   enemies: EnemyState[];
   particles: ParticleState[];
   projectiles: ProjectileState[];

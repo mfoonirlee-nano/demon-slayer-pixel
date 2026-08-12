@@ -31,7 +31,7 @@
 | 终幕万相血月 | `bossKills >= 12` 后出场；五相接力、六术符印、破月硬直、原子换相、安全清场、专属死亡与胜利结算已接入 | 不进任何轮换池；继续按 15-30% 熟练通关率试玩调参，通关后进阶待接 | 已实现 | P4 | `docs/art/bosses/blood-moon-many-faces.md` |
 | 通关后进阶难度 | 未实现 | 血月试炼可叠加难度层（横向解锁，不给局外永久战力） | 目标设计，未实现 | P5 | `docs/numeric-system/endgame-ascension.md` |
 | 地图生成 | 片段式平台生成、张力、低层恢复、防重叠和月潮灵匣专用的可达高台支路已实现；地图不维护奖励预算 | 按幕数调整片段权重和平台速度，保留喘息片段，并继续根据领取率校准高台路线风险 | 部分实现 | P2 | `src/entities/platform.ts`、`src/entities/platforms/treasureRoute.ts`、`docs/map-generation.md` |
-| 奖励拾取 | 分数、技能能量、大招能量、XP、敌人残灵、Boss 装备三选一和每幕一次的月潮灵匣动态三选一已实现；灵匣会按幕数与玩家资源缺口生成实际有效奖励 | 按试玩数据校准残灵供给、灵匣领取率和动态候选分布，保持三类奖励覆盖层依次展示 | 已实现 | P2 | `src/entities/residualSpirit.ts`、`src/systems/highPlatformTreasure.ts`、`src/systems/treasureRewards.ts`、`docs/numeric-system/rewards.md` |
+| 奖励拾取 | 分数、技能能量、大招能量、XP、敌人残灵、Boss 装备三选一和每幕一次的月潮灵匣动态三选一已实现；残灵原地等待接触，拾取后以光粒归入左上灵龛，灵匣会按幕数与玩家资源缺口生成实际有效奖励 | 按试玩数据校准残灵供给、灵匣领取率和动态候选分布，保持三类奖励覆盖层依次展示 | 已实现 | P2 | `src/entities/residualSpirit.ts`、`src/entities/residualSpiritPickupFlight.ts`、`src/systems/highPlatformTreasure.ts`、`src/systems/treasureRewards.ts`、`docs/numeric-system/rewards.md` |
 | 经验升级 | 单局 XP、角色等级、普通技能/大招成长、升级三选一和奖励暂停已实现；正常每幕普通战斗 +1 级、Boss +1 级 | 继续用实际试玩数据校准清怪时点和候选池体验 | 已实现 | P2 | `src/systems/progression.ts`、`docs/numeric-system/progression.md` |
 | 装备系统 | 18 件普通品质装备、Boss 三选一、`blade/garb/talisman` 三槽位、暂停页换装和集中属性派生已接入 | 按 `actBand` 接入精良/觉醒品质与更完整的掉落权重 | 部分实现 | P2 | `docs/numeric-system/equipment.md` |
 | HUD | 生命、技能图标/能量、大招球、六珠灵龛残灵储量/引灵进度、Boss 血条、等级/XP/幕数、状态图标和 Boss/灵匣/升级奖励队列已实现；回涡二段跳使用技能图标显示 | 继续校准移动端信息密度和灵匣卡片的实际试玩可读性 | 部分实现 | P2 | `src/ui/gameHud.tsx`、`src/ui/rewardOverlay.tsx`、`src/game/gameStore.ts`、`src/systems/playerStatuses.ts` |

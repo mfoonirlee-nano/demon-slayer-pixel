@@ -166,6 +166,7 @@ export function createInitialState(): GameState {
     spritesReady: false,
     player: createInitialPlayerState(),
     residualSpirits: [],
+    residualSpiritPickupFlights: [],
     enemies: [],
     particles: [],
     projectiles: [],
@@ -215,6 +216,10 @@ export function resetState() {
   const next = createInitialState();
   state.player = next.player;
   resetCollection(state.residualSpirits, next.residualSpirits);
+  resetCollection(
+    state.residualSpiritPickupFlights,
+    next.residualSpiritPickupFlights,
+  );
   resetCollection(state.enemies, next.enemies);
   resetCollection(state.platforms, next.platforms);
   resetCollection(state.particles, next.particles);

@@ -15,8 +15,6 @@ export const RESIDUAL_SPIRIT_CONFIG = {
   pickup: {
     collisionSize: 24,
     lifetimeSeconds: 12,
-    magnetRadius: 150,
-    magnetSpeed: 180,
     bobAmplitude: 3,
     bobSpeed: 4,
     auraPadding: 4,
@@ -27,5 +25,19 @@ export const RESIDUAL_SPIRIT_CONFIG = {
       duration: 0.09,
       volume: 0.05,
     },
+  },
+  pickupFlight: {
+    durationSeconds: 0.36,
+    maxActive: 12,
+    baseParticleCount: 3,
+    amountPerExtraParticle: 2,
+    maxParticleCount: 7,
+    trailProgressGap: 0.045,
+    arcHeightRatio: 0.16,
+    maxArcHeight: 88,
+    swayRatio: 0.04,
+    maxSway: 24,
+    coreSize: 4,
+    trailSizeStep: 0.55,
   },
 } as const;

@@ -38,7 +38,7 @@
 }
 
 .residual-spirit-vessel--compact {
-  transform: scale(0.88);
+  transform: scale(var(--residual-spirit-compact-scale));
   transform-origin: top left;
 }
 
@@ -178,10 +178,10 @@
 .residual-spirit-channel-seal {
   position: absolute;
   z-index: 4;
-  top: 21px;
-  left: 28px;
-  width: 8px;
-  height: 8px;
+  top: var(--residual-spirit-intake-top);
+  left: var(--residual-spirit-intake-left);
+  width: var(--residual-spirit-intake-size);
+  height: var(--residual-spirit-intake-size);
   border-radius: 50%;
   background: conic-gradient(
     from -90deg,

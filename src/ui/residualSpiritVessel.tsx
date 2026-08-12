@@ -2,6 +2,10 @@ import type { CSSProperties } from "react";
 import { resolveStaticAssetUrl } from "../assets/staticAssetUrl";
 import { RESIDUAL_SPIRIT_BEAD_CHARGE_SHEET } from "../constants";
 import type { Language } from "../i18n/language";
+import {
+  HUD_RESIDUAL_SPIRIT_COMPACT_SCALE,
+  HUD_RESIDUAL_SPIRIT_INTAKE,
+} from "./gameHudLayout";
 import { UiSprite, uiSpriteDisplaySize } from "./uiSprite";
 
 const RESIDUAL_SPIRIT_BEAD_COUNT = 6;
@@ -116,6 +120,10 @@ export function ResidualSpiritVessel({
         width: frameSize.w,
         height: frameSize.h,
         "--residual-spirit-heal-angle": `${healProgress * FULL_CIRCLE_DEGREES}deg`,
+        "--residual-spirit-compact-scale": HUD_RESIDUAL_SPIRIT_COMPACT_SCALE,
+        "--residual-spirit-intake-left": `${HUD_RESIDUAL_SPIRIT_INTAKE.left}px`,
+        "--residual-spirit-intake-top": `${HUD_RESIDUAL_SPIRIT_INTAKE.top}px`,
+        "--residual-spirit-intake-size": `${HUD_RESIDUAL_SPIRIT_INTAKE.size}px`,
         "--residual-spirit-bead-sheet": `url("${RESIDUAL_SPIRIT_BEAD_SHEET_SRC}")`,
         "--residual-spirit-bead-sheet-width": `${
           RESIDUAL_SPIRIT_BEAD_CHARGE_SHEET.columns

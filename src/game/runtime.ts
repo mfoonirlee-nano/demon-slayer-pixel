@@ -83,6 +83,7 @@ import {
 } from "../entities/highPlatformTreasure";
 import { updateProjectiles, drawProjectiles } from "../entities/projectile";
 import { drawResidualSpirits, updateResidualSpirits } from "../entities/residualSpirit";
+import { drawResidualSpiritPickupFlights, updateResidualSpiritPickupFlights } from "../entities/residualSpiritPickupFlight";
 import { drawResidualSpiritHealingEffect } from "../entities/players/residualSpiritHealingVisual";
 import {
   updateParticles,
@@ -258,6 +259,7 @@ function isUltimateCastFreezeActive() {
 export function updateUltimateCastFreezeFrame(dt: number) {
   updatePlayer();
   updateResidualSpiritHealingCompletionVisual(state, dt);
+  updateResidualSpiritPickupFlights(dt);
   // Gameplay remains frozen, but old visual bursts must not stay at peak density for the full cast.
   updateParticles();
   updateSkillBursts();
@@ -419,6 +421,7 @@ function loop(ts: number) {
       updateBindingZones();
       updatePlayer(dt);
       updateResidualSpiritHealing(state, dt);
+      updateResidualSpiritPickupFlights(dt);
       updatePlatforms(dt);
       const treasureEvents = updateHighPlatformTreasure(state, dt);
       if (treasureEvents.telegraph) playSfx("treasureTelegraph");
@@ -531,6 +534,7 @@ function loop(ts: number) {
   drawBruteFireballEffects();
   drawProjectiles();
   drawParticles();
+  drawResidualSpiritPickupFlights();
 
   if (isCollisionDebugEnabled) {
     recordPersistentCollisionShapes();

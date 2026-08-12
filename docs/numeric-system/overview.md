@@ -48,6 +48,7 @@
 | `state.bossSpawnTimer` | Boss 出场或重生计时器 |
 | `state.platformSpawnTimer` | 下一个地图片段生成计时器 |
 | `state.residualSpirits` | 敌人死亡后尚未拾取的残灵列表 |
+| `state.residualSpiritPickupFlights` | 已结算拾取、正在飞向 HUD 灵龛的纯视觉光粒 |
 
 React HUD 通过 `getStateSnapshot()` 暴露：
 

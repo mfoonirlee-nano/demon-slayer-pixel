@@ -71,6 +71,14 @@ export type ResidualSpiritState = {
   lifetime: number;
 };
 
+export type ResidualSpiritPickupFlightState = {
+  startX: number;
+  startY: number;
+  amount: number;
+  phase: number;
+  elapsed: number;
+};
+
 export type PlayerState = {
   x: number;
   y: number;

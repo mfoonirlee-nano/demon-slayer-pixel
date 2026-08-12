@@ -25,6 +25,7 @@ import {
   HUD_SKILL_METER_PLACEMENT,
   HUD_RESIDUAL_SPIRIT_LEFT,
   HUD_RESIDUAL_SPIRIT_TOP,
+  HUD_SCREEN_INSET,
   HUD_ULTIMATE_FRAME_TOP,
   type HudMeterFrame,
   type HudMeterPlacement,
@@ -286,7 +287,10 @@ export function GameHud() {
     <>
       <DebugPanel />
 
-      <div className="pointer-events-none absolute left-2 top-2 z-10 hidden text-white md:block">
+      <div
+        className="pointer-events-none absolute z-10 hidden text-white md:block"
+        style={{ left: HUD_SCREEN_INSET, top: HUD_SCREEN_INSET }}
+      >
         <div className="player-hud">
           <div className="player-hud-abilities">
             <UiSprite
@@ -377,7 +381,8 @@ export function GameHud() {
         healDuration={player.residualSpiritHealDuration}
         language={language}
         compact
-        className="pointer-events-none absolute left-2 top-2 z-10 md:hidden"
+        className="pointer-events-none absolute z-10 md:hidden"
+        style={{ left: HUD_SCREEN_INSET, top: HUD_SCREEN_INSET }}
       />
 
       {boss ? (

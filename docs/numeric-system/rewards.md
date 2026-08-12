@@ -8,7 +8,7 @@
 
 ## Current State
 
-当前普通敌人奖励由击杀产生：玩家击杀敌人时获得得分、技能能量、XP，并让敌人在原地掉落可拾取的残灵；已习得终式后还会获得大招能量。残灵拾取后只进入单局储存器，不会立刻恢复生命，也不会提高攻击。
+当前普通敌人奖励由击杀产生：玩家击杀敌人时获得得分、技能能量、XP，并让敌人在原地掉落可拾取的残灵；已习得终式后还会获得大招能量。残灵不会主动飞向玩家，必须由玩家接触拾取；可容纳的数值会在接触帧进入单局储存器，并以短促光粒飞向左上灵龛作为归仓反馈。拾取不会立刻恢复生命，也不会提高攻击。
 
 玩家按 `H` 可开始 `0.6s` 引灵：引灵完成后消耗 `20` 点残灵并恢复 `15%` 最大生命。满生命、残灵不足、玩家死亡或已有引灵进行中时不能再次开始。残灵、装备和其他单局资源不会带入下一局，并在重开时清空；当前没有局外战力成长。
 
@@ -73,7 +73,7 @@ ultimateEnergy = min(ultimateEnergyMax, ultimateEnergy + gain)
 
 ## HUD Contract
 
-残灵储存器使用六颗祈念珠/灵龛承载位表达 `0-60` 容量，而不是普通横向槽。每个承载位对应 `10` 点容量，局部填充显示当前十点区间的进度；数值文字负责精确读数。引灵期间 HUD 显示 `0.6s` 的施法进度，移动端与键盘共用同一套治疗入口。
+残灵储存器使用六颗祈念珠/灵龛承载位表达 `0-60` 容量，而不是普通横向槽。每个承载位对应 `10` 点容量，局部填充显示当前十点区间的进度；数值文字负责精确读数。拾取光粒会按桌面或紧凑布局飞入当前可见灵龛，但只承担反馈，储量已经在接触帧结算。引灵期间 HUD 显示 `0.6s` 的施法进度，移动端与键盘共用同一套治疗入口。
 
 ## Removed Reward Path
 
@@ -91,6 +91,7 @@ ultimateEnergy = min(ultimateEnergyMax, ultimateEnergy + gain)
 
 - `src/constants/residualSpirit.ts`
 - `src/entities/residualSpirit.ts`
+- `src/entities/residualSpiritPickupFlight.ts`
 - `src/entities/enemies/defeat.ts`
 - `src/systems/residualSpirit.ts`
 - `src/game/input.ts`

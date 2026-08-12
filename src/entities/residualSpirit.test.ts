@@ -12,7 +12,7 @@ const TEST_ENEMY = { x: 100, y: 200, w: 40, h: 60 };
 const TEST_SPAWN_AMOUNT = RESIDUAL_SPIRIT_CONFIG.dropByTier[2];
 const TEST_PICKUP_AMOUNT = RESIDUAL_SPIRIT_CONFIG.dropByTier[1];
 const DAMAGED_HP = 40;
-const MAGNET_OFFSET_X = 100;
+const NEARBY_OFFSET_X = 100;
 const UPDATE_SECONDS = 0.1;
 const EXPIRING_LIFETIME_SECONDS = 0.05;
 const LATER_GLOW_PHASE = Math.PI / 2;
@@ -88,6 +88,14 @@ describe("residual-spirit pickups", () => {
     expect(state.player.residualSpirit).toBe(TEST_PICKUP_AMOUNT);
     expect(state.player.hp).toBe(DAMAGED_HP);
     expect(state.residualSpirits).toHaveLength(0);
+    expect(state.residualSpiritPickupFlights).toEqual([
+      expect.objectContaining({
+        startX: state.player.x + state.player.w / 2,
+        startY: state.player.y + state.player.h / 2,
+        amount: TEST_PICKUP_AMOUNT,
+        elapsed: 0,
+      }),
+    ]);
   });
 
   it("leaves the uncollected remainder when only part of a pickup fits", () => {
@@ -100,12 +108,27 @@ describe("residual-spirit pickups", () => {
     expect(state.residualSpirits).toEqual([
       expect.objectContaining({ amount: 2 }),
     ]);
+    expect(state.residualSpiritPickupFlights).toEqual([
+      expect.objectContaining({ amount: 1 }),
+    ]);
   });
 
-  it("pulls a collectible pickup toward the player and expires stale pickups", () => {
+  it("leaves an overlapping pickup untouched when the vessel is full", () => {
+    state.player.residualSpirit = RESIDUAL_SPIRIT_CONFIG.maxStored;
+    spiritAtPlayer(TEST_PICKUP_AMOUNT);
+
+    updateResidualSpirits(0);
+
+    expect(state.residualSpirits).toEqual([
+      expect.objectContaining({ amount: TEST_PICKUP_AMOUNT }),
+    ]);
+    expect(state.residualSpiritPickupFlights).toEqual([]);
+  });
+
+  it("waits for player contact without moving and expires stale pickups", () => {
     const playerCenterX = state.player.x + state.player.w / 2;
     state.residualSpirits.push({
-      x: playerCenterX + MAGNET_OFFSET_X,
+      x: playerCenterX + NEARBY_OFFSET_X,
       y: state.player.y + state.player.h / 2,
       amount: TEST_PICKUP_AMOUNT,
       phase: 0,
@@ -114,11 +137,7 @@ describe("residual-spirit pickups", () => {
 
     updateResidualSpirits(UPDATE_SECONDS);
 
-    expect(state.residualSpirits[0].x).toBeCloseTo(
-      playerCenterX
-        + MAGNET_OFFSET_X
-        - RESIDUAL_SPIRIT_CONFIG.pickup.magnetSpeed * UPDATE_SECONDS,
-    );
+    expect(state.residualSpirits[0].x).toBe(playerCenterX + NEARBY_OFFSET_X);
 
     state.residualSpirits[0].lifetime = EXPIRING_LIFETIME_SECONDS;
     updateResidualSpirits(UPDATE_SECONDS);

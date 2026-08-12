@@ -7,6 +7,7 @@ import { ctx } from "../rendering/context";
 import type { EnemyState, ResidualSpiritState } from "../types/game-state";
 import { storeResidualSpirit } from "../systems/residualSpirit";
 import { emitHitBurst } from "./particle";
+import { spawnResidualSpiritPickupFlight } from "./residualSpiritPickupFlight";
 
 const FULL_CIRCLE_RADIANS = Math.PI * 2;
 const HALF = 0.5;
@@ -127,27 +128,18 @@ export function spawnResidualSpirit(
   });
 }
 
-function moveTowardPlayer(spirit: ResidualSpiritState, dt: number) {
-  if (state.player.residualSpirit >= RESIDUAL_SPIRIT_CONFIG.maxStored) return;
-
-  const playerX = state.player.x + state.player.w * HALF;
-  const playerY = state.player.y + state.player.h * HALF;
-  const dx = playerX - spirit.x;
-  const dy = playerY - spirit.y;
-  const distance = Math.hypot(dx, dy);
-  if (distance <= 0 || distance > RESIDUAL_SPIRIT_CONFIG.pickup.magnetRadius) return;
-
-  const travel = Math.min(distance, RESIDUAL_SPIRIT_CONFIG.pickup.magnetSpeed * dt);
-  spirit.x += dx / distance * travel;
-  spirit.y += dy / distance * travel;
-}
-
 function collectResidualSpirit(spirit: ResidualSpiritState) {
   const storedAmount = storeResidualSpirit(state.player, spirit.amount);
   if (storedAmount <= 0) return false;
 
   spirit.amount -= storedAmount;
   const position = residualSpiritPosition(spirit);
+  spawnResidualSpiritPickupFlight(
+    position.x,
+    position.y,
+    storedAmount,
+    spirit.phase,
+  );
   emitHitBurst(
     position.x,
     position.y,
@@ -169,7 +161,6 @@ export function updateResidualSpirits(dt: number) {
     }
 
     spirit.phase += dt * RESIDUAL_SPIRIT_CONFIG.pickup.bobSpeed;
-    moveTowardPlayer(spirit, dt);
     const box = residualSpiritBox(spirit);
     recordCollisionDebugRect(box, "pickup");
     if (hitbox(state.player, box) && collectResidualSpirit(spirit)) {
