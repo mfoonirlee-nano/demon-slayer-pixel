@@ -169,6 +169,40 @@ body {
   pointer-events: none;
 }
 
+.audio-volume-slider {
+  cursor: pointer;
+}
+
+.audio-volume-slider[data-dragging="true"] {
+  cursor: grabbing;
+}
+
+.audio-volume-slider::after {
+  position: absolute;
+  inset: 2px -4px;
+  border: 1px solid rgba(127, 232, 255, 0.9);
+  border-radius: 3px;
+  box-shadow: 0 0 8px rgba(38, 213, 255, 0.38);
+  content: "";
+  opacity: 0;
+  pointer-events: none;
+}
+
+.audio-volume-slider:has(input:focus-visible)::after {
+  opacity: 1;
+}
+
+.audio-volume-thumb {
+  transition: filter 70ms ease-out;
+  will-change: filter;
+}
+
+.audio-volume-slider:hover .audio-volume-thumb,
+.audio-volume-slider:has(input:focus-visible) .audio-volume-thumb,
+.audio-volume-slider[data-dragging="true"] .audio-volume-thumb {
+  filter: brightness(1.2) drop-shadow(0 0 3px rgba(38, 213, 255, 0.85));
+}
+
 .pause-square-badge {
   position: absolute;
   z-index: 2;

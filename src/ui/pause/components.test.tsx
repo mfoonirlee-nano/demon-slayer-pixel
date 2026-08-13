@@ -36,10 +36,10 @@ describe("PauseSquareIcon", () => {
 
 describe("AudioVolumeControl", () => {
   it.each([
-    { value: 0, percent: 0, transform: "translateX(0)" },
-    { value: 0.5, percent: 50, transform: "translateX(-50%)" },
-    { value: 1, percent: 100, transform: "translateX(-100%)" },
-  ])("keeps the fill and thumb aligned at $percent%", ({ value, percent, transform }) => {
+    { value: 0, label: "0%", fillWidth: 0, thumbLeft: 0 },
+    { value: 0.5, label: "50%", fillWidth: 260, thumbLeft: 249 },
+    { value: 1, label: "100%", fillWidth: 509, thumbLeft: 498 },
+  ])("keeps the fill and thumb bounded at $label", ({ value, fillWidth, thumbLeft }) => {
     const markup = renderToStaticMarkup(
       <AudioVolumeControl label="Volume" value={value} onChange={() => undefined} />,
     );
@@ -47,8 +47,7 @@ describe("AudioVolumeControl", () => {
     expect(markup).toMatch(
       new RegExp(`data-audio-slider="true"[^>]*style="width:${PAUSE_SLIDER_TRACK_W}px`),
     );
-    expect(markup).toContain(`width:${percent}%`);
-    expect(markup).toContain(`left:${percent}%`);
-    expect(markup).toContain(`transform:${transform}`);
+    expect(markup).toContain(`width:${fillWidth === 0 ? "0" : `${fillWidth}px`}`);
+    expect(markup).toContain(`left:${thumbLeft === 0 ? "0" : `${thumbLeft}px`}`);
   });
 });

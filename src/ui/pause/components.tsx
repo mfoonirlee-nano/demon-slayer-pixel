@@ -1,3 +1,8 @@
+import {
+  useRef,
+  useState,
+  type PointerEvent as ReactPointerEvent,
+} from "react";
 import { type UiSpriteId } from "../../constants";
 import { UiSprite } from "../uiSprite";
 import {
@@ -124,34 +129,117 @@ export function AudioVolumeControl({ label, value, onChange }: {
   value: number;
   onChange: (value: number) => void;
 }) {
-  const percent = Math.round(value * AUDIO_PERCENT_SCALE);
-  const thumbTransform = percent <= 0
-    ? "translateX(0)"
-    : percent >= AUDIO_PERCENT_SCALE
-      ? "translateX(-100%)"
-      : "translateX(-50%)";
+  const inputRef = useRef<HTMLInputElement>(null);
+  const activePointerIdRef = useRef<number | null>(null);
+  const pointerGrabOffsetRef = useRef(0);
+  const [isDragging, setIsDragging] = useState(false);
+  const normalizedValue = Math.max(0, Math.min(1, value));
+  const exactPercent = normalizedValue * AUDIO_PERCENT_SCALE;
+  const displayPercent = Math.round(exactPercent);
+  const thumbLeft = normalizedValue * (PAUSE_SLIDER_TRACK_W - PAUSE_SLIDER_THUMB_W);
+  const fillWidth = normalizedValue <= 0
+    ? 0
+    : thumbLeft + PAUSE_SLIDER_THUMB_W / 2;
+
+  const valueFromPointer = (
+    event: ReactPointerEvent<HTMLElement>,
+  ) => {
+    const trackRect = event.currentTarget.getBoundingClientRect();
+    const renderedThumbWidth = PAUSE_SLIDER_THUMB_W
+      * trackRect.width / PAUSE_SLIDER_TRACK_W;
+    const renderedTravelWidth = trackRect.width - renderedThumbWidth;
+    const nextValue = (
+      event.clientX
+      - pointerGrabOffsetRef.current
+      - trackRect.left
+      - renderedThumbWidth / 2
+    ) / renderedTravelWidth;
+
+    return Math.max(0, Math.min(1, nextValue));
+  };
+
+  const handlePointerDown = (event: ReactPointerEvent<HTMLElement>) => {
+    if (
+      !event.isPrimary
+      || activePointerIdRef.current !== null
+      || (event.pointerType === "mouse" && event.button !== 0)
+    ) return;
+
+    event.preventDefault();
+    inputRef.current?.focus({ preventScroll: true });
+
+    const trackRect = event.currentTarget.getBoundingClientRect();
+    const renderedThumbWidth = PAUSE_SLIDER_THUMB_W
+      * trackRect.width / PAUSE_SLIDER_TRACK_W;
+    const renderedThumbLeft = trackRect.left
+      + normalizedValue * (trackRect.width - renderedThumbWidth);
+    const renderedThumbRight = renderedThumbLeft + renderedThumbWidth;
+
+    pointerGrabOffsetRef.current = event.clientX >= renderedThumbLeft
+      && event.clientX <= renderedThumbRight
+      ? event.clientX - renderedThumbLeft - renderedThumbWidth / 2
+      : 0;
+    activePointerIdRef.current = event.pointerId;
+    event.currentTarget.setPointerCapture(event.pointerId);
+    setIsDragging(true);
+    onChange(valueFromPointer(event));
+  };
+
+  const handlePointerMove = (event: ReactPointerEvent<HTMLElement>) => {
+    if (activePointerIdRef.current !== event.pointerId) return;
+    event.preventDefault();
+    onChange(valueFromPointer(event));
+  };
+
+  const finishPointerDrag = (event: ReactPointerEvent<HTMLElement>) => {
+    if (activePointerIdRef.current !== event.pointerId) return;
+
+    activePointerIdRef.current = null;
+    pointerGrabOffsetRef.current = 0;
+    setIsDragging(false);
+    if (event.currentTarget.hasPointerCapture(event.pointerId)) {
+      event.currentTarget.releasePointerCapture(event.pointerId);
+    }
+  };
+
+  const handleLostPointerCapture = (event: ReactPointerEvent<HTMLElement>) => {
+    if (activePointerIdRef.current !== event.pointerId) return;
+    activePointerIdRef.current = null;
+    pointerGrabOffsetRef.current = 0;
+    setIsDragging(false);
+  };
 
   return (
     <label className="grid gap-2 py-[5px] text-[10px] leading-none text-[#c8efff]">
       <span className="flex items-baseline justify-between gap-3">
         <span className="text-[#7fc8e0]">{label}</span>
-        <span className="text-[18px] font-bold text-[#26d5ff]">{percent}%</span>
+        <span className="text-[18px] font-bold text-[#26d5ff]">{displayPercent}%</span>
       </span>
       <span
         data-audio-slider="true"
-        className="relative block"
-        style={{ width: PAUSE_SLIDER_TRACK_W, height: PAUSE_SLIDER_WRAP_H }}
+        data-dragging={isDragging ? "true" : undefined}
+        className="audio-volume-slider relative block select-none"
+        style={{
+          width: PAUSE_SLIDER_TRACK_W,
+          height: PAUSE_SLIDER_WRAP_H,
+          touchAction: "none",
+        }}
+        onLostPointerCapture={handleLostPointerCapture}
+        onPointerCancel={finishPointerDrag}
+        onPointerDown={handlePointerDown}
+        onPointerMove={handlePointerMove}
+        onPointerUp={finishPointerDrag}
       >
         <UiSprite
           id="pauseSliderTrack"
           width={PAUSE_SLIDER_TRACK_W}
           height={PAUSE_SLIDER_TRACK_H}
-          className="absolute left-0"
+          className="pointer-events-none absolute left-0"
           style={{ top: PAUSE_SLIDER_TRACK_TOP }}
         />
         <span
-          className="absolute left-0 block overflow-hidden"
-          style={{ width: `${percent}%`, height: PAUSE_SLIDER_TRACK_H, top: PAUSE_SLIDER_TRACK_TOP }}
+          className="pointer-events-none absolute left-0 block overflow-hidden"
+          style={{ width: fillWidth, height: PAUSE_SLIDER_TRACK_H, top: PAUSE_SLIDER_TRACK_TOP }}
         >
           <UiSprite
             id="pauseSliderFill"
@@ -163,16 +251,19 @@ export function AudioVolumeControl({ label, value, onChange }: {
           id="pauseSliderThumb"
           width={PAUSE_SLIDER_THUMB_W}
           height={PAUSE_SLIDER_THUMB_H}
-          className="absolute"
-          style={{ left: `${percent}%`, top: PAUSE_SLIDER_THUMB_TOP, transform: thumbTransform }}
+          className="audio-volume-thumb pointer-events-none absolute"
+          style={{ left: thumbLeft, top: PAUSE_SLIDER_THUMB_TOP }}
         />
         <input
+          ref={inputRef}
           type="range"
           min={0}
           max={AUDIO_PERCENT_SCALE}
-          step={5}
-          value={percent}
-          className="absolute inset-0 w-full cursor-pointer opacity-0"
+          step={1}
+          value={displayPercent}
+          aria-label={label}
+          aria-valuetext={`${displayPercent}%`}
+          className="pointer-events-none absolute inset-0 h-full w-full opacity-0"
           onChange={(event) => onChange(Number(event.currentTarget.value) / AUDIO_PERCENT_SCALE)}
         />
       </span>
