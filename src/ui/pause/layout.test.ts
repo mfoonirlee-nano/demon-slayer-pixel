@@ -29,6 +29,9 @@ import {
   PAUSE_TAB_W,
   PAUSE_TABS,
   PAUSE_SETTINGS_INSET_X,
+  PAUSE_SLIDER_THUMB_H,
+  PAUSE_SLIDER_THUMB_W,
+  PAUSE_SLIDER_TRACK_H,
   PAUSE_SLIDER_TRACK_W,
 } from "./constants";
 
@@ -107,5 +110,22 @@ describe("pause layout", () => {
     const settingsWidth = bodySafeWidth - PAUSE_SETTINGS_INSET_X * 2;
 
     expect(PAUSE_SLIDER_TRACK_W).toBeLessThanOrEqual(settingsWidth);
+    expect(uiSpriteDisplaySize("pauseSliderTrack")).toEqual({
+      w: PAUSE_SLIDER_TRACK_W,
+      h: PAUSE_SLIDER_TRACK_H,
+    });
+    expect(uiSpriteDisplaySize("pauseSliderFill")).toEqual({
+      w: PAUSE_SLIDER_TRACK_W,
+      h: PAUSE_SLIDER_TRACK_H,
+    });
+    expect(uiSpriteDisplaySize("pauseSliderThumb")).toEqual({
+      w: PAUSE_SLIDER_THUMB_W,
+      h: PAUSE_SLIDER_THUMB_H,
+    });
+  });
+
+  it("keeps pause tabs on their undistorted display contract", () => {
+    expect(uiSpriteDisplaySize("pauseTabNormal")).toEqual({ w: PAUSE_TAB_W, h: PAUSE_TAB_H });
+    expect(uiSpriteDisplaySize("pauseTabActive")).toEqual({ w: PAUSE_TAB_W, h: PAUSE_TAB_H });
   });
 });

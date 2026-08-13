@@ -132,12 +132,16 @@ export function AudioVolumeControl({ label, value, onChange }: {
       : "translateX(-50%)";
 
   return (
-    <label className="grid gap-2 px-2 py-[5px] text-[10px] leading-none text-[#c8efff]">
+    <label className="grid gap-2 py-[5px] text-[10px] leading-none text-[#c8efff]">
       <span className="flex items-baseline justify-between gap-3">
         <span className="text-[#7fc8e0]">{label}</span>
         <span className="text-[18px] font-bold text-[#26d5ff]">{percent}%</span>
       </span>
-      <span className="relative block" style={{ height: PAUSE_SLIDER_WRAP_H }}>
+      <span
+        data-audio-slider="true"
+        className="relative block"
+        style={{ width: PAUSE_SLIDER_TRACK_W, height: PAUSE_SLIDER_WRAP_H }}
+      >
         <UiSprite
           id="pauseSliderTrack"
           width={PAUSE_SLIDER_TRACK_W}

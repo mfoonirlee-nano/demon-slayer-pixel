@@ -30,6 +30,8 @@ const MAX_ALPHA = 255;
 const PNG_FILTER_AVERAGE = 3;
 const PNG_FILTER_PAETH = 4;
 const OPAQUE_ALPHA_THRESHOLD = 128;
+const HIGH_DENSITY_UI_SOURCE_SCALE = 3;
+const MIN_HIGH_DENSITY_DETAIL_BLOCKS = 20;
 function readPngAlpha(src) {
   const fileUrl = new URL(`../../${src}`, import.meta.url);
   const buffer = readFileSync(fileUrl);
@@ -171,6 +173,35 @@ function expectTransparentPngAsset(asset) {
   ];
   expect(cornerIndexes.map((index) => png.alpha[index])).toEqual([0, 0, 0, 0]);
   expect(png.alpha.some((alpha) => alpha > 0)).toBe(true);
+  return png;
+}
+
+function expectHighDensityUiAsset(asset, sourceScale) {
+  const png = expectTransparentPngAsset(asset);
+  expect(asset.w / asset.displayW).toBe(sourceScale);
+  expect(asset.h / asset.displayH).toBe(sourceScale);
+  return png;
+}
+
+function sourceDetailBlockCount(png, sourceScale) {
+  let detailedBlocks = 0;
+  for (let y = 0; y < png.height; y += sourceScale) {
+    for (let x = 0; x < png.width; x += sourceScale) {
+      const firstAlpha = png.alpha[y * png.width + x];
+      let hasSourceDetail = false;
+      for (let offsetY = 0; offsetY < sourceScale && !hasSourceDetail; offsetY += 1) {
+        for (let offsetX = 0; offsetX < sourceScale; offsetX += 1) {
+          const alpha = png.alpha[(y + offsetY) * png.width + x + offsetX];
+          if (alpha !== firstAlpha) {
+            hasSourceDetail = true;
+            break;
+          }
+        }
+      }
+      if (hasSourceDetail) detailedBlocks += 1;
+    }
+  }
+  return detailedBlocks;
 }
 
 function expectTransparentSpriteSheet(asset) {
@@ -235,5 +266,28 @@ describe("game HUD sprite geometry", () => {
 
   it("keeps the death sequence on its four-times-density sprite contract", () => {
     expectTransparentSpriteSheet(DEATH_SPRITE_SHEET);
+  });
+
+  it("keeps the visible settings chrome on its three-times-density contract", () => {
+    [
+      UI_SPRITES.upgradeRewardPanel,
+      UI_SPRITES.pauseTabNormal,
+      UI_SPRITES.pauseTabActive,
+      UI_SPRITES.pauseSliderTrack,
+      UI_SPRITES.pauseSliderFill,
+      UI_SPRITES.pauseSliderThumb,
+    ].forEach((asset) => expectHighDensityUiAsset(asset, HIGH_DENSITY_UI_SOURCE_SCALE));
+  });
+
+  it("keeps the settings sliders as true high-density redraws instead of block upscales", () => {
+    [
+      UI_SPRITES.pauseSliderTrack,
+      UI_SPRITES.pauseSliderFill,
+      UI_SPRITES.pauseSliderThumb,
+    ].forEach((asset) => {
+      const png = expectHighDensityUiAsset(asset, HIGH_DENSITY_UI_SOURCE_SCALE);
+      expect(sourceDetailBlockCount(png, HIGH_DENSITY_UI_SOURCE_SCALE))
+        .toBeGreaterThan(MIN_HIGH_DENSITY_DETAIL_BLOCKS);
+    });
   });
 });

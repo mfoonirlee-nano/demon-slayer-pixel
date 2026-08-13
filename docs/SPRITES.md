@@ -114,11 +114,17 @@
 | `ui/system/{hud,slots,pause,controls,rewards}/*.png` | 独立 PNG | 角色 HUD 框体、暂停页、奖励面板、卡片、槽位和按钮状态 | `UI_SPRITES` |
 | `ui/system/hud/residual-spirit-vessel-frame.png` | `192x99` | 六珠灵龛式残灵储存器外框，显示为 `64x33` | `UI_SPRITES.residualSpiritVesselFrame` |
 | `ui/system/hud/residual-spirit-bead-charge-sheet.png` | `96x96` | `4` 列动画相位 × `4` 行充能阶段，单帧 `24x24`，显示为 `8x8` | `RESIDUAL_SPIRIT_BEAD_CHARGE_SHEET` |
+| `ui/system/rewards/upgrade-reward-panel.png` | `2112x1245` | 升级奖励与暂停设置共享的面板背景，显示为 `704x415` | `UI_SPRITES.upgradeRewardPanel` |
+| `ui/system/pause/pause-tab-{normal,active}.png` | `366x126` | 暂停页签普通态与选中态，显示为 `122x42` | `UI_SPRITES.pauseTabNormal/pauseTabActive` |
+| `ui/system/pause/pause-slider-{track,fill}.png` | `1560x54` | 主音量与音效音量的轨道和填充，显示为 `520x18` | `UI_SPRITES.pauseSliderTrack/pauseSliderFill` |
+| `ui/system/pause/pause-slider-thumb.png` | `66x72` | 主音量与音效音量共用滑块，显示为 `22x24` | `UI_SPRITES.pauseSliderThumb` |
 | `ui/ultimate_orb_sheet.png` | `512x64` | 大招满能量动画 | `UltimateOrb` |
 | `ui/ultimate_orb_charge_sheet.png` | `256x512` | 8 个充能阶段 × 每阶段 4 帧循环动画 | `UltimateOrb` |
 | `ui/end.png` | `6688x3764` | 中文死亡标题 24 帧序列，`6x4` 排列、物理帧 `1088x812` | `DEATH_SPRITE_SHEET` |
 
 充能图集按 `4 列动画相位 × 8 行充能阶段` 排列，单格 `64x64`。能量百分比选择对应行；非零充能且未释放时，以每帧 `200ms` 循环该行的潮流、泡沫和高光。零能量与大招释放倒计时保持该阶段第 1 帧静止；满能量仍切换到 `ultimate_orb_sheet.png` 的 8 帧 / `1600ms` 循环。UI 框体素材按用途放在 `ui/system/` 的子目录中，便于逐个微调。角色 HUD 使用 `ui/system/hud/` 下的模块化素材：`ultimate-frame.png` 是大招圆框，`current-skill-frame.png` 是当前技能圆框，生命条和技能条各由 `left/mid/right` 三段式外框组成。角色状态 HUD 这组素材以 3x 源尺寸保存，例如大招圆框源图为 `216x216`、运行时显示为 `72x72`；`UI_SPRITES` 通过 `displayW/displayH` 记录显示尺寸。运行时只从单图绘制外框和暗轨道，当前值、滞后值和文字由 React/CSS 动态叠加，保证状态条可随等级横向增长。
+
+设置页可见的共享面板、页签和三张音量滑条素材同样以 `3x` 源密度保存，并由 `displayW/displayH` 固定逻辑显示尺寸。轨道、填充和滑块基于原有月纹端帽、银蓝金属和月潮核心重新绘制高密源像素，不使用旧逻辑图的整块倍增；轨道与填充按真实 `520x18` 行程保存为 `1560x54`，因此运行时不再把旧 `420x18` 图片单独横向拉伸。透明 range 输入、填充裁切和滑块位置共用完整 `520px` 宽度。
 
 `ui/end.png` 使用 `4x` 源密度保存，网格原点为 `(92, 88)`；运行时仍按 `1672x941` 逻辑图集、`272x203` 逻辑帧和 `2/3` 显示缩放裁切，因此高清化不会改变标题体量。前 24 帧以 `70ms`/帧播放一次，随后循环最后一行的 6 帧。
 
