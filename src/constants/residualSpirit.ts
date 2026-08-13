@@ -17,8 +17,8 @@ export const RESIDUAL_SPIRIT_CONFIG = {
     lifetimeSeconds: 12,
     bobAmplitude: 3,
     bobSpeed: 4,
-    auraPadding: 4,
-    auraAlpha: 0.2,
+    auraPadding: 6,
+    auraAlpha: 0.3,
     pickupBurstPower: 1.4,
     pickupTone: {
       frequency: 620,

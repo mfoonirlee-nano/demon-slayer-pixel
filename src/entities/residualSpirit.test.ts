@@ -24,8 +24,17 @@ type GradientRecord = {
 
 function createGlowContext() {
   const gradients: GradientRecord[] = [];
+  const compositeOperations: GlobalCompositeOperation[] = [];
+  let compositeOperation: GlobalCompositeOperation = "source-over";
   const context = {
     globalAlpha: 1,
+    get globalCompositeOperation() {
+      return compositeOperation;
+    },
+    set globalCompositeOperation(operation: GlobalCompositeOperation) {
+      compositeOperation = operation;
+      compositeOperations.push(operation);
+    },
     fillStyle: "",
     save: vi.fn(),
     restore: vi.fn(),
@@ -45,7 +54,7 @@ function createGlowContext() {
   setCanvas({
     getContext: () => context,
   } as unknown as HTMLCanvasElement);
-  return { context, gradients };
+  return { context, gradients, compositeOperations };
 }
 
 function spiritAtPlayer(amount: number) {
@@ -145,12 +154,13 @@ describe("residual-spirit pickups", () => {
   });
 
   it("draws a layered, continuously breathing aura instead of a rigid block glow", () => {
-    const { context, gradients } = createGlowContext();
+    const { context, gradients, compositeOperations } = createGlowContext();
     spiritAtPlayer(TEST_PICKUP_AMOUNT);
 
     drawResidualSpirits();
 
     expect(context.createRadialGradient).toHaveBeenCalledTimes(2);
+    expect(compositeOperations).toEqual(["screen", "source-over"]);
     expect(gradients[0].args[5]).toBeGreaterThan(gradients[1].args[5]);
     expect(gradients.every((gradient) => (
       gradient.stops[gradient.stops.length - 1]?.color.endsWith(", 0)")

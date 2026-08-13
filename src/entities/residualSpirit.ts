@@ -181,6 +181,8 @@ export function drawResidualSpirits() {
 
     ctx.save();
     const baseAlpha = ctx.globalAlpha;
+    const baseCompositeOperation = ctx.globalCompositeOperation;
+    ctx.globalCompositeOperation = "screen";
     for (const profile of AURA_LAYER_PROFILES) {
       drawAuraLayer(
         ctx,
@@ -193,6 +195,7 @@ export function drawResidualSpirits() {
       );
     }
     ctx.globalAlpha = baseAlpha;
+    ctx.globalCompositeOperation = baseCompositeOperation;
     if (sprite.image) {
       ctx.drawImage(
         sprite.image,
