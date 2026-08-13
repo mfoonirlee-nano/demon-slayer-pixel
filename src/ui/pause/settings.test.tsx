@@ -45,19 +45,21 @@ describe("PauseSettings localization", () => {
       );
     });
 
-    const languageSelect = container.querySelector<HTMLSelectElement>(
-      'select[aria-label="语言"]',
+    const languageTrigger = container.querySelector<HTMLButtonElement>(
+      'button[aria-haspopup="listbox"]',
     );
-    expect(languageSelect).not.toBeNull();
-    expect(languageSelect?.value).toBe("zh-CN");
-    expect([...languageSelect!.options].map((option) => option.value))
-      .toEqual([...SUPPORTED_LANGUAGES]);
-    expect([...languageSelect!.options].map((option) => option.textContent))
-      .toEqual(["中文", "English"]);
+    expect(languageTrigger).not.toBeNull();
+    expect(languageTrigger?.textContent).toContain("中文");
 
     act(() => {
-      languageSelect!.value = "en";
-      languageSelect!.dispatchEvent(new Event("change", { bubbles: true }));
+      languageTrigger?.click();
+    });
+    expect([
+      ...container.querySelectorAll<HTMLButtonElement>('[role="option"]'),
+    ].map((option) => option.dataset.language)).toEqual([...SUPPORTED_LANGUAGES]);
+
+    act(() => {
+      container.querySelector<HTMLButtonElement>('[data-language="en"]')?.click();
     });
 
     expect(store.get(languageAtom)).toBe("en");
@@ -66,8 +68,10 @@ describe("PauseSettings localization", () => {
     expect(container.textContent).toContain("Master volume");
     expect(container.textContent).toContain("Sound effects");
     expect(container.textContent).toContain("Language");
-    expect(languageSelect?.value).toBe("en");
-    expect(languageSelect?.getAttribute("aria-label")).toBe("Language");
+    expect(languageTrigger?.textContent).toContain("English");
+    const triggerLabelIds = languageTrigger?.getAttribute("aria-labelledby")?.split(" ") ?? [];
+    expect(triggerLabelIds.map((id) => document.getElementById(id)?.textContent))
+      .toEqual(["Language", "English"]);
     expect(container.textContent).not.toMatch(/[主音量音效设置]/u);
   });
 });
