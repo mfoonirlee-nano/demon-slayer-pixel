@@ -1,29 +1,29 @@
 import { useEffect, useState } from "react";
 import { useAtomValue } from "jotai";
 import { resolveStaticAssetUrl } from "../assets/staticAssetUrl";
+import { DEATH_SPRITE_SHEET } from "../constants";
 import { languageAtom } from "../i18n/language";
 import { message } from "../i18n/messages";
 
-const DEATH_SPRITE_COLUMNS = 6;
-const DEATH_SPRITE_ROWS = 4;
+const DEATH_SPRITE_COLUMNS = DEATH_SPRITE_SHEET.columns;
+const DEATH_SPRITE_ROWS = DEATH_SPRITE_SHEET.rows;
 const DEATH_SPRITE_FRAMES = DEATH_SPRITE_COLUMNS * DEATH_SPRITE_ROWS;
 const DEATH_SPRITE_LOOP_START_FRAME = DEATH_SPRITE_FRAMES - DEATH_SPRITE_COLUMNS;
-const DEATH_FRAME_MS = 70;
 const DEATH_SPRITE_SCALE_NUMERATOR = 2;
 const DEATH_SPRITE_SCALE_DENOMINATOR = 3;
-const DEATH_SHEET_BASE_WIDTH = 1672;
-const DEATH_SHEET_BASE_HEIGHT = 941;
-const DEATH_FRAME_BASE_WIDTH = 272;
-const DEATH_FRAME_BASE_HEIGHT = 203;
-const DEATH_FRAME_BASE_CONTENT_OFFSET_X = 23;
-const DEATH_FRAME_BASE_CONTENT_OFFSET_Y = 22;
 export const DEATH_SPRITE_SCALE = DEATH_SPRITE_SCALE_NUMERATOR / DEATH_SPRITE_SCALE_DENOMINATOR;
-export const DEATH_FRAME_WIDTH = DEATH_FRAME_BASE_WIDTH * DEATH_SPRITE_SCALE;
-export const DEATH_FRAME_HEIGHT = DEATH_FRAME_BASE_HEIGHT * DEATH_SPRITE_SCALE;
-const DEATH_SHEET_WIDTH = DEATH_SHEET_BASE_WIDTH * DEATH_SPRITE_SCALE;
-const DEATH_SHEET_HEIGHT = DEATH_SHEET_BASE_HEIGHT * DEATH_SPRITE_SCALE;
-const DEATH_FRAME_CONTENT_OFFSET_X = DEATH_FRAME_BASE_CONTENT_OFFSET_X * DEATH_SPRITE_SCALE;
-const DEATH_FRAME_CONTENT_OFFSET_Y = DEATH_FRAME_BASE_CONTENT_OFFSET_Y * DEATH_SPRITE_SCALE;
+export const DEATH_FRAME_WIDTH = DEATH_SPRITE_SHEET.frameW
+  / DEATH_SPRITE_SHEET.sourceScale * DEATH_SPRITE_SCALE;
+export const DEATH_FRAME_HEIGHT = DEATH_SPRITE_SHEET.frameH
+  / DEATH_SPRITE_SHEET.sourceScale * DEATH_SPRITE_SCALE;
+const DEATH_SHEET_WIDTH = DEATH_SPRITE_SHEET.w
+  / DEATH_SPRITE_SHEET.sourceScale * DEATH_SPRITE_SCALE;
+const DEATH_SHEET_HEIGHT = DEATH_SPRITE_SHEET.h
+  / DEATH_SPRITE_SHEET.sourceScale * DEATH_SPRITE_SCALE;
+const DEATH_FRAME_CONTENT_OFFSET_X = DEATH_SPRITE_SHEET.offsetX
+  / DEATH_SPRITE_SHEET.sourceScale * DEATH_SPRITE_SCALE;
+const DEATH_FRAME_CONTENT_OFFSET_Y = DEATH_SPRITE_SHEET.offsetY
+  / DEATH_SPRITE_SHEET.sourceScale * DEATH_SPRITE_SCALE;
 
 export function deathSpriteFrameForStep(step: number) {
   if (step < DEATH_SPRITE_FRAMES) return step;
@@ -46,7 +46,9 @@ export function DeathScreen({ elapsed }: { elapsed: number }) {
     let messageShown = false;
 
     const tick = (now: number) => {
-      const animationStep = Math.floor((now - animationStartedAt) / DEATH_FRAME_MS);
+      const animationStep = Math.floor(
+        (now - animationStartedAt) / DEATH_SPRITE_SHEET.frameDurationMs,
+      );
       const nextFrame = deathSpriteFrameForStep(animationStep);
 
       if (nextFrame !== currentFrame) {
@@ -78,7 +80,7 @@ export function DeathScreen({ elapsed }: { elapsed: number }) {
           style={{ width: DEATH_FRAME_WIDTH, height: DEATH_FRAME_HEIGHT }}
         >
           <img
-            src={resolveStaticAssetUrl("assets/sprites/ui/end.png")}
+            src={resolveStaticAssetUrl(DEATH_SPRITE_SHEET.src)}
             alt=""
             draggable={false}
             className="death-sprite-sheet"

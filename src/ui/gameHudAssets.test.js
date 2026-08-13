@@ -4,6 +4,7 @@ import { URL } from "node:url";
 import { inflateSync } from "node:zlib";
 import { describe, expect, it } from "vitest";
 import {
+  DEATH_SPRITE_SHEET,
   RESIDUAL_SPIRIT_BEAD_CHARGE_SHEET,
   RESIDUAL_SPIRIT_PICKUP_SPRITE,
   UI_SPRITES,
@@ -175,34 +176,38 @@ function expectTransparentPngAsset(asset) {
 function expectTransparentSpriteSheet(asset) {
   const png = readPngAlpha(asset.src);
   expect({ width: png.width, height: png.height }).toEqual({
-    width: asset.frameW * asset.columns,
-    height: asset.frameH * asset.rows,
+    width: asset.w,
+    height: asset.h,
   });
+  const offsetX = asset.offsetX ?? 0;
+  const offsetY = asset.offsetY ?? 0;
 
   for (let row = 0; row < asset.rows; row += 1) {
     for (let column = 0; column < asset.columns; column += 1) {
-      const visiblePixels = [];
+      let visiblePixelCount = 0;
+      let minX = Number.POSITIVE_INFINITY;
+      let maxX = Number.NEGATIVE_INFINITY;
+      let minY = Number.POSITIVE_INFINITY;
+      let maxY = Number.NEGATIVE_INFINITY;
       for (let y = 0; y < asset.frameH; y += 1) {
         for (let x = 0; x < asset.frameW; x += 1) {
-          const sourceX = column * asset.frameW + x;
-          const sourceY = row * asset.frameH + y;
-          if (png.alpha[sourceY * png.width + sourceX] > 0) visiblePixels.push({ x, y });
+          const sourceX = offsetX + column * asset.frameW + x;
+          const sourceY = offsetY + row * asset.frameH + y;
+          if (png.alpha[sourceY * png.width + sourceX] === 0) continue;
+
+          visiblePixelCount += 1;
+          minX = Math.min(minX, x);
+          maxX = Math.max(maxX, x);
+          minY = Math.min(minY, y);
+          maxY = Math.max(maxY, y);
         }
       }
 
-      expect(visiblePixels.length).toBeGreaterThan(0);
-      expect(Math.min(...visiblePixels.map(({ x }) => x))).toBeGreaterThanOrEqual(
-        asset.frameGutter,
-      );
-      expect(Math.max(...visiblePixels.map(({ x }) => x))).toBeLessThan(
-        asset.frameW - asset.frameGutter,
-      );
-      expect(Math.min(...visiblePixels.map(({ y }) => y))).toBeGreaterThanOrEqual(
-        asset.frameGutter,
-      );
-      expect(Math.max(...visiblePixels.map(({ y }) => y))).toBeLessThan(
-        asset.frameH - asset.frameGutter,
-      );
+      expect(visiblePixelCount).toBeGreaterThan(0);
+      expect(minX).toBeGreaterThanOrEqual(asset.frameGutter);
+      expect(maxX).toBeLessThan(asset.frameW - asset.frameGutter);
+      expect(minY).toBeGreaterThanOrEqual(asset.frameGutter);
+      expect(maxY).toBeLessThan(asset.frameH - asset.frameGutter);
     }
   }
 }
@@ -226,5 +231,9 @@ describe("game HUD sprite geometry", () => {
     expectTransparentPngAsset(RESIDUAL_SPIRIT_PICKUP_SPRITE);
     expectTransparentPngAsset(RESIDUAL_SPIRIT_BEAD_CHARGE_SHEET);
     expectTransparentSpriteSheet(RESIDUAL_SPIRIT_BEAD_CHARGE_SHEET);
+  });
+
+  it("keeps the death sequence on its four-times-density sprite contract", () => {
+    expectTransparentSpriteSheet(DEATH_SPRITE_SHEET);
   });
 });

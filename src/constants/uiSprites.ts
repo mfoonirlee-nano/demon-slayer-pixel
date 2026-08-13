@@ -1,3 +1,18 @@
+export const DEATH_SPRITE_SHEET = {
+  src: "assets/sprites/ui/end.png",
+  w: 6688,
+  h: 3764,
+  frameW: 1088,
+  frameH: 812,
+  columns: 6,
+  rows: 4,
+  offsetX: 92,
+  offsetY: 88,
+  frameGutter: 64,
+  sourceScale: 4,
+  frameDurationMs: 70,
+} as const;
+
 export const RESIDUAL_SPIRIT_BEAD_CHARGE_SHEET = {
   src: "assets/sprites/ui/system/hud/residual-spirit-bead-charge-sheet.png",
   w: 96,

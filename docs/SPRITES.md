@@ -116,8 +116,11 @@
 | `ui/system/hud/residual-spirit-bead-charge-sheet.png` | `96x96` | `4` 列动画相位 × `4` 行充能阶段，单帧 `24x24`，显示为 `8x8` | `RESIDUAL_SPIRIT_BEAD_CHARGE_SHEET` |
 | `ui/ultimate_orb_sheet.png` | `512x64` | 大招满能量动画 | `UltimateOrb` |
 | `ui/ultimate_orb_charge_sheet.png` | `256x512` | 8 个充能阶段 × 每阶段 4 帧循环动画 | `UltimateOrb` |
+| `ui/end.png` | `6688x3764` | 中文死亡标题 24 帧序列，`6x4` 排列、物理帧 `1088x812` | `DEATH_SPRITE_SHEET` |
 
 充能图集按 `4 列动画相位 × 8 行充能阶段` 排列，单格 `64x64`。能量百分比选择对应行；非零充能且未释放时，以每帧 `200ms` 循环该行的潮流、泡沫和高光。零能量与大招释放倒计时保持该阶段第 1 帧静止；满能量仍切换到 `ultimate_orb_sheet.png` 的 8 帧 / `1600ms` 循环。UI 框体素材按用途放在 `ui/system/` 的子目录中，便于逐个微调。角色 HUD 使用 `ui/system/hud/` 下的模块化素材：`ultimate-frame.png` 是大招圆框，`current-skill-frame.png` 是当前技能圆框，生命条和技能条各由 `left/mid/right` 三段式外框组成。角色状态 HUD 这组素材以 3x 源尺寸保存，例如大招圆框源图为 `216x216`、运行时显示为 `72x72`；`UI_SPRITES` 通过 `displayW/displayH` 记录显示尺寸。运行时只从单图绘制外框和暗轨道，当前值、滞后值和文字由 React/CSS 动态叠加，保证状态条可随等级横向增长。
+
+`ui/end.png` 使用 `4x` 源密度保存，网格原点为 `(92, 88)`；运行时仍按 `1672x941` 逻辑图集、`272x203` 逻辑帧和 `2/3` 显示缩放裁切，因此高清化不会改变标题体量。前 24 帧以 `70ms`/帧播放一次，随后循环最后一行的 6 帧。
 
 残灵储存器沿用同一套深靛、暗银与月潮蓝色语法，不使用常规横向进度槽。`residual-spirit-vessel-frame.png` 只提供灵龛外框与六个成 `2 + 2 + 2` 分组的圆形承载位；React/CSS 在外框下方叠加当前充填、精确数值和引灵进度。`residual-spirit-bead-charge-sheet.png` 以列表示四个灵火流动相位，以行表示低、中、高、满四档充能形态；六颗灵珠错相播放，引灵时加速。未充满的灵珠同时保留未闭合内环、较暗核心和位于真实充填高度的暖白刻线，空珠、充能中和满珠可直接区分；系统启用“减弱动态效果”时固定在当前充能行的首帧。源图与其他角色 HUD 框体一样以 3x 尺寸保存，显示时不对原图做非等比拉伸。
 
