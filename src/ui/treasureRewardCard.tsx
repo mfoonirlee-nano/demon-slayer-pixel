@@ -2,6 +2,7 @@ import { resolveStaticAssetUrl } from "../assets/staticAssetUrl";
 import type { GameSnapshot } from "../game/gameStore";
 import {
   equipmentFamilyLabel,
+  equipmentPrimaryStatLabel,
   equipmentSlotLabel,
   equipmentTierLabel,
   localizeEquipmentItem,
@@ -12,6 +13,7 @@ import type {
   TreasureChoiceState,
   TreasureResourceKind,
 } from "../types/game-state";
+import { formatSignedPercent } from "../utils";
 import { equipmentIconSrc, equipmentSlotBadgeSrc } from "./uiDisplay";
 import { getRewardOverlayLayout } from "./rewardOverlayLayout";
 
@@ -26,36 +28,42 @@ const RESOURCE_STYLE: Record<TreasureResourceKind, {
   descriptionKey: MessageKey;
   iconSrc: string;
   nameKey: MessageKey;
+  valueKey: MessageKey;
 }> = {
   health: {
     accent: "#8fffd0",
     descriptionKey: "reward.treasure.healthDescription",
     iconSrc: resolveStaticAssetUrl("assets/sprites/ui/status/semantic/buff_recovery.png"),
     nameKey: "reward.treasure.healthName",
+    valueKey: "reward.treasure.healthValue",
   },
   skillEnergy: {
     accent: "#69ddff",
     descriptionKey: "reward.treasure.skillEnergyDescription",
     iconSrc: resolveStaticAssetUrl("assets/sprites/ui/status/semantic/buff_energy.png"),
     nameKey: "reward.treasure.skillEnergyName",
+    valueKey: "reward.treasure.skillEnergyValue",
   },
   ultimateEnergy: {
     accent: "#ffd36f",
     descriptionKey: "reward.treasure.ultimateEnergyDescription",
     iconSrc: resolveStaticAssetUrl("assets/sprites/ui/status/semantic/buff_ultimate.png"),
     nameKey: "reward.treasure.ultimateEnergyName",
+    valueKey: "reward.treasure.ultimateEnergyValue",
   },
   residualSpirit: {
     accent: "#a8eeff",
     descriptionKey: "reward.treasure.residualSpiritDescription",
     iconSrc: RESIDUAL_SPIRIT_ICON_SRC,
     nameKey: "reward.treasure.residualSpiritName",
+    valueKey: "reward.treasure.residualSpiritValue",
   },
   runXp: {
     accent: "#ffe099",
     descriptionKey: "reward.treasure.xpDescription",
     iconSrc: resolveStaticAssetUrl("assets/sprites/ui/status/semantic/buff_charge.png"),
     nameKey: "reward.treasure.xpName",
+    valueKey: "reward.treasure.xpValue",
   },
 };
 
@@ -75,6 +83,15 @@ export function TreasureRewardCard({ choice, language, layout, selected, snapsho
   const equippedName = equippedSource
     ? localizeEquipmentItem(language, equippedSource).name
     : message(language, "common.none");
+  const equipmentPrimaryStat = equipment
+    ? formatSignedPercent(equipment.primaryStatBonusRatio)
+    : null;
+  const equippedPrimaryStat = equippedSource
+    ? formatSignedPercent(equippedSource.primaryStatBonusRatio)
+    : null;
+  const primaryStatValue = equipmentPrimaryStat && equippedPrimaryStat
+    ? `${equippedPrimaryStat} → ${equipmentPrimaryStat}`
+    : equipmentPrimaryStat;
   const iconSrc = equipment ? equipmentIconSrc(equipment.id) : resourceStyle?.iconSrc;
   const iconBadgeSize = layout.cardIcon
     ? Math.max(ICON_BADGE_MIN_SIZE, Math.round(layout.cardIcon.size * ICON_BADGE_SIZE_RATIO))
@@ -139,7 +156,11 @@ export function TreasureRewardCard({ choice, language, layout, selected, snapsho
             <div className="mt-1 truncate text-center text-[8px] font-bold text-[#ffd36f]">
               {equipmentFamilyLabel(language, equipment.family)} · {equipment.uiTags[equipment.uiTags.length - 1]}
             </div>
-            <div className="mt-3 line-clamp-3 text-center text-[8px] leading-[1.45] text-[#bcefff]">
+            <div className="mt-1 text-center text-[9px] font-black text-[#ffe099]">
+              {equipmentPrimaryStatLabel(language, equipment.slot)}{" "}
+              {primaryStatValue}
+            </div>
+            <div className="mt-2 line-clamp-3 text-center text-[8px] leading-[1.45] text-[#bcefff]">
               {equipment.summary}
             </div>
             <div className="mt-auto pt-1 text-center text-[7px] leading-[1.35] text-[#ffd990]">
@@ -163,14 +184,16 @@ export function TreasureRewardCard({ choice, language, layout, selected, snapsho
                 {message(language, resourceStyle.nameKey)}
               </span>
             </div>
-            <div className="reward-treasure-gain mt-2 text-center text-[18px] font-black leading-none">
-              +{choice.amount}
+            <div className="reward-treasure-gain mt-2 flex items-baseline justify-center gap-1 font-black leading-none">
+              <span className="text-[9px]">{message(language, resourceStyle.valueKey)}</span>
+              <span className="text-[18px]">+{choice.amount}</span>
             </div>
             {choice.kind !== "runXp" ? (
               <div className="mt-2 text-center text-[9px] font-bold text-[#d7f7ff]">
                 {message(language, "reward.treasure.transition", {
                   before: choice.before,
                   after: choice.after,
+                  resource: message(language, resourceStyle.valueKey),
                 })}
               </div>
             ) : null}

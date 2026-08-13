@@ -25,6 +25,45 @@ const CHINESE_UPGRADE: UpgradeChoiceState = {
 };
 
 describe("RewardOverlay localization", () => {
+  it("states moon-tide treasure gains plainly while keeping the setting flavor", () => {
+    const store = createStore();
+    store.set(languageAtom, "zh-CN");
+    const blade = equipmentItem("flow_blade", "common");
+    if (!blade) throw new Error("Expected flow blade equipment");
+    const choices: TreasureChoiceState[] = [
+      { id: "health", kind: "health", amount: 15, before: 10, after: 25 },
+      { id: "xp", kind: "runXp", amount: 24, before: 80, after: 104 },
+      {
+        id: "blade",
+        kind: "equipment",
+        equipment: { ...blade, previousTier: null, reason: "new" },
+        replacedEquippedId: null,
+      },
+    ];
+    const baseSnapshot = gameStore.get(gameSnapshotAtom);
+    const snapshot = {
+      ...baseSnapshot,
+      activeOverlay: "treasure" as const,
+      pendingTreasureChoices: choices,
+      player: { ...baseSnapshot.player, xpToNext: 100 },
+    };
+
+    const markup = renderToStaticMarkup(
+      <Provider store={store}>
+        <RewardOverlay snapshot={snapshot} />
+      </Provider>,
+    );
+
+    expect(markup).toContain("选择一份月潮馈赠");
+    expect(markup).toContain("恢复生命");
+    expect(markup).toContain("生命：10 → 25");
+    expect(markup).toContain("获得经验");
+    expect(markup).toContain("吸收月华，离下一等级更近。");
+    expect(markup).toContain("选择后立即升级，并继续选择一项强化");
+    expect(markup).toContain("攻击力 +12%");
+    expect(markup).not.toMatch(/历练|推进本幕修行进度/u);
+  });
+
   it("derives an English skill reward from an existing Chinese snapshot", () => {
     const store = createStore();
     store.set(languageAtom, "en");
@@ -128,11 +167,11 @@ describe("RewardOverlay localization", () => {
     );
 
     expect(markup).toContain("Moon-Tide Coffer");
-    expect(markup).toContain("Life Tide");
+    expect(markup).toContain("Restore Health");
     expect(markup).toContain("+15");
     expect(markup).toContain("10 → 25");
     expect(markup).not.toContain("80 → 104");
-    expect(markup).toContain("Levels you up, then opens an upgrade choice");
+    expect(markup).toContain("Choose this to level up, then pick an upgrade");
   });
 
   it("identifies the equipped item replaced by a treasure relic", () => {
@@ -165,6 +204,40 @@ describe("RewardOverlay localization", () => {
     );
 
     expect(markup).toContain("Moonbreak Blade");
+    expect(markup).toContain("Attack +12% → +14%");
     expect(markup).toContain("Replace current Blade: Flow Blade");
+  });
+
+  it("shows when a treasure replacement lowers its primary stat bonus", () => {
+    const store = createStore();
+    store.set(languageAtom, "zh-CN");
+    const current = equipmentItem("risk_blade", "common");
+    const replacement = equipmentItem("tempo_blade", "common");
+    if (!current || !replacement) throw new Error("Expected blade equipment");
+    const choice: TreasureChoiceState = {
+      id: "lower-attack-replacement",
+      kind: "equipment",
+      equipment: { ...replacement, previousTier: null, reason: "replacement" },
+      replacedEquippedId: current.id,
+    };
+    const baseSnapshot = gameStore.get(gameSnapshotAtom);
+    const snapshot = {
+      ...baseSnapshot,
+      activeOverlay: "treasure" as const,
+      equipment: {
+        ...baseSnapshot.equipment,
+        equipped: { ...baseSnapshot.equipment.equipped, blade: current },
+      },
+      pendingTreasureChoices: [choice],
+    };
+
+    const markup = renderToStaticMarkup(
+      <Provider store={store}>
+        <RewardOverlay snapshot={snapshot} />
+      </Provider>,
+    );
+
+    expect(markup).toContain("攻击力 +15% → +10%");
+    expect(markup).toContain("替换：当前刃器「残心刃」");
   });
 });
