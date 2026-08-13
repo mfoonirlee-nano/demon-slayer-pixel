@@ -19,6 +19,8 @@ const GUST_RELEASE_SAMPLE_STEP_SECONDS = 1 / GUST_RELEASE_SAMPLE_FPS;
 const GUST_RELEASE_POSITION_EPSILON = 1;
 const EARLY_POSITION_SAMPLE_SECONDS = 0.25;
 const OPENING_GUST_SAMPLE_SECONDS = 2.5;
+const GUST_END_BEFORE_SECONDS = 2.466667;
+const GUST_END_AFTER_SECONDS = 2.470833;
 const LATE_POSITION_SAMPLE_SECONDS = 10;
 const LONG_RUN_POSITION_SAMPLE_SECONDS = 90;
 const POSITION_SAMPLE_TIMES = [
@@ -29,6 +31,16 @@ const POSITION_SAMPLE_TIMES = [
   LONG_RUN_POSITION_SAMPLE_SECONDS,
 ];
 const MOTION_SAMPLE_SECONDS = 0.2;
+const NATURAL_MOTION_SAMPLE_DURATION_SECONDS = 20;
+const NATURAL_MOTION_SAMPLE_STEP_SECONDS = 0.1;
+const DESCENT_PACE_WINDOW_SECONDS = 1;
+const DESCENT_PACE_RANGE_MIN = 18;
+const RELEASED_AT_TRACK_PRECISION = 6;
+const TIME_CONTINUITY_EPSILON_SCALE = 4;
+const LEAF_READABILITY_GROUND_CLEARANCE = 72;
+const FAR_READABLE_ALPHA_MIN = 0.42;
+const NEAR_READABLE_ALPHA_MIN = 0.62;
+const NEAR_CALM_LEAF_COUNT = 4;
 const FRAME_HOLD_SAMPLE_SECONDS = 0.05;
 const FRAME_ADVANCE_SAMPLE_SECONDS = 0.1;
 const FRAME_WRAP_SAMPLE_SECONDS = 2;
@@ -43,6 +55,11 @@ afterEach(() => {
 function totalLeafCount(elapsed: number) {
   return resolveFallingLeafRenderPlan({ elapsed, seed: SAMPLE_SEED, layer: "far" }).length
     + resolveFallingLeafRenderPlan({ elapsed, seed: SAMPLE_SEED, layer: "near" }).length;
+}
+
+function isContinuousInterval(current: number, previous: number, expected: number) {
+  return Math.abs(current - previous - expected)
+    < Number.EPSILON * Math.max(1, current) * TIME_CONTINUITY_EPSILON_SCALE;
 }
 
 describe("falling leaf render plan", () => {
@@ -111,6 +128,32 @@ describe("falling leaf render plan", () => {
     }
   });
 
+  it.each([
+    { layer: "far" as const, calmCount: FAR_CALM_LEAF_COUNT },
+    { layer: "near" as const, calmCount: NEAR_CALM_LEAF_COUNT },
+  ])("keeps released $layer gust leaves falling after the wind subsides", ({
+    layer,
+    calmCount,
+  }) => {
+    const before = resolveFallingLeafRenderPlan({
+      elapsed: GUST_END_BEFORE_SECONDS,
+      seed: SAMPLE_SEED,
+      layer,
+    }).slice(calmCount);
+    const after = resolveFallingLeafRenderPlan({
+      elapsed: GUST_END_AFTER_SECONDS,
+      seed: SAMPLE_SEED,
+      layer,
+    });
+
+    expect(before.length).toBeGreaterThan(0);
+    for (const leaf of before) {
+      expect(after.some((candidate) => (
+        candidate.sourceId === leaf.sourceId && candidate.releasedAt === leaf.releasedAt
+      ))).toBe(true);
+    }
+  });
+
   it("shows multiple tree-matched silhouettes in the opening near layer", () => {
     const plan = resolveFallingLeafRenderPlan({ elapsed: 0, seed: SAMPLE_SEED, layer: "near" });
 
@@ -164,6 +207,105 @@ describe("falling leaf render plan", () => {
 
     expect(downwardCount).toBeGreaterThan(before.length / 2);
     expect(sidewaysCount).toBeGreaterThan(before.length / 2);
+  });
+
+  it.each([
+    { layer: "far" as const, calmCount: FAR_CALM_LEAF_COUNT, alphaMin: FAR_READABLE_ALPHA_MIN },
+    { layer: "near" as const, calmCount: NEAR_CALM_LEAF_COUNT, alphaMin: NEAR_READABLE_ALPHA_MIN },
+  ])("keeps $layer calm leaves readable until their landing fade", ({
+    layer,
+    calmCount,
+    alphaMin,
+  }) => {
+    const sampleCount = NATURAL_MOTION_SAMPLE_DURATION_SECONDS
+      / NATURAL_MOTION_SAMPLE_STEP_SECONDS;
+    const readableLeaves = Array.from({ length: sampleCount + 1 }, (_, index) => (
+      resolveFallingLeafRenderPlan({
+        elapsed: index * NATURAL_MOTION_SAMPLE_STEP_SECONDS,
+        seed: SAMPLE_SEED,
+        layer,
+      }).slice(0, calmCount)
+    )).flat().filter((leaf) => leaf.y <= GROUND_Y - LEAF_READABILITY_GROUND_CLEARANCE);
+
+    expect(readableLeaves.length).toBeGreaterThan(0);
+    expect(Math.min(...readableLeaves.map((leaf) => leaf.alpha))).toBeGreaterThanOrEqual(
+      alphaMin,
+    );
+  });
+
+  it("lets calm leaves drift both ways instead of sliding along one fixed track", () => {
+    const sampleCount = NATURAL_MOTION_SAMPLE_DURATION_SECONDS
+      / NATURAL_MOTION_SAMPLE_STEP_SECONDS;
+    const tracks = new Map<string, Array<{ elapsed: number; x: number }>>();
+
+    for (let index = 0; index <= sampleCount; index += 1) {
+      const elapsed = index * NATURAL_MOTION_SAMPLE_STEP_SECONDS;
+      const plan = resolveFallingLeafRenderPlan({
+        elapsed,
+        seed: SAMPLE_SEED,
+        layer: "far",
+      });
+      if (plan.length !== FAR_CALM_LEAF_COUNT) continue;
+
+      for (const leaf of plan) {
+        const trackId = `${leaf.sourceId}:${leaf.releasedAt.toFixed(RELEASED_AT_TRACK_PRECISION)}`;
+        const samples = tracks.get(trackId) ?? [];
+        samples.push({ elapsed, x: leaf.x });
+        tracks.set(trackId, samples);
+      }
+    }
+
+    const hasNaturalTurn = [...tracks.values()].some((samples) => {
+      const deltas = samples.slice(1).flatMap((sample, index) => {
+        const previous = samples[index];
+        return isContinuousInterval(
+          sample.elapsed,
+          previous.elapsed,
+          NATURAL_MOTION_SAMPLE_STEP_SECONDS,
+        ) ? [sample.x - previous.x] : [];
+      });
+      return deltas.some((delta) => delta >= 1) && deltas.some((delta) => delta <= -1);
+    });
+
+    expect(hasNaturalTurn).toBe(true);
+  });
+
+  it("varies each calm leaf's descent pace instead of lowering it at a fixed rate", () => {
+    const sampleCount = NATURAL_MOTION_SAMPLE_DURATION_SECONDS
+      / NATURAL_MOTION_SAMPLE_STEP_SECONDS;
+    const windowSize = DESCENT_PACE_WINDOW_SECONDS / NATURAL_MOTION_SAMPLE_STEP_SECONDS;
+    const tracks = new Map<string, Array<{ elapsed: number; y: number }>>();
+
+    for (let index = 0; index <= sampleCount; index += 1) {
+      const elapsed = index * NATURAL_MOTION_SAMPLE_STEP_SECONDS;
+      const plan = resolveFallingLeafRenderPlan({
+        elapsed,
+        seed: SAMPLE_SEED,
+        layer: "far",
+      }).slice(0, FAR_CALM_LEAF_COUNT);
+
+      for (const leaf of plan) {
+        const trackId = `${leaf.sourceId}:${leaf.releasedAt.toFixed(RELEASED_AT_TRACK_PRECISION)}`;
+        const samples = tracks.get(trackId) ?? [];
+        samples.push({ elapsed, y: leaf.y });
+        tracks.set(trackId, samples);
+      }
+    }
+
+    const hasVariedPace = [...tracks.values()].some((samples) => {
+      const drops = samples.slice(windowSize).flatMap((sample, index) => {
+        const previous = samples[index];
+        return isContinuousInterval(
+          sample.elapsed,
+          previous.elapsed,
+          DESCENT_PACE_WINDOW_SECONDS,
+        ) ? [sample.y - previous.y] : [];
+      });
+
+      return drops.length > 0 && Math.max(...drops) - Math.min(...drops) >= DESCENT_PACE_RANGE_MIN;
+    });
+
+    expect(hasVariedPace).toBe(true);
   });
 
   it("advances the tumble sequence and wraps within the registered frames", () => {
