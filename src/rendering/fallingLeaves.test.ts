@@ -31,6 +31,7 @@ const POSITION_SAMPLE_TIMES = [
   LONG_RUN_POSITION_SAMPLE_SECONDS,
 ];
 const MOTION_SAMPLE_SECONDS = 0.2;
+const CALM_DIRECTION_SAMPLE_SECONDS = 1;
 const NATURAL_MOTION_SAMPLE_DURATION_SECONDS = 20;
 const NATURAL_MOTION_SAMPLE_STEP_SECONDS = 0.1;
 const DESCENT_PACE_WINDOW_SECONDS = 1;
@@ -46,6 +47,7 @@ const FRAME_ADVANCE_SAMPLE_SECONDS = 0.1;
 const FRAME_WRAP_SAMPLE_SECONDS = 2;
 const OPENING_LEAF_KIND_MIN = 3;
 const MAX_LEAF_LIFT_ABOVE_ORIGIN = 16;
+const EXPECTED_TRAJECTORIES = new Set(["flutter", "glide", "spiral"]);
 
 afterEach(() => {
   setCanvas(null);
@@ -69,6 +71,46 @@ describe("falling leaf render plan", () => {
 
     expect(resolveFallingLeafRenderPlan(options)).toEqual(first);
     expect(resolveFallingLeafRenderPlan({ ...options, seed: OTHER_SEED })).not.toEqual(first);
+  });
+
+  it.each([
+    { layer: "far" as const, calmCount: FAR_CALM_LEAF_COUNT },
+    { layer: "near" as const, calmCount: NEAR_CALM_LEAF_COUNT },
+  ])("keeps flutter, glide, and spiral trajectories mixed in the $layer layer", ({
+    layer,
+    calmCount,
+  }) => {
+    for (const elapsed of POSITION_SAMPLE_TIMES) {
+      const plan = resolveFallingLeafRenderPlan({ elapsed, seed: SAMPLE_SEED, layer })
+        .slice(0, calmCount);
+
+      expect(new Set(plan.map((leaf) => leaf.trajectory))).toEqual(EXPECTED_TRAJECTORIES);
+    }
+  });
+
+  it("drifts calm leaves in both directions before the first gust", () => {
+    const before = (["far", "near"] as const).flatMap((layer) => (
+      resolveFallingLeafRenderPlan({ elapsed: 0, seed: SAMPLE_SEED, layer })
+    ));
+    const after = new Map(((["far", "near"] as const).flatMap((layer) => (
+      resolveFallingLeafRenderPlan({
+        elapsed: CALM_DIRECTION_SAMPLE_SECONDS,
+        seed: SAMPLE_SEED,
+        layer,
+      })
+    ))).map((leaf) => [
+      `${leaf.sourceId}:${leaf.releasedAt.toFixed(RELEASED_AT_TRACK_PRECISION)}`,
+      leaf,
+    ]));
+    const deltas = before.flatMap((leaf) => {
+      const current = after.get(
+        `${leaf.sourceId}:${leaf.releasedAt.toFixed(RELEASED_AT_TRACK_PRECISION)}`,
+      );
+      return current ? [current.x - leaf.x] : [];
+    });
+
+    expect(deltas.some((delta) => delta > 0)).toBe(true);
+    expect(deltas.some((delta) => delta < 0)).toBe(true);
   });
 
   it("breathes from sparse calm leaves into a readable gust within the opening seconds", () => {

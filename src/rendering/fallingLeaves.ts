@@ -6,6 +6,12 @@ import {
 } from "../constants";
 import { seededRandom } from "../game/utils";
 import { ctx } from "./context";
+import {
+  resolveFallingLeafTrajectory,
+  resolveFallingLeafTrajectoryPosition,
+  resolveFallingLeafTumbleFrame,
+  type FallingLeafTrajectory,
+} from "./fallingLeafTrajectories";
 import { resolveTreeLeafSources, type TreeLeafSource } from "./nearForeground";
 
 export type FallingLeafLayer = "far" | "near";
@@ -16,6 +22,7 @@ export type FallingLeafRenderItem = {
   alpha: number;
   frame: number;
   kind: FallingLeafKind;
+  trajectory: FallingLeafTrajectory;
   sourceId: string;
   releasedAt: number;
   originX: number;
@@ -77,16 +84,14 @@ type FallingLeafMotionProfile = {
 const TWO_PI = Math.PI * 2;
 const LEAF_GROUND_INSET = 6;
 const LEAF_BOTTOM = GROUND_Y - LEAF_GROUND_INSET;
+const LEAF_CANOPY_LIFT_LIMIT = 16;
 const GUST_VISIBILITY_THRESHOLD = 0.08;
-const VERTICAL_FLUTTER_RATE_SCALE = 0.7;
 const LEAF_SLOT_SEED_STEP = 0x6c8e9cf5;
 const LEAF_CYCLE_SEED_STEP = 0x9e3779b1;
 const LEAF_KIND_SEED_SALT = 0x42d4c3;
 const LEAF_MOTION_SEED_SALT = 0x74d2b91;
 const LEAF_GROUND_FADE_START = 0.9;
 const LEAF_LIFT_RAMP_SECONDS = 0.3;
-const SECONDARY_SWAY_SCALE = 0.28;
-const SECONDARY_SWAY_RATE_SCALE = 2.35;
 const GUST_RESPONSE_MIN = 0.82;
 const GUST_RESPONSE_RANGE = 0.36;
 const GUST_RELEASE_WINDOW_RATIO = 0.35;
@@ -193,10 +198,6 @@ const LAYER_CONFIG: Record<FallingLeafLayer, FallingLeafLayerConfig> = {
   },
 };
 
-function positiveModulo(value: number, modulus: number) {
-  return ((value % modulus) + modulus) % modulus;
-}
-
 function resolveWindCycle(elapsed: number, seed: number): WindCycle {
   const rng = seededRandom(seed + WIND_TIMING.seedSalt);
   const firstStart = WIND_TIMING.firstStartMin + rng() * WIND_TIMING.firstStartRange;
@@ -275,63 +276,84 @@ function resolveLeaf(
   if (sources.length === 0) return null;
 
   const source = selectTreeSource(sources, index, options.seed + config.seedSalt, sourceRng);
-  const motion = LEAF_KIND_MOTION[source.kind];
+  const kindMotion = LEAF_KIND_MOTION[source.kind];
+  const {
+    trajectory,
+    driftDirection,
+    trajectoryPhase,
+    trajectoryDirection,
+    spiralTurns,
+    motion: trajectoryMotion,
+  } = resolveFallingLeafTrajectory({
+    index,
+    seed: options.seed + config.seedSalt,
+    cycleSeed,
+  });
   const motionRng = seededRandom(cycleSeed + LEAF_MOTION_SEED_SALT);
   const originX = source.x;
   const originY = source.y;
   const horizontalSpeed = (
     config.horizontalSpeedMin + motionRng() * config.horizontalSpeedRange
-  ) * motion.driftScale;
+  ) * kindMotion.driftScale * trajectoryMotion.driftScale;
   const gustResponse = GUST_RESPONSE_MIN + motionRng() * GUST_RESPONSE_RANGE;
   const gustSpeed = (
     config.gustSpeedMin + motionRng() * config.gustSpeedRange
   ) * gustResponse;
-  const sway = (config.swayMin + motionRng() * config.swayRange) * motion.swayScale;
+  const sway = (config.swayMin + motionRng() * config.swayRange)
+    * kindMotion.swayScale * trajectoryMotion.swayScale;
   const swayRate = (
     config.swayRateMin + motionRng() * config.swayRateRange
-  ) * motion.swayRateScale;
+  ) * kindMotion.swayRateScale;
   const swayPhase = motionRng() * TWO_PI;
   const secondarySwayPhase = motionRng() * TWO_PI;
   const descentPhase = motionRng() * TWO_PI;
   const flutterPhase = motionRng() * TWO_PI;
-  const tumbleRate = config.tumbleRateMin + motionRng() * config.tumbleRateRange;
+  const tumbleRate = (config.tumbleRateMin + motionRng() * config.tumbleRateRange)
+    * kindMotion.tumbleRateScale * trajectoryMotion.tumbleRateScale;
   const alpha = config.alphaMin + motionRng() * config.alphaRange;
   const releaseWind = resolveWindCycle(releasedAt, options.seed);
   const windTravel = (wind.integratedStrength - releaseWind.integratedStrength) * gustSpeed;
-  const swayOffset = (
-    Math.sin(cycleAge * swayRate + swayPhase) - Math.sin(swayPhase)
-  ) * sway;
-  const secondarySwayRate = swayRate * SECONDARY_SWAY_RATE_SCALE;
-  const secondarySwayOffset = (
-    Math.sin(cycleAge * secondarySwayRate + secondarySwayPhase)
-    - Math.sin(secondarySwayPhase)
-  ) * sway * SECONDARY_SWAY_SCALE;
-  const x = originX - cycleAge * horizontalSpeed - windTravel
-    + swayOffset + secondarySwayOffset;
-  const flutterRate = swayRate * VERTICAL_FLUTTER_RATE_SCALE;
-  const flutterOffset = (
-    Math.sin(cycleAge * flutterRate + flutterPhase) - Math.sin(flutterPhase)
-  ) * config.flutter * motion.flutterScale;
+  const descentWave = (config.descentWaveMin + motionRng() * config.descentWaveRange)
+    * kindMotion.descentWaveScale * trajectoryMotion.descentWaveScale;
+  const trajectoryPosition = resolveFallingLeafTrajectoryPosition({
+    trajectory,
+    cycleAge,
+    cycleProgress: cycleAge / cycleDuration,
+    sway,
+    swayRate,
+    swayPhase,
+    secondarySwayPhase,
+    descentPhase,
+    flutter: config.flutter * kindMotion.flutterScale * trajectoryMotion.flutterScale,
+    flutterPhase,
+    trajectoryPhase,
+    trajectoryDirection,
+    spiralTurns,
+    descentWave,
+  });
+  const x = originX + cycleAge * horizontalSpeed * driftDirection - windTravel
+    + trajectoryPosition.x;
   const liftRamp = Math.min(1, cycleAge / LEAF_LIFT_RAMP_SECONDS);
   const liftOffset = wind.strength * config.gustLift * liftRamp * gustResponse;
   const cycleProgress = cycleAge / cycleDuration;
-  const descentWave = (
-    config.descentWaveMin + motionRng() * config.descentWaveRange
-  ) * motion.descentWaveScale;
-  // This integrated wave varies descent speed while preserving the canopy and landing endpoints.
-  const descentProgress = cycleProgress + descentWave * (
-    Math.sin(cycleProgress * TWO_PI + descentPhase) - Math.sin(descentPhase)
-  );
-  const y = Math.min(
-    LEAF_BOTTOM - 1,
-    originY + (LEAF_BOTTOM - originY) * descentProgress + flutterOffset - liftOffset,
+  const y = Math.max(
+    originY - LEAF_CANOPY_LIFT_LIMIT,
+    Math.min(
+      LEAF_BOTTOM - 1,
+      originY + (LEAF_BOTTOM - originY) * trajectoryPosition.descentProgress
+        + trajectoryPosition.y - liftOffset,
+    ),
   );
   const sheet = FALLING_LEAF_SHEETS[source.kind];
-  const framePhase = swayPhase / TWO_PI * sheet.count;
-  const frame = Math.floor(positiveModulo(
-    cycleAge * tumbleRate * motion.tumbleRateScale + framePhase,
-    sheet.count,
-  ));
+  const frame = resolveFallingLeafTumbleFrame({
+    trajectory,
+    cycleAge,
+    tumbleRate,
+    swayRate,
+    swayPhase,
+    direction: trajectoryDirection,
+    frameCount: sheet.count,
+  });
   const fadeProgress = Math.min(1, Math.max(0,
     (cycleProgress - LEAF_GROUND_FADE_START) / (1 - LEAF_GROUND_FADE_START),
   ));
@@ -343,6 +365,7 @@ function resolveLeaf(
     alpha: alpha * source.alpha * endFade,
     frame,
     kind: source.kind,
+    trajectory,
     sourceId: source.id,
     releasedAt,
     originX,
