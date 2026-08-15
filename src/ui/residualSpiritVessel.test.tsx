@@ -1,5 +1,5 @@
 import { renderToStaticMarkup } from "react-dom/server";
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import {
   ResidualSpiritVessel,
   residualSpiritBeadChargeStage,
@@ -19,8 +19,16 @@ const HIGH_CHARGE_START = 0.7;
 const HIGH_CHARGE_END = 0.9;
 const FULL_CHARGE_STAGE = 3;
 const CHARGED_BEAD_COUNT = 3;
+const DEPLOYED_DOCUMENT_BASE_URI =
+  "https://example.com/demon-slayer-pixel/dist/index.html";
+const DEPLOYED_BEAD_SHEET_URL =
+  "https://example.com/demon-slayer-pixel/assets/sprites/ui/system/hud/residual-spirit-bead-charge-sheet.png";
 
 describe("residual-spirit vessel", () => {
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
   it("fills six beads in order, with partial spirit preserved", () => {
     expect(residualSpiritBeadFillRatios(0, RESIDUAL_SPIRIT_MAX))
       .toEqual([0, 0, 0, 0, 0, 0]);
@@ -88,5 +96,25 @@ describe("residual-spirit vessel", () => {
     expect(markup).toContain("residual-spirit-vessel--compact");
     expect(markup).toContain("残灵 8 / 60");
     expect(markup).not.toContain("<kbd");
+  });
+
+  it("keeps the CSS sprite sheet outside the dist bundle directory", async () => {
+    vi.stubGlobal("document", { baseURI: DEPLOYED_DOCUMENT_BASE_URI });
+    vi.resetModules();
+    const { ResidualSpiritVessel: BrowserResidualSpiritVessel } = await import(
+      "./residualSpiritVessel"
+    );
+    const markup = renderToStaticMarkup(
+      <BrowserResidualSpiritVessel
+        value={10}
+        max={60}
+        healTimer={0}
+        healDuration={0.6}
+        language="zh-CN"
+      />,
+    );
+
+    expect(markup).toContain(DEPLOYED_BEAD_SHEET_URL);
+    expect(markup).not.toContain("/dist/assets/sprites/");
   });
 });
