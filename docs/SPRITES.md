@@ -75,23 +75,23 @@
 
 ### 逐幕 Boss 主题平台
 
-`platform/acts/` 保存 13 张带 alpha 的 `544x128` PNG 图集，每幕一张。每张图固定包含三个切片：`chain=80x64 @ (0,0)`、`normal=160x96 @ (96,0)`、`wide=272x128 @ (272,0)`；三者 `surfaceY=4`、`drawScale=0.75`，切片之间保留 `16px` 透明隔离区。所有切片的可见顶边都对齐到 `surfaceY`，四边保留透明 gutter，碰撞宽高仍由运行时平台状态决定。
+`platform/acts/` 保存 13 张带 alpha 的 `544x128` PNG 图集，每幕一张。每张图固定包含三个切片：`chain=80x64 @ (0,0)`、`normal=160x96 @ (96,0)`、`wide=272x128 @ (272,0)`；`drawScale=0.75`，切片之间保留 `16px` 透明隔离区。每个切片的 `surfaceY` 分别标记经连续三行支撑和材质边缘共同校验的首个实体落脚带；草尖、蛛丝、骨刺等装饰可以高于该行，但不作为角色落脚线。四边继续保留透明 gutter，碰撞宽高仍由运行时平台状态决定。
 
-| 幕 | Boss / 形态 | 平台视觉母题 | 文件 |
-| ---: | --- | --- | --- |
-| 1 | 蛛弦 / 基础 | 蓝黑神社石、白蛛丝、暗红结扣、蛛足钩 | `act-01-spider-string.png` |
-| 2 | 雾骨 / 基础 | 枯骨灰白、雾蓝冰晶、肋骨与脊椎 | `act-02-mist-bone.png` |
-| 3 | 镜魇 / 基础 | 黑曜镜砖、冷蓝碎镜、银色裂边 | `act-03-mirror-dream.png` |
-| 4 | 牙岚 / 基础 | 风蚀暗岩、象牙獠牙、爪痕与兽口 | `act-04-fang-gale.png` |
-| 5 | 灯烬 / 基础 | 焦黑神社石、暗红熔火裂隙、灰烬 | `act-05-lantern-ember.png` |
-| 6 | 枯铃 / 基础 | 暗金旧钟铜、裂铃、回纹声波 | `act-06-dead-bell.png` |
-| 7 | 蛛弦 / 蚀醒 | 血红丝线核心、密网、渗血关节钩 | `act-07-spider-string-awakened.png` |
-| 8 | 雾骨 / 蚀醒 | 密集骨林、强冷蓝鬼火、浓雾纹 | `act-08-mist-bone-awakened.png` |
-| 9 | 镜魇 / 蚀醒 | 明暗双镜、高密镜裂、冷蓝晶簇 | `act-09-mirror-dream-awakened.png` |
-| 10 | 牙岚 / 蚀醒 | 三重兽口节奏、血光尖牙、风刃痕 | `act-10-fang-gale-awakened.png` |
-| 11 | 灯烬 / 蚀醒 | 多层灯牢、熔火网格、浓灰烬 | `act-11-lantern-ember-awakened.png` |
-| 12 | 枯铃 / 蚀醒 | 双裂铃、暗金铜、双频错相回纹 | `act-12-dead-bell-awakened.png` |
-| 13 | 万相血月 / 终幕 | 黑红王座石、血月纹、受控眷属残相 | `act-13-blood-moon-many-faces.png` |
+| 幕 | Boss / 形态 | `surfaceY`（chain / normal / wide） | 平台视觉母题 | 文件 |
+| ---: | --- | --- | --- | --- |
+| 1 | 蛛弦 / 基础 | `12 / 15 / 11` | 蓝黑神社石、白蛛丝、暗红结扣、蛛足钩 | `act-01-spider-string.png` |
+| 2 | 雾骨 / 基础 | `8 / 9 / 8` | 枯骨灰白、雾蓝冰晶、肋骨与脊椎 | `act-02-mist-bone.png` |
+| 3 | 镜魇 / 基础 | `8 / 11 / 14` | 黑曜镜砖、冷蓝碎镜、银色裂边 | `act-03-mirror-dream.png` |
+| 4 | 牙岚 / 基础 | `6 / 7 / 8` | 风蚀暗岩、象牙獠牙、爪痕与兽口 | `act-04-fang-gale.png` |
+| 5 | 灯烬 / 基础 | `7 / 7 / 7` | 焦黑神社石、暗红熔火裂隙、灰烬 | `act-05-lantern-ember.png` |
+| 6 | 枯铃 / 基础 | `9 / 11 / 20` | 暗金旧钟铜、裂铃、回纹声波 | `act-06-dead-bell.png` |
+| 7 | 蛛弦 / 蚀醒 | `8 / 9 / 9` | 血红丝线核心、密网、渗血关节钩 | `act-07-spider-string-awakened.png` |
+| 8 | 雾骨 / 蚀醒 | `6 / 9 / 8` | 密集骨林、强冷蓝鬼火、浓雾纹 | `act-08-mist-bone-awakened.png` |
+| 9 | 镜魇 / 蚀醒 | `10 / 10 / 10` | 明暗双镜、高密镜裂、冷蓝晶簇 | `act-09-mirror-dream-awakened.png` |
+| 10 | 牙岚 / 蚀醒 | `5 / 5 / 5` | 三重兽口节奏、血光尖牙、风刃痕 | `act-10-fang-gale-awakened.png` |
+| 11 | 灯烬 / 蚀醒 | `5 / 5 / 5` | 多层灯牢、熔火网格、浓灰烬 | `act-11-lantern-ember-awakened.png` |
+| 12 | 枯铃 / 蚀醒 | `7 / 8 / 9` | 双裂铃、暗金铜、双频错相回纹 | `act-12-dead-bell-awakened.png` |
+| 13 | 万相血月 / 终幕 | `5 / 6 / 6` | 黑红王座石、血月纹、受控眷属残相 | `act-13-blood-moon-many-faces.png` |
 
 `ACT_PLATFORM_SPRITES` 暴露上述图集并由素材 manifest 全部预加载。平台生成时按当前 `act` 取主题池，并以 `40%` 主题 / `60%` 通用的概率混选；`chain`、`normal`、`wide` 只会从同尺寸类别中选择。主题身份保存在 `PlatformState.spriteAct`，所以跨幕时屏内旧平台仍保持生成时外观。
 

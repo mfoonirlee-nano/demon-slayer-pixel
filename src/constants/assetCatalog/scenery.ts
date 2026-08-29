@@ -10,7 +10,10 @@ type TreeSpriteCatalog = {
     variants: SpriteRegion[];
   }>;
 };
-export type PlatformSpriteRegion = SpriteRegion & { surfaceY: number };
+export type PlatformSpriteRegion = SpriteRegion & {
+  /** First stable material row used as the platform's visual standing surface. */
+  surfaceY: number;
+};
 export type PlatformSpriteSheet = {
   src: string;
   image: HTMLImageElement | null;

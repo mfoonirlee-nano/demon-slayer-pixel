@@ -3,6 +3,7 @@ import { PLATFORM_STYLE_VALUES } from "./ids";
 export const PLATFORM_CONFIG = {
   spawnOffsetX: 40,
   height: 12,
+  // Visual-only overlap for opaque player feet that sit above the collision-box bottom.
   collisionSurfaceInsetY: 6,
   baseSpeed: 1.4,
   randomSpeed: 0.9,

@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { ACT_PLATFORM_SPRITES } from "../../constants";
 import {
   platformSpritePoolForAct,
   type PlatformSpriteKind,
@@ -6,6 +7,21 @@ import {
 
 const PLATFORM_SPRITE_KINDS: PlatformSpriteKind[] = ["chain", "normal", "wide"];
 const FIRST_ACT = 1;
+const MATERIAL_SURFACE_Y_BY_ACT = [
+  { chain: 12, normal: 15, wide: 11 },
+  { chain: 8, normal: 9, wide: 8 },
+  { chain: 8, normal: 11, wide: 14 },
+  { chain: 6, normal: 7, wide: 8 },
+  { chain: 7, normal: 7, wide: 7 },
+  { chain: 9, normal: 11, wide: 20 },
+  { chain: 8, normal: 9, wide: 9 },
+  { chain: 6, normal: 9, wide: 8 },
+  { chain: 10, normal: 10, wide: 10 },
+  { chain: 5, normal: 5, wide: 5 },
+  { chain: 5, normal: 5, wide: 5 },
+  { chain: 7, normal: 8, wide: 9 },
+  { chain: 5, normal: 6, wide: 6 },
+] as const;
 const THEMED_PLATFORM_SOURCES = [
   "assets/sprites/platform/acts/act-01-spider-string.png",
   "assets/sprites/platform/acts/act-02-mist-bone.png",
@@ -23,6 +39,20 @@ const THEMED_PLATFORM_SOURCES = [
 ];
 
 describe("platformSpritePoolForAct", () => {
+  it("maps each themed sprite to its solid material landing surface", () => {
+    for (const [index, expectedSurfaceYs] of MATERIAL_SURFACE_Y_BY_ACT.entries()) {
+      const act = index + FIRST_ACT;
+
+      expect(
+        ACT_PLATFORM_SPRITES[act].regions.map(({ surfaceY }) => surfaceY),
+      ).toEqual([
+        expectedSurfaceYs.chain,
+        expectedSurfaceYs.normal,
+        expectedSurfaceYs.wide,
+      ]);
+    }
+  });
+
   it("mixes the common platform sheet with every act theme", () => {
     for (const [index, themedSrc] of THEMED_PLATFORM_SOURCES.entries()) {
       const act = index + FIRST_ACT;
