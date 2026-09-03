@@ -9,6 +9,8 @@
 
 ## Character SFX Runtime
 
+- Adobe Firefly 角色技能音效的逐条生成 prompt、导出目标与验收清单见
+  [player-skill-firefly-sfx-prompts.md](player-skill-firefly-sfx-prompts.md)。
 - `npm run generate:sfx` 会用固定 seed 生成 15 个 Boss 音效、23 个敌人音效与 29 个玩家音效，分别位于 `assets/audio/sfx/bosses/`、`assets/audio/sfx/enemies/` 和 `assets/audio/sfx/players/`，格式统一为 48 kHz、16-bit、mono WAV。
 - Boss 音效包含通用击败反馈、雾骨的 `6` 条专属采样，以及枯铃的施法、低/高钟音、音刃、止响、违律反击、安全破响和击败共 `8` 条专属采样。枯铃以干燥旧铜准备音、音区明确的双钟音和突然停拍建立节拍语言，并用尖锐失谐裂响与低沉衰减分别区分惩罚和安全反击窗口；通用击败仍以重太鼓、下坠妖气与裂铃上行尾音区分普通敌人击败。
 - 敌人音效覆盖攻击前摇、冲刺/斩击、灯焰与纸符施法、诅咒伤害、盾击/破盾、俯冲/落地、分裂/出生、光环、潜地/钻出、受伤和击败。
