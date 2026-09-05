@@ -15,24 +15,35 @@
 
 ## 使用方式
 
-1. 在 Firefly 中选择生成音效，不要选择音乐或带对白的模型。
+1. 在 Firefly 中选择生成音效，每次只粘贴一个英文代码块；中文说明和导出目标不粘贴。
 2. 每条 prompt 单独生成至少 3 个版本；不要把多个 cue 写进一次生成任务。
 3. 优先选择瞬态清楚、无背景底噪、无旋律引用的版本，再按“导出目标”裁剪。
 4. 导出为 WAV 后统一转换为 **48 kHz、16-bit、mono WAV**，文件名必须与采样键完全一致。
 5. 裁剪时保留刀锋或水流的自然短尾音，但移除开头静音；除特别说明外不要做循环。
 6. 试听时同时播放战斗 BGM，确认音效不会遮盖 Boss 前摇、敌人攻击警告或连续普攻。
 
-Firefly 对时长描述可能只做近似处理，因此 prompt 中的时长是声音结构目标，最终仍以裁剪后的文件为准。
+### Prompt 编写规则
+
+依据 [Adobe 官方音效 prompt 指南](https://helpx.adobe.com/au/firefly/web/work-with-audio-and-video/work-with-audio/writing-effective-text-prompts-for-sound-effects-generation.html)，
+使用简短、直接的声音描述，聚焦声源、动作和听感；复杂混合音应分别生成后叠加。
+
+- 本文每条英文 prompt 控制在 **200 字符以内（含空格与标点）**，这是项目自定的精简预算，不是 Adobe 官方硬性上限。
+- 每条只描述一个核心声音事件，保留水流、刀锋、音高走向和起落质感，省去世界观叙述、乐器清单和重复禁用词。
+- 精确秒数、音量关系与文件格式由后期处理落实，不写进 prompt；“导出目标”是最终素材要求。
+- 雨线的五次瞬态、终式蓄势的四级上行若数量不准，可用口技节奏引导，或生成单次声音后在音频编辑器中排列。
+- 冲刺收刀、防反回斩等复合动作若生成不清楚，分别生成动作层再按导出目标拼接。
+
+Firefly 支持用声音表演引导节奏，并在生成后裁剪、调整音量和叠加音轨；
+操作见 [Adobe 生成音效说明](https://helpx.adobe.com/uk/firefly/web/work-with-audio-and-video/work-with-audio/text-to-sound-effects.html)。
 
 ## 全局声音语言
 
 所有生成结果应保持同一套“月潮流”身份：英雄侧清亮、流动、克制，夜妖侧的失谐裂铃与粗粝噪声不应成为主角。
 
-每条 prompt 已包含必要约束。若生成结果仍像音乐片段，可在末尾追加：
+水流与刀锋是主音色，拨弦和铃声只作为短促质感点缀。轻太鼓或 16-bit 点缀若有需要，单独制作后少量叠加。
 
-```text
-Isolated game sound effect, not music. Dry close perspective, immediate transient, transparent tail, no ambience bed, no melody, no vocals, no dialogue, no footsteps, no environmental background, no cinematic trailer boom, no distortion, no clipping.
-```
+不要追加通用长串否定词。若结果出现旋律或环境底噪，先删去容易引出配乐的音色词，保留核心动作重新生成；
+无配乐、人声、背景声、长混响和削波作为试听筛选标准。
 
 ## 通用施法起手
 
@@ -43,7 +54,7 @@ Isolated game sound effect, not music. Dry close perspective, immediate transien
 导出目标：约 `0.62s`，短促上行，末尾干净。
 
 ```text
-Isolated fantasy action game skill-charge sound effect, about 0.62 seconds. A close, clean breath of water gathers upward around a sword, followed by three tiny ascending dry koto-like plucks and one faint clear temple-bell sparkle. Agile moonlit Japanese-fantasy hero energy, restrained and readable, with a soft rising pitch and a very short transparent echo. The cue prepares an attack but does not release or impact. No music, no melody phrase, no vocals, no dialogue, no heavy hit, no thunder, no ocean ambience, no long reverb, no distortion.
+Soft magical water gathering, gently rising pitch, delicate plucked resonance, light and restrained, dry close sound, short clean tail.
 ```
 
 ## 九种普通技能
@@ -55,7 +66,7 @@ Isolated fantasy action game skill-charge sound effect, about 0.62 seconds. A cl
 导出目标：约 `0.75s`，第一帧即起，单次向前释放。
 
 ```text
-Isolated fantasy game projectile sound effect, about 0.75 seconds. A compressed tide erupts straight forward from a sword as one narrow water-dragon rush: immediate low taiko pulse, dense pressurized water rasp, sharp blade core, and a descending low airy tail that travels away. Powerful but focused, moonlit Japanese-fantasy hero sound, one continuous forward motion with no explosion. No music, no roar or animal voice, no ocean ambience, no repeated hits, no huge cinematic boom, no long reverb, no distortion.
+One forceful water jet rushing straight forward, deep pressure pulse, sharp metallic hiss, low descending tail, immediate attack, dry and compact.
 ```
 
 ### `playerSkillArc.wav` — 弦月·潮刃
@@ -65,7 +76,7 @@ Isolated fantasy game projectile sound effect, about 0.75 seconds. A compressed 
 导出目标：约 `0.44s`，明亮瞬态，短尾音。
 
 ```text
-Isolated fantasy sword-skill sound effect, about 0.44 seconds. One fast close-range crescent slash made of a crisp steel blade whoosh wrapped in a thin bright sheet of water, with a tiny dry koto pluck and delicate high bell glint at the apex. Clean semicircular motion, agile and heroic, bright moon-tide identity, sharp readable start and quick decay. No impact, no multiple swings, no music, no vocals, no wind ambience, no bass boom, no long reverb, no distortion.
+One swift crescent sword swoosh, bright steel edge, thin watery hiss, light and crisp, close dry sound, rapid decay.
 ```
 
 ### `playerSkillGuard.wav` — 镜潮·护返
@@ -75,7 +86,7 @@ Isolated fantasy sword-skill sound effect, about 0.44 seconds. One fast close-ra
 导出目标：约 `0.58s`，上行包覆后稳定收束。
 
 ```text
-Isolated fantasy game guard-activation sound effect, about 0.58 seconds. A circular veil of water rises and seals around the hero like a polished tide mirror: soft inward water sweep, rounded resonant metal tone, muted low taiko touch, then a clear but gentle bell shimmer confirming the guard is active. Protective, poised, reflective, and readable, not explosive. No sword hit, no shattering glass, no counterattack, no music, no vocals, no shield clang cliché, no long reverb, no distortion.
+Magical water shield closing inward, smooth rising sweep, rounded metallic resonance, gentle shimmering finish, dry and compact.
 ```
 
 ### `playerCounter.wav` — 镜潮·护返反击
@@ -85,7 +96,7 @@ Isolated fantasy game guard-activation sound effect, about 0.58 seconds. A circu
 导出目标：约 `0.46s`，格开与回斩几乎连成一个动作。
 
 ```text
-Isolated fantasy game perfect-counter sound effect, about 0.46 seconds. A compact dull-metal parry click instantly redirects into one bright upward tide-blade slash, supported by a tight wooden clack, a small low taiko impact, and two very short ascending koto-like spark notes. Decisive successful defense turning into offense, crisp and heroic, with no delay and a fast clean tail. No music, no vocals, no enemy grunt, no glass break, no giant explosion, no long reverb, no distortion.
+One sharp metal parry snapping into an upward watery sword slash, tight woody attack, bright and decisive, quick dry decay.
 ```
 
 ### `playerSkillDash.wav` — 流步·潮闪
@@ -95,7 +106,7 @@ Isolated fantasy game perfect-counter sound effect, about 0.46 seconds. A compac
 导出目标：约 `0.44s`，约前 `0.30s` 冲刺，最后 `0.14s` 收刀。
 
 ```text
-Isolated fantasy action game dash sound effect, about 0.44 seconds. A hero kicks off with a tiny wooden foot snap and surges forward through a narrow spray of water and one fast steel blade whoosh; near the final third, add a distinct higher-pitched sheathing slash and small dry pluck to mark the stop. Swift short reposition, close and controlled, moonlit tide energy, no teleport magic. No music, no vocals, no footsteps sequence, no repeated swings, no thunder, no long wind tail, no distortion.
+One fast watery sword dash ending in a distinct high metallic sheathing snap, narrow rushing hiss, swift and controlled, short dry tail.
 ```
 
 ### `playerSkillVortex.wav` — 回涡·引潮
@@ -105,7 +116,7 @@ Isolated fantasy action game dash sound effect, about 0.44 seconds. A hero kicks
 导出目标：约 `0.98s`，中段最饱满，结束快速退去；非循环。
 
 ```text
-Isolated fantasy game water-vortex sound effect, about 0.98 seconds. A low circular undertow forms on the ground from a muted taiko pulse, rotating bands of water, and a soft inward suction tone; the swirl rises slightly in pitch and density at the center, carries one restrained cracked-bell resonance, then collapses cleanly before one second. Tactical crowd-control energy, compact radius, powerful but not storm-sized. No music, no vocals, no drain sound, no ocean surf, no tornado wind, no impact, no long ambience, no distortion.
+Compact swirling water vortex, low inward suction, rising pitch and density, full middle, quick collapse, dry close sound.
 ```
 
 ### `playerSkillArmorBreak.wav` — 断浪·裂甲释放
@@ -115,7 +126,7 @@ Isolated fantasy game water-vortex sound effect, about 0.98 seconds. A low circu
 导出目标：约 `0.50s`，紧绷上行后快速射出。
 
 ```text
-Isolated fantasy action game armor-break projectile launch, about 0.50 seconds. A sword compresses water into a hard thin line, producing a tense rising metallic resonance, a narrow blade hiss, and a pressurized water snap that shoots forward. Dense, precise, armor-piercing intent with a clean moon-tide tone, but no contact or break in this cue. No music, no vocals, no impact, no cracking armor, no explosion, no gunshot character, no long reverb, no distortion.
+One pressurized water blade launching forward, tense rising metallic hiss, narrow sharp snap, dense and precise, short dry tail, no impact.
 ```
 
 ### `playerSkillArmorBreakImpact.wav` — 断浪·裂甲命中
@@ -125,7 +136,7 @@ Isolated fantasy action game armor-break projectile launch, about 0.50 seconds. 
 导出目标：约 `0.52s`，强瞬态后有短促裂纹扩散。
 
 ```text
-Isolated fantasy game armor-rending impact sound effect, about 0.52 seconds. One heavy low taiko-backed strike lands on thick supernatural armor, followed immediately by dull iron strain, three fast ascending wooden crack details, and a compact burst of pressurized water spreading through the fracture. Weighty and conclusive but clean, readable as armor weakened rather than armor completely destroyed. No music, no vocals, no launch whoosh, no glass shatter, no rubble collapse, no cinematic sub boom, no long reverb, no clipping.
+One heavy armor hit, dull iron strain and tight cracking texture, deep punch, brief watery burst, dry close sound, rapid decay.
 ```
 
 ### `playerSkillRain.wav` — 雨线·穿针
@@ -135,7 +146,7 @@ Isolated fantasy game armor-rending impact sound effect, about 0.52 seconds. One
 导出目标：约 `0.78s`，5 个可数的快速刀水瞬态。
 
 ```text
-Isolated fantasy game multi-strike sound effect, about 0.78 seconds. Five distinct thin diagonal tide needles fall in a quick near-to-far sequence, each a short bright blade hiss with a fine water filament; pitches climb subtly across the five strikes, with only three tiny dry koto-like spark accents between them. Precise anti-air coverage, light and surgical, every strike count readable. No music, no vocals, no rainfall ambience, no thunder, no machine-gun rhythm, no heavy impacts, no long reverb, no distortion.
+Five quick thin watery blade hisses, distinct near-to-far sequence, subtly rising pitch, light sharp attacks, dry short tails.
 ```
 
 ### `playerSkillReturningBlade.wav` — 回刃·归潮掷出
@@ -145,7 +156,7 @@ Isolated fantasy game multi-strike sound effect, about 0.78 seconds. Five distin
 导出目标：约 `0.52s`，单向外抛，尾部保持轻微旋转感。
 
 ```text
-Isolated fantasy game returning-blade throw sound effect, about 0.52 seconds. One crescent tideblade leaves the hand with a crisp steel release, a narrow rotating water ribbon, a clean rising pitch core, and a tiny dry pluck. The motion travels outward in one direction and remains light enough to suggest it will return later; do not include the turnaround or catch. Heroic moonlit Japanese-fantasy tone, fast and controlled. No music, no vocals, no impact, no boomerang cartoon whistle, no second pass, no long reverb, no distortion.
+One spinning water blade thrown outward, crisp metallic release, narrow fluttering hiss, rising pitch, light dry tail, no return.
 ```
 
 ### `playerSkillReturningBladeTurn.wav` — 回刃·归潮折返
@@ -155,7 +166,7 @@ Isolated fantasy game returning-blade throw sound effect, about 0.52 seconds. On
 导出目标：约 `0.34s`，先制动下坠，再短促反向上扬。
 
 ```text
-Isolated fantasy game projectile-turnaround sound effect, about 0.34 seconds. A spinning water blade brakes in midair with a quick descending filtered whoosh, pivots on a dry high pluck, then snaps back with a shorter rising water-and-steel breath. Clearly communicates reversal of direction, compact and precise, with no impact or catch. No music, no vocals, no full sword swing, no cartoon ricochet, no long echo, no ambience, no distortion.
+Spinning water blade reversing direction, brief falling whoosh snapping upward, tight metallic pivot, compact and dry, no impact.
 ```
 
 ### `playerSkillReturningBladeCatch.wav` — 回刃·归潮收回
@@ -165,7 +176,7 @@ Isolated fantasy game projectile-turnaround sound effect, about 0.34 seconds. A 
 导出目标：约 `0.28s`，小而明确的收束声。
 
 ```text
-Isolated fantasy game returning-blade catch sound effect, about 0.28 seconds. A small incoming water hiss resolves into one neat wooden grip click, a soft dry high pluck, and a delicate clear bell sparkle as the tideblade is safely caught. Satisfying, controlled, and lighter than the throw or impact, with an immediate clean ending. No music, no vocals, no metal crash, no impact boom, no long reverb, no ambience, no distortion.
+Returning water blade caught softly, incoming hiss ending in a neat wooden click, faint bright resonance, light and dry, quick decay.
 ```
 
 ### `playerSkillVerticalWave.wav` — 升浪·托月
@@ -175,7 +186,7 @@ Isolated fantasy game returning-blade catch sound effect, about 0.28 seconds. A 
 导出目标：约 `0.68s`，低位起音快速爬升至明亮刀锋。
 
 ```text
-Isolated fantasy game vertical wave attack sound effect, about 0.68 seconds. A compact low taiko pulse plants the force at the hero's feet, then a narrow pillar of water and steel rises sharply upward in one accelerating sweep, moving from low pressure to a bright blade crest with a faint bell glint near the top. Clear vertical lift, heroic and forceful, then a quick falloff. No music, no vocals, no horizontal projectile, no geyser ambience, no splashy rain, no repeated impacts, no long reverb, no distortion.
+One water blade surging vertically upward, deep pressure swelling into a bright metallic crest, accelerating rise, sharp cutoff with short natural tail.
 ```
 
 ## 终式·月潮无间
@@ -187,7 +198,7 @@ Isolated fantasy game vertical wave attack sound effect, about 0.68 seconds. A c
 导出目标：约 `1.25s`，四级上行层次，不能提前出现最终爆发。
 
 ```text
-Isolated fantasy game ultimate-charge sound effect, about 1.25 seconds. Moonlit water gathers around a sword hero in four clearly stepped rising layers: deep controlled water breath, two restrained low taiko heartbeats, four ascending dry koto-like plucks, and a growing pure bell resonance. The energy becomes bright and focused without releasing; suspenseful heroic Japanese-fantasy power, spacious enough for combat readability. No music, no vocals, no dialogue, no final impact, no choir, no thunder, no trailer riser, no long reverb, no distortion.
+Magical water charging in four rising pulses, deep pressure building to bright metallic resonance, restrained tension, dry sound, no final impact.
 ```
 
 ### `playerUltimateImpact.wav` — 终式开启
@@ -195,7 +206,7 @@ Isolated fantasy game ultimate-charge sound effect, about 1.25 seconds. Moonlit 
 导出目标：约 `1.05s`，全套中最强的单次瞬态，但不做全屏爆炸。
 
 ```text
-Isolated fantasy game ultimate-activation impact, about 1.05 seconds. One massive but clean low taiko strike releases a circular moon-tide surge, layered with a broad steel blade flash, dense low water pressure, resonant dull iron, a clear temple-bell bloom, and one fast rising luminous tone. Climactic heroic state activation, powerful and wide yet readable, with a controlled transparent decay. No music, no vocals, no explosion or debris, no choir, no cinematic trailer boom, no endless ocean wash, no clipping or distortion.
+One powerful magical water burst, deep rounded punch, broad metallic edge, bright ringing crest, immediate attack, controlled short decay.
 ```
 
 ### `playerUltimateAfterimage.wav` — 强化普攻残影潮刃
@@ -203,7 +214,7 @@ Isolated fantasy game ultimate-activation impact, about 1.05 seconds. One massiv
 导出目标：约 `0.30s`，高频使用时仍轻盈、不疲劳。
 
 ```text
-Isolated fantasy game afterimage slash sound effect, about 0.30 seconds. A very fast, light secondary crescent made of bright steel and a thin high water ribbon, finished by one tiny dry koto-like sparkle. Ethereal moon-tide afterimage following another attack, airy and precise, clearly weaker and shorter than the main sword hit. No music, no vocals, no impact boom, no bass, no multiple swings, no long reverb, no harsh high-frequency whistle, no distortion.
+One tiny airy water-blade swoosh, thin bright metallic edge, delicate plucked texture, very light, soft treble, dry rapid decay.
 ```
 
 ### `playerUltimateEnd.wav` — 强化结束
@@ -211,7 +222,7 @@ Isolated fantasy game afterimage slash sound effect, about 0.30 seconds. A very 
 导出目标：约 `0.80s`，从明亮高频向低处回落，柔和但不可漏听。
 
 ```text
-Isolated fantasy game power-state ending sound effect, about 0.80 seconds. A bright moon-tide aura folds inward and recedes: soft high water breath descends in pitch, one restrained cracked-bell tone dims, and a faint paper-like shimmer dissolves into a low clean finish. Bittersweet and unmistakable as power expiring, not failure or damage, with a short transparent echo. No music, no vocals, no impact, no sad melody, no wind ambience, no ominous monster tone, no long reverb, no distortion.
+Magical water energy receding inward, bright hiss descending into a soft low tone, fading metallic shimmer, gentle clear ending, short dry tail.
 ```
 
 ## 验收清单
