@@ -16,6 +16,7 @@ import type {
   EquipmentItemState,
   EquipmentSlot,
   PlayerStatusSnapshot,
+  PlayerSkillEffectPhase,
   SkillLevel,
   TreasureChoiceState,
   UltimateLevel,
@@ -54,6 +55,7 @@ export type PlayerSnapshot = {
   skillCharges: number;
   maxSkillCharges: number;
   skillIndex: number;
+  returningBladePhase: PlayerSkillEffectPhase | null;
   equippedSkillIds: [SkillId | null, SkillId | null, SkillId | null];
   skillLevels: Partial<Record<SkillId, SkillLevel>>;
   ultimateEnergy: number;
@@ -135,6 +137,7 @@ const initialSnapshot: GameSnapshot = {
     skillCharges: 0,
     maxSkillCharges: maxSkillChargesForEnergy(initialSkillEnergyMax),
     skillIndex: 0,
+    returningBladePhase: null,
     equippedSkillIds: [...INITIAL_EQUIPPED_SKILL_IDS],
     skillLevels: { ...INITIAL_SKILL_LEVELS },
     ultimateEnergy: 0,

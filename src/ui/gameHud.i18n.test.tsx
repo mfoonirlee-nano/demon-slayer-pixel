@@ -1,3 +1,4 @@
+import { SKILL_IDS } from "../constants";
 import { Provider } from "jotai";
 import { createStore } from "jotai/vanilla";
 import { renderToStaticMarkup } from "react-dom/server";
@@ -62,5 +63,26 @@ describe("GameHud localization", () => {
     expect(markup).toContain("Active status effects");
     expect(markup).toContain("Moon Tide Form");
     expect(markup).toContain("--player-status-remaining-angle:180deg");
+  });
+});
+
+describe("returning blade action feedback", () => {
+  it.each([
+    { phase: "hover", label: "Recall" },
+    { phase: "return", label: "Returning" },
+  ] as const)("shows $label for $phase even without skill energy", ({ phase, label }) => {
+    const store = createStore();
+    store.set(languageAtom, "en");
+    const snapshot = gameStore.get(gameSnapshotAtom);
+    store.set(gameSnapshotAtom, {
+      ...snapshot,
+      player: {
+        ...snapshot.player, skillEnergy: 0, skillIndex: 0,
+        equippedSkillIds: [SKILL_IDS.returningBlade, null, null],
+        returningBladePhase: phase,
+      },
+    });
+    const markup = renderToStaticMarkup(<Provider store={store}><GameHud /></Provider>);
+    expect(markup).toContain(`>${label}<`);
   });
 });

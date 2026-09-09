@@ -204,3 +204,5 @@ export type UpgradeChoiceState = {
   skillId?: SkillId;
   nextLevel?: SkillLevel | UltimateLevel;
 };
+
+export type PlayerSkillEffectPhase = "out" | "hover" | "recall" | "return" | "impact";

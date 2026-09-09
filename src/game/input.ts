@@ -100,7 +100,7 @@ function handleInputPress(key: string) {
     handlers.onJump();
   }
   if (handlers.onAttack && k === PLAYER_CONTROL_KEYS.attack) handlers.onAttack();
-  if (handlers.onSkill && k === PLAYER_CONTROL_KEYS.skill) handlers.onSkill();
+  if (handlers.onSkill && !alreadyPressed && k === PLAYER_CONTROL_KEYS.skill) handlers.onSkill();
   if (handlers.onUltimate && k === PLAYER_CONTROL_KEYS.ultimate) handlers.onUltimate();
   if (handlers.onHeal && !alreadyPressed && k === PLAYER_CONTROL_KEYS.heal) handlers.onHeal();
 

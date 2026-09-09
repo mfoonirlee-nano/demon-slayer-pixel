@@ -1,4 +1,6 @@
 import { state } from "../../game/state";
+import { updateReturningBladeEffect } from "./returningBlade";
+import { drawReturningBladeEffect } from "./returningBladeVisuals";
 import { playSfx } from "../../game/audio";
 import { ctx } from "../../rendering/context";
 import { PLAYER_COMBAT, VERTICAL_WAVE_PILLAR_CONFIG } from "../../constants";
@@ -15,7 +17,6 @@ import { emitHitBurst, emitSlash } from "./bursts";
 import {
   ARMOR_BREAK_IMPACT_FRAME_START,
   DEFAULT_HIT_BURST_COLOR,
-  RETURNING_BLADE_SPEED,
   type ArmorBreakCollision,
   applyArmorBreakToBoss,
   applyArmorBreakToEnemy,
@@ -242,75 +243,6 @@ function updateArmorBreakEffect(effect: PlayerSkillEffectState) {
   }
 }
 
-function updateReturningBladeEffect(effect: PlayerSkillEffectState) {
-  const previousX = effect.x;
-  const previousY = effect.y;
-  // The bonus ring shares this route, but only the original blade owns its
-  // turn and catch cues so one cast never doubles the audible feedback.
-  const playsRouteCues = effect.kind === "returningBlade";
-
-  if (effect.phase === "return") {
-    const targetX = state.player.x + state.player.w / 2;
-    const targetY = state.player.y + state.player.h / 2;
-    const dx = targetX - effect.x;
-    const dy = targetY - effect.y;
-    const distance = Math.hypot(dx, dy);
-    if (distance <= RETURNING_BLADE_SPEED) {
-      effect.life = 0;
-      if (playsRouteCues) {
-        playSfx("playerSkillReturningBladeCatch");
-      }
-      return;
-    }
-    effect.vx = dx / distance * RETURNING_BLADE_SPEED;
-    effect.vy = dy / distance * RETURNING_BLADE_SPEED;
-    effect.facing = effect.vx >= 0 ? 1 : -1;
-  }
-
-  effect.x += effect.vx;
-  effect.y += effect.vy;
-  effect.traveled = (effect.traveled ?? 0) + Math.hypot(effect.x - previousX, effect.y - previousY);
-
-  const activeHits = effect.phase === "return"
-    ? effect.returnHitEnemies ?? effect.hitEnemies
-    : effect.hitEnemies;
-  const box = effectBox(effect);
-  let hitTargets = 0;
-  let bossHit = false;
-  const maxEnemyHits = effect.maxHits ?? Number.POSITIVE_INFINITY;
-
-  if (activeHits.length < maxEnemyHits) {
-    for (let j = state.enemies.length - 1; j >= 0; j -= 1) {
-      const enemy = state.enemies[j];
-      if (activeHits.includes(enemy)) continue;
-      if (!hitbox(box, enemy)) continue;
-      activeHits.push(enemy);
-      applyEffectDamageToEnemy(effect, enemy, j);
-      hitTargets += 1;
-      if (activeHits.length >= maxEnemyHits) break;
-    }
-  }
-
-  if (state.boss && !effect.bossCooldown && hitbox(box, state.boss)) {
-    bossHit = applyEffectDamageToBoss(effect);
-    effect.bossCooldown = effect.bossHitCooldown;
-  }
-
-  refundSkillGroup(effect, hitTargets, bossHit);
-
-  if (effect.phase !== "return") {
-    const distanceReached = (effect.traveled ?? 0) >= (effect.maxDistance ?? 0);
-    if (distanceReached) {
-      effect.phase = "return";
-      effect.returnHitEnemies ??= [];
-      effect.bossCooldown = undefined;
-      if (playsRouteCues) {
-        playSfx("playerSkillReturningBladeTurn");
-      }
-    }
-  }
-}
-
 export function updatePlayerSkillEffects() {
   for (let i = state.playerSkillEffects.length - 1; i >= 0; i -= 1) {
     const effect = state.playerSkillEffects[i] as PlayerSkillEffectState;
@@ -331,10 +263,7 @@ export function updatePlayerSkillEffects() {
       updateVortexEffect(effect);
     } else if (effect.kind === "armorBreak") {
       updateArmorBreakEffect(effect);
-    } else if (
-      effect.kind === "returningBlade"
-      || effect.kind === "returningBladeWaterRing"
-    ) {
+    } else if (effect.kind === "returningBlade") {
       updateReturningBladeEffect(effect);
     } else {
       effect.x += effect.vx;
@@ -355,6 +284,7 @@ export function drawPlayerSkillEffects() {
 
   for (const effect of state.playerSkillEffects) {
     if ((effect.startDelay ?? 0) > 0) continue;
+    if (drawReturningBladeEffect(effect)) continue;
 
     const sheet = playerSkillEffectSheet(effect.skillId, effect.kind);
     const tuning = isGenericPlayerSkillId(effect.skillId)
@@ -377,10 +307,7 @@ export function drawPlayerSkillEffects() {
       const drawW = sheet.frameW * drawScale;
       const drawH = sheet.frameH * drawScale;
       ctx.translate(effect.x, effect.visualY ?? effect.y);
-      // Keep the centered ring's rotation phase stable when the return route
-      // flips facing; directional sheets still mirror with the player.
-      const mirrorsWithFacing = effect.kind !== "verticalWavePillar"
-        && effect.kind !== "returningBladeWaterRing";
+      const mirrorsWithFacing = effect.kind !== "verticalWavePillar";
       ctx.scale(mirrorsWithFacing ? effect.facing : 1, 1);
       ctx.drawImage(sheet.image, sx, 0, sheet.frameW, sheet.frameH, -drawW / 2, -drawH / 2, drawW, drawH);
     } else {

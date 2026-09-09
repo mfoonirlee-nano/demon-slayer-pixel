@@ -29,6 +29,7 @@ function makePlayer(overrides: Partial<GameSnapshot["player"]> = {}): GameSnapsh
     skillCharges: 0,
     maxSkillCharges: 3,
     skillIndex: 0,
+    returningBladePhase: null,
     equippedSkillIds: [SKILL_IDS.lineProjectile, null, null],
     skillLevels: {
       [SKILL_IDS.lineProjectile]: LEARNED_SKILL_LEVEL,

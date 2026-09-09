@@ -1,5 +1,5 @@
 import {
-  RETURNING_BLADE_WATER_RING_CONFIG,
+  RETURNING_BLADE_CONFIG,
   SKILLS,
   SKILL_IDS,
   VERTICAL_WAVE_PILLAR_CONFIG,
@@ -12,8 +12,6 @@ import type { Language } from "./language";
 
 const VERTICAL_WAVE_PILLAR_CHANCE = formatPercent(VERTICAL_WAVE_PILLAR_CONFIG.chance);
 const VERTICAL_WAVE_PILLAR_DAMAGE = formatPercent(VERTICAL_WAVE_PILLAR_CONFIG.damageMultiplier);
-const RETURNING_BLADE_WATER_RING_CHANCE = formatPercent(RETURNING_BLADE_WATER_RING_CONFIG.chance);
-const RETURNING_BLADE_WATER_RING_DAMAGE = formatPercent(RETURNING_BLADE_WATER_RING_CONFIG.damageMultiplier);
 
 export type LocalizedSkillCopy = {
   name: string;
@@ -98,12 +96,12 @@ const ENGLISH_SKILL_COPY = {
     },
   },
   [SKILL_IDS.returningBlade]: {
-    name: "Returning Tideblade",
-    description: "Route control. Throw a tideblade that damages on both the outbound and return paths. It retraces its route instead of tracking across the arena.",
+    name: "Returning Blade",
+    description: "Leave a tideblade ahead, reposition, then cast again to recall it along a locked straight route.",
     levelDescriptions: {
-      1: "The tideblade flies out and returns, hitting up to 2 times and rewarding careful positioning.",
-      2: "Travel distance and damage increase, with up to 3 hits.",
-      3: `Hits up to 4 times for greater route payoff. The original tideblade still travels out and returns. Each cast has a ${RETURNING_BLADE_WATER_RING_CHANCE} chance to add one spinning water-ring slash dealing ${RETURNING_BLADE_WATER_RING_DAMAGE} skill damage, but it still does not track targets across the arena.`,
+      1: "The blade hovers for 2 seconds. Cast again to recall for free; each target is hit once per leg, with most damage on return.",
+      2: "Hover time increases to 2.5 seconds and damage rises. Move or use another skill before recalling.",
+      3: `Outbound hits leave tide marks. A return hit on the same target triggers a cross-slash for ${formatPercent(RETURNING_BLADE_CONFIG.crossDamageRatio)} skill damage and briefly staggers light enemies. Bosses only take damage.`,
     },
   },
   [SKILL_IDS.verticalWave]: {
@@ -150,4 +148,10 @@ function catalogCopy(skillId: SkillId): LocalizedSkillCopy {
     description: skill.description,
     levelDescriptions: skill.levelDescriptions,
   };
+}
+
+export function returningBladeActionLabel(language: Language, phase: string | null | undefined) {
+  if (phase === "out" || phase === "hover") return language === "en" ? "Recall" : "收回";
+  if (phase === "recall" || phase === "return") return language === "en" ? "Returning" : "归刃";
+  return null;
 }

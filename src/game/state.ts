@@ -346,6 +346,9 @@ export function getStateSnapshot(manualPaused = false, paused = manualPaused): G
       skillCharges: state.player.skillCharges,
       maxSkillCharges: state.player.maxSkillCharges,
       skillIndex: state.player.skillIndex,
+      returningBladePhase: state.gameOver ? null : state.playerSkillEffects.find(
+        (effect) => effect.kind === "returningBlade" && effect.life > 0,
+      )?.phase ?? null,
       equippedSkillIds: [...state.player.equippedSkillIds],
       skillLevels: { ...state.player.skillLevels },
       ultimateEnergy: state.player.ultimateEnergy,

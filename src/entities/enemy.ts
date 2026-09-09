@@ -496,13 +496,17 @@ export function updateEnemies() {
     if (updateSpawnOccluderEntry(enemy)) continue;
     const usesPlatformPhysics = enemyUsesPlatformPhysics(enemy);
     const prevBottom = usesPlatformPhysics ? prepareEnemyPlatformPhysics(enemy) : 0;
-    archetype.update(enemy);
+    if ((enemy.returningBladeStaggerTimer ?? 0) > 0) {
+      enemy.returningBladeStaggerTimer = (enemy.returningBladeStaggerTimer ?? 0) - 1;
+    } else {
+      archetype.update(enemy);
+    }
     if (archetype.shouldRemove?.(enemy)) {
       state.enemies.splice(i, 1);
       continue;
     }
 
-    if (lanternBuffed) {
+    if (lanternBuffed && (enemy.returningBladeStaggerTimer ?? 0) <= 0) {
       enemy.x += enemy.vx * LANTERN_EMBER_CONFIG.buffSpeedExtraScale;
       enemy.lanternBuffTimer = Math.max(0, (enemy.lanternBuffTimer ?? 0) - 1);
     }
@@ -518,7 +522,8 @@ export function updateEnemies() {
     const lanternBuffed = (enemy.lanternBuffTimer ?? 0) > 0;
     const archetype = enemyArchetypeForSheet(enemy.sheetIndex);
     if (
-      !isEnemyBehindSpawnOccluder(enemy)
+      (enemy.returningBladeStaggerTimer ?? 0) <= 0
+      && !isEnemyBehindSpawnOccluder(enemy)
       && !archetype.contactDamageDisabled?.(enemy)
       && hitbox(state.player, enemy)
     ) {

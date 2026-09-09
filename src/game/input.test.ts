@@ -95,3 +95,29 @@ describe("debug input", () => {
     expect(keys.has("d")).toBe(false);
   });
 });
+
+describe("two-stage skill input", () => {
+  it("does not turn a held keyboard press into a recall", () => {
+    const onSkill = vi.fn();
+    setupInput({ onSkill });
+    window.dispatchEvent(new KeyboardEvent("keydown", { key: "k" }));
+    window.dispatchEvent(new KeyboardEvent("keydown", { key: "k", repeat: true }));
+    expect(onSkill).toHaveBeenCalledTimes(1);
+    window.dispatchEvent(new KeyboardEvent("keyup", { key: "k" }));
+    window.dispatchEvent(new KeyboardEvent("keydown", { key: "k" }));
+    expect(onSkill).toHaveBeenCalledTimes(2);
+  });
+
+  it("allows successive taps of the same touch skill button", () => {
+    document.body.innerHTML = '<button class="touch-btn" data-key="k">Skill</button>';
+    const onSkill = vi.fn();
+    setupInput({ onSkill });
+    const button = document.querySelector("button")!;
+    for (let tap = 0; tap < 2; tap += 1) {
+      button.dispatchEvent(new Event("pointerdown"));
+      button.dispatchEvent(new Event("pointerup"));
+    }
+    expect(onSkill).toHaveBeenCalledTimes(2);
+    document.body.innerHTML = "";
+  });
+});

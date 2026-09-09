@@ -2,7 +2,7 @@ import {
   ARMOR_BREAK_PASSIVE_CONFIG,
   ANTI_AIR_MULTI_BONUS_DROP_CONFIG,
   DASH_REPOSITION_PASSIVE_CONFIG,
-  RETURNING_BLADE_WATER_RING_CONFIG,
+  RETURNING_BLADE_CONFIG,
   SKILL_IDS,
   VERTICAL_WAVE_PILLAR_CONFIG,
   VORTEX_CONTROL_DOUBLE_JUMP_CONFIG,
@@ -47,13 +47,11 @@ export function skillLevelUnlockRewardMetric(
 
   if (
     skillId === SKILL_IDS.returningBlade
-    && unlocksLevel(nextLevel, previousLevel, RETURNING_BLADE_WATER_RING_CONFIG.requiredLevel)
+    && unlocksLevel(nextLevel, previousLevel, RETURNING_BLADE_CONFIG.requiredLevel)
   ) {
     return {
-      label: rewardLabel(language, "bonusWaterRingSlash"),
-      value: `${formatPercent(RETURNING_BLADE_WATER_RING_CONFIG.chance)} / ${
-        skillDamageValue(language, RETURNING_BLADE_WATER_RING_CONFIG.damageMultiplier)
-      }`,
+      label: rewardLabel(language, "returningBladeCross"),
+      value: skillDamageValue(language, RETURNING_BLADE_CONFIG.crossDamageRatio),
       tone: "damage" as const,
     };
   }

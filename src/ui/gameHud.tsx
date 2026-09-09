@@ -1,7 +1,8 @@
+import { returningBladeActionLabel } from "../i18n/skillCopy";
 import { type CSSProperties, useEffect, useRef, useState } from "react";
 import { useAtomValue } from "jotai";
 import { resolveStaticAssetUrl } from "../assets/staticAssetUrl";
-import { HUD_UI } from "../constants";
+import { HUD_UI, SKILL_IDS } from "../constants";
 import { DebugPanel } from "../game/debug";
 import { gameSnapshotAtom } from "../game/gameStore";
 import { bossPhaseTitle } from "../i18n/bossCopy";
@@ -255,6 +256,8 @@ export function GameHud() {
   const { player, boss, elapsed, spritesReady } = snapshot;
   const activeSkillId = player.equippedSkillIds[player.skillIndex];
   const activeSkill = getSkill(activeSkillId);
+  const bladeAction = activeSkillId === SKILL_IDS.returningBlade
+    ? returningBladeActionLabel(language, player.returningBladePhase) : null;
   const activeSkillLevel = activeSkillId ? player.skillLevels[activeSkillId] : undefined;
 
   const skillValue = player.skillEnergy;
@@ -321,7 +324,7 @@ export function GameHud() {
               {activeSkillId && activeSkill ? (
                 <>
                   <img src={skillIconSrc(activeSkillId)} alt="" draggable={false} />
-                  <span>{romanLevel(activeSkillLevel)}</span>
+                  <span aria-live="polite">{bladeAction ?? romanLevel(activeSkillLevel)}</span>
                 </>
               ) : (
                 <span>--</span>

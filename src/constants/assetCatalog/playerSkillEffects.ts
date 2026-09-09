@@ -1,6 +1,6 @@
 import { SKILL_IDS } from "../ids";
 import {
-  RETURNING_BLADE_WATER_RING_CONFIG,
+  RETURNING_BLADE_CONFIG,
   VERTICAL_WAVE_PILLAR_CONFIG,
 } from "../combat";
 import type { SkillId, SpriteSheet } from "../../types/assets";
@@ -139,6 +139,14 @@ export const GUARD_COUNTER_EFFECT_CONFIG = {
   damageReductionMaxPlayerLevel: 25,
 } as const;
 
+export const RETURNING_BLADE_TECHNIQUE_SHEET: SpriteSheet = {
+  src: "assets/sprites/skills/returning_blade/tide_technique.png",
+  frameW: 256,
+  frameH: 256,
+  count: RETURNING_BLADE_CONFIG.frameCount,
+  image: null,
+};
+
 export const PLAYER_SKILL_EFFECT_SHEETS: Partial<Record<SkillId, SpriteSheet>> = {
   [SKILL_IDS.dashReposition]: {
     src: "assets/sprites/skills/dash_reposition/effect.png",
@@ -168,13 +176,7 @@ export const PLAYER_SKILL_EFFECT_SHEETS: Partial<Record<SkillId, SpriteSheet>> =
     count: 4,
     image: null,
   },
-  [SKILL_IDS.returningBlade]: {
-    src: "assets/sprites/skills/returning_blade/effect.png",
-    frameW: 240,
-    frameH: 120,
-    count: 4,
-    image: null,
-  },
+  [SKILL_IDS.returningBlade]: RETURNING_BLADE_TECHNIQUE_SHEET,
   [SKILL_IDS.verticalWave]: {
     src: "assets/sprites/skills/vertical_wave/effect.png",
     frameW: 480,
@@ -189,14 +191,6 @@ export const VERTICAL_WAVE_PILLAR_SHEET: SpriteSheet = {
   frameW: 480,
   frameH: 520,
   count: VERTICAL_WAVE_PILLAR_CONFIG.frameCount,
-  image: null,
-};
-
-export const RETURNING_BLADE_WATER_RING_SHEET: SpriteSheet = {
-  src: "assets/sprites/skills/returning_blade/ripple_slash.png",
-  frameW: 240,
-  frameH: 160,
-  count: RETURNING_BLADE_WATER_RING_CONFIG.frameCount,
   image: null,
 };
 

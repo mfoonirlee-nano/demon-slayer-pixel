@@ -4,8 +4,8 @@ import {
   CLOSE_ARC_BASIC_CRESCENT_CONFIG,
   CLOSE_ARC_BASIC_CRESCENT_SHEET,
   LINE_PROJECTILE_EFFECT_CONFIG,
-  RETURNING_BLADE_WATER_RING_CONFIG,
-  RETURNING_BLADE_WATER_RING_SHEET,
+  RETURNING_BLADE_CONFIG,
+  RETURNING_BLADE_TECHNIQUE_SHEET,
   SKILL_IDS,
   VERTICAL_WAVE_PILLAR_CONFIG,
   VERTICAL_WAVE_PILLAR_SHEET,
@@ -40,8 +40,8 @@ const GUARD_COUNTER_LEVEL_THREE = 3;
 const DASH_REPOSITION_LEVEL_THREE = 3;
 const ARMOR_BREAK_LEVEL_THREE = 3;
 const ANTI_AIR_MULTI_LEVEL_THREE = 3;
-const RETURNING_BLADE_WATER_RING_FRAME_WIDTH = 240;
-const RETURNING_BLADE_WATER_RING_FRAME_HEIGHT = 160;
+const RETURNING_BLADE_TECHNIQUE_FRAME_WIDTH = 256;
+const RETURNING_BLADE_TECHNIQUE_FRAME_HEIGHT = 256;
 const VERTICAL_WAVE_PILLAR_FRAME_WIDTH = 480;
 const VERTICAL_WAVE_PILLAR_FRAME_HEIGHT = 520;
 const VERTICAL_WAVE_PILLAR_FRAME_COUNT = VERTICAL_WAVE_PILLAR_CONFIG.frameCount;
@@ -165,20 +165,16 @@ describe("player skill catalog copy", () => {
     expect(description).toContain(formatPercent(ANTI_AIR_MULTI_BONUS_DROP_CONFIG.damageMultiplier));
   });
 
-  it("explains the level-three returning blade water-ring slash", () => {
+  it("explains the level-three returning blade technique slash", () => {
     const description = playerSkillDescription(
       SKILL_IDS.returningBlade,
-      RETURNING_BLADE_WATER_RING_CONFIG.requiredLevel,
+      RETURNING_BLADE_CONFIG.requiredLevel,
     );
 
-    expect(description).toContain("原有潮刃照常往返");
-    expect(description).toContain(formatPercent(RETURNING_BLADE_WATER_RING_CONFIG.chance));
-    expect(description).toContain("追加 1 道");
-    expect(description).toContain("回旋水波纹剑气");
-    expect(description).toContain(
-      `造成 ${formatPercent(RETURNING_BLADE_WATER_RING_CONFIG.damageMultiplier)} 技能伤害`,
-    );
-    expect(description).toContain("不自动追踪全场");
+    expect(description).toContain("同一目标");
+    expect(description).toContain("确定触发合痕斩");
+    expect(description).toContain(formatPercent(RETURNING_BLADE_CONFIG.crossDamageRatio));
+    expect(description).not.toContain("概率");
   });
 
   it("explains the level-three vertical wave pillar chain", () => {
@@ -212,20 +208,20 @@ describe("player skill catalog copy", () => {
     });
   });
 
-  it("preloads and selects the separate returning blade water-ring sheet", () => {
+  it("preloads and selects the separate returning blade technique sheet", () => {
     const preloadedSources = playerSkillEffectSheets().map((sheet) => sheet.src);
 
     expect(
-      preloadedSources.filter((src) => src === RETURNING_BLADE_WATER_RING_SHEET.src),
+      preloadedSources.filter((src) => src === RETURNING_BLADE_TECHNIQUE_SHEET.src),
     ).toHaveLength(1);
-    expect(playerSkillEffectSheet(SKILL_IDS.returningBlade, "returningBladeWaterRing"))
-      .toBe(RETURNING_BLADE_WATER_RING_SHEET);
+    expect(playerSkillEffectSheet(SKILL_IDS.returningBlade, "returningBladeCross"))
+      .toBe(RETURNING_BLADE_TECHNIQUE_SHEET);
     expect(playerSkillEffectSheet(SKILL_IDS.returningBlade, "returningBlade"))
-      .not.toBe(RETURNING_BLADE_WATER_RING_SHEET);
-    expect(RETURNING_BLADE_WATER_RING_SHEET).toMatchObject({
-      frameW: RETURNING_BLADE_WATER_RING_FRAME_WIDTH,
-      frameH: RETURNING_BLADE_WATER_RING_FRAME_HEIGHT,
-      count: RETURNING_BLADE_WATER_RING_CONFIG.frameCount,
+      .toBe(RETURNING_BLADE_TECHNIQUE_SHEET);
+    expect(RETURNING_BLADE_TECHNIQUE_SHEET).toMatchObject({
+      frameW: RETURNING_BLADE_TECHNIQUE_FRAME_WIDTH,
+      frameH: RETURNING_BLADE_TECHNIQUE_FRAME_HEIGHT,
+      count: RETURNING_BLADE_CONFIG.frameCount,
     });
   });
 

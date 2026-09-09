@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
-  RETURNING_BLADE_WATER_RING_CONFIG,
+  RETURNING_BLADE_CONFIG,
   SKILL_IDS,
   VERTICAL_WAVE_PILLAR_CONFIG,
   VORTEX_CONTROL_DOUBLE_JUMP_CONFIG,
@@ -307,23 +307,20 @@ describe("reward choice details", () => {
     expect(metricValue(metrics, "追加雨滴")).toBe("30% / 50%技能伤害");
   });
 
-  it("shows the returning blade water-ring chance and damage at level three", () => {
+  it("shows the returning blade deterministic cross-slash damage at level three", () => {
     const choice: UpgradeChoiceState = {
       id: "upgrade-returning-blade",
       type: "upgradeSkill",
       title: "技能精进",
       name: "回刃·归潮 III",
-      description: "有概率追加回旋剑气。",
+      description: "往返双中触发合痕斩。",
       skillId: SKILL_IDS.returningBlade,
-      nextLevel: RETURNING_BLADE_WATER_RING_CONFIG.requiredLevel,
+      nextLevel: RETURNING_BLADE_CONFIG.requiredLevel,
     };
-    const expectedValue = `${
-      formatPercent(RETURNING_BLADE_WATER_RING_CONFIG.chance)
-    } / ${formatPercent(RETURNING_BLADE_WATER_RING_CONFIG.damageMultiplier)}`;
-
-    expect(metricValue(upgradeRewardMetrics(choice, BASE_PLAYER), "追加回旋剑气"))
+    const expectedValue = formatPercent(RETURNING_BLADE_CONFIG.crossDamageRatio);
+    expect(metricValue(upgradeRewardMetrics(choice, BASE_PLAYER), "往返双中合痕斩"))
       .toBe(`${expectedValue}技能伤害`);
-    expect(metricValue(upgradeRewardMetrics(choice, BASE_PLAYER, "en"), "Bonus Water-Ring Slash"))
+    expect(metricValue(upgradeRewardMetrics(choice, BASE_PLAYER, "en"), "Cross-Slash on Both Legs"))
       .toBe(`${expectedValue} skill damage`);
   });
 

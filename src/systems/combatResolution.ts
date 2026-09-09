@@ -78,6 +78,7 @@ export function resolveEnemyHit({
   damageKind = "normal",
   afterDamage,
   knockbackOverride,
+  sourceX,
 }: {
   enemy: EnemyState;
   enemyIndex: number;
@@ -89,9 +90,10 @@ export function resolveEnemyHit({
   damageKind?: EnemyDamageKind;
   afterDamage?: () => void;
   knockbackOverride?: PlayerHitKnockbackOverride;
+  sourceX?: number;
 }): EnemyHitResolution {
   const { x: hitX, y: hitY } = hitPoint ?? overlapHitPoint(hitRect, enemy);
-  const appliedDamage = applyEnemyDamage(enemy, damage, hitCooldown, damageKind, hitX);
+  const appliedDamage = applyEnemyDamage(enemy, damage, hitCooldown, damageKind, sourceX ?? hitX);
   afterDamage?.();
   const defeated = resolveEnemyDefeat(enemy, enemyIndex, reward);
   if (!defeated) applyPlayerHitKnockback(state, enemy, knockbackOverride);

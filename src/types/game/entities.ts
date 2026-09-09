@@ -209,6 +209,7 @@ export type EnemyState = {
   hp: number;
   damage: number;
   hitCd: number;
+  returningBladeStaggerTimer?: number;
   animSeed: number;
   sheetIndex: number;
   chaserPhase?: ChaserPhase;

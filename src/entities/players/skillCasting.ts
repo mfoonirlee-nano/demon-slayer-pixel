@@ -1,3 +1,4 @@
+import { activeReturningBlade, recallReturningBlade } from "../particles/returningBlade";
 import { state } from "../../game/state";
 import { PLAYER_COMBAT, PLAYER_DRAW, SKILL_FLASH, SKILL_IDS } from "../../constants";
 import type { Skill, SkillId } from "../../types/assets";
@@ -97,7 +98,7 @@ export function syncSkillCharges() {
 }
 
 export function castSelectedSkill() {
-  if (isBinderTalismanStunned()) return;
+  if (state.gameOver || state.player.hp <= 0 || isBinderTalismanStunned()) return;
 
   const p = state.player;
   if (p.ultimateCastTimer > 0) return;
@@ -105,6 +106,10 @@ export function castSelectedSkill() {
   if (p.fallAttackTimer > 0 || p.fallAttackRecoveryTimer > 0) return;
   const skill = selectedSkill(state);
   if (!skill) return;
+  if (skill.id === SKILL_IDS.returningBlade && activeReturningBlade()) {
+    if (recallReturningBlade()) p.offenseActionSequence += 1;
+    return;
+  }
   const energyCost = skill.energyCost ?? equipmentSkillEnergyCost(state);
   const infiniteSkillCharge = hasDebugInfiniteSkillCharge();
   if (infiniteSkillCharge) {

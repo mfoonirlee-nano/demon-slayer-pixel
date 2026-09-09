@@ -1,3 +1,4 @@
+import type { ReturningBladeRouteState } from "./returningBlade";
 import type { PlayerAnimationState, SkillId, SpriteSheet } from "../assets";
 import type {
   ActBand,
@@ -8,6 +9,7 @@ import type {
   MirrorShardKind,
   ProjectileKind,
   SkillLevel,
+  PlayerSkillEffectPhase,
 } from "./domain";
 import type { EnemyState, PlatformState } from "./entities";
 
@@ -503,11 +505,9 @@ export type GuardCounterEffectState = {
   barrierFlash: number;
 };
 
-export type PlayerSkillEffectPhase = "out" | "return" | "impact";
-
 export type PlayerSkillEffectState = {
   skillId: SkillId;
-  kind: "dashSlash" | "vortex" | "armorBreak" | "rainLine" | "returningBlade" | "returningBladeWaterRing" | "verticalWave" | "verticalWavePillar";
+  kind: "dashSlash" | "vortex" | "armorBreak" | "rainLine" | "returningBlade" | "returningBladeCross" | "verticalWave" | "verticalWavePillar";
   x: number;
   y: number;
   visualY?: number;
@@ -532,9 +532,9 @@ export type PlayerSkillEffectState = {
   originY?: number;
   maxDistance?: number;
   traveled?: number;
-  maxHits?: number;
   hitEnemies: EnemyState[];
   returnHitEnemies?: EnemyState[];
+  returningBlade?: ReturningBladeRouteState;
   enemyCooldowns?: Array<{ enemy: EnemyState; frames: number }>;
   bossCooldown?: number;
   refundedSkillEnergy?: boolean;

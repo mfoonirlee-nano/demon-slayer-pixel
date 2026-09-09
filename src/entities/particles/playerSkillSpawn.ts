@@ -1,9 +1,9 @@
+import { spawnReturningBlade } from "./returningBlade";
 import { state } from "../../game/state";
 import {
   ANTI_AIR_MULTI_BONUS_DROP_CONFIG,
   GROUND_Y,
   PLAYER_COMBAT,
-  RETURNING_BLADE_WATER_RING_CONFIG,
   SKILL_IDS,
   VERTICAL_WAVE_PILLAR_CONFIG,
   WIDTH,
@@ -31,8 +31,6 @@ import {
   DASH_REPOSITION_TRAIL_EXTRA_LIFE,
   RAIN_LINE_EFFECT_BOTTOM_TRANSPARENT_PX,
   RAIN_LINE_EFFECT_Y_OFFSET,
-  RETURNING_BLADE_SPAWN_FORWARD_OFFSET,
-  RETURNING_BLADE_SPEED,
   VORTEX_CAST_FORWARD_OFFSET,
   VORTEX_GROUND_Y_OFFSET,
   VORTEX_VERTICAL_RADIUS_SCALE,
@@ -43,8 +41,6 @@ import {
   makeGenericEffect,
   rainLineTargets,
   refundSkillGroupById,
-  returningBladeLife,
-  returningBladeOutboundDistance,
 } from "./playerSkillShared";
 
 const VERTICAL_WAVE_FORWARD_OFFSET = 34;
@@ -152,7 +148,6 @@ export function spawnPlayerSkillEffect(skillId: SkillId, castDamageMultiplier = 
   const tuning = GENERIC_PLAYER_SKILL_TUNING[skillId];
   const player = state.player;
   const playerCenterX = player.x + player.w / 2;
-  const playerCenterY = player.y + player.h / 2;
   const feetY = player.y + player.h;
   const refundGroupId = nextPlayerSkillRefundGroupId;
   nextPlayerSkillRefundGroupId += 1;
@@ -261,47 +256,7 @@ export function spawnPlayerSkillEffect(skillId: SkillId, castDamageMultiplier = 
   }
 
   if (skillId === SKILL_IDS.returningBlade) {
-    const minDistance = valueForSkillLevel(tuning.distance ?? tuning.width, level);
-    const startX = playerCenterX + player.facing * RETURNING_BLADE_SPAWN_FORWARD_OFFSET;
-    const maxDistance = returningBladeOutboundDistance(startX, player.facing, minDistance);
-    const life = returningBladeLife(maxDistance);
-    const route = {
-      vx: player.facing * RETURNING_BLADE_SPEED,
-      phase: "out" as const,
-      originX: playerCenterX,
-      originY: playerCenterY,
-      traveled: 0,
-      maxDistance,
-      life,
-      maxLife: life,
-      maxHits: valueForSkillLevel(tuning.maxHits ?? tuning.life, level),
-      refundGroupId,
-    };
-
-    state.playerSkillEffects.push(makeGenericEffect(skillId, level, castDamageMultiplier, startX, playerCenterY, {
-      ...route,
-      returnHitEnemies: [],
-    }));
-    const hasWaterRing = level >= RETURNING_BLADE_WATER_RING_CONFIG.requiredLevel
-      && Math.random() < RETURNING_BLADE_WATER_RING_CONFIG.chance;
-    if (hasWaterRing) {
-      state.playerSkillEffects.push(makeGenericEffect(
-        skillId,
-        level,
-        castDamageMultiplier * RETURNING_BLADE_WATER_RING_CONFIG.damageMultiplier,
-        startX,
-        playerCenterY,
-        {
-          ...route,
-          kind: "returningBladeWaterRing",
-          returnHitEnemies: [],
-          startDelay: RETURNING_BLADE_WATER_RING_CONFIG.startDelay,
-          frameDuration: RETURNING_BLADE_WATER_RING_CONFIG.frameDuration,
-          drawScale: RETURNING_BLADE_WATER_RING_CONFIG.drawScale,
-        },
-      ));
-    }
-    return true;
+    return spawnReturningBlade(level, castDamageMultiplier, refundGroupId);
   }
 
   if (skillId === SKILL_IDS.verticalWave) {
