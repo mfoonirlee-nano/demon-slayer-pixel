@@ -47,6 +47,9 @@ const FRAME_ADVANCE_SAMPLE_SECONDS = 0.1;
 const FRAME_WRAP_SAMPLE_SECONDS = 2;
 const OPENING_LEAF_KIND_MIN = 3;
 const MAX_LEAF_LIFT_ABOVE_ORIGIN = 16;
+const LANDING_SAMPLE_DURATION = 30;
+const LEAF_GROUND_INSET = 6;
+const RELEASE_TIME_EPSILON = 0.000001;
 const EXPECTED_TRAJECTORIES = new Set(["flutter", "glide", "spiral"]);
 
 afterEach(() => {
@@ -219,8 +222,8 @@ describe("falling leaf render plan", () => {
           expect(leaf.kind).toBe(source.kind);
           expect(leaf.originX).toBe(source.x);
           expect(leaf.originY).toBe(source.y);
-          expect(Number.isInteger(leaf.x)).toBe(true);
-          expect(Number.isInteger(leaf.y)).toBe(true);
+          expect(Number.isFinite(leaf.x)).toBe(true);
+          expect(Number.isFinite(leaf.y)).toBe(true);
           expect(leaf.y).toBeGreaterThanOrEqual(leaf.originY - MAX_LEAF_LIFT_ABOVE_ORIGIN);
           expect(leaf.y).toBeLessThan(GROUND_Y);
           expect(leaf.alpha).toBeGreaterThan(0);
@@ -350,6 +353,28 @@ describe("falling leaf render plan", () => {
     expect(hasVariedPace).toBe(true);
   });
 
+  it("lands before fading and holds its position and pose on the ground", () => {
+    let settledCount = 0;
+    for (const layer of ["far", "near"] as const) {
+      for (let elapsed = 0; elapsed < LANDING_SAMPLE_DURATION; elapsed += NATURAL_MOTION_SAMPLE_STEP_SECONDS) {
+        const before = resolveFallingLeafRenderPlan({ elapsed, seed: SAMPLE_SEED, layer });
+        const after = resolveFallingLeafRenderPlan({ elapsed: elapsed + SAMPLE_STEP_SECONDS, seed: SAMPLE_SEED, layer });
+        for (const leaf of before.filter((item) => item.y === GROUND_Y - LEAF_GROUND_INSET)) {
+          const next = after.find((item) => item.sourceId === leaf.sourceId
+            && Math.abs(item.releasedAt - leaf.releasedAt) < RELEASE_TIME_EPSILON);
+          if (!next) continue;
+          expect(next.x).toBeCloseTo(leaf.x);
+          expect(next.y).toBe(leaf.y);
+          expect(next.rotation).toBeCloseTo(leaf.rotation);
+          expect(next.frame).toBe(leaf.frame);
+          expect(next.alpha).toBeLessThan(leaf.alpha);
+          settledCount += 1;
+        }
+      }
+    }
+    expect(settledCount).toBeGreaterThan(0);
+  });
+
   it("advances the tumble sequence and wraps within the registered frames", () => {
     const firstFarFrameAt = (elapsed: number) => resolveFallingLeafRenderPlan({
       elapsed,
@@ -380,6 +405,8 @@ it.each([
   )));
   const context = {
     drawImage: vi.fn(),
+    translate: vi.fn(),
+    rotate: vi.fn(),
     globalAlpha: 1,
     restore: vi.fn(),
     save: vi.fn(),
@@ -393,18 +420,20 @@ it.each([
 
   drawFallingLeaves(options);
 
-  expect(context.save).toHaveBeenCalledOnce();
-  expect(context.restore).toHaveBeenCalledOnce();
+  expect(context.save).toHaveBeenCalledTimes(plan.length + 1);
+  expect(context.restore).toHaveBeenCalledTimes(plan.length + 1);
   expect(context.drawImage).toHaveBeenCalledTimes(plan.length);
   for (const [index, leaf] of plan.entries()) {
+    expect(context.translate).toHaveBeenNthCalledWith(index + 1, leaf.x, leaf.y);
+    expect(context.rotate).toHaveBeenNthCalledWith(index + 1, leaf.rotation);
     expect(vi.mocked(context.drawImage).mock.calls[index]).toEqual([
       leafImages[leaf.kind],
       leaf.frame * FALLING_LEAF_SHEETS[leaf.kind].frameW,
       0,
       FALLING_LEAF_SHEETS[leaf.kind].frameW,
       FALLING_LEAF_SHEETS[leaf.kind].frameH,
-      leaf.x - drawSize / 2,
-      leaf.y - drawSize / 2,
+      -drawSize / 2,
+      -drawSize / 2,
       drawSize,
       drawSize,
     ]);
@@ -414,6 +443,8 @@ it.each([
 it("skips an unloaded leaf family without suppressing already loaded families", () => {
   const context = {
     drawImage: vi.fn(),
+    translate: vi.fn(),
+    rotate: vi.fn(),
     globalAlpha: 1,
     restore: vi.fn(),
     save: vi.fn(),

@@ -6,34 +6,27 @@ import {
 
 const BASE_POSITION_INPUT = {
   cycleAge: 2,
-  cycleProgress: 0.5,
+  cycleDuration: 10,
   sway: 10,
   swayRate: 1,
   swayPhase: 0,
   secondarySwayPhase: 0,
   descentPhase: 0,
-  flutter: 4,
-  flutterPhase: 0,
   trajectoryPhase: 0,
   trajectoryDirection: 1 as const,
   spiralTurns: 2,
-  descentWave: 0,
 };
-const FIRST_ORBIT_QUARTER = 0.25;
-const THIRD_ORBIT_QUARTER = 0.75;
-const FIRST_ORBIT_AGE = 1;
-const THIRD_ORBIT_AGE = 3;
 const FRAME_COUNT = 8;
+const EARLY_SWAY_PHASE = 1.3;
+const REVERSED_SWAY_PHASE = 3.5;
+const LATE_SWAY_PHASE = 5.8;
+const MOTION_PHASES = [0, EARLY_SWAY_PHASE, REVERSED_SWAY_PHASE, LATE_SWAY_PHASE];
+const MOTION_SAMPLE_FPS = 60;
+const MAX_DESCENT_PER_FRAME = 0.01;
 const GLIDE_FRAME_TURN_START = 7;
 const GLIDE_FRAME_TURN_MIDDLE = 8;
 const GLIDE_FRAME_TURN_END = 9;
 const FLUTTER_FRAME_PULSE_END = 3;
-const HALF_PI = Math.PI / 2;
-const FLUTTER_SWAY_PEAK_AGES = [
-  HALF_PI,
-  Math.PI + HALF_PI,
-  Math.PI * 2 + HALF_PI,
-];
 const GLIDE_FRAME_SAMPLE_AGES = [
   GLIDE_FRAME_TURN_START,
   GLIDE_FRAME_TURN_MIDDLE,
@@ -59,54 +52,42 @@ function frameAt(
 }
 
 describe("falling leaf trajectories", () => {
-  it("swings a flutter path across both sides more than once", () => {
-    const positions = FLUTTER_SWAY_PEAK_AGES.map((cycleAge) => (
-      resolveFallingLeafTrajectoryPosition({
-        ...BASE_POSITION_INPUT,
-        trajectory: "flutter",
-        cycleAge,
-      })
-    ));
+  it.each(["flutter", "glide", "spiral"] as const)(
+    "%s releases at the canopy, sinks continuously, and reaches the ground",
+    (trajectory) => {
+      for (const swayPhase of MOTION_PHASES) {
+        const samples = Array.from({ length: 601 }, (_, frame) => (
+          resolveFallingLeafTrajectoryPosition({
+            ...BASE_POSITION_INPUT, trajectory, swayPhase, cycleAge: frame / MOTION_SAMPLE_FPS,
+          })
+        ));
+        expect(samples[0].x).toBeCloseTo(0);
+        expect(samples[0].descentProgress).toBeCloseTo(0);
+        expect(samples[samples.length - 1].descentProgress).toBeCloseTo(1);
+        const drops = samples.slice(1).map((sample, index) => (
+          sample.descentProgress - samples[index].descentProgress
+        ));
+        expect(Math.min(...drops)).toBeGreaterThan(0);
+        expect(Math.max(...drops)).toBeLessThan(MAX_DESCENT_PER_FRAME);
+        expect(Math.max(...drops)).toBeGreaterThan(Math.min(...drops) * 2);
+        const sideways = samples.slice(1).map((sample, index) => sample.x - samples[index].x);
+        expect(sideways.some((dx) => dx > 0)).toBe(true);
+        expect(sideways.some((dx) => dx < 0)).toBe(true);
+      }
+    },
+  );
 
-    expect(positions[0].x).toBeGreaterThan(0);
-    expect(positions[1].x).toBeLessThan(0);
-    expect(positions[2].x).toBeGreaterThan(0);
-  });
-
-  it("lets a glide bank wide while hanging above the regular flutter descent", () => {
-    const flutter = resolveFallingLeafTrajectoryPosition({
-      ...BASE_POSITION_INPUT,
-      trajectory: "flutter",
-    });
-    const glide = resolveFallingLeafTrajectoryPosition({
-      ...BASE_POSITION_INPUT,
-      trajectory: "glide",
-    });
-
-    expect(Math.abs(glide.x)).toBeGreaterThan(Math.abs(flutter.x));
-    expect(glide.descentProgress).toBeLessThan(flutter.descentProgress);
-  });
-
-  it("moves a spiral across both sides of its descending ellipse", () => {
-    const firstQuarter = resolveFallingLeafTrajectoryPosition({
-      ...BASE_POSITION_INPUT,
-      trajectory: "spiral",
-      cycleAge: FIRST_ORBIT_AGE,
-      cycleProgress: FIRST_ORBIT_QUARTER,
-      spiralTurns: 1,
-    });
-    const thirdQuarter = resolveFallingLeafTrajectoryPosition({
-      ...BASE_POSITION_INPUT,
-      trajectory: "spiral",
-      cycleAge: THIRD_ORBIT_AGE,
-      cycleProgress: THIRD_ORBIT_QUARTER,
-      spiralTurns: 1,
-    });
-
-    expect(firstQuarter.x).toBeGreaterThan(0);
-    expect(thirdQuarter.x).toBeLessThan(0);
-    expect(firstQuarter.y).toBeLessThan(0);
-    expect(thirdQuarter.y).toBeLessThan(0);
+  it("does not change airborne sway to force a loop at the lifetime boundary", () => {
+    for (const trajectory of ["flutter", "glide", "spiral"] as const) {
+      const shortFlight = resolveFallingLeafTrajectoryPosition({
+        ...BASE_POSITION_INPUT, trajectory, cycleDuration: 6,
+      });
+      const longFlight = resolveFallingLeafTrajectoryPosition({
+        ...BASE_POSITION_INPUT, trajectory, cycleDuration: 20,
+      });
+      expect(shortFlight.x).toEqual(longFlight.x);
+      expect(shortFlight.rotation).toEqual(longFlight.rotation);
+    }
   });
 
   it("rocks glide frames backward while flutter frames pause during a pulse", () => {

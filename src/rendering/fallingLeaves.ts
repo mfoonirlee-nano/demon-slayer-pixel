@@ -21,6 +21,7 @@ export type FallingLeafRenderItem = {
   y: number;
   alpha: number;
   frame: number;
+  rotation: number;
   kind: FallingLeafKind;
   trajectory: FallingLeafTrajectory;
   sourceId: string;
@@ -50,10 +51,6 @@ type FallingLeafLayerConfig = {
   swayRange: number;
   swayRateMin: number;
   swayRateRange: number;
-  descentWaveMin: number;
-  descentWaveRange: number;
-  flutter: number;
-  gustLift: number;
   tumbleRateMin: number;
   tumbleRateRange: number;
   alphaMin: number;
@@ -76,22 +73,19 @@ type FallingLeafMotionProfile = {
   driftScale: number;
   swayScale: number;
   swayRateScale: number;
-  descentWaveScale: number;
-  flutterScale: number;
   tumbleRateScale: number;
 };
 
 const TWO_PI = Math.PI * 2;
 const LEAF_GROUND_INSET = 6;
 const LEAF_BOTTOM = GROUND_Y - LEAF_GROUND_INSET;
-const LEAF_CANOPY_LIFT_LIMIT = 16;
 const GUST_VISIBILITY_THRESHOLD = 0.08;
 const LEAF_SLOT_SEED_STEP = 0x6c8e9cf5;
 const LEAF_CYCLE_SEED_STEP = 0x9e3779b1;
 const LEAF_KIND_SEED_SALT = 0x42d4c3;
 const LEAF_MOTION_SEED_SALT = 0x74d2b91;
-const LEAF_GROUND_FADE_START = 0.9;
-const LEAF_LIFT_RAMP_SECONDS = 0.3;
+const LEAF_LANDING_PROGRESS = 0.9;
+const WIND_RESPONSE_DELAY_SECONDS = 0.25;
 const GUST_RESPONSE_MIN = 0.82;
 const GUST_RESPONSE_RANGE = 0.36;
 const GUST_RELEASE_WINDOW_RATIO = 0.35;
@@ -102,32 +96,24 @@ const LEAF_KIND_MOTION: Record<FallingLeafKind, FallingLeafMotionProfile> = {
     driftScale: 1,
     swayScale: 0.72,
     swayRateScale: 1.22,
-    descentWaveScale: 0.72,
-    flutterScale: 0.72,
     tumbleRateScale: 0.82,
   },
   willow: {
     driftScale: 0.72,
     swayScale: 1.18,
     swayRateScale: 0.78,
-    descentWaveScale: 1.12,
-    flutterScale: 1.15,
     tumbleRateScale: 0.68,
   },
   broadleaf: {
     driftScale: 0.82,
     swayScale: 1.25,
     swayRateScale: 0.9,
-    descentWaveScale: 1.18,
-    flutterScale: 1.1,
     tumbleRateScale: 1,
   },
   bamboo: {
     driftScale: 1.12,
     swayScale: 0.82,
     swayRateScale: 1.18,
-    descentWaveScale: 0.82,
-    flutterScale: 0.78,
     tumbleRateScale: 1.16,
   },
 };
@@ -151,18 +137,14 @@ const LAYER_CONFIG: Record<FallingLeafLayer, FallingLeafLayerConfig> = {
     cycleDurationRange: 6,
     gustDurationMin: 3.5,
     gustDurationRange: 0.7,
-    horizontalSpeedMin: 6,
-    horizontalSpeedRange: 4,
+    horizontalSpeedMin: 3,
+    horizontalSpeedRange: 2,
     gustSpeedMin: 52,
     gustSpeedRange: 12,
-    swayMin: 9,
-    swayRange: 6,
+    swayMin: 16,
+    swayRange: 8,
     swayRateMin: 0.7,
     swayRateRange: 0.6,
-    descentWaveMin: 0.08,
-    descentWaveRange: 0.03,
-    flutter: 3.5,
-    gustLift: 4,
     tumbleRateMin: 4,
     tumbleRateRange: 3.6,
     alphaMin: 0.58,
@@ -177,18 +159,14 @@ const LAYER_CONFIG: Record<FallingLeafLayer, FallingLeafLayerConfig> = {
     cycleDurationRange: 4,
     gustDurationMin: 3,
     gustDurationRange: 0.8,
-    horizontalSpeedMin: 9,
-    horizontalSpeedRange: 6,
+    horizontalSpeedMin: 4,
+    horizontalSpeedRange: 3,
     gustSpeedMin: 58,
     gustSpeedRange: 18,
-    swayMin: 14,
-    swayRange: 9,
+    swayMin: 22,
+    swayRange: 10,
     swayRateMin: 0.8,
     swayRateRange: 0.75,
-    descentWaveMin: 0.075,
-    descentWaveRange: 0.035,
-    flutter: 5.5,
-    gustLift: 8,
     tumbleRateMin: 5.6,
     tumbleRateRange: 4.4,
     alphaMin: 0.73,
@@ -231,6 +209,18 @@ function resolveWindCycle(elapsed: number, seed: number): WindCycle {
     strength: Math.sin(Math.PI * gustProgress),
     integratedStrength: completedCycles * fullGustIntegral + partialGustIntegral,
     latestGust,
+  };
+}
+
+function resolveLeafWind(elapsed: number, seed: number): WindCycle {
+  const current = resolveWindCycle(elapsed, seed);
+  const delayed = resolveWindCycle(elapsed - WIND_RESPONSE_DELAY_SECONDS, seed);
+  const tail = resolveWindCycle(elapsed - WIND_RESPONSE_DELAY_SECONDS * 2, seed);
+  const sampleCount = 3;
+  return {
+    ...current,
+    integratedStrength: (current.integratedStrength + delayed.integratedStrength
+      + tail.integratedStrength) / sampleCount,
   };
 }
 
@@ -307,47 +297,35 @@ function resolveLeaf(
   const swayPhase = motionRng() * TWO_PI;
   const secondarySwayPhase = motionRng() * TWO_PI;
   const descentPhase = motionRng() * TWO_PI;
-  const flutterPhase = motionRng() * TWO_PI;
   const tumbleRate = (config.tumbleRateMin + motionRng() * config.tumbleRateRange)
     * kindMotion.tumbleRateScale * trajectoryMotion.tumbleRateScale;
   const alpha = config.alphaMin + motionRng() * config.alphaRange;
-  const releaseWind = resolveWindCycle(releasedAt, options.seed);
-  const windTravel = (wind.integratedStrength - releaseWind.integratedStrength) * gustSpeed;
-  const descentWave = (config.descentWaveMin + motionRng() * config.descentWaveRange)
-    * kindMotion.descentWaveScale * trajectoryMotion.descentWaveScale;
+  const flightDuration = cycleDuration * LEAF_LANDING_PROGRESS;
+  const flightAge = Math.min(cycleAge, flightDuration);
+  const releaseWind = resolveLeafWind(releasedAt, options.seed);
+  const flightWind = resolveLeafWind(releasedAt + flightAge, options.seed);
+  const windTravel = (flightWind.integratedStrength - releaseWind.integratedStrength) * gustSpeed;
   const trajectoryPosition = resolveFallingLeafTrajectoryPosition({
     trajectory,
-    cycleAge,
-    cycleProgress: cycleAge / cycleDuration,
+    cycleAge: flightAge,
+    cycleDuration: flightDuration,
     sway,
     swayRate,
     swayPhase,
     secondarySwayPhase,
     descentPhase,
-    flutter: config.flutter * kindMotion.flutterScale * trajectoryMotion.flutterScale,
-    flutterPhase,
     trajectoryPhase,
     trajectoryDirection,
     spiralTurns,
-    descentWave,
   });
-  const x = originX + cycleAge * horizontalSpeed * driftDirection - windTravel
+  const x = originX + flightAge * horizontalSpeed * driftDirection - windTravel
     + trajectoryPosition.x;
-  const liftRamp = Math.min(1, cycleAge / LEAF_LIFT_RAMP_SECONDS);
-  const liftOffset = wind.strength * config.gustLift * liftRamp * gustResponse;
   const cycleProgress = cycleAge / cycleDuration;
-  const y = Math.max(
-    originY - LEAF_CANOPY_LIFT_LIMIT,
-    Math.min(
-      LEAF_BOTTOM - 1,
-      originY + (LEAF_BOTTOM - originY) * trajectoryPosition.descentProgress
-        + trajectoryPosition.y - liftOffset,
-    ),
-  );
+  const y = originY + (LEAF_BOTTOM - originY) * trajectoryPosition.descentProgress;
   const sheet = FALLING_LEAF_SHEETS[source.kind];
   const frame = resolveFallingLeafTumbleFrame({
     trajectory,
-    cycleAge,
+    cycleAge: flightAge,
     tumbleRate,
     swayRate,
     swayPhase,
@@ -355,15 +333,16 @@ function resolveLeaf(
     frameCount: sheet.count,
   });
   const fadeProgress = Math.min(1, Math.max(0,
-    (cycleProgress - LEAF_GROUND_FADE_START) / (1 - LEAF_GROUND_FADE_START),
+    (cycleProgress - LEAF_LANDING_PROGRESS) / (1 - LEAF_LANDING_PROGRESS),
   ));
   const endFade = 1 - fadeProgress;
 
   return {
-    x: Math.round(x),
-    y: Math.round(y),
+    x,
+    y,
     alpha: alpha * source.alpha * endFade,
     frame,
+    rotation: trajectoryPosition.rotation,
     kind: source.kind,
     trajectory,
     sourceId: source.id,
@@ -417,18 +396,22 @@ export function drawFallingLeaves(options: FallingLeafOptions): void {
     const image = sheet.image;
     if (!image) continue;
 
+    context.save();
     context.globalAlpha = leaf.alpha;
+    context.translate(leaf.x, leaf.y);
+    context.rotate(leaf.rotation);
     context.drawImage(
       image,
       leaf.frame * sheet.frameW,
       0,
       sheet.frameW,
       sheet.frameH,
-      leaf.x - drawSize / 2,
-      leaf.y - drawSize / 2,
+      -drawSize / 2,
+      -drawSize / 2,
       drawSize,
       drawSize,
     );
+    context.restore();
   }
   context.restore();
 }
