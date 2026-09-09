@@ -37,11 +37,13 @@ export function createPlayerSfxSpecs({
       mixWood(samples, rng, { start: 0.018, duration: 0.13, frequency: 230, gain: 0.33 });
       mixBreath(samples, rng, { start: 0.045, duration: 0.18, gain: 0.12, lowCutoff: 420, cutoff: 2_400 });
     }),
-    sound("playerAttackStart", 0.15, -5.2, (samples, rng) => {
-      mixNoise(samples, rng, { start: 0.002, duration: 0.075, gain: 0.5, color: "band", lowCutoff: 760, cutoff: 3_200, endLowCutoff: 2_600, endCutoff: 9_600, attack: 0.004, release: 0.014, contour: (progress) => Math.sin(Math.PI * Math.pow(progress, 0.7)) });
-      mixNoise(samples, rng, { start: 0.032, duration: 0.082, gain: 0.78, color: "band", lowCutoff: 4_200, cutoff: 12_000, endLowCutoff: 1_300, endCutoff: 5_200, attack: 0.001, release: 0.026, decay: 2.8 });
-      mixOscillator(samples, { start: 0.036, duration: 0.052, frequency: 3_600, endFrequency: 2_100, gain: 0.055, wave: "sine", attack: 0.001, release: 0.024, decay: 3.4 });
-      mixOscillator(samples, { start: 0.038, duration: 0.036, frequency: 7_200, endFrequency: 4_200, gain: 0.018, wave: "sine", attack: 0.001, release: 0.018, decay: 4.2 });
+    sound("playerAttackStart", 0.18, -6, (samples, rng) => {
+      // One passing arc with a soft tide tail keeps repeated swings distinct from confirmed hits.
+      mixNoise(samples, rng, { duration: 0.105, gain: 0.64, color: "band", lowCutoff: 260, cutoff: 1_800, endLowCutoff: 900, endCutoff: 5_400, attack: 0.003, release: 0.035, contour: (progress) => Math.sin(Math.PI * Math.pow(progress, 0.55)) });
+      mixNoise(samples, rng, { start: 0.021, duration: 0.072, gain: 0.46, color: "band", lowCutoff: 1_600, cutoff: 6_400, endLowCutoff: 680, endCutoff: 2_800, attack: 0.003, release: 0.026, decay: 2.4 });
+      mixNoise(samples, rng, { start: 0.052, duration: 0.112, gain: 0.17, color: "band", lowCutoff: 440, cutoff: 2_800, endLowCutoff: 220, endCutoff: 1_100, attack: 0.012, release: 0.045, decay: 2.2 });
+      mixOscillator(samples, { start: 0.023, duration: 0.057, frequency: 2_400, endFrequency: 1_480, gain: 0.022, wave: "sine", attack: 0.003, release: 0.026, decay: 3 });
+      mixOscillator(samples, { start: 0.027, duration: 0.039, frequency: 3_370, endFrequency: 2_150, gain: 0.009, wave: "sine", attack: 0.003, release: 0.022, decay: 3.5 });
     }),
     sound("playerAttackHit", 0.25, -1.05, (samples, rng) => {
       mixTaiko(samples, rng, { duration: 0.19, frequency: 106, gain: 0.4 });
