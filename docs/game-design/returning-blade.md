@@ -59,7 +59,7 @@ Lv2 的长按微调保留为后续可选探索，本轮采用已选定的延长�
 ## 素材与实现入口
 
 - `assets/sprites/skills/returning_blade/tide_technique.png`：8 帧 RGBA 横条，单帧 256x256。0-3 为飞行/留刃循环，4 为潮痕，4-7 为合痕动画。
-- 原施法动作与技能图标保留；旧 `effect.png` 和 `ripple_slash.png` 留作历史素材，不再预加载或参与本招运行时。
+- 施法动作精修为五帧持刀、蓄潮、送刃、释刃与收势，保留原有尺寸、锚点和第四帧释放时机；技能图标保留。旧 `effect.png` 和 `ripple_slash.png` 留作历史素材，不再预加载或参与本招运行时。
 - 细潮线为动态路径提示，不具备碰撞；不以程序图形代替潮刃、潮痕和合痕素材。
 - 参数：`src/constants/combat.ts`、`src/systems/playerSkills.ts`。
 - 路线与结算：`src/entities/particles/returningBlade.ts`。
