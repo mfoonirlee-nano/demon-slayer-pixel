@@ -1,15 +1,15 @@
 export const DEATH_SPRITE_SHEET = {
   src: "assets/sprites/ui/end.png",
-  w: 6688,
-  h: 3764,
-  frameW: 1088,
-  frameH: 812,
+  w: 13376,
+  h: 7528,
+  frameW: 2176,
+  frameH: 1624,
   columns: 6,
   rows: 4,
-  offsetX: 92,
-  offsetY: 88,
-  frameGutter: 64,
-  sourceScale: 4,
+  offsetX: 184,
+  offsetY: 176,
+  frameGutter: 128,
+  sourceScale: 8,
   frameDurationMs: 70,
 } as const;
 

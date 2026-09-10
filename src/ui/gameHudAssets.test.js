@@ -264,7 +264,7 @@ describe("game HUD sprite geometry", () => {
     expectTransparentSpriteSheet(RESIDUAL_SPIRIT_BEAD_CHARGE_SHEET);
   });
 
-  it("keeps the death sequence on its four-times-density sprite contract", () => {
+  it("keeps the death sequence on its eight-times-density sprite contract", () => {
     expectTransparentSpriteSheet(DEATH_SPRITE_SHEET);
   });
 
