@@ -121,8 +121,8 @@ export function drawBossDefeatSplitEffect() {
 
 function bloodMoonDeathPose(boss: LiveBoss): BossVisualFrameState {
   const archetype = bossArchetypeForId(boss.id);
-  const w = archetype.castDrawW;
-  const h = w * BLOOD_MOON_DEATH_SHEET.frameH / BLOOD_MOON_DEATH_SHEET.frameW;
+  const h = archetype.drawH;
+  const w = h * BLOOD_MOON_DEATH_SHEET.frameW / BLOOD_MOON_DEATH_SHEET.frameH;
   const centerX = boss.x + boss.w / 2;
   const feetY = boss.y + boss.h;
   return {

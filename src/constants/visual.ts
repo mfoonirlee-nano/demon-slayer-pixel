@@ -4,6 +4,23 @@ export const LOADING_SCREEN = {
   font: "24px monospace",
 } as const;
 
+export const PLAYER_JUMP_VISUAL = {
+  // The six poses follow vertical motion, so a new jump never starts mid-cycle.
+  frameVelocityRatios: {
+    riseStart: -0.7,
+    riseEnd: -0.25,
+    apex: 0.2,
+    fallStart: 0.55,
+    fallEnd: 0.85,
+  },
+} as const;
+
+export const PLAYER_FALL_ATTACK_VISUAL = {
+  // The ordinary strip reaches the ground one pose before the Moon Tide strip.
+  airFrameCount: 4,
+  moonTideAirFrameCount: 5,
+} as const;
+
 export const SKILL_FLASH = {
   maxFrames: 24,
   baseRadius: 320,

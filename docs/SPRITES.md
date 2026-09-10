@@ -147,7 +147,7 @@
 | `player_jump.png` | `2688x420` | 6 | `448x420` | `jump` | 起跳、滞空、下落和落地准备 |
 | `player_attack.png` | `6144x480` | 8 | `768x480` | `attack` | 普攻按 `BASIC_ATTACK.frames` 线性播放完整 8 帧 |
 | `player_moving_attack.png` | `6144x480` | 8 | `768x480` | `movingAttack` | 移动中起手的普攻；低身前冲起势，低身恢复后接回跑步 |
-| `player_fall_attack.png` | `5120x560` | 8 | `640x560` | `fallAttack` | 前 5 帧为空中下刺，后 3 帧为落地恢复 |
+| `player_fall_attack.png` | `5120x560` | 8 | `640x560` | `fallAttack` | 前 4 帧为空中下刺，后 4 帧为落地冲击与恢复 |
 | `residual_spirit_heal_effect.png` | `1920x240` | 8 | `240x240` | 引灵治疗附着特效 | 纯 VFX；前 5 帧收拢两枚残灵，后 3 帧只在成功结算后播放峰值与散逸 |
 | `moon_tide/player_moon_tide_idle.png` | `3072x480` | 8 | `384x480` | 大招强化期 `idle` | 拔刀蓄势，贴身月潮绕刃循环 |
 | `moon_tide/player_moon_tide_run.png` | `3584x420` | 8 | `448x420` | 大招强化期 `run` | 低身水步追击，按实际水平移动距离推进 |
@@ -156,9 +156,9 @@
 | `moon_tide/player_moon_tide_moving_attack.png` | `6144x480` | 8 | `768x480` | 大招强化期 `movingAttack` | 从水步进入滑斩，低身恢复后接回追击 |
 | `moon_tide/player_moon_tide_fall_attack.png` | `5120x560` | 8 | `640x560` | 大招强化期 `fallAttack` | 前 5 帧旋潮下刺，后 3 帧为落地潮爆恢复 |
 
-玩家运行时图集以 `assets/art/player-concept.png` 为角色身份基准：深蓝短披风、潮纹衣摆、金属护具、月形腰饰和蓝白潮流刀光。所有玩家运行时图集源方向统一朝右；朝左由 `drawSheetFrame()` 根据玩家 `facing` 镜像绘制。跑步帧按实际水平移动距离推进，并在离开移动状态时重置入口相位。普攻帧由 `attackTimer` 映射到完整图集，不使用全局 elapsed 循环；从跑步中起手时锁定 `movingAttack`，静止或空中起手时保留 `attack`。下落攻击由 `fallAttackTimer` 映射到 0-4 帧，由 `fallAttackRecoveryTimer` 映射到 5-7 帧。
+玩家运行时图集以 `assets/art/player-concept.png` 为角色身份基准：深蓝短披风、潮纹衣摆、金属护具、月形腰饰和蓝白潮流刀光。所有玩家运行时图集源方向统一朝右；朝左由 `drawSheetFrame()` 根据玩家 `facing` 镜像绘制。跑步帧按实际水平移动距离推进，并在离开移动状态时重置入口相位。普攻帧由 `attackTimer` 映射到完整图集，不使用全局 elapsed 循环；从跑步中起手时锁定 `movingAttack`，静止或空中起手时保留 `attack`。跳跃按纵向速度相对起跳速度选择上升、滞空与下降姿态，不跟随全局时钟循环，二段跳会回到起跳姿态。普通下落攻击由 `fallAttackTimer` 映射到 0-3 帧并保持最后的空中下刺姿态，落地后的 `fallAttackRecoveryTimer` 映射到 4-7 帧；月潮强化图的对应区间为 0-4 与 5-7，地面水花只在落地后出现。
 
-`MOON_TIDE_PLAYER_SHEETS` 在 `ultimateTimer > 0` 的强化持续期覆盖上述六种基础动作，30 帧开启动作仍使用 `ultimate_skill/skill.png`。强化图与常态图保持相同帧数、单帧尺寸、播放顺序、锚点和朝向，因此不改变攻击关键帧、移动距离、跳跃轨迹、碰撞或命中范围；只按素材可见内容使用 `idle=128x160`、`run=169x158`、`jump=192x180`、`attack/movingAttack=261x163`、`fallAttack=203x178` 的绘制框，让贴身潮流和新姿态在运行时与常态角色保持相近主体体量。强化结束后立即恢复常态图，已生成的玩家残影继续使用强化帧淡出。
+`MOON_TIDE_PLAYER_SHEETS` 在 `ultimateTimer > 0` 的强化持续期覆盖上述六种基础动作，30 帧开启动作仍使用 `ultimate_skill/skill.png`。强化图与常态图保持相同帧数、单帧尺寸、动作阶段、锚点和朝向，因此不改变攻击关键帧、移动距离、跳跃轨迹、碰撞或命中范围；只按素材可见内容使用 `idle=128x160`、`run=169x158`、`jump=192x180`、`attack/movingAttack=261x163`、`fallAttack=203x178` 的绘制框，让贴身潮流和新姿态在运行时与常态角色保持相近主体体量。强化结束后立即恢复常态图，已生成的玩家残影继续使用强化帧淡出。
 
 `player/residual_spirit_heal_effect.png` 不包含角色或武器，也不替换当前玩家动作。运行时以 `154x154` 绘制在玩家中心和脚点上，源图脚环基线约为 `y=226`，因此使用 `anchorX=0.5`、`anchorY=0.942` 且不随朝向镜像。引灵进行中的 `0.6s` 只映射前 5 帧：两枚蓝白残灵从身体两侧向内旋入并压缩为月蓝核心；只有残灵真实扣除且生命恢复成功后，才在额外 `0.18s` 内播放第 6-8 帧的月白弯月、脚下潮环和泡沫散逸。失败复检、死亡和未引灵状态不绘制成功帧。各帧固定为 RGBA、四角全透明、可见内容不触边，且不参与碰撞或伤害。
 
@@ -192,7 +192,7 @@
 | `ultimate_skill/skill.png` | `2880x480` | 6 | `480x480` | `ULTIMATE_SKILL_SHEET` |
 | `ultimate_skill/effect.png` | `3840x360` | 8 | `480x360` | `ULTIMATE_SKILL_EFFECT_SHEET` |
 
-玩家技能特效以 `assets/art/player-concept.png`、`assets/art/player-skills-concept.png`、`assets/art/player-skills-implementation-source.png` 和 `assets/art/player-ultimate-concept.png` 为视觉基准：深蓝月潮流、银白浪尖、泡沫碎点和月形水纹。`line_projectile/effect.png`、`line_projectile/effect_lv2.png` 和 `line_projectile/effect_lv3.png` 分别是 `潮龙·破阵` Lv1/Lv2/Lv3 的 8 帧右向潮龙投射物，等级越高使用越长的真实序列帧；每一帧都保留完整的龙头、龙身和龙尾，前 6 帧以刀锋附近的水流起点为锚，保持龙头和龙尾尺寸不变，通过逐帧增加中段龙身的水浪卷数自然变长，并叠加投射物前移；随后从第 6 帧开始循环最后 3 帧，龙头的高度和朝向保持稳定，同一道浪身波峰从颈后向中段、后段和龙尾逐段传递，鬃鳍和泡沫滞后跟随；不得复用同一龙体仅做整体位移或同相摆动。运行时同时负责让投射物直接冲出屏幕，命中间隔保持不变。`close_arc/effect.png` 是 6 帧贴身半月潮刃，对应 `弦月·潮刃` 的 6 帧动作，运行时按技能等级缩放到最高等级的 50% / 75% / 100%；`close_arc/basic_crescent.png` 是 Lv3 普攻追加的 2 帧小型水波纹月牙剑气，只覆盖基础普攻刀尖外侧的小范围；狩牙刃强化普攻也复用该图集作为纯视觉水刃，并按两帧各自的透明像素 bbox 缩放，使可见部分恰好覆盖强化普攻新增的攻击距离。`guard_counter/effect.png` 是 6 帧环身防反潮幕，对应 `镜潮·护返`。六个新增技能的图标、施法图和特效图以 `player-skills-implementation-source.png` 的绿幕源图为初版基础；其中 `雨线·穿针` 已按原画设定重新生成更大的施放动作和单束斜落针雨运行时序列帧，`回涡·引潮` 已重新生成 5 帧贴地引潮施法动作和 6 帧低位地面潮涡特效，`升浪·托月` 已重新生成 6 帧施放动作、7 帧前向弧形上挑浪柱特效和无角色图标；`vertical_wave/downward_pillar.png` 是该技能 Lv3 被动独立使用的 7 帧向下水柱，每帧保持 4 个游戏帧、`drawScale=0.42`，原图落点固定在 `(240,450)`，三个实例复用同一图集并按 `0/6/12` 帧启动。该水柱不随 `facing` 镜像，朝向只决定三个落点由近及远排在玩家哪一侧。`returning_blade/tide_technique.png` 是留刃牵线的 8 帧图集：0-3 为中心固定的月牙潮刃循环，飞行时旋转至真实运动方向，留刃时按朝向镜像；4 为目标潮痕；4-7 为合痕聚拢、峰值、散开与消散。每帧 5 个游戏帧，刀与合痕 `drawScale=0.32`，潮痕 `0.14`；透明边缘至少 24px，统一中心 `(128,128)`。留刃到期或主动收刀时缩至正常尺寸的 72%，随后恢复飞行尺寸；不会缩放玩法命中盒。动态细潮线不具有伤害。旧 `returning_blade/effect.png` 与 `ripple_slash.png` 仅保留为历史文件，不再预加载或用于本招。其他新增技能仍从源图裁切、抠像并重排为运行时透明 PNG：`流步·潮闪` 为短潮线收刀斩，`断浪·裂甲` 为裂纹压缩斩。`ultimate_skill/skill.png` 的 6 帧施法动作每帧保持 5 个游戏帧，总计 30 帧；播放期间冻结战斗和关卡推进。`ultimate_skill/effect.png` 是 8 帧月蓝半月潮环，按 `PLAYER_COMBAT.ultimateEffectFrameDuration` 循环并跟随玩家脚下，持续到月潮强化状态结束。除向下水柱、回刃合痕和沿飞行方向旋转的潮刃外，以上透明 PNG 均由运行时根据玩家 `facing` 或中心点绘制。
+玩家技能特效以 `assets/art/player-concept.png`、`assets/art/player-skills-concept.png`、`assets/art/player-skills-implementation-source.png` 和 `assets/art/player-ultimate-concept.png` 为视觉基准：深蓝月潮流、银白浪尖、泡沫碎点和月形水纹。`line_projectile/effect.png`、`line_projectile/effect_lv2.png` 和 `line_projectile/effect_lv3.png` 分别是 `潮龙·破阵` Lv1/Lv2/Lv3 的 8 帧右向潮龙投射物，等级越高使用越长的真实序列帧；每一帧都保留完整的龙头、龙身和龙尾，前 6 帧以刀锋附近的水流起点为锚，保持龙头和龙尾尺寸不变，通过逐帧增加中段龙身的水浪卷数自然变长，并叠加投射物前移；随后从第 6 帧开始循环最后 3 帧，龙头的高度和朝向保持稳定，同一道浪身波峰从颈后向中段、后段和龙尾逐段传递，鬃鳍和泡沫滞后跟随；不得复用同一龙体仅做整体位移或同相摆动。运行时同时负责让投射物直接冲出屏幕，命中间隔保持不变。`close_arc/effect.png` 是 6 帧贴身半月潮刃，对应 `弦月·潮刃` 的 6 帧动作，运行时按技能等级缩放到最高等级的 50% / 75% / 100%；`close_arc/basic_crescent.png` 是 Lv3 普攻追加的 2 帧小型水波纹月牙剑气，只覆盖基础普攻刀尖外侧的小范围；狩牙刃强化普攻也复用该图集作为纯视觉水刃，并按两帧各自的透明像素 bbox 缩放，使可见部分恰好覆盖强化普攻新增的攻击距离。`guard_counter/effect.png` 是 6 帧环身防反潮幕，对应 `镜潮·护返`。六个新增技能的图标、施法图和特效图以 `player-skills-implementation-source.png` 的绿幕源图为初版基础；其中 `雨线·穿针` 已按原画设定重新生成更大的施放动作和单束斜落针雨运行时序列帧，`回涡·引潮` 已重新生成 5 帧贴地引潮施法动作和 6 帧低位地面潮涡特效，`升浪·托月` 已重新生成 6 帧施放动作、7 帧前向弧形上挑浪柱特效和无角色图标；`vertical_wave/downward_pillar.png` 是该技能 Lv3 被动独立使用的 7 帧向下水柱，每帧保持 4 个游戏帧、`drawScale=0.42`，原图落点固定在 `(240,450)`，三个实例复用同一图集并按 `0/6/12` 帧启动。该水柱不随 `facing` 镜像，朝向只决定三个落点由近及远排在玩家哪一侧。`returning_blade/tide_technique.png` 是留刃牵线的 8 帧图集：0-3 为中心固定的月牙潮刃循环，飞行时旋转至真实运动方向，留刃时按朝向镜像；4 为目标潮痕；4-7 为合痕聚拢、峰值、散开与消散。每帧 5 个游戏帧，刀与合痕 `drawScale=0.32`，潮痕 `0.14`；透明边缘至少 24px，统一中心 `(128,128)`。留刃到期或主动收刀时缩至正常尺寸的 72%，随后恢复飞行尺寸；不会缩放玩法命中盒。动态细潮线不具有伤害。旧 `returning_blade/effect.png` 与 `ripple_slash.png` 仅保留为历史文件，不再预加载或用于本招。`断浪·裂甲` 的五帧施法图已重新生成，依次为收刀、回腕、前刺、随动和回收；头身比例与脚点保持稳定，刀光沿同一条前刺轨迹推进。其 `drawScale=0.45`、`anchorX=0.4`、`anchorY=0.96`，保留 `360x360` 单帧、释放时刻与独立命中特效。`流步·潮闪` 为短潮线收刀斩。`ultimate_skill/skill.png` 的 6 帧施法动作每帧保持 5 个游戏帧，总计 30 帧；播放期间冻结战斗和关卡推进。`ultimate_skill/effect.png` 是 8 帧月蓝半月潮环，按 `PLAYER_COMBAT.ultimateEffectFrameDuration` 循环并跟随玩家脚下，持续到月潮强化状态结束。除向下水柱、回刃合痕和沿飞行方向旋转的潮刃外，以上透明 PNG 均由运行时根据玩家 `facing` 或中心点绘制。
 
 ### 敌人和 Boss
 
@@ -477,3 +477,17 @@ node scripts/compress-assets.js assets/sprites/skills/close_arc/effect.png
 - 技能、Boss、平台、背景等素材的碰撞或命中范围由运行时状态和常量控制，不应从图片尺寸临时推断。
 - 透明 PNG 提交前需要确认四角 alpha 为 0，避免绿幕或黑底残留。
 - 如果本地存在 `assets/origin/` 或备份目录，它们只作为工作素材来源，不参与 Vite 运行时加载。
+
+灯烬移动图已修复缺灯和相邻帧残片：四帧完整保留手边血月灯、连续链条与穗尾，缓步支撑和衣摆回摆接回首帧。维持 `4 × 350x419` 契约及现有绘制尺寸；各帧脚点基线 `y=411`，四边至少 7px 透明留白。
+
+序列帧一致性维护（2026-09-10）：`runner_windup.png` 保持四帧逐步压低的前摇，按接近状态校准头胸体量；`runner_recover.png` 的三帧按重新站稳的顺序播放，绑定本次恢复进度，保留普通、蚀醒、精英各自硬直时长。`glider_hover.png` 重绘六帧完整下拍、收翼上提、展翼回落的循环，与恢复状态保持相近头胸体量，仍为 `6 × 360x240`。`leaper_windup.png`、`leaper_recover.png` 分别以原图的 82%、84% 等比校准身体并重排至原有 `320x320` 帧内，脚点基线 `y=315`；压缩和伸展姿态保留。以上操作不改变敌人碰撞体、攻击时刻、速度或伤害。
+
+蛛弦绘制契约维护：近战与柱阵施法以 `380x380` 绘制，脚点补偿 `47.5px`；千丝牢笼本体单独使用 `260x260` 和 `11.05px` 脚点补偿，匹配其更大的原图身体及 `y=383` 原图基线。蛛网施法与移动保持原配置，全部 PNG、帧数、攻击时刻、柱位和伤害不变。
+
+雾骨普攻六帧已按移动图重绘长头骨、细肋和高背刺，逐帧修正抽骨与回收阶段的多余前臂，保持每帧两只手。保留 `6 × 400x400`、第四帧释放及现有绘制配置；可见脚下雾基线约 `y=395`，四边至少 5px 透明留白。制作源图与局部修正记录位于 `tmp/imagegen/sequence-repair-20260910/`。
+
+雾骨单点、成列、合围也已统一长头骨与高背刺，三套均保持 `6 × 400x400`、原播放及释放时序，脚下雾底约 `y=390–395`，按现有 `304x304` 绘制。
+
+万相血月的换相、恢复、破月与五种施法使用 `BLOOD_MOON_BODY_DRAW_SCALES` 校准身体，移除贴底图集多余的 `26px` 基值脚底补偿；死亡图按移动高度等比绘制。牙岚只把终段扑咬等比放大 `1.2` 倍，并保留随尺寸缩放的原脚底补偿。两者均不修改玩法碰撞和招式时序。
+
+镜魇移动本体及蚀醒裂纹、缚咒夜妖移动均采用原帧索引 `0 → 1 → 2 → 1` 回摆，保留四帧契约、原节拍及原生贴底脚线。循环中的中间姿态有意重复，避免末帧直接跳回首帧或连续双倍停留；自动重复帧诊断须结合此播放意图判断。

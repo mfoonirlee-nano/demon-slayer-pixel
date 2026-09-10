@@ -43,6 +43,10 @@ export const SPIDER_STRING_CAGE_CONFIG = {
   sidePulseStartFrames: createPulseStartFrames(SIDE_STAGE_START_FRAME, SIDE_STAGE_PULSE_COUNT),
   castDuration: 312,
   castFrameDuration: 39,
+  // This strip has a larger body and less bottom padding than the web cast.
+  castDrawW: 260,
+  castDrawH: 260,
+  castDrawBottomPadding: 11.05,
   warningFrames: 30,
   warningSpriteFrames: 2,
   effectFrameDuration: 4,

@@ -193,17 +193,16 @@ export function resolveBossVisualFrame(
   if (boss.castTimer > 0) {
     const castSheet = bossCastSheet(boss);
     const castDuration = bossCastDuration(boss);
-    const pillarCast = boss.id === BOSS_ARCHETYPE_IDS.spiderString
-      && boss.skillMode === "spiderStringPillars";
-    const drawW = pillarCast
-      ? SPIDER_STRING_PILLAR_CONFIG.castDrawW
-      : archetype.castDrawW;
-    const drawH = pillarCast
-      ? SPIDER_STRING_PILLAR_CONFIG.castDrawH
-      : archetype.castDrawH;
-    const bottomPadding = pillarCast
-      ? SPIDER_STRING_PILLAR_CONFIG.castDrawBottomPadding
-      : archetype.castBottomPadding;
+    const spiderCast = boss.id !== BOSS_ARCHETYPE_IDS.spiderString
+      ? null
+      : boss.skillMode === "spiderStringPillars"
+        ? SPIDER_STRING_PILLAR_CONFIG
+        : boss.skillMode === "spiderStringCage"
+          ? SPIDER_STRING_CAGE_CONFIG
+          : null;
+    const drawW = spiderCast?.castDrawW ?? archetype.castDrawW;
+    const drawH = spiderCast?.castDrawH ?? archetype.castDrawH;
+    const bottomPadding = spiderCast?.castDrawBottomPadding ?? archetype.castBottomPadding;
     const framesSinceCastStart = castDuration - boss.castTimer;
     const frame = boss.id === BOSS_ARCHETYPE_IDS.fangGale
       ? proportionalFrame(castSheet.count, framesSinceCastStart, castDuration)
@@ -452,13 +451,16 @@ function fangGaleActionVisualFrame(
   const archetype = bossArchetypeForId(boss.id);
   const centerX = boss.x + boss.w / 2;
   const feetY = boss.y + boss.h;
+  const scale = sheet === FANG_GALE_FINAL_BITE_SHEET ? FANG_GALE_CONFIG.finalBiteDrawScale : 1;
+  const drawW = archetype.castDrawW * scale;
+  const drawH = archetype.castDrawH * scale;
   return visualFrame(
     sheet,
     frame,
-    centerX - archetype.castDrawW / 2,
-    feetY - archetype.castDrawH + archetype.castBottomPadding,
-    archetype.castDrawW,
-    archetype.castDrawH,
+    centerX - drawW / 2,
+    feetY - drawH + archetype.castBottomPadding * scale,
+    drawW,
+    drawH,
     boss.facing,
   );
 }

@@ -107,6 +107,7 @@ export const FANG_GALE_CONFIG = {
   castDrawW: 232,
   castDrawH: 232,
   castBottomPadding: 24,
+  finalBiteDrawScale: 1.2,
   steeringForce: 0.062,
   drag: 0.88,
   maxVelocity: 4.1,

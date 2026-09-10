@@ -1,9 +1,10 @@
-import { describe, expect, it } from "vitest";
-import { ENEMY_CONFIG, GROUND_Y } from "../../constants";
+import { afterEach, describe, expect, it, vi } from "vitest";
+import { ENEMY_CONFIG, GROUND_Y, RUNNER_SHEETS } from "../../constants";
 import { resetState, state } from "../../game/state";
 import type { ActBand, EnemyState } from "../../types/game-state";
 import { spawnEnemyById, updateEnemies } from "../enemy";
-import { runnerDashAnimationFrame, runnerWindupAnimationFrame } from "./runner";
+import { RUNNER_ARCHETYPE, runnerDashAnimationFrame, runnerWindupAnimationFrame } from "./runner";
+import * as enemyDrawing from "./common";
 
 const RUNNER_TRIGGER_DISTANCE = 160;
 const WINDUP_ANIM_FRAME_DURATION_FRAMES = 7;
@@ -69,6 +70,38 @@ function placeRunnerRightOfPlayer(runner: EnemyState, distance: number) {
 }
 
 describe("runner dash tuning", () => {
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  it.each(["intro", "awakened", "final"] as const)("plays recovery once from entry to exit in $0 growth", (growthStage) => {
+    const runner = enterRunnerDash(growthStage);
+    runner.runnerTimer = 1;
+    runner.y = GROUND_Y - runner.h;
+    for (let tick = 0; tick < LANDING_RECOVER_GUARD_FRAMES && runner.runnerPhase === "dash"; tick += 1) {
+      updateEnemies();
+    }
+    expect(runner.runnerPhase).toBe("recover");
+    const draw = vi.spyOn(enemyDrawing, "drawEnemySheetFrame").mockImplementation(() => {});
+    const frames: number[] = [];
+    const duration = runner.runnerTimer ?? 0;
+    state.elapsed = WINDUP_BEFORE_DASH_SECONDS;
+
+    for (let tick = 0; tick < duration; tick += 1) {
+      draw.mockClear();
+      const timer = runner.runnerTimer;
+      RUNNER_ARCHETYPE.draw?.(runner);
+      expect(draw.mock.calls[0]?.[1]).toBe(RUNNER_SHEETS.recover);
+      frames.push(draw.mock.calls[0]?.[2] ?? -1);
+      expect(runner.runnerTimer).toBe(timer);
+      updateEnemies();
+    }
+
+    expect([...new Set(frames)]).toEqual(Array.from({ length: RUNNER_SHEETS.recover.count }, (_, frame) => frame));
+    expect(frames).toEqual([...frames].sort((a, b) => a - b));
+    expect(runner.runnerPhase).toBe("approach");
+  });
+
   it("plays a slower windup once and holds its final frame for one second", () => {
     resetState();
     state.elapsed = 0;

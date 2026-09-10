@@ -8,10 +8,13 @@ import {
   PLAYER_COMBAT,
   PLAYER_DRAW,
   PLAYER_SHEETS,
+  SKILL_IDS,
   ULTIMATE_SKILL_SHEET,
 } from "../../constants";
 import { resetState, state } from "../../game/state";
+import { onGround } from "../../game/utils";
 import { setCanvas } from "../../rendering/context";
+import { tryJump, updatePlayer } from "../player";
 import { drawPlayer } from "./render";
 
 type MockCanvasContext = CanvasRenderingContext2D & {
@@ -24,9 +27,13 @@ const BINDER_ATTACHMENT_BACK_OFFSET_RATIO = 0.24;
 const BINDER_ATTACHMENT_CENTER_Y_RATIO = 0.55;
 const BINDER_KEY_SCRAMBLE_HOVER_Y_OFFSET = 18;
 const EXPECTED_ULTIMATE_CAST_FRAME_DURATION = 5;
+const MAX_TEST_AIR_FRAMES = 100;
+const TEST_FRAMES_PER_SECOND = 60;
 const TEST_IMAGE = {} as HTMLImageElement;
 const RUN_IMAGE = {} as HTMLImageElement;
 const MOVING_ATTACK_IMAGE = {} as HTMLImageElement;
+const JUMP_IMAGE = {} as HTMLImageElement;
+const FALL_ATTACK_IMAGE = {} as HTMLImageElement;
 const MOON_TIDE_IMAGES: Record<keyof typeof MOON_TIDE_PLAYER_SHEETS, HTMLImageElement> = {
   [PLAYER_ANIMATION_STATES.idle]: {} as HTMLImageElement,
   [PLAYER_ANIMATION_STATES.run]: {} as HTMLImageElement,
@@ -66,6 +73,8 @@ describe("player render", () => {
     PLAYER_SHEETS[PLAYER_ANIMATION_STATES.idle].image = TEST_IMAGE;
     PLAYER_SHEETS[PLAYER_ANIMATION_STATES.run].image = RUN_IMAGE;
     PLAYER_SHEETS[PLAYER_ANIMATION_STATES.movingAttack].image = MOVING_ATTACK_IMAGE;
+    PLAYER_SHEETS[PLAYER_ANIMATION_STATES.jump].image = JUMP_IMAGE;
+    PLAYER_SHEETS[PLAYER_ANIMATION_STATES.fallAttack].image = FALL_ATTACK_IMAGE;
     for (const stateName of Object.values(PLAYER_ANIMATION_STATES)) {
       MOON_TIDE_PLAYER_SHEETS[stateName].image = MOON_TIDE_IMAGES[stateName];
     }
@@ -79,6 +88,8 @@ describe("player render", () => {
     PLAYER_SHEETS[PLAYER_ANIMATION_STATES.idle].image = null;
     PLAYER_SHEETS[PLAYER_ANIMATION_STATES.run].image = null;
     PLAYER_SHEETS[PLAYER_ANIMATION_STATES.movingAttack].image = null;
+    PLAYER_SHEETS[PLAYER_ANIMATION_STATES.jump].image = null;
+    PLAYER_SHEETS[PLAYER_ANIMATION_STATES.fallAttack].image = null;
     for (const sheet of Object.values(MOON_TIDE_PLAYER_SHEETS)) {
       sheet.image = null;
     }
@@ -149,6 +160,98 @@ describe("player render", () => {
     state.player.ultimateCastTimer -= 1;
     drawPlayer();
     expect(context.drawImage.mock.calls[0]?.[1]).toBe(ULTIMATE_SKILL_SHEET.frameW);
+  });
+
+  it.each([
+    { moonTide: false, startTime: 0 },
+    { moonTide: false, startTime: 137 },
+    { moonTide: true, startTime: 11 },
+    { moonTide: true, startTime: 251 },
+  ])("follows a whole jump without looping poses (Moon Tide: $moonTide, clock: $startTime)", ({ moonTide, startTime }) => {
+    const context = createMockContext();
+    installMockContext(context);
+    state.elapsed = startTime;
+    if (moonTide) {
+      state.player.ultimateLevel = 1;
+      state.player.ultimateTimer = 1000;
+    }
+    const sheet = moonTide ? MOON_TIDE_PLAYER_SHEETS.jump : PLAYER_SHEETS.jump;
+    const poses: number[] = [];
+
+    tryJump();
+    for (let tick = 0; tick < MAX_TEST_AIR_FRAMES; tick += 1) {
+      updatePlayer();
+      state.elapsed += 1 / TEST_FRAMES_PER_SECOND;
+      if (onGround(state.player, state.player.onPlatform)) break;
+      context.drawImage.mockClear();
+      const position = { y: state.player.y, vy: state.player.vy };
+      drawPlayer();
+      const draw = context.drawImage.mock.calls.find(([image]) => image === sheet.image);
+      expect(draw).toBeDefined();
+      poses.push(Number(draw?.[1]) / sheet.frameW);
+      expect(state.player).toMatchObject(position);
+    }
+
+    expect(poses[0]).toBe(0);
+    expect([...new Set(poses)]).toEqual(Array.from({ length: sheet.count }, (_, frame) => frame));
+    expect(poses).toEqual([...poses].sort((a, b) => a - b));
+    expect(onGround(state.player, state.player.onPlatform)).toBe(true);
+  });
+
+  it("restarts the rising pose when a second jump interrupts descent", () => {
+    const context = createMockContext();
+    installMockContext(context);
+    state.player.skillLevels[SKILL_IDS.vortexControl] = 3;
+    state.player.equippedSkillIds[2] = SKILL_IDS.vortexControl;
+    tryJump();
+    do {
+      updatePlayer();
+    } while (state.player.vy < state.player.jump / 2);
+    drawPlayer();
+    expect(context.drawImage.mock.calls[0]?.[1]).toBeGreaterThan(0);
+
+    tryJump();
+    updatePlayer();
+    context.drawImage.mockClear();
+    drawPlayer();
+
+    expect(context.drawImage.mock.calls[0]?.[0]).toBe(JUMP_IMAGE);
+    expect(context.drawImage.mock.calls[0]?.[1]).toBe(0);
+  });
+
+  it.each([
+    { moonTide: false, lastAirPose: 3, firstGroundPose: 4 },
+    { moonTide: true, lastAirPose: 4, firstGroundPose: 5 },
+  ])("keeps ground splash poses out of a long dive (Moon Tide: $moonTide)", ({ moonTide, lastAirPose, firstGroundPose }) => {
+    const context = createMockContext();
+    installMockContext(context);
+    state.player.y -= 1000;
+    state.player.fallAttackTimer = 1;
+    if (moonTide) {
+      state.player.ultimateLevel = 1;
+      state.player.ultimateTimer = 1000;
+    }
+    const sheet = moonTide ? MOON_TIDE_PLAYER_SHEETS.fallAttack : PLAYER_SHEETS.fallAttack;
+    const airbornePoses: number[] = [];
+    for (let tick = 0; tick < MAX_TEST_AIR_FRAMES; tick += 1) {
+      updatePlayer();
+      context.drawImage.mockClear();
+      // Landing grants blinking immunity; inspect the underlying landing pose.
+      state.player.invincible = 0;
+      drawPlayer();
+      const draw = context.drawImage.mock.calls.find(([image]) => image === sheet.image);
+      expect(draw).toBeDefined();
+      const pose = Number(draw?.[1]) / sheet.frameW;
+      if (state.player.fallAttackTimer === 0) {
+        expect(pose).toBe(firstGroundPose);
+        break;
+      }
+      airbornePoses.push(pose);
+    }
+    expect(airbornePoses.length).toBeGreaterThan(sheet.animSpeed * lastAirPose);
+    expect(Math.max(...airbornePoses)).toBe(lastAirPose);
+    expect(state.player.fallAttackRecoveryTimer).toBeGreaterThan(0);
+    expect(onGround(state.player, state.player.onPlatform)).toBe(true);
   });
 
   it("renders a running basic attack from the movement-specific sheet", () => {

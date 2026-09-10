@@ -34,9 +34,9 @@ export const SPIDER_STRING_ATTACK_CONFIG = {
   hitboxTopOffset: 34,
   forwardOffset: 18,
   damageMultiplier: 1.25,
-  drawW: 300,
-  drawH: 300,
-  drawBottomPadding: 38,
+  drawW: 380,
+  drawH: 380,
+  drawBottomPadding: 47.5,
 } as const;
 
 export const SPIDER_STRING_PILLAR_CONFIG = {
@@ -61,7 +61,7 @@ export const SPIDER_STRING_PILLAR_CONFIG = {
   effectBottomPadding: 11.2,
   damageBase: 14,
   damagePhase: 3,
-  castDrawW: 300,
-  castDrawH: 300,
-  castDrawBottomPadding: 38,
+  castDrawW: 380,
+  castDrawH: 380,
+  castDrawBottomPadding: 47.5,
 } as const;

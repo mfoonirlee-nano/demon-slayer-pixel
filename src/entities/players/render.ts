@@ -9,6 +9,8 @@ import {
   PLAYER_ANIMATION_STATES,
   PLAYER_COMBAT,
   PLAYER_DRAW,
+  PLAYER_FALL_ATTACK_VISUAL,
+  PLAYER_JUMP_VISUAL,
   PLAYER_SHEETS,
   SKILL_IDS,
 } from "../../constants";
@@ -28,7 +30,7 @@ import {
 } from "../enemies/binder";
 import { binderTalismanFrameEffect } from "../enemies/binderTalismanVisuals";
 import { lanternAshZonePlayerMoveScale, spiderSilkSlowPlayerMoveScale } from "./movementModifiers";
-import { moonTideActive, moonTidePlayerAnimationFrameSpeed, recordMoonTidePlayerGhost } from "./moonTide";
+import { moonTideActive, moonTideJumpMultiplier, moonTidePlayerAnimationFrameSpeed, recordMoonTidePlayerGhost } from "./moonTide";
 import { playerSkillCastFrame } from "./skillCasting";
 
 const HALF_RATIO = 0.5;
@@ -393,8 +395,15 @@ export function drawPlayer() {
       sheet.count - 1,
       Math.floor(p.runStepDistance * sheet.count / PLAYER_COMBAT.runAnimationCycleDistance),
     );
+  } else if (stateName === PLAYER_ANIMATION_STATES.jump) {
+    const velocityRatio = p.vy / (p.jump * moonTideJumpMultiplier());
+    const pose = Object.values(PLAYER_JUMP_VISUAL.frameVelocityRatios)
+      .findIndex((limit) => velocityRatio < limit);
+    frame = pose < 0 ? sheet.count - 1 : Math.min(pose, sheet.count - 1);
   } else if (stateName === PLAYER_ANIMATION_STATES.fallAttack) {
-    const airFrameCount = 5;
+    const airFrameCount = moonTideActive()
+      ? PLAYER_FALL_ATTACK_VISUAL.moonTideAirFrameCount
+      : PLAYER_FALL_ATTACK_VISUAL.airFrameCount;
     const recoveryFrameCount = sheet.count - airFrameCount;
     if (p.fallAttackTimer > 0) {
       frame = Math.min(airFrameCount - 1, Math.floor(Math.max(0, p.fallAttackTimer - 1) / animSpeed));

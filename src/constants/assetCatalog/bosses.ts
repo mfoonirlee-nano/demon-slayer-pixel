@@ -281,6 +281,18 @@ const BLOOD_MOON_TRAIL_FIRST_SAMPLE_FRAME = 6;
 const BLOOD_MOON_TRAIL_SECOND_SAMPLE_FRAME = 18;
 const BLOOD_MOON_TRAIL_THIRD_SAMPLE_FRAME = 30;
 
+// Match the standing body, excluding raised relics and intentionally crouched poses.
+export const BLOOD_MOON_BODY_DRAW_SCALES: Readonly<Record<string, number>> = {
+  [BLOOD_MOON_PHASE_SHIFT_SHEET.src]: 1.2,
+  [BLOOD_MOON_RECOVER_SHEET.src]: 0.92,
+  [BLOOD_MOON_FINAL_STAGGER_SHEET.src]: 0.92,
+  [BLOOD_MOON_SPIDER_MIST_CAST_SHEET.src]: 1.13,
+  [BLOOD_MOON_MIRROR_FANG_CAST_SHEET.src]: 1.07,
+  [BLOOD_MOON_LANTERN_BELL_CAST_SHEET.src]: 1.06,
+  [BLOOD_MOON_SIXFOLD_CAST_SHEET.src]: 0.94,
+  [BLOOD_MOON_MANY_FACES_CAST_SHEET.src]: 1.15,
+};
+
 export const BLOOD_MOON_CONFIG = {
   castDuration: 72,
   finalCastDuration: 252,
@@ -298,7 +310,7 @@ export const BLOOD_MOON_CONFIG = {
   drawH: 224,
   castDrawW: 236,
   castDrawH: 236,
-  castBottomPadding: 26,
+  castBottomPadding: 0,
   moveSteeringForce: 0.046,
   phaseSteeringForce: 0.01,
   retreatForce: 0.058,

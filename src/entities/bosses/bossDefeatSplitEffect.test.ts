@@ -13,7 +13,7 @@ import {
 import { resetState, state } from "../../game/state";
 import { setCanvas } from "../../rendering/context";
 import { createBossEncounter } from "./encounter";
-import { BOSS_ARCHETYPE_IDS } from "./registry";
+import { BOSS_ARCHETYPE_IDS, bossArchetypeForId } from "./registry";
 import {
   drawBossDefeatSplitEffect,
   spawnBossDefeatSplitEffect,
@@ -198,6 +198,9 @@ describe("boss defeat split effect", () => {
       kind: "bloodMoonDissolve",
       pose: { sheet: BLOOD_MOON_DEATH_SHEET },
     });
+    const pose = state.bossDefeatSplitEffect?.pose;
+    expect(pose && pose.y + pose.h).toBeCloseTo(boss.y + boss.h);
+    expect(pose?.h).toBeCloseTo(bossArchetypeForId(boss.id).drawH);
 
     drawBossDefeatSplitEffect();
     expect(context.clip).not.toHaveBeenCalled();

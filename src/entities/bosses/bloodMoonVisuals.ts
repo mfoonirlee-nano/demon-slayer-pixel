@@ -1,4 +1,5 @@
 import {
+  BLOOD_MOON_BODY_DRAW_SCALES,
   BLOOD_MOON_CONFIG,
   BLOOD_MOON_FINAL_STAGGER_SHEET,
   BLOOD_MOON_LANTERN_BELL_CAST_SHEET,
@@ -83,13 +84,16 @@ export function resolveBloodMoonActionVisual(
     sheet: BossVisualFrameState["sheet"],
     frame: number,
   ): BossVisualFrameState {
+    const scale = BLOOD_MOON_BODY_DRAW_SCALES[sheet.src] ?? 1;
+    const w = archetype.castDrawW * scale;
+    const h = archetype.castDrawH * scale;
     return {
       sheet,
       frame,
-      x: centerX - archetype.castDrawW / 2,
-      y: feetY - archetype.castDrawH + archetype.castBottomPadding,
-      w: archetype.castDrawW,
-      h: archetype.castDrawH,
+      x: centerX - w / 2,
+      y: feetY - h + archetype.castBottomPadding * scale,
+      w,
+      h,
       facing: source.castTimer > 0 ? source.castFacing : source.facing,
     };
   }

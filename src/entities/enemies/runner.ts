@@ -286,13 +286,15 @@ function drawRunner(enemy: EnemyState) {
   const drawScale = enemyDrawScale(RUNNER_ARCHETYPE) * (
     phase === "dash" ? RUNNER_CONFIG.dashDrawScaleMultiplier : 1
   );
-  if (phase === "dash" || phase === "windup") {
+  if (phase === "dash" || phase === "windup" || phase === "recover") {
     const frame = phase === "dash"
       ? runnerDashAnimationFrame(
           enemy.runnerDashElapsed ?? 0,
           (enemy.runnerDashLandingTimer ?? 0) > 0,
         )
-      : runnerWindupAnimationFrame(runnerWindupElapsedFrames(enemy));
+      : phase === "windup"
+        ? runnerWindupAnimationFrame(runnerWindupElapsedFrames(enemy))
+        : runnerRecoveryAnimationFrame(enemy);
     const drawW = Math.round(sheet.frameW * drawScale);
     const drawH = Math.round(sheet.frameH * drawScale);
     const centerX = enemyCenterX(enemy);
@@ -311,6 +313,16 @@ function drawRunner(enemy: EnemyState) {
   }
 
   drawEnemyFrame(enemy, sheet, drawScale, RUNNER_CONFIG.defaultAnimSpeed, state.elapsed, facing);
+}
+
+function runnerRecoveryAnimationFrame(enemy: EnemyState) {
+  const duration = runnerRecoverFrames(enemy);
+  const elapsed = Math.max(0, duration - (enemy.runnerTimer ?? 0));
+  // Recovery belongs to this dash; a global loop can start at the exit pose.
+  return Math.min(
+    RUNNER_SHEETS.recover.count - 1,
+    Math.floor(elapsed * RUNNER_SHEETS.recover.count / duration),
+  );
 }
 
 export const RUNNER_ARCHETYPE: EnemyArchetype = {
