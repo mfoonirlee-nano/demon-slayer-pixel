@@ -12,7 +12,8 @@ import { spawnResidualSpiritPickupFlight } from "./residualSpiritPickupFlight";
 const FULL_CIRCLE_RADIANS = Math.PI * 2;
 const HALF = 0.5;
 const SPIRIT_BURST_COLOR = "#8feaff";
-const OUTER_AURA_MID_STOP = 0.42;
+// Keep the soft shoulder outside the sprite so its opaque core cannot hide the glow.
+const OUTER_AURA_MID_STOP = 0.5;
 const INNER_AURA_MID_STOP = 0.32;
 const AURA_HORIZONTAL_DRIFT_SPEED = 1.37;
 const AURA_VERTICAL_DRIFT_SPEED = 0.83;
@@ -42,7 +43,7 @@ const OUTER_AURA_PROFILE: AuraLayerProfile = {
   verticalOffset: 1,
   colorStops: [
     [0, "rgba(157, 238, 255, 0.48)"],
-    [OUTER_AURA_MID_STOP, "rgba(80, 204, 255, 0.24)"],
+    [OUTER_AURA_MID_STOP, "rgba(80, 204, 255, 0.3)"],
     [1, "rgba(80, 204, 255, 0)"],
   ],
 };
