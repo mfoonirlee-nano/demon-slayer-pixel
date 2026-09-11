@@ -4,6 +4,7 @@ export const RESIDUAL_SPIRIT_CONFIG = {
   healRatio: 0.15,
   healChannelSeconds: 0.6,
   healCompletionVisualSeconds: 0.18,
+  dropChance: 0.6,
   dropByTier: {
     1: 3,
     2: 4,

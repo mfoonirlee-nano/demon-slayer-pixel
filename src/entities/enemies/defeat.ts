@@ -1,4 +1,4 @@
-import { PLAYER_COMBAT } from "../../constants";
+import { PLAYER_COMBAT, RESIDUAL_SPIRIT_CONFIG } from "../../constants";
 import { recordEnemyCoverKill } from "../../game/coverProgress";
 import { state } from "../../game/state";
 import type { EnemyState } from "../../types/game-state";
@@ -22,7 +22,9 @@ function gainEnergy(skillAmount: number, ultimateAmount: number) {
 function applyEnemyDefeatReward(enemy: EnemyState, reward: EnemyDefeatRewardKind) {
   if (reward === "none") return;
 
-  spawnResidualSpirit(enemy, residualSpiritDropAmount(enemy));
+  if (enemy.elite || Math.random() < RESIDUAL_SPIRIT_CONFIG.dropChance) {
+    spawnResidualSpirit(enemy, residualSpiritDropAmount(enemy));
+  }
 
   if (enemy.splitterVariant === "child") {
     gainEnergy(SPLITLING_SKILL_ENERGY_GAIN, SPLITLING_ULTIMATE_ENERGY_GAIN);
