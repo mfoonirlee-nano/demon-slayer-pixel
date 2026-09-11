@@ -17,13 +17,13 @@ const OUTER_AURA_MID_STOP = 0.5;
 const INNER_AURA_MID_STOP = 0.32;
 const AURA_HORIZONTAL_DRIFT_SPEED = 1.37;
 const AURA_VERTICAL_DRIFT_SPEED = 0.83;
+const AURA_BREATH_PERIOD_SECONDS = 3.2;
 
 type AuraLayerProfile = {
   radiusRatio: number;
   radiusPulse: number;
   alphaBase: number;
   alphaPulse: number;
-  phaseSpeed: number;
   phaseOffset: number;
   driftX: number;
   driftY: number;
@@ -33,10 +33,9 @@ type AuraLayerProfile = {
 
 const OUTER_AURA_PROFILE: AuraLayerProfile = {
   radiusRatio: 1,
-  radiusPulse: 0.06,
+  radiusPulse: 0.12,
   alphaBase: 0.68,
-  alphaPulse: 0.16,
-  phaseSpeed: 0.43,
+  alphaPulse: 0.25,
   phaseOffset: 0.2,
   driftX: 0.75,
   driftY: 0.45,
@@ -50,11 +49,10 @@ const OUTER_AURA_PROFILE: AuraLayerProfile = {
 
 const INNER_AURA_PROFILE: AuraLayerProfile = {
   radiusRatio: 0.64,
-  radiusPulse: 0.045,
+  radiusPulse: 0.06,
   alphaBase: 0.9,
-  alphaPulse: 0.12,
-  phaseSpeed: 0.71,
-  phaseOffset: 1.7,
+  alphaPulse: 0.18,
+  phaseOffset: 0,
   driftX: 0.4,
   driftY: 0.3,
   verticalOffset: -1,
@@ -94,7 +92,10 @@ function drawAuraLayer(
   baseAlpha: number,
   profile: AuraLayerProfile,
 ) {
-  const layerPhase = phase * profile.phaseSpeed + profile.phaseOffset;
+  // Share one breath with a slight outer-layer lag so the layers do not cancel visually.
+  const animationSeconds = phase / RESIDUAL_SPIRIT_CONFIG.pickup.bobSpeed;
+  const layerPhase = animationSeconds * FULL_CIRCLE_RADIANS / AURA_BREATH_PERIOD_SECONDS
+    - profile.phaseOffset;
   const pulse = Math.sin(layerPhase);
   const radius = baseRadius * (profile.radiusRatio + pulse * profile.radiusPulse);
   const centerX = x
