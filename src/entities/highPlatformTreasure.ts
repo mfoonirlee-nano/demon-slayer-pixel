@@ -9,7 +9,6 @@ import { ctx } from "../rendering/context";
 
 const HALF = 0.5;
 const FULL_CIRCLE = Math.PI * 2;
-const BEAM_WIDTH = 54;
 const MOTES = 8;
 const MOTE_ORBIT_SPEED = 0.8;
 const MOTE_ORBIT_SPEED_STEP = 0.04;
@@ -41,17 +40,14 @@ const WARNING_PULSE_AMPLITUDE = 0.5;
 const PLATFORM_GLOW_INSET = 5;
 const PLATFORM_AURA_INSET = 10;
 const PLATFORM_AURA_ALPHA = 0.28;
-const TELEGRAPH_PULSE_BASE = 0.45;
-const TELEGRAPH_PULSE_SPEED = 3.2;
-const TELEGRAPH_PULSE_AMPLITUDE = 0.12;
-const BEAM_OUTER_ALPHA = 0.12;
-const BEAM_INNER_ALPHA = 0.16;
-const BEAM_INNER_HALF_WIDTH = 14;
-const BEAM_INNER_TOP_INSET = 8;
-const RING_ALPHA = 0.42;
-const RING_Y_OFFSET = 4;
-const RING_RADIUS_X = 31;
-const RING_RADIUS_Y = 9;
+const AURA_BREATH_SECONDS = 3.6;
+const AURA_MIN_RADIUS = 64;
+const AURA_RADIUS_GROWTH = 10;
+const AURA_MIN_ALPHA = 0.48;
+const AURA_ALPHA_GROWTH = 0.24;
+const AURA_CENTER_Y_OFFSET = 35;
+const AURA_INNER_STOP = 0.24;
+const AURA_OUTER_STOP = 0.6;
 const REVEAL_OPEN_PROGRESS = 0.38;
 const OPEN_FRAME = 3;
 const UNLOCK_LIT_PROGRESS = 0.55;
@@ -72,9 +68,6 @@ const ARRIVAL_GLOW_RADIUS = 96;
 const ARRIVAL_GLOW_PEAK_PROGRESS = 0.22;
 const ARRIVAL_GLOW_SILVER_STOP = 0.13;
 const ARRIVAL_GLOW_TIDE_STOP = 0.42;
-const ARRIVAL_GLOW_RING_ALPHA = 0.28;
-const ARRIVAL_GLOW_RING_RADIUS_X = 58;
-const ARRIVAL_GLOW_RING_RADIUS_Y = 43;
 const ARRIVAL_GLOW_MOTE_STRENGTH = 0.62;
 const ARRIVAL_GLOW_MOTE_PHASE_SPEED = 2.8;
 
@@ -196,20 +189,6 @@ function drawTreasureArrivalGlow() {
     ARRIVAL_GLOW_RADIUS * 2,
     ARRIVAL_GLOW_RADIUS * 2,
   );
-  ctx.globalAlpha = strength * ARRIVAL_GLOW_RING_ALPHA;
-  ctx.strokeStyle = "#bff5ff";
-  ctx.lineWidth = 2;
-  ctx.beginPath();
-  ctx.ellipse(
-    x,
-    y,
-    ARRIVAL_GLOW_RING_RADIUS_X,
-    ARRIVAL_GLOW_RING_RADIUS_Y,
-    0,
-    0,
-    FULL_CIRCLE,
-  );
-  ctx.stroke();
   drawPixelMotes(
     x,
     y + MOTE_Y_OFFSET,
@@ -232,35 +211,21 @@ export function drawTreasureTelegraph() {
   drawTreasureArrivalGlow();
   if (position.x > WIDTH + treasure.host.w) return;
 
-  const beamTop = position.y - HIGH_PLATFORM_TREASURE_CONFIG.host.beamHeight;
-  const pulse = TELEGRAPH_PULSE_BASE
-    + Math.sin(position.phase * TELEGRAPH_PULSE_SPEED) * TELEGRAPH_PULSE_AMPLITUDE;
+  // Use the treasure's gameplay clock so breathing freezes with pauses and rewards.
+  const breath = (1 - Math.cos(position.phase * FULL_CIRCLE / AURA_BREATH_SECONDS)) * HALF;
+  const radius = AURA_MIN_RADIUS + breath * AURA_RADIUS_GROWTH;
+  const pulse = AURA_MIN_ALPHA + breath * AURA_ALPHA_GROWTH;
+  const centerY = position.y - AURA_CENTER_Y_OFFSET;
+  const gradient = ctx.createRadialGradient(position.x, centerY, 0, position.x, centerY, radius);
+  gradient.addColorStop(0, "rgba(218, 246, 255, 0.46)");
+  gradient.addColorStop(AURA_INNER_STOP, "rgba(151, 227, 255, 0.34)");
+  gradient.addColorStop(AURA_OUTER_STOP, "rgba(83, 193, 255, 0.13)");
+  gradient.addColorStop(1, "rgba(64, 155, 255, 0)");
   ctx.save();
   ctx.globalCompositeOperation = "screen";
-  ctx.fillStyle = "#5bdcff";
-  ctx.globalAlpha = pulse * BEAM_OUTER_ALPHA;
-  ctx.fillRect(position.x - BEAM_WIDTH * HALF, beamTop, BEAM_WIDTH, position.y - beamTop);
-  ctx.globalAlpha = pulse * BEAM_INNER_ALPHA;
-  ctx.fillRect(
-    position.x - BEAM_INNER_HALF_WIDTH,
-    beamTop + BEAM_INNER_TOP_INSET,
-    BEAM_INNER_HALF_WIDTH * 2,
-    position.y - beamTop - BEAM_INNER_TOP_INSET,
-  );
-  ctx.globalAlpha = pulse * RING_ALPHA;
-  ctx.strokeStyle = "#9af1ff";
-  ctx.lineWidth = 2;
-  ctx.beginPath();
-  ctx.ellipse(
-    position.x,
-    position.y - RING_Y_OFFSET,
-    RING_RADIUS_X,
-    RING_RADIUS_Y,
-    0,
-    0,
-    FULL_CIRCLE,
-  );
-  ctx.stroke();
+  ctx.fillStyle = gradient;
+  ctx.globalAlpha = pulse;
+  ctx.fillRect(position.x - radius, centerY - radius, radius * 2, radius * 2);
   drawPixelMotes(position.x, position.y, position.phase, pulse);
   ctx.restore();
   drawPlatformGlow();

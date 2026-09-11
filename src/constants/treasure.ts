@@ -16,7 +16,6 @@ export const HIGH_PLATFORM_TREASURE_CONFIG = {
     unlockDelaySeconds: 0.6,
     claimHoldSeconds: 0.2,
     claimRadius: 56,
-    beamHeight: 80,
     edgeWarningSeconds: 1.5,
   },
   reveal: {
