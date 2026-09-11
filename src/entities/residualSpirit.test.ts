@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { RESIDUAL_SPIRIT_CONFIG } from "../constants";
+import { RESIDUAL_SPIRIT_CONFIG, RESIDUAL_SPIRIT_PICKUP_SPRITE } from "../constants";
 import { resetState, state } from "../game/state";
 import { setCanvas } from "../rendering/context";
 import {
@@ -16,6 +16,7 @@ const NEARBY_OFFSET_X = 100;
 const UPDATE_SECONDS = 0.1;
 const EXPIRING_LIFETIME_SECONDS = 0.05;
 const LATER_GLOW_PHASE = Math.PI / 2;
+const TEST_SPRITE_IMAGE = {} as HTMLImageElement;
 
 type GradientRecord = {
   args: number[];
@@ -70,9 +71,11 @@ function spiritAtPlayer(amount: number) {
 describe("residual-spirit pickups", () => {
   beforeEach(() => {
     resetState();
+    RESIDUAL_SPIRIT_PICKUP_SPRITE.image = TEST_SPRITE_IMAGE;
   });
 
   afterEach(() => {
+    RESIDUAL_SPIRIT_PICKUP_SPRITE.image = null;
     setCanvas(null);
   });
 
@@ -151,6 +154,52 @@ describe("residual-spirit pickups", () => {
     state.residualSpirits[0].lifetime = EXPIRING_LIFETIME_SECONDS;
     updateResidualSpirits(UPDATE_SECONDS);
     expect(state.residualSpirits).toHaveLength(0);
+  });
+
+  it("plays every pickup pose in order and wraps without changing its draw size", () => {
+    const { context } = createGlowContext();
+    const sprite = RESIDUAL_SPIRIT_PICKUP_SPRITE;
+    state.player.residualSpirit = RESIDUAL_SPIRIT_CONFIG.maxStored;
+    spiritAtPlayer(TEST_PICKUP_AMOUNT);
+    state.residualSpirits[0].phase = sprite.frameDurationSeconds
+      * RESIDUAL_SPIRIT_CONFIG.pickup.bobSpeed / 2;
+
+    const sourceColumns: number[] = [];
+    for (let tick = 0; tick <= sprite.count; tick += 1) {
+      context.drawImage.mockClear();
+      drawResidualSpirits();
+      expect(context.drawImage).toHaveBeenCalledTimes(1);
+      const [image, sourceX, sourceY, sourceW, sourceH, , , drawW, drawH] = context.drawImage.mock.calls[0];
+      expect(image).toBe(TEST_SPRITE_IMAGE);
+      expect([sourceY, sourceW, sourceH]).toEqual([0, sprite.frameW, sprite.frameH]);
+      expect([drawW, drawH]).toEqual([sprite.drawW, sprite.drawH]);
+      sourceColumns.push(sourceX);
+      updateResidualSpirits(sprite.frameDurationSeconds);
+    }
+
+    expect(sourceColumns).toEqual([
+      ...Array.from({ length: sprite.count }, (_, frame) => frame * sprite.frameW),
+      0,
+    ]);
+  });
+
+  it("keeps pickups out of phase and holds their frames when gameplay is not updating", () => {
+    const { context } = createGlowContext();
+    const sprite = RESIDUAL_SPIRIT_PICKUP_SPRITE;
+    spiritAtPlayer(TEST_PICKUP_AMOUNT);
+    spiritAtPlayer(TEST_PICKUP_AMOUNT);
+    state.residualSpirits[1].phase = sprite.count / 2
+      * sprite.frameDurationSeconds * RESIDUAL_SPIRIT_CONFIG.pickup.bobSpeed;
+    const before = state.residualSpirits.map((spirit) => ({ ...spirit }));
+
+    drawResidualSpirits();
+    const firstDraw = context.drawImage.mock.calls.map((call) => [...call]);
+    expect(firstDraw.map((call) => call[1])).toEqual([0, sprite.frameW * sprite.count / 2]);
+
+    context.drawImage.mockClear();
+    drawResidualSpirits();
+    expect(context.drawImage.mock.calls).toEqual(firstDraw);
+    expect(state.residualSpirits).toEqual(before);
   });
 
   it("draws a layered, continuously breathing aura instead of a rigid block glow", () => {

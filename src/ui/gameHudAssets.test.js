@@ -259,7 +259,15 @@ describe("game HUD sprite geometry", () => {
 
   it("keeps generated residual-spirit assets on their transparent PNG contracts", () => {
     expectTransparentPngAsset(UI_SPRITES.residualSpiritVesselFrame);
-    expectTransparentPngAsset(RESIDUAL_SPIRIT_PICKUP_SPRITE);
+    const pickup = RESIDUAL_SPIRIT_PICKUP_SPRITE;
+    expectTransparentSpriteSheet({
+      ...pickup,
+      w: pickup.frameW * pickup.count,
+      h: pickup.frameH,
+      columns: pickup.count,
+      rows: 1,
+      frameGutter: 8,
+    });
     expectTransparentPngAsset(RESIDUAL_SPIRIT_BEAD_CHARGE_SHEET);
     expectTransparentSpriteSheet(RESIDUAL_SPIRIT_BEAD_CHARGE_SHEET);
   });

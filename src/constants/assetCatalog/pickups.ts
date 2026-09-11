@@ -1,17 +1,18 @@
-export const RESIDUAL_SPIRIT_PICKUP_SPRITE: {
-  src: string;
-  image: HTMLImageElement | null;
-  w: number;
-  h: number;
+import type { SpriteSheet } from "../../types/assets";
+
+export const RESIDUAL_SPIRIT_PICKUP_SPRITE: SpriteSheet & {
   drawW: number;
   drawH: number;
+  frameDurationSeconds: number;
 } = {
-  src: "assets/sprites/pickups/residual-spirit.png",
+  src: "assets/sprites/pickups/residual-spirit-idle.png",
   image: null,
-  w: 96,
-  h: 96,
+  frameW: 96,
+  frameH: 96,
+  count: 8,
   drawW: 24,
   drawH: 24,
+  frameDurationSeconds: 0.1,
 };
 
 export const MOON_TIDE_TREASURE_SPRITE: {

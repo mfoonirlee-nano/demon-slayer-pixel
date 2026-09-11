@@ -83,7 +83,7 @@
   - `bosses/renderBoss.ts`: 按 Boss 的施法、动作和反震计时选择本体图集及帧序；所有已注册施法模式都通过本体动作读招。
   - `bosses/*Effects.ts`: 更新并绘制各 Boss 的技能实体；已锁定的危险位置在命中前使用对应特效图集的早期帧提示。雾骨效果模块额外在骨刺之前重复铺排 `mist_bone_fog_veil.png`、`mist_bone_fog_roll.png` 和 `mist_bone_fog_wisp.png`，以不同帧节拍与固定初始相位构成图片雾层，让局部遮蔽保留预警可读度；若雾区和骨刺锁定在移动或悬浮平台上，两者会通过相对平台锚点持续对齐。
   - `platform.ts`: 片段式地图生成与平台逻辑。
-  - `residualSpirit.ts`: 敌人死亡后的残灵生成、原地浮动、接触拾取与绘制。
+  - `residualSpirit.ts`: 敌人死亡后的残灵生成、原地浮动、接触拾取与绘制；本体八帧循环复用单个残灵的随机浮动相位选帧，由玩法更新推进，暂停和战斗定格时保持当前姿态。
   - `residualSpiritPickupFlight.ts`: 拾取结算后飞向当前可见灵龛的纯视觉光粒。
   - `highPlatformTreasure.ts`: 月潮灵匣本体、路线预告、驻留反馈和开匣视觉。
   - `particle.ts`: 战斗特效粒子系统。

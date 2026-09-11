@@ -182,11 +182,19 @@ describe("sprite manifest", () => {
     }
   });
 
-  it("preloads the residual-spirit pickup exactly once", () => {
-    const loadedSources = spriteImageLoadTargets().map((target) => target.src);
-
-    expect(loadedSources.filter((src) => src === RESIDUAL_SPIRIT_PICKUP_SPRITE.src))
-      .toHaveLength(1);
+  it("preloads the residual-spirit pickup sequence exactly once and binds its image", () => {
+    const matchingTargets = spriteImageLoadTargets().filter(
+      (target) => target.src === RESIDUAL_SPIRIT_PICKUP_SPRITE.src,
+    );
+    const originalImage = RESIDUAL_SPIRIT_PICKUP_SPRITE.image;
+    const image = {} as HTMLImageElement;
+    expect(matchingTargets).toHaveLength(1);
+    try {
+      matchingTargets[0].setImage(image);
+      expect(RESIDUAL_SPIRIT_PICKUP_SPRITE.image).toBe(image);
+    } finally {
+      RESIDUAL_SPIRIT_PICKUP_SPRITE.image = originalImage;
+    }
   });
 
   it("preloads the residual-spirit healing sequence exactly once and updates its image", () => {

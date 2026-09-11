@@ -198,12 +198,15 @@ export function drawResidualSpirits() {
     ctx.globalAlpha = baseAlpha;
     ctx.globalCompositeOperation = baseCompositeOperation;
     if (sprite.image) {
+      // The pickup's random phase advances only with gameplay, including after partial collection.
+      const animationSeconds = spirit.phase / RESIDUAL_SPIRIT_CONFIG.pickup.bobSpeed;
+      const frame = Math.floor(animationSeconds / sprite.frameDurationSeconds) % sprite.count;
       ctx.drawImage(
         sprite.image,
+        frame * sprite.frameW,
         0,
-        0,
-        sprite.w,
-        sprite.h,
+        sprite.frameW,
+        sprite.frameH,
         drawX - sprite.drawW * HALF,
         drawY - sprite.drawH * HALF,
         sprite.drawW,
