@@ -2,12 +2,13 @@
 
 _Moonlit Tide Survivor_ is a React/TypeScript single-run 2D side-scrolling pixel action-survival game: a dark, moonlit Japanese-fantasy journey where original night demons meet bright, fluid moon-and-tide hero effects, readable silhouettes and attack tells, responsive controls, run-bound builds, and concise poetic presentation.
 
-Use `pnpm` and `pnpm-lock.yaml`; treat the scripts in [`package.json`](package.json) as the command source of truth.
+Use `pnpm` and `pnpm-lock.yaml`; treat the scripts in [`package.json`](package.json) as the command source of truth. Run documented `npm run <script>` commands as `pnpm run <script>`.
 
 ## Grounding and Scope
 
-- Inspect the named area and its nearest implementation and tests before making claims or edits. Load only the matching references below. Design documents may describe unimplemented targets; source and tests establish current behavior. Surface conflicts instead of silently choosing a version.
-- Match the requested action: inspect and report for answers, reviews, diagnoses, and plans; for change requests, make the smallest coherent local edit and verify it. Preserve unrelated worktree changes, code, comments, and formatting. Finish only when the relevant checks pass or an unrelated blocker is documented and the final diff contains only task-scoped changes.
+- Ground claims in the relevant implementation and tests. Design documents describe intent and may include unimplemented targets; surface conflicts with current behavior.
+- Answers, reviews, diagnoses, and plans are inspection tasks unless changes are also requested. For change requests, complete the smallest coherent solution, including necessary documentation and validation, while preserving unrelated worktree changes.
+- Continue authorized local edits, relevant checks, and fixes for failures caused by the change without asking for approval at each step. Completion means the requested outcome is implemented and applicable checks pass, or a blocker is documented with the remaining work. Follow the validation tiers in `docs/CODE_RULES.md`; repeat checks when changes or failures justify it.
 
 ## Player-Facing Work
 
@@ -21,10 +22,10 @@ Use `pnpm` and `pnpm-lock.yaml`; treat the scripts in [`package.json`](package.j
 
 ## Load When Applicable
 
-Read every matching reference completely before acting; apply multiple bullets when a task crosses domains:
+Use these references when the task touches the listed concern. Read the relevant sections and their required dependencies; expand only when needed to resolve an uncertainty or a cross-domain change.
 
-- **Any repository edit:** read [`docs/CODE_RULES.md`](docs/CODE_RULES.md) for correctness, scope, conventions, validation, and documentation sync.
-- **Player-facing design or implementation:** read [`docs/game-design/README.md`](docs/game-design/README.md), then [`docs/game-design/game-overview.md`](docs/game-design/game-overview.md) and the relevant design document. Use design docs for intent and source/tests for implementation status.
+- **Repository changes:** use [`docs/CODE_RULES.md`](docs/CODE_RULES.md) for applicable conventions, validation tiers, and documentation sync.
+- **Player-facing design or behavior changes:** use [`docs/game-design/README.md`](docs/game-design/README.md) to locate the relevant design document; use [`docs/game-design/game-overview.md`](docs/game-design/game-overview.md) for overall direction and core-loop decisions.
 - **Runtime lifecycle or ownership, React-Canvas boundaries, input, HUD snapshots, asset or audio loading, or render order:** read [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md).
 - **Map segments, platform reachability, or high-platform treasure placement:** read [`docs/map-generation.md`](docs/map-generation.md).
 - **Bitmap generation or editing:** follow [`workflows/imagegen-project-asset.md`](workflows/imagegen-project-asset.md), which routes to the applicable sprite contract and visual brief.
