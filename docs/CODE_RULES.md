@@ -58,12 +58,12 @@
 
 ## 分级验证
 
-选择能证明当前改动正确的最小检查集，并在影响范围扩大时升级：
+选择能证明当前改动正确的最小检查集，并在影响范围扩大时升级。已有检查覆盖最终改动时复用结果；只有后续改动、失败或未解决的风险才需要重跑。
 
 - 所有改动：运行 `git diff HEAD --check`，并检查最终 diff 只包含任务范围。
-- 纯文档：核对引用路径和命令真实存在，运行 `npm run lint:lines`。
-- TypeScript / React：运行相关单测、`npm run typecheck` 和 `npm run lint`。
-- 玩法、运行时或跨模块行为：完成相关单测后，最终运行 `npm test` 和 `npm run build`。
+- 纯文档：核对引用路径和命令真实存在，运行 `pnpm run lint:lines`。
+- TypeScript / React：运行相关单测、`pnpm run typecheck` 和 `pnpm run lint`。
+- 玩法、运行时或跨模块行为：完成相关单测后，最终运行 `pnpm test` 和 `pnpm run build`。
 - 位图或 sprite：执行 `workflows/imagegen-project-asset.md` 的素材契约检查；只有代码或常量同时变化时才追加对应代码检查。
 
 如果检查失败，继续修复当前改动导致的问题；对无关的既有失败，保留证据并明确报告。

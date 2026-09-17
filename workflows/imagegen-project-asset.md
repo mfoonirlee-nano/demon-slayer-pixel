@@ -86,13 +86,13 @@ Validate every final candidate against the measured target contract:
 
 Run the checks selected by [`docs/CODE_RULES.md`](../docs/CODE_RULES.md), including `git diff HEAD --check`. Do not claim completion from a preview or from dimensions alone.
 
-## Ask the User When
+## Decision Boundaries
 
-Pause only when:
+Continue generation, deterministic corrections, integration, and checks within the requested asset scope. Request missing input or report a blocker when:
 
 - No trusted artifact can be recovered and no approved CLI fallback is available.
 - CLI fallback is required but `OPENAI_API_KEY` is unavailable.
-- One targeted regeneration still fails the visual requirement.
+- Further generation needs new user references, a changed visual direction, or a budget beyond what the user authorized. Within scope, use observed defects to guide targeted retries; stop and report when retries repeat the same failure without a viable correction.
 - Replacement would overwrite unrelated user changes.
 - Success requires changing gameplay or a runtime contract outside the request.
 

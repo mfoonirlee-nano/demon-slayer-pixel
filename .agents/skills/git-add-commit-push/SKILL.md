@@ -1,6 +1,6 @@
 ---
 name: git-add-commit-push
-description: Commit and push the current workspace changes to the remote branch with a short, intentional git workflow. Use when the user asks to run git add + git commit + git push, says "提交并推送", "整理工作区的改动，提交代码", "push code", or wants local changes committed and pushed without opening a PR.
+description: Stage, commit, and push when the user requests publishing local changes, including “提交并推送” or “push code”. Respect commit-only requests; do not open a PR.
 ---
 
 # Git Add Commit Push
@@ -22,14 +22,13 @@ Use this when the user wants the simple publish flow: inspect changes, stage the
    - If files are already staged, also run `git diff --cached --stat`.
 2. Confirm scope:
    - If the worktree contains only changes clearly related to the user's current request, proceed.
-   - If unrelated or ambiguous changes are present, stop and ask which files belong in the commit.
-   - Do not silently stage unrelated changes.
+   - Leave clearly unrelated unstaged changes untouched and stage the authorized paths.
+   - Ask only when scope is ambiguous or unrelated changes are already staged; preserve the existing index until resolved.
 3. Stage changes:
    - Prefer explicit `git add <paths>` when the scope is narrow.
    - Use `git add .` only when the full worktree is confirmed in scope.
 4. Validate:
-   - Run the most relevant quick check before committing when practical.
-   - For this repo, prefer `npm run typecheck` for TypeScript/UI changes.
+   - Use [the repository validation tiers](../../../docs/CODE_RULES.md#分级验证). Reuse checks that already cover the final diff.
    - If a pre-commit hook runs checks or asset compression, let it complete and report what it changed.
 5. Commit:
    - Use a Conventional Commits message that precisely describes the staged diff.
@@ -51,7 +50,7 @@ Use this when the user wants the simple publish flow: inspect changes, stage the
 - Never run destructive git commands as part of this skill.
 - Never amend, rebase, force-push, reset, restore, or stash unless the user explicitly asks.
 - If push fails because the remote moved, stop and report the blocker instead of pulling or rebasing automatically.
-- If checks fail, stop before commit unless the user explicitly says to commit anyway.
+- Fix failures caused by the requested change and rerun affected checks. If a failure is unrelated or needs a decision outside scope, report it before committing unless the user has authorized proceeding.
 
 ## Commit Message Rules
 

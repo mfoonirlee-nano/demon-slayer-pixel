@@ -22,12 +22,13 @@ Use `pnpm` and `pnpm-lock.yaml`; treat the scripts in [`package.json`](package.j
 
 ## Load When Applicable
 
-Use these references when the task touches the listed concern. Read the relevant sections and their required dependencies; expand only when needed to resolve an uncertainty or a cross-domain change.
+Use these references when the task touches the listed concern. Read only sections needed for the task; follow further references when they resolve a concrete dependency or uncertainty.
 
-- **Repository changes:** use [`docs/CODE_RULES.md`](docs/CODE_RULES.md) for applicable conventions, validation tiers, and documentation sync.
+- **Code changes:** use [`docs/CODE_RULES.md`](docs/CODE_RULES.md) for conventions and ownership. For documentation or asset-only changes, use its validation and documentation-sync sections.
 - **Player-facing design or behavior changes:** use [`docs/game-design/README.md`](docs/game-design/README.md) to locate the relevant design document; use [`docs/game-design/game-overview.md`](docs/game-design/game-overview.md) for overall direction and core-loop decisions.
 - **Runtime lifecycle or ownership, React-Canvas boundaries, input, HUD snapshots, asset or audio loading, or render order:** read [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md).
 - **Map segments, platform reachability, or high-platform treasure placement:** read [`docs/map-generation.md`](docs/map-generation.md).
 - **Bitmap generation or editing:** follow [`workflows/imagegen-project-asset.md`](workflows/imagegen-project-asset.md), which routes to the applicable sprite contract and visual brief.
 - **Cross-state combat-actor visual audits or unification:** follow [`workflows/character-state-visual-unification.md`](workflows/character-state-visual-unification.md) before changing runtime assets.
 - **Music direction, BGM prompts, or Boss/enemy/player SFX recipes:** read [`docs/music-direction.md`](docs/music-direction.md).
+- **Agent instructions or skills:** keep triggers task-specific, share authoritative rules by link, and state completion and real stopping conditions. Preserve project constraints; keep tool recipes in the workflow that owns them.
