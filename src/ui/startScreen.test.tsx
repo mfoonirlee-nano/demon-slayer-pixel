@@ -6,6 +6,30 @@ import { languageAtom } from "../i18n/language";
 import { StartScreen } from "./startScreen";
 
 describe("StartScreen localization", () => {
+  it("shows measured progress and a localized retry on failure", () => {
+    const store = createStore();
+    store.set(languageAtom, "en");
+    const markup = renderToStaticMarkup(
+      <Provider store={store}>
+        <StartScreen
+          assetsReady={false}
+          assetProgress={{ status: "error", loaded: 1, total: 2, failed: ["assets/a.png"] }}
+          startQueued
+          controlsOpen={false}
+          onOpenControls={() => undefined}
+          onCloseControls={() => undefined}
+          onStart={() => undefined}
+          onRetry={() => undefined}
+        />
+      </Provider>,
+    );
+    expect(markup).toContain("50%");
+    expect(markup).toContain("Loaded 1 / 2");
+    expect(markup).toContain("Retry loading");
+    expect(markup).toContain('role="alert"');
+    expect(markup).toContain('value="1" max="2"');
+    expect(markup).not.toContain("Press any key or click to start");
+  });
   it("renders the saved English language", () => {
     const store = createStore();
     store.set(languageAtom, "en");

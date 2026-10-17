@@ -6,7 +6,8 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { ensureAudio } from "../game/audio";
 import App from "./App";
 
-vi.mock("../assets", () => ({
+vi.mock("../assets", async (importOriginal) => ({
+  ...await importOriginal<typeof import("../assets")>(),
   loadSprites: vi.fn(() => new Promise<void>(() => undefined)),
 }));
 

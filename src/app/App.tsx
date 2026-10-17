@@ -1,11 +1,11 @@
-import { useCallback, useEffect, useLayoutEffect, useRef, useState, type CSSProperties } from "react";
+import { useCallback, useEffect, useLayoutEffect, useRef, useState, useSyncExternalStore, type CSSProperties } from "react";
 import { Provider, useAtomValue } from "jotai";
 import {
   WIDTH,
   HEIGHT,
   MENU_CONTROL_KEYS,
 } from "../constants";
-import { loadSprites } from "../assets";
+import { loadSprites, getSpriteLoadProgress, subscribeSpriteLoadProgress } from "../assets";
 import { setCanvas } from "../rendering/context";
 import { startGame } from "../game/runtime";
 import { gameStore, setGameSnapshot } from "../game/gameStore";
@@ -115,7 +115,10 @@ function GameCanvas({ active, backingScale }: { active: boolean; backingScale: n
 
 function AppShell() {
   const [phase, setPhase] = useState<AppPhase>("menu");
-  const [assetsReady, setAssetsReady] = useState(false);
+  const assetProgress = useSyncExternalStore(
+    subscribeSpriteLoadProgress, getSpriteLoadProgress, getSpriteLoadProgress,
+  );
+  const assetsReady = assetProgress.status === "ready";
   const [startQueued, setStartQueued] = useState(false);
   const [controlsOpen, setControlsOpen] = useState(false);
   const viewportScale = useViewportGameScale();
@@ -131,22 +134,13 @@ function AppShell() {
     transform: `scale(${viewportScale})`,
   } satisfies CSSProperties;
 
-  useEffect(() => {
-    let disposed = false;
-
-    loadSprites()
-      .then(() => {
-        if (!disposed) setAssetsReady(true);
-      })
-      .catch((err) => {
-        console.error("[app] preload sprites failed:", err);
-        if (!disposed) setAssetsReady(true);
-      });
-
-    return () => {
-      disposed = true;
-    };
+  const preloadAssets = useCallback(() => {
+    void loadSprites().catch((err) => {
+      console.error("[app] preload sprites failed:", err);
+    });
   }, []);
+
+  useEffect(preloadAssets, [preloadAssets]);
 
   const requestStart = useCallback(() => {
     if (phase !== "menu") return;
@@ -203,6 +197,8 @@ function AppShell() {
           {phase === "menu" ? (
             <StartScreen
               assetsReady={assetsReady}
+              assetProgress={assetProgress}
+              onRetry={preloadAssets}
               startQueued={startQueued}
               controlsOpen={controlsOpen}
               onOpenControls={() => setControlsOpen(true)}

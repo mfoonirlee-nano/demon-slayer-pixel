@@ -4,6 +4,7 @@ import type { PlatformState } from "../types/game-state";
 import { recordCollisionDebugRect } from "./collisionDebug";
 
 const GROUND_CONTACT_EPSILON = 0.1;
+const IMAGE_LOAD_TIMEOUT_MS = 30000;
 const FRAMES_PER_SECOND = 60;
 const HALF = 0.5;
 const DEFAULT_HIT_JITTER_RATIO = 0.25;
@@ -28,8 +29,24 @@ export type RgbColor = readonly [number, number, number];
 export function loadImage(src: string): Promise<HTMLImageElement> {
   return new Promise((resolve, reject) => {
     const img = new Image();
-    img.onload = () => resolve(img);
-    img.onerror = () => reject(new Error(`Sprite load failed: ${src}`));
+    const cleanup = () => {
+      clearTimeout(timeout);
+      img.onload = null;
+      img.onerror = null;
+    };
+    const timeout = setTimeout(() => {
+      cleanup();
+      img.src = "";
+      reject(new Error(`Sprite load timed out: ${src}`));
+    }, IMAGE_LOAD_TIMEOUT_MS);
+    img.onload = () => {
+      cleanup();
+      resolve(img);
+    };
+    img.onerror = () => {
+      cleanup();
+      reject(new Error(`Sprite load failed: ${src}`));
+    };
     img.src = resolveStaticAssetUrl(src);
   });
 }

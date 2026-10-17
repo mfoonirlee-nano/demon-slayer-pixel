@@ -20,11 +20,15 @@ import { getMoonPhaseGlowScale } from "../moon/phaseGlow";
 import { languageAtom, type Language } from "../i18n/language";
 import { message } from "../i18n/messages";
 import { ControlsGuide } from "./controlsGuide";
+import type { SpriteLoadProgress } from "../assets";
+import { AssetLoadingProgress } from "./assetLoadingProgress";
 
 type CustomCssProperties = CSSProperties & Record<`--${string}`, string>;
 
 type StartScreenProps = {
   assetsReady: boolean;
+  assetProgress?: SpriteLoadProgress;
+  onRetry?: () => void;
   startQueued: boolean;
   controlsOpen: boolean;
   onOpenControls: () => void;
@@ -353,6 +357,8 @@ function CoverMoonPhase({ progress, transitionKind }: {
 
 export function StartScreen({
   assetsReady,
+  assetProgress,
+  onRetry,
   startQueued,
   controlsOpen,
   onOpenControls,
@@ -365,10 +371,13 @@ export function StartScreen({
   const closeButtonRef = useRef<HTMLButtonElement>(null);
   const wasControlsOpenRef = useRef(controlsOpen);
   const { kills, progress, transitionKind } = useCoverProgress(prefersReducedMotion);
-  const promptText = assetsReady
-    ? message(language, "start.prompt")
-    : message(language, "loading.sprites");
-  const promptClassName = startQueued && !assetsReady
+  const hasLoadError = assetProgress?.status === "error";
+  const promptText = hasLoadError
+    ? message(language, "loading.retry")
+    : assetsReady
+      ? message(language, "start.prompt")
+      : message(language, "loading.sprites");
+  const promptClassName = startQueued && !assetsReady && !hasLoadError
     ? "start-prompt start-prompt-loading"
     : "start-prompt";
   const stageClassName = transitionKind === "none"
@@ -433,6 +442,9 @@ export function StartScreen({
         <div className="cover-darkness" />
       </div>
       <CoverKillCounter value={kills} language={language} />
+      {!assetsReady && assetProgress && !controlsOpen ? (
+        <AssetLoadingProgress progress={assetProgress} />
+      ) : null}
       {!controlsOpen ? (
         <StartMenuButton
           buttonRef={openButtonRef}
@@ -448,7 +460,8 @@ export function StartScreen({
           onPointerDown={(event) => event.stopPropagation()}
           onClick={(event) => {
             event.stopPropagation();
-            onStart();
+            if (hasLoadError) onRetry?.();
+            else onStart();
           }}
         >
           {promptText}

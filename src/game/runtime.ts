@@ -128,7 +128,6 @@ import { applyUpgradeChoice } from "../systems/progression";
 import { chooseBossEquipment as chooseBossEquipmentReward, equipEquipment as equipEquipmentInState } from "../systems/equipment";
 import { equipSkillSlot as equipSkillSlotInState, setSkillLevel as setSkillLevelInState, SKILL_SLOT_COUNT } from "../systems/loadout";
 import { updateEnemyDirector } from "../systems/enemyDirector";
-import { markSpritesReady } from "../systems/runLifecycle";
 import { isTreasureRevealAnimating } from "../systems/treasureState";
 import {
   beginResidualSpiritHealing,
@@ -582,7 +581,6 @@ export function startGame(options: { onStateChange?: (snapshot: GameSnapshot) =>
   if (!state.spritesReady) {
     loadSprites().catch((err) => {
       console.error('[runtime] loadSprites failed:', err);
-      markSpritesReady(state);
     });
   }
 

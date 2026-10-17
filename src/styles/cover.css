@@ -127,6 +127,43 @@
   cursor: wait;
 }
 
+.asset-loading-panel {
+  position: absolute;
+  bottom: 16%;
+  left: 50%;
+  z-index: 6;
+  width: min(80%, 480px);
+  padding: 16px 20px;
+  transform: translateX(-50%);
+  background: rgba(3, 13, 24, 0.9);
+  border: 1px solid #5a9ba9;
+  color: #c2e7ea;
+  font-size: 15px;
+  line-height: 1.6;
+  text-align: center;
+  pointer-events: none;
+}
+
+.asset-loading-heading {
+  display: flex;
+  justify-content: space-between;
+}
+
+.asset-loading-bar {
+  display: block;
+  width: 100%;
+  height: 10px;
+  margin: 10px 0;
+  border: 1px solid #507a8a;
+  background: #13283b;
+  accent-color: #8ad8de;
+}
+
+.asset-loading-bar::-webkit-progress-bar { background: #13283b; }
+.asset-loading-bar::-webkit-progress-value { background: #8ad8de; }
+.asset-loading-bar::-moz-progress-bar { background: #8ad8de; }
+.asset-loading-error { margin-top: 8px; color: #f1be9b; }
+
 @property --scan-x {
   syntax: "<percentage>";
   inherits: false;
