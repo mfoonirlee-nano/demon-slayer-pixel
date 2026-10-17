@@ -224,42 +224,14 @@ function resolveLeafWind(elapsed: number, seed: number): WindCycle {
   };
 }
 
-function resolveLeaf(
+function createLeafRelease(
   options: FallingLeafOptions,
   config: FallingLeafLayerConfig,
-  wind: WindCycle,
   index: number,
-  isGustLeaf: boolean,
-): FallingLeafRenderItem | null {
-  const slotSeed = options.seed + config.seedSalt
-    + Math.imul(index + 1, LEAF_SLOT_SEED_STEP);
-  const rng = seededRandom(slotSeed);
-  const durationRandom = rng();
-  const cycleDuration = isGustLeaf
-    ? config.gustDurationMin + durationRandom * config.gustDurationRange
-    : config.cycleDurationMin + durationRandom * config.cycleDurationRange;
-  const cycleOffset = rng() * cycleDuration;
-  let cycleIndex: number;
-  let cycleAge: number;
-  let releasedAt: number;
-  if (isGustLeaf) {
-    const latestGust = wind.latestGust;
-    if (!latestGust) return null;
-
-    const gustLeafIndex = index - config.calmCount;
-    const releaseProgress = GUST_VISIBILITY_DELAY_RATIO
-      + gustLeafIndex / config.gustCount * GUST_RELEASE_WINDOW_RATIO;
-    releasedAt = latestGust.startedAt + latestGust.duration * releaseProgress;
-    if (options.elapsed < releasedAt) return null;
-    cycleIndex = latestGust.index;
-    cycleAge = options.elapsed - releasedAt;
-    if (cycleAge >= cycleDuration) return null;
-  } else {
-    const cyclePosition = (options.elapsed + cycleOffset) / cycleDuration;
-    cycleIndex = Math.floor(cyclePosition);
-    cycleAge = (cyclePosition - cycleIndex) * cycleDuration;
-    releasedAt = options.elapsed - cycleAge;
-  }
+  slotSeed: number,
+  cycleIndex: number,
+  releasedAt: number,
+) {
   const cycleSeed = slotSeed + Math.imul(cycleIndex, LEAF_CYCLE_SEED_STEP);
   const sourceRng = seededRandom(cycleSeed);
   const sources = resolveTreeLeafSources({ elapsed: releasedAt, layer: options.layer });
@@ -300,11 +272,72 @@ function resolveLeaf(
   const tumbleRate = (config.tumbleRateMin + motionRng() * config.tumbleRateRange)
     * kindMotion.tumbleRateScale * trajectoryMotion.tumbleRateScale;
   const alpha = config.alphaMin + motionRng() * config.alphaRange;
+  return {
+    source, originX, originY, trajectory, driftDirection, trajectoryPhase,
+    trajectoryDirection, spiralTurns, horizontalSpeed, gustSpeed, sway,
+    swayRate, swayPhase, secondarySwayPhase, descentPhase, tumbleRate, alpha,
+    windIntegral: resolveLeafWind(releasedAt, options.seed).integratedStrength,
+  };
+}
+
+type LeafReleaseCache = {
+  cycleIndex: number;
+  release: ReturnType<typeof createLeafRelease>;
+};
+
+function resolveLeaf(
+  options: FallingLeafOptions,
+  config: FallingLeafLayerConfig,
+  wind: WindCycle,
+  index: number,
+  isGustLeaf: boolean,
+  releases?: LeafReleaseCache[],
+): FallingLeafRenderItem | null {
+  const slotSeed = options.seed + config.seedSalt
+    + Math.imul(index + 1, LEAF_SLOT_SEED_STEP);
+  const rng = seededRandom(slotSeed);
+  const durationRandom = rng();
+  const cycleDuration = isGustLeaf
+    ? config.gustDurationMin + durationRandom * config.gustDurationRange
+    : config.cycleDurationMin + durationRandom * config.cycleDurationRange;
+  const cycleOffset = rng() * cycleDuration;
+  let cycleIndex: number;
+  let cycleAge: number;
+  let releasedAt: number;
+  if (isGustLeaf) {
+    const latestGust = wind.latestGust;
+    if (!latestGust) return null;
+
+    const gustLeafIndex = index - config.calmCount;
+    const releaseProgress = GUST_VISIBILITY_DELAY_RATIO
+      + gustLeafIndex / config.gustCount * GUST_RELEASE_WINDOW_RATIO;
+    releasedAt = latestGust.startedAt + latestGust.duration * releaseProgress;
+    if (options.elapsed < releasedAt) return null;
+    cycleIndex = latestGust.index;
+    cycleAge = options.elapsed - releasedAt;
+    if (cycleAge >= cycleDuration) return null;
+  } else {
+    const cyclePosition = (options.elapsed + cycleOffset) / cycleDuration;
+    cycleIndex = Math.floor(cyclePosition);
+    cycleAge = (cyclePosition - cycleIndex) * cycleDuration;
+    releasedAt = cycleIndex * cycleDuration - cycleOffset;
+  }
+  let cached = releases?.[index];
+  if (!cached || cached.cycleIndex !== cycleIndex) {
+    cached = { cycleIndex, release: createLeafRelease(options, config, index, slotSeed, cycleIndex, releasedAt) };
+    if (releases) releases[index] = cached;
+  }
+  if (!cached.release) return null;
+  const {
+    source, originX, originY, trajectory, driftDirection, trajectoryPhase,
+    trajectoryDirection, spiralTurns, horizontalSpeed, gustSpeed, sway,
+    swayRate, swayPhase, secondarySwayPhase, descentPhase, tumbleRate, alpha,
+    windIntegral,
+  } = cached.release;
   const flightDuration = cycleDuration * LEAF_LANDING_PROGRESS;
   const flightAge = Math.min(cycleAge, flightDuration);
-  const releaseWind = resolveLeafWind(releasedAt, options.seed);
   const flightWind = resolveLeafWind(releasedAt + flightAge, options.seed);
-  const windTravel = (flightWind.integratedStrength - releaseWind.integratedStrength) * gustSpeed;
+  const windTravel = (flightWind.integratedStrength - windIntegral) * gustSpeed;
   const trajectoryPosition = resolveFallingLeafTrajectoryPosition({
     trajectory,
     cycleAge: flightAge,
@@ -368,8 +401,9 @@ function selectTreeSource(
   return matchingSources[Math.floor(rng() * matchingSources.length)];
 }
 
-export function resolveFallingLeafRenderPlan(
+function resolveRenderPlan(
   options: FallingLeafOptions,
+  releases?: LeafReleaseCache[],
 ): FallingLeafRenderItem[] {
   const config = LAYER_CONFIG[options.layer];
   const wind = resolveWindCycle(options.elapsed, options.seed);
@@ -381,15 +415,40 @@ export function resolveFallingLeafRenderPlan(
     wind,
     index,
     index >= config.calmCount,
+    releases,
   )).filter((leaf): leaf is FallingLeafRenderItem => leaf !== null);
 }
+
+export function resolveFallingLeafRenderPlan(options: FallingLeafOptions): FallingLeafRenderItem[] {
+  return resolveRenderPlan(options);
+}
+
+export function createFallingLeafRenderPlanner() {
+  const layers: Record<FallingLeafLayer, { seed: number; elapsed: number; releases: LeafReleaseCache[] }> = {
+    far: { seed: NaN, elapsed: -Infinity, releases: [] },
+    near: { seed: NaN, elapsed: -Infinity, releases: [] },
+  };
+  return (options: FallingLeafOptions): FallingLeafRenderItem[] => {
+    const cache = layers[options.layer];
+    // One entry per fixed leaf slot: old releases are replaced, never accumulated.
+    // A new run or a rewound clock cannot inherit another run's canopy origins.
+    if (cache.seed !== options.seed || options.elapsed < cache.elapsed) {
+      cache.releases.length = 0;
+      cache.seed = options.seed;
+    }
+    cache.elapsed = options.elapsed;
+    return resolveRenderPlan(options, cache.releases);
+  };
+}
+
+const planFallingLeaves = createFallingLeafRenderPlanner();
 
 export function drawFallingLeaves(options: FallingLeafOptions): void {
   const context = ctx;
   if (!context) return;
 
   const drawSize = LAYER_CONFIG[options.layer].drawSize;
-  const plan = resolveFallingLeafRenderPlan(options);
+  const plan = planFallingLeaves(options);
   context.save();
   for (const leaf of plan) {
     const sheet = FALLING_LEAF_SHEETS[leaf.kind];

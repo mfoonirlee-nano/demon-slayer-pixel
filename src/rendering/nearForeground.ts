@@ -2,6 +2,7 @@ import { state } from "../game/state";
 import { ctx } from "./context";
 import {
   GROUND_Y,
+  HEIGHT,
   NEAR_FOREGROUND_SCROLL_SPEED,
   WIDTH,
   TREE_SPRITES,
@@ -210,6 +211,9 @@ function drawRegion(
   alpha: number,
 ) {
   const drawW = drawH * (region.sw / region.sh);
+  // Keep offscreen placements available for spawning and leaf origins, but do not
+  // submit their images to Canvas. Partially visible silhouettes still draw whole.
+  if (x + drawW <= 0 || x >= WIDTH || y + drawH <= 0 || y >= HEIGHT) return;
 
   context.save();
   context.globalAlpha = alpha;

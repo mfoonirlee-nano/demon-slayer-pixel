@@ -1,3 +1,4 @@
+import { MOON_TIDE_FRAME_EFFECTS } from "../../constants/moonTideVisual";
 import { state } from "../../game/state";
 import { ctx } from "../../rendering/context";
 import { MOON_TIDE_PLAYER_SHEETS, PLAYER_COMBAT } from "../../constants";
@@ -12,9 +13,7 @@ import { playerSkillById, ULTIMATE_SKILL_ASSETS } from "../../systems/skillCatal
 const FULL_CIRCLE_RADIANS = Math.PI * 2;
 const ULTIMATE_SKILL_EFFECT_SHEET = ULTIMATE_SKILL_ASSETS.effect;
 
-const PLAYER_GHOST_FRAME_EFFECT = {
-  filter: "brightness(0) saturate(100%) invert(60%) sepia(92%) saturate(1600%) hue-rotate(172deg) brightness(103%) contrast(102%) drop-shadow(0 0 3px rgba(42, 178, 255, 0.72))",
-} as const satisfies SpriteFrameEffect;
+
 const PLAYER_GHOST_ALPHA_BASE = 0.18;
 const PLAYER_GHOST_ALPHA_SCALE = 0.44;
 const PLAYER_GHOST_ALPHA_MAX = 0.6;
@@ -207,7 +206,7 @@ export function drawUltimatePlayerGhosts() {
   ctx.save();
   ctx.globalCompositeOperation = "source-over";
   const canCacheGhostFrames = typeof document !== "undefined";
-  if (!canCacheGhostFrames) ctx.filter = PLAYER_GHOST_FRAME_EFFECT.filter ?? "none";
+  if (!canCacheGhostFrames) ctx.filter = MOON_TIDE_FRAME_EFFECTS.ghost.filter ?? "none";
   for (const ghost of state.ultimatePlayerGhosts) {
     const lifeRatio = ghost.life / ghost.maxLife;
     const alpha = Math.min(
@@ -216,7 +215,7 @@ export function drawUltimatePlayerGhosts() {
     );
 
     ctx.globalAlpha = alpha;
-    drawUltimatePlayerGhost(ghost, canCacheGhostFrames ? PLAYER_GHOST_FRAME_EFFECT : undefined);
+    drawUltimatePlayerGhost(ghost, canCacheGhostFrames ? MOON_TIDE_FRAME_EFFECTS.ghost : undefined);
   }
   ctx.restore();
 }

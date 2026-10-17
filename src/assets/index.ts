@@ -2,6 +2,7 @@ import { spriteImageLoadTargets } from "./manifest";
 import { loadImage } from "../game/utils";
 import { state } from "../game/state";
 import { markSpritesReady } from "../systems/runLifecycle";
+import { prepareMoonTideSprite } from "../rendering/moonTidePreparation";
 
 let loadTask: Promise<void> | null = null;
 const MAX_CONCURRENT_IMAGES = 6;
@@ -44,6 +45,8 @@ export function loadSprites(): Promise<void> {
       try {
         const image = await loadImage(src);
         targets.filter((target) => target.src === src).forEach((target) => target.setImage(image));
+        const preparation = prepareMoonTideSprite(src);
+        if (preparation) await preparation;
         loadedSources.add(src);
       } catch {
         failed.push(src);

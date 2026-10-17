@@ -91,7 +91,6 @@ function effectFrameCanvas(
 ): CachedEffectFrame | null {
   if (!sheet.image || typeof document === "undefined") return null;
 
-  const padding = spatialFilterPadding(effect.filter);
   const contentW = Math.max(1, Math.ceil(w));
   const contentH = Math.max(1, Math.ceil(h));
   const key = [
@@ -105,6 +104,7 @@ function effectFrameCanvas(
   const cached = cache.get(key);
   if (cached) return cached;
 
+  const padding = spatialFilterPadding(effect.filter);
   const canvas = document.createElement("canvas");
   canvas.width = contentW + padding * 2;
   canvas.height = contentH + padding * 2;
@@ -166,6 +166,16 @@ function drawFrameTint(
   ctx.globalAlpha *= tint.alpha;
   ctx.drawImage(tinted, x, y, w, h);
   ctx.restore();
+}
+
+export function prepareSheetFrameEffect(
+  sheet: SpriteSheet,
+  frame: number,
+  w: number,
+  h: number,
+  effect: SpriteFrameEffect,
+): boolean {
+  return effectFrameCanvas(sheet, frame, w, h, effect) !== null;
 }
 
 export function drawSheetFrame(

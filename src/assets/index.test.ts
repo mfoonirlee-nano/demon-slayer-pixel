@@ -1,12 +1,13 @@
 // @vitest-environment jsdom
 import { afterEach, expect, it, vi } from "vitest";
 
-const { targets, markReady, loadImage } = vi.hoisted(() => {
+const { targets, markReady, loadImage, prepareSprite } = vi.hoisted(() => {
   const totalImages = 8;
   return {
     targets: Array.from({ length: totalImages }, (_, index) => ({ src: `assets/${index}.png`, setImage: vi.fn() })),
     markReady: vi.fn(),
     loadImage: vi.fn<(src: string) => Promise<HTMLImageElement>>(),
+    prepareSprite: vi.fn<(src: string) => Promise<void> | undefined>(() => undefined),
   };
 });
 const TOTAL_IMAGES = targets.length;
@@ -16,10 +17,28 @@ vi.mock("./manifest", () => ({ spriteImageLoadTargets: () => targets }));
 vi.mock("../game/utils", () => ({ loadImage }));
 vi.mock("../systems/runLifecycle", () => ({ markSpritesReady: markReady }));
 vi.mock("../game/state", () => ({ state: {} }));
+vi.mock("../rendering/moonTidePreparation", () => ({ prepareMoonTideSprite: prepareSprite }));
 
 afterEach(() => {
   vi.resetModules();
   vi.clearAllMocks();
+  prepareSprite.mockReset();
+});
+
+it("holds readiness and completed-image progress until filter preparation finishes", async () => {
+  let finishPreparation = () => {};
+  const preparation = new Promise<void>((resolve) => { finishPreparation = resolve; });
+  prepareSprite.mockImplementation((src) => src === targets[0].src ? preparation : undefined);
+  loadImage.mockResolvedValue(document.createElement("img"));
+  const { loadSprites, getSpriteLoadProgress } = await import("./index");
+  const task = loadSprites();
+  await vi.waitFor(() => expect(getSpriteLoadProgress().loaded).toBe(SUCCESSFUL_FIRST_ATTEMPT));
+  expect(markReady).not.toHaveBeenCalled();
+  expect(getSpriteLoadProgress().status).toBe("loading");
+  finishPreparation();
+  await task;
+  expect(markReady).toHaveBeenCalledOnce();
+  expect(getSpriteLoadProgress().status).toBe("ready");
 });
 
 it("publishes partial progress, bounds requests and shares concurrent preload calls", async () => {

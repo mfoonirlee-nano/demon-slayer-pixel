@@ -4,7 +4,7 @@ import { useAtomValue } from "jotai";
 import { resolveStaticAssetUrl } from "../assets/staticAssetUrl";
 import { HUD_UI, SKILL_IDS } from "../constants";
 import { DebugPanel } from "../game/debug";
-import { gameSnapshotAtom } from "../game/gameStore";
+import { bossHudAtom, gameOverlayAtom, playerHudAtom, playerStatusesAtom, spritesReadyAtom, ultimateHudAtom } from "./hudSubscriptions";
 import { bossPhaseTitle } from "../i18n/bossCopy";
 import { languageAtom } from "../i18n/language";
 import { message } from "../i18n/messages";
@@ -250,10 +250,20 @@ export function UltimateOrb({ value, max, ready, size = ULTIMATE_ORB_DEFAULT_SIZ
   );
 }
 
-export function GameHud() {
-  const snapshot = useAtomValue(gameSnapshotAtom);
+function ActiveUltimateOrb() {
+  const orb = useAtomValue(ultimateHudAtom);
+  return <UltimateOrb {...orb} size={ULTIMATE_ORB_DEFAULT_SIZE} />;
+}
+
+function PlayerStatusHud({ width }: { width: number }) {
+  const statuses = useAtomValue(playerStatusesAtom);
   const language = useAtomValue(languageAtom);
-  const { player, boss, elapsed, spritesReady } = snapshot;
+  return <PlayerStatusBar statuses={statuses} language={language} width={width} />;
+}
+
+function PlayerHud() {
+  const { player, talismanId, talismanTier } = useAtomValue(playerHudAtom);
+  const language = useAtomValue(languageAtom);
   const activeSkillId = player.equippedSkillIds[player.skillIndex];
   const activeSkill = getSkill(activeSkillId);
   const bladeAction = activeSkillId === SKILL_IDS.returningBlade
@@ -264,23 +274,14 @@ export function GameHud() {
   const skillMax = player.skillEnergyMax;
   const activeSkillEnergyCost = activeSkill
     ? activeSkill.energyCost ?? skillEnergyCostForTalisman(
-        snapshot.equipment.equipped.talisman?.id,
-        snapshot.equipment.equipped.talisman?.tier,
+        talismanId,
+        talismanTier,
       )
     : 0;
   const skillMarkerPercents = filledCostMarkerPercents(skillValue, skillMax, activeSkillEnergyCost);
-  const bossHp = boss?.hp ?? 0;
-  const bossHpMax = boss?.hpMax ?? 1;
   const xpPercent = clampMeterPercent(player.runXp, player.xpToNext);
-  const ultimateActivePercent = player.ultimateTimer > 0
-    ? player.ultimateTimer / Math.max(1, player.ultimateDuration)
-    : player.ultimateCastTimer > 0
-      ? 1
-      : 0;
-
   const ghostHp = useGhostValue(player.hp);
   const ghostSkill = useGhostValue(skillValue);
-  const ghostBossHp = useGhostValue(bossHp);
   const playerBarWidth = Math.min(
     HUD_UI.playerBarMaxW,
     HUD_UI.playerBarBaseW + Math.max(0, player.runLevel - 1) * HUD_UI.playerBarGrowthPerLevel,
@@ -288,8 +289,6 @@ export function GameHud() {
 
   return (
     <>
-      <DebugPanel />
-
       <div
         className="pointer-events-none absolute z-10 hidden text-white md:block"
         style={{ left: HUD_SCREEN_INSET, top: HUD_SCREEN_INSET }}
@@ -303,13 +302,7 @@ export function GameHud() {
               className="player-hud-ultimate-frame flex items-center justify-center"
               style={{ top: HUD_ULTIMATE_FRAME_TOP }}
             >
-              <UltimateOrb
-                value={player.ultimateEnergy}
-                max={player.ultimateEnergyMax}
-                ready={player.ultimateReady}
-                size={44}
-                activePercent={ultimateActivePercent}
-              />
+              <ActiveUltimateOrb />
             </UiSprite>
             <UiSprite
               id="currentSkillFrame"
@@ -369,11 +362,7 @@ export function GameHud() {
               markerPercents={skillMarkerPercents}
             />
           </div>
-          <PlayerStatusBar
-            statuses={player.statuses}
-            language={language}
-            width={playerBarWidth}
-          />
+          <PlayerStatusHud width={playerBarWidth} />
         </div>
       </div>
 
@@ -388,6 +377,27 @@ export function GameHud() {
         style={{ left: HUD_SCREEN_INSET, top: HUD_SCREEN_INSET }}
       />
 
+      <div className="pointer-events-none absolute bottom-0 left-0 right-0 z-10">
+        <div className="hud-xp-bar">
+          <div className="hud-xp-fill" style={{ width: `${xpPercent}%` }} />
+        </div>
+      </div>
+      <div className="hud-level-label pointer-events-none absolute bottom-1 left-2 z-10 hidden md:block">
+        Lv.{player.runLevel}
+      </div>
+
+    </>
+  );
+}
+
+function BossHud() {
+  const boss = useAtomValue(bossHudAtom);
+  const language = useAtomValue(languageAtom);
+  const bossHp = boss?.hp ?? 0;
+  const bossHpMax = boss?.hpMax ?? 1;
+  const ghostBossHp = useGhostValue(bossHp);
+  return (
+    <>
       {boss ? (
         <div
           className="pointer-events-none absolute left-1/2 top-2 z-10 hidden -translate-x-1/2 overflow-hidden text-white md:block"
@@ -476,21 +486,31 @@ export function GameHud() {
         </div>
       ) : null}
 
+    </>
+  );
+}
+
+function LoadingOverlay() {
+  const spritesReady = useAtomValue(spritesReadyAtom);
+  const language = useAtomValue(languageAtom);
+  return (
+    <>
       {!spritesReady ? (
         <div className="pointer-events-none absolute inset-0 z-20 flex items-center justify-center bg-black/30 text-sm text-white md:hidden">
           {message(language, "loading.sprites")}
         </div>
       ) : null}
 
-      <div className="pointer-events-none absolute bottom-0 left-0 right-0 z-10">
-        <div className="hud-xp-bar">
-          <div className="hud-xp-fill" style={{ width: `${xpPercent}%` }} />
-        </div>
-      </div>
-      <div className="hud-level-label pointer-events-none absolute bottom-1 left-2 z-10 hidden md:block">
-        Lv.{player.runLevel}
-      </div>
+    </>
+  );
+}
 
+function GameOverlays() {
+  const snapshot = useAtomValue(gameOverlayAtom);
+  if (!snapshot) return null;
+  const { elapsed } = snapshot;
+  return (
+    <>
       {snapshot.activeOverlay === "death" ? <DeathScreen elapsed={elapsed} /> : null}
       {snapshot.activeOverlay === "victory" ? <VictoryScreen elapsed={elapsed} /> : null}
 
@@ -500,6 +520,18 @@ export function GameHud() {
       || snapshot.activeOverlay === "treasure" ? (
         <RewardOverlay snapshot={snapshot} />
       ) : null}
+    </>
+  );
+}
+
+export function GameHud() {
+  return (
+    <>
+      <DebugPanel />
+      <PlayerHud />
+      <BossHud />
+      <LoadingOverlay />
+      <GameOverlays />
     </>
   );
 }

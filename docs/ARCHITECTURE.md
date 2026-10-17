@@ -62,8 +62,10 @@
 - `src/rendering/context.ts`: 管理 canvas 与 2D context 引用。
 - `src/assets/index.ts`: 按唯一素材路径预加载图片，最多同时请求 6 张；图片请求 30 秒超时。
   通过 `getSpriteLoadProgress` / `subscribeSpriteLoadProgress` 向 React 发布成功数、总数、失败路径和状态。
-  只有全部图片成功才更新 `spritesReady`；失败保持在开始页，重试保留已成功素材。
+  只有全部图片成功且月潮滤镜准备完成才更新 `spritesReady`；失败保持在开始页，重试保留已成功素材。
   `App.tsx` 用 `useSyncExternalStore` 订阅进度，等待期间的开始请求在全部成功后执行。
+  `src/rendering/moonTidePreparation.ts` 在加载阶段准备月潮动作与已实现技能的逐帧残影、三级描边缓存，每 4 项让出一次任务供加载界面绘制，避免首次开大或切换动作时同步创建滤镜画布。
+  滤镜参数由 `src/constants/moonTideVisual.ts` 与实战绘制共用；复用 `graphics.ts` 按图片弱引用、每张图片最多 32 项的缓存，重开不重复准备。
   音频沿用独立加载及振荡器回退，不计入贴图进度。
 - `src/assets/staticAssetUrl.ts`: 将仓库内的逻辑素材路径 `assets/...` 定位到
   `dist/` 同级目录，并在浏览器中输出绝对 URL，避免 CSS 自定义变量按 bundle 目录重新解析相对路径；
@@ -72,10 +74,14 @@
 - `src/game/collisionDebug.ts`: 按帧收集真实碰撞判定使用的矩形、椭圆、圆环、线段和采样点，并统一绘制调试层。
 - `src/rendering/background.ts`: 绘制天空、星星、月亮、云层、山脉和地面底色。
 - `src/rendering/fallingLeaves.ts`: 按单局种子和玩法时间从真实树冠释放远景、近景落叶，并解析间歇风阵与落地淡出。
+  运行时 planner 为每层的固定叶片槽缓存当前释放的树冠、运动参数与初始风程；换周期覆盖，换种子或时间回退时清空。
+  `resolveFallingLeafRenderPlan` 保留无缓存解析，供轨迹对照验证；缓存不保存逐帧位置，也不随游戏时长增长。
 - `src/rendering/fallingLeafTrajectories.ts`: 为每个落叶槽均衡分配飘摆、滑翔、旋落轨迹，积分下沉速度、解算连续飘摆位置并联动叶片侧倾。
 - `src/rendering/clouds.ts`: 绘制大云/小云精灵，支持夜晚灰色滤镜和血月红色染色。
 - `src/rendering/actLandmarks.ts`: 按当前幕解析并绘制 Boss 专属中景地标，不参与碰撞或出生遮挡。
 - `src/rendering/nearForeground.ts`: 编排纯视觉高树后层、基础树线、逐幕出生遮挡物、Boss 地标、石塔和鸟居，使用独立视差速度。
+  树线、出生遮挡道具、装饰和鸟居在提交 Canvas 绘制前按完整绘制矩形裁除屏幕外项；部分可见项完整绘制。
+  出生遮挡与树冠来源解析仍保留屏幕外放置，绘制裁除不改变玩法与落叶释放位置。
 - `src/moon/`: 管理月亮状态、血月插值、天空配色和月亮渲染。
 - `src/game/audio.ts`: 使用 Web Audio 播放 Boss、敌人与玩家采样音效，并在加载失败时回退到振荡器音型；雾骨和枯铃分别使用按动作边沿拆分的专属 SFX。
 - `src/game/utils.ts`: 通用工具函数。
@@ -149,6 +155,17 @@ Boss 读招不维护第二套攻击倒计时，也不使用独立的程序化红
 Boss 被击杀时进入 `60` 帧视觉冻结，普通玩法更新停止。大多数 Boss 会快照当帧本体，按一次性随机切向裁成两半后分离淡出；雾骨在捕获姿态后清空实战雾与骨刺，先用三套雾序列帧错相表现雾幕吹散，再把快照拆成骨架碎片散落；枯铃会先冻结最多三圈当前声波（无活动声波时生成一圈回响），清空实战声波和音刃，再把独立裂铃图裁成左右两块分离；万相血月会清空六种借用判定与召唤物，不使用击杀快照，而是在同一冻结计时内推进 `blood_moon_death.png` 六帧，让残相与光轮按确定顺序剥落。装备奖励或胜利 overlay 只在效果结束后显示。这四条路径都由独立的击败效果状态推进，不恢复 Boss 战斗动作。
 
 React HUD 不直接绘制到 Canvas，而是订阅 `gameSnapshotAtom` 显示生命、技能资源、大招能量、残灵储量/引灵进度、Boss 血条、暂停和死亡状态。`src/systems/playerStatuses.ts` 在运行时快照阶段把限时效果、常驻技能被动和需要即时决策的装备状态投影为 `PlayerStatusSnapshot[]`，`src/ui/playerStatusBar.tsx` 再解析对应的本地化名称与图标；掠影符、连珠符和残心免伤护盾分别通过互斥的 ready / cooldown 快照表达就绪与冷却，返魂符则只在低血持续回能时显示。角色状态 HUD 由左侧大招圆框、贴在大招右下方的当前技能圆框、两条随等级增长的生命/技能资源条、六珠灵龛式残灵储存器，以及状态图标条组成；灵龛使用充能阶段 × 动画相位图集错相播放灵珠，未满珠额外显示真实充填高度刻线。桌面和紧凑 HUD 都在真实入口元素上标记同一入槽锚点，Canvas 只测量当前可见入口并换算回逻辑画布坐标，因此断点和缩放变化不会产生第二套目标规则。
+
+`src/ui/hudSubscriptions.ts` 将快照拆为玩家资源 HUD、大招圆框、状态图标条、Boss 血条、加载状态、overlay 和触控技能标签订阅。
+玩家与 Boss 订阅按显示数据比较，技能槽、技能等级与状态倒计时按值比较，避免新快照对象或世界时间推进导致整个 HUD 重绘。
+大招持续时间、施法时间和状态倒计时不会使生命、技能资源及灵龛重绘；大招圆框订阅其实际显示的能量、就绪状态和剩余比例。
+`GameHud` 只组合独立订阅的子组件；生命与技能资源的缓动仍由各自所在组件推进。
+运行时继续逐帧发布完整快照，overlay 激活后直接接收完整快照，输入、奖励和死亡切换没有节流延迟。
+
+性能回归使用 `pnpm run bench:runtime` 比较有缓存与无缓存的落叶 CPU 路径；不启动游戏或浏览器。
+`sceneryPerformance.test.ts` 检查无屏幕外绘制、释放数据复用和跨周期轨迹一致性；`hudPerformance.test.tsx` 用 React Profiler 检查无关世界更新不会触发 UI 提交。
+`ultimateHudPerformance.test.tsx` 驱动真实大招倒计时，检查圆框继续更新且灵龛无冗余重绘；`moonTidePreparation.test.ts` 覆盖三级大招的全部动作及技能，检查加载后不再创建滤镜画布，并约束预备画布像素内存低于 64 MiB（不含图片解码和浏览器内部开销）。
+这些检查覆盖 CPU 路径和操作次数，不包含 Canvas 光栅化、GPU 合成或设备实际 FPS。
 
 引灵治疗的世界内反馈不复用玩家动作状态：`residual_spirit_heal_effect.png` 作为独立 8 帧纯视觉图集附着在玩家中心和脚点，允许当前移动、普攻和技能动作继续播放。前 5 帧直接由 `residualSpiritHealTimer` 映射，成功扣除残灵并恢复生命后才启动后 3 帧的短峰值/散逸计时；完成复检失败或玩家死亡时不会显示成功反馈。该层绘制在玩家之后、平台前沿和敌方技能之前，不参与碰撞、伤害或控制。
 

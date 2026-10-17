@@ -75,6 +75,9 @@ pnpm run deploy:cloudflare
 
 ## 项目结构与文档
 
+性能基准可运行 `pnpm run bench:runtime`：离线比较落叶缓存与无缓存路径，
+并测量前景放置、HUD 快照投影的 CPU 开销。基准不启动游戏或浏览器，结果不代表实际 FPS。
+
 详细的文档位于 `docs/` 目录下：
 
 - [游戏原案总入口 (game-design/README.md)](docs/game-design/README.md)：游戏定位、核心循环、系统状态、内容优先级、UI/反馈和验收指标。

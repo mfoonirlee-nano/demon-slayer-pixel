@@ -1,4 +1,4 @@
-import { gameSnapshotAtom } from "../game/gameStore";
+import { touchSkillAtom } from "./hudSubscriptions";
 import { SKILL_IDS } from "../constants";
 import { returningBladeActionLabel } from "../i18n/skillCopy";
 import { useAtomValue } from "jotai";
@@ -8,9 +8,9 @@ import { message } from "../i18n/messages";
 
 export function TouchControls() {
   const language = useAtomValue(languageAtom);
-  const { player } = useAtomValue(gameSnapshotAtom);
-  const bladeAction = player.equippedSkillIds[player.skillIndex] === SKILL_IDS.returningBlade
-    ? returningBladeActionLabel(language, player.returningBladePhase) : null;
+  const { skillId, phase } = useAtomValue(touchSkillAtom);
+  const bladeAction = skillId === SKILL_IDS.returningBlade
+    ? returningBladeActionLabel(language, phase) : null;
   const actionTextClass = language === "zh-CN" ? "text-lg" : "text-[11px] font-bold";
 
   return (

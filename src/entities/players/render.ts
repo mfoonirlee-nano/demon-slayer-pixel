@@ -1,3 +1,4 @@
+import { MOON_TIDE_FRAME_EFFECTS } from "../../constants/moonTideVisual";
 import { state } from "../../game/state";
 import { ctx } from "../../rendering/context";
 import {
@@ -36,13 +37,10 @@ import { playerSkillCastFrame } from "./skillCasting";
 const HALF_RATIO = 0.5;
 const FULL_CIRCLE = Math.PI * 2;
 const ULTIMATE_SKILL_SHEET = ULTIMATE_SKILL_ASSETS.skill;
-const MOON_TIDE_OUTLINE_MAX_LEVEL = 3;
 const MOON_TIDE_OUTLINE_ALPHA_BASE = 0.14;
 const MOON_TIDE_OUTLINE_ALPHA_PER_LEVEL = 0.04;
 const ULTIMATE_SKILL_CAST_ANCHOR_Y = 0.83;
-const MOON_TIDE_OUTLINE_EFFECT = {
-  filter: "brightness(0) saturate(100%) invert(64%) sepia(88%) saturate(1320%) hue-rotate(166deg) brightness(103%) contrast(103%) drop-shadow(0 0 7px rgba(52, 196, 255, 0.82))",
-} as const satisfies SpriteFrameEffect;
+
 const PLAYER_BINDER_TALISMAN_ATTACHMENT = {
   w: 24,
   h: 32,
@@ -255,10 +253,10 @@ function drawRenderSnapshot(
 function drawMoonTideOutline(snapshot: UltimatePlayerGhostSnapshot, currentSkill: Skill | null = null) {
   if (!ctx || !moonTideActive()) return;
 
-  const level = state.player.ultimateLevel === 2 || state.player.ultimateLevel === MOON_TIDE_OUTLINE_MAX_LEVEL
+  const level = state.player.ultimateLevel === 2 || state.player.ultimateLevel === MOON_TIDE_FRAME_EFFECTS.maxLevel
     ? state.player.ultimateLevel
     : 1;
-  const expand = 2 + level;
+  const expand = MOON_TIDE_FRAME_EFFECTS.outlineExpandBase + level;
   const outline: UltimatePlayerGhostSnapshot = {
     ...snapshot,
     x: snapshot.x - expand,
@@ -270,7 +268,7 @@ function drawMoonTideOutline(snapshot: UltimatePlayerGhostSnapshot, currentSkill
   ctx.save();
   ctx.globalAlpha = MOON_TIDE_OUTLINE_ALPHA_BASE + level * MOON_TIDE_OUTLINE_ALPHA_PER_LEVEL;
   ctx.globalCompositeOperation = "lighter";
-  drawRenderSnapshot(outline, currentSkill, MOON_TIDE_OUTLINE_EFFECT);
+  drawRenderSnapshot(outline, currentSkill, MOON_TIDE_FRAME_EFFECTS.outline);
   ctx.restore();
 }
 

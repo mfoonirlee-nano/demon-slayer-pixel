@@ -6,6 +6,7 @@
   "scripts": {
     "dev": "vite",
     "test": "vitest run",
+    "bench:runtime": "vitest bench --run src/game/runtimePerformance.bench.ts",
     "typecheck": "tsc --noEmit",
     "lint": "eslint . && npm run lint:lines",
     "lint:fix": "eslint . --fix && npm run lint:lines",
