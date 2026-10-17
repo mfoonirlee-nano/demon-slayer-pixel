@@ -60,7 +60,11 @@
   - `assets.ts`: `Skill`、`SpriteSheet`、`PlayerSheet` 等资源类型。
   - `game-state.ts`: 玩家、敌人、Boss、平台、粒子等运行时状态类型。
 - `src/rendering/context.ts`: 管理 canvas 与 2D context 引用。
-- `src/assets/index.ts`: 异步加载图片资源，并在加载完成后更新 `spritesReady`。
+- `src/assets/index.ts`: 按唯一素材路径预加载图片，最多同时请求 6 张；图片请求 30 秒超时。
+  通过 `getSpriteLoadProgress` / `subscribeSpriteLoadProgress` 向 React 发布成功数、总数、失败路径和状态。
+  只有全部图片成功才更新 `spritesReady`；失败保持在开始页，重试保留已成功素材。
+  `App.tsx` 用 `useSyncExternalStore` 订阅进度，等待期间的开始请求在全部成功后执行。
+  音频沿用独立加载及振荡器回退，不计入贴图进度。
 - `src/assets/staticAssetUrl.ts`: 将仓库内的逻辑素材路径 `assets/...` 定位到
   `dist/` 同级目录，并在浏览器中输出绝对 URL，避免 CSS 自定义变量按 bundle 目录重新解析相对路径；
   Vite 只构建 HTML、JavaScript 和 CSS，不复制运行时素材。
@@ -86,6 +90,8 @@
   - `residualSpirit.ts`: 敌人死亡后的残灵生成、原地浮动、接触拾取与绘制；本体八帧循环复用单个残灵的随机浮动相位选帧，由玩法更新推进，暂停和战斗定格时保持当前姿态。
   - `residualSpiritPickupFlight.ts`: 拾取结算后飞向当前可见灵龛的纯视觉光粒。
   - `highPlatformTreasure.ts`: 月潮灵匣本体、路线预告、驻留反馈和开匣视觉。
+  - 宝藏光效绘制由 `src/rendering/treasureGlow.ts` 接收位置、游戏计时、驻留比例和开匣比例，
+    使用 `src/constants/treasureVisual.ts` 的视觉参数；不维护独立计时或玩法状态。
   - `particle.ts`: 战斗特效粒子系统。
   - `projectile.ts`: 处理投射物。
 
@@ -115,7 +121,7 @@ Canvas 每帧大致按以下顺序绘制：
 1. 背景：天空、月亮、星星、云、山脉、地面底色。
 2. 远层落叶，以及仍在近景遮挡后出生的敌人。
 3. 覆盖出生敌人的近景背景：纯视觉高树后层、基础树线、当前幕出生遮挡物、Boss 地标、石塔、鸟居。
-4. 近层落叶、地图与掉落物：未承载玩家的平台、月潮灵匣的一次性右缘入场光晕、圆形呼吸柔光与平台辉光、敌人掉落的残灵。
+4. 近层落叶、地图与掉落物：未承载玩家的平台、月潮灵匣的一次性右缘入场光晕、月潮断弧/柔光/光尘与平台辉光、敌人掉落的残灵。
 5. 玩家技能闪屏。
 6. 玩家、紧随玩家绘制的引灵治疗序列帧、月潮灵匣本体、狩牙刃水刃、当前承载玩家的平台、技能效果、敌人、Boss 本体动作、Boss 击杀裂身快照、Boss 技能及其序列帧预警、投射物和粒子。
 7. 地面瓦片覆盖层。

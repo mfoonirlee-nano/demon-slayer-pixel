@@ -79,9 +79,17 @@ const TREASURE_HEALTH_AFTER = 50;
 const UPGRADE_CHOICE_COUNT = 3;
 
 function createMockContext(): MockCanvasContext {
+  const gradient = { addColorStop: vi.fn() };
   return {
     drawImage: vi.fn(),
     beginPath: vi.fn(),
+    moveTo: vi.fn(),
+    lineTo: vi.fn(),
+    closePath: vi.fn(),
+    fill: vi.fn(),
+    stroke: vi.fn(),
+    createRadialGradient: vi.fn(() => gradient),
+    createLinearGradient: vi.fn(() => gradient),
     clip: vi.fn(),
     fillRect: vi.fn(),
     filter: "none",

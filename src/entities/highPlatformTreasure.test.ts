@@ -45,17 +45,37 @@ function platform(): PlatformState {
 
 function createMockContext(): MockCanvasContext {
   const filledRects: FilledRect[] = [];
+  let transform = { x: 0, y: 0, scaleX: 1, scaleY: 1 };
+  const transforms: typeof transform[] = [];
   const gradient = { addColorStop: vi.fn() } as unknown as CanvasGradient;
   return {
     filledRects,
     beginPath: vi.fn(),
+    moveTo: vi.fn(),
+    lineTo: vi.fn(),
+    closePath: vi.fn(),
+    fill: vi.fn(),
+    translate: vi.fn((x: number, y: number) => {
+      transform.x += x * transform.scaleX;
+      transform.y += y * transform.scaleY;
+    }),
+    scale: vi.fn((x: number, y: number) => {
+      transform.scaleX *= x;
+      transform.scaleY *= y;
+    }),
+    createLinearGradient: vi.fn(() => gradient),
     createRadialGradient: vi.fn(() => gradient),
     ellipse: vi.fn(),
     fillRect: vi.fn((x: number, y: number, width: number, height: number) => {
-      filledRects.push({ x, y, width, height });
+      filledRects.push({
+        x: transform.x + x * transform.scaleX,
+        y: transform.y + y * transform.scaleY,
+        width: width * transform.scaleX,
+        height: height * transform.scaleY,
+      });
     }),
-    restore: vi.fn(),
-    save: vi.fn(),
+    restore: vi.fn(() => { transform = transforms.pop() ?? transform; }),
+    save: vi.fn(() => { transforms.push({ ...transform }); }),
     stroke: vi.fn(),
     fillStyle: "#000000",
     globalAlpha: 1,

@@ -48,7 +48,7 @@
 
 本设计不是恢复旧的随机平台掉落。它引入的是每幕有预算、明确预告、只绑定可选高路线的独立事件。地图只提供合格承载平台，奖励生成和结算由宝藏系统负责。
 
-实现按三层拆分：`highPlatformTreasure.ts` 管理每幕机会、附着、解封、驻留领取和开匣定格；`treasureRewards.ts` 生成并结算不可变奖励快照；`highPlatformTreasure.ts` 实体绘制模块负责一次性右缘月潮光晕、圆形呼吸柔光、平台辉光、四帧灵匣和领取反馈。领取后的短开匣定格继续推进自身视觉计时但冻结玩法，最终打开帧留在 Canvas 上，再由独立的宝藏 overlay 接管选择。
+实现按三层拆分：`highPlatformTreasure.ts` 管理每幕机会、附着、解封、驻留领取和开匣定格；`treasureRewards.ts` 生成并结算不可变奖励快照；`highPlatformTreasure.ts` 实体绘制模块编排一次性右缘月潮提示、四帧灵匣、平台辉光和驻留环，`src/rendering/treasureGlow.ts` 负责月潮柔光、断弧、上浮光尘、驻留收束及开匣扩散潮环。领取后的短开匣定格继续推进自身视觉计时但冻结玩法，扩散潮环在计时结束时散去，最终打开帧留在 Canvas 上，再由独立的宝藏 overlay 接管选择。
 
 ## Spawn Budget
 
