@@ -19,7 +19,9 @@ const CHECKED_EXTENSIONS = new Set([
   ".tsx",
 ]);
 
-const IGNORED_DIRECTORIES = new Set([".git", "assets", "dist", "node_modules"]);
+const IGNORED_DIRECTORIES = new Set([
+  ".git", "assets", "dist", "node_modules", ".cloudflare", ".wrangler",
+]);
 const IGNORED_FILES = new Set(["package-lock.json", "pnpm-lock.yaml", "yarn.lock"]);
 
 function print(message) {

@@ -16,7 +16,7 @@ const TS_NO_MAGIC_NUMBERS_OPTIONS = {
 
 export default tseslint.config(
   {
-    ignores: ["dist", "node_modules", "assets"],
+    ignores: ["dist", "node_modules", "assets", ".cloudflare", ".wrangler"],
   },
   js.configs.recommended,
   ...tseslint.configs.recommended,

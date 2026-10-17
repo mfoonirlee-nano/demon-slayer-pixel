@@ -2,4 +2,8 @@ node_modules
 .DS_Store
 *.local
 .env
+.env.*
+!.env.example
+.cloudflare/
+.wrangler/
 tmp

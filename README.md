@@ -33,23 +33,45 @@
 
 ### 1. 安装依赖
 ```bash
-npm install
+pnpm install
 ```
 
 ### 2. 启动开发服务器
 ```bash
-npm run dev
+pnpm run dev
 ```
 访问控制台输出的链接（通常是 `http://localhost:5173`）即可。
 
 ### 3. 构建发布版本
 ```bash
-npm run build
+pnpm run build
 ```
 
 构建后的 `dist/` 只包含 HTML、JavaScript 和 CSS。图片、音频等运行时素材继续保留在
 仓库根目录的 `assets/`；发布时需要让 `dist/` 与 `assets/` 保持同级，并以二者的共同父目录
 作为静态服务根目录，入口为 `dist/index.html`。
+
+### 4. 发布到 Cloudflare Pages
+
+部署工具需要 Node.js 22 或更高版本。
+在 `.env` 中配置 `CLOUDFLARE_API_TOKEN` 和 `CLOUDFLARE_ACCOUNT_ID`（见
+[.env.example](.env.example)）。Token 需要目标账户的 `Cloudflare Pages: Edit` 权限。
+可选的 `CLOUDFLARE_PAGES_PROJECT_NAME` 默认为 `moonlit-tide-survivor`。
+CI 可直接通过环境变量提供这些配置，环境变量优先于 `.env`。
+
+```bash
+# 构建并生成完整上传目录
+pnpm run build:cloudflare
+
+# 重新构建并发布到生产环境；首次运行会自动创建 Pages 项目
+pnpm run deploy:cloudflare
+```
+
+发布目录为 `.cloudflare/site/`，内含同级的 `dist/` 和 `assets/`，
+站点根路径自动跳转到 `/dist/`。部署脚本只上传此目录，凭据文件不包含在发布包中。
+再次执行发布命令会更新同一项目；已有项目沿用其生产分支。
+这些本地命令使用 [Cloudflare Pages Direct Upload](https://developers.cloudflare.com/pages/get-started/direct-upload/)，
+无需手动登录 Wrangler。构建上传目录及 `.wrangler/` 缓存均不提交到 Git。
 
 ## 项目结构与文档
 
