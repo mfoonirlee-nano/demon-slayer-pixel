@@ -8,7 +8,7 @@ import {
   VERTICAL_WAVE_PILLAR_CONFIG,
   WIDTH,
 } from "../../constants";
-import type { EnemyState, SkillLevel } from "../../types/game-state";
+import type { EnemyState, SkillLevel, SkillHitSource } from "../../types/game-state";
 import type { SkillId } from "../../types/assets";
 import { clamp, hitbox } from "../../game/utils";
 import { recordCollisionDebugRect } from "../../game/collisionDebug";
@@ -54,6 +54,7 @@ export function finishDashRepositionSkill(
   facing: number,
   hitEnemies: EnemyState[] = [],
   bossHit = false,
+  skillSource?: SkillHitSource,
 ) {
   const player = state.player;
   const tuning = GENERIC_PLAYER_SKILL_TUNING[SKILL_IDS.dashReposition];
@@ -74,6 +75,7 @@ export function finishDashRepositionSkill(
       h: slashH,
       facing,
       refundGroupId,
+      skillSource,
       hitEnemies: [...hitEnemies],
       bossCooldown: bossHit ? tuning.bossHitCooldown : undefined,
     },
@@ -108,6 +110,7 @@ export function damageDashRepositionTravel(previousX: number, previousY: number,
 
     dash.hitEnemies.push(enemy);
     const hit = resolveEnemyHit({
+      skillSource: dash.skillSource,
       enemy,
       enemyIndex: i,
       hitRect: box,
@@ -126,6 +129,7 @@ export function damageDashRepositionTravel(previousX: number, previousY: number,
       dash.bossHit = true;
       bossHit = true;
       const hit = resolveBossHit({
+        skillSource: dash.skillSource,
         boss: state.boss,
         hitRect: box,
         damage: bossDamage,
@@ -144,7 +148,8 @@ export function damageDashRepositionTravel(previousX: number, previousY: number,
 export function spawnPlayerSkillEffect(skillId: SkillId, castDamageMultiplier = 1) {
   if (!isGenericPlayerSkillId(skillId)) return false;
 
-  const level = genericSkillLevel(skillId);
+  const level = state.player.activeSkillCast?.skillId === skillId
+    ? state.player.activeSkillCast.level : genericSkillLevel(skillId);
   const tuning = GENERIC_PLAYER_SKILL_TUNING[skillId];
   const player = state.player;
   const playerCenterX = player.x + player.w / 2;
@@ -157,6 +162,7 @@ export function spawnPlayerSkillEffect(skillId: SkillId, castDamageMultiplier = 
     const targetX = dashDestination(distance);
     player.vx = 0;
     player.dashReposition = {
+      skillSource: player.activeSkillCast ?? undefined,
       startX: player.x,
       targetX,
       elapsed: 0,

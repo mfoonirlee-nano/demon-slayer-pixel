@@ -6,7 +6,8 @@ import {
   type EnemyDefeatRewardKind,
 } from "../entities/enemies/common";
 import { resolveEnemyDefeat } from "../entities/enemies/defeat";
-import type { EnemyState } from "../types/game-state";
+import type { EnemyState, SkillHitSource } from "../types/game-state";
+import { recordEquipmentReactionHit } from "./equipmentReactions";
 import { overlapHitPoint, type RectLike } from "../game/utils";
 import { state } from "../game/state";
 import { equipmentBossDamageMultiplier, recordBossDamageEquipmentEffects } from "./equipment";
@@ -79,6 +80,7 @@ export function resolveEnemyHit({
   afterDamage,
   knockbackOverride,
   sourceX,
+  skillSource,
 }: {
   enemy: EnemyState;
   enemyIndex: number;
@@ -91,10 +93,12 @@ export function resolveEnemyHit({
   afterDamage?: () => void;
   knockbackOverride?: PlayerHitKnockbackOverride;
   sourceX?: number;
+  skillSource?: SkillHitSource;
 }): EnemyHitResolution {
   const { x: hitX, y: hitY } = hitPoint ?? overlapHitPoint(hitRect, enemy);
   const appliedDamage = applyEnemyDamage(enemy, damage, hitCooldown, damageKind, sourceX ?? hitX);
   afterDamage?.();
+  recordEquipmentReactionHit(state, enemy, skillSource, appliedDamage, false);
   const defeated = resolveEnemyDefeat(enemy, enemyIndex, reward);
   if (!defeated) applyPlayerHitKnockback(state, enemy, knockbackOverride);
   return {
@@ -112,6 +116,7 @@ export function resolveBossHit({
   damage,
   hitCooldown,
   afterDamage,
+  skillSource,
 }: {
   boss: LiveBossState;
   hitRect: RectLike;
@@ -119,10 +124,12 @@ export function resolveBossHit({
   damage: number;
   hitCooldown?: number;
   afterDamage?: () => void;
+  skillSource?: SkillHitSource;
 }): BossHitResolution {
   const { x: hitX, y: hitY } = hitPoint ?? overlapHitPoint(hitRect, boss);
   const appliedDamage = applyBossDamage(boss, damage, hitCooldown);
   afterDamage?.();
+  recordEquipmentReactionHit(state, boss, skillSource, appliedDamage, true);
   return {
     hitX,
     hitY,

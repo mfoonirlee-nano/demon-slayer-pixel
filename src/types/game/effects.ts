@@ -11,7 +11,7 @@ import type {
   SkillLevel,
   PlayerSkillEffectPhase,
 } from "./domain";
-import type { EnemyState, PlatformState } from "./entities";
+import type { EnemyState, PlatformState, SkillHitSource } from "./entities";
 
 export type BossVisualFrameState = {
   sheet: SpriteSheet;
@@ -440,8 +440,8 @@ export type SkillBurstState = {
   scaleOut: number;
   color: string;
 };
-
 export type LineProjectileEffectState = {
+  skillSource?: SkillHitSource;
   x: number;
   y: number;
   vx: number;
@@ -453,8 +453,8 @@ export type LineProjectileEffectState = {
   damageMultiplier: number;
   refundedSkillEnergy?: boolean;
 };
-
 export type CloseArcEffectState = {
+  skillSource?: SkillHitSource;
   x: number;
   y: number;
   vx: number;
@@ -493,8 +493,8 @@ export type HuntBladeReachEffectState = {
   life: number;
   reachExtension: number;
 };
-
 export type GuardCounterEffectState = {
+  skillSource?: SkillHitSource;
   elapsed: number;
   frame: number;
   hitsRemaining: number;
@@ -504,8 +504,9 @@ export type GuardCounterEffectState = {
   damageMultiplier: number;
   barrierFlash: number;
 };
-
 export type PlayerSkillEffectState = {
+  skillSource?: SkillHitSource;
+  effectLevel?: SkillLevel;
   skillId: SkillId;
   kind: "dashSlash" | "vortex" | "armorBreak" | "rainLine" | "returningBlade" | "returningBladeCross" | "verticalWave" | "verticalWavePillar";
   x: number;
@@ -546,7 +547,6 @@ export type PlayerSkillEffectState = {
   armorBreakBossMultiplier?: number;
   lift?: number;
 };
-
 export type UltimateEffectState = {
   x: number;
   y: number;

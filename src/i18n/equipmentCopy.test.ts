@@ -26,7 +26,7 @@ describe("equipment copy", () => {
   it("provides concise English copy for an equipment tier", () => {
     expect(equipmentItemCopy("en", "flow_blade", "common")).toEqual({
       name: "Flow Blade",
-      summary: "After 4 basic hits, your next skill deals more damage.",
+      summary: "Skills mark targets; another skill converts marks into directional sweeps. Basics charge stronger skills.",
       tag: "Basic Charge",
     });
   });
@@ -195,7 +195,7 @@ describe("equipment copy", () => {
     expect(localizeEquipmentItem("en", item)).toEqual({
       ...item,
       name: "Beatcall Talisman",
-      summary: "Skill cost reaches its floor; casting different skills in succession refunds skill energy.",
+      summary: "With Flow Blade, conversions gather nearby marks into a pulling surge instead of a sweep. Skills cost less.",
       uiTags: ["Awakened", "Skill Swap Refund"],
     });
     expect(item.name).toBe("鸣拍符");

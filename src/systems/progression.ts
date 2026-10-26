@@ -16,6 +16,7 @@ import {
   SPLITTER_SHEET_INDEX,
   WARDEN_SHEET_INDEX,
 } from "../constants";
+import { seededRandom } from "../game/utils";
 import type { SkillId } from "../types/assets";
 import type {
   EnemyState,
@@ -58,6 +59,8 @@ const UPGRADE_CHOICE_COUNT = 3;
 const MAX_UNLEARNED_CHOICE_COUNT = 2;
 const ULTIMATE_LEVEL_TWO_REQUIRED_MAXED_SKILLS = 1;
 const ULTIMATE_LEVEL_THREE_REQUIRED_MAXED_SKILLS = 3;
+const UPGRADE_SEED_SALT = 0x75c4d28b;
+const UPGRADE_SEED_LEVEL_MULTIPLIER = 0x9e3779b1;
 
 const ENEMY_XP_BY_SHEET_INDEX: Partial<Record<number, number>> = {
   [CRAWLER_SHEET_INDEX]: 8,
@@ -276,6 +279,12 @@ function applyLevelStatGrowth(state: GameState) {
 }
 
 function createUpgradeChoices(state: GameState): UpgradeChoiceState[] {
+  // Each level has its own stream: encounter timing and reading the HUD cannot reroll a draft.
+  const random = seededRandom(
+    state.enemyDirector.runSeed
+    ^ Math.imul(state.player.runLevel, UPGRADE_SEED_LEVEL_MULTIPLIER)
+    ^ UPGRADE_SEED_SALT,
+  );
   const nextUltimateLevel = Math.min(MAX_SKILL_LEVEL, state.player.ultimateLevel + 1) as UltimateLevel;
   const unlockChoices: UpgradeChoiceState[] = [];
   const upgradeChoices: UpgradeChoiceState[] = [];
@@ -314,6 +323,9 @@ function createUpgradeChoices(state: GameState): UpgradeChoiceState[] {
     : null;
   const choices: UpgradeChoiceState[] = [];
   const hasUltimate = hasLearnedUltimate(state);
+  const takeChoice = (pool: UpgradeChoiceState[]) => (
+    pool.splice(Math.floor(random() * pool.length), 1)[0]
+  );
   let unlearnedChoiceCount = 0;
   const addChoice = (choice: UpgradeChoiceState | null | undefined) => {
     if (!choice || choices.length >= UPGRADE_CHOICE_COUNT) return;
@@ -326,18 +338,18 @@ function createUpgradeChoices(state: GameState): UpgradeChoiceState[] {
   };
 
   if (hasUltimate) {
-    addChoice(unlockChoices.shift());
+    addChoice(takeChoice(unlockChoices));
     addChoice(ultimateChoice);
-    addChoice(upgradeChoices.shift());
+    addChoice(takeChoice(upgradeChoices));
   } else {
     addChoice(createUltimateChoice(state, 1));
-    addChoice(upgradeChoices.shift());
-    addChoice(unlockChoices.shift());
+    addChoice(takeChoice(upgradeChoices));
+    addChoice(takeChoice(unlockChoices));
   }
 
-  for (const choice of [...unlockChoices, ...upgradeChoices]) {
-    if (choices.length >= UPGRADE_CHOICE_COUNT) break;
-    addChoice(choice);
+  const remainingChoices = [...unlockChoices, ...upgradeChoices];
+  while (remainingChoices.length > 0 && choices.length < UPGRADE_CHOICE_COUNT) {
+    addChoice(takeChoice(remainingChoices));
   }
 
   return choices;

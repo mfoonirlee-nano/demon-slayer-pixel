@@ -9,6 +9,7 @@ import { addEnemyRunXp, enemyXp } from "../../systems/progression";
 import { grantSkillEnergy, grantUltimateEnergy, recordEnemyDefeatEquipmentEffects } from "../../systems/equipment";
 import { residualSpiritDropAmount } from "../../systems/residualSpirit";
 import { spawnResidualSpirit } from "../residualSpirit";
+import { recordEquipmentReactionDefeat } from "../../systems/equipmentReactions";
 
 const SPLITLING_SKILL_ENERGY_GAIN = 2;
 const SPLITLING_ULTIMATE_ENERGY_GAIN = 0.5;
@@ -48,6 +49,7 @@ export function resolveEnemyDefeat(
   reward: EnemyDefeatRewardKind,
 ) {
   if (enemy.hp > 0) return false;
+  recordEquipmentReactionDefeat(state, enemy);
 
   let rewardApplied = false;
   const applyReward = () => {

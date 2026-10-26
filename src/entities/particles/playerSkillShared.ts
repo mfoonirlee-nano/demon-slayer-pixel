@@ -187,6 +187,9 @@ export function makeGenericEffect(
   return {
     skillId,
     kind: tuning.kind,
+    effectLevel: level,
+    skillSource: state.player.activeSkillCast?.skillId === skillId
+      ? state.player.activeSkillCast : undefined,
     x,
     y,
     w: overrides.w ?? valueForSkillLevel(tuning.width, level),

@@ -13,6 +13,7 @@ import type { GameState, PlayerState } from "../types/game-state";
 import { equipmentItem } from "../systems/equipment";
 import { createEnemyDirectorState } from "../systems/enemyDirector";
 import { activePlayerStatuses } from "../systems/playerStatuses";
+import { createEquipmentReactionState } from "../systems/equipmentReactions";
 import {
   createInitialTreasureOpportunity,
   createInitialTreasurePity,
@@ -73,6 +74,7 @@ export function createInitialPlayerState(): PlayerState {
     equippedSkillIds: [...INITIAL_EQUIPPED_SKILL_IDS],
     skillLevels: { ...INITIAL_SKILL_LEVELS },
     skillTimer: 0,
+    activeSkillCast: null,
     skillEffectSpawned: false,
     skillCastDamageMultiplier: 1,
     skillReleasedThisFrameId: null,
@@ -165,6 +167,7 @@ export function createInitialState(): GameState {
     moon: createInitialMoonState(),
     spritesReady: false,
     player: createInitialPlayerState(),
+    equipmentReactions: createEquipmentReactionState(),
     residualSpirits: [],
     residualSpiritPickupFlights: [],
     enemies: [],
@@ -215,6 +218,7 @@ function resetCollection<T>(collection: T[], nextItems: T[] = []) {
 export function resetState() {
   const next = createInitialState();
   state.player = next.player;
+  state.equipmentReactions = next.equipmentReactions;
   resetCollection(state.residualSpirits, next.residualSpirits);
   resetCollection(
     state.residualSpiritPickupFlights,

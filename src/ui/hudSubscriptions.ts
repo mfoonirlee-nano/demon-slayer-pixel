@@ -62,6 +62,13 @@ export const touchSkillAtom = selectAtom(gameSnapshotAtom, ({ player }) => ({
   phase: player.returningBladePhase,
 }), sameFields);
 
+export const touchSkillSlotsAtom = selectAtom(gameSnapshotAtom, ({ player }) => ({
+  selected: player.skillIndex,
+  first: player.equippedSkillIds[0],
+  second: player.equippedSkillIds[1],
+  third: player.equippedSkillIds[2],
+}), sameFields);
+
 export const ultimateHudAtom = selectAtom(gameSnapshotAtom, ({ player }) => ({
   value: player.ultimateEnergy,
   max: player.ultimateEnergyMax,

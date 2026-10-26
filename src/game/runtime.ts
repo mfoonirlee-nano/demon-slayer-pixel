@@ -26,7 +26,8 @@ import { drawBackground, drawGroundTileBase, drawGroundTileOcclusion } from "../
 import { drawFallingLeaves } from "../rendering/fallingLeaves";
 import { drawNearForeground } from "../rendering/nearForeground";
 import { playSfx } from "./audio";
-
+import { updateEquipmentReactionEffects } from "../entities/particles/equipmentReactions";
+import { drawEquipmentReactionCues, drawEquipmentReactionEffects } from "../entities/particles/equipmentReactionVisuals";
 import { updatePlayer, drawPlayer, triggerAttack, castSelectedSkill, castUltimateSkill, selectSkill, tryJump } from "../entities/player";
 import {
   drawEnemy,
@@ -449,6 +450,7 @@ function loop(ts: number) {
         updateHuntBladeReachEffects();
         updateGuardCounterEffect();
         updatePlayerSkillEffects();
+        updateEquipmentReactionEffects();
         updateUltimateEffects();
         updateUltimateTrails();
         updateUltimateAfterimageSlashes();
@@ -477,7 +479,6 @@ function loop(ts: number) {
   drawBindingZonesBack();
   drawUltimateTrails();
   drawUltimateEffects();
-
   if (state.player.skillFlash > 0) {
     const flashT = state.player.skillFlash / SKILL_FLASH.maxFrames;
     const radius = SKILL_FLASH.baseRadius - state.player.skillFlash * SKILL_FLASH.radiusStep;
@@ -509,6 +510,7 @@ function loop(ts: number) {
   drawHuntBladeReachEffects();
   drawPlatformOcclusion();
   drawGuardCounterEffect();
+  drawEquipmentReactionEffects();
   drawSkillBursts();
   drawUltimateAfterimageSlashes();
   drawEnemyLayer(isEnemyAboveNearForeground);
@@ -534,7 +536,7 @@ function loop(ts: number) {
   drawProjectiles();
   drawParticles();
   drawResidualSpiritPickupFlights();
-
+  drawEquipmentReactionCues();
   if (isCollisionDebugEnabled) {
     recordPersistentCollisionShapes();
     drawCollisionDebug(ctx);

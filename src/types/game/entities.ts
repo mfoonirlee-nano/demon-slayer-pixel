@@ -79,6 +79,8 @@ export type ResidualSpiritPickupFlightState = {
   elapsed: number;
 };
 
+export type SkillHitSource = { skillId: SkillId; castId: number; equipmentRevision?: number };
+
 export type PlayerState = {
   x: number;
   y: number;
@@ -114,12 +116,14 @@ export type PlayerState = {
   equippedSkillIds: [SkillId | null, SkillId | null, SkillId | null];
   skillLevels: Partial<Record<SkillId, SkillLevel>>;
   skillTimer: number;
+  activeSkillCast: SkillHitSource & { level: SkillLevel } | null;
   skillEffectSpawned: boolean;
   skillCastDamageMultiplier: number;
   // Player updates before Bosses; this transient edge is cleared at the next player update.
   skillReleasedThisFrameId: SkillId | null;
   vortexControlAirJumpsUsed: number;
   dashReposition: {
+    skillSource?: SkillHitSource;
     startX: number;
     targetX: number;
     elapsed: number;

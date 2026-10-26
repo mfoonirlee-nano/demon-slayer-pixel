@@ -25,7 +25,6 @@ import {
   drawEnemyIntoVortex,
   effectBox,
   findArmorBreakCollision,
-  genericSkillLevel,
   playerSkillSheetFrame,
   recordVortexCollisionDebug,
   rectFeetPoint,
@@ -75,6 +74,7 @@ function setLocalEnemyCooldown(effect: PlayerSkillEffectState, enemy: EnemyState
 function applyEffectDamageToEnemy(effect: PlayerSkillEffectState, enemy: EnemyState, enemyIndex: number) {
   const box = effectBox(effect);
   const hit = resolveEnemyHit({
+    skillSource: effect.skillSource,
     enemy,
     enemyIndex,
     hitRect: box,
@@ -90,6 +90,7 @@ function applyEffectDamageToBoss(effect: PlayerSkillEffectState) {
   if (!state.boss) return false;
   const box = effectBox(effect);
   const hit = resolveBossHit({
+    skillSource: effect.skillSource,
     boss: state.boss,
     hitRect: box,
     damage: effect.bossDamage,
@@ -124,6 +125,7 @@ function triggerArmorBreakImpact(effect: PlayerSkillEffectState, collision: Armo
   if (collision.type === "enemy") {
     effect.hitEnemies.push(collision.enemy);
     const hit = resolveEnemyHit({
+      skillSource: effect.skillSource,
       enemy: collision.enemy,
       enemyIndex: collision.enemyIndex,
       hitRect: effectBox(effect),
@@ -145,6 +147,7 @@ function triggerArmorBreakImpact(effect: PlayerSkillEffectState, collision: Armo
   }
 
   const hit = resolveBossHit({
+    skillSource: effect.skillSource,
     boss: collision.boss,
     hitRect: effectBox(effect),
     hitPoint: { x, y },
@@ -191,7 +194,7 @@ function updateVortexEffect(effect: PlayerSkillEffectState) {
   const tuning = isGenericPlayerSkillId(effect.skillId)
     ? GENERIC_PLAYER_SKILL_TUNING[effect.skillId]
     : null;
-  const level = isGenericPlayerSkillId(effect.skillId) ? genericSkillLevel(effect.skillId) : 1;
+  const level = effect.effectLevel ?? 1;
   const pull = tuning ? valueForSkillLevel(tuning.pull ?? tuning.width, level) : 0;
   const slow = tuning ? valueForSkillLevel(tuning.slow ?? tuning.life, level) : 1;
   let hitTargets = 0;

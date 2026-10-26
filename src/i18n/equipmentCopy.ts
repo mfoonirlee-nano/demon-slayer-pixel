@@ -38,9 +38,11 @@ import {
   EQUIPMENT_PRIMARY_STAT_LABELS as ZH_EQUIPMENT_PRIMARY_STAT_LABELS,
   EQUIPMENT_TIER_LABELS as ZH_EQUIPMENT_TIER_LABELS,
   equipmentItemForTier,
+  equipmentTierEffectSummary,
 } from "../systems/equipmentCatalog";
 import { formatPercent } from "../utils";
 import type { Language } from "./language";
+import { equipmentSkillItemSummary } from "./equipmentSkillCopy";
 
 const EQUIPMENT_FAMILY_LABELS: Record<Language, Record<EquipmentFamily, string>> = {
   "zh-CN": ZH_EQUIPMENT_FAMILY_LABELS,
@@ -491,7 +493,18 @@ export function equipmentItemCopy(
   }
 
   const item = EN_EQUIPMENT_COPY[itemId];
-  return { name: item.name, ...item.tiers[tier] };
+  const copy = item.tiers[tier];
+  return {
+    name: item.name,
+    ...copy,
+    summary: equipmentSkillItemSummary(language, itemId) ?? copy.summary,
+  };
+}
+
+export function equipmentTierEffectCopy(language: Language, itemId: EquipmentItemId, tier: EquipmentTier) {
+  return language === "zh-CN"
+    ? equipmentTierEffectSummary(itemId, tier)
+    : EN_EQUIPMENT_COPY[itemId].tiers[tier].summary;
 }
 
 export function localizeEquipmentItem<T extends EquipmentItemState>(language: Language, item: T): T {

@@ -79,6 +79,7 @@ export function updateLineProjectileEffects() {
       if (enemy.hitCd > 0) continue;
       if (!hitbox(box, enemy)) continue;
       const hit = resolveEnemyHit({
+        skillSource: eff.skillSource,
         enemy,
         enemyIndex: j,
         hitRect: box,
@@ -101,6 +102,7 @@ export function updateLineProjectileEffects() {
         bossHit = true;
         const hit = resolveBossHit(
           {
+            skillSource: eff.skillSource,
             boss,
             hitRect: box,
             damage,
@@ -157,6 +159,7 @@ export function updateCloseArcEffects() {
       if (enemy.hitCd > 0) continue;
       if (!hitbox(box, enemy)) continue;
       const hit = resolveEnemyHit({
+        skillSource: eff.skillSource,
         enemy,
         enemyIndex: j,
         hitRect: box,
@@ -175,6 +178,7 @@ export function updateCloseArcEffects() {
         bossHit = true;
         const hit = resolveBossHit(
           {
+            skillSource: eff.skillSource,
             boss,
             hitRect: box,
             damage,

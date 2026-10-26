@@ -1,5 +1,6 @@
 import type { GameState } from "../types/game-state";
 import { applyEquipmentStatChange } from "./equipmentStats";
+import { resetEquipmentReactions } from "./equipmentReactions";
 import {
   createInitialTreasureOpportunity,
   createInitialTreasurePity,
@@ -23,6 +24,7 @@ export function clearTreasureState(state: GameState) {
 
 export function endRun(state: GameState) {
   state.gameOver = true;
+  resetEquipmentReactions(state);
   state.runCleared = false;
   state.pendingEquipmentChoices = [];
   state.pendingUpgradeChoices = [];
@@ -40,6 +42,7 @@ export function endRun(state: GameState) {
 
 export function clearRun(state: GameState) {
   state.gameOver = true;
+  resetEquipmentReactions(state);
   state.runCleared = true;
   state.pendingEquipmentChoices = [];
   state.pendingUpgradeChoices = [];

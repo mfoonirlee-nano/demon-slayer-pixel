@@ -57,6 +57,7 @@ import { resolvePlayerLanding, tryPlayerJump } from "./players/jumping";
 import { playerMoveScale } from "./players/movementModifiers";
 import { updateSkillCastRelease, updateUltimateCastAndTimer } from "./players/skillCasting";
 import { spawnHuntBladeReachEffect } from "./particles/huntBladeReachEffect";
+import { recordEquipmentReactionMovement, tickEquipmentReactions } from "../systems/equipmentReactions";
 
 export { castSelectedSkill, castUltimateSkill } from "./players/skillCasting";
 export { drawPlayer } from "./players/render";
@@ -96,7 +97,7 @@ function playerFallAttackKeyDown() {
 }
 
 export function triggerAttack() {
-  if (isBinderTalismanStunned()) return;
+  if (state.gameOver || state.player.hp <= 0 || isBinderTalismanStunned()) return;
 
   const p = state.player;
   if (
@@ -328,6 +329,7 @@ function resolveGuardCounterResponse(
       hitPoint,
       damage: counterDamage,
       reward: "enemy",
+      skillSource: counter.skillSource,
     });
     emitSlash(hit.hitX, hit.hitY, GUARD_COUNTER_HIT_COLOR, e.w);
     emitHitBurst(hit.hitX, hit.hitY, GUARD_COUNTER_HIT_COLOR, GUARD_COUNTER_ENEMY_BURST_POWER);
@@ -340,6 +342,7 @@ function resolveGuardCounterResponse(
       hitRect: counterRect,
       hitPoint,
       damage: counterDamage,
+      skillSource: counter.skillSource,
     });
     emitSlash(hit.hitX, hit.hitY, GUARD_COUNTER_HIT_COLOR);
     emitHitBurst(hit.hitX, hit.hitY, GUARD_COUNTER_HIT_COLOR, 2);
@@ -406,6 +409,7 @@ export function updatePlayer(deltaSeconds = 0) {
   }
 
   tickEquipmentEffects(state, deltaSeconds);
+  tickEquipmentReactions(state);
   const movementStartX = p.x;
   const dashReposition = p.dashReposition;
   const wasGrounded = onGround(p, p.onPlatform);
@@ -413,6 +417,7 @@ export function updatePlayer(deltaSeconds = 0) {
   if (!dashReposition && p.onPlatform && state.platforms.includes(p.onPlatform)) {
     p.x += p.onPlatform.vx;
   }
+  const reactionMovementStartX = p.x;
   const moveScale = playerMoveScale();
   let previousDashX = p.x;
   let previousDashY = p.y;
@@ -485,10 +490,12 @@ export function updatePlayer(deltaSeconds = 0) {
       dashReposition.facing,
       dashReposition.hitEnemies,
       dashReposition.bossHit,
+      dashReposition.skillSource,
     );
   }
 
   recordEquipmentMovement(state, p.x - movementStartX);
+  recordEquipmentReactionMovement(state, p.x - reactionMovementStartX);
   const horizontalMoveDistance = Math.abs(p.x - movementStartX);
   const canPlayRunStep = !dashReposition
     && !stunned

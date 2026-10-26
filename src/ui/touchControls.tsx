@@ -5,6 +5,7 @@ import { useAtomValue } from "jotai";
 import { TOUCH_CONTROL_KEYS } from "../constants";
 import { languageAtom } from "../i18n/language";
 import { message } from "../i18n/messages";
+import { TouchSkillSlots } from "./touchSkillSlots";
 
 export function TouchControls() {
   const language = useAtomValue(languageAtom);
@@ -15,9 +16,12 @@ export function TouchControls() {
 
   return (
     <div className="pointer-events-none absolute inset-0 z-20 flex items-end justify-between gap-2 p-3 pb-[calc(12px+env(safe-area-inset-bottom))] md:hidden">
-      <div className="pointer-events-auto flex items-end gap-2">
+      <div className="pointer-events-auto flex flex-col items-start">
+        <TouchSkillSlots />
+        <div className="flex items-end gap-2">
         <button className="touch-btn dir-btn flex h-[54px] w-[54px] items-center justify-center rounded-[14px] border-2 border-[rgba(210,236,255,0.8)] bg-[rgba(16,31,56,0.58)] text-2xl text-[#e8f6ff] shadow-[0_1px_0_rgba(0,0,0,0.25)]" data-key={TOUCH_CONTROL_KEYS.moveLeft} data-hold="true" aria-label={message(language, "touch.moveLeft")}>◀</button>
         <button className="touch-btn dir-btn flex h-[54px] w-[54px] items-center justify-center rounded-[14px] border-2 border-[rgba(210,236,255,0.8)] bg-[rgba(16,31,56,0.58)] text-2xl text-[#e8f6ff] shadow-[0_1px_0_rgba(0,0,0,0.25)]" data-key={TOUCH_CONTROL_KEYS.moveRight} data-hold="true" aria-label={message(language, "touch.moveRight")}>▶</button>
+        </div>
       </div>
       <div className="pointer-events-auto grid grid-cols-3 place-items-center gap-2">
         <button className="touch-btn dir-btn flex h-[44px] w-[44px] items-center justify-center rounded-[10px] border border-[rgba(150,200,255,0.5)] bg-[rgba(16,31,56,0.5)] text-xl text-[#b0d4f0] shadow-[0_1px_0_rgba(0,0,0,0.25)]" data-key={TOUCH_CONTROL_KEYS.fallAttackModifier} data-hold="true" aria-label={message(language, "touch.fallAttack")}>▼</button>

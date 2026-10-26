@@ -17,7 +17,7 @@ import {
 } from "../../constants";
 import { frameIndex, onGround } from "../../game/utils";
 import { drawSheetFrame, drawSkillFrame, type SpriteFrameEffect } from "../../rendering/graphics";
-import { selectedSkill } from "../../systems/loadout";
+import { castingSkill } from "../../systems/loadout";
 import { playerSkillById, ULTIMATE_SKILL_ASSETS } from "../../systems/skillCatalog";
 import type { Skill } from "../../types/assets";
 import type {
@@ -284,7 +284,7 @@ function playerGhostAction(stateName: keyof typeof PLAYER_SHEETS): UltimatePlaye
 
 export function drawPlayer() {
   const p = state.player;
-  const isDashRepositionSkillAnimation = p.skillTimer > 0 && selectedSkill(state)?.id === SKILL_IDS.dashReposition;
+  const isDashRepositionSkillAnimation = p.skillTimer > 0 && castingSkill(state)?.id === SKILL_IDS.dashReposition;
   if (
     p.invincible > 0
     && !isDashRepositionSkillAnimation
@@ -334,7 +334,7 @@ export function drawPlayer() {
   }
 
   if (p.skillTimer > 0) {
-    const skill = selectedSkill(state);
+    const skill = castingSkill(state);
     if (!skill) return;
     if (skill.image) {
       const frame = playerSkillCastFrame(skill, p.skillTimer);

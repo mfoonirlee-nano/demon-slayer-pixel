@@ -1,4 +1,5 @@
 import type { MoonState } from "../../moon/types";
+import type { EquipmentReactionState } from "./equipmentReactions";
 import type {
   EnemyId,
   EnemyProfileId,
@@ -131,6 +132,7 @@ export type GameState = {
   moon: MoonState;
   spritesReady: boolean;
   player: PlayerState;
+  equipmentReactions: EquipmentReactionState;
   residualSpirits: ResidualSpiritState[];
   residualSpiritPickupFlights: ResidualSpiritPickupFlightState[];
   enemies: EnemyState[];

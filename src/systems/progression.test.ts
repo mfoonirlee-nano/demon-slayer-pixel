@@ -60,7 +60,7 @@ describe("run progression skills", () => {
       nextLevel: 1,
     });
     expect(state.pendingUpgradeChoices[1]).toMatchObject({
-      skillId: SKILL_IDS.lineProjectile,
+      type: "upgradeSkill",
       nextLevel: 2,
     });
     expect(state.pendingUpgradeChoices.filter((choice) => choice.type === "unlockSkill")).toHaveLength(1);
@@ -149,12 +149,15 @@ describe("run progression skills", () => {
 
     addRunXp(state, xpToNextLevel(1));
     const unlockSkillIndex = state.pendingUpgradeChoices.findIndex((choice) => (
-      choice.type === "unlockSkill" && choice.skillId === SKILL_IDS.dashReposition
+      choice.type === "unlockSkill"
     ));
     expect(unlockSkillIndex).toBeGreaterThanOrEqual(0);
+    const skillId = state.pendingUpgradeChoices[unlockSkillIndex].skillId;
+    if (!skillId) throw new Error("Expected a normal skill unlock");
+    expect(state.player.skillLevels[skillId]).toBeUndefined();
     expect(applyUpgradeChoice(state, unlockSkillIndex)).toBe(true);
 
-    expect(state.player.skillLevels[SKILL_IDS.dashReposition]).toBe(1);
+    expect(state.player.skillLevels[skillId]).toBe(1);
     expect(state.player.equippedSkillIds).toEqual([
       SKILL_IDS.lineProjectile,
       SKILL_IDS.closeArc,

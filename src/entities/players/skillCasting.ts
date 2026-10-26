@@ -10,7 +10,7 @@ import {
   equipmentSkillEnergyCost,
   syncSkillChargesForEquipment,
 } from "../../systems/equipment";
-import { selectedSkill } from "../../systems/loadout";
+import { castingSkill, selectedSkill } from "../../systems/loadout";
 import { hasLearnedUltimate, skillDamageMultiplier } from "../../systems/progression";
 import { corePlayerSkillGrowth, isGenericPlayerSkillId } from "../../systems/playerSkills";
 import {
@@ -127,6 +127,12 @@ export function castSelectedSkill() {
   p.skillFlash = 0;
   p.offenseActionSequence += 1;
   p.skillTimer = playerSkillCastFrames(skill);
+  p.activeSkillCast = {
+    skillId: skill.id,
+    level: p.skillLevels[skill.id] ?? 1,
+    castId: p.offenseActionSequence,
+    equipmentRevision: state.equipmentReactions.revision,
+  };
   p.skillEffectSpawned = !(
     skill.id === SKILL_IDS.lineProjectile
     || skill.id === SKILL_IDS.closeArc
@@ -211,7 +217,7 @@ export function updateSkillCastRelease(): boolean {
   const p = state.player;
   if (p.skillTimer > 0) {
     p.skillTimer -= 1;
-    const skill = selectedSkill(state);
+    const skill = castingSkill(state);
     if (!skill) {
       p.skillTimer = 0;
       p.skillEffectSpawned = false;
@@ -226,7 +232,7 @@ export function updateSkillCastRelease(): boolean {
         const cx = p.x + p.w / 2;
         const feetY = p.y + p.h;
         if (skill.id === SKILL_IDS.lineProjectile) {
-          const effectLevel = state.player.skillLevels[skill.id] ?? 1;
+          const effectLevel = p.activeSkillCast?.level ?? state.player.skillLevels[skill.id] ?? 1;
           const effectSheet = lineProjectileEffectSheetForLevel(effectLevel);
           const drawScale = LINE_PROJECTILE_EFFECT_CONFIG.drawScale;
           const effectW = effectSheet.frameW * drawScale;
@@ -234,6 +240,7 @@ export function updateSkillCastRelease(): boolean {
           const skillDrawH = skill.frameH * skill.drawScale;
           const frontX = cx + p.facing * p.w / 2;
           state.lineProjectileEffects.push({
+            skillSource: p.activeSkillCast ?? undefined,
             x: frontX + p.facing * (effectW / 2 - LINE_PROJECTILE_EFFECT_CONFIG.spawnOverlap),
             y: feetY - skillDrawH / 2 - effectH / 2,
             vx: p.facing * LINE_PROJECTILE_EFFECT_CONFIG.speed,
@@ -246,12 +253,13 @@ export function updateSkillCastRelease(): boolean {
           });
           playSfx(PLAYER_SKILL_RELEASE_SFX[skill.id]);
         } else if (skill.id === SKILL_IDS.closeArc) {
-          const growth = corePlayerSkillGrowth(skill.id, state.player.skillLevels[skill.id]);
+          const growth = corePlayerSkillGrowth(skill.id, p.activeSkillCast?.level ?? state.player.skillLevels[skill.id]);
           const drawScale = growth?.drawScale ?? CLOSE_ARC_EFFECT_CONFIG.drawScale;
           const effectW = CLOSE_ARC_EFFECT_SHEET.frameW * drawScale;
           const effectBaselineY = CLOSE_ARC_EFFECT_CONFIG.groundBaselineY * drawScale;
           const frontX = cx + p.facing * p.w / 2;
           state.closeArcEffects.push({
+            skillSource: p.activeSkillCast ?? undefined,
             x: frontX + p.facing * effectW / 2,
             y: feetY - effectBaselineY,
             vx: p.facing * CLOSE_ARC_EFFECT_CONFIG.speed,
@@ -274,13 +282,15 @@ export function updateSkillCastRelease(): boolean {
       }
     }
   }
+  if (p.skillTimer <= 0) p.activeSkillCast = null;
   return true;
 }
 
 function spawnGuardCounterEffect(damageMultiplier: number) {
-  const growth = corePlayerSkillGrowth(SKILL_IDS.guardCounter, state.player.skillLevels[SKILL_IDS.guardCounter]);
+  const growth = corePlayerSkillGrowth(SKILL_IDS.guardCounter, state.player.activeSkillCast?.level ?? state.player.skillLevels[SKILL_IDS.guardCounter]);
   const maxHits = growth?.maxHits ?? GUARD_COUNTER_EFFECT_CONFIG.maxHits;
   state.guardCounterEffect = {
+    skillSource: state.player.activeSkillCast ?? undefined,
     elapsed: 0,
     frame: 0,
     hitsRemaining: maxHits,

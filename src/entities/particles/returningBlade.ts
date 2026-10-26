@@ -102,6 +102,7 @@ function damageRoute(effect: PlayerSkillEffectState, previousX: number, previous
     const cross = returning && route.level >= CONFIG.requiredLevel && route.markedEnemies.includes(enemy);
     const dx = effect.x - previousX;
     const hit = resolveEnemyHit({
+      skillSource: effect.skillSource,
       enemy, enemyIndex: index, hitRect: box,
       damage: effect.damage * (ratio + (cross ? CONFIG.crossDamageRatio : 0)),
       hitCooldown: effect.hitCooldown, reward: "enemyNoCover",
@@ -127,6 +128,7 @@ function damageRoute(effect: PlayerSkillEffectState, previousX: number, previous
     if (returning) route.returnBoss = boss;
     else route.outboundBoss = boss;
     const hit = resolveBossHit({
+      skillSource: effect.skillSource,
       boss, hitRect: box,
       damage: effect.bossDamage * (ratio + (cross ? CONFIG.crossDamageRatio : 0)),
       hitCooldown: effect.bossHitCooldown,

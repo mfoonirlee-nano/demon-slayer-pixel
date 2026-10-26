@@ -16,6 +16,7 @@ import type {
 import { formatSignedPercent } from "../utils";
 import { equipmentIconSrc, equipmentSlotBadgeSrc } from "./uiDisplay";
 import { getRewardOverlayLayout } from "./rewardOverlayLayout";
+import { EquipmentSkillPreview } from "./equipmentSkillPreview";
 
 const ICON_BADGE_MIN_SIZE = 12;
 const ICON_BADGE_SIZE_RATIO = 0.34;
@@ -163,6 +164,7 @@ export function TreasureRewardCard({ choice, language, layout, selected, snapsho
             <div className="mt-2 line-clamp-3 text-center text-[8px] leading-[1.45] text-[#bcefff]">
               {equipment.summary}
             </div>
+            <EquipmentSkillPreview equipment={snapshot.equipment} item={equipment} language={language} compact />
             <div className="mt-auto pt-1 text-center text-[7px] leading-[1.35] text-[#ffd990]">
               {equipment.reason === "replacement"
                 ? message(language, "reward.status.replacement", {

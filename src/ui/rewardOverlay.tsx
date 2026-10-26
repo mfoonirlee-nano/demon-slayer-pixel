@@ -38,6 +38,12 @@ import {
 } from "./rewardOverlayLayout";
 import { TreasureRewardCard } from "./treasureRewardCard";
 import { UiSprite } from "./uiSprite";
+import {
+  EquipmentSkillPreview,
+  SkillEquipmentPreview,
+  currentSkillEquipmentLines,
+  equipmentSkillPreviewLines,
+} from "./equipmentSkillPreview";
 
 const ULTIMATE_SKILL_ICON_SRC = resolveStaticAssetUrl(
   "assets/sprites/skills/ultimate_skill/icon.png",
@@ -190,6 +196,19 @@ export function RewardOverlay({ snapshot }: { snapshot: GameSnapshot }) {
   const choiceIds = choices.map((choice) => choice.id).join("|");
   const [selectedIndex, setSelectedIndex] = useState(0);
   const selectedChoiceIndex = choiceCount > 0 ? Math.min(selectedIndex, choiceCount - 1) : 0;
+  const selectedEquipment = isBossReward
+    ? snapshot.pendingEquipmentChoices[selectedChoiceIndex]
+    : isTreasureReward && snapshot.pendingTreasureChoices[selectedChoiceIndex]?.kind === "equipment"
+      ? (snapshot.pendingTreasureChoices[selectedChoiceIndex] as Extract<TreasureChoiceState, { kind: "equipment" }>).equipment
+      : null;
+  const selectedSkillId = !isBossReward && !isTreasureReward
+    ? snapshot.pendingUpgradeChoices[selectedChoiceIndex]?.skillId
+    : null;
+  const hasComboPreview = selectedEquipment
+    ? equipmentSkillPreviewLines(snapshot.equipment, selectedEquipment, language).length > 0
+    : selectedSkillId
+      ? currentSkillEquipmentLines(snapshot.equipment, selectedSkillId, language).length > 0
+      : false;
   const layout = getRewardOverlayLayout(overlayKind, choices.length);
   const title = message(
     language,
@@ -249,7 +268,7 @@ export function RewardOverlay({ snapshot }: { snapshot: GameSnapshot }) {
       className={`${REWARD_OVERLAY_BACKDROP_CLASS} ${isTreasureReward ? "reward-overlay-treasure" : ""} absolute inset-0 z-40 flex items-center justify-center bg-[rgba(4,7,16,0.78)] px-4 text-white`}
     >
       <div
-        className={`${REWARD_OVERLAY_PANEL_CLASS} relative`}
+        className={`${REWARD_OVERLAY_PANEL_CLASS} relative ${hasComboPreview ? "mb-[108px]" : ""}`}
         style={{ width: layout.overlayW, height: layout.overlayH }}
       >
         {isTreasureReward ? <div className="reward-treasure-panel-aura" aria-hidden="true" /> : null}
@@ -317,6 +336,8 @@ export function RewardOverlay({ snapshot }: { snapshot: GameSnapshot }) {
             const resonance = item
               ? equipmentFamilyResonanceCopy(language, item.family)
               : null;
+            const hasItemComboPreview = item
+              && equipmentSkillPreviewLines(snapshot.equipment, item, language).length > 0;
             return (
               <button
                 key={choice.id}
@@ -426,12 +447,13 @@ export function RewardOverlay({ snapshot }: { snapshot: GameSnapshot }) {
                         </div>
                         <RewardMetricList metrics={metrics} accent={bossAccent} />
                         <div className="mt-1 line-clamp-2 text-center text-[8px] leading-[1.4] text-[#c8efff]">{item.summary}</div>
-                        {resonance ? (
+                        {resonance && !hasItemComboPreview ? (
                           <div className="mt-1 text-center text-[7px] leading-[1.25] text-[#ffd9a0]">
                             <div className="line-clamp-2">{resonance.pair}</div>
                             <div className="mt-[2px] line-clamp-2">{resonance.full}</div>
                           </div>
                         ) : null}
+                        <EquipmentSkillPreview equipment={snapshot.equipment} item={item} language={language} compact />
                       </>
                     ) : upgrade && upgradeStyle ? (
                       <>
@@ -465,6 +487,13 @@ export function RewardOverlay({ snapshot }: { snapshot: GameSnapshot }) {
               </button>
             );
           })}
+        </div>
+        <div className="absolute inset-x-4 top-full mt-1">
+          {selectedEquipment ? (
+            <EquipmentSkillPreview equipment={snapshot.equipment} item={selectedEquipment} language={language} />
+          ) : selectedSkillId ? (
+            <SkillEquipmentPreview snapshot={snapshot} skillId={selectedSkillId} language={language} />
+          ) : null}
         </div>
       </div>
     </div>

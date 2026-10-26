@@ -1,6 +1,8 @@
 import type { EquipmentSlot, GameState } from "../types/game-state";
+import { resetEquipmentReactions } from "./equipmentReactions";
 
 export function resetSlotRuntimeState(state: GameState, slot: EquipmentSlot) {
+  resetEquipmentReactions(state);
   const player = state.player;
   if (slot === "blade") {
     player.flowBladeHits = 0;

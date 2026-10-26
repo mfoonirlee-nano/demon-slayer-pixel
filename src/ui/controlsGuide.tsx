@@ -177,7 +177,9 @@ export function ControlsGuide({
       </div>
 
       <footer className="controls-guide-footer">
-        <p>{message(language, "controls.footer")}</p>
+        <div>
+          <p>{message(language, "controls.footer")}</p>
+        </div>
         {actions ? <div className="controls-guide-actions">{actions}</div> : null}
       </footer>
     </section>

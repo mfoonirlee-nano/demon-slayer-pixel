@@ -12,6 +12,7 @@ import {
   RISK_TALISMAN_SKILL_REGEN_PER_SECOND,
   RISK_TALISMAN_ULTIMATE_GAIN,
 } from "../constants";
+import { equipmentReactionDamageMultiplier, resetEquipmentReactions } from "./equipmentReactions";
 import type { SkillId } from "../types/assets";
 import type {
   EquipmentItemId,
@@ -155,6 +156,7 @@ export function chooseBossEquipment(state: GameState, index: number) {
     state.pendingUpgradeChoices = [];
     clearTreasureState(state);
     state.gameOver = true;
+    resetEquipmentReactions(state);
     state.runCleared = true;
   }
   return true;
@@ -285,7 +287,6 @@ export function tickEquipmentEffects(state: GameState, deltaSeconds = 0) {
 export function recordEquipmentMovement(state: GameState, movedDistance: number) {
   const distance = Math.abs(movedDistance);
   const player = state.player;
-
   if (distance > PLAYER_COMBAT.movementIdleThreshold) {
     const shadowstepTier = equippedTier(state, "blade", "shadowstep_blade");
     if (shadowstepTier && !player.shadowstepBladeReady) {
@@ -381,7 +382,7 @@ export function equipmentBossDamageMultiplier(state: GameState, boss: BossLike) 
 }
 
 export function equipmentIncomingDamageMultiplier(state: GameState) {
-  let multiplier = 1;
+  let multiplier = equipmentReactionDamageMultiplier(state);
   const flowTier = equippedTier(state, "garb", "flow_garb");
   if (flowTier && tierAtLeast(flowTier, "fine") && state.player.flowGarbTimer > 0) {
     multiplier *= FLOW_GARB_DAMAGE_MULTIPLIER;

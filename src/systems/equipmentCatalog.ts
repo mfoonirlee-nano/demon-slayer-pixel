@@ -19,6 +19,7 @@ import {
   RISK_TALISMAN_ULTIMATE_GAIN,
 } from "../constants";
 import { formatPercent } from "../utils";
+import { equipmentSkillItemSummary } from "../i18n/equipmentSkillCopy";
 
 type EquipmentBaseItem = {
   id: EquipmentItemId;
@@ -282,7 +283,7 @@ export function equipmentItemForTier(itemId: EquipmentItemId, tier: EquipmentTie
     ...base,
     tier,
     primaryStatBonusRatio,
-    summary: effect.summary,
+    summary: equipmentSkillItemSummary("zh-CN", itemId) ?? effect.summary,
     uiTags: [EQUIPMENT_TIER_LABELS[tier], effect.tag],
     requiresUltimate: effect.requiresUltimate,
   };
@@ -290,6 +291,10 @@ export function equipmentItemForTier(itemId: EquipmentItemId, tier: EquipmentTie
 
 export function equipmentRequiresUltimate(itemId: EquipmentItemId, tier: EquipmentTier) {
   return EQUIPMENT_TIER_EFFECTS[itemId][tier].requiresUltimate === true;
+}
+
+export function equipmentTierEffectSummary(itemId: EquipmentItemId, tier: EquipmentTier) {
+  return EQUIPMENT_TIER_EFFECTS[itemId][tier].summary;
 }
 
 export const EQUIPMENT_ITEMS: Record<EquipmentItemId, EquipmentItemState> = Object.fromEntries(

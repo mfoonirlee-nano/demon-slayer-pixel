@@ -12,6 +12,12 @@ export function selectedSkill(state: GameState): Skill | null {
   return skillById(state.player.equippedSkillIds[state.player.skillIndex] ?? null);
 }
 
+export function castingSkill(state: GameState): Skill | null {
+  return state.player.activeSkillCast
+    ? skillById(state.player.activeSkillCast.skillId)
+    : selectedSkill(state);
+}
+
 export function isSkillLearned(state: GameState, skillId: SkillId) {
   return Boolean(state.player.skillLevels[skillId]);
 }

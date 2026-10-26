@@ -91,7 +91,8 @@ describe("pause equipment detail copy", () => {
 
     expect(detail.title).toBe("Flow Blade");
     expect(detail.body).toContain("Base Stat: Attack +12%.");
-    expect(detail.body).toContain("Unique Effect: After 4 basic hits");
+    expect(detail.body).toContain("Unique Effect: Skills mark targets");
+    expect(detail.body).toContain("Tier Effect: After 4 basic hits");
     expect(`${detail.kicker}${detail.title}${detail.body}`).not.toMatch(/[一-龥]/u);
   });
 

@@ -126,7 +126,7 @@ export function PauseScreen({ snapshot }: { snapshot: GameSnapshot }) {
     unlockedEquipmentIds,
     language,
   );
-  const skillDetail = skillDetailCopy(hoveredSkillDetail ?? selectedSkillDetail, player, language);
+  const skillDetail = skillDetailCopy(hoveredSkillDetail ?? selectedSkillDetail, player, language, equipment);
 
   const selectPauseTab = (tabId: PauseTab) => {
     setActiveTab(tabId);

@@ -3,6 +3,7 @@ import {
   equipmentFamilyResonanceCopy,
   equipmentPrimaryStatLabel,
   equipmentSlotLabel,
+  equipmentTierEffectCopy,
   localizeEquipmentItem,
 } from "../../i18n/equipmentCopy";
 import { DEFAULT_LANGUAGE, type Language } from "../../i18n/language";
@@ -16,6 +17,13 @@ import {
 } from "../uiDisplay";
 import { formatSignedPercent } from "../../utils";
 import type { EquipmentDetailTarget, PauseDetailCopy, SkillDetailTarget } from "./types";
+import { equipmentSkillRuleCopy } from "../../i18n/equipmentSkillCopy";
+import { resolveEquipmentSkillRules } from "../../systems/equipmentSkillRules";
+import {
+  currentSkillEquipmentLines,
+  equipmentSkillLoadout,
+  equipmentSkillPreviewLines,
+} from "../equipmentSkillPreview";
 
 export function equipmentDetailCopy(
   target: EquipmentDetailTarget,
@@ -35,7 +43,7 @@ export function equipmentDetailCopy(
         message(language, equipped ? "status.equipped" : unlocked ? "status.canEquip" : "status.locked")
       }`,
       title: item.name,
-      body: equipmentItemDetailBody(item, language),
+      body: equipmentItemDetailBody(item, equipment, language, equipped, unlocked),
     };
   }
 
@@ -44,22 +52,43 @@ export function equipmentDetailCopy(
   return {
     kicker: `${equipmentSlotLabel(language, target.slot)} · ${item?.uiTags.join(" · ") ?? message(language, "status.notEquipped")}`,
     title: item?.name ?? message(language, "status.emptySlot"),
-    body: item ? equipmentItemDetailBody(item, language) : message(language, "pause.detail.currentEquipmentEmpty"),
+    body: item ? equipmentItemDetailBody(item, equipment, language, true, true) : message(language, "pause.detail.currentEquipmentEmpty"),
   };
 }
 
-function equipmentItemDetailBody(item: EquipmentItemState, language: Language) {
+function equipmentItemDetailBody(
+  item: EquipmentItemState,
+  equipment: GameSnapshot["equipment"],
+  language: Language,
+  equipped: boolean,
+  unlocked: boolean,
+) {
   const primaryStatPercent = formatSignedPercent(item.primaryStatBonusRatio);
   const resonance = equipmentFamilyResonanceCopy(language, item.family);
-  return language === "zh-CN"
-    ? `基础属性：${equipmentPrimaryStatLabel(language, item.slot)} ${primaryStatPercent}。专属机制：${item.summary}\n套装效果：${resonance.pair}\n${resonance.full}`
-    : `Base Stat: ${equipmentPrimaryStatLabel(language, item.slot)} ${primaryStatPercent}. Unique Effect: ${item.summary}\nSet Bonuses: ${resonance.pair}\n${resonance.full}`;
+  const zh = language === "zh-CN";
+  const comboLines = equipped
+    ? resolveEquipmentSkillRules(equipmentSkillLoadout(equipment)).map((rule) => equipmentSkillRuleCopy(language, rule).description)
+    : equipmentSkillPreviewLines(equipment, item, language);
+  const comboLabel = equipped
+    ? zh ? "当前构筑联动" : "Current Build Combos"
+    : unlocked
+      ? zh ? "装备后联动" : "Combos After Equipping"
+      : zh ? "获得并装备后联动" : "Combos After Obtaining and Equipping";
+  const combo = comboLines.length ? `${comboLabel}：\n${comboLines.join("\n")}\n` : "";
+  const tierEffect = equipmentTierEffectCopy(language, item.id, item.tier);
+  const tierLine = tierEffect !== item.summary
+    ? `\n${zh ? "品质机制" : "Tier Effect"}: ${tierEffect}`
+    : "";
+  return combo + (zh
+    ? `基础属性：${equipmentPrimaryStatLabel(language, item.slot)} ${primaryStatPercent}。专属机制：${item.summary}${tierLine}\n套装效果：${resonance.pair}\n${resonance.full}`
+    : `Base Stat: ${equipmentPrimaryStatLabel(language, item.slot)} ${primaryStatPercent}. Unique Effect: ${item.summary}${tierLine}\nSet Bonuses: ${resonance.pair}\n${resonance.full}`);
 }
 
 export function skillDetailCopy(
   target: SkillDetailTarget,
   player: GameSnapshot["player"],
   language: Language = DEFAULT_LANGUAGE,
+  equipment?: GameSnapshot["equipment"],
 ): PauseDetailCopy {
   if (target.type === "item") {
     const skill = getSkill(target.skillId);
@@ -75,9 +104,9 @@ export function skillDetailCopy(
     return {
       kicker: `${message(language, "pause.detail.skill")} · ${message(language, "pause.detail.level", { level: levelText })}${equippedText}`,
       title: copy?.name ?? message(language, "pause.detail.unknownSkill"),
-      body: skill && level
+      body: appendSkillCombos(skill && level
         ? skillDescription(language, target.skillId, level)
-        : copy?.description ?? message(language, "pause.detail.noSkillDescription"),
+        : copy?.description ?? message(language, "pause.detail.noSkillDescription"), target.skillId, equipment, language, equippedSlot >= 0),
     };
   }
 
@@ -93,8 +122,24 @@ export function skillDetailCopy(
   return {
     kicker: `${message(language, "pause.detail.slot", { slot: target.slotIndex + 1 })} · ${message(language, "pause.detail.hotkey", { key: target.slotIndex + 1 })} · ${stateText}`,
     title: copy?.name ?? message(language, "status.emptySlot"),
-    body: skillId && level
+    body: appendSkillCombos(skillId && level
       ? skillDescription(language, skillId, level)
-      : copy?.description ?? message(language, "pause.detail.currentSkillEmpty"),
+      : copy?.description ?? message(language, "pause.detail.currentSkillEmpty"), skillId, equipment, language, true),
   };
+}
+
+function appendSkillCombos(
+  body: string,
+  skillId: Parameters<typeof currentSkillEquipmentLines>[1] | null,
+  equipment: GameSnapshot["equipment"] | undefined,
+  language: Language,
+  equipped: boolean,
+) {
+  if (!equipment || !skillId) return body;
+  const lines = currentSkillEquipmentLines(equipment, skillId, language);
+  if (!lines.length) return body;
+  const label = language === "zh-CN"
+    ? equipped ? "当前装备联动" : "习得并装备此招后"
+    : equipped ? "Current Equipment Combos" : "After Learning and Equipping This Skill";
+  return `${body}\n${label}：\n${lines.join("\n")}`;
 }

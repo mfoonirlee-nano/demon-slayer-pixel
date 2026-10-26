@@ -116,10 +116,10 @@ export function PauseSquareIcon({
 
 export function PauseDetailPanel({ detail }: { detail: PauseDetailCopy }) {
   return (
-    <div className="pause-detail-panel" style={{ height: PAUSE_DETAIL_PANEL_H, minHeight: PAUSE_DETAIL_PANEL_H }}>
+    <div className="pause-detail-panel flex flex-col" style={{ height: PAUSE_DETAIL_PANEL_H, minHeight: PAUSE_DETAIL_PANEL_H }}>
       <div className="truncate text-[8px] leading-none text-[#7fc8e0]">{detail.kicker}</div>
       <div className="mt-[5px] truncate text-[12px] font-bold leading-none text-[#ffd46e]">{detail.title}</div>
-      <div className="mt-[5px] line-clamp-5 whitespace-pre-line text-[8px] leading-[1.35] text-[#c8efff]">{detail.body}</div>
+      <div className="mt-[5px] min-h-0 flex-1 overflow-y-auto whitespace-pre-line text-[8px] leading-[1.35] text-[#c8efff]" tabIndex={0}>{detail.body}</div>
     </div>
   );
 }
