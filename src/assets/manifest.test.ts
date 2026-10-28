@@ -63,20 +63,22 @@ describe("sprite manifest", () => {
     }
   });
 
-  it("keeps Moon Tide player timing and anchors aligned with the normal actions", () => {
+  it("keeps Moon Tide attack on the original moving-attack layout", () => {
     for (const stateName of Object.values(PLAYER_ANIMATION_STATES)) {
-      const normalSheet = PLAYER_SHEETS[stateName];
+      const referenceSheet = stateName === PLAYER_ANIMATION_STATES.attack
+        ? PLAYER_SHEETS[PLAYER_ANIMATION_STATES.movingAttack]
+        : PLAYER_SHEETS[stateName];
       const moonTideSheet = MOON_TIDE_PLAYER_SHEETS[stateName];
-
       expect(moonTideSheet).toMatchObject({
-        frameW: normalSheet.frameW,
-        frameH: normalSheet.frameH,
-        count: normalSheet.count,
-        animSpeed: normalSheet.animSpeed,
-        anchorY: normalSheet.anchorY,
+        frameW: referenceSheet.frameW,
+        frameH: referenceSheet.frameH,
+        count: referenceSheet.count,
+        animSpeed: referenceSheet.animSpeed,
+        anchorY: referenceSheet.anchorY,
       });
-      expect(moonTideSheet.anchorX).toBe(normalSheet.anchorX);
-      expect(moonTideSheet.flipX).toBe(normalSheet.flipX);
+      expect(moonTideSheet.anchorX).toBe(referenceSheet.anchorX);
+      expect(moonTideSheet.flipX).toBe(referenceSheet.flipX);
+      expect(moonTideSheet.attachmentBounds).toBeUndefined();
     }
   });
 

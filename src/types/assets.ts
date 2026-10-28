@@ -83,15 +83,17 @@ export type SpriteSheet = {
 };
 
 // Player animation sheet: sprite data + per-state draw parameters.
-// Draw formula: drawX = refX - drawW * anchorX, drawY = refY - drawH * anchorY
+// Draw formula: drawX = refX - drawW * mirroredAnchorX, drawY = refY - drawH * anchorY
 // where refX = centerX, refY = feetY - PLAYER_DRAW.yOffset.
 export type PlayerSheet = SpriteSheet & {
+  // Source-pixel body bounds for attachments; excludes weapon/effect canvas space.
+  attachmentBounds?: { x: number; y: number; w: number; h: number };
   // rendered draw size in canvas pixels
   drawW: number;
   drawH: number;
   // game-frames per animation frame (higher = slower)
   animSpeed: number;
-  // horizontal anchor (0–1): where the player center sits in the frame, default 0.5
+  // Horizontal anchor in source orientation; mirrored with facing, default 0.5.
   anchorX?: number;
   // vertical anchor (0–1): where the player feet sit in the frame, default 1.0 = sprite bottom
   anchorY?: number;

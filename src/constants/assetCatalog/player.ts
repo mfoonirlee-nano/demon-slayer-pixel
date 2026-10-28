@@ -26,6 +26,25 @@ export const RESIDUAL_SPIRIT_HEAL_EFFECT_SHEET: PlayerAttachedEffectSheet = {
   channelFrameCount: 5,
 };
 
+const BASIC_ATTACK_SHEET_LAYOUT = {
+  frameW: 768,
+  frameH: 480,
+  count: 8,
+  drawW: 227,
+  drawH: 142,
+  animSpeed: 3,
+  anchorY: 0.979,
+} as const;
+const STANDING_ATTACK_LAYOUT = {
+  frameW: 768,
+  frameH: 512,
+  sourceDensity: 3.2,
+  feetX: 320,
+  feetY: 450,
+  // Match the idle sprite's visible soles, about 3.75 canvas pixels above refY.
+  baselineInsetY: 12,
+} as const;
+
 export const PLAYER_SHEETS: Record<PlayerAnimationState, PlayerSheet> = {
   [PLAYER_ANIMATION_STATES.idle]: {
     src: "assets/sprites/player/player_idle.png",
@@ -61,26 +80,23 @@ export const PLAYER_SHEETS: Record<PlayerAnimationState, PlayerSheet> = {
     anchorY: 0.971,
   },
   [PLAYER_ANIMATION_STATES.attack]: {
+    ...BASIC_ATTACK_SHEET_LAYOUT,
     src: "assets/sprites/player/player_attack.png",
-    frameW: 768,
-    frameH: 480,
-    count: 8,
     image: null,
-    drawW: 227,
-    drawH: 142,
-    animSpeed: 3,
-    anchorY: 0.979,
+    frameW: STANDING_ATTACK_LAYOUT.frameW,
+    frameH: STANDING_ATTACK_LAYOUT.frameH,
+    count: 16,
+    drawW: STANDING_ATTACK_LAYOUT.frameW / STANDING_ATTACK_LAYOUT.sourceDensity,
+    drawH: STANDING_ATTACK_LAYOUT.frameH / STANDING_ATTACK_LAYOUT.sourceDensity,
+    anchorX: STANDING_ATTACK_LAYOUT.feetX / STANDING_ATTACK_LAYOUT.frameW,
+    anchorY: (STANDING_ATTACK_LAYOUT.feetY + STANDING_ATTACK_LAYOUT.baselineInsetY) / STANDING_ATTACK_LAYOUT.frameH,
+    // Attach status effects to the body, excluding the forward sword/water space.
+    attachmentBounds: { x: 192, y: 110, w: 256, h: 340 },
   },
   [PLAYER_ANIMATION_STATES.movingAttack]: {
+    ...BASIC_ATTACK_SHEET_LAYOUT,
     src: "assets/sprites/player/player_moving_attack.png",
-    frameW: 768,
-    frameH: 480,
-    count: 8,
     image: null,
-    drawW: 227,
-    drawH: 142,
-    animSpeed: 3,
-    anchorY: 0.979,
   },
   [PLAYER_ANIMATION_STATES.fallAttack]: {
     src: "assets/sprites/player/player_fall_attack.png",
@@ -100,7 +116,8 @@ function moonTideSheet(
   src: string,
 ): PlayerSheet {
   return {
-    ...PLAYER_SHEETS[state],
+    // Moon Tide keeps its own original attack bitmap and slicing contract.
+    ...(state === PLAYER_ANIMATION_STATES.attack ? BASIC_ATTACK_SHEET_LAYOUT : PLAYER_SHEETS[state]),
     src,
     image: null,
     ...MOON_TIDE_DRAW_SIZES[state],
