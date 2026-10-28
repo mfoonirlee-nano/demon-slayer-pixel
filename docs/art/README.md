@@ -9,6 +9,7 @@
 | 主题 | 文档 |
 | --- | --- |
 | 玩家原画设定 | [player.md](player.md) |
+| 角色序列帧设计与修正经验、提示词模板 | [character-sequence-lessons.md](character-sequence-lessons.md) |
 | 月潮灵匣原画设定 | [moon-tide-treasure.md](moon-tide-treasure.md) |
 | 环境与气候设定 | [environment.md](environment.md) |
 | 敌人原画设定 | [enemies/README.md](enemies/README.md) |

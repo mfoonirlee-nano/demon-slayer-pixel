@@ -10,6 +10,7 @@ description: Create, repair, or integrate frame-based sprite sheets; fix frame c
 - For generated or edited bitmap content, follow [the imagegen project workflow](../../../workflows/imagegen-project-asset.md). It owns trusted artifacts, generation, deterministic processing, retries, and delivery.
 - For scale, anchor, or playback fixes, inspect the consuming code and [sprite contract](../../../docs/SPRITES.md). Adjust the existing runtime configuration when it can meet the visual requirement.
 - For cross-state actor identity or scale unification, use [the character-state workflow](../../../workflows/character-state-visual-unification.md).
+- For actor motion, costume continuity, or weapon/VFX sequence repairs, read [the character sequence lessons](../../../docs/art/character-sequence-lessons.md). Use its two-endpoint repair method, prompt template, and visual review criteria; keep case-specific poses and frame counts scoped to their original action.
 
 Read the target's section in `docs/SPRITES.md` and its brief through [the art index](../../../docs/art/README.md). Load gameplay design only when the intended action or tell is unclear or behavior is changing.
 
@@ -27,7 +28,7 @@ For chroma-key sources, request flat `#00ff00`, no floor/shadow/gradient/text, a
 - Lock every frame to the same baseline, center anchor, viewing angle, style, palette, pixel density, and apparent scale unless the animation intentionally changes one of them.
 - Prompt important middle frames explicitly. For peak-and-decay effects, describe frame N as the direct continuation of frame N-1, not a new side wave, slash, pose, or unrelated shape.
 - Preserve the same motion family through the whole strip: wind-up, growth, peak, decay, and fade for effects; anticipation, contact, follow-through, and recovery for actors.
-- For impact effects, specify force cues directly: bright contact point, broad base shock ring, dense particles/droplets, strong value contrast, readable peak frame, and clear dissipation.
+- For impact effects, choose force cues that fit the action: directional silhouette, layered flow, value contrast, a readable peak, and clear dissipation. Add shock rings or dense bursts only when the intended action calls for them; recovery must continue the preceding effect's decay.
 - Inspect the sequence midpoint before replacing assets. Middle frames often reveal hidden discontinuity after a good-looking start and end.
 - If fitting the source into the current frame size forces the important frame to shrink too much, prefer a modest frame contract expansion plus updated constants/docs over accepting a weak-looking asset. Keep gameplay hitboxes unchanged unless the user asks for behavior changes.
 - Validate progression with alpha bboxes, not just visual preview: sizes and centers should evolve smoothly without sudden width/height collapse, anchor drift, or identity change.
