@@ -35,89 +35,102 @@ const BASIC_ATTACK_SHEET_LAYOUT = {
   animSpeed: 3,
   anchorY: 0.979,
 } as const;
-const STANDING_ATTACK_LAYOUT = {
+const PLAYER_BODY_LAYOUT = {
   frameW: 768,
   frameH: 512,
   sourceDensity: 3.2,
   feetX: 320,
   feetY: 450,
-  // Match the idle sprite's visible soles, about 3.75 canvas pixels above refY.
+  // Preserve the shared visible sole position, 3.75 canvas pixels above refY.
   baselineInsetY: 12,
+  bodyX: 192,
+  bodyY: 110,
+  bodyW: 256,
+  bodyH: 340,
 } as const;
+const FALL_ATTACK_LAYOUT = { frameH: 640, feetY: 510 } as const;
+
+function playerBodyLayout(
+  frameH: number = PLAYER_BODY_LAYOUT.frameH,
+  feetY: number = PLAYER_BODY_LAYOUT.feetY,
+) {
+  const layout = PLAYER_BODY_LAYOUT;
+  return {
+    frameW: layout.frameW,
+    frameH,
+    drawW: layout.frameW / layout.sourceDensity,
+    drawH: frameH / layout.sourceDensity,
+    anchorX: layout.feetX / layout.frameW,
+    anchorY: (feetY + layout.baselineInsetY) / frameH,
+    // The plunge canvas extends below the boots; effects attach to the body.
+    attachmentBounds: {
+      x: layout.bodyX, y: layout.bodyY + feetY - layout.feetY,
+      w: layout.bodyW, h: layout.bodyH,
+    },
+  };
+}
 
 export const PLAYER_SHEETS: Record<PlayerAnimationState, PlayerSheet> = {
   [PLAYER_ANIMATION_STATES.idle]: {
+    ...playerBodyLayout(),
     src: "assets/sprites/player/player_idle.png",
-    frameW: 384,
-    frameH: 480,
     count: 8,
     image: null,
-    drawW: 96,
-    drawH: 120,
     animSpeed: 8,
-    anchorY: 0.979,
   },
   [PLAYER_ANIMATION_STATES.run]: {
+    ...playerBodyLayout(),
     src: "assets/sprites/player/player_run.png",
-    frameW: 448,
-    frameH: 420,
     count: 8,
     image: null,
-    drawW: 120,
-    drawH: 112,
     animSpeed: 4,
-    anchorY: 0.976,
   },
   [PLAYER_ANIMATION_STATES.jump]: {
+    ...playerBodyLayout(),
     src: "assets/sprites/player/player_jump.png",
-    frameW: 448,
-    frameH: 420,
     count: 6,
     image: null,
-    drawW: 124,
-    drawH: 116,
     animSpeed: 7,
-    anchorY: 0.971,
   },
   [PLAYER_ANIMATION_STATES.attack]: {
-    ...BASIC_ATTACK_SHEET_LAYOUT,
+    ...playerBodyLayout(),
     src: "assets/sprites/player/player_attack.png",
     image: null,
-    frameW: STANDING_ATTACK_LAYOUT.frameW,
-    frameH: STANDING_ATTACK_LAYOUT.frameH,
     count: 16,
-    drawW: STANDING_ATTACK_LAYOUT.frameW / STANDING_ATTACK_LAYOUT.sourceDensity,
-    drawH: STANDING_ATTACK_LAYOUT.frameH / STANDING_ATTACK_LAYOUT.sourceDensity,
-    anchorX: STANDING_ATTACK_LAYOUT.feetX / STANDING_ATTACK_LAYOUT.frameW,
-    anchorY: (STANDING_ATTACK_LAYOUT.feetY + STANDING_ATTACK_LAYOUT.baselineInsetY) / STANDING_ATTACK_LAYOUT.frameH,
-    // Attach status effects to the body, excluding the forward sword/water space.
-    attachmentBounds: { x: 192, y: 110, w: 256, h: 340 },
+    animSpeed: 3,
   },
   [PLAYER_ANIMATION_STATES.movingAttack]: {
-    ...BASIC_ATTACK_SHEET_LAYOUT,
+    ...playerBodyLayout(),
     src: "assets/sprites/player/player_moving_attack.png",
     image: null,
+    count: 12,
+    animSpeed: 3,
   },
   [PLAYER_ANIMATION_STATES.fallAttack]: {
+    ...playerBodyLayout(FALL_ATTACK_LAYOUT.frameH, FALL_ATTACK_LAYOUT.feetY),
     src: "assets/sprites/player/player_fall_attack.png",
-    frameW: 640,
-    frameH: 560,
     count: 8,
     image: null,
-    drawW: 178,
-    drawH: 156,
     animSpeed: 4,
-    anchorY: 0.982,
   },
 };
+
+// Moon Tide bitmaps have independent slicing and anchors; normal art may expand.
+const MOON_TIDE_SOURCE_LAYOUTS = {
+  idle: { frameW: 384, frameH: 480, count: 8, animSpeed: 8, anchorY: 0.979 },
+  run: { frameW: 448, frameH: 420, count: 8, animSpeed: 4, anchorY: 0.976 },
+  jump: { frameW: 448, frameH: 420, count: 6, animSpeed: 7, anchorY: 0.971 },
+  attack: BASIC_ATTACK_SHEET_LAYOUT,
+  movingAttack: BASIC_ATTACK_SHEET_LAYOUT,
+  fallAttack: { frameW: 640, frameH: 560, count: 8, animSpeed: 4, anchorY: 0.982 },
+} as const;
 
 function moonTideSheet(
   state: PlayerAnimationState,
   src: string,
 ): PlayerSheet {
   return {
-    // Moon Tide keeps its own original attack bitmap and slicing contract.
-    ...(state === PLAYER_ANIMATION_STATES.attack ? BASIC_ATTACK_SHEET_LAYOUT : PLAYER_SHEETS[state]),
+    ...MOON_TIDE_SOURCE_LAYOUTS[state],
     src,
     image: null,
     ...MOON_TIDE_DRAW_SIZES[state],

@@ -55,6 +55,16 @@
 - Approval status: repaired
 - Validation notes: 裂甲五帧已重绘并校准比例与脚点；跳跃按纵向运动选帧；常态下刺以第四帧为空中保持姿态，第五帧起仅在落地播放。跳跃、二段跳、长距离下刺及月潮形态回归测试通过。
 
+### player — 2026-10-28 常态动作续作
+
+- Scope: 本次只重绘玩家常态待机、跑步、跳跃、移动攻击和下落攻击；已完成的原地攻击保留，月潮形态、技能施法和其他角色不在本批替换范围。
+- Baseline status: baseline clear；身份参照为玩家原设与新普攻的第 11、16 帧，用户已要求继续生成其他角色序列。
+- Initial findings: 旧待机和移动类动作的身形、衣片与新普攻存在差异，需要统一；不能只按各自整帧尺寸缩放。选择自然小幅跑姿，保留跳跃与下刺的运动阶段。
+- Repair type: sprite-contract repair；其余常态图采用与新普攻一致的源密度和身体参照，下刺扩大下方留白，移动攻击扩为十二帧。月潮布局已与常态图隔离。
+- Approval status: approved by the user's continuation request; integrated for review。
+- Validation notes: 生成前后均运行 `scripts/audit-character-sprites.mjs`，本次人工复核聚焦玩家常态五组及与原地攻击的衔接；未重新声称复核所有角色。候选稿中拥挤的移动攻击图已淘汰，采用稿第二帧缺刀已单独修正。动作接触表和左右镜像预览位于 `tmp/imagegen/player-basic-states-20261028/`；未运行游戏或无头浏览器。
+- Remaining visual uncertainty: 跑步两半周期的支撑腿区别不够强，移动攻击与跑步切换仍需用户连播复核；记录为已接入待审阅，不等同用户已确认满意。月潮及技能跨状态一致性留待后续批次。
+
 ### chaser
 
 - Display name: 裸身追妖

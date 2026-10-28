@@ -122,16 +122,17 @@ describe("player render", () => {
     const talismanTranslate = context.translate.mock.calls[1];
     expect(talismanTranslate).toBeDefined();
     const [talismanCenterX, talismanCenterY] = talismanTranslate;
-    const idleSheet = PLAYER_SHEETS[PLAYER_ANIMATION_STATES.idle];
     const playerCenterX = state.player.x + state.player.w / 2;
     const playerRefY = state.player.y + state.player.h - PLAYER_DRAW.yOffset;
-    const playerSpriteTop = playerRefY - idleSheet.drawH * (idleSheet.anchorY ?? 1);
+    const bodyW = ATTACK_LAYOUT.bodyW / ATTACK_LAYOUT.sourceDensity;
+    const bodyH = ATTACK_LAYOUT.bodyH / ATTACK_LAYOUT.sourceDensity;
+    const playerSpriteTop = playerRefY - bodyH - ATTACK_LAYOUT.baselineInsetY / ATTACK_LAYOUT.sourceDensity;
 
     expect(talismanCenterX).toBeCloseTo(
-      playerCenterX + direction * idleSheet.drawW * BINDER_ATTACHMENT_BACK_OFFSET_RATIO,
+      playerCenterX + direction * bodyW * BINDER_ATTACHMENT_BACK_OFFSET_RATIO,
     );
     expect(talismanCenterY).toBeCloseTo(
-      playerSpriteTop + idleSheet.drawH * BINDER_ATTACHMENT_CENTER_Y_RATIO,
+      playerSpriteTop + bodyH * BINDER_ATTACHMENT_CENTER_Y_RATIO,
     );
 
     const keyScrambleTranslate = context.translate.mock.calls[2];
@@ -175,20 +176,23 @@ describe("player render", () => {
     expect(statusY).toBeCloseTo(bodyTop - BINDER_KEY_SCRAMBLE_HOVER_Y_OFFSET);
   });
 
-  it("plays all sixteen stationary attack sprites within the normal attack duration", () => {
+  it.each([
+    { label: "stationary", fromRun: false, image: ATTACK_IMAGE, count: 16 },
+    { label: "moving", fromRun: true, image: MOVING_ATTACK_IMAGE, count: 12 },
+  ])("plays all $label attack sprites within the normal attack duration", ({ fromRun, image, count }) => {
     const context = createMockContext();
     installMockContext(context);
-    state.player.attackFromRun = false;
+    state.player.attackFromRun = fromRun;
     const seenFrames = new Set<number>();
     for (let remaining = state.player.attackDuration; remaining > 0; remaining -= 1) {
       state.player.attackTimer = remaining;
       context.drawImage.mockClear();
       drawPlayer();
       const draw = context.drawImage.mock.calls[0];
-      expect(draw[0]).toBe(ATTACK_IMAGE);
+      expect(draw[0]).toBe(image);
       seenFrames.add(draw[1] / ATTACK_LAYOUT.frameW);
     }
-    expect([...seenFrames]).toEqual(Array.from({ length: ATTACK_LAYOUT.count }, (_, index) => index));
+    expect([...seenFrames]).toEqual(Array.from({ length: count }, (_, index) => index));
   });
 
   it("draws stun attachment effects from the talisman center", () => {
