@@ -49,6 +49,7 @@ Use the Image Gen CLI only when the user requests CLI/API/model control, built-i
 ## Procedure
 
 1. Read the applicable sprite contract and visual brief.
+   For actor sprite sequences, also use the [character sequence lessons](../docs/art/character-sequence-lessons.md) to distinguish local repair from redesign and plan continuity checks.
 2. Inspect the target asset, its runtime constants/manifest entries, and its worktree state.
 3. State the intended visual change and measurable runtime contract.
 4. Generate or edit with built-in `imagegen`, or use a permitted CLI fallback from the section above.

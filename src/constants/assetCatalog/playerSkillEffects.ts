@@ -87,6 +87,9 @@ export const CLOSE_ARC_BASIC_CRESCENT_ALPHA_BOUNDS = [
 
 export const CLOSE_ARC_BASIC_CRESCENT_CONFIG = {
   requiredSkillLevel: 3,
+  // Use attack progress so alternate sprite counts do not shift the release window.
+  attackStartProgress: 0.375,
+  attackEndProgress: 0.625,
   drawScale: 0.58,
   frameDuration: 4,
   life: 8,

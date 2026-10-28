@@ -4,10 +4,8 @@ import {
   CLOSE_ARC_BASIC_CRESCENT_CONFIG,
   FALL_ATTACK,
   GRAVITY,
-  PLAYER_ANIMATION_STATES,
   PLAYER_COMBAT,
   PLAYER_CONTROL_KEYS,
-  PLAYER_SHEETS,
   SKILL_IDS,
   WIDTH,
 } from "../constants";
@@ -80,8 +78,6 @@ const PLAYER_LAND_PITCH_SCALE = 0.035;
 const PLAYER_LAND_MAX_PITCH = 1.18;
 const PLAYER_RUN_STEP_RIGHT_PITCH = 1.02;
 const PLAYER_RUN_STEP_LEFT_PITCH = 0.98;
-const CLOSE_ARC_BASIC_CRESCENT_ATTACK_FRAME = { start: 3, end: 5 } as const;
-const BASIC_ATTACK_ANIMATION_FRAME_COUNT = PLAYER_SHEETS[PLAYER_ANIMATION_STATES.attack].count;
 
 function playerMovementKeyDown(direction: "moveLeft" | "moveRight") {
   const key = PLAYER_CONTROL_KEYS[direction];
@@ -191,20 +187,20 @@ function spawnCloseArcBasicCrescent(life: number) {
   }
 }
 
-function attackAnimationFrameStartElapsed(frameIndex: number, attackDuration: number) {
-  return Math.max(1, Math.ceil(frameIndex * Math.max(1, attackDuration) / BASIC_ATTACK_ANIMATION_FRAME_COUNT));
+function attackProgressElapsed(progress: number, attackDuration: number) {
+  return Math.max(1, Math.ceil(progress * Math.max(1, attackDuration)));
 }
 
 function maybeSpawnCloseArcBasicCrescent() {
   const p = state.player;
   const elapsedAttack = p.attackDuration - p.attackTimer;
-  const startElapsed = attackAnimationFrameStartElapsed(
-    CLOSE_ARC_BASIC_CRESCENT_ATTACK_FRAME.start,
+  const startElapsed = attackProgressElapsed(
+    CLOSE_ARC_BASIC_CRESCENT_CONFIG.attackStartProgress,
     p.attackDuration,
   );
   if (elapsedAttack !== startElapsed) return;
 
-  const endElapsed = attackAnimationFrameStartElapsed(CLOSE_ARC_BASIC_CRESCENT_ATTACK_FRAME.end, p.attackDuration);
+  const endElapsed = attackProgressElapsed(CLOSE_ARC_BASIC_CRESCENT_CONFIG.attackEndProgress, p.attackDuration);
   spawnCloseArcBasicCrescent(Math.max(1, endElapsed - elapsedAttack + 1));
 }
 

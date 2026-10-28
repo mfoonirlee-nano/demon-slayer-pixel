@@ -63,20 +63,21 @@ describe("sprite manifest", () => {
     }
   });
 
-  it("keeps Moon Tide player timing and anchors aligned with the normal actions", () => {
+  it("keeps all Moon Tide layouts independent of expanded normal sprites", () => {
+    const originalLayouts = {
+      idle: { frameW: 384, frameH: 480, count: 8, animSpeed: 8, anchorY: 0.979 },
+      run: { frameW: 448, frameH: 420, count: 8, animSpeed: 4, anchorY: 0.976 },
+      jump: { frameW: 448, frameH: 420, count: 6, animSpeed: 7, anchorY: 0.971 },
+      attack: { frameW: 768, frameH: 480, count: 8, animSpeed: 3, anchorY: 0.979 },
+      movingAttack: { frameW: 768, frameH: 480, count: 8, animSpeed: 3, anchorY: 0.979 },
+      fallAttack: { frameW: 640, frameH: 560, count: 8, animSpeed: 4, anchorY: 0.982 },
+    };
     for (const stateName of Object.values(PLAYER_ANIMATION_STATES)) {
-      const normalSheet = PLAYER_SHEETS[stateName];
       const moonTideSheet = MOON_TIDE_PLAYER_SHEETS[stateName];
-
-      expect(moonTideSheet).toMatchObject({
-        frameW: normalSheet.frameW,
-        frameH: normalSheet.frameH,
-        count: normalSheet.count,
-        animSpeed: normalSheet.animSpeed,
-        anchorY: normalSheet.anchorY,
-      });
-      expect(moonTideSheet.anchorX).toBe(normalSheet.anchorX);
-      expect(moonTideSheet.flipX).toBe(normalSheet.flipX);
+      expect(moonTideSheet).toMatchObject(originalLayouts[stateName]);
+      expect(moonTideSheet.anchorX).toBeUndefined();
+      expect(moonTideSheet.flipX).toBeUndefined();
+      expect(moonTideSheet.attachmentBounds).toBeUndefined();
     }
   });
 

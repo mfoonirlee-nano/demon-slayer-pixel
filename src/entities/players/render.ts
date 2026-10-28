@@ -297,7 +297,7 @@ export function drawPlayer() {
   ) < 1;
 
   // Unified reference point: player center X, feet Y minus global sprite padding.
-  // All draw positions: drawX = refX - drawW * anchorX, drawY = refY - drawH * anchorY
+  // Source anchors are mirrored with their sprite before applying this reference.
   const refX = p.x + p.w / 2;
   const refY = p.y + p.h - PLAYER_DRAW.yOffset;
 
@@ -423,22 +423,33 @@ export function drawPlayer() {
       Math.floor(Math.max(0, elapsedAttack) * sheet.count / attackDuration),
     );
   }
+  const sourceFacing = p.facing * (flipX ? -1 : 1);
+  const effectiveAnchorX = sourceFacing === 1 ? anchorX : 1 - anchorX;
   const snapshot: UltimatePlayerGhostSnapshot = {
     source: "player",
     animationState: stateName,
     action,
     frame,
-    x: refX - drawW * anchorX,
+    x: refX - drawW * effectiveAnchorX,
     y: refY - drawH * anchorY,
     w: drawW,
     h: drawH,
-    facing: p.facing * (flipX ? -1 : 1),
+    facing: sourceFacing,
   };
   drawWithBindingSlowFilter(isBindingSlowed, () => {
     recordMoonTidePlayerGhost(snapshot);
     drawMoonTideOutline(snapshot);
     drawRenderSnapshot(snapshot);
   });
-  drawBinderTalismanAttachment({ ...snapshot, facing: p.facing });
+  const body = sheet.attachmentBounds ?? { x: 0, y: 0, w: sheet.frameW, h: sheet.frameH };
+  const bodyX = sourceFacing === 1 ? body.x : sheet.frameW - body.x - body.w;
+  drawBinderTalismanAttachment({
+    ...snapshot,
+    x: snapshot.x + bodyX * drawW / sheet.frameW,
+    y: snapshot.y + body.y * drawH / sheet.frameH,
+    w: body.w * drawW / sheet.frameW,
+    h: body.h * drawH / sheet.frameH,
+    facing: p.facing,
+  });
   if (isBindingSlowed) drawBindingSlowEffect();
 }

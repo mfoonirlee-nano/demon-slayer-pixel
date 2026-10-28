@@ -21,8 +21,8 @@ const TEST_PLAYER_IMAGE = {} as HTMLImageElement;
 const TEST_PLATFORM_X = 100;
 const TEST_PLATFORM_Y = 200.25;
 const EXPECTED_VISUAL_SURFACE_INSET = 6;
-// Idle frame 0 has the highest opaque foot line, so it is the conservative no-gap case.
-const IDLE_OPAQUE_BOTTOM_EXCLUSIVE_Y = 457;
+// Measured from regenerated idle frame 0 (alpha > 120), not the canvas bottom.
+const IDLE_OPAQUE_BOTTOM_EXCLUSIVE_Y = 450;
 const MAX_FOOT_SURFACE_OVERLAP = 2;
 const TEST_ACT = 1;
 const TEST_ACT_SPRITE_INDEX = 1;

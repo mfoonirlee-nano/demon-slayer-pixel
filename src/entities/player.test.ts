@@ -3,8 +3,6 @@ import {
   BOSS_CONFIG,
   CLOSE_ARC_BASIC_CRESCENT_CONFIG,
   GROUND_Y,
-  PLAYER_ANIMATION_STATES,
-  PLAYER_SHEETS,
   SKILL_IDS,
 } from "../constants";
 import { keys } from "../game/input";
@@ -25,8 +23,8 @@ const TEST_ENEMY_HP = 100;
 const TEST_ATTACK_BONUS = 4;
 const OUTER_RANGE_GAP = 2;
 const CLOSE_ARC_SLOT_INDEX = 1;
-const CLOSE_ARC_BASIC_CRESCENT_ATTACK_FRAME_START = 3;
-const CLOSE_ARC_BASIC_CRESCENT_ATTACK_FRAME_END = 5;
+const CLOSE_ARC_BASIC_CRESCENT_START_PROGRESS = 0.375;
+const CLOSE_ARC_BASIC_CRESCENT_END_PROGRESS = 0.625;
 const LINE_PROJECTILE_LEVEL_THREE = 3;
 const GUARD_COUNTER_LEVEL_THREE = 3;
 const DASH_REPOSITION_LEVEL_THREE = 3;
@@ -62,10 +60,9 @@ function selectCloseArc() {
   state.player.skillIndex = CLOSE_ARC_SLOT_INDEX;
 }
 
-function attackFrameStartElapsed(frameIndex: number) {
-  const attackFrameCount = PLAYER_SHEETS[PLAYER_ANIMATION_STATES.attack].count;
+function attackProgressElapsed(progress: number) {
   const duration = Math.max(1, state.player.attackDuration);
-  return Math.max(1, Math.ceil(frameIndex * duration / attackFrameCount));
+  return Math.max(1, Math.ceil(progress * duration));
 }
 
 function updatePlayerFrames(frames: number) {
@@ -83,7 +80,7 @@ function placePlayerInAir(surfaceY = GROUND_Y) {
 }
 
 function advanceAttackToBasicCrescentFrame() {
-  updatePlayerFrames(attackFrameStartElapsed(CLOSE_ARC_BASIC_CRESCENT_ATTACK_FRAME_START));
+  updatePlayerFrames(attackProgressElapsed(CLOSE_ARC_BASIC_CRESCENT_START_PROGRESS));
 }
 
 function advanceThroughAttack() {
@@ -124,13 +121,19 @@ describe("close arc basic attack crescent", () => {
     expect(state.closeArcBasicCrescents).toHaveLength(0);
   });
 
-  it("spawns on the fourth attack sprite frame and covers the fifth", () => {
+  it.each([
+    { mode: "stationary", vx: 0, ultimateTimer: 0 },
+    { mode: "moving", vx: 4, ultimateTimer: 0 },
+    { mode: "moon tide", vx: 0, ultimateTimer: 120 },
+  ])("spawns during the cutting phase independently of sprite count in $mode attacks", ({ vx, ultimateTimer }) => {
+    state.player.vx = vx;
+    state.player.ultimateTimer = ultimateTimer;
     selectCloseArc();
     state.player.skillLevels[SKILL_IDS.closeArc] = 3;
 
     triggerAttack();
-    const startElapsed = attackFrameStartElapsed(CLOSE_ARC_BASIC_CRESCENT_ATTACK_FRAME_START);
-    const endElapsed = attackFrameStartElapsed(CLOSE_ARC_BASIC_CRESCENT_ATTACK_FRAME_END);
+    const startElapsed = attackProgressElapsed(CLOSE_ARC_BASIC_CRESCENT_START_PROGRESS);
+    const endElapsed = attackProgressElapsed(CLOSE_ARC_BASIC_CRESCENT_END_PROGRESS);
 
     updatePlayerFrames(startElapsed - 1);
 
