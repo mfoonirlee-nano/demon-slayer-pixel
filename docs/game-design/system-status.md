@@ -22,6 +22,7 @@
 | 玩家移动 | 左右移动、跳跃、平台承载、移动端触控已实现；回涡 Lv3 装备后可二段跳并在落地时恢复，跳跃输入按按下边沿触发 | 保持当前手感，后续只围绕敌人与地图调参 | 已实现 | P0 | `src/entities/player.ts`、`src/entities/players/jumping.ts`、`src/game/input.ts` |
 | 普攻与下落攻击 | 普攻、下落攻击、命中、击退、粒子和音效已实现 | 补更明确的命中/击杀反馈规范 | 已实现 | P4 | `src/entities/player.ts`、`docs/numeric-system/player.md` |
 | 技能与大招 | 9 个普通技能、技能池装备、局内技能升级、常驻技能被动、技能能量和月潮大招已实现；回涡 Lv3 被动提供二段跳 | 继续围绕各技能 Lv3 专精形态补齐平衡与表现验收 | 已实现 | P3 | `src/constants/assetCatalog/skills.ts`、`src/entities/players/skillCasting.ts`、`src/systems/playerSkillPassives.ts` |
+| 技能等级特效 | 潮龙、弦月、护返已接入三级素材，护返以单环、双月牙、三旋潮区分等级，持续与格挡波纹保持同一贴地视角；按起手等级选图，画布与判定分离 | 完成其余六招，再处理大招；实战遮挡与连播观感待人工复核 | 部分实现 | P4 | [技能等级特效](../art/player-skill-level-vfx.md) |
 | 普通敌人 | 12 种 archetype/state machine、按局种子生成的解锁顺序、按幕 profile、波次预算、同屏 cap 和 Boss 前奏已接入 | 按实际试玩校准组合压力与逐幕学习节奏 | 已实现 | P1 | `src/entities/enemies/`、`src/systems/enemyDirector.ts`、`src/systems/enemyDirectorRules.ts` |
 | Boss | Boss 注册表与逐幕轮换已接入；雾骨已完整实现薄雾减速、P3 成列骨刺后锁向追击、蚀醒浓雾葬/视觉态、P4 支援召唤和专属死亡效果；枯铃已接入确定性节拍、双频停拍反震、预算内支援、专用恢复和死亡收尾 | 继续逐 Boss 校准读招、恢复窗口和召唤压力；枯铃登场/击败短句 UI 尚未接入 | 部分实现 | P1 | `src/entities/boss.ts`、`src/entities/bosses/mistBoneBehavior.ts`、`src/entities/bosses/deadBellBehavior.ts`、`docs/art/bosses/mist-bone.md`、`docs/art/bosses/dead-bell.md` |
 | Boss 击杀推进 | 所有 Boss 死亡路径已统一调用 `defeatBoss()`，推进 `bossKills`、装备掉落、视觉冻结和重生节奏 | 保持统一入口，继续为个别 Boss 增加不改变结算协议的专属死亡表现 | 已实现 | P1 | `src/entities/bosses/defeat.ts`、`src/entities/bosses/bossDefeatSplitEffect.ts` |

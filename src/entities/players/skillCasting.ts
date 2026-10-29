@@ -1,3 +1,4 @@
+import { CLOSE_ARC_COLLISION_SIZE, LINE_PROJECTILE_COLLISION_SIZES } from "../../constants/playerSkillGeometry";
 import { activeReturningBlade, recallReturningBlade } from "../particles/returningBlade";
 import { state } from "../../game/state";
 import { PLAYER_COMBAT, PLAYER_DRAW, SKILL_FLASH, SKILL_IDS } from "../../constants";
@@ -15,8 +16,6 @@ import { hasLearnedUltimate, skillDamageMultiplier } from "../../systems/progres
 import { corePlayerSkillGrowth, isGenericPlayerSkillId } from "../../systems/playerSkills";
 import {
   CORE_PLAYER_SKILL_EFFECT_CONFIGS,
-  CORE_PLAYER_SKILL_EFFECT_SHEETS,
-  lineProjectileEffectSheetForLevel,
 } from "../../systems/skillCatalog";
 import { spawnPlayerSkillEffect } from "../particle";
 import { isBinderTalismanStunned } from "../enemies/binder";
@@ -38,7 +37,6 @@ const PLAYER_SKILL_RELEASE_FRAMES: Partial<Record<SkillId, number>> = {
   [SKILL_IDS.antiAirMulti]: 24,
 };
 const LINE_PROJECTILE_EFFECT_CONFIG = CORE_PLAYER_SKILL_EFFECT_CONFIGS[SKILL_IDS.lineProjectile];
-const CLOSE_ARC_EFFECT_SHEET = CORE_PLAYER_SKILL_EFFECT_SHEETS[SKILL_IDS.closeArc];
 const CLOSE_ARC_EFFECT_CONFIG = CORE_PLAYER_SKILL_EFFECT_CONFIGS[SKILL_IDS.closeArc];
 const GUARD_COUNTER_EFFECT_CONFIG = CORE_PLAYER_SKILL_EFFECT_CONFIGS[SKILL_IDS.guardCounter];
 const PLAYER_SKILL_CAST_SFX_PITCH = {
@@ -233,10 +231,10 @@ export function updateSkillCastRelease(): boolean {
         const feetY = p.y + p.h;
         if (skill.id === SKILL_IDS.lineProjectile) {
           const effectLevel = p.activeSkillCast?.level ?? state.player.skillLevels[skill.id] ?? 1;
-          const effectSheet = lineProjectileEffectSheetForLevel(effectLevel);
+          const geometry = LINE_PROJECTILE_COLLISION_SIZES[effectLevel];
           const drawScale = LINE_PROJECTILE_EFFECT_CONFIG.drawScale;
-          const effectW = effectSheet.frameW * drawScale;
-          const effectH = effectSheet.frameH * drawScale;
+          const effectW = geometry.width * drawScale;
+          const effectH = geometry.height * drawScale;
           const skillDrawH = skill.frameH * skill.drawScale;
           const frontX = cx + p.facing * p.w / 2;
           state.lineProjectileEffects.push({
@@ -253,12 +251,14 @@ export function updateSkillCastRelease(): boolean {
           });
           playSfx(PLAYER_SKILL_RELEASE_SFX[skill.id]);
         } else if (skill.id === SKILL_IDS.closeArc) {
-          const growth = corePlayerSkillGrowth(skill.id, p.activeSkillCast?.level ?? state.player.skillLevels[skill.id]);
+          const effectLevel = p.activeSkillCast?.level ?? state.player.skillLevels[skill.id] ?? 1;
+          const growth = corePlayerSkillGrowth(skill.id, effectLevel);
           const drawScale = growth?.drawScale ?? CLOSE_ARC_EFFECT_CONFIG.drawScale;
-          const effectW = CLOSE_ARC_EFFECT_SHEET.frameW * drawScale;
+          const effectW = CLOSE_ARC_COLLISION_SIZE.width * drawScale;
           const effectBaselineY = CLOSE_ARC_EFFECT_CONFIG.groundBaselineY * drawScale;
           const frontX = cx + p.facing * p.w / 2;
           state.closeArcEffects.push({
+            effectLevel,
             skillSource: p.activeSkillCast ?? undefined,
             x: frontX + p.facing * effectW / 2,
             y: feetY - effectBaselineY,
@@ -287,9 +287,11 @@ export function updateSkillCastRelease(): boolean {
 }
 
 function spawnGuardCounterEffect(damageMultiplier: number) {
-  const growth = corePlayerSkillGrowth(SKILL_IDS.guardCounter, state.player.activeSkillCast?.level ?? state.player.skillLevels[SKILL_IDS.guardCounter]);
+  const effectLevel = state.player.activeSkillCast?.level ?? state.player.skillLevels[SKILL_IDS.guardCounter] ?? 1;
+  const growth = corePlayerSkillGrowth(SKILL_IDS.guardCounter, effectLevel);
   const maxHits = growth?.maxHits ?? GUARD_COUNTER_EFFECT_CONFIG.maxHits;
   state.guardCounterEffect = {
+    effectLevel,
     skillSource: state.player.activeSkillCast ?? undefined,
     elapsed: 0,
     frame: 0,

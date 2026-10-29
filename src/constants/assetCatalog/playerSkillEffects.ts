@@ -3,12 +3,13 @@ import {
   RETURNING_BLADE_CONFIG,
   VERTICAL_WAVE_PILLAR_CONFIG,
 } from "../combat";
+import type { SkillLevel } from "../../types/game-state";
 import type { SkillId, SpriteSheet } from "../../types/assets";
 
 export const LINE_PROJECTILE_EFFECT_SHEET: SpriteSheet = {
   src: "assets/sprites/skills/line_projectile/effect.png",
   frameW: 480,
-  frameH: 160,
+  frameH: 240,
   count: 8,
   image: null,
 };
@@ -16,7 +17,7 @@ export const LINE_PROJECTILE_EFFECT_SHEET: SpriteSheet = {
 export const LINE_PROJECTILE_EFFECT_LEVEL_TWO_SHEET: SpriteSheet = {
   src: "assets/sprites/skills/line_projectile/effect_lv2.png",
   frameW: 720,
-  frameH: 160,
+  frameH: 240,
   count: 8,
   image: null,
 };
@@ -24,7 +25,7 @@ export const LINE_PROJECTILE_EFFECT_LEVEL_TWO_SHEET: SpriteSheet = {
 export const LINE_PROJECTILE_EFFECT_LEVEL_THREE_SHEET: SpriteSheet = {
   src: "assets/sprites/skills/line_projectile/effect_lv3.png",
   frameW: 840,
-  frameH: 160,
+  frameH: 240,
   count: 8,
   image: null,
 };
@@ -39,7 +40,7 @@ export const LINE_PROJECTILE_EFFECT_CONFIG = {
   speed: 8,
   // frame animate speed in game-frames per anim-frame
   frameDuration: 5,
-  // loop the final three frames once the full-dragon length growth finishes
+  // Sustain the final wave phases after the opening sequence.
   loopFromFrame: 5,
   // damage multiplier relative to player base+bonus attack
   damageMultiplier: 1.2,
@@ -70,6 +71,16 @@ export const CLOSE_ARC_EFFECT_CONFIG = {
   damageMultiplier: 1.5,
   hitCooldown: 20,
 } as const;
+
+export const CLOSE_ARC_EFFECT_LEVEL_TWO_SHEET: SpriteSheet = {
+  ...CLOSE_ARC_EFFECT_SHEET,
+  src: "assets/sprites/skills/close_arc/effect_lv2.png",
+};
+
+export const CLOSE_ARC_EFFECT_LEVEL_THREE_SHEET: SpriteSheet = {
+  ...CLOSE_ARC_EFFECT_SHEET,
+  src: "assets/sprites/skills/close_arc/effect_lv3.png",
+};
 
 export const CLOSE_ARC_BASIC_CRESCENT_SHEET: SpriteSheet = {
   src: "assets/sprites/skills/close_arc/basic_crescent.png",
@@ -108,31 +119,18 @@ export const GUARD_COUNTER_EFFECT_SHEET: SpriteSheet = {
 };
 
 export const GUARD_COUNTER_EFFECT_CONFIG = {
-  drawScale: 0.48,
-  centerYOffset: 72,
+  drawScale: 0.25,
+  centerYOffset: 4,
   frameDuration: 6,
-  startupFrames: 36,
+  startupFrames: 12,
+  startupAlpha: 0.68,
+  sustainedAlphaMin: 0.42,
+  sustainedAlphaRange: 0.14,
   barrierFlashFrames: 18,
   barrierFrameDuration: 3,
-  barrierDrawScale: 0.39,
-  barrierCenterYOffset: 62,
-  barrierAlphaMin: 0.35,
-  barrierAlphaMax: 0.82,
-  auraAlphaMin: 0.06,
-  auraAlphaRange: 0.08,
-  auraWidthScale: 1.35,
-  auraHeightScale: 1.45,
-  rippleWidth: 76,
-  rippleHeight: 14,
-  ripplePulseSpeed: 0.16,
-  ripplePulseWidth: 10,
-  ripplePulseHeight: 3,
-  rippleYOffset: 4,
-  rippleAlphaMin: 0.22,
-  rippleAlphaRange: 0.3,
-  rippleInnerAlphaScale: 0.66,
-  rippleInnerWidthScale: 0.31,
-  rippleInnerHeightScale: 0.28,
+  counterAlphaMax: 0.72,
+  barrierDrawScale: 0.28,
+  barrierCenterYOffset: 4,
   activeFrames: 72,
   maxHits: 3,
   damageMultiplier: 2,
@@ -141,6 +139,22 @@ export const GUARD_COUNTER_EFFECT_CONFIG = {
   damageReductionMax: 0.3,
   damageReductionMaxPlayerLevel: 25,
 } as const;
+
+export const GUARD_COUNTER_EFFECT_LEVEL_TWO_SHEET: SpriteSheet = {
+  ...GUARD_COUNTER_EFFECT_SHEET,
+  src: "assets/sprites/skills/guard_counter/effect_lv2.png",
+};
+
+export const GUARD_COUNTER_EFFECT_LEVEL_THREE_SHEET: SpriteSheet = {
+  ...GUARD_COUNTER_EFFECT_SHEET,
+  src: "assets/sprites/skills/guard_counter/effect_lv3.png",
+};
+
+export const GUARD_COUNTER_HIT_SHEETS: Record<SkillLevel, SpriteSheet> = {
+  1: { ...GUARD_COUNTER_EFFECT_SHEET, src: "assets/sprites/skills/guard_counter/counter.png" },
+  2: { ...GUARD_COUNTER_EFFECT_SHEET, src: "assets/sprites/skills/guard_counter/counter_lv2.png" },
+  3: { ...GUARD_COUNTER_EFFECT_SHEET, src: "assets/sprites/skills/guard_counter/counter_lv3.png" },
+};
 
 export const RETURNING_BLADE_TECHNIQUE_SHEET: SpriteSheet = {
   src: "assets/sprites/skills/returning_blade/tide_technique.png",

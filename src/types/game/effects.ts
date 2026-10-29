@@ -455,6 +455,7 @@ export type LineProjectileEffectState = {
 };
 export type CloseArcEffectState = {
   skillSource?: SkillHitSource;
+  effectLevel?: SkillLevel;
   x: number;
   y: number;
   vx: number;
@@ -467,7 +468,6 @@ export type CloseArcEffectState = {
   damageMultiplier: number;
   refundedSkillEnergy?: boolean;
 };
-
 export type CloseArcBasicCrescentState = {
   x: number;
   y: number;
@@ -483,7 +483,6 @@ export type CloseArcBasicCrescentState = {
   hitEnemies: EnemyState[];
   bossHit: boolean;
 };
-
 export type HuntBladeReachEffectState = {
   x: number;
   y: number;
@@ -495,6 +494,7 @@ export type HuntBladeReachEffectState = {
 };
 export type GuardCounterEffectState = {
   skillSource?: SkillHitSource;
+  effectLevel?: SkillLevel;
   elapsed: number;
   frame: number;
   hitsRemaining: number;

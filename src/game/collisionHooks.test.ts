@@ -1,3 +1,4 @@
+import { CLOSE_ARC_COLLISION_SIZE, LINE_PROJECTILE_COLLISION_SIZES } from "../constants/playerSkillGeometry";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import {
   BASIC_ATTACK,
@@ -10,8 +11,6 @@ import {
 } from "../constants";
 import {
   CORE_PLAYER_SKILL_EFFECT_CONFIGS,
-  CORE_PLAYER_SKILL_EFFECT_SHEETS,
-  lineProjectileEffectSheetForLevel,
 } from "../systems/skillCatalog";
 import {
   updateCloseArcBasicCrescentEffects,
@@ -231,8 +230,8 @@ describe("collision debug hooks", () => {
   });
 
   it("records the same core-skill rectangles used for hit checks", () => {
-    const lineSheet = lineProjectileEffectSheetForLevel(1);
-    const closeArcSheet = CORE_PLAYER_SKILL_EFFECT_SHEETS[SKILL_IDS.closeArc];
+    const lineSheet = LINE_PROJECTILE_COLLISION_SIZES[1];
+    const closeArcSheet = CLOSE_ARC_COLLISION_SIZE;
     const closeArcConfig = CORE_PLAYER_SKILL_EFFECT_CONFIGS[SKILL_IDS.closeArc];
     state.lineProjectileEffects.push({
       x: LINE_EFFECT_START_X,
@@ -280,17 +279,17 @@ describe("collision debug hooks", () => {
     expect(playerAttackRects()).toEqual([
       {
         x: LINE_EFFECT_START_X + LINE_PROJECTILE_EFFECT_CONFIG.speed
-          - lineSheet.frameW * LINE_PROJECTILE_EFFECT_CONFIG.drawScale / 2,
+          - lineSheet.width * LINE_PROJECTILE_EFFECT_CONFIG.drawScale / 2,
         y: 220,
-        w: lineSheet.frameW * LINE_PROJECTILE_EFFECT_CONFIG.drawScale,
-        h: lineSheet.frameH * LINE_PROJECTILE_EFFECT_CONFIG.drawScale,
+        w: lineSheet.width * LINE_PROJECTILE_EFFECT_CONFIG.drawScale,
+        h: lineSheet.height * LINE_PROJECTILE_EFFECT_CONFIG.drawScale,
       },
       {
         x: CLOSE_ARC_EFFECT_START_X + closeArcConfig.speed
-          - closeArcSheet.frameW * closeArcConfig.drawScale / 2,
+          - closeArcSheet.width * closeArcConfig.drawScale / 2,
         y: 250,
-        w: closeArcSheet.frameW * closeArcConfig.drawScale,
-        h: closeArcSheet.frameH * closeArcConfig.drawScale,
+        w: closeArcSheet.width * closeArcConfig.drawScale,
+        h: closeArcSheet.height * closeArcConfig.drawScale,
       },
       { x: 355, y: 258, w: 90, h: 44 },
     ]);
