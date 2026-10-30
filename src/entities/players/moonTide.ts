@@ -196,6 +196,7 @@ export function triggerMoonTideAfterimageHit(
   const slashH = Math.max(AFTERIMAGE_MIN_SLASH_H, Math.min(AFTERIMAGE_MAX_SLASH_H, targetSpread * AFTERIMAGE_SLASH_H_SCALE));
   for (let i = 0; i < config.afterimageCount; i += 1) {
     state.ultimateAfterimageSlashes.push({
+      effectLevel: currentMoonTideLevel(),
       x: hitX + p.facing * (AFTERIMAGE_FORWARD_OFFSET + i * AFTERIMAGE_FORWARD_STAGGER),
       y: hitY - AFTERIMAGE_Y_OFFSET + (Math.random() - 0.5) * AFTERIMAGE_Y_JITTER,
       w: slashW,

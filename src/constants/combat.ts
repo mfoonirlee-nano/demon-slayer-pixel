@@ -1,3 +1,5 @@
+import { ULTIMATE_CAST_FRAMES, ULTIMATE_EFFECT_SPAWN_RATIO } from "./playerSkillTiming.js";
+
 const SECONDS_PER_MINUTE = 60;
 const FRAMES_PER_SECOND = 60;
 const ENEMY_ULTIMATE_ENERGY_GAIN_NUMERATOR = 8;
@@ -131,12 +133,12 @@ export const PLAYER_COMBAT = {
   enemyUltimateEnergyGain: ENEMY_ULTIMATE_ENERGY_GAIN,
   bossUltimateEnergyGain: 40,
   ultimateRadius: 360,
-  ultimateCastFrames: 30,
+  ultimateCastFrames: ULTIMATE_CAST_FRAMES,
   ultimateCastFrameDuration: 5,
   ultimateStartupInvincibleFrames: 8,
   ultimateEffectFrameDuration: 8,
   ultimateEffectLife: 96,
-  ultimateEffectSpawnRatio: 0.45,
+  ultimateEffectSpawnRatio: ULTIMATE_EFFECT_SPAWN_RATIO,
   ultimateDrawScale: 0.3,
   ultimateEffectDrawScale: 0.68,
   ultimateEffectYOffset: 78,

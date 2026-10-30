@@ -127,7 +127,7 @@ export function drawEnemyIntoVortex(effect: PlayerSkillEffectState, enemy: Enemy
 }
 
 export function playerSkillSheetFrame(effect: PlayerSkillEffectState) {
-  const sheet = playerSkillEffectSheet(effect.skillId, effect.kind);
+  const sheet = playerSkillEffectSheet(effect.skillId, effect.kind, effect.effectLevel);
   const tuning = isGenericPlayerSkillId(effect.skillId) ? GENERIC_PLAYER_SKILL_TUNING[effect.skillId] : null;
   if (!sheet || !tuning) return 0;
   const frameDuration = effect.frameDuration ?? tuning.frameDuration;

@@ -168,6 +168,8 @@
 
 五组重绘的源图、被淘汰的移动攻击稿、缺刀帧修正、打包参数与离线预览保存在 `tmp/imagegen/player-basic-states-20261028/`。下落攻击仍以前四帧为空中阶段，第五帧起仅在落地恢复期间播放；不改变攻击时长、跑步距离周期、跳跃选帧阈值或命中逻辑。月潮形态使用独立源图布局，不继承常态新增画布与身体框。
 
+2026-10-29 移动攻击续作保存在 `tmp/imagegen/player-continuity-20261029/`，只替换 `player_moving_attack.png`，保留十二帧、`768x512` 单帧、绘制比例与锚点。第 10–11 帧用前后姿态约束补绘，首尾改为接近跑步入口的迈步姿态；新增正常速度、慢放和跑步→攻击→跑步的新旧离线对比。跑步候选未通过双腿交替的视觉检查，原跑步图保留。实际更新逻辑在攻击期间重置 `runStepDistance`，恢复跑动时从入口相位推进，本轮没有新增步态切换逻辑。
+
 收刀连续性修正仅替换第 `12–15` 帧，以原第 `11`、`16` 帧为姿态与服饰参照，补齐回肘、降腕、刀尖下落和回到身侧的过渡；第 `1–11`、`16` 帧逐像素保留。源图、打包参数和修正前后预览保存在 `tmp/imagegen/attack-recovery-fix/`，图集规格、锚点、基础攻击时长与命中逻辑沿用上述配置。
 
 裂潮附加水刃以攻击进度 `37.5%` 起效、`62.5%` 结束计算生成时刻与存活窗口，不读取常态图集帧数；正常、移动与月潮攻击均按各自攻击时长换算，避免换图后附加水刃提前出现。
@@ -189,22 +191,37 @@
 | `anti_air_multi/skill.png` | `3200x420` | 5 | `640x420` | `SKILLS.anti_air_multi` |
 | `returning_blade/skill.png` | `1800x360` | 5 | `360x360` | `SKILLS.returning_blade` |
 | `vertical_wave/skill.png` | `2880x420` | 6 | `480x420` | `SKILLS.vertical_wave` |
-| `line_projectile/effect.png` | `3840x160` | 8 | `480x160` | `LINE_PROJECTILE_EFFECT_SHEET` |
-| `line_projectile/effect_lv2.png` | `5760x160` | 8 | `720x160` | `LINE_PROJECTILE_EFFECT_LEVEL_TWO_SHEET` |
-| `line_projectile/effect_lv3.png` | `6720x160` | 8 | `840x160` | `LINE_PROJECTILE_EFFECT_LEVEL_THREE_SHEET` |
+| `line_projectile/effect.png` | `3840x240` | 8 | `480x240` | `LINE_PROJECTILE_EFFECT_SHEET` |
+| `line_projectile/effect_lv2.png` | `5760x240` | 8 | `720x240` | `LINE_PROJECTILE_EFFECT_LEVEL_TWO_SHEET` |
+| `line_projectile/effect_lv3.png` | `6720x240` | 8 | `840x240` | `LINE_PROJECTILE_EFFECT_LEVEL_THREE_SHEET` |
 | `close_arc/effect.png` | `3240x420` | 6 | `540x420` | `CLOSE_ARC_EFFECT_SHEET` |
+| `close_arc/effect_lv2.png` | `3240x420` | 6 | `540x420` | `CLOSE_ARC_EFFECT_LEVEL_TWO_SHEET` |
+| `close_arc/effect_lv3.png` | `3240x420` | 6 | `540x420` | `CLOSE_ARC_EFFECT_LEVEL_THREE_SHEET` |
 | `close_arc/basic_crescent.png` | `384x128` | 2 | `192x128` | `CLOSE_ARC_BASIC_CRESCENT_SHEET` |
 | `guard_counter/effect.png` | `2520x320` | 6 | `420x320` | `GUARD_COUNTER_EFFECT_SHEET` |
+| `guard_counter/effect_lv2.png` | `2520x320` | 6 | `420x320` | `GUARD_COUNTER_EFFECT_LEVEL_TWO_SHEET` |
+| `guard_counter/effect_lv3.png` | `2520x320` | 6 | `420x320` | `GUARD_COUNTER_EFFECT_LEVEL_THREE_SHEET` |
+| `guard_counter/counter.png` | `2520x320` | 6 | `420x320` | `GUARD_COUNTER_HIT_SHEETS[1]` |
+| `guard_counter/counter_lv2.png` | `2520x320` | 6 | `420x320` | `GUARD_COUNTER_HIT_SHEETS[2]` |
+| `guard_counter/counter_lv3.png` | `2520x320` | 6 | `420x320` | `GUARD_COUNTER_HIT_SHEETS[3]` |
 | `dash_reposition/effect.png` | `1440x120` | 4 | `360x120` | `PLAYER_SKILL_EFFECT_SHEETS.dash_reposition` |
+| `dash_reposition/effect_lv2.png` | `1440x120` | 4 | `360x120` | `PLAYER_SKILL_EFFECT_LEVEL_SHEETS.dash_reposition[2]` |
+| `dash_reposition/effect_lv3.png` | `1440x120` | 4 | `360x120` | `PLAYER_SKILL_EFFECT_LEVEL_SHEETS.dash_reposition[3]` |
 | `vortex_control/effect.png` | `1536x160` | 6 | `256x160` | `PLAYER_SKILL_EFFECT_SHEETS.vortex_control` |
+| `vortex_control/effect_lv2.png` | `1536x160` | 6 | `256x160` | `PLAYER_SKILL_EFFECT_LEVEL_SHEETS.vortex_control[2]` |
+| `vortex_control/effect_lv3.png` | `1536x160` | 6 | `256x160` | `PLAYER_SKILL_EFFECT_LEVEL_SHEETS.vortex_control[3]` |
 | `armor_break/effect.png` | `880x160` | 4 | `220x160` | `PLAYER_SKILL_EFFECT_SHEETS.armor_break` |
+| `armor_break/effect_lv2.png` | `880x160` | 4 | `220x160` | `PLAYER_SKILL_EFFECT_LEVEL_SHEETS.armor_break[2]` |
+| `armor_break/effect_lv3.png` | `880x160` | 4 | `220x160` | `PLAYER_SKILL_EFFECT_LEVEL_SHEETS.armor_break[3]` |
 | `anti_air_multi/effect.png` | `1440x320` | 4 | `360x320` | `PLAYER_SKILL_EFFECT_SHEETS.anti_air_multi` |
 | `returning_blade/tide_technique.png` | `2048x256` | 8 | `256x256` | `RETURNING_BLADE_TECHNIQUE_SHEET` |
 | `vertical_wave/effect.png` | `3360x520` | 7 | `480x520` | `PLAYER_SKILL_EFFECT_SHEETS.vertical_wave` |
 | `vertical_wave/downward_pillar.png` | `3360x520` | 7 | `480x520` | `VERTICAL_WAVE_PILLAR_SHEET` |
 | `ultimate_skill/icon.png` | `256x256` | 1 | `256x256` | 大招图标 |
 | `ultimate_skill/skill.png` | `2880x480` | 6 | `480x480` | `ULTIMATE_SKILL_SHEET` |
-| `ultimate_skill/effect.png` | `3840x360` | 8 | `480x360` | `ULTIMATE_SKILL_EFFECT_SHEET` |
+| `ultimate_skill/effect{,_lv2,_lv3}.png` | `1920x360` | 4 | `480x360` | `ULTIMATE_SKILL_EFFECT_LEVEL_SHEETS` |
+| `ultimate_skill/opening{,_lv2,_lv3}.png` | `2880x360` | 6 | `480x360` | `ULTIMATE_OPENING_LEVEL_SHEETS` |
+| `ultimate_skill/afterimage{,_lv2,_lv3}.png` | `1024x128` | 4 | `256x128` | `ULTIMATE_AFTERIMAGE_LEVEL_SHEETS` |
 | `tide_weave/sweep.png` | `1536x256` | 6 | `256x256` | `TIDE_WEAVE_SWEEP_SHEET` |
 | `tide_weave/surge.png` | `1536x256` | 6 | `256x256` | `TIDE_WEAVE_SURGE_SHEET` |
 
@@ -217,7 +234,26 @@
 
 目标潮印复用 `sweep.png` 索引 `2` 的上述可见区域，宽 `16px`，置于目标上方；被控制目标脚下显示短紫色折线。踏影衣达到实际移动蓄势距离时，玩家脚边出现两枚短青色折线，消耗后立即消失；未穿该衣服时不显示。角色没有通用织潮就绪环。场地预警与浪潮仍绘制在敌人之前；目标标记和玩家就绪折线在敌人、技能与地面遮挡层之后单独绘制，避免脚边反馈被地表遮住。以上反馈只读取玩法状态，暂停时不推进动画；死亡或结局时不显示。图集由 `assets/manifest.ts` 统一预加载，透明素材本身不修改，反应显示时机由 `entities/particles/equipmentReactionVisuals.ts` 对齐玩法参数。
 
-玩家技能特效以 `assets/art/player-concept.png`、`assets/art/player-skills-concept.png`、`assets/art/player-skills-implementation-source.png` 和 `assets/art/player-ultimate-concept.png` 为视觉基准：深蓝月潮流、银白浪尖、泡沫碎点和月形水纹。`line_projectile/effect.png`、`line_projectile/effect_lv2.png` 和 `line_projectile/effect_lv3.png` 分别是 `潮龙·破阵` Lv1/Lv2/Lv3 的 8 帧右向潮龙投射物，等级越高使用越长的真实序列帧；每一帧都保留完整的龙头、龙身和龙尾，前 6 帧以刀锋附近的水流起点为锚，保持龙头和龙尾尺寸不变，通过逐帧增加中段龙身的水浪卷数自然变长，并叠加投射物前移；随后从第 6 帧开始循环最后 3 帧，龙头的高度和朝向保持稳定，同一道浪身波峰从颈后向中段、后段和龙尾逐段传递，鬃鳍和泡沫滞后跟随；不得复用同一龙体仅做整体位移或同相摆动。运行时同时负责让投射物直接冲出屏幕，命中间隔保持不变。`close_arc/effect.png` 是 6 帧贴身半月潮刃，对应 `弦月·潮刃` 的 6 帧动作，运行时按技能等级缩放到最高等级的 50% / 75% / 100%；`close_arc/basic_crescent.png` 是 Lv3 普攻追加的 2 帧小型水波纹月牙剑气，只覆盖基础普攻刀尖外侧的小范围；狩牙刃强化普攻也复用该图集作为纯视觉水刃，并按两帧各自的透明像素 bbox 缩放，使可见部分恰好覆盖强化普攻新增的攻击距离。`guard_counter/effect.png` 是 6 帧环身防反潮幕，对应 `镜潮·护返`。六个新增技能的图标、施法图和特效图以 `player-skills-implementation-source.png` 的绿幕源图为初版基础；其中 `雨线·穿针` 已按原画设定重新生成更大的施放动作和单束斜落针雨运行时序列帧，`回涡·引潮` 已重新生成 5 帧贴地引潮施法动作和 6 帧低位地面潮涡特效，`升浪·托月` 已重新生成 6 帧施放动作、7 帧前向弧形上挑浪柱特效和无角色图标；`vertical_wave/downward_pillar.png` 是该技能 Lv3 被动独立使用的 7 帧向下水柱，每帧保持 4 个游戏帧、`drawScale=0.42`，原图落点固定在 `(240,450)`，三个实例复用同一图集并按 `0/6/12` 帧启动。该水柱不随 `facing` 镜像，朝向只决定三个落点由近及远排在玩家哪一侧。`returning_blade/tide_technique.png` 是留刃牵线的 8 帧图集：0-3 为中心固定的月牙潮刃循环，飞行时旋转至真实运动方向，留刃时按朝向镜像；4 为目标潮痕；4-7 为合痕聚拢、峰值、散开与消散。每帧 5 个游戏帧，刀与合痕 `drawScale=0.32`，潮痕 `0.14`；透明边缘至少 24px，统一中心 `(128,128)`。留刃到期或主动收刀时缩至正常尺寸的 72%，随后恢复飞行尺寸；不会缩放玩法命中盒。动态细潮线不具有伤害。旧 `returning_blade/effect.png` 与 `ripple_slash.png` 仅保留为历史文件，不再预加载或用于本招。`断浪·裂甲` 的五帧施法图已重新生成，依次为收刀、回腕、前刺、随动和回收；头身比例与脚点保持稳定，刀光沿同一条前刺轨迹推进。其 `drawScale=0.45`、`anchorX=0.4`、`anchorY=0.96`，保留 `360x360` 单帧、释放时刻与独立命中特效。`流步·潮闪` 为短潮线收刀斩。`ultimate_skill/skill.png` 的 6 帧施法动作每帧保持 5 个游戏帧，总计 30 帧；播放期间冻结战斗和关卡推进。`ultimate_skill/effect.png` 是 8 帧月蓝半月潮环，按 `PLAYER_COMBAT.ultimateEffectFrameDuration` 循环并跟随玩家脚下，持续到月潮强化状态结束。除向下水柱、回刃合痕和沿飞行方向旋转的潮刃外，以上透明 PNG 均由运行时根据玩家 `facing` 或中心点绘制。
+玩家技能特效以 `assets/art/player-concept.png`、`assets/art/player-skills-concept.png`、`assets/art/player-skills-implementation-source.png` 和 `assets/art/player-ultimate-concept.png` 为视觉基准：深蓝月潮流、银白浪尖、泡沫碎点和月形水纹。第一批等级特效已接入潮龙、弦月、护返，制作与验收记录见 [技能等级特效](art/player-skill-level-vfx.md)。
+
+- 潮龙三个等级各 8 帧，每帧 5 个游戏帧，索引 5–7 循环。Lv1 保留单道浪身，Lv2 加入交织水流，Lv3 增加银白鬃鳍与层叠浪纹。每帧高由 160 扩为 240，视觉围绕原命中盒中心绘制；逻辑高度仍为 160。Lv2/Lv3 最后一个播放位置复用源图第 4 帧，以避开源图末帧龙身缩短的问题，各有 7 张不同画面，不宣称 8 张独立新帧。
+- 弦月三个等级各 6 帧，每帧 4 个游戏帧；依次增加内侧回流与银白月刃脊线。保持原有 50% / 75% / 100% 绘制比例、底边锚点 365 和命中范围。`basic_crescent.png` 仍为 Lv3 普攻追加的 2 帧小型剑气；狩牙刃也复用它，透明 bbox 对齐新增攻击距离。
+- 护返三个等级各有 6 帧贴地水环与独立 6 帧格挡波纹。全部采用同一低视角水平椭圆，中心透明，环缘中心对齐单帧 `(210,160)`；可见外缘宽高比至少 3.5，不能沿用竖立潮幕或斜向回卷。持续图每帧 6 个游戏帧、整组循环，缩放 0.25，中心位于脚上方 4px；起手 12 帧由透明度 0.68 过渡到持续值，持续值为 `0.42 + 剩余次数比例 × 0.14`。成功格挡图每帧 3 个游戏帧，共 18 帧，缩放 0.28，使用同一脚点，最高透明度 0.72 后淡出。Lv1 为完整细水环，Lv2 为左右分开的两道月牙水流，Lv3 为三段首尾相接的旋潮浪纹；持续与格挡阶段沿用各自轮廓，不靠微小细纹或亮度区分等级。显示尺寸和亮度上限不随等级增加。图像以普通透明方式叠加，不另画填充光晕；次数用尽或窗口结束后停止持续光环，只允许已经触发的格挡波纹播完。
+- 三招在起手时锁定等级，飞行或持续期间升级不会换图。所有等级素材统一加入预加载；命中尺寸由 `playerSkillGeometry.ts` 管理，不再读取特效图的画布大小。新增素材单帧边缘至少留 8px 全透明空间。
+
+第二批潮闪、回涡、裂甲已接入三个等级的独立图集，仍使用原切片尺寸、帧数与绘制比例。`playerSkillEffectSheet(skillId, kind, level)` 读取效果实例的 `effectLevel`，统一预加载六张新增图集。三招采用普通透明叠加，保留深蓝水体与水流间隙；第三批后所有通用水系特效统一采用这一方式。
+
+- 潮闪：4 帧、每帧 4 个游戏帧、缩放 0.45，分别为单道低位水流、两道分离水流、三叉尾流。沿途视觉与收刀仍使用同一等级图集，沿途命中和收刀命中规则保持原样；水流条数不是额外攻击次数。
+- 回涡：6 帧、每帧 6 个游戏帧、缩放 0.78，分别为单钩、双臂、三臂向内卷动。每帧保持低位椭圆与中心留白，整组六帧循环，不反复播放生成和消失。吸附椭圆与持续时间仍由等级数值决定。
+- 裂甲：4 帧、每帧 5 个游戏帧、缩放 0.68。索引 0 是飞行水刃，实际碰撞后才播放索引 1–3 的压缩、破裂与消散，保留 15 个游戏帧的命中余波。Lv1 为单楔、Lv2 为双楔与双弧、Lv3 为菱形水核与四角裂浪；飞行途中不预播爆裂。
+
+本批单帧透明边缘至少 12px，原图、切片与实际尺寸预览见 `tmp/imagegen/skill-level-batch2-20261029/`。碰撞使用实例的 `w/h`，不读取上述素材的宽高；角色施法图与玩法数值未修改。
+
+第三批穿针、回刃、升浪也已接入三个等级的独立图集：穿针与升浪在原目录增加 `effect_lv2.png`、`effect_lv3.png`；回刃增加 `tide_technique_lv2.png`、`tide_technique_lv3.png`。每级切片分别保持 360×320×4、256×256×8、480×520×7，播放速度分别为 6/5/4 个游戏帧。回刃专用绘制与合痕均按实例 `effectLevel` 选图，低等级不显示潮痕与合痕；新增等级图统一预加载。
+
+穿针三级分别使用单针、绕流水针、羽状水锋，触地落点 `(180,302)`；升浪为单锋、主锋加双侧流、主锋加四侧流，地面锚点 `(240,450)`。升浪和独立落柱的绘制中心按该锚点对齐实例脚点，不再随命中盒高度偏移。落柱前两帧悬空、索引 2 触地，原有概率、延迟、伤害门槛不变。回刃为单、双、三重弯刃，前四帧以主体中心注册并循环，后四帧保留潮痕与合痕。十张图集共 64 帧，透明边缘至少 14px，回刃至少 24px；源图与离线预览见 `tmp/imagegen/skill-level-batch3-20261029/`。
+
+六个新增技能的图标、施法图和特效图以 `player-skills-implementation-source.png` 的绿幕源图为初版基础；其中 `雨线·穿针` 已按原画设定重新生成更大的施放动作和单束斜落针雨运行时序列帧，`回涡·引潮` 已重新生成 5 帧贴地引潮施法动作和 6 帧低位地面潮涡特效，`升浪·托月` 已重新生成 6 帧施放动作、7 帧前向弧形上挑浪柱特效和无角色图标；`vertical_wave/downward_pillar.png` 是该技能 Lv3 被动独立使用的 7 帧向下水柱，每帧保持 4 个游戏帧、`drawScale=0.42`，原图落点固定在 `(240,450)`，三个实例复用同一图集并按 `0/6/12` 帧启动。该水柱不随 `facing` 镜像，朝向只决定三个落点由近及远排在玩家哪一侧。`returning_blade/tide_technique.png` 是留刃牵线的 8 帧图集：0-3 为中心固定的月牙潮刃循环，飞行时旋转至真实运动方向，留刃时按朝向镜像；4 为目标潮痕；4-7 为合痕聚拢、峰值、散开与消散。每帧 5 个游戏帧，刀与合痕 `drawScale=0.32`，潮痕 `0.14`；透明边缘至少 24px，统一中心 `(128,128)`。留刃到期或主动收刀时缩至正常尺寸的 72%，随后恢复飞行尺寸；不会缩放玩法命中盒。动态细潮线不具有伤害。旧 `returning_blade/effect.png` 与 `ripple_slash.png` 仅保留为历史文件，不再预加载或用于本招。`断浪·裂甲` 的五帧施法图已重新生成，依次为收刀、回腕、前刺、随动和回收；头身比例与脚点保持稳定，刀光沿同一条前刺轨迹推进。其 `drawScale=0.45`、`anchorX=0.4`、`anchorY=0.96`，保留 `360x360` 单帧、释放时刻与独立命中特效。`流步·潮闪` 为短潮线收刀斩。`ultimate_skill/skill.png` 的 6 帧施法动作每帧保持 5 个游戏帧，总计 30 帧；播放期间冻结战斗和关卡推进。`ultimate_skill/effect{,_lv2,_lv3}.png` 是各级四帧低位月牙潮流，每帧八个游戏帧，缩放 0.38，中心位于脚上方 3px，透明度 0.52，最后 30 帧渐隐；保持中心透明，不随朝向镜像。`opening{,_lv2,_lv3}.png` 为六帧一次性展开，每帧四个游戏帧、缩放 0.64、底边锚点 260；`afterimage{,_lv2,_lv3}.png` 为真实追加命中时的四帧水刃，在原有 12 帧寿命内播放。三组按触发时记录的等级选图，普通透明叠加，单帧边缘至少 16px；开启图不循环，状态结束后不显示脚下提示。除向下水柱、回刃合痕、月潮脚下与开启浪纹和沿飞行方向旋转的潮刃外，以上透明 PNG 均由运行时根据玩家 `facing` 或中心点绘制。
 
 ### 敌人和 Boss
 

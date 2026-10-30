@@ -7,6 +7,7 @@ import {
 } from "../../constants";
 import { keys } from "../../game/input";
 import { resetState, state } from "../../game/state";
+import { ultimateAfterimageSheetForLevel } from "../../systems/skillCatalog";
 import { setCanvas } from "../../rendering/context";
 import type { UltimatePlayerGhostAction, UltimatePlayerGhostSnapshot } from "../../types/game-state";
 import { updatePlayer } from "../player";
@@ -266,7 +267,10 @@ describe("moon tide player ghosts", () => {
     expect(context.filterValues[0]).toContain("rgba(42, 178, 255");
   });
 
-  it("draws afterimage slashes with water-blue strokes", () => {
+  it("draws afterimage slashes from the water sequence", () => {
+    const sheet = ultimateAfterimageSheetForLevel();
+    const oldImage = sheet.image;
+    sheet.image = {} as HTMLImageElement;
     const context = createMockContext();
     installMockContext(context);
 
@@ -283,10 +287,10 @@ describe("moon tide player ghosts", () => {
 
     drawUltimateAfterimageSlashes();
 
-    expect(context.strokeStyleValues).toEqual([
-      "rgba(78, 210, 255, 0.9)",
-      "rgba(34, 142, 255, 0.64)",
-    ]);
+    expect(context.drawImage).toHaveBeenCalledTimes(1);
+    expect(context.drawImage.mock.calls[0]?.[0]).toBe(sheet.image);
+    expect(context.drawImage.mock.calls[0]?.[1]).toBe(0);
+    sheet.image = oldImage;
   });
 
   it("caps moon tide trail visuals to the visible lifetime window", () => {

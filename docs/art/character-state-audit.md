@@ -65,6 +65,16 @@
 - Validation notes: 生成前后均运行 `scripts/audit-character-sprites.mjs`，本次人工复核聚焦玩家常态五组及与原地攻击的衔接；未重新声称复核所有角色。候选稿中拥挤的移动攻击图已淘汰，采用稿第二帧缺刀已单独修正。动作接触表和左右镜像预览位于 `tmp/imagegen/player-basic-states-20261028/`；未运行游戏或无头浏览器。
 - Remaining visual uncertainty: 跑步两半周期的支撑腿区别不够强，移动攻击与跑步切换仍需用户连播复核；记录为已接入待审阅，不等同用户已确认满意。月潮及技能跨状态一致性留待后续批次。
 
+### player — 2026-10-29 常态衔接修正
+
+- Scope: 用户授权先优化角色序列帧；本轮聚焦常态跑步与移动攻击，技能施法和月潮形态留待之后讨论。
+- Baseline status: baseline clear；沿用当前原地攻击末帧、跑步入口及角色设定。
+- Initial findings: 跑步两半周期的腿部遮挡关系相似；移动攻击起止偏站定姿态，水花增长突兀，收刀需要更清楚的刀尖路径。
+- Repair type: asset-only repair；只接入新的十二帧 `player_moving_attack.png`，切片、缩放、锚点、时长和判定不变。
+- Approval status: 用户已授权制作与接入；已接入移动攻击供审阅，不代表用户已确认视觉满意。
+- Validation notes: 生成完整移动攻击后，以第 9、12 帧为参照补绘第 10–11 帧；核对十二帧、武器连接、透明边缘和实际尺寸的新旧切换接触图。正常速度与慢放 GIF 位于 `tmp/imagegen/player-continuity-20261029/`，静帧检查不等同观看实际连播。更新前后运行角色素材审计；仅玩家本轮目标做新增人工复核。未启动游戏或浏览器。
+- Remaining visual uncertainty: 跑步三张整套候选和一张单姿态修正均未解决腿部交替，全部保留为淘汰稿，原运行时跑步图不变，跑步优化仍未完成。移动攻击中段仍有相近的随动姿态，末帧与跑步入口也非逐像素匹配，需用户以正常速度对比判断。
+
 ### chaser
 
 - Display name: 裸身追妖

@@ -1,5 +1,5 @@
 import type { ReturningBladeRouteState } from "./returningBlade";
-import type { PlayerAnimationState, SkillId, SpriteSheet } from "../assets";
+import type { SkillId, SpriteSheet } from "../assets";
 import type {
   ActBand,
   BinderTalismanDebuff,
@@ -455,6 +455,7 @@ export type LineProjectileEffectState = {
 };
 export type CloseArcEffectState = {
   skillSource?: SkillHitSource;
+  effectLevel?: SkillLevel;
   x: number;
   y: number;
   vx: number;
@@ -467,7 +468,6 @@ export type CloseArcEffectState = {
   damageMultiplier: number;
   refundedSkillEnergy?: boolean;
 };
-
 export type CloseArcBasicCrescentState = {
   x: number;
   y: number;
@@ -483,7 +483,6 @@ export type CloseArcBasicCrescentState = {
   hitEnemies: EnemyState[];
   bossHit: boolean;
 };
-
 export type HuntBladeReachEffectState = {
   x: number;
   y: number;
@@ -495,6 +494,7 @@ export type HuntBladeReachEffectState = {
 };
 export type GuardCounterEffectState = {
   skillSource?: SkillHitSource;
+  effectLevel?: SkillLevel;
   elapsed: number;
   frame: number;
   hitsRemaining: number;
@@ -547,54 +547,8 @@ export type PlayerSkillEffectState = {
   armorBreakBossMultiplier?: number;
   lift?: number;
 };
-export type UltimateEffectState = {
-  x: number;
-  y: number;
-  facing: number;
-  elapsed: number;
-  frame: number;
-  life: number;
-  maxLife: number;
-};
 
-export type UltimateTrailState = {
-  x: number;
-  y: number;
-  facing: number;
-  life: number;
-  maxLife: number;
-  width: number;
-  height: number;
-  phase: number;
-};
-
-export type UltimateAfterimageSlashState = {
-  x: number;
-  y: number;
-  w: number;
-  h: number;
-  facing: number;
-  life: number;
-  maxLife: number;
-  power: number;
-};
-
-export type UltimatePlayerGhostAction = "idle" | "move" | "attack" | "skill" | "fallAttack";
-
-export type UltimatePlayerGhostState = {
-  source: "player" | "skill";
-  animationState?: PlayerAnimationState;
-  skillId?: SkillId;
-  action: UltimatePlayerGhostAction;
-  frame: number;
-  x: number;
-  y: number;
-  w: number;
-  h: number;
-  facing: number;
-  life: number;
-  maxLife: number;
-  strength: number;
-};
-
-export type UltimatePlayerGhostSnapshot = Omit<UltimatePlayerGhostState, "life" | "maxLife" | "strength">;
+export type {
+  UltimateEffectState, UltimateTrailState, UltimateAfterimageSlashState,
+  UltimatePlayerGhostAction, UltimatePlayerGhostState, UltimatePlayerGhostSnapshot,
+} from "./ultimateEffects";

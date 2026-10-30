@@ -2,6 +2,7 @@ import { existsSync, readFileSync } from "node:fs";
 import { expect, it } from "vitest";
 import { spriteImageLoadTargets } from "./manifest";
 import { MOON_TIDE_PLAYER_SHEETS, PLAYER_SHEETS } from "../constants";
+import { playerSkillEffectSheets } from "../systems/skillCatalog";
 
 const PNG_HEADER = { signatureLength: 8, widthOffset: 16, heightOffset: 20 };
 
@@ -11,8 +12,11 @@ it("has a repository file for every preloaded image", () => {
   expect(missing).toEqual([]);
 });
 
-it("matches every player sheet slicing contract to its actual PNG dimensions", () => {
-  for (const sheet of [...Object.values(PLAYER_SHEETS), ...Object.values(MOON_TIDE_PLAYER_SHEETS)]) {
+it("matches player and skill effect slicing contracts to their actual PNG dimensions", () => {
+  for (const sheet of [
+    ...Object.values(PLAYER_SHEETS), ...Object.values(MOON_TIDE_PLAYER_SHEETS),
+    ...playerSkillEffectSheets(),
+  ]) {
     const png = readFileSync(sheet.src);
     expect(png.toString("hex", 0, PNG_HEADER.signatureLength), sheet.src).toBe("89504e470d0a1a0a");
     expect(png.readUInt32BE(PNG_HEADER.widthOffset), sheet.src).toBe(sheet.frameW * sheet.count);

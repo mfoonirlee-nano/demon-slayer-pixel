@@ -1,3 +1,4 @@
+import { CLOSE_ARC_COLLISION_SIZE, LINE_PROJECTILE_COLLISION_SIZES } from "../../constants/playerSkillGeometry";
 import { state } from "../../game/state";
 import { ctx } from "../../rendering/context";
 import {
@@ -18,14 +19,13 @@ import { hitbox } from "../../game/utils";
 import { recordCollisionDebugRect } from "../../game/collisionDebug";
 import {
   CORE_PLAYER_SKILL_EFFECT_CONFIGS,
-  CORE_PLAYER_SKILL_EFFECT_SHEETS,
+  corePlayerSkillEffectSheetForLevel,
   lineProjectileEffectSheetForLevel,
   playerSkillColor,
 } from "../../systems/skillCatalog";
 import { emitHitBurst, emitSlash } from "./bursts";
 
 const LINE_PROJECTILE_EFFECT_CONFIG = CORE_PLAYER_SKILL_EFFECT_CONFIGS[SKILL_IDS.lineProjectile];
-const CLOSE_ARC_EFFECT_SHEET = CORE_PLAYER_SKILL_EFFECT_SHEETS[SKILL_IDS.closeArc];
 const CLOSE_ARC_EFFECT_CONFIG = CORE_PLAYER_SKILL_EFFECT_CONFIGS[SKILL_IDS.closeArc];
 const CLOSE_ARC_FADE_ALPHA_GAIN = 0.7;
 const CLOSE_ARC_BASIC_CRESCENT_HIT_COLOR = playerSkillColor(SKILL_IDS.closeArc);
@@ -48,8 +48,9 @@ export function updateLineProjectileEffects() {
     const eff = state.lineProjectileEffects[i] as LineProjectileEffectState;
     const sheet = lineProjectileEffectSheetForLevel(eff.effectLevel);
     const drawScale = eff.drawScale ?? LINE_PROJECTILE_EFFECT_CONFIG.drawScale;
-    const drawW = sheet.frameW * drawScale;
-    const drawH = sheet.frameH * drawScale;
+    const geometry = LINE_PROJECTILE_COLLISION_SIZES[eff.effectLevel];
+    const drawW = geometry.width * drawScale;
+    const drawH = geometry.height * drawScale;
     const damage = baseDamage * eff.damageMultiplier;
     let hitTargets = 0;
     let bossHit = false;
@@ -126,15 +127,15 @@ export function updateLineProjectileEffects() {
 }
 
 export function updateCloseArcEffects() {
-  const sheet = CLOSE_ARC_EFFECT_SHEET;
   const p = state.player;
   const baseDamage = (p.baseAttack + p.attackBonus) * CLOSE_ARC_EFFECT_CONFIG.damageMultiplier;
 
   for (let i = state.closeArcEffects.length - 1; i >= 0; i -= 1) {
     const eff = state.closeArcEffects[i] as CloseArcEffectState;
+    const sheet = corePlayerSkillEffectSheetForLevel(SKILL_IDS.closeArc, eff.effectLevel);
     const drawScale = eff.drawScale ?? CLOSE_ARC_EFFECT_CONFIG.drawScale;
-    const drawW = sheet.frameW * drawScale;
-    const drawH = sheet.frameH * drawScale;
+    const drawW = CLOSE_ARC_COLLISION_SIZE.width * drawScale;
+    const drawH = CLOSE_ARC_COLLISION_SIZE.height * drawScale;
     const maxTravel = eff.maxTravel ?? CLOSE_ARC_EFFECT_CONFIG.maxTravel;
     const damage = baseDamage * eff.damageMultiplier;
     let hitTargets = 0;
@@ -261,7 +262,7 @@ export function drawLineProjectileEffects() {
     const drawW = sheet.frameW * drawScale;
     const sx = e.frame * sheet.frameW;
     ctx.save();
-    ctx.translate(e.x, e.y + drawH / 2);
+    ctx.translate(e.x, e.y + LINE_PROJECTILE_COLLISION_SIZES[e.effectLevel].height * drawScale / 2);
     ctx.scale(e.facing, 1);
     ctx.drawImage(sheet.image, sx, 0, sheet.frameW, sheet.frameH, -drawW / 2, -drawH / 2, drawW, drawH);
     ctx.restore();
@@ -270,9 +271,9 @@ export function drawLineProjectileEffects() {
 
 export function drawCloseArcEffects() {
   if (!ctx) return;
-  const sheet = CLOSE_ARC_EFFECT_SHEET;
-  if (!sheet.image) return;
   for (const e of state.closeArcEffects) {
+    const sheet = corePlayerSkillEffectSheetForLevel(SKILL_IDS.closeArc, e.effectLevel);
+    if (!sheet.image) continue;
     const drawScale = e.drawScale ?? CLOSE_ARC_EFFECT_CONFIG.drawScale;
     const drawH = sheet.frameH * drawScale;
     const drawW = sheet.frameW * drawScale;
@@ -282,7 +283,7 @@ export function drawCloseArcEffects() {
     const alpha = 1 - fadeT * CLOSE_ARC_FADE_ALPHA_GAIN;
     ctx.save();
     ctx.globalAlpha = alpha;
-    ctx.translate(e.x - e.facing * CLOSE_ARC_EFFECT_CONFIG.visualBackOffset, e.y + drawH / 2);
+    ctx.translate(e.x - e.facing * CLOSE_ARC_EFFECT_CONFIG.visualBackOffset, e.y + CLOSE_ARC_COLLISION_SIZE.height * drawScale / 2);
     ctx.scale(e.facing, 1);
     ctx.drawImage(sheet.image, sx, 0, sheet.frameW, sheet.frameH, -drawW / 2, -drawH / 2, drawW, drawH);
     ctx.restore();

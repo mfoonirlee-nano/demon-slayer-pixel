@@ -1,18 +1,26 @@
 import {
   CLOSE_ARC_EFFECT_CONFIG,
   CLOSE_ARC_EFFECT_SHEET,
+  CLOSE_ARC_EFFECT_LEVEL_TWO_SHEET,
+  CLOSE_ARC_EFFECT_LEVEL_THREE_SHEET,
   CLOSE_ARC_BASIC_CRESCENT_SHEET,
   GUARD_COUNTER_EFFECT_CONFIG,
   GUARD_COUNTER_EFFECT_SHEET,
+  GUARD_COUNTER_EFFECT_LEVEL_TWO_SHEET,
+  GUARD_COUNTER_EFFECT_LEVEL_THREE_SHEET,
+  GUARD_COUNTER_HIT_SHEETS,
   LINE_PROJECTILE_EFFECT_CONFIG,
   LINE_PROJECTILE_EFFECT_LEVEL_THREE_SHEET,
   LINE_PROJECTILE_EFFECT_LEVEL_TWO_SHEET,
   LINE_PROJECTILE_EFFECT_SHEET,
   PLAYER_SKILL_EFFECT_SHEETS,
-  RETURNING_BLADE_TECHNIQUE_SHEET,
+  PLAYER_SKILL_EFFECT_LEVEL_SHEETS,
   SKILL_IDS,
   SKILLS,
   ULTIMATE_SKILL_EFFECT_SHEET,
+  ULTIMATE_SKILL_EFFECT_LEVEL_SHEETS,
+  ULTIMATE_OPENING_LEVEL_SHEETS,
+  ULTIMATE_AFTERIMAGE_LEVEL_SHEETS,
   ULTIMATE_SKILL_SHEET,
   VERTICAL_WAVE_PILLAR_SHEET,
 } from "../constants";
@@ -47,6 +55,28 @@ export const LINE_PROJECTILE_EFFECT_SHEETS_BY_LEVEL: Record<SkillLevel, SpriteSh
   2: LINE_PROJECTILE_EFFECT_LEVEL_TWO_SHEET,
   3: LINE_PROJECTILE_EFFECT_LEVEL_THREE_SHEET,
 };
+
+export const CORE_PLAYER_SKILL_LEVEL_SHEETS: Record<CorePlayerSkillId, Record<SkillLevel, SpriteSheet>> = {
+  [SKILL_IDS.lineProjectile]: LINE_PROJECTILE_EFFECT_SHEETS_BY_LEVEL,
+  [SKILL_IDS.closeArc]: {
+    1: CLOSE_ARC_EFFECT_SHEET,
+    2: CLOSE_ARC_EFFECT_LEVEL_TWO_SHEET,
+    3: CLOSE_ARC_EFFECT_LEVEL_THREE_SHEET,
+  },
+  [SKILL_IDS.guardCounter]: {
+    1: GUARD_COUNTER_EFFECT_SHEET,
+    2: GUARD_COUNTER_EFFECT_LEVEL_TWO_SHEET,
+    3: GUARD_COUNTER_EFFECT_LEVEL_THREE_SHEET,
+  },
+};
+
+export function corePlayerSkillEffectSheetForLevel(skillId: CorePlayerSkillId, level: SkillLevel = 1) {
+  return CORE_PLAYER_SKILL_LEVEL_SHEETS[skillId][level];
+}
+
+export function guardCounterHitSheetForLevel(level: SkillLevel = 1) {
+  return GUARD_COUNTER_HIT_SHEETS[level];
+}
 
 export const CORE_PLAYER_SKILL_EFFECT_CONFIGS: CorePlayerSkillEffectConfig = {
   [SKILL_IDS.lineProjectile]: LINE_PROJECTILE_EFFECT_CONFIG,
@@ -91,37 +121,43 @@ export function playerSkillDescription(skillId: SkillId, level: SkillLevel) {
 export function playerSkillEffectSheet(
   skillId: SkillId,
   effectKind?: PlayerSkillEffectState["kind"],
+  level: SkillLevel = 1,
 ): SpriteSheet | null {
   if (
     skillId === SKILL_IDS.verticalWave
     && effectKind === "verticalWavePillar"
   ) return VERTICAL_WAVE_PILLAR_SHEET;
-  if (
-    skillId === SKILL_IDS.returningBlade
-    && effectKind === "returningBladeCross"
-  ) return RETURNING_BLADE_TECHNIQUE_SHEET;
   if (isCorePlayerSkillId(skillId)) {
-    return CORE_PLAYER_SKILL_EFFECT_SHEETS[skillId];
+    return corePlayerSkillEffectSheetForLevel(skillId, level);
   }
   if (isGenericPlayerSkillId(skillId)) {
-    return PLAYER_SKILL_EFFECT_SHEETS[skillId] ?? null;
+    return PLAYER_SKILL_EFFECT_LEVEL_SHEETS[skillId]?.[level] ?? PLAYER_SKILL_EFFECT_SHEETS[skillId] ?? null;
   }
   return null;
 }
 
 export function playerSkillEffectSheets(): SpriteSheet[] {
   return [
-    ...Object.values(CORE_PLAYER_SKILL_EFFECT_SHEETS),
+    ...Object.values(CORE_PLAYER_SKILL_LEVEL_SHEETS).flatMap((levels) => Object.values(levels)),
+    ...Object.values(GUARD_COUNTER_HIT_SHEETS),
     CLOSE_ARC_BASIC_CRESCENT_SHEET,
-    LINE_PROJECTILE_EFFECT_LEVEL_TWO_SHEET,
-    LINE_PROJECTILE_EFFECT_LEVEL_THREE_SHEET,
     ...Object.values(PLAYER_SKILL_EFFECT_SHEETS).filter(isSpriteSheet),
+    ...Object.values(PLAYER_SKILL_EFFECT_LEVEL_SHEETS).flatMap((levels) => levels ? Object.values(levels).slice(1) : []),
     VERTICAL_WAVE_PILLAR_SHEET,
   ];
 }
 
 export function ultimateSkillSheets(): SpriteSheet[] {
-  return [ULTIMATE_SKILL_ASSETS.skill, ULTIMATE_SKILL_ASSETS.effect];
+  return [ULTIMATE_SKILL_ASSETS.skill, ...Object.values(ULTIMATE_SKILL_EFFECT_LEVEL_SHEETS),
+    ...Object.values(ULTIMATE_OPENING_LEVEL_SHEETS), ...Object.values(ULTIMATE_AFTERIMAGE_LEVEL_SHEETS)];
+}
+
+export function ultimateEffectSheetForLevel(level: SkillLevel = 1, opening = false): SpriteSheet {
+  return (opening ? ULTIMATE_OPENING_LEVEL_SHEETS : ULTIMATE_SKILL_EFFECT_LEVEL_SHEETS)[level];
+}
+
+export function ultimateAfterimageSheetForLevel(level: SkillLevel = 1): SpriteSheet {
+  return ULTIMATE_AFTERIMAGE_LEVEL_SHEETS[level];
 }
 
 export function genericPlayerSkillTuning(skillId: SkillId) {

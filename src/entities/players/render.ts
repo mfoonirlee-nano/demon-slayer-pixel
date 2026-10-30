@@ -267,7 +267,7 @@ function drawMoonTideOutline(snapshot: UltimatePlayerGhostSnapshot, currentSkill
 
   ctx.save();
   ctx.globalAlpha = MOON_TIDE_OUTLINE_ALPHA_BASE + level * MOON_TIDE_OUTLINE_ALPHA_PER_LEVEL;
-  ctx.globalCompositeOperation = "lighter";
+  ctx.globalCompositeOperation = "source-over";
   drawRenderSnapshot(outline, currentSkill, MOON_TIDE_FRAME_EFFECTS.outline);
   ctx.restore();
 }

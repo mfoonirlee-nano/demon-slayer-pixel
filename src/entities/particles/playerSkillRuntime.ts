@@ -3,7 +3,7 @@ import { updateReturningBladeEffect } from "./returningBlade";
 import { drawReturningBladeEffect } from "./returningBladeVisuals";
 import { playSfx } from "../../game/audio";
 import { ctx } from "../../rendering/context";
-import { PLAYER_COMBAT, VERTICAL_WAVE_PILLAR_CONFIG } from "../../constants";
+import { PLAYER_COMBAT, VERTICAL_WAVE_EFFECT_GROUND_BASELINE_Y, VERTICAL_WAVE_PILLAR_CONFIG } from "../../constants";
 import type { EnemyState, PlayerSkillEffectState } from "../../types/game-state";
 import { hitbox } from "../../game/utils";
 import { resolveBossHit, resolveEnemyHit } from "../../systems/combatResolution";
@@ -102,7 +102,7 @@ function applyEffectDamageToBoss(effect: PlayerSkillEffectState) {
 }
 
 function armorBreakImpactLife(effect: PlayerSkillEffectState) {
-  const sheet = playerSkillEffectSheet(effect.skillId);
+  const sheet = playerSkillEffectSheet(effect.skillId, effect.kind, effect.effectLevel);
   const tuning = isGenericPlayerSkillId(effect.skillId) ? GENERIC_PLAYER_SKILL_TUNING[effect.skillId] : null;
   const impactFrames = Math.max(1, (sheet?.count ?? 1) - ARMOR_BREAK_IMPACT_FRAME_START);
   return impactFrames * (tuning?.frameDuration ?? 1);
@@ -289,7 +289,7 @@ export function drawPlayerSkillEffects() {
     if ((effect.startDelay ?? 0) > 0) continue;
     if (drawReturningBladeEffect(effect)) continue;
 
-    const sheet = playerSkillEffectSheet(effect.skillId, effect.kind);
+    const sheet = playerSkillEffectSheet(effect.skillId, effect.kind, effect.effectLevel);
     const tuning = isGenericPlayerSkillId(effect.skillId)
       ? GENERIC_PLAYER_SKILL_TUNING[effect.skillId]
       : null;
@@ -302,14 +302,20 @@ export function drawPlayerSkillEffects() {
 
     ctx.save();
     ctx.globalAlpha = alpha;
-    ctx.globalCompositeOperation = "lighter";
+    // Preserve the navy volume and open gaps of the tiered water art.
+    ctx.globalCompositeOperation = "source-over";
 
     if (sheet?.image && tuning) {
       const sx = effect.frame * sheet.frameW;
       const drawScale = effect.drawScale ?? tuning.drawScale;
       const drawW = sheet.frameW * drawScale;
       const drawH = sheet.frameH * drawScale;
-      ctx.translate(effect.x, effect.visualY ?? effect.y);
+      // Register the water's ground contact independently of the level's hitbox height.
+      const isGroundWave = effect.kind === "verticalWave" || effect.kind === "verticalWavePillar";
+      const centerY = isGroundWave
+        ? effect.y + effect.h / 2 - (VERTICAL_WAVE_EFFECT_GROUND_BASELINE_Y - sheet.frameH / 2) * drawScale
+        : effect.visualY ?? effect.y;
+      ctx.translate(effect.x, centerY);
       const mirrorsWithFacing = effect.kind !== "verticalWavePillar";
       ctx.scale(mirrorsWithFacing ? effect.facing : 1, 1);
       ctx.drawImage(sheet.image, sx, 0, sheet.frameW, sheet.frameH, -drawW / 2, -drawH / 2, drawW, drawH);
