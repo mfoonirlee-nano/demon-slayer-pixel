@@ -203,6 +203,25 @@ export const PLAYER_SKILL_EFFECT_SHEETS: Partial<Record<SkillId, SpriteSheet>> =
   },
 };
 
+function createLevelEffectSheets(sheet: SpriteSheet): Record<SkillLevel, SpriteSheet> {
+  return {
+    1: sheet,
+    2: { ...sheet, src: sheet.src.replace(".png", "_lv2.png") },
+    3: { ...sheet, src: sheet.src.replace(".png", "_lv3.png") },
+  };
+}
+
+export const PLAYER_SKILL_EFFECT_LEVEL_SHEETS: Partial<Record<SkillId, Record<SkillLevel, SpriteSheet>>> = {
+  [SKILL_IDS.dashReposition]: createLevelEffectSheets(PLAYER_SKILL_EFFECT_SHEETS[SKILL_IDS.dashReposition]!),
+  [SKILL_IDS.vortexControl]: createLevelEffectSheets(PLAYER_SKILL_EFFECT_SHEETS[SKILL_IDS.vortexControl]!),
+  [SKILL_IDS.armorBreak]: createLevelEffectSheets(PLAYER_SKILL_EFFECT_SHEETS[SKILL_IDS.armorBreak]!),
+  [SKILL_IDS.antiAirMulti]: createLevelEffectSheets(PLAYER_SKILL_EFFECT_SHEETS[SKILL_IDS.antiAirMulti]!),
+  [SKILL_IDS.returningBlade]: createLevelEffectSheets(RETURNING_BLADE_TECHNIQUE_SHEET),
+  [SKILL_IDS.verticalWave]: createLevelEffectSheets(PLAYER_SKILL_EFFECT_SHEETS[SKILL_IDS.verticalWave]!),
+};
+
+export const VERTICAL_WAVE_EFFECT_GROUND_BASELINE_Y = 450;
+
 export const VERTICAL_WAVE_PILLAR_SHEET: SpriteSheet = {
   src: "assets/sprites/skills/vertical_wave/downward_pillar.png",
   frameW: 480,
@@ -223,6 +242,24 @@ export const ULTIMATE_SKILL_EFFECT_SHEET: SpriteSheet = {
   src: "assets/sprites/skills/ultimate_skill/effect.png",
   frameW: 480,
   frameH: 360,
-  count: 8,
+  count: 4,
   image: null,
 };
+
+export const ULTIMATE_SKILL_EFFECT_LEVEL_SHEETS = createLevelEffectSheets(ULTIMATE_SKILL_EFFECT_SHEET);
+
+export const ULTIMATE_OPENING_LEVEL_SHEETS = createLevelEffectSheets({
+  src: "assets/sprites/skills/ultimate_skill/opening.png",
+  frameW: 480,
+  frameH: 360,
+  count: 6,
+  image: null,
+});
+
+export const ULTIMATE_AFTERIMAGE_LEVEL_SHEETS = createLevelEffectSheets({
+  src: "assets/sprites/skills/ultimate_skill/afterimage.png",
+  frameW: 256,
+  frameH: 128,
+  count: 4,
+  image: null,
+});

@@ -1,4 +1,4 @@
-import { MOON_TIDE_FRAME_EFFECTS } from "../../constants/moonTideVisual";
+import { MOON_TIDE_AURA, MOON_TIDE_FRAME_EFFECTS } from "../../constants/moonTideVisual";
 import { state } from "../../game/state";
 import { ctx } from "../../rendering/context";
 import { MOON_TIDE_PLAYER_SHEETS, PLAYER_COMBAT } from "../../constants";
@@ -8,15 +8,13 @@ import type {
   UltimatePlayerGhostState,
   UltimateTrailState,
 } from "../../types/game-state";
-import { playerSkillById, ULTIMATE_SKILL_ASSETS } from "../../systems/skillCatalog";
+import { playerSkillById, ultimateAfterimageSheetForLevel, ultimateEffectSheetForLevel } from "../../systems/skillCatalog";
 
 const FULL_CIRCLE_RADIANS = Math.PI * 2;
-const ULTIMATE_SKILL_EFFECT_SHEET = ULTIMATE_SKILL_ASSETS.effect;
 
-
-const PLAYER_GHOST_ALPHA_BASE = 0.18;
-const PLAYER_GHOST_ALPHA_SCALE = 0.44;
-const PLAYER_GHOST_ALPHA_MAX = 0.6;
+const PLAYER_GHOST_ALPHA_BASE = 0.1;
+const PLAYER_GHOST_ALPHA_SCALE = 0.34;
+const PLAYER_GHOST_ALPHA_MAX = 0.44;
 const PLAYER_GHOST_OFFSET_X: Record<UltimatePlayerGhostState["action"], number> = {
   idle: 16,
   move: 18,
@@ -24,11 +22,6 @@ const PLAYER_GHOST_OFFSET_X: Record<UltimatePlayerGhostState["action"], number> 
   skill: 18,
   fallAttack: 22,
 };
-const ULTIMATE_FOOT_EFFECT = {
-  drawScale: 0.38,
-  footYOffset: 6,
-  anchorY: 0.94,
-} as const;
 const TRAIL_RIPPLE_PHASE_SCALE = 0.5;
 const TRAIL_RIPPLE_AMPLITUDE = 2;
 const TRAIL_STROKE_ALPHA_BASE = 0.08;
@@ -40,24 +33,8 @@ const TRAIL_HEIGHT_FADE_SCALE = 0.5;
 const TRAIL_FILL_ALPHA_BASE = 0.06;
 const TRAIL_FILL_ALPHA_SCALE = 0.12;
 const TRAIL_FILL_X_OFFSET_SCALE = 0.45;
-const FOOT_EFFECT_OPENING_ALPHA = 0.42;
-const FOOT_EFFECT_MIN_ALPHA = 0.12;
-const FOOT_EFFECT_MAX_ALPHA = 0.28;
-const FOOT_EFFECT_LIFE_ALPHA_SCALE = 0.32;
-const SLASH_ALPHA_MAX = 0.52;
-const SLASH_ALPHA_BASE = 0.16;
-const SLASH_ALPHA_SCALE = 0.42;
-const OUTER_SLASH_LINE_WIDTH = 3;
-const OUTER_SLASH_START_Y_SCALE = 0.25;
-const OUTER_SLASH_CONTROL_X_SCALE = 0.08;
-const OUTER_SLASH_CONTROL_Y_SCALE = 0.68;
-const OUTER_SLASH_END_Y_SCALE = 0.2;
-const INNER_SLASH_LINE_WIDTH = 1.5;
-const INNER_SLASH_START_X_SCALE = 0.36;
-const INNER_SLASH_START_Y_SCALE = 0.46;
-const INNER_SLASH_CONTROL_Y_SCALE = 0.08;
-const INNER_SLASH_END_X_SCALE = 0.42;
-const INNER_SLASH_END_Y_SCALE = 0.1;
+const AFTERIMAGE_DRAW_WIDTH_SCALE = 1.2;
+const AFTERIMAGE_ALPHA_MAX = 0.66;
 
 export function updateUltimateTrails() {
   for (let i = state.ultimateTrails.length - 1; i >= 0; i -= 1) {
@@ -84,9 +61,9 @@ export function updateUltimatePlayerGhosts() {
 }
 
 export function updateUltimateEffects() {
-  const sheet = ULTIMATE_SKILL_EFFECT_SHEET;
   for (let i = state.ultimateEffects.length - 1; i >= 0; i -= 1) {
     const eff = state.ultimateEffects[i];
+    const sheet = ultimateEffectSheetForLevel(eff.effectLevel);
     eff.elapsed += 1;
     eff.life -= 1;
     eff.frame = Math.floor(eff.elapsed / PLAYER_COMBAT.ultimateEffectFrameDuration) % sheet.count;
@@ -99,7 +76,7 @@ export function drawUltimateTrails() {
   if (state.ultimateTrails.length === 0) return;
 
   ctx.save();
-  ctx.globalCompositeOperation = "lighter";
+  ctx.globalCompositeOperation = "source-over";
   ctx.strokeStyle = "rgba(126, 226, 255, 0.72)";
   ctx.lineWidth = 2;
   ctx.fillStyle = "rgba(156, 242, 255, 0.5)";
@@ -132,71 +109,55 @@ export function drawUltimateTrails() {
 }
 
 export function drawUltimateEffects() {
-  if (!ctx) return;
-  const sheet = ULTIMATE_SKILL_EFFECT_SHEET;
-  if (!sheet.image) return;
-  if (state.ultimateEffects.length === 0) return;
-  const drawW = sheet.frameW * ULTIMATE_FOOT_EFFECT.drawScale;
-  const drawH = sheet.frameH * ULTIMATE_FOOT_EFFECT.drawScale;
-  const openingFrames = sheet.count * PLAYER_COMBAT.ultimateEffectFrameDuration;
+  if (!ctx || state.gameOver || state.player.hp <= 0) return;
   const p = state.player;
+  if (p.ultimateCastTimer <= 0 && p.ultimateTimer <= 0) return;
   const cx = p.x + p.w / 2;
-  const footY = p.y + p.h + ULTIMATE_FOOT_EFFECT.footYOffset;
+  const footY = p.y + p.h + MOON_TIDE_AURA.footYOffset;
   for (const eff of state.ultimateEffects) {
-    const sx = eff.frame * sheet.frameW;
-    const lifeRatio = eff.life / eff.maxLife;
-    const alpha = eff.elapsed <= openingFrames
-      ? FOOT_EFFECT_OPENING_ALPHA
-      : Math.max(FOOT_EFFECT_MIN_ALPHA, Math.min(FOOT_EFFECT_MAX_ALPHA, lifeRatio * FOOT_EFFECT_LIFE_ALPHA_SCALE));
+    const sheet = ultimateEffectSheetForLevel(eff.effectLevel);
+    const opening = ultimateEffectSheetForLevel(eff.effectLevel, true);
+    const openingFrame = Math.floor(eff.elapsed / MOON_TIDE_AURA.openingFrameDuration);
+    const fade = Math.min(1, eff.life / MOON_TIDE_AURA.fadeOutFrames);
     ctx.save();
-    ctx.globalAlpha = alpha;
-    ctx.globalCompositeOperation = "lighter";
+    ctx.globalCompositeOperation = "source-over";
     ctx.translate(cx, footY);
-    ctx.scale(eff.facing, 1);
-    ctx.drawImage(sheet.image, sx, 0, sheet.frameW, sheet.frameH, -drawW / 2, -drawH * ULTIMATE_FOOT_EFFECT.anchorY, drawW, drawH);
+    // Floor perspective remains fixed when the character turns.
+    if (sheet.image) {
+      const w = sheet.frameW * MOON_TIDE_AURA.drawScale;
+      const h = sheet.frameH * MOON_TIDE_AURA.drawScale;
+      ctx.globalAlpha = MOON_TIDE_AURA.alpha * fade;
+      ctx.drawImage(sheet.image, eff.frame * sheet.frameW, 0, sheet.frameW, sheet.frameH, -w / 2, -h / 2, w, h);
+    }
+    // The opening is a one-shot, independent of the sustained water loop.
+    if (opening.image && openingFrame < opening.count) {
+      const w = opening.frameW * MOON_TIDE_AURA.openingDrawScale;
+      const h = opening.frameH * MOON_TIDE_AURA.openingDrawScale;
+      ctx.globalAlpha = MOON_TIDE_AURA.openingAlpha * (1 - openingFrame / opening.count);
+      ctx.drawImage(opening.image, openingFrame * opening.frameW, 0, opening.frameW, opening.frameH,
+        -w / 2, -MOON_TIDE_AURA.openingAnchorY * MOON_TIDE_AURA.openingDrawScale, w, h);
+    }
     ctx.restore();
   }
 }
 
 export function drawUltimateAfterimageSlashes() {
-  if (!ctx) return;
-  if (state.ultimateAfterimageSlashes.length === 0) return;
-
-  ctx.save();
-  ctx.globalCompositeOperation = "lighter";
-
+  if (!ctx || state.gameOver || state.player.hp <= 0) return;
   for (const slash of state.ultimateAfterimageSlashes) {
-    const t = slash.life / slash.maxLife;
-    const alpha = Math.min(SLASH_ALPHA_MAX, (SLASH_ALPHA_BASE + t * SLASH_ALPHA_SCALE) * slash.power);
-    ctx.globalAlpha = alpha;
-    ctx.strokeStyle = "rgba(78, 210, 255, 0.9)";
-    ctx.lineWidth = OUTER_SLASH_LINE_WIDTH;
-    ctx.beginPath();
-    ctx.moveTo(slash.x - slash.facing * slash.w / 2, slash.y + slash.h * OUTER_SLASH_START_Y_SCALE);
-    ctx.quadraticCurveTo(
-      slash.x - slash.facing * slash.w * OUTER_SLASH_CONTROL_X_SCALE,
-      slash.y - slash.h * OUTER_SLASH_CONTROL_Y_SCALE,
-      slash.x + slash.facing * slash.w / 2,
-      slash.y - slash.h * OUTER_SLASH_END_Y_SCALE,
-    );
-    ctx.stroke();
-    ctx.strokeStyle = "rgba(34, 142, 255, 0.64)";
-    ctx.lineWidth = INNER_SLASH_LINE_WIDTH;
-    ctx.beginPath();
-    ctx.moveTo(
-      slash.x - slash.facing * slash.w * INNER_SLASH_START_X_SCALE,
-      slash.y + slash.h * INNER_SLASH_START_Y_SCALE,
-    );
-    ctx.quadraticCurveTo(
-      slash.x,
-      slash.y - slash.h * INNER_SLASH_CONTROL_Y_SCALE,
-      slash.x + slash.facing * slash.w * INNER_SLASH_END_X_SCALE,
-      slash.y + slash.h * INNER_SLASH_END_Y_SCALE,
-    );
-    ctx.stroke();
+    const sheet = ultimateAfterimageSheetForLevel(slash.effectLevel);
+    if (!sheet.image) continue;
+    const progress = 1 - slash.life / slash.maxLife;
+    const frame = Math.min(sheet.count - 1, Math.floor(progress * sheet.count));
+    const w = slash.w * AFTERIMAGE_DRAW_WIDTH_SCALE;
+    const h = w * sheet.frameH / sheet.frameW;
+    ctx.save();
+    ctx.globalCompositeOperation = "source-over";
+    ctx.globalAlpha = AFTERIMAGE_ALPHA_MAX * (1 - progress);
+    ctx.translate(slash.x, slash.y);
+    ctx.scale(slash.facing, 1);
+    ctx.drawImage(sheet.image, frame * sheet.frameW, 0, sheet.frameW, sheet.frameH, -w / 2, -h / 2, w, h);
+    ctx.restore();
   }
-
-  ctx.restore();
 }
 
 export function drawUltimatePlayerGhosts() {

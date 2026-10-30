@@ -352,15 +352,15 @@ export function playSfx(sfx: GameSfx, pitch = 1) {
       return;
     case "playerUltimateCast":
       playPattern(sfx, [
-        { frequency: 220, slideTo: 110, duration: 0.16, type: "sawtooth", volume: 0.07 },
-        { frequency: 880, slideTo: 1180, duration: 0.14, type: "triangle", volume: 0.055 },
+        { frequency: 392, slideTo: 587, duration: 0.16, type: "sine", volume: 0.035 },
+        { frequency: 587, slideTo: 784, duration: 0.12, type: "triangle", volume: 0.022, delay: 0.07 },
       ], SFX_MIN_GAPS.playerUltimateCast, pitch);
       return;
     case "playerUltimateImpact":
       playPattern(sfx, [
-        { frequency: 76, slideTo: 42, duration: 0.18, type: "sawtooth", volume: 0.08 },
-        { frequency: 190, slideTo: 95, duration: 0.12, type: "square", volume: 0.055, delay: 0.015 },
-        { frequency: 720, slideTo: 960, duration: 0.09, type: "triangle", volume: 0.045, delay: 0.025 },
+        { frequency: 76, slideTo: 52, duration: 0.18, type: "sine", volume: 0.065 },
+        { frequency: 784, slideTo: 1047, duration: 0.12, type: "triangle", volume: 0.035, delay: 0.025 },
+        { frequency: 1175, slideTo: 784, duration: 0.13, type: "sine", volume: 0.022, delay: 0.08 },
       ], SFX_MIN_GAPS.playerUltimateImpact, pitch);
       return;
     case "playerCounter":

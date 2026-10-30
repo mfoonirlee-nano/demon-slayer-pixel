@@ -240,7 +240,7 @@ export function spawnPlayerSkillEffect(skillId: SkillId, castDamageMultiplier = 
       if (bonusTarget) targets.push(bonusTarget);
     }
     const effectLife = valueForSkillLevel(tuning.life, level);
-    const sheet = playerSkillEffectSheet(skillId);
+    const sheet = playerSkillEffectSheet(skillId, "rainLine", level);
     const visualY = sheet
       ? GROUND_Y - sheet.frameH * tuning.drawScale / 2 + RAIN_LINE_EFFECT_BOTTOM_TRANSPARENT_PX * tuning.drawScale
       : undefined;

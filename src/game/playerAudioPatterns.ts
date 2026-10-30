@@ -28,12 +28,12 @@ const DYNAMIC_PLAYER_SFX_PATTERNS = {
     { frequency: 760, slideTo: 340, duration: 0.08, type: "square", volume: 0.036, delay: 0.07 },
   ],
   playerUltimateAfterimage: () => [
-    { frequency: 640, slideTo: 1040, duration: 0.055, type: "triangle", volume: 0.042 },
-    { frequency: 1100, slideTo: 760, duration: 0.045, type: "sine", volume: 0.03, delay: 0.025 },
+    { frequency: 640, slideTo: 1040, duration: 0.055, type: "triangle", volume: 0.026 },
+    { frequency: 1100, slideTo: 760, duration: 0.045, type: "sine", volume: 0.018, delay: 0.025 },
   ],
   playerUltimateEnd: () => [
-    { frequency: 700, slideTo: 280, duration: 0.18, type: "sine", volume: 0.05 },
-    { frequency: 350, slideTo: 160, duration: 0.22, type: "triangle", volume: 0.035, delay: 0.03 },
+    { frequency: 700, slideTo: 280, duration: 0.18, type: "sine", volume: 0.03 },
+    { frequency: 350, slideTo: 160, duration: 0.22, type: "triangle", volume: 0.02, delay: 0.03 },
   ],
 } satisfies Record<DynamicPlayerSfx, () => ToneStep[]>;
 

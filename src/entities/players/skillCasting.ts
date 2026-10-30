@@ -201,6 +201,7 @@ export function triggerUltimateOpeningEffect() {
 
   state.ultimateEffects.length = 0;
   state.ultimateEffects.push({
+    effectLevel: p.ultimateLevel || 1,
     x: cx,
     y: cy,
     facing: p.facing,
