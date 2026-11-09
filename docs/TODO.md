@@ -1,5 +1,7 @@
 # 待办
 
+- [ ] 按[基于 pixelfx 的游戏效果优化方案](../todo/pixelfx-game-effects-optimization.md)推进特效优化，并持续记录验证结果。
+
 增加天气效果
 增加装备和宝箱以及天气的联动
 优化生成序列帧的skill
